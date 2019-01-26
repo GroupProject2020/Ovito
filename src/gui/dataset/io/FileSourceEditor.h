@@ -88,9 +88,9 @@ private:
 	QLineEdit* _sourcePathLabel;
 	QLineEdit* _wildcardPatternTextbox;
 	QLabel* _fileSeriesLabel;
-	QLabel* _timeSeriesLabel;
+	QLabel* _timeSeriesLabel = nullptr;
 	StatusWidget* _statusLabel;
-	QComboBox* _framesListBox;
+	QComboBox* _framesListBox = nullptr;
 };
 
 OVITO_END_INLINE_NAMESPACE

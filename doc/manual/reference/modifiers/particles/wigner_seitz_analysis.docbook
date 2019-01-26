@@ -169,28 +169,29 @@
   </simplesect>
 
   <simplesect>
-    <title>Parameters</title>
-
-    <variablelist>
-
-      <varlistentry>
-        <term>Eliminate homogeneous cell deformation</term>
-        <listitem>
-          <para>This option lets the modifier first rescale the 
-          simulation cell of the displaced configuration, including all particle positions, to match the 
-          cell shape of the reference configuration before performing the Wigner-Seitz analysis. This effectively eliminates any
-          affine deformation of the simulation cell and may be useful when the displaced and the reference configuration of the crystal do not have the same volume.</para>
-        </listitem>
-      </varlistentry>    
-
-      <varlistentry>
-        <term>Output per-type occupancies</term>
-        <listitem>
-          <para>If this option is active, the modifier outputs per-type occupancy numbers as explained above.</para>
-        </listitem>
-      </varlistentry>
- 
-    </variablelist>
+    <title>Affine mapping of the simulation cell</title>
+    <para>
+      Note: This option applies only to systems with periodic boundary conditions. For non-periodic systems (and typically also for
+      systems with mixed boundary conditions) it should remain turned off.
+    </para>
+    <para>
+      The <emphasis>affine mapping</emphasis> setting controls how OVITO treats situations in which the volume of the periodic simulation cell
+      has changed between the reference and the current configuration. Such cell changes typically occur in simulations due to active straining 
+      of the cell or stress relaxations.
+      If affine mapping is turned off (the default), the current and the reference particle positions are taken as is for the WS analysis. 
+      Any changes of the simulation cell geometry are ignored. If the particle system expands or shrinks as a whole, however,
+      the associated particle displacements may lead to artifacts in the Wigner-Seitz analysis, because particles appear to have left their
+      ideal reference sites. 
+    </para>
+    <para>
+      To avoid such artifacts associated with system volume changes, the <emphasis>"To reference"</emphasis> setting allows to perform a remapping (homogenous rescaling) of the current particle positions to the reference simulation cell 
+      before performing the WS analysis. For that, OVITO determines the affine transformation that maps the current onto the reference
+      simulation cell geometry and applies that transformation to all particle coordinates. Now
+      the particles will stay close to their original sites should the system expand or shrink as a whole.
+    </para> 
+    <para>Note: The <emphasis>"To reference"</emphasis> setting corresponds to the <emphasis>eliminate homogeneous cell deformation</emphasis> option 
+      found in older program versions.
+      </para>
   </simplesect>
   
   <simplesect>

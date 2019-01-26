@@ -95,10 +95,35 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	sublayout->addWidget(upstreamPipelineBtn, 0, 0, 1, 2);
 	sublayout->addWidget(externalFileBtn, 1, 0, 1, 2);
 
+	QGroupBox* referenceFrameGroupBox = new QGroupBox(tr("Reference animation frame"));
+	layout->addWidget(referenceFrameGroupBox);
+
+	sublayout = new QGridLayout(referenceFrameGroupBox);
+	sublayout->setContentsMargins(4,4,4,4);
+	sublayout->setSpacing(4);
+	sublayout->setColumnStretch(0, 5);
+	sublayout->setColumnStretch(2, 95);
+
+	// Add box for selection between absolute and relative reference frames.
+	BooleanRadioButtonParameterUI* useFrameOffsetUI = new BooleanRadioButtonParameterUI(this, PROPERTY_FIELD(ReferenceConfigurationModifier::useReferenceFrameOffset));
+	useFrameOffsetUI->buttonFalse()->setText(tr("Constant reference configuration"));
+	sublayout->addWidget(useFrameOffsetUI->buttonFalse(), 0, 0, 1, 3);
+
 	IntegerParameterUI* frameNumberUI = new IntegerParameterUI(this, PROPERTY_FIELD(ReferenceConfigurationModifier::referenceFrameNumber));
-	//frameNumberUI->label()->setText(tr("Frame number:"));
-	sublayout->addWidget(frameNumberUI->label(), 2, 0);
-	sublayout->addLayout(frameNumberUI->createFieldLayout(), 2, 1);
+	frameNumberUI->label()->setText(tr("Frame number:"));
+	sublayout->addWidget(frameNumberUI->label(), 1, 1, 1, 1);
+	sublayout->addLayout(frameNumberUI->createFieldLayout(), 1, 2, 1, 1);
+	frameNumberUI->setEnabled(false);
+	connect(useFrameOffsetUI->buttonFalse(), &QRadioButton::toggled, frameNumberUI, &IntegerParameterUI::setEnabled);
+
+	useFrameOffsetUI->buttonTrue()->setText(tr("Relative to current frame"));
+	sublayout->addWidget(useFrameOffsetUI->buttonTrue(), 2, 0, 1, 3);
+	IntegerParameterUI* frameOffsetUI = new IntegerParameterUI(this, PROPERTY_FIELD(ReferenceConfigurationModifier::referenceFrameOffset));
+	frameOffsetUI->label()->setText(tr("Frame offset:"));
+	sublayout->addWidget(frameOffsetUI->label(), 3, 1, 1, 1);
+	sublayout->addLayout(frameOffsetUI->createFieldLayout(), 3, 2, 1, 1);
+	frameOffsetUI->setEnabled(false);
+	connect(useFrameOffsetUI->buttonTrue(), &QRadioButton::toggled, frameOffsetUI, &IntegerParameterUI::setEnabled);	
 	
 	// Status label.
 	layout->addSpacing(6);

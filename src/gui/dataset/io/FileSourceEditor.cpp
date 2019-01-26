@@ -105,15 +105,17 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	_fileSeriesLabel->setFont(smallFont);
 	gridlayout->addWidget(_fileSeriesLabel, 1, 1);
 
-	gridlayout->addWidget(new QLabel(tr("Current frame:")), 2, 0);
-	_framesListBox = new QComboBox();
-	_framesListBox->setEditable(false);
-	_framesListBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-	connect(_framesListBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &FileSourceEditor::onFrameSelected);
-	gridlayout->addWidget(_framesListBox, 2, 1);
-	_timeSeriesLabel = new QLabel();
-	_timeSeriesLabel->setFont(smallFont);
-	gridlayout->addWidget(_timeSeriesLabel, 3, 1);
+	if(!parentEditor()) {
+		gridlayout->addWidget(new QLabel(tr("Current frame:")), 2, 0);
+		_framesListBox = new QComboBox();
+		_framesListBox->setEditable(false);
+		_framesListBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+		connect(_framesListBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &FileSourceEditor::onFrameSelected);
+		gridlayout->addWidget(_framesListBox, 2, 1);
+		_timeSeriesLabel = new QLabel();
+		_timeSeriesLabel->setFont(smallFont);
+		gridlayout->addWidget(_timeSeriesLabel, 3, 1);
+	}
 
 	QGroupBox* statusBox = new QGroupBox(tr("Status"), rollout);
 	layout->addWidget(statusBox);
@@ -122,34 +124,37 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	_statusLabel = new StatusWidget(rollout);
 	sublayout->addWidget(_statusLabel);
 
-	// Create another rollout for time series control.
-	rollout = createRollout(tr("Animation"), rolloutParams.after(rollout).collapse(), "scene_objects.file_source.html");
+	if(!parentEditor()) {
 
-	// Create the rollout contents.
-	layout = new QVBoxLayout(rollout);
-	layout->setContentsMargins(4,4,4,4);
-	layout->setSpacing(4);
+		// Create another rollout for time series control.
+		rollout = createRollout(tr("Animation"), rolloutParams.after(rollout).collapse(), "scene_objects.file_source.html");
 
-	QHBoxLayout* subsublayout = new QHBoxLayout();
-	subsublayout->setContentsMargins(0,0,0,0);
-	subsublayout->setSpacing(2);
-	IntegerParameterUI* playbackSpeedNumeratorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedNumerator));
-	subsublayout->addWidget(new QLabel(tr("Playback rate:")));
-	subsublayout->addLayout(playbackSpeedNumeratorUI->createFieldLayout());
-	subsublayout->addWidget(new QLabel(tr("/")));
-	IntegerParameterUI* playbackSpeedDenominatorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedDenominator));
-	subsublayout->addLayout(playbackSpeedDenominatorUI->createFieldLayout());
-	layout->addLayout(subsublayout);
+		// Create the rollout contents.
+		layout = new QVBoxLayout(rollout);
+		layout->setContentsMargins(4,4,4,4);
+		layout->setSpacing(4);
 
-	subsublayout = new QHBoxLayout();
-	subsublayout->setContentsMargins(0,0,0,0);
-	IntegerParameterUI* playbackStartUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackStartTime));
-	subsublayout->addWidget(new QLabel(tr("Start at animation frame:")));
-	subsublayout->addLayout(playbackStartUI->createFieldLayout());
-	layout->addLayout(subsublayout);
+		QHBoxLayout* subsublayout = new QHBoxLayout();
+		subsublayout->setContentsMargins(0,0,0,0);
+		subsublayout->setSpacing(2);
+		IntegerParameterUI* playbackSpeedNumeratorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedNumerator));
+		subsublayout->addWidget(new QLabel(tr("Playback rate:")));
+		subsublayout->addLayout(playbackSpeedNumeratorUI->createFieldLayout());
+		subsublayout->addWidget(new QLabel(tr("/")));
+		IntegerParameterUI* playbackSpeedDenominatorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedDenominator));
+		subsublayout->addLayout(playbackSpeedDenominatorUI->createFieldLayout());
+		layout->addLayout(subsublayout);
 
-	BooleanParameterUI* adjustAnimIntervalUI = new BooleanParameterUI(this, PROPERTY_FIELD(FileSource::adjustAnimationIntervalEnabled));
-	layout->addWidget(adjustAnimIntervalUI->checkBox());
+		subsublayout = new QHBoxLayout();
+		subsublayout->setContentsMargins(0,0,0,0);
+		IntegerParameterUI* playbackStartUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackStartTime));
+		subsublayout->addWidget(new QLabel(tr("Start at animation frame:")));
+		subsublayout->addLayout(playbackStartUI->createFieldLayout());
+		layout->addLayout(subsublayout);
+
+		BooleanParameterUI* adjustAnimIntervalUI = new BooleanParameterUI(this, PROPERTY_FIELD(FileSource::adjustAnimationIntervalEnabled));
+		layout->addWidget(adjustAnimIntervalUI->checkBox());
+	}
 
 	// Show settings editor of importer class.
 	new SubObjectParameterUI(this, PROPERTY_FIELD(FileSource::importer), rolloutParams.after(rollout));
@@ -355,9 +360,12 @@ void FileSourceEditor::updateInformationLabel()
 		_sourcePathLabel->setText(QString());
 		_filenameLabel->setText(QString());
 		_statusLabel->clearStatus();
-		_framesListBox->clear();
-		_framesListBox->setEnabled(false);
-		_fileSeriesLabel->setText(QString());
+		if(_framesListBox) {
+			_framesListBox->clear();
+			_framesListBox->setEnabled(false);
+		}
+		if(_fileSeriesLabel) 
+			_fileSeriesLabel->setText(QString());
 		return;
 	}
 
@@ -410,25 +418,29 @@ void FileSourceEditor::updateInformationLabel()
 	else
 		_fileSeriesLabel->setText(tr("Found %1 matching files").arg(fileSeriesCount));
 
-	if(!fileSource->frames().empty())
-		_timeSeriesLabel->setText(tr("Showing frame %1 of %2").arg(fileSource->storedFrameIndex()+1).arg(fileSource->frames().count()));
-	else
-		_timeSeriesLabel->setText(tr("No frames available"));
+	if(_timeSeriesLabel) {
+		if(!fileSource->frames().empty())
+			_timeSeriesLabel->setText(tr("Showing frame %1 of %2").arg(fileSource->storedFrameIndex()+1).arg(fileSource->frames().count()));
+		else
+			_timeSeriesLabel->setText(tr("No frames available"));
+	}
 
-	for(int index = 0; index < fileSource->frames().size(); index++) {
-		if(_framesListBox->count() <= index) {
-			_framesListBox->addItem(fileSource->frames()[index].label);
+	if(_framesListBox) {
+		for(int index = 0; index < fileSource->frames().size(); index++) {
+			if(_framesListBox->count() <= index) {
+				_framesListBox->addItem(fileSource->frames()[index].label);
+			}
+			else {
+				if(_framesListBox->itemText(index) != fileSource->frames()[index].label)
+					_framesListBox->setItemText(index, fileSource->frames()[index].label);
+			}
 		}
-		else {
-			if(_framesListBox->itemText(index) != fileSource->frames()[index].label)
-				_framesListBox->setItemText(index, fileSource->frames()[index].label);
+		for(int index = _framesListBox->count() - 1; index >= fileSource->frames().size(); index--) {
+			_framesListBox->removeItem(index);
 		}
+		_framesListBox->setCurrentIndex(frameIndex);
+		_framesListBox->setEnabled(_framesListBox->count() > 1);
 	}
-	for(int index = _framesListBox->count() - 1; index >= fileSource->frames().size(); index--) {
-		_framesListBox->removeItem(index);
-	}
-	_framesListBox->setCurrentIndex(frameIndex);
-	_framesListBox->setEnabled(_framesListBox->count() > 1);
 
 	_statusLabel->setStatus(fileSource->status());
 }
