@@ -76,7 +76,20 @@ void ViewportModeAction::onActionTriggered(bool checked)
 ******************************************************************************/
 QPushButton* ViewportModeAction::createPushButton(QWidget* parent)
 {
-	QPushButton* button = new QPushButton(text(), parent);
+	// Define a specialized QPushButton class, which will automatically deactive the viewport input
+	// mode wheneven the button widget is hidden. This is to prevent the viewport mode from remaining
+	// active when the user switches to another command panel tab.
+	class MyPushButton : public QPushButton {
+	public:
+		using QPushButton::QPushButton;
+	protected:
+		virtual void hideEvent(QHideEvent* event) override {
+			if(!event->spontaneous() && isChecked()) click();
+			QPushButton::hideEvent(event);
+		}
+	};
+
+	QPushButton* button = new MyPushButton(text(), parent);
 	button->setCheckable(true);
 	button->setChecked(isChecked());
 
