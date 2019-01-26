@@ -314,7 +314,7 @@ FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& fi
 	while(!stream.eof());
 
 	// Make sure the number of atoms specified in the header was correct.
-	if(expectedAtomCount > 0 && positions.size() < expectedAtomCount)
+	if(expectedAtomCount > 0 && positions.size() < (size_t)expectedAtomCount)
 		throw Exception(tr("Unexpected end of DL_POLY file. Expected %1 atom records but found only %2.").arg(expectedAtomCount).arg(positions.size()));
 
 	// Create particle properties.

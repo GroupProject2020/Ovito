@@ -6553,6 +6553,7 @@ namespace GEO {
 		 String::to_string(periodic_vertex_instance(v)) ;
 	 }
 
+#if 0 // Removed function to silence compiler warning!
 	 std::string binary_to_string(index_t m) const {
 	     std::string s(32,' ');
 	     for(index_t i=0; i<32; ++i) {
@@ -6560,6 +6561,7 @@ namespace GEO {
 	     }
 	     return s;
 	 }
+#endif
 	 
 	 static int translation[27][3];
 

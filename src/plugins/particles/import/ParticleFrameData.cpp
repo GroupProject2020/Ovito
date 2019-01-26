@@ -438,7 +438,7 @@ void ParticleFrameData::sortParticlesById()
 		auto particleIndex = bondTopology->dataInt64();
 		auto particleIndexEnd = particleIndex + bondTopology->size() * 2;
 		for(; particleIndex != particleIndexEnd; ++particleIndex) {
-			if(*particleIndex >= 0 && *particleIndex < invertedPermutation.size())
+			if(*particleIndex >= 0 && (size_t)*particleIndex < invertedPermutation.size())
 				*particleIndex = invertedPermutation[*particleIndex];
 		}
 	}

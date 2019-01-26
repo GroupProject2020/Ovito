@@ -228,7 +228,7 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 
 	// Read per-particle data.
 	bool isFirstLine = true;
-	for(size_t particleIndex = 0; particleIndex < header.numParticles; ) {
+	for(qlonglong particleIndex = 0; particleIndex < header.numParticles; ) {
 
 		// Update progress indicator.
 		if(!setProgressValueIntermittent(particleIndex)) 

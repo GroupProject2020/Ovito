@@ -205,10 +205,10 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 				if(!result.second) {
 					for(size_t dim = 0; dim < 3; dim++) {
 						if(cell.pbcFlags()[dim]) {
-							short shift = (short)std::round(result.first->second[dim] - rp[dim]);
+							int shift = (int)std::round(result.first->second[dim] - rp[dim]);
 							if(shift != 0) {
 								// Create a new record when particle has crossed a periodic cell boundary.
-								unwrapRecords.emplace(result.first->first, std::make_tuple(time, dim, shift));
+								unwrapRecords.emplace(result.first->first, std::make_tuple(time, (qint8)dim, (qint16)shift));
 							}
 						}
 					}

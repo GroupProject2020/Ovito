@@ -196,7 +196,8 @@ void AnimationSettings::setAnimationPlayback(bool on)
 	if(on) {
 		bool reverse = false;
 		if(!Application::instance()->scriptMode()) {
-			reverse |= (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier);
+			if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
+				reverse = true;
 		}
 		startAnimationPlayback(reverse ? -1 : 1);
 	}

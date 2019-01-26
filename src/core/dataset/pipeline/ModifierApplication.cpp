@@ -217,7 +217,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, 
 							setStatus(PipelineStatus());
 						return state;
 					}
-					catch(const Exception& ex) {
+					catch(const Exception&) {
 						throw;
 					}
 					catch(const std::bad_alloc&) {
