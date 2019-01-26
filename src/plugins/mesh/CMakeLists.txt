@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2013) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -37,10 +37,6 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 		surface/SurfaceMeshReplicateModifierDelegate.cpp)
 ENDIF()
 
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
-ENDIF()
-
 # List of source files of the GLU library used for polygon tessellation.
 SET(GLUSourceFiles
 	util/polytess/dict.c
@@ -55,10 +51,13 @@ SET(GLUSourceFiles
 	util/polytess/tessmono.c
 )
 
+# Define the plugin module.
 OVITO_STANDARD_PLUGIN(Mesh
-	SOURCES Mesh.cpp ${SourceFiles} ${GLUSourceFiles}
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdObj StdMod
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
+	SOURCES 
+		Mesh.cpp 
+		${SourceFiles} 
+		${GLUSourceFiles}
+	OPTIONAL_PLUGIN_DEPENDENCIES StdObj StdMod
 )
 
 # Speed up compilation by using precompiled headers.
@@ -69,6 +68,11 @@ ENDIF()
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

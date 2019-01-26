@@ -43,7 +43,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 using namespace PyScript;
 
-PYBIND11_MODULE(CrystalAnalysis, m)
+PYBIND11_MODULE(CrystalAnalysisPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -477,7 +477,7 @@ PYBIND11_MODULE(CrystalAnalysis, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CrystalAnalysis);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CrystalAnalysisPython);
 
 }	// End of namespace
 }	// End of namespace

@@ -192,8 +192,8 @@ void PythonViewportOverlay::renderImplementation(const Viewport* viewport, TimeP
 			// Pass viewport, QPainter, and other information to the Python script function.
 			// The QPainter pointer has to be converted to the representation used by PyQt5.
 			py::module numpy_module = py::module::import("numpy");
-			py::module sip_module = py::module::import("sip");
 			py::module qtgui_module = py::module::import("PyQt5.QtGui");
+			py::module sip_module = py::module::import("sip");
 			py::object painter_ptr = py::cast(reinterpret_cast<std::uintptr_t>(&painter));
 			py::object qpainter_class = qtgui_module.attr("QPainter");
 			py::object sip_painter = sip_module.attr("wrapinstance")(painter_ptr, qpainter_class);

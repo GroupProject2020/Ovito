@@ -31,7 +31,7 @@ namespace Ovito { namespace Mesh {
 /**
  * \brief File parser for VTK files containing triangle mesh data.
  */
-class VTKFileImporter : public FileSourceImporter
+class OVITO_MESH_EXPORT VTKFileImporter : public FileSourceImporter
 {
 	/// Defines a metaclass specialization for this importer type.
 	class OOMetaClass : public FileSourceImporter::OOMetaClass

@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2016) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,21 +19,21 @@
 #
 ###############################################################################
 
+# This third-party library is needed by the script editor.
 FIND_PACKAGE(QScintilla REQUIRED)
-
-SET(SourceFiles
-	GUIBinding.cpp
-	PythonViewportOverlayEditor.cpp
-	PythonScriptModifierEditor.cpp
-	RunScriptAction.cpp
-	ObjectScriptEditor.cpp
-)
 
 # Compile resources.
 QT5_ADD_RESOURCES(ResourceFiles resources/pyscript_gui.qrc)
 
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(PyScriptGui
-	SOURCES ${SourceFiles} ${ResourceFiles}
+	SOURCES
+		GUIBinding.cpp
+		PythonViewportOverlayEditor.cpp
+		PythonScriptModifierEditor.cpp
+		RunScriptAction.cpp
+		ObjectScriptEditor.cpp
+		${ResourceFiles}
 	PLUGIN_DEPENDENCIES PyScript
 	PRIVATE_LIB_DEPENDENCIES ${QScintilla_LIBRARIES}
 	GUI_PLUGIN

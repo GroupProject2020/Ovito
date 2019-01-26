@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2016) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,24 +19,22 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	importer/CAImporterEditor.cpp
-	objects/patterns/BurgersVectorFamilyEditor.cpp
-	objects/patterns/StructurePatternEditor.cpp
-	objects/patterns/PatternCatalogEditor.cpp
-	objects/dislocations/DislocationVisEditor.cpp
-	objects/partition_mesh/PartitionMeshVisEditor.cpp
-	objects/slip_surface/SlipSurfaceVisEditor.cpp
-	modifier/ConstructSurfaceModifierEditor.cpp
-	modifier/DislocationAnalysisModifierEditor.cpp
-	modifier/ElasticStrainModifierEditor.cpp
-	modifier/SimplifyMicrostructureModifierEditor.cpp
-#	modifier/GrainSegmentationModifierEditor.cpp
-	util/DislocationInspectionApplet.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(CrystalAnalysisGui
-	SOURCES ${SourceFiles}
+	SOURCES
+		importer/CAImporterEditor.cpp
+		objects/patterns/BurgersVectorFamilyEditor.cpp
+		objects/patterns/StructurePatternEditor.cpp
+		objects/patterns/PatternCatalogEditor.cpp
+		objects/dislocations/DislocationVisEditor.cpp
+		objects/partition_mesh/PartitionMeshVisEditor.cpp
+		objects/slip_surface/SlipSurfaceVisEditor.cpp
+		modifier/ConstructSurfaceModifierEditor.cpp
+		modifier/DislocationAnalysisModifierEditor.cpp
+		modifier/ElasticStrainModifierEditor.cpp
+		modifier/SimplifyMicrostructureModifierEditor.cpp
+#		modifier/GrainSegmentationModifierEditor.cpp
+		util/DislocationInspectionApplet.cpp
 	PLUGIN_DEPENDENCIES CrystalAnalysis ParticlesGui
 	GUI_PLUGIN
 )

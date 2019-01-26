@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -33,15 +33,13 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 	)
 ENDIF()
 
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
-ENDIF()
-
+# Define the plugin module.
 OVITO_STANDARD_PLUGIN(Grid
-	SOURCES Grid.cpp ${SourceFiles}
+	SOURCES 
+		Grid.cpp 
+		${SourceFiles}
 	PLUGIN_DEPENDENCIES Mesh StdObj
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdMod
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
+	OPTIONAL_PLUGIN_DEPENDENCIES StdMod
 )
 
 # Speed up compilation by using precompiled headers.
@@ -52,6 +50,11 @@ ENDIF()
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

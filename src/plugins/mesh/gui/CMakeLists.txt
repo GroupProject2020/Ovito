@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2016) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,13 +19,11 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
-	tri/TriMeshVisEditor.cpp
-	surface/SurfaceMeshVisEditor.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(MeshGui
-	SOURCES ${SourceFiles}
+	SOURCES
+		tri/TriMeshVisEditor.cpp
+		surface/SurfaceMeshVisEditor.cpp
 	PLUGIN_DEPENDENCIES Mesh
 	GUI_PLUGIN
 )

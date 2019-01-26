@@ -74,7 +74,7 @@ static py::object buildNumpyArray(const PropertyPtr& p, bool makeWritable, py::h
 	return std::move(arr);
 }
 
-PYBIND11_MODULE(StdObj, m)
+PYBIND11_MODULE(StdObjPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -516,7 +516,7 @@ PYBIND11_MODULE(StdObj, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdObj);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdObjPython);
 
 /// Helper function that converts a Python string to a C++ PropertyReference instance.
 /// The function requires a property class to look up the property name string.

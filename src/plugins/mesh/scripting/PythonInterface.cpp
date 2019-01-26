@@ -35,7 +35,7 @@ namespace Ovito { namespace Mesh {
 
 using namespace PyScript;
 
-PYBIND11_MODULE(Mesh, m)
+PYBIND11_MODULE(MeshPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -290,7 +290,7 @@ PYBIND11_MODULE(Mesh, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Mesh);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(MeshPython);
 
 }	// End of namespace
 }	// End of namespace

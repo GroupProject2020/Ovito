@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,27 +19,23 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	AMBERNetCDFImporter.cpp
-	AMBERNetCDFExporter.cpp
-)
-
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles PythonInterface.cpp)
-ENDIF()
-
-OVITO_STANDARD_PLUGIN(
-	NetCDFPlugin
-	SOURCES ${SourceFiles}
+# Define the plugin module.
+OVITO_STANDARD_PLUGIN(NetCDFPlugin
+	SOURCES
+		AMBERNetCDFImporter.cpp
+		AMBERNetCDFExporter.cpp
 	PLUGIN_DEPENDENCIES Particles
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 	PRIVATE_LIB_DEPENDENCIES NetCDFIntegration
 )
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

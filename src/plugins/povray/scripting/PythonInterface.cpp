@@ -30,7 +30,7 @@ namespace Ovito { namespace POVRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 using namespace Ovito;
 using namespace PyScript;
 
-PYBIND11_MODULE(POVRay, m)
+PYBIND11_MODULE(POVRayPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -109,7 +109,7 @@ PYBIND11_MODULE(POVRay, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(POVRay);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(POVRayPython);
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

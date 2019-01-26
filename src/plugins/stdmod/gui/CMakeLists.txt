@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,28 +19,27 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
-	SliceModifierEditor.cpp
-	AffineTransformationModifierEditor.cpp
-	ClearSelectionModifierEditor.cpp
-	InvertSelectionModifierEditor.cpp
-	ColorCodingModifierEditor.cpp
-	AssignColorModifierEditor.cpp
-	DeleteSelectedModifierEditor.cpp
-	SelectTypeModifierEditor.cpp
-	HistogramModifierEditor.cpp
-	ScatterPlotModifierEditor.cpp
-	ReplicateModifierEditor.cpp
-	ColorLegendOverlayEditor.cpp
-	ExpressionSelectionModifierEditor.cpp
-	FreezePropertyModifierEditor.cpp
-	ManualSelectionModifierEditor.cpp
-	ComputePropertyModifierEditor.cpp
-	CombineDatasetsModifierEditor.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(StdModGui
-	SOURCES StdModGui.cpp ${SourceFiles}
+	SOURCES 
+		StdModGui.cpp
+		SliceModifierEditor.cpp
+		AffineTransformationModifierEditor.cpp
+		ClearSelectionModifierEditor.cpp
+		InvertSelectionModifierEditor.cpp
+		ColorCodingModifierEditor.cpp
+		AssignColorModifierEditor.cpp
+		DeleteSelectedModifierEditor.cpp
+		SelectTypeModifierEditor.cpp
+		HistogramModifierEditor.cpp
+		ScatterPlotModifierEditor.cpp
+		ReplicateModifierEditor.cpp
+		ColorLegendOverlayEditor.cpp
+		ExpressionSelectionModifierEditor.cpp
+		FreezePropertyModifierEditor.cpp
+		ManualSelectionModifierEditor.cpp
+		ComputePropertyModifierEditor.cpp
+		CombineDatasetsModifierEditor.cpp
 	PLUGIN_DEPENDENCIES StdMod StdObjGui
 	PRIVATE_LIB_DEPENDENCIES Qwt
 	GUI_PLUGIN

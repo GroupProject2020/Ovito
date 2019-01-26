@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,35 +19,28 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
-	modifiers/SliceModifier.cpp
-	modifiers/AffineTransformationModifier.cpp
-	modifiers/InvertSelectionModifier.cpp
-	modifiers/ClearSelectionModifier.cpp
-	modifiers/ColorCodingModifier.cpp
-	modifiers/AssignColorModifier.cpp
-	modifiers/DeleteSelectedModifier.cpp
-	modifiers/SelectTypeModifier.cpp
-	modifiers/HistogramModifier.cpp
-	modifiers/ScatterPlotModifier.cpp
-	modifiers/ReplicateModifier.cpp
-	modifiers/ExpressionSelectionModifier.cpp
-	modifiers/FreezePropertyModifier.cpp
-	modifiers/ManualSelectionModifier.cpp
-	modifiers/ComputePropertyModifier.cpp
-	modifiers/CombineDatasetsModifier.cpp
-	viewport/ColorLegendOverlay.cpp	
-)
-
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
-ENDIF()
-
+# Define the plugin module.
 OVITO_STANDARD_PLUGIN(StdMod
-	SOURCES StdMod.cpp ${SourceFiles}
+	SOURCES
+		StdMod.cpp
+		modifiers/SliceModifier.cpp
+		modifiers/AffineTransformationModifier.cpp
+		modifiers/InvertSelectionModifier.cpp
+		modifiers/ClearSelectionModifier.cpp
+		modifiers/ColorCodingModifier.cpp
+		modifiers/AssignColorModifier.cpp
+		modifiers/DeleteSelectedModifier.cpp
+		modifiers/SelectTypeModifier.cpp
+		modifiers/HistogramModifier.cpp
+		modifiers/ScatterPlotModifier.cpp
+		modifiers/ReplicateModifier.cpp
+		modifiers/ExpressionSelectionModifier.cpp
+		modifiers/FreezePropertyModifier.cpp
+		modifiers/ManualSelectionModifier.cpp
+		modifiers/ComputePropertyModifier.cpp
+		modifiers/CombineDatasetsModifier.cpp
+		viewport/ColorLegendOverlay.cpp	
 	PLUGIN_DEPENDENCIES StdObj
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 
 # Speed up compilation by using precompiled headers.
@@ -58,6 +51,11 @@ ENDIF()
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

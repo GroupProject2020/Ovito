@@ -19,23 +19,14 @@
 #
 ###############################################################################
 
-# Locate the OSPRay library.
-FIND_PACKAGE(ospray REQUIRED)
-
-SET(SourceFiles
+# Define the plugin module.
+OVITO_STANDARD_PLUGIN(OSPRayRenderer SOURCES 
 	renderer/OSPRayRenderer.cpp
 	renderer/OSPRayBackend.cpp
 )
 
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
-ENDIF()
-
-OVITO_STANDARD_PLUGIN(OSPRayRenderer
-	SOURCES ${SourceFiles}
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
-)
+# Locate the OSPRay library.
+FIND_PACKAGE(ospray REQUIRED)
 
 # Link to the OSPRay library and its dependencies.
 TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE ${OSPRAY_INCLUDE_DIRS} "${TBB_INCLUDE_DIR}")
@@ -60,6 +51,11 @@ ENDIF()
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

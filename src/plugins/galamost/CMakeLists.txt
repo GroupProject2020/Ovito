@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2018) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,22 +19,18 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	GALAMOSTImporter.cpp
-)
-
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles PythonInterface.cpp)
-ENDIF()
-
-OVITO_STANDARD_PLUGIN(
-	Galamost
-	SOURCES ${SourceFiles}
+# Define the plugin module.
+OVITO_STANDARD_PLUGIN(Galamost
+	SOURCES
+		GALAMOSTImporter.cpp
 	PLUGIN_DEPENDENCIES Particles
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
-	PRIVATE_LIB_DEPENDENCIES Qt5::Xml
+	LIB_DEPENDENCIES Qt5::Xml
 )
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
+ENDIF()
 
 # Propagate list of plugins to parent scope.
 SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

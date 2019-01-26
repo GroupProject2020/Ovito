@@ -69,7 +69,7 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 ENDFOREACH()
 
 # Define tests for the scripting interface.
-SET(PYTHON_TEST_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/tests/scripts/test_suite")
+SET(PYTHON_TEST_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/tests/scripts")
 FILE(GLOB_RECURSE PYTHON_TEST_SCRIPTS RELATIVE "${PYTHON_TEST_SCRIPTS_DIR}" "${PYTHON_TEST_SCRIPTS_DIR}/*.py")
 FOREACH(test_script ${PYTHON_TEST_SCRIPTS})
 	# Run each test case both with 'ovitos' and a second time with the system Python interpreter.

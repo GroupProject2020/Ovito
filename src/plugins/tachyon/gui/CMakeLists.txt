@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2013) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,12 +19,10 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	TachyonRendererEditor.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(TachyonGui
-	SOURCES ${SourceFiles}
+	SOURCES
+		TachyonRendererEditor.cpp
 	PLUGIN_DEPENDENCIES Tachyon
 	GUI_PLUGIN
 )

@@ -31,7 +31,7 @@ namespace Ovito { namespace Grid {
 
 using namespace PyScript;
 
-PYBIND11_MODULE(Grid, m)
+PYBIND11_MODULE(GridPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -186,7 +186,7 @@ PYBIND11_MODULE(Grid, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Grid);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(GridPython);
 
 }	// End of namespace
 }	// End of namespace

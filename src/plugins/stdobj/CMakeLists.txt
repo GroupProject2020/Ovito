@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,34 +19,27 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	camera/CameraObject.cpp
-	camera/TargetObject.cpp
-	simcell/SimulationCellObject.cpp
-	simcell/SimulationCellVis.cpp
-	simcell/PeriodicDomainDataObject.cpp
-	properties/PropertyStorage.cpp
-	properties/PropertyObject.cpp
-	properties/PropertyReference.cpp
-	properties/PropertyContainerClass.cpp
-	properties/PropertyContainer.cpp
-	properties/ElementType.cpp
-	properties/GenericPropertyModifier.cpp
-	properties/PropertyExpressionEvaluator.cpp
-	series/DataSeriesObject.cpp
-	io/DataSeriesExporter.cpp
-	util/ElementSelectionSet.cpp
-)
-
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
-ENDIF()
-
+# Define the plugin module.
 OVITO_STANDARD_PLUGIN(StdObj
-	SOURCES StdObj.cpp ${SourceFiles}
+	SOURCES 
+		StdObj.cpp
+		camera/CameraObject.cpp
+		camera/TargetObject.cpp
+		simcell/SimulationCellObject.cpp
+		simcell/SimulationCellVis.cpp
+		simcell/PeriodicDomainDataObject.cpp
+		properties/PropertyStorage.cpp
+		properties/PropertyObject.cpp
+		properties/PropertyReference.cpp
+		properties/PropertyContainerClass.cpp
+		properties/PropertyContainer.cpp
+		properties/ElementType.cpp
+		properties/GenericPropertyModifier.cpp
+		properties/PropertyExpressionEvaluator.cpp
+		series/DataSeriesObject.cpp
+		io/DataSeriesExporter.cpp
+		util/ElementSelectionSet.cpp
 	LIB_DEPENDENCIES muParser
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 
 # Speed up compilation by using precompiled headers.
@@ -57,6 +50,11 @@ ENDIF()
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,13 +19,11 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
-	modifier/CreateIsosurfaceModifierEditor.cpp
-	modifier/SpatialBinningModifierEditor.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(GridGui
-	SOURCES ${SourceFiles}
+	SOURCES
+		modifier/CreateIsosurfaceModifierEditor.cpp
+		modifier/SpatialBinningModifierEditor.cpp
 	PLUGIN_DEPENDENCIES Grid StdObjGui
 	GUI_PLUGIN
 )

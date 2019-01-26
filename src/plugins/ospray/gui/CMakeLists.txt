@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,14 +19,12 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	OSPRayRendererEditor.cpp
-	OSPRaySciVisBackendEditor.cpp
-	OSPRayPathTracerBackendEditor.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(OSPRayRendererGui
-	SOURCES ${SourceFiles}
+	SOURCES
+		OSPRayRendererEditor.cpp
+		OSPRaySciVisBackendEditor.cpp
+		OSPRayPathTracerBackendEditor.cpp	
 	PLUGIN_DEPENDENCIES OSPRayRenderer
 	GUI_PLUGIN
 )

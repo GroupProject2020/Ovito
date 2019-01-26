@@ -28,24 +28,23 @@ IF(MSVC)
 	ADD_COMPILE_OPTIONS(-Zm150)
 ENDIF()
 
-SET(SourceFiles
-	engine/ScriptEngine.cpp
-	engine/ScriptAutostarter.cpp
-	engine/AdhocApplication.cpp
-	binding/PythonInterface.cpp
-	binding/ViewportBinding.cpp
-	binding/AnimationBinding.cpp
-	binding/SceneBinding.cpp
-	binding/FileIOBinding.cpp
-	binding/RenderingBinding.cpp
-	binding/AppBinding.cpp
-	binding/TypeCasting.cpp
-	extensions/PythonViewportOverlay.cpp
-	extensions/PythonScriptModifier.cpp
-)
-
+# Define the plugin module.
 OVITO_STANDARD_PLUGIN(PyScript
-	SOURCES PyScript.cpp ${SourceFiles}
+	SOURCES 
+		PyScript.cpp
+		engine/ScriptEngine.cpp
+		engine/ScriptAutostarter.cpp
+		engine/AdhocApplication.cpp
+		binding/PythonInterface.cpp
+		binding/ViewportBinding.cpp
+		binding/AnimationBinding.cpp
+		binding/SceneBinding.cpp
+		binding/FileIOBinding.cpp
+		binding/RenderingBinding.cpp
+		binding/AppBinding.cpp
+		binding/TypeCasting.cpp
+		extensions/PythonViewportOverlay.cpp
+		extensions/PythonScriptModifier.cpp	
 	LIB_DEPENDENCIES ${PYTHON_LIBRARIES} OpenGLRenderer
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/python/"
 )

@@ -33,8 +33,8 @@ This module contains classes related to :ref:`data visualization and rendering <
 
 """
 
-import sip
 import PyQt5.QtGui
+import sip # Note: Make sure SIP is loaded *after* PyQt5, because otherwise me might load the wrong version.
 
 # Load the native modules.
 from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer, 

@@ -49,7 +49,7 @@ void defineModifiersSubmodule(py::module parentModule);	// Defined in ModifierBi
 void defineImportersSubmodule(py::module parentModule);	// Defined in ImporterBinding.cpp
 void defineExportersSubmodule(py::module parentModule);	// Defined in ExporterBinding.cpp
 
-PYBIND11_MODULE(Particles, m)
+PYBIND11_MODULE(ParticlesPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -578,7 +578,7 @@ PYBIND11_MODULE(Particles, m)
 	defineExportersSubmodule(m);	// Defined in ExporterBinding.cpp
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Particles);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(ParticlesPython);
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

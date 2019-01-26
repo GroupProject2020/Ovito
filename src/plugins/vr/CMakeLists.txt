@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2016) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -22,18 +22,16 @@
 # Locate the OpenVR library.
 FIND_PACKAGE(OpenVR REQUIRED)
 
-SET(SourceFiles
-	StartVRAction.cpp
-	VRWindow.cpp
-	VRRenderingWidget.cpp
-	VRSceneRenderer.cpp
-	#VRCacheModifier.cpp
-	VRSettingsObject.cpp
-	VRSettingsObjectEditor.cpp
-)
-
+# Define the plugin module.
 OVITO_STANDARD_PLUGIN(VRPlugin
-	SOURCES ${SourceFiles}
+	SOURCES
+		StartVRAction.cpp
+		VRWindow.cpp
+		VRRenderingWidget.cpp
+		VRSceneRenderer.cpp
+		#VRCacheModifier.cpp
+		VRSettingsObject.cpp
+		VRSettingsObjectEditor.cpp
 	GUI_PLUGIN
 )
 

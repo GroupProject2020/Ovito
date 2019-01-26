@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,12 +19,10 @@
 #
 ###############################################################################
 
-SET(SourceFiles
-	VoroTopModifierEditor.cpp
-)
-
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(VoroTopGui
-	SOURCES ${SourceFiles}
+	SOURCES
+		VoroTopModifierEditor.cpp
 	PLUGIN_DEPENDENCIES VoroTop ParticlesGui
 	GUI_PLUGIN
 )

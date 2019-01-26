@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,24 +19,24 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
-	camera/CameraObjectEditor.cpp
-	properties/PropertyInspectionApplet.cpp
-	properties/PropertyObjectEditor.cpp
-	simcell/SimulationCellObjectEditor.cpp
-	simcell/SimulationCellVisEditor.cpp
-	series/SeriesInspectionApplet.cpp
-	widgets/PropertyContainerParameterUI.cpp
-	widgets/PropertyReferenceParameterUI.cpp
-	widgets/PropertySelectionComboBox.cpp
-	widgets/DataSeriesPlotWidget.cpp
-)
-
-# Compile resources.
+# Compile Qt resources to be embedded into the executable.
 QT5_ADD_RESOURCES(ResourceFiles resources/stdobj_gui.qrc)
 
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(StdObjGui
-	SOURCES StdObjGui.cpp ${SourceFiles} ${ResourceFiles}
+	SOURCES 
+		StdObjGui.cpp 
+		camera/CameraObjectEditor.cpp
+		properties/PropertyInspectionApplet.cpp
+		properties/PropertyObjectEditor.cpp
+		simcell/SimulationCellObjectEditor.cpp
+		simcell/SimulationCellVisEditor.cpp
+		series/SeriesInspectionApplet.cpp
+		widgets/PropertyContainerParameterUI.cpp
+		widgets/PropertyReferenceParameterUI.cpp
+		widgets/PropertySelectionComboBox.cpp
+		widgets/DataSeriesPlotWidget.cpp
+		${ResourceFiles}
 	PLUGIN_DEPENDENCIES StdObj
 	LIB_DEPENDENCIES Qwt
 	GUI_PLUGIN

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,7 @@ namespace Ovito { namespace OSPRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 using namespace Ovito;
 using namespace PyScript;
 
-PYBIND11_MODULE(OSPRayRenderer, m)
+PYBIND11_MODULE(OSPRayRendererPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -38,7 +38,7 @@ PYBIND11_MODULE(OSPRayRenderer, m)
 	options.disable_function_signatures();
 
 	ovito_class<OSPRayRenderer, NonInteractiveSceneRenderer>(m,
-			"This is one of the software-based rendering backends of OVITO. OSPRay is an open-source raytracing engine integrated into OVITO."
+			"This is one of the software-based rendering backends of OVITO. OSPRay is an open-source raytracing system integrated into OVITO."
 			"\n\n"
 			"An instance of this class can be passed to the :py:meth:`Viewport.render_image` or :py:meth:`Viewport.render_anim` methods. "
 			"\n\n"
@@ -108,7 +108,7 @@ PYBIND11_MODULE(OSPRayRenderer, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(OSPRayRenderer);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(OSPRayRendererPython);
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

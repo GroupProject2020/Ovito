@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2016) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,8 +19,10 @@
 #
 ###############################################################################
 
+# Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(NetCDFPluginGui
-	SOURCES AMBERNetCDFImporterEditor.cpp
+	SOURCES 
+		AMBERNetCDFImporterEditor.cpp
 	PLUGIN_DEPENDENCIES NetCDFPlugin ParticlesGui
 	GUI_PLUGIN
 )

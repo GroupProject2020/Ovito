@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #  Copyright (2016) Lars Pastewka
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -23,21 +23,12 @@
 # Locate the FFTW library.
 FIND_PACKAGE(FFTW3 REQUIRED)
 
-SET(SourceFiles
-	CorrelationFunctionModifier.cpp
-)
-
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	LIST(APPEND SourceFiles PythonInterface.cpp)
-ENDIF()
-
-OVITO_STANDARD_PLUGIN(
-    CorrelationFunctionPlugin
-    SOURCES ${SourceFiles}
+# Define the plugin module.
+OVITO_STANDARD_PLUGIN(CorrelationFunctionPlugin
+    SOURCES
+		CorrelationFunctionModifier.cpp
     PLUGIN_DEPENDENCIES Particles
 	PRIVATE_LIB_DEPENDENCIES ${FFTW3_LIBRARIES}
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 
 TARGET_INCLUDE_DIRECTORIES(CorrelationFunctionPlugin PRIVATE "${FFTW3_INCLUDE_DIRS}")
@@ -45,6 +36,11 @@ TARGET_INCLUDE_DIRECTORIES(CorrelationFunctionPlugin PRIVATE "${FFTW3_INCLUDE_DI
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Build corresponding Python binding plugin.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(scripting)
 ENDIF()
 
 IF(WIN32)

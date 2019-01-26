@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,7 @@ namespace Ovito { namespace Tachyon { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 using namespace Ovito;
 using namespace PyScript;
 
-PYBIND11_MODULE(Tachyon, m)
+PYBIND11_MODULE(TachyonPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -93,7 +93,7 @@ PYBIND11_MODULE(Tachyon, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Tachyon);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(TachyonPython);
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

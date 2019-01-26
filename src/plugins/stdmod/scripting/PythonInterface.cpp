@@ -46,7 +46,7 @@ namespace Ovito { namespace StdMod {
 
 using namespace PyScript;
 
-PYBIND11_MODULE(StdMod, m)
+PYBIND11_MODULE(StdModPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -729,7 +729,7 @@ PYBIND11_MODULE(StdMod, m)
 	;
 }
 
-OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdMod);
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdModPython);
 
 }	// End of namespace
 }	// End of namespace
