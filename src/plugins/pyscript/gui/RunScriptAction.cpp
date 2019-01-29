@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(RunScriptAction);
 void RunScriptAction::registerActions(ActionManager& actionManager)
 {
 	// Register an action, which allows the user to run a Python script file.
-	QAction* runScriptFileAction = actionManager.createCommandAction(ACTION_SCRIPTING_RUN_FILE, tr("Run Python script..."));
+	QAction* runScriptFileAction = actionManager.createCommandAction(ACTION_SCRIPTING_RUN_FILE, tr("Run Python script..."), ":/gui/actions/file/scripting_manual.bw.svg");
 
 	connect(runScriptFileAction, &QAction::triggered, [&actionManager]() {
 		// Let the user select a script file on disk.

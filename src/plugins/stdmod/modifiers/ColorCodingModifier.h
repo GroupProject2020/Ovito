@@ -189,6 +189,7 @@ public:
 	/// \return The color that visualizes the given scalar value.
 	virtual Color valueToColor(FloatType t) override {
 		int index = t * (sizeof(colormap_viridis_data)/sizeof(colormap_viridis_data[0]) - 1);
+		OVITO_ASSERT(t >= 0 && t < sizeof(colormap_viridis_data)/sizeof(colormap_viridis_data[0]));
 		return Color(colormap_viridis_data[index][0], colormap_viridis_data[index][1], colormap_viridis_data[index][2]);
 	}
 };
@@ -212,8 +213,34 @@ public:
 	/// \return The color that visualizes the given scalar value.
 	virtual Color valueToColor(FloatType t) override {
 		int index = t * (sizeof(colormap_magma_data)/sizeof(colormap_magma_data[0]) - 1);
+		OVITO_ASSERT(t >= 0 && t < sizeof(colormap_magma_data)/sizeof(colormap_magma_data[0]));
 		return Color(colormap_magma_data[index][0], colormap_magma_data[index][1], colormap_magma_data[index][2]);
 	}
+};
+
+/**
+ * \brief Uses a color table to convert scalar values to a color.
+ */
+class OVITO_STDMOD_EXPORT ColorCodingTableGradient : public ColorCodingGradient
+{
+	OVITO_CLASS(ColorCodingTableGradient)
+	Q_CLASSINFO("DisplayName", "User table");
+	Q_OBJECT
+	
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ColorCodingTableGradient(DataSet* dataset) : ColorCodingGradient(dataset) {}
+
+	/// \brief Converts a scalar value to a color value.
+	/// \param t A value between 0 and 1.
+	/// \return The color that visualizes the given scalar value.
+	virtual Color valueToColor(FloatType t) override;
+
+private:
+
+	/// The user-defined color table.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(std::vector<Color>, table, setTable);
 };
 
 /**

@@ -46,6 +46,7 @@ IMPLEMENT_OVITO_CLASS(ColorCodingJetGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingBlueWhiteRedGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingViridisGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingMagmaGradient);
+IMPLEMENT_OVITO_CLASS(ColorCodingTableGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingImageGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingModifier);
 DEFINE_REFERENCE_FIELD(ColorCodingModifier, startValueController);
@@ -62,6 +63,7 @@ SET_PROPERTY_FIELD_LABEL(ColorCodingModifier, keepSelection, "Keep selection");
 SET_PROPERTY_FIELD_LABEL(ColorCodingModifier, sourceProperty, "Source property");
 
 DEFINE_PROPERTY_FIELD(ColorCodingImageGradient, image);
+DEFINE_PROPERTY_FIELD(ColorCodingTableGradient, table);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -433,6 +435,20 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	}
 
 	return PipelineStatus::Success;
+}
+
+/******************************************************************************
+* Converts a scalar value to a color value.
+******************************************************************************/
+Color ColorCodingTableGradient::valueToColor(FloatType t) 
+{
+	if(table().empty()) return Color(0,0,0);
+	if(table().size() == 1) return table()[0];
+	t *= (table().size() - 1);
+	FloatType t0 = std::floor(t);
+	const Color& c1 = table()[(size_t)t0];
+	const Color& c2 = table()[(size_t)std::ceil(t)];
+	return c1 * (FloatType(1) - (t - t0)) + c2 * (t - t0);
 }
 
 /******************************************************************************

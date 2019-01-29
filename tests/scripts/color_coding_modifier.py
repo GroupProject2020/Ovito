@@ -33,6 +33,9 @@ modifier.gradient = ColorCodingModifier.Grayscale()
 modifier.gradient = ColorCodingModifier.BlueWhiteRed()
 modifier.gradient = ColorCodingModifier.Viridis()
 modifier.gradient = ColorCodingModifier.Magma()
+modifier.gradient = ColorCodingModifier.Image("../../doc/manual/images/modifiers/color_coding_custom_map.png")
+
+# Backward compatibility with OVITO 2.9.0:
 modifier.gradient = ColorCodingModifier.Custom("../../doc/manual/images/modifiers/color_coding_custom_map.png")
 
 print(pipeline.compute().particles.color is not None)

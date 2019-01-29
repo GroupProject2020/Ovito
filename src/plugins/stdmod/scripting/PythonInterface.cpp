@@ -306,10 +306,20 @@ PYBIND11_MODULE(StdModPython, m)
 				" * ``ColorCodingModifier.Magma()``\n"
 				" * ``ColorCodingModifier.Rainbow()`` [default]\n"
 				" * ``ColorCodingModifier.Viridis()``\n"
-				" * ``ColorCodingModifier.Custom(\"<image file>\")``\n"
+				" * ``ColorCodingModifier.Gradient(Nx3 array)``\n"
+				" * ``ColorCodingModifier.Image(\"<image file path>\")``\n"
 				"\n"
-				"The last color map constructor expects the path to an image file on disk, "
-				"which will be used to create a custom color gradient from a row of pixels in the image.")
+				"The ``Gradient`` constructor lets you define your own coloring scheme and expects an array of dimensions *N* x 3 containing a table of colors (RGB values in the range [0-1]). "
+				"The color coding modifier will linearly interpolate between the *N* colors of the table. "
+				"\n"
+				"The ``Image`` constructor expects the path to an image file on disk, "
+				"which will be used to create a custom color gradient from the first row of pixels in the image."
+				"\n\n"
+				"Code example:"
+				"\n\n"
+				".. literalinclude:: ../example_snippets/color_coding_custom_gradient.py\n"
+				"   :lines: 9-17\n"
+				)
 		.def_property("only_selected", &ColorCodingModifier::colorOnlySelected, &ColorCodingModifier::setColorOnlySelected,
 				"If ``True``, only selected elements will be affected by the modifier and the existing colors "
 				"of unselected elements will be preserved; if ``False``, all elements will be colored."
@@ -323,7 +333,7 @@ PYBIND11_MODULE(StdModPython, m)
 	;
 
 	ovito_abstract_class<ColorCodingGradient, RefTarget>(ColorCodingModifier_py)
-		.def("valueToColor", &ColorCodingGradient::valueToColor)
+		.def("value_to_color", &ColorCodingGradient::valueToColor)
 	;
 
 	ovito_class<ColorCodingHSVGradient, ColorCodingGradient>(ColorCodingModifier_py, nullptr, "Rainbow")
@@ -340,12 +350,31 @@ PYBIND11_MODULE(StdModPython, m)
 	;
 	ovito_class<ColorCodingMagmaGradient, ColorCodingGradient>(ColorCodingModifier_py, nullptr, "Magma")
 	;
-	ovito_class<ColorCodingImageGradient, ColorCodingGradient>(ColorCodingModifier_py, nullptr, "Image")
+	ovito_class<ColorCodingImageGradient, ColorCodingGradient>(ColorCodingModifier_py, nullptr, "ImageGradient")
 		.def("load_image", &ColorCodingImageGradient::loadImage)
 	;
-	ColorCodingModifier_py.def_static("Custom", [](const QString& filename) {
+	ColorCodingModifier_py.def_static("Image", [](const QString& filename) {
 	    OORef<ColorCodingImageGradient> gradient(new ColorCodingImageGradient(ovito_class_initialization_helper::getCurrentDataset()));
     	gradient->loadImage(filename);
+    	return gradient;
+	});
+	ovito_class<ColorCodingTableGradient, ColorCodingGradient>(ColorCodingModifier_py, nullptr, "TableGradient")
+	;
+	ColorCodingModifier_py.def_static("Gradient", [](py::array_t<double> array) {
+		if(array.ndim() != 2)
+			throw py::value_error("Expected two-dimensional color array.");
+		if(array.shape(1) != 3)
+			throw py::value_error("Expected two-dimensional color array with three RGB components. Size of second dimension doesn't match.");
+		std::vector<Color> table(array.shape(0));
+		size_t i = 0;
+		for(Color& c : table) {
+			c.r() = array.at(i,0);
+			c.g() = array.at(i,1);
+			c.b() = array.at(i,2);
+			i++;
+		}
+	    OORef<ColorCodingTableGradient> gradient(new ColorCodingTableGradient(ovito_class_initialization_helper::getCurrentDataset()));
+    	gradient->setTable(std::move(table));
     	return gradient;
 	});
 

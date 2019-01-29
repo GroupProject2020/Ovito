@@ -50,7 +50,8 @@ class _ColorCodingModifier_AssignmentMode:
 ColorCodingModifier.AssignmentMode = _ColorCodingModifier_AssignmentMode
 def _ColorCodingModifier_set_assign_to(self, v): self.operate_on = v
 ColorCodingModifier.assign_to = property(lambda self: self.operate_on, _ColorCodingModifier_set_assign_to)
-    
+ColorCodingModifier.Custom = ColorCodingModifier.Image
+
 # For backward compatibility with OVITO 2.9.0:
 def _AffineTransformationModifier_set_transform_particles(self, v): self.operate_on.add('particles')
 AffineTransformationModifier.transform_particles = property(lambda self: 'particles' in self.operate_on, _AffineTransformationModifier_set_transform_particles)
