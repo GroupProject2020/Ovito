@@ -502,8 +502,8 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		if(imageFilename.isEmpty())
 			throwException(tr("Cannot save rendered image to file, because no output filename has been specified."));
 
-		if(settings->renderingRangeType() != RenderSettings::CURRENT_FRAME) {
-			// Append frame number to file name if rendering an animation.
+		// Append frame number to filename when rendering an animation.
+		if(settings->renderingRangeType() != RenderSettings::CURRENT_FRAME && settings->renderingRangeType() != RenderSettings::CUSTOM_FRAME) {
 			QFileInfo fileInfo(imageFilename);
 			imageFilename = fileInfo.path() + QChar('/') + fileInfo.baseName() + QString("%1.").arg(frameNumber, 4, 10, QChar('0')) + fileInfo.completeSuffix();
 
