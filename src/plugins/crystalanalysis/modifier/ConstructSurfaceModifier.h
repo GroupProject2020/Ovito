@@ -27,6 +27,7 @@
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -78,13 +79,14 @@ private:
 	public:
 
 		/// Constructor.
-		ConstructSurfaceEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel) :
-			_positions(std::move(positions)), 
+		ConstructSurfaceEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel, bool selectSurfaceParticles) :
+			_positions(positions), 
 			_selection(std::move(selection)), 
 			_simCell(simCell), 
 			_radius(radius), 
 			_smoothingLevel(smoothingLevel), 
-			_totalVolume(std::abs(simCell.matrix().determinant())) {}
+			_totalVolume(std::abs(simCell.matrix().determinant())),
+			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::SelectionProperty, true) : nullptr) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -129,6 +131,9 @@ private:
 		/// Returns the input particle selection.
 		const ConstPropertyPtr& selection() const { return _selection; }
 
+		/// Returns the selection set containing the particles at the constructed surfaces.
+		const PropertyPtr& surfaceParticleSelection() const { return _surfaceParticleSelection; }
+
 	private:
 
 		const FloatType _radius;
@@ -151,6 +156,9 @@ private:
 	
 		/// The computed surface area.
 		double _surfaceArea = 0;
+
+		/// The selection set containing the particles at the constructed surfaces.
+		PropertyPtr _surfaceParticleSelection;
 	};
 
 	/// Controls the radius of the probe sphere.
@@ -161,6 +169,9 @@ private:
 
 	/// Controls whether only selected particles should be taken into account.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
+
+	/// Controls whether the modifier should select surface particles.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, selectSurfaceParticles, setSelectSurfaceParticles);
 
 	/// The vis element for rendering the surface.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, surfaceMeshVis, setSurfaceMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);

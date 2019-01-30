@@ -186,10 +186,18 @@ JOM: Vol. 66, Issue 3 (2014), 399-407</link></literallayout>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>Use only selected particles</term>
+        <term>Use only selected input particles</term>
         <listitem>
-          <para>By default, the modifier constructs the surface mesh around all input particles.
-          This option restricts the construction to only the selected particles.</para>
+          <para>By default, the modifier constructs the surface mesh around all particles in the input dataset.
+          This option restricts the mesh construction to particles that are currently selected. 
+          In this case, unselected particles will be ignored during the surface construction as if they did not exist.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Select particles on the surface</term>
+        <listitem>
+          <para>This option activates the selection of particles that form the constructed surface. 
+          Thus, it provides a way to identify surface atom/particles of a solid.</para>
         </listitem>
       </varlistentry>
 	</variablelist>

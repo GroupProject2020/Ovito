@@ -97,6 +97,11 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 				"if ``False``, the modifier constructs the surface around all particles."
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("select_surface_particles", &ConstructSurfaceModifier::selectSurfaceParticles, &ConstructSurfaceModifier::setSelectSurfaceParticles,
+				"This option activates the selection of particles that form the constructed surface. "
+				"When set to ``True``, the modifier will generate the ``Selection`` output particle property. "
+				"\n\n"
+				":Default: ``False``\n")
 		.def_property("vis", &ConstructSurfaceModifier::surfaceMeshVis, &ConstructSurfaceModifier::setSurfaceMeshVis,
 				"The :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the computed surface.\n")
 	;

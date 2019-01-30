@@ -56,6 +56,9 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::onlySelectedParticles));
 	layout->addWidget(onlySelectedUI->checkBox(), 2, 0, 1, 2);
 
+	BooleanParameterUI* selectSurfaceParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::selectSurfaceParticles));
+	layout->addWidget(selectSurfaceParticlesUI->checkBox(), 3, 0, 1, 2);
+
 	// Status label.
 	layout->setRowMinimumHeight(3, 10);
 	layout->addWidget(statusLabel(), 4, 0, 1, 2);
