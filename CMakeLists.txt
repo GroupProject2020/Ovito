@@ -193,7 +193,7 @@ MACRO(OVITO_INSTALL_DLL dll)
 	IF(error_var)
 		MESSAGE(FATAL_ERROR "Failed to copy DLL into build directory: ${dll}")
 	ENDIF()
-	INSTALL(FILES "${dll}" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}" COMPONENT "runtime")
+	INSTALL(FILES "${dll}" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}")
 ENDMACRO()
 
 # This macro installs a required third-party shared library in the OVITO directory
@@ -212,7 +212,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 			IF(NOT lib_version_name STREQUAL symlink_target_name)
 				MESSAGE("Installing symlink ${lib_version_name} to ${symlink_target_name}")
 				EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink ${symlink_target_name} "${Ovito_BINARY_DIR}/${destination_dir}/${lib_version_name}")
-				INSTALL(FILES "${Ovito_BINARY_DIR}/${destination_dir}/${lib_version_name}" DESTINATION "${destination_dir}/" COMPONENT "runtime")
+				INSTALL(FILES "${Ovito_BINARY_DIR}/${destination_dir}/${lib_version_name}" DESTINATION "${destination_dir}/")
 			ENDIF()
 			SET(lib_version "${symlink_target}")
 		ENDWHILE()
@@ -224,7 +224,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 	FOREACH(lib_file ${lib_files})
 		MESSAGE("Installing shared library ${lib_file}")
 		CONFIGURE_FILE("${lib_file}" "${Ovito_BINARY_DIR}/${destination_dir}/" COPYONLY)
-		INSTALL(FILES "${lib_file}" DESTINATION "${destination_dir}/" COMPONENT "runtime")
+		INSTALL(FILES "${lib_file}" DESTINATION "${destination_dir}/")
 	ENDFOREACH()
 	UNSET(lib_files)
 ENDMACRO()
@@ -263,6 +263,9 @@ IF(OVITO_RUN_CLANG_TIDY AND NOT CMAKE_VERSION VERSION_LESS "3.6")
 	FIND_PROGRAM(CLANG_TIDY_EXE NAMES "clang-tidy" DOC "Path to clang-tidy executable")
 	SET(OVITO_CLANG_TIDY_CMD "${CLANG_TIDY_EXE}") # List of checks will be read from the .clang-tidy file.
 ENDIF()
+
+# Set the default component name for the installer.
+SET(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "Ovito")
 
 # Generate build targets.
 ADD_SUBDIRECTORY(src)

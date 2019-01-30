@@ -4,29 +4,29 @@ IF(APPLE)
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
 
 	# Copy the application icon into the resource directory.
-	INSTALL(FILES "${OVITO_SOURCE_BASE_DIR}/src/main/resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}" COMPONENT "runtime")
+	INSTALL(FILES "${OVITO_SOURCE_BASE_DIR}/src/main/resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
 
 	SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
 
 	# Install needed Qt plugins by copying directories from the Qt installation
 	SET(plugin_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
 	SET(qtconf_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/iconengines" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/styles" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/iconengines" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/styles" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 
 	# Install a qt.conf file.
 	# This inserts some cmake code into the install script to write the file
 	INSTALL(CODE "
 	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${qtconf_dest_dir}/qt.conf\" \"[Paths]\\nPlugins = PlugIns/\")
-	    " COMPONENT "runtime")
+	    ")
 
 	# Purge any previous version of the nested bundle to avoid errors during bundle fixup.
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 		INSTALL(CODE "
 			FILE(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App\")
-			" COMPONENT "runtime")
+			")
 	ENDIF()
 
 	# Use BundleUtilities to get all other dependencies for the application to work.
@@ -92,14 +92,14 @@ IF(APPLE)
 		SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
 		INCLUDE(BundleUtilities)
 		FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
-		" COMPONENT "runtime")
+		")
 
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 		# Remove __pycache__ files from installation bundle.
 		INSTALL(CODE "
 			MESSAGE(\"Removing __pycache__ files.\")
 			EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
-			" COMPONENT "runtime")
+			")
 
 		# Create a nested bundle for 'ovitos'.
 		# This is to prevent the program icon from showing up in the dock when 'ovitos' is run.
@@ -116,7 +116,7 @@ IF(APPLE)
 				GET_FILENAME_COMPONENT(FILE_ENTRY_NAME \"\${FILE_ENTRY}\" NAME)
 				EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../\${FILE_ENTRY_NAME}\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/MacOS/\${FILE_ENTRY_NAME}\")
 			ENDFOREACH()
-		" COMPONENT "runtime")
+		")
 	ENDIF()	
 
 	# Sign bundle (starting from the inside out with all executables/libraries, 
@@ -157,6 +157,6 @@ IF(APPLE)
 		# Verify signing process:
 		EXECUTE_PROCESS(COMMAND codesign --verify --verbose --deep \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
 		EXECUTE_PROCESS(COMMAND spctl --assess --type execute \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
-		" COMPONENT "runtime")
+		")
 
 ENDIF()

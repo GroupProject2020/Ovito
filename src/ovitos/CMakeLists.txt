@@ -33,16 +33,16 @@ ENDIF()
 IF(APPLE)
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES OUTPUT_NAME "ovitos.exe")
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
-	INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime")
+	INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 	
 	# Build the launch helper, which is needed because the 'ovitos' interpreter is located in a nested app bundle under macOS.
 	ADD_EXECUTABLE(MacOSWrapper MacOSWrapper.cpp)
 	SET_TARGET_PROPERTIES(MacOSWrapper PROPERTIES OUTPUT_NAME "ovitos")
 	SET_TARGET_PROPERTIES(MacOSWrapper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
-	INSTALL(TARGETS MacOSWrapper DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime")
+	INSTALL(TARGETS MacOSWrapper DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 ELSE()
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
-	INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}" COMPONENT "runtime")
+	INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}")
 ENDIF()
 
 IF(APPLE)
@@ -90,3 +90,18 @@ FOREACH(test_script ${PYTHON_EXAMPLE_SNIPPETS})
 		SET_PROPERTY(TEST "snippet_${test_script}_extern" PROPERTY ENVIRONMENT "PYTHONPATH=${OVITO_PYTHON_DIRECTORY}")
 	ENDIF()
 ENDFOREACH()
+
+# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
+INSTALL(CODE "
+	MESSAGE(\"Uninstalling unnecessary Python packages.\")
+	IF(APPLE)
+		SET(OVITOS_COMMAND \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_LIBRARY_DIRECTORY}/ovitos.exe\")
+	ELSE()
+		SET(OVITOS_COMMAND \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/ovitos\")
+	ENDIF()
+	SET(ENV{PYTHONHOME} \"\${CMAKE_INSTALL_PREFIX}\")
+	EXECUTE_PROCESS(COMMAND \"\${OVITOS_COMMAND}\" -m pip --disable-pip-version-check uninstall --yes Sphinx alabaster Pygments babel 
+		Jinja2 imagesize docutils requests snowballstemmer packaging pytz idna chardet urllib3 certifi 
+		MarkupSafe sphinxcontrib-websupport)
+")
+
