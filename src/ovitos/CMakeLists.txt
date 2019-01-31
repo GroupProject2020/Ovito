@@ -91,17 +91,32 @@ FOREACH(test_script ${PYTHON_EXAMPLE_SNIPPETS})
 	ENDIF()
 ENDFOREACH()
 
-# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
-INSTALL(CODE "
+# Uninstall Python PIP packages (e.g. Sphinx) from the embedded interpreter that should not be shipped with 
+# the official OVITO distribution.
+SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "
 	MESSAGE(\"Uninstalling unnecessary Python packages.\")
+	# Get path to installed ovitos executable.
 	IF(APPLE)
-		SET(OVITOS_COMMAND \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_LIBRARY_DIRECTORY}/ovitos.exe\")
+		SET(OVITOS_COMMAND \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_LIBRARY_DIRECTORY}/ovitos\")
 	ELSE()
 		SET(OVITOS_COMMAND \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/ovitos\")
 	ENDIF()
-	SET(ENV{PYTHONHOME} \"\${CMAKE_INSTALL_PREFIX}\")
+	# Make sure PIP will operate on the right Python installation.
+	IF(WIN32)
+		SET(ENV{PYTHONHOME} \"\${CMAKE_INSTALL_PREFIX}\")
+	ENDIF()
+	# Execute PIP uninstall via ovitos interpreter.
 	EXECUTE_PROCESS(COMMAND \"\${OVITOS_COMMAND}\" -m pip --disable-pip-version-check uninstall --yes Sphinx alabaster Pygments babel 
 		Jinja2 imagesize docutils requests snowballstemmer packaging pytz idna chardet urllib3 certifi 
 		MarkupSafe sphinxcontrib-websupport)
 ")
-
+IF(WIN32)
+	# Uninstall Python modules now.
+	INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
+ELSE()
+	# Propagate variable to parent scope.
+	SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}" PARENT_SCOPE)
+	# Python module uninstall via PIP will be performed at a later point in time 
+	# in FixupMacBundle.cmake (on macOS), or after building the main executable (on Linux),
+	# because the installation must be brought into a fully-working state prior to invoking 'ovitos'.
+ENDIF()

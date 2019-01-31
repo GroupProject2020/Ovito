@@ -95,11 +95,6 @@ IF(APPLE)
 		")
 
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-		# Remove __pycache__ files from installation bundle.
-		INSTALL(CODE "
-			MESSAGE(\"Removing __pycache__ files.\")
-			EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
-			")
 
 		# Create a nested bundle for 'ovitos'.
 		# This is to prevent the program icon from showing up in the dock when 'ovitos' is run.
@@ -117,6 +112,15 @@ IF(APPLE)
 				EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../\${FILE_ENTRY_NAME}\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/MacOS/\${FILE_ENTRY_NAME}\")
 			ENDFOREACH()
 		")
+
+		# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
+		INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
+
+		# Remove __pycache__ files from installation bundle.
+		INSTALL(CODE "
+			MESSAGE(\"Removing __pycache__ files.\")
+			EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
+			")
 	ENDIF()	
 
 	# Sign bundle (starting from the inside out with all executables/libraries, 
