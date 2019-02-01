@@ -115,12 +115,6 @@ IF(APPLE)
 
 		# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
 		INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
-
-		# Remove __pycache__ files from installation bundle.
-		INSTALL(CODE "
-			MESSAGE(\"Removing __pycache__ files.\")
-			EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
-			")
 	ENDIF()	
 
 	# Sign bundle (starting from the inside out with all executables/libraries, 

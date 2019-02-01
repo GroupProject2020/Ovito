@@ -7,11 +7,11 @@ sudo port install cmake docbook-xml doxygen libxslt boost yasm povray
 sudo port install -s fftw-3 libssh
 
 **************************************************************************
-Install Qt libraries, version 5.12
+Install Qt libraries, version 5.9.7
 **************************************************************************
 
 # This is a workaround to let VS Code Intellisense find the Qt headers:
-cd $HOME/Qt/5.12.0/clang_64/
+cd $HOME/Qt/5.9.7/clang_64/
 mkdir headers
 cd headers
 ln -s $PWD/../lib/QtCore.framework/Versions/5/Headers/ QtCore
@@ -37,7 +37,7 @@ python3 configure.py \
 	--no-designer-plugin \
 	--no-qml-plugin \
 	--assume-shared \
-	--qmake $HOME/Qt/5.12.0/clang_64/bin/qmake \
+	--qmake $HOME/Qt/5.9.7/clang_64/bin/qmake \
 	--sip=/Library/Frameworks/Python.framework/Versions/3.7/bin/sip \
 	--concatenate \
 	--enable QtCore \
@@ -62,8 +62,8 @@ Edit "site.py" of the Python interpreter and set
 **************************************************************************
 Download and build QScintilla2
 **************************************************************************
-cd QScintilla_gpl-2.10.2/Qt4Qt5/
-$HOME/Qt/5.12.0/clang_64/bin/qmake qscintilla.pro && \
+cd QScintilla_gpl-2.10.8/Qt4Qt5/
+$HOME/Qt/5.9.7/clang_64/bin/qmake qscintilla.pro && \
 make -j4 && \
 install_name_tool -id $PWD/libqscintilla2_qt5.13.1.0.dylib libqscintilla2_qt5.13.1.0.dylib
 
@@ -183,19 +183,19 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
       -DOVITO_DOUBLE_PRECISION_FP=ON \
       -DCMAKE_INSTALL_PREFIX=../release_install \
-      -DCMAKE_PREFIX_PATH=$HOME/Qt/5.12.0/clang_64/ \
+      -DCMAKE_PREFIX_PATH=$HOME/Qt/5.9.7/clang_64/ \
       -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.7/bin/python3 \
       -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m \
       -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib \
       -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
       -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
-      -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.2/Qt4Qt5 \
-      -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.2/Qt4Qt5/libqscintilla2_qt5.dylib \
+      -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.8/Qt4Qt5 \
+      -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.8/Qt4Qt5/libqscintilla2_qt5.dylib \
       -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
       -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
       -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
       -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.6.0 \
-	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
+	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-	  -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
+	    -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
       ../..
