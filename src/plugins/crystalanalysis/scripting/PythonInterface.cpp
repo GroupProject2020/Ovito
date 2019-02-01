@@ -30,8 +30,6 @@
 #include <plugins/crystalanalysis/objects/patterns/BurgersVectorFamily.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshVis.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
 #include <plugins/crystalanalysis/exporter/CAExporter.h>
 #include <plugins/crystalanalysis/exporter/VTKDislocationsExporter.h>
@@ -279,40 +277,6 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 				":Default: sqrt(8/3)\n")
 	;
 
-#if 0
-	ovito_class<GrainSegmentationModifier, StructureIdentificationModifier>(m)
-		.def_property("input_crystal_structure", &GrainSegmentationModifier::inputCrystalStructure, &GrainSegmentationModifier::setInputCrystalStructure)
-		.def_property("misorientation_threshold", &GrainSegmentationModifier::misorientationThreshold, &GrainSegmentationModifier::setMisorientationThreshold)
-		.def_property("fluctuation_tolerance", &GrainSegmentationModifier::fluctuationTolerance, &GrainSegmentationModifier::setFluctuationTolerance)
-		.def_property("min_atom_count", &GrainSegmentationModifier::minGrainAtomCount, &GrainSegmentationModifier::setMinGrainAtomCount)
-		.def_property("probe_sphere_radius", &GrainSegmentationModifier::probeSphereRadius, &GrainSegmentationModifier::setProbeSphereRadius,
-				"The radius of the probe sphere used in the free surface construction algorithm."
-				"\n\n"
-				"A rule of thumb is that the probe sphere radius should be slightly larger than the typical distance between "
-				"nearest neighbor atoms."
-				"\n\n"
-				"This parameter is ignored if :py:attr:`.output_mesh` is false."
-				"\n\n"
-				":Default: 4.0\n")
-		.def_property("smoothing_level", &GrainSegmentationModifier::smoothingLevel, &GrainSegmentationModifier::setSmoothingLevel,
-				"The number of iterations of the smoothing algorithm applied to the computed grain boundary mesh. "
-				"\n\n"
-				"This parameter is ignored if :py:attr:`.output_mesh` is false."
-				"\n\n"
-				":Default: 8\n")
-		.def_property("only_selected", &GrainSegmentationModifier::onlySelectedParticles, &GrainSegmentationModifier::setOnlySelectedParticles,
-				"This flag tells the modifier to ignore unselected particles."
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("output_mesh", &GrainSegmentationModifier::outputPartitionMesh, &GrainSegmentationModifier::setOutputPartitionMesh,
-				"This flag controls the generation of the grain boundary mesh. "
-				"If true, the modifier will generate a geometric representation of the grain boundary network "
-				"in addition to assigning each input atom to a grain. "
-				"\n\n"
-				":Default: ``False``\n")
-	;
-#endif
-
 	ovito_class<CAImporter, FileSourceImporter>{m}
 	;
 
@@ -461,24 +425,6 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 				"The unique identifier of this atomic cluster.")
 		.def_readonly("atom_count", &Cluster::atomCount)
 		.def_readonly("orientation", &Cluster::orientation)
-	;
-
-	ovito_class<PartitionMesh, PeriodicDomainDataObject>{m}
-	;
-
-	ovito_class<PartitionMeshVis, DataVis>{m}
-		.def_property("surface_color", &PartitionMeshVis::surfaceColor, &PartitionMeshVis::setSurfaceColor,
-				"The display color of the outer free surface."
-				"\n\n"
-				":Default: ``(1.0, 1.0, 1.0)``\n")
-		.def_property("surface_transparency", &PartitionMeshVis::surfaceTransparency, &PartitionMeshVis::setSurfaceTransparency,
-				"The level of transparency of the displayed surface. Valid range is 0.0 -- 1.0."
-				"\n\n"
-				":Default: 0.0\n")
-		.def_property("smooth_shading", &PartitionMeshVis::smoothShading, &PartitionMeshVis::setSmoothShading,
-				"Enables smooth shading of the triangulated surface mesh."
-				"\n\n"
-				":Default: ``True``\n")
 	;
 }
 

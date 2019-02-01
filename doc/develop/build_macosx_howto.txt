@@ -65,7 +65,7 @@ Download and build QScintilla2
 cd QScintilla_gpl-2.10.8/Qt4Qt5/
 $HOME/Qt/5.9.7/clang_64/bin/qmake qscintilla.pro && \
 make -j4 && \
-install_name_tool -id $PWD/libqscintilla2_qt5.13.1.0.dylib libqscintilla2_qt5.13.1.0.dylib
+install_name_tool -id $PWD/libqscintilla2_qt5.13.2.1.dylib libqscintilla2_qt5.13.2.1.dylib
 
 **************************************************************************
 Build static Libav:

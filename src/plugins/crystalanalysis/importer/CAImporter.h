@@ -26,7 +26,6 @@
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
@@ -134,11 +133,6 @@ protected:
 			return _defectSurface;
 		}
 
-		const std::shared_ptr<PartitionMeshData>& partitionMesh() {
-			if(!_partitionMesh) _partitionMesh = std::make_shared<PartitionMeshData>();
-			return _partitionMesh;
-		}
-
 	protected:
 
 		/// The structure pattern catalog.
@@ -152,9 +146,6 @@ protected:
 
 		/// The triangle mesh of the defect surface.
 		std::shared_ptr<HalfEdgeMesh<>> _defectSurface;
-		
-		/// The partition mesh.
-		std::shared_ptr<PartitionMeshData> _partitionMesh;
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in the background.

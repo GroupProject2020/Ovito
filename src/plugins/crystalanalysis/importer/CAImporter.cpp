@@ -24,8 +24,6 @@
 #include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshVis.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <core/app/Application.h>
@@ -461,116 +459,6 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 				}
 			}
 		}
-		else if(stream.lineStartsWith("PARTITION_MESH_VERTICES ")) {
-			// Read partition mesh vertices.
-			int numVertices;
-			if(sscanf(stream.line(), "PARTITION_MESH_VERTICES %i", &numVertices) != 1)
-				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
-			setProgressText(tr("Reading partition mesh"));
-			setProgressMaximum(numVertices);
-			auto partitionMesh = frameData->partitionMesh();
-			partitionMesh->reserveVertices(numVertices);
-			for(int index = 0; index < numVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return {};
-				Point3 p;
-				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
-					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				partitionMesh->createVertex(p);
-			}
-		}
-		else if(stream.lineStartsWith("PARTITION_MESH_FACETS ")) {
-			// Read partition mesh facets.
-			int numFacets;
-			if(sscanf(stream.line(), "PARTITION_MESH_FACETS %i", &numFacets) != 1)
-				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
-			setProgressMaximum(numFacets * 2);
-			auto partitionMesh = frameData->partitionMesh();
-			partitionMesh->reserveFaces(numFacets);
-			for(int index = 0; index < numFacets; index++) {
-				if(!setProgressValueIntermittent(index))
-					return {};
-				int v[3];
-				int region;
-				if(sscanf(stream.readLine(), "%i %i %i %i", &region, &v[0], &v[1], &v[2]) != 4)
-					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
-				PartitionMeshData::Face* face = partitionMesh->createFace({ partitionMesh->vertex(v[0]), partitionMesh->vertex(v[1]), partitionMesh->vertex(v[2]) });
-				face->region = region;
-			}
-
-			// Read facet adjacency information.
-			for(int index = 0; index < numFacets; index++) {
-				if(!setProgressValueIntermittent(index + numFacets))
-					return {};
-				int v[3];
-				int mfe[3][2];
-				int oppositeFaceIndex;
-				if(sscanf(stream.readLine(), "%i %i %i %i %i %i %i %i %i %i", &oppositeFaceIndex,
-						&v[0], &mfe[0][0], &mfe[0][1],
-						&v[1], &mfe[1][0], &mfe[1][1],
-						&v[2], &mfe[2][0], &mfe[2][1]) != 10)
-					throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
-				PartitionMeshData::Face* oppositeFace = partitionMesh->face(oppositeFaceIndex);
-				partitionMesh->face(index)->oppositeFace = oppositeFace;
-				PartitionMeshData::Edge* edge = partitionMesh->face(index)->edges();
-				for(int i = 0; i < 3; i++, edge = edge->nextFaceEdge()) {
-					OVITO_CHECK_POINTER(edge);
-					PartitionMeshData::Edge* manifoldEdge = oppositeFace->findEdge(partitionMesh->vertex(mfe[i][0]), partitionMesh->vertex(mfe[i][1]));
-					OVITO_ASSERT(manifoldEdge != nullptr);
-					edge->nextManifoldEdge = manifoldEdge;
-					if(edge->oppositeEdge() != nullptr) continue;
-					PartitionMeshData::Face* adjacentFace = partitionMesh->face(v[i]);
-					PartitionMeshData::Edge* oppositeEdge = adjacentFace->findEdge(edge->vertex2(), edge->vertex1());
-					OVITO_ASSERT(oppositeEdge != nullptr);
-					edge->linkToOppositeEdge(oppositeEdge);
-				}
-			}
-		}
-		else if(stream.lineStartsWith("SLIP_SURFACE_VERTICES ")) {
-			// Read slip surface vertices.
-			int numVertices;
-			if(sscanf(stream.line(), "SLIP_SURFACE_VERTICES %i", &numVertices) != 1)
-				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
-			setProgressText(tr("Reading slip surfaces"));
-			setProgressMaximum(numVertices);
-			for(int index = 0; index < numVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return {};
-				stream.readLine();
-			}
-		}
-		else if(stream.lineStartsWith("SLIP_SURFACE_FACETS ")) {
-			// Read slip surface facets.
-			int numFacets;
-			if(sscanf(stream.line(), "SLIP_SURFACE_FACETS %i", &numFacets) != 1)
-				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
-			setProgressMaximum(numFacets);
-			for(int index = 0; index < numFacets; index++) {
-				if(!setProgressValueIntermittent(index)) return {};
-				stream.readLine();
-			}
-		}
-		else if(stream.lineStartsWith("STACKING_FAULT_VERTICES ")) {
-			// Read slip surface vertices.
-			int numVertices;
-			if(sscanf(stream.line(), "STACKING_FAULT_VERTICES %i", &numVertices) != 1)
-				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
-			setProgressText(tr("Reading stacking faults"));
-			setProgressMaximum(numVertices);
-			for(int index = 0; index < numVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return {};
-				stream.readLine();
-			}
-		}
-		else if(stream.lineStartsWith("STACKING_FAULT_FACETS ")) {
-			// Read slip surface facets.
-			int numFacets;
-			if(sscanf(stream.line(), "STACKING_FAULT_FACETS %i", &numFacets) != 1)
-				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
-			setProgressMaximum(numFacets);
-			for(int index = 0; index < numFacets; index++) {
-				if(!setProgressValueIntermittent(index)) return {};
-				stream.readLine();
-			}
-		}
 		else if(stream.lineStartsWith("METADATA SIMULATION_TIMESTEP ")) {
 			int timestep;
 			if(sscanf(stream.line(), "METADATA SIMULATION_TIMESTEP %i", &timestep) != 1)
@@ -622,23 +510,6 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 		}
 		defectSurfaceObj->setDomain(output->getObject<SimulationCellObject>());
 		defectSurfaceObj->setStorage(defectSurface());
-	}
-
-	// Insert partition mesh.
-	if(_partitionMesh) {
-		PartitionMesh* partitionMeshObj = const_cast<PartitionMesh*>(existing ? existing->getObject<PartitionMesh>() : nullptr);
-		if(!partitionMeshObj) {
-			partitionMeshObj = output->createObject<PartitionMesh>(fileSource);
-			OORef<PartitionMeshVis> vis = new PartitionMeshVis(fileSource->dataset());
-			if(!Application::instance()->scriptMode())
-				vis->loadUserDefaults();
-			partitionMeshObj->setVisElement(vis);
-		}
-		else {
-			output->addObject(partitionMeshObj);
-		}
-		partitionMeshObj->setDomain(output->getObject<SimulationCellObject>());
-		partitionMeshObj->setStorage(partitionMesh());
 	}
 
 	// Insert pattern catalog.

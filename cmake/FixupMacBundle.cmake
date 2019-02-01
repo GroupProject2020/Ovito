@@ -14,7 +14,9 @@ IF(APPLE)
 	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/iconengines" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/styles" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	IF(NOT Qt5Core_VERSION VERSION_LESS "5.12")
+		INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/styles" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	ENDIF()
 
 	# Install a qt.conf file.
 	# This inserts some cmake code into the install script to write the file

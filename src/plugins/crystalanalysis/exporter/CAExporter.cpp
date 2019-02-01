@@ -23,7 +23,6 @@
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 #include <core/utilities/concurrent/Promise.h>
@@ -88,10 +87,7 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 	// Get defect surface mesh.
 	const SurfaceMesh* defectMesh = meshExportEnabled() ? state.getObject<SurfaceMesh>() : nullptr;
 
-	// Get partition mesh.
-	const PartitionMesh* partitionMesh = meshExportEnabled() ? state.getObject<PartitionMesh>() : nullptr;
-
-	if(!dislocationObj && !defectMesh && !partitionMesh && !microstructureObj)
+	if(!dislocationObj && !defectMesh && !microstructureObj)
 		throwException(tr("Dataset to be exported contains no dislocation lines nor a surface mesh. Cannot write CA file."));
 
 	// Get cluster graph.
@@ -260,45 +256,6 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 			const HalfEdgeMesh<>::Edge* e = facet->edges();
 			do {
 				textStream() << e->oppositeEdge()->face()->index() << " ";
-				e = e->nextFaceEdge();
-			}
-			while(e != facet->edges());
-			textStream() << "\n";
-		}
-	}
-
-	if(partitionMesh) {
-		// Serialize list of vertices.
-		textStream() << "PARTITION_MESH_VERTICES " << partitionMesh->storage()->vertices().size() << "\n";
-		for(const PartitionMeshData::Vertex* vertex : partitionMesh->storage()->vertices()) {
-
-			// Make sure indices have been assigned to vertices.
-			OVITO_ASSERT(vertex->index() >= 0 && vertex->index() < partitionMesh->storage()->vertices().size());
-
-			textStream() << vertex->pos().x() << " " << vertex->pos().y() << " " << vertex->pos().z() << "\n";
-		}
-
-		// Serialize list of facets.
-		textStream() << "PARTITION_MESH_FACETS " << partitionMesh->storage()->faces().size() << "\n";
-		for(const PartitionMeshData::Face* facet : partitionMesh->storage()->faces()) {
-			textStream() << facet->region << " ";
-			const PartitionMeshData::Edge* e = facet->edges();
-			do {
-				textStream() << e->vertex1()->index() << " ";
-				e = e->nextFaceEdge();
-			}
-			while(e != facet->edges());
-			textStream() << "\n";
-		}
-
-		// Serialize facet adjacency information.
-		for(const PartitionMeshData::Face* facet : partitionMesh->storage()->faces()) {
-			OVITO_ASSERT(facet->oppositeFace != nullptr);
-			textStream() << facet->oppositeFace->index() << " ";
-			const PartitionMeshData::Edge* e = facet->edges();
-			do {
-				OVITO_ASSERT(facet->oppositeFace->findEdge(e->nextManifoldEdge->vertex1(), e->nextManifoldEdge->vertex2()) != nullptr);
-				textStream() << e->oppositeEdge()->face()->index() << " " << e->nextManifoldEdge->vertex1()->index() << " " << e->nextManifoldEdge->vertex2()->index() << " ";
 				e = e->nextFaceEdge();
 			}
 			while(e != facet->edges());

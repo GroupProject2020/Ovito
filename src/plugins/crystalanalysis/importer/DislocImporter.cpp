@@ -22,7 +22,7 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
-#include <plugins/crystalanalysis/objects/slip_surface/SlipSurfaceVis.h>
+#include <plugins/crystalanalysis/objects/microstructure/SlipSurfaceVis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>

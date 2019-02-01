@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/slip_surface/SlipSurfaceVis.h>
+#include <plugins/crystalanalysis/objects/microstructure/SlipSurfaceVis.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanGroupBoxParameterUI.h>

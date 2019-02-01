@@ -32,9 +32,7 @@ SET(SourceFiles
 	objects/dislocations/DislocationVis.cpp
 	objects/dislocations/RenderableDislocationLines.cpp
 	objects/microstructure/MicrostructureObject.cpp
-	objects/partition_mesh/PartitionMesh.cpp
-	objects/partition_mesh/PartitionMeshVis.cpp
-	objects/slip_surface/SlipSurfaceVis.cpp
+	objects/microstructure/SlipSurfaceVis.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
 	data/Microstructure.cpp
