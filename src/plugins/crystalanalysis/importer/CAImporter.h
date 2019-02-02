@@ -28,7 +28,7 @@
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
+#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 

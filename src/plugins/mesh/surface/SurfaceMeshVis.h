@@ -26,7 +26,7 @@
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/utilities/mesh/TriMesh.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
+#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/dataset/animation/controller/Controller.h>
 

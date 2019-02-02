@@ -38,6 +38,10 @@ namespace Ovito {
 		class TriMeshVis;
 		class SurfaceMesh;
 		class SurfaceMeshVis;
+
+		template<typename> struct EmptyHalfEdgeMeshStruct;
+		template<template<typename> class EdgeBase = EmptyHalfEdgeMeshStruct, template<typename> class FaceBase = EmptyHalfEdgeMeshStruct, template<typename> class VertexBase = EmptyHalfEdgeMeshStruct>
+		class HalfEdgeMesh;
 	}
 }
 

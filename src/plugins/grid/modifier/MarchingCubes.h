@@ -23,7 +23,7 @@
 
 
 #include <plugins/grid/Grid.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
+#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/PromiseState.h>
 
 namespace Ovito { namespace Grid {

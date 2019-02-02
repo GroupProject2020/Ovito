@@ -22,13 +22,13 @@
 #pragma once
 
 
-#include <core/Core.h>
+#include <plugins/mesh/Mesh.h>
 #include "HalfEdgeMesh.h"
 
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/optional.hpp>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
+namespace Ovito { namespace Mesh {
 
 /// Default implementation of a functor that calculates the vector between to spatial points.
 struct DefaultPointPointVector 
@@ -672,9 +672,5 @@ private:
 	static constexpr FloatType mcMaxDihedralAngleSin2 = FloatType(0.000304586490452); // =sin(1 degree)^2
 };
 
-
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-
+}	// End of namespace

@@ -22,11 +22,11 @@
 #pragma once
 
 
-#include <core/Core.h>
+#include <plugins/mesh/Mesh.h>
 #include <core/utilities/MemoryPool.h>
-#include "TriMesh.h"
+#include <core/utilities/mesh/TriMesh.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
+namespace Ovito { namespace Mesh {
 
 // An empty structure that is used as default base class for edges, faces, and vertices in the HaldEdgeMesh class template.
 template<typename>
@@ -44,7 +44,7 @@ struct EmptyHalfEdgeMeshStruct {};
  * Each face has a pointer to one of the edges adjacent to it.
  */
 template<template<typename> class EdgeBase, template<typename> class FaceBase, template<typename> class VertexBase>
-class OVITO_CORE_EXPORT HalfEdgeMesh
+class OVITO_MESH_EXPORT HalfEdgeMesh
 {
 public:
 
@@ -977,6 +977,5 @@ private:
 	std::vector<Vertex*> _reclaimedVertices;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
+}	// End of namespace
 }	// End of namespace

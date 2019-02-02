@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
+#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 #include "ClusterVector.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {

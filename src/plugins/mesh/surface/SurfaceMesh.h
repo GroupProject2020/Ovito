@@ -25,7 +25,7 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
+#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 
 namespace Ovito { namespace Mesh {
 
