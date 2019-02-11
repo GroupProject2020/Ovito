@@ -85,7 +85,6 @@ bool DLPOLYImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl
 	return true;
 }
 
-
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/

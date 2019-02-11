@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -67,6 +67,12 @@ public:
 		return std::make_shared<FrameLoader>(frame, localFilename);
 	}
 
+	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+		activateCLocale();
+		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
+	}
+
 private:
 
 	/// The format-specific task object that is responsible for reading an input file in the background.
@@ -82,11 +88,23 @@ private:
 		/// Loads the frame data from the given file.
 		virtual FrameDataPtr loadFile(QFile& file) override;
 	};
+
+	/// The format-specific task object that is responsible for scanning the input file for animation frames. 
+	class FrameFinder : public FileSourceImporter::FrameFinder
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameFinder::FrameFinder;
+
+	protected:
+
+		/// Scans the given file for source frames.
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;	
+	};
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-
