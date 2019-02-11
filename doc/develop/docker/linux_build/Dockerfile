@@ -41,6 +41,7 @@ RUN apt-get install -qy  cmake \
                          python3-pyqt5 \
                          python3-matplotlib \
                          python3-ase \
+                         python3-pip \
                          python-dev \
                          python-sphinx \
                          python-numpy \
@@ -48,6 +49,7 @@ RUN apt-get install -qy  cmake \
                          python-pyqt5 \
                          python-matplotlib \
                          python-ase \
+                         python-pip \
                          xsltproc \
                          docbook-xml \
                          povray \
