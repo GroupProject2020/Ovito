@@ -49,7 +49,7 @@ ParticlesObject::ParticlesObject(DataSet* dataset) : PropertyContainer(dataset)
 
 /******************************************************************************
 * Duplicates the BondsObject if it is shared with other particle objects.
-* After this method returns, all BondsObject are exclusively owned by the 
+* After this method returns, the BondsObject is exclusively owned by the 
 * container and can be safely modified without unwanted side effects.
 ******************************************************************************/
 BondsObject* ParticlesObject::makeBondsMutable()

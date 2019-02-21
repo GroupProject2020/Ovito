@@ -264,7 +264,7 @@ PipelineStatus MicrostructureReplicateModifierDelegate::apply(Modifier* modifier
 			simCell.column(0) *= (newImages.sizeX() + 1);
 			simCell.column(1) *= (newImages.sizeY() + 1);
 			simCell.column(2) *= (newImages.sizeZ() + 1);
-			newMicrostructure->domain()->setCellMatrix(simCell);
+			newMicrostructure->mutableDomain()->setCellMatrix(simCell);
 
 			microstructure->makeContinuousDislocationLines();
 		}

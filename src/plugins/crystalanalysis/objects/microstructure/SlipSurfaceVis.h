@@ -23,7 +23,6 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/data/Microstructure.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
@@ -37,7 +36,7 @@
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
- * \brief A visualization element for rendering SlipSurface data objects.
+ * \brief A visualization element for rendering the slip facets stored in a MicrostructureObject.
  */
 class OVITO_CRYSTALANALYSIS_EXPORT SlipSurfaceVis : public TransformingDataVis
 {
@@ -82,9 +81,9 @@ protected:
 	public:
 
 		/// Constructor.
-		PrepareMeshEngine(std::shared_ptr<const Microstructure> mesh, std::shared_ptr<const ClusterGraph> clusterGraph, const SimulationCell& simCell,
+		PrepareMeshEngine(const Microstructure mesh, const SimulationCell& simCell,
 				QStringList structureNames, QVector<Plane3> cuttingPlanes, bool smoothShading) :
-			_inputMesh(std::move(mesh)), _clusterGraph(std::move(clusterGraph)), _simCell(simCell),
+			_inputMesh(std::move(mesh)), _simCell(simCell),
 			_structureNames(std::move(structureNames)), _cuttingPlanes(std::move(cuttingPlanes)), _smoothShading(smoothShading) {}
 
 		/// Computes the results and stores them in this object for later retrieval.
@@ -92,8 +91,7 @@ protected:
 
 	private:
 
-		const std::shared_ptr<const Microstructure> _inputMesh;
-		const std::shared_ptr<const ClusterGraph> _clusterGraph;
+		const Microstructure _inputMesh;
 		const SimulationCell _simCell;
 		const QStringList _structureNames;
 		const QVector<Plane3> _cuttingPlanes;

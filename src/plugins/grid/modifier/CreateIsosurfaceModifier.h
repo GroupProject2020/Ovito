@@ -110,11 +110,8 @@ private:
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 		
-		/// Indicates whether the entire simulation cell is part of the solid region.
-		bool isCompletelySolid() const { return _isCompletelySolid; }
-
-		/// Sets whether the entire simulation cell is part of the solid region.
-		void setIsCompletelySolid(bool isSolid) { _isCompletelySolid = isSolid; }
+		/// Indicates whether the entire simulation cell is part of the inner region.
+		bool isSpaceFilling() const { return _isSpaceFilling; }
 
 		/// Returns the minimum field value that was encountered.
 		FloatType minValue() const { return _minValue; }
@@ -123,7 +120,10 @@ private:
 		FloatType maxValue() const { return _maxValue; }
 
 		/// Returns the generated mesh.
-		const std::shared_ptr<HalfEdgeMesh<>>& mesh() { return _mesh; }
+		const HalfEdgeMeshPtr& mesh() { return _mesh; }
+
+	    /// Returns the coordinates of the generated surface mesh vertices.
+    	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
 
 		/// Adjust the min/max values to include the given value.
 		void updateMinMax(FloatType val) {
@@ -146,10 +146,13 @@ private:
 		const SimulationCell _simCell;
 
 		/// The surface mesh produced by the modifier.
-		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
+		HalfEdgeMeshPtr _mesh;
 
-		/// Indicates that the entire simulation cell is part of the solid region.
-		bool _isCompletelySolid = false;
+	    /// The coordinates of the generated surface mesh vertices.
+    	PropertyPtr _vertexCoords;
+
+		/// Indicates that the entire periodic simulation cell is part of the inner region.
+		bool _isSpaceFilling = false;
 
 		/// The minimum field value that was encountered.
 		FloatType _minValue =  FLOATTYPE_MAX;

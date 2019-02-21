@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/PromiseState.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 
@@ -36,14 +37,14 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  * Constructs a closed manifold which separates different regions
  * in a tetrahedral mesh.
  */
-template<class HalfEdgeStructureType, bool FlipOrientation = false, bool CreateTwoSidedMesh = false>
+template<bool FlipOrientation = false, bool CreateTwoSidedMesh = false>
 class ManifoldConstructionHelper
 {
 public:
 
 	// A no-op face-preparation functor.
 	struct DefaultPrepareMeshFaceFunc {
-		void operator()(typename HalfEdgeStructureType::Face* face,
+		void operator()(HalfEdgeMesh::face_index face,
 				const std::array<size_t,3>& vertexIndices,
 				const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles,
 				DelaunayTessellation::CellHandle cell) {}
@@ -51,14 +52,14 @@ public:
 
 	// A no-op manifold cross-linking functor.
 	struct DefaultLinkManifoldsFunc {
-		void operator()(typename HalfEdgeStructureType::Edge* edge1, typename HalfEdgeStructureType::Edge* edge2) {}
+		void operator()(HalfEdgeMesh::edge_index edge1, HalfEdgeMesh::edge_index edge2) {}
 	};
 
 public:
 
 	/// Constructor.
-	ManifoldConstructionHelper(DelaunayTessellation& tessellation, HalfEdgeStructureType& outputMesh, FloatType alpha,
-			const PropertyStorage& positions) : _tessellation(tessellation), _mesh(outputMesh), _alpha(alpha), _positions(positions) {}
+	ManifoldConstructionHelper(DelaunayTessellation& tessellation, HalfEdgeMesh& outputMesh, PropertyStorage& outputvertexCoords, FloatType alpha,
+			const PropertyStorage& positions) : _tessellation(tessellation), _mesh(outputMesh), _vertexCoords(outputvertexCoords), _alpha(alpha), _positions(positions) {}
 
 	/// This is the main function, which constructs the manifold triangle mesh.
 	template<typename CellRegionFunc, typename PrepareMeshFaceFunc = DefaultPrepareMeshFaceFunc, typename LinkManifoldsFunc = DefaultLinkManifoldsFunc>
@@ -144,7 +145,7 @@ private:
 	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, PromiseState& promise)
 	{
 		// Stores the triangle mesh vertices created for the vertices of the tetrahedral mesh.
-		std::vector<typename HalfEdgeStructureType::Vertex*> vertexMap(_positions.size(), nullptr);
+		std::vector<HalfEdgeMesh::vertex_index> vertexMap(_positions.size(), HalfEdgeMesh::InvalidIndex);
 		_tetrahedraFaceList.clear();
 		_faceLookupMap.clear();
 
@@ -186,20 +187,23 @@ private:
 				}
 
 				// Create the three vertices of the face or use existing output vertices.
-				std::array<typename HalfEdgeStructureType::Vertex*,3> facetVertices;
+				std::array<HalfEdgeMesh::vertex_index,3> facetVertices;
 				std::array<DelaunayTessellation::VertexHandle,3> vertexHandles;
 				std::array<size_t,3> vertexIndices;
 				for(int v = 0; v < 3; v++) {
 					vertexHandles[v] = _tessellation.cellVertex(cell, DelaunayTessellation::cellFacetVertexIndex(f, FlipOrientation ? (2-v) : v));
 					size_t vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 					OVITO_ASSERT(vertexIndex < vertexMap.size());
-					if(vertexMap[vertexIndex] == nullptr)
-						vertexMap[vertexIndex] = _mesh.createVertex(_positions.getPoint3(vertexIndex));
+					if(vertexMap[vertexIndex] == HalfEdgeMesh::InvalidIndex) {
+						vertexMap[vertexIndex] = _mesh.createVertex();
+						_vertexCoords.grow(1);
+						_vertexCoords.setPoint3(vertexMap[vertexIndex], _positions.getPoint3(vertexIndex));
+					}
 					facetVertices[v] = vertexMap[vertexIndex];
 				}
 
 				// Create a new triangle facet.
-				typename HalfEdgeStructureType::Face* face = _mesh.createFace(facetVertices.begin(), facetVertices.end());
+				HalfEdgeMesh::face_index face = _mesh.createFace(facetVertices.begin(), facetVertices.end());
 
 				// Tell client code about the new facet.
 				prepareMeshFaceFunc(face, vertexIndices, vertexHandles, cell);
@@ -214,12 +218,12 @@ private:
 						vertexHandles[v] = _tessellation.cellVertex(adjacentCell, DelaunayTessellation::cellFacetVertexIndex(mirrorFacet.second, FlipOrientation ? (2-v) : v));
 						size_t vertexIndex = reverseVertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 						OVITO_ASSERT(vertexIndex < vertexMap.size());
-						OVITO_ASSERT(vertexMap[vertexIndex] != nullptr);
+						OVITO_ASSERT(vertexMap[vertexIndex] != HalfEdgeMesh::InvalidIndex);
 						facetVertices[v] = vertexMap[vertexIndex];
 					}
 
 					// Create a new triangle facet.
-					typename HalfEdgeStructureType::Face* oppositeFace = _mesh.createFace(facetVertices.begin(), facetVertices.end());
+					HalfEdgeMesh::face_index oppositeFace = _mesh.createFace(facetVertices.begin(), facetVertices.end());
 
 					// Tell client code about the new facet.
 					prepareMeshFaceFunc(oppositeFace, reverseVertexIndices, vertexHandles, adjacentCell);
@@ -236,7 +240,7 @@ private:
 				// Insert into contiguous list of tetrahedron faces.
 				if(_tessellation.getCellIndex(cell) == -1) {
 					_tessellation.setCellIndex(cell, _tetrahedraFaceList.size());
-					_tetrahedraFaceList.push_back(std::array<typename HalfEdgeStructureType::Face*, 4>({ nullptr, nullptr, nullptr, nullptr }));
+					_tetrahedraFaceList.push_back(std::array<HalfEdgeMesh::face_index, 4>{{ HalfEdgeMesh::InvalidIndex, HalfEdgeMesh::InvalidIndex, HalfEdgeMesh::InvalidIndex, HalfEdgeMesh::InvalidIndex }});
 				}
 				_tetrahedraFaceList[_tessellation.getCellIndex(cell)][f] = face;
 			}
@@ -245,7 +249,7 @@ private:
 		return !promise.isCanceled();
 	}
 
-	typename HalfEdgeStructureType::Face* findAdjacentFace(DelaunayTessellation::CellHandle cell, int f, int e)
+	HalfEdgeMesh::face_index findAdjacentFace(DelaunayTessellation::CellHandle cell, int f, int e)
 	{
 		int vertexIndex1, vertexIndex2;
 		if(!FlipOrientation) {
@@ -276,8 +280,8 @@ private:
 		std::pair<DelaunayTessellation::CellHandle,int> mirrorFacet = _tessellation.mirrorFacet(*circulator);
 		OVITO_ASSERT(_tessellation.getUserField(mirrorFacet.first) == region);
 
-		typename HalfEdgeStructureType::Face* adjacentFace = findCellFace(mirrorFacet);
-		if(adjacentFace == nullptr)
+		HalfEdgeMesh::face_index adjacentFace = findCellFace(mirrorFacet);
+		if(adjacentFace == HalfEdgeMesh::InvalidIndex)
 			throw Exception("Cannot construct mesh for this input dataset. Adjacent cell face not found.");
 
 		return adjacentFace;
@@ -301,34 +305,33 @@ private:
 				return false;
 
 			for(int f = 0; f < 4; f++) {
-				typename HalfEdgeStructureType::Face* facet = (*tet)[f];
-				if(facet == nullptr) continue;
+				HalfEdgeMesh::face_index facet = (*tet)[f];
+				if(facet == HalfEdgeMesh::InvalidIndex) continue;
 
 				// Link within manifold.
-				typename HalfEdgeStructureType::Edge* edge = facet->edges();
-				for(int e = 0; e < 3; e++, edge = edge->nextFaceEdge()) {
-					OVITO_CHECK_POINTER(edge);
-					if(edge->oppositeEdge() != nullptr) continue;
-					typename HalfEdgeStructureType::Face* oppositeFace = findAdjacentFace(cell, f, e);
-					typename HalfEdgeStructureType::Edge* oppositeEdge = oppositeFace->findEdge(edge->vertex2(), edge->vertex1());
-					if(oppositeEdge == nullptr)
+				HalfEdgeMesh::edge_index edge = _mesh.firstFaceEdge(facet);
+				for(int e = 0; e < 3; e++, edge = _mesh.nextFaceEdge(edge)) {
+					if(_mesh.hasOppositeEdge(edge)) continue;
+					HalfEdgeMesh::face_index oppositeFace = findAdjacentFace(cell, f, e);
+					HalfEdgeMesh::edge_index oppositeEdge = _mesh.findEdge(oppositeFace, _mesh.vertex2(edge), _mesh.vertex1(edge));
+					if(oppositeEdge == HalfEdgeMesh::InvalidIndex)
 						throw Exception("Cannot construct mesh for this input dataset. Opposite half-edge not found.");
-					edge->linkToOppositeEdge(oppositeEdge);
+					_mesh.linkOppositeEdges(edge, oppositeEdge);
 				}
 
 				if(CreateTwoSidedMesh) {
 					std::pair<DelaunayTessellation::CellHandle,int> oppositeFacet = _tessellation.mirrorFacet(cell, f);
 					OVITO_ASSERT(_tessellation.getUserField(oppositeFacet.first) != _tessellation.getUserField(cell));
-					typename HalfEdgeStructureType::Face* outerFacet = findCellFace(oppositeFacet);
-					OVITO_ASSERT(outerFacet != nullptr);
+					HalfEdgeMesh::face_index outerFacet = findCellFace(oppositeFacet);
+					OVITO_ASSERT(outerFacet != HalfEdgeMesh::InvalidIndex);
 
 					// Link across manifolds
-					typename HalfEdgeStructureType::Edge* edge1 = facet->edges();
-					for(int e1 = 0; e1 < 3; e1++, edge1 = edge1->nextFaceEdge()) {
+					HalfEdgeMesh::edge_index edge1 = _mesh.firstFaceEdge(facet);
+					for(int e1 = 0; e1 < 3; e1++, edge1 = _mesh.nextFaceEdge(edge1)) {
 						bool found = false;
-						for(typename HalfEdgeStructureType::Edge* edge2 = outerFacet->edges(); ; edge2 = edge2->nextFaceEdge()) {
-							if(edge2->vertex1() == edge1->vertex2()) {
-								OVITO_ASSERT(edge2->vertex2() == edge1->vertex1());
+						for(HalfEdgeMesh::edge_index edge2 = _mesh.firstFaceEdge(outerFacet); ; edge2 = _mesh.nextFaceEdge(edge2)) {
+							if(_mesh.vertex1(edge2) == _mesh.vertex2(edge1)) {
+								OVITO_ASSERT(_mesh.vertex2(edge2) == _mesh.vertex1(edge1));
 								linkManifoldsFunc(edge1, edge2);
 								found = true;
 								break;
@@ -339,15 +342,14 @@ private:
 
 					if(_tessellation.getUserField(oppositeFacet.first) == 0) {
 						// Link within opposite manifold.
-						typename HalfEdgeStructureType::Edge* edge = outerFacet->edges();
-						for(int e = 0; e < 3; e++, edge = edge->nextFaceEdge()) {
-							OVITO_CHECK_POINTER(edge);
-							if(edge->oppositeEdge() != nullptr) continue;
-							typename HalfEdgeStructureType::Face* oppositeFace = findAdjacentFace(oppositeFacet.first, oppositeFacet.second, e);
-							typename HalfEdgeStructureType::Edge* oppositeEdge = oppositeFace->findEdge(edge->vertex2(), edge->vertex1());
-							if(oppositeEdge == nullptr)
+						HalfEdgeMesh::edge_index edge = _mesh.firstFaceEdge(outerFacet);
+						for(int e = 0; e < 3; e++, edge = _mesh.nextFaceEdge(edge)) {
+							if(_mesh.hasOppositeEdge(edge)) continue;
+							HalfEdgeMesh::face_index oppositeFace = findAdjacentFace(oppositeFacet.first, oppositeFacet.second, e);
+							HalfEdgeMesh::edge_index oppositeEdge = _mesh.findEdge(oppositeFace, _mesh.vertex2(edge), _mesh.vertex1(edge));
+							if(oppositeEdge == HalfEdgeMesh::InvalidIndex)
 								throw Exception("Cannot construct mesh for this input dataset. Opposite half-edge1 not found.");
-							edge->linkToOppositeEdge(oppositeEdge);
+							_mesh.linkOppositeEdges(edge, oppositeEdge);
 						}
 					}
 				}
@@ -360,7 +362,7 @@ private:
 		return !promise.isCanceled();
 	}
 
-	typename HalfEdgeStructureType::Face* findCellFace(const std::pair<DelaunayTessellation::CellHandle,int>& facet)
+	HalfEdgeMesh::face_index findCellFace(const std::pair<DelaunayTessellation::CellHandle,int>& facet)
 	{
 		// If the cell is a ghost cell, find the corresponding real cell first.
 		auto cell = facet.first;
@@ -379,7 +381,7 @@ private:
 			if(iter != _faceLookupMap.end())
 				return iter->second;
 			else
-				return nullptr;
+				return HalfEdgeMesh::InvalidIndex;
 		}
 	}
 
@@ -405,20 +407,23 @@ private:
 	/// Counts the number of tetrehedral cells that belong to the solid region.
 	size_t _numSolidCells = 0;
 
-	/// Stores the region ID if all cells belong to the same region.
+	/// The region filling the entire periodic domain in case all Delaunay cells belong to the same region.
 	int _spaceFillingRegion = -1;
 
 	/// The input particle positions.
 	const PropertyStorage& _positions;
 
-	/// The output triangle mesh.
-	HalfEdgeStructureType& _mesh;
+	/// The output mesh topology.
+	HalfEdgeMesh& _mesh;
+
+	/// The output mesh vertex coordinates.
+	PropertyStorage& _vertexCoords;
 
 	/// Stores the faces of the local tetrahedra that have a least one facet for which a triangle has been created.
-	std::vector<std::array<typename HalfEdgeStructureType::Face*, 4>> _tetrahedraFaceList;
+	std::vector<std::array<HalfEdgeMesh::face_index, 4>> _tetrahedraFaceList;
 
 	/// This map allows to lookup faces based on their vertices.
-	std::unordered_map<std::array<size_t,3>, typename HalfEdgeStructureType::Face*, boost::hash<std::array<size_t,3>>> _faceLookupMap;
+	std::unordered_map<std::array<size_t,3>, HalfEdgeMesh::face_index, boost::hash<std::array<size_t,3>>> _faceLookupMap;
 };
 
 }	// End of namespace

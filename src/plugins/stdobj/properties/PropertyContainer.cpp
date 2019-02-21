@@ -43,7 +43,7 @@ const PropertyObject* PropertyContainer::expectProperty(int typeId) const
 {
 	const PropertyObject* property = getProperty(typeId);
 	if(!property)
-		throwException(tr("Property '%1' is required but does not exist in the pipeline dataset.").arg(getOOMetaClass().standardPropertyName(typeId)));
+		throwException(tr("Required property '%1' does not exist in the input dataset.").arg(getOOMetaClass().standardPropertyName(typeId)));
 	return property;
 }
 
@@ -54,7 +54,7 @@ const PropertyObject* PropertyContainer::expectProperty(const QString& propertyN
 {
 	const PropertyObject* property = getProperty(propertyName);
 	if(!property)
-		throwException(tr("Property '%1' is required but does not exist in the pipeline dataset.").arg(propertyName));
+		throwException(tr("Required property '%1' does not exist in the input dataset.").arg(propertyName));
 	if(property->dataType() != dataType)
 		throwException(tr("Property '%1' does not have the required data type in the pipeline dataset.").arg(property->name()));
 	if(property->componentCount() != componentCount)

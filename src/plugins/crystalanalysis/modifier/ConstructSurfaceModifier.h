@@ -107,9 +107,12 @@ private:
 		/// Sets whether the entire simulation cell is part of the solid region.
 		void setIsCompletelySolid(bool isSolid) { _isCompletelySolid = isSolid; }
 
-		/// Returns the generated mesh.
-		const SurfaceMeshPtr& mesh() { return _mesh; }
+		/// Returns the topology of the generated surface mesh.
+		const HalfEdgeMeshPtr& mesh() { return _mesh; }
 		
+	    /// Returns the coordinates of the generated surface mesh vertices.
+    	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
+
 		/// Returns the computed solid volume.
 		FloatType solidVolume() const { return (FloatType)_solidVolume; }
 
@@ -142,8 +145,11 @@ private:
 		ConstPropertyPtr _selection;
 		const SimulationCell _simCell;
 
-		/// The surface mesh produced by the modifier.
-		SurfaceMeshPtr _mesh = std::make_shared<HalfEdgeMesh<>>();
+		/// The generated surface mesh.
+		HalfEdgeMeshPtr _mesh = std::make_shared<HalfEdgeMesh>();
+
+		/// The vertex coordinates of the surface mesh mesh.
+    	PropertyPtr _vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
 
 		/// Indicates that the entire simulation cell is part of the solid region.
 		bool _isCompletelySolid = false;
@@ -157,7 +163,7 @@ private:
 		/// The computed surface area.
 		double _surfaceArea = 0;
 
-		/// The selection set containing the particles at the constructed surfaces.
+		/// The selection set containing the particles right on the constructed surfaces.
 		PropertyPtr _surfaceParticleSelection;
 	};
 

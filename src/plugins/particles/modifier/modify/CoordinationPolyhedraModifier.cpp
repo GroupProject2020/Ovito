@@ -122,7 +122,6 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 		if(!task()->incrementProgressValue())
 			return;
 	}
-	mesh()->reindexVerticesAndFaces();
 }
 
 /******************************************************************************
@@ -131,16 +130,12 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 ******************************************************************************/
 void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(std::vector<Point3>& vecs)
 {
-	using Vertex = HalfEdgeMesh<>::Vertex;
-	using Edge = HalfEdgeMesh<>::Edge;
-	using Face = HalfEdgeMesh<>::Face;
-
 	if(vecs.size() < 4) return;	// Convex hull requires at least 4 input points.
 
 	// Keep track of how many faces and vertices we started with. 
 	// We won't touch the existing mesh faces and vertices.
-	int originalFaceCount = mesh()->faceCount();
-	int originalVertexCount = mesh()->vertexCount();
+	auto originalFaceCount = mesh()->faceCount();
+	auto originalVertexCount = mesh()->vertexCount();
 
 	// Determine which points should form the initial tetrahedron.
 	// Make sure they are not co-planar.
@@ -173,28 +168,19 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 	if(n != 4) return;
 	
 	// Create the initial tetrahedron.
-	Vertex* tetverts[4];
+	HalfEdgeMesh::vertex_index tetverts[4];
 	for(size_t i = 0; i < 4; i++) {
-		tetverts[i] = mesh()->createVertex(vecs[tetrahedraCorners[i]]);
+        tetverts[i] = mesh()->createVertex();
+        vertexCoords()->grow(1);
+        vertexCoords()->setPoint3(tetverts[i], vecs[tetrahedraCorners[i]]);
 	}
 	mesh()->createFace({tetverts[0], tetverts[1], tetverts[3]});
 	mesh()->createFace({tetverts[2], tetverts[0], tetverts[3]});
 	mesh()->createFace({tetverts[0], tetverts[2], tetverts[1]});
 	mesh()->createFace({tetverts[1], tetverts[2], tetverts[3]});
-	// Connect opposite half edges.
-	for(size_t i = 0; i < 4; i++) {
-		for(Edge* edge = tetverts[i]->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
-			if(edge->oppositeEdge()) continue;
-			for(Edge* oppositeEdge = edge->vertex2()->edges(); oppositeEdge != nullptr; oppositeEdge = oppositeEdge->nextVertexEdge()) {
-				if(oppositeEdge->oppositeEdge()) continue;
-				if(oppositeEdge->vertex2() == tetverts[i]) {
-					edge->linkToOppositeEdge(oppositeEdge);
-					break;
-				}
-			}
-			OVITO_ASSERT(edge->oppositeEdge());
-		}
-	}
+	// Connect opposite half-edges to link the four faces together.
+	for(size_t i = 0; i < 4; i++)
+		mesh()->connectOppositeHalfedges(tetverts[i]);
 
 	// Remove 4 points of initial tetrahedron from input list.
 	for(size_t i = 1; i <= 4; i++)
@@ -210,11 +196,11 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 		size_t remainingPointCount = vecs.size();
 		for(auto p = vecs.rbegin(); p != vecs.rend(); ++p) {
 			bool insideHull = true;
-			for(int faceIndex = originalFaceCount; faceIndex < mesh()->faceCount(); faceIndex++) {
-				Face* face = mesh()->face(faceIndex);
-				Plane3 plane(face->edges()->vertex1()->pos(),
-							face->edges()->vertex2()->pos(),
-							face->edges()->nextFaceEdge()->vertex2()->pos(), true);
+			for(auto faceIndex = originalFaceCount; faceIndex < mesh()->faceCount(); faceIndex++) {
+				auto v0 = mesh()->firstFaceVertex(faceIndex);
+				auto v1 = mesh()->secondFaceVertex(faceIndex);
+				auto v2 = mesh()->thirdFaceVertex(faceIndex);
+				Plane3 plane(vertexCoords()->getPoint3(v0), vertexCoords()->getPoint3(v1), vertexCoords()->getPoint3(v2), true);
 				FloatType signedDistance = plane.pointDistance(*p);
 				if(signedDistance > FLOATTYPE_EPSILON) {
 					insideHull = false;
@@ -234,59 +220,61 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 		OVITO_ASSERT(furthestPointDistance > 0 && furthestPoint != vecs.rend());
 
 		// Kill all faces of the polyhedron that can be seen from the selected point.
-		for(int faceIndex = originalFaceCount; faceIndex < mesh()->faceCount(); faceIndex++) {
-			Face* face = mesh()->face(faceIndex);
-			Plane3 plane(face->edges()->vertex1()->pos(),
-						face->edges()->vertex2()->pos(),
-						face->edges()->nextFaceEdge()->vertex2()->pos(), true);
+		for(auto face = originalFaceCount; face < mesh()->faceCount(); face++) {
+			auto v0 = mesh()->firstFaceVertex(face);
+			auto v1 = mesh()->secondFaceVertex(face);
+			auto v2 = mesh()->thirdFaceVertex(face);
+			Plane3 plane(vertexCoords()->getPoint3(v0), vertexCoords()->getPoint3(v1), vertexCoords()->getPoint3(v2), true);
 			if(plane.pointDistance(*furthestPoint) > FLOATTYPE_EPSILON) {
-				mesh()->removeFace(faceIndex);
-				faceIndex--;
+				mesh()->deleteFace(face);
+				face--;
 			}
 		}
 
 		// Find an edge that borders the newly created hole in the mesh.
-		Edge* firstBorderEdge = nullptr;
-		for(int faceIndex = originalFaceCount; faceIndex < mesh()->faceCount() && !firstBorderEdge; faceIndex++) {
-			Face* face = mesh()->face(faceIndex);
-			Edge* e = face->edges();
-			OVITO_ASSERT(e != nullptr);
+		HalfEdgeMesh::edge_index firstBorderEdge = HalfEdgeMesh::InvalidIndex;
+		for(auto face = originalFaceCount; face < mesh()->faceCount() && firstBorderEdge == HalfEdgeMesh::InvalidIndex; face++) {
+			HalfEdgeMesh::edge_index e = mesh()->firstFaceEdge(face);
+			OVITO_ASSERT(e != HalfEdgeMesh::InvalidIndex);
 			do {
-				if(e->oppositeEdge() == nullptr) {
+				if(!mesh()->hasOppositeEdge(e)) {
 					firstBorderEdge = e;
 					break;
 				}
-				e = e->nextFaceEdge();
+				e = mesh()->nextFaceEdge(e);
 			}
-			while(e != face->edges());
+			while(e != mesh()->firstFaceEdge(face));
 		}
-		OVITO_ASSERT(firstBorderEdge != nullptr); // If this assert fails, then there was no hole in the mesh.
+		OVITO_ASSERT(firstBorderEdge != HalfEdgeMesh::InvalidIndex); // If this assert fails, then there was no hole in the mesh.
 
 		// Create new faces that connects the edges at the horizon (i.e. the border of the hole) with
 		// the selected vertex.
-		Vertex* vertex = mesh()->createVertex(*furthestPoint);
-		Edge* borderEdge = firstBorderEdge;
-		Face* previousFace;
-		Face* firstFace;
-		Face* newFace;
+		HalfEdgeMesh::vertex_index vertex = mesh()->createVertex();
+        vertexCoords()->grow(1);
+        vertexCoords()->setPoint3(vertex, *furthestPoint);
+		HalfEdgeMesh::edge_index borderEdge = firstBorderEdge;
+		HalfEdgeMesh::face_index previousFace = HalfEdgeMesh::InvalidIndex;
+		HalfEdgeMesh::face_index firstFace = HalfEdgeMesh::InvalidIndex;
+		HalfEdgeMesh::face_index newFace;
 		do {
-			newFace = mesh()->createFace({ borderEdge->vertex2(), borderEdge->vertex1(), vertex });
-			newFace->edges()->linkToOppositeEdge(borderEdge);
+			newFace = mesh()->createFace({ mesh()->vertex2(borderEdge), mesh()->vertex1(borderEdge), vertex });
+			mesh()->linkOppositeEdges(mesh()->firstFaceEdge(newFace), borderEdge);
 			if(borderEdge == firstBorderEdge)
 				firstFace = newFace;
 			else
-				newFace->edges()->nextFaceEdge()->linkToOppositeEdge(previousFace->edges()->prevFaceEdge());
+				mesh()->linkOppositeEdges(mesh()->secondFaceEdge(newFace), mesh()->prevFaceEdge(mesh()->firstFaceEdge(previousFace)));
 			previousFace = newFace;
 			// Proceed to next edge along the hole's border.
 			for(;;) {
-				borderEdge = borderEdge->nextFaceEdge();
-				if(borderEdge->oppositeEdge() == nullptr || borderEdge == firstBorderEdge) break;
-				borderEdge = borderEdge->oppositeEdge();
+				borderEdge = mesh()->nextFaceEdge(borderEdge);
+				if(!mesh()->hasOppositeEdge(borderEdge) || borderEdge == firstBorderEdge) 
+					break;
+				borderEdge = mesh()->oppositeEdge(borderEdge);
 			}
 		}
-		while(borderEdge != firstBorderEdge);
+		while(borderEdge != firstBorderEdge);		
 		OVITO_ASSERT(firstFace != newFace);
-		firstFace->edges()->nextFaceEdge()->linkToOppositeEdge(newFace->edges()->prevFaceEdge());
+		mesh()->linkOppositeEdges(mesh()->secondFaceEdge(firstFace), mesh()->prevFaceEdge(mesh()->firstFaceEdge(newFace)));
 
 		// Remove selected point from the input list as well.
 		remainingPointCount--;
@@ -295,10 +283,16 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 	}
 
 	// Delete interior vertices from the mesh that are no longer attached to any of the faces.
-	for(int vertexIndex = originalVertexCount; vertexIndex < mesh()->vertexCount(); vertexIndex++) {
-		if(mesh()->vertex(vertexIndex)->numEdges() == 0) {
-			mesh()->removeVertex(vertexIndex);
-			vertexIndex--;
+	for(auto vertex = originalVertexCount; vertex < mesh()->vertexCount(); vertex++) {
+		if(mesh()->vertexEdgeCount(vertex) == 0) {
+			// Delete the vertex from the mesh topology.
+			mesh()->deleteVertex(vertex);
+			// Delete the vertex from the coordinates the array.
+			if(vertex < vertexCoords()->size() - 1)
+				vertexCoords()->setPoint3(vertex, vertexCoords()->getPoint3(vertexCoords()->size()-1));	
+			vertexCoords()->truncate(1);
+			// Adjust index to point to next vertex in the mesh after loop incrementation.
+			vertex--;
 		}
 	}
 }
@@ -312,7 +306,8 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitResults(TimePoin
 
 	// Create the output data object.
 	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("coord-polyhedra"), modApp, tr("Coordination polyhedra"));
-	meshObj->setStorage(mesh());
+	meshObj->setTopology(mesh());
+	meshObj->vertices()->createProperty(vertexCoords());
 	meshObj->setDomain(state.getObject<SimulationCellObject>());
 	meshObj->setVisElement(modifier->surfaceMeshVis());
 }

@@ -128,9 +128,13 @@ protected:
 			return _dislocations;
 		}
 
-		const std::shared_ptr<HalfEdgeMesh<>>& defectSurface() {
-			if(!_defectSurface) _defectSurface = std::make_shared<HalfEdgeMesh<>>();
+		const HalfEdgeMeshPtr& defectSurface() const {
 			return _defectSurface;
+		}
+
+		void setDefectSurface(HalfEdgeMeshPtr&& topology, PropertyPtr&& verts) {
+			_defectSurface = std::move(topology);
+			_defectSurfaceVerts = std::move(verts);
 		}
 
 	protected:
@@ -138,14 +142,17 @@ protected:
 		/// The structure pattern catalog.
 		QVector<PatternInfo> _patterns;
 
-		/// The cluster list.
-		std::shared_ptr<ClusterGraph> _clusterGraph;
+		/// The crystal cluster list.
+		ClusterGraphPtr _clusterGraph;
 
-		/// The dislocation segments.
+		/// The dislocation lines.
 		std::shared_ptr<DislocationNetwork> _dislocations;
 
-		/// The triangle mesh of the defect surface.
-		std::shared_ptr<HalfEdgeMesh<>> _defectSurface;
+		/// The topology of the defect surface mesh.
+		HalfEdgeMeshPtr _defectSurface;
+
+		/// The vertex coordinates of the defect surface mesh.
+		PropertyPtr _defectSurfaceVerts;
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in the background.

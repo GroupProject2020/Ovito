@@ -73,7 +73,7 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	_outputInterfaceMesh(false),
 	_onlyPerfectDislocations(false),
 	_defectMeshSmoothingLevel(8),
-	_lineSmoothingEnabled(true), 
+	_lineSmoothingEnabled(true),
 	_lineCoarseningEnabled(true),
 	_lineSmoothingLevel(1),
 	_linePointInterval(2.5)
@@ -91,8 +91,8 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	interfaceMeshVis()->setShowCap(false);
 	interfaceMeshVis()->setSmoothShading(false);
 	interfaceMeshVis()->setCapTransparency(0.5);
-	interfaceMeshVis()->setObjectTitle(tr("Interface mesh"));		
-	
+	interfaceMeshVis()->setObjectTitle(tr("Interface mesh"));
+
 	// Create pattern catalog.
 	setPatternCatalog(new PatternCatalog(dataset));
 	while(patternCatalog()->patterns().empty() == false)
@@ -129,7 +129,7 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 1, tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
 	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 2, tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
 	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 3, tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
-	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 4, tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
+	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 4, tr("1/3<100> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
 	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 5, tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
 
 	StructurePattern* bccPattern = patternCatalog()->structureById(StructureAnalysis::LATTICE_BCC);

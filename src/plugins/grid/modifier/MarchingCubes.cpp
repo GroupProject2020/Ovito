@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@ namespace Ovito { namespace Grid {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* data, size_t stride, HalfEdgeMesh<>& outputMesh, bool lowerIsSolid) :
+MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* data, size_t stride, bool lowerIsSolid) :
     _data_size_x(size_x), 
     _data_size_y(size_y), 
     _data_size_z(size_z), 
@@ -38,9 +38,7 @@ MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool
     _pbcFlags(pbcFlags),
     _data(data), 
     _dataStride(stride), 
-    _outputMesh(outputMesh),
-    _cubeVerts(_size_x * _size_y * _size_z * 3, nullptr),
-    _isCompletelySolid(false),
+    _cubeVerts(_size_x * _size_y * _size_z * 3, HalfEdgeMesh::InvalidIndex),
     _lowerIsSolid(lowerIsSolid)
 {
     OVITO_ASSERT(stride >= 1);
@@ -77,7 +75,7 @@ bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise
 ******************************************************************************/
 void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& promise)
 {
-    _isCompletelySolid = (_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2]);
+    _isSpaceFilling = (_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2]);
     for(int k = 0; k < _size_z && !promise.isCanceled(); k++, promise.incrementProgressValue()) {
         for(int j = 0; j < _size_y; j++) {
             for(int i = 0; i < _size_x; i++) {
@@ -93,10 +91,10 @@ void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& 
                 if(std::abs(cube[4]) < _epsilon) cube[4] = _epsilon;
 
                 if(_lowerIsSolid) {
-                    if(cube[0] > 0) _isCompletelySolid = false;
+                    if(cube[0] > 0) _isSpaceFilling = false;
                 }
                 else {
-                    if(cube[0] < 0) _isCompletelySolid = false;
+                    if(cube[0] < 0) _isSpaceFilling = false;
                 }
                 if(cube[1]*cube[0] < 0) createEdgeVertexX(i,j,k, cube[0] / (cube[0] - cube[1]));
                 if(cube[3]*cube[0] < 0) createEdgeVertexY(i,j,k, cube[0] / (cube[0] - cube[3]));
@@ -294,7 +292,7 @@ bool MarchingCubes::testInterior(char s)
 ******************************************************************************/
 void MarchingCubes::processCube(int i, int j, int k)
 {
-    HalfEdgeMesh<>::Vertex* v12 = nullptr;
+    HalfEdgeMesh::vertex_index v12 = HalfEdgeMesh::InvalidIndex;
     _case   = cases[_lut_entry][0];
     _config = cases[_lut_entry][1];
     _subconfig = 0;
@@ -312,14 +310,14 @@ void MarchingCubes::processCube(int i, int j, int k)
         break;
 
     case  3 :
-        if(testFace(test3[_config]) )
+        if(testFace(test3[_config]))
             addTriangle(i,j,k, tiling3_2[_config], 4); // 3.2
         else
             addTriangle(i,j,k, tiling3_1[_config], 2); // 3.1
         break;
 
     case  4 :
-        if(testInterior(test4[_config]) )
+        if(testInterior(test4[_config]))
             addTriangle(i,j,k, tiling4_1[_config], 2); // 4.1.1
         else
             addTriangle(i,j,k, tiling4_2[_config], 6); // 4.1.2
@@ -330,11 +328,11 @@ void MarchingCubes::processCube(int i, int j, int k)
         break;
 
     case  6 :
-        if(testFace(test6[_config][0]) )
+        if(testFace(test6[_config][0]))
             addTriangle(i,j,k, tiling6_2[_config], 5); // 6.2
         else
         {
-            if(testInterior(test6[_config][1]) )
+            if(testInterior(test6[_config][1]))
                 addTriangle(i,j,k, tiling6_1_1[_config], 3); // 6.1.1
             else
             {
@@ -348,7 +346,7 @@ void MarchingCubes::processCube(int i, int j, int k)
         if(testFace(test7[_config][0])) _subconfig +=  1;
         if(testFace(test7[_config][1])) _subconfig +=  2;
         if(testFace(test7[_config][2])) _subconfig +=  4;
-        switch( _subconfig )
+        switch(_subconfig)
         {
         case 0 :
             addTriangle(i,j,k, tiling7_1[_config], 3); break;
@@ -368,7 +366,7 @@ void MarchingCubes::processCube(int i, int j, int k)
             v12 = createCenterVertex(i,j,k);
             addTriangle(i,j,k, tiling7_3[_config][2], 9, v12); break;
         case 7 :
-            if(testInterior(test7[_config][3]) )
+            if(testInterior(test7[_config][3]))
                 addTriangle(i,j,k, tiling7_4_2[_config], 9);
             else
                 addTriangle(i,j,k, tiling7_4_1[_config], 5);
@@ -385,26 +383,22 @@ void MarchingCubes::processCube(int i, int j, int k)
         break;
 
     case 10 :
-        if(testFace(test10[_config][0]) )
-        {
-            if(testFace(test10[_config][1]) )
+        if(testFace(test10[_config][0])) {
+            if(testFace(test10[_config][1])) {
                 addTriangle(i,j,k, tiling10_1_1_[_config], 4); // 10.1.1
-            else
-            {
+            }
+            else {
                 v12 = createCenterVertex(i,j,k);
                 addTriangle(i,j,k, tiling10_2[_config], 8, v12); // 10.2
             }
         }
-        else
-        {
-            if(testFace(test10[_config][1]) )
-            {
+        else {
+            if(testFace(test10[_config][1])) {
                 v12 = createCenterVertex(i,j,k);
                 addTriangle(i,j,k, tiling10_2_[_config], 8, v12); // 10.2
             }
-            else
-            {
-                if(testInterior(test10[_config][2]) )
+            else {
+                if(testInterior(test10[_config][2]))
                     addTriangle(i,j,k, tiling10_1_1[_config], 4); // 10.1.1
                 else
                     addTriangle(i,j,k, tiling10_1_2[_config], 8); // 10.1.2
@@ -417,26 +411,22 @@ void MarchingCubes::processCube(int i, int j, int k)
         break;
 
     case 12 :
-        if(testFace(test12[_config][0]) )
-        {
-            if(testFace(test12[_config][1]) )
+        if(testFace(test12[_config][0])) {
+            if(testFace(test12[_config][1])) {
                 addTriangle(i,j,k, tiling12_1_1_[_config], 4); // 12.1.1
-            else
-            {
+            }
+            else {
                 v12 = createCenterVertex(i,j,k);
                 addTriangle(i,j,k, tiling12_2[_config], 8, v12); // 12.2
             }
         }
-        else
-        {
-            if(testFace(test12[_config][1]) )
-            {
+        else {
+            if(testFace(test12[_config][1])) {
                 v12 = createCenterVertex(i,j,k);
                 addTriangle(i,j,k, tiling12_2_[_config], 8, v12); // 12.2
             }
-            else
-            {
-                if(testInterior(test12[_config][2]) )
+            else {
+                if(testInterior(test12[_config][2]))
                     addTriangle(i,j,k, tiling12_1_1[_config], 4); // 12.1.1
                 else
                     addTriangle(i,j,k, tiling12_1_2[_config], 8); // 12.1.2
@@ -520,28 +510,28 @@ void MarchingCubes::processCube(int i, int j, int k)
 
             case 23 :/* 13.5 */
                 _subconfig = 0;
-                if(testInterior(test13[_config][6]) )
+                if(testInterior(test13[_config][6]))
                     addTriangle(i,j,k, tiling13_5_1[_config][0], 6);
                 else
                     addTriangle(i,j,k, tiling13_5_2[_config][0], 10);
                 break;
             case 24 :/* 13.5 */
                 _subconfig = 1;
-                if(testInterior(test13[_config][6]) )
+                if(testInterior(test13[_config][6]))
                     addTriangle(i,j,k, tiling13_5_1[_config][1], 6);
                 else
                     addTriangle(i,j,k, tiling13_5_2[_config][1], 10);
                 break;
             case 25 :/* 13.5 */
                 _subconfig = 2;
-                if(testInterior(test13[_config][6]) )
+                if(testInterior(test13[_config][6]))
                     addTriangle(i,j,k, tiling13_5_1[_config][2], 6);
                 else
                     addTriangle(i,j,k, tiling13_5_2[_config][2], 10);
                 break;
             case 26 :/* 13.5 */
                 _subconfig = 3;
-                if(testInterior(test13[_config][6]) )
+                if(testInterior(test13[_config][6]))
                     addTriangle(i,j,k, tiling13_5_1[_config][3], 6);
                 else
                     addTriangle(i,j,k, tiling13_5_2[_config][3], 10);
@@ -614,9 +604,9 @@ void MarchingCubes::processCube(int i, int j, int k)
 /******************************************************************************
 * Adds triangles to the mesh.
 ******************************************************************************/
-void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh<>::Vertex* v12)
+void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh::vertex_index v12)
 {
-    HalfEdgeMesh<>::Vertex* tv[3];
+    HalfEdgeMesh::vertex_index tv[3];
 
     for(int t = 0; t < 3 * n; t++) {
         switch(trig[t]) {
@@ -635,13 +625,13 @@ void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, H
             case 12: tv[t % 3] = v12; break;
             default: break;
         }
-        OVITO_ASSERT_MSG(tv[t%3] != nullptr, "Marching cubes", "invalid triangle");
+        OVITO_ASSERT_MSG(tv[t%3] != HalfEdgeMesh::InvalidIndex, "Marching cubes", "invalid triangle");
 
         if(t%3 == 2) {
             if(_lowerIsSolid)
-                _outputMesh.createFace({tv[0], tv[1], tv[2]});
+                _outputMesh->createFace({tv[0], tv[1], tv[2]});
             else
-                _outputMesh.createFace({tv[2], tv[1], tv[0]});
+                _outputMesh->createFace({tv[2], tv[1], tv[0]});
         }
     }
 }
@@ -649,17 +639,19 @@ void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, H
 /******************************************************************************
 * Adds a vertex inside the current cube.
 ******************************************************************************/
-HalfEdgeMesh<>::Vertex* MarchingCubes::createCenterVertex(int i, int j, int k)
+HalfEdgeMesh::vertex_index MarchingCubes::createCenterVertex(int i, int j, int k)
 {
     int u = 0;
     Point3 p = Point3::Origin();
 
     // Computes the average of the intersection points of the cube
     auto addPosition = [this, &p, &u](int i, int j, int k, int axis) {
-        if(const HalfEdgeMesh<>::Vertex* v = getEdgeVert(i, j, k, axis)) {
-            p.x() += v->pos().x();
-            p.y() += v->pos().y();
-            p.z() += v->pos().z();
+        HalfEdgeMesh::vertex_index v = getEdgeVert(i, j, k, axis);
+        if(v != HalfEdgeMesh::InvalidIndex) {
+            const Point3& vp = _vertexCoords->getPoint3(v);
+            p.x() += vp.x();
+            p.y() += vp.y();
+            p.z() += vp.z();
             if(i == _size_x) p.x() += _size_x;
             if(j == _size_y) p.y() += _size_y;
             if(k == _size_z) p.z() += _size_z;
@@ -683,7 +675,7 @@ HalfEdgeMesh<>::Vertex* MarchingCubes::createCenterVertex(int i, int j, int k)
     p.y() /= u;
     p.z() /= u;
 
-    return _outputMesh.createVertex(p);
+    return createVertex(p);
 }
 
 }	// End of namespace

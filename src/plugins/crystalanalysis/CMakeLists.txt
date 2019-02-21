@@ -32,10 +32,9 @@ SET(SourceFiles
 	objects/dislocations/DislocationVis.cpp
 	objects/dislocations/RenderableDislocationLines.cpp
 	objects/microstructure/MicrostructureObject.cpp
-	objects/microstructure/SlipSurfaceVis.cpp
+#	objects/microstructure/SlipSurfaceVis.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
-	data/Microstructure.cpp
 	modifier/ConstructSurfaceModifier.cpp
 	modifier/dxa/DislocationAnalysisModifier.cpp
 	modifier/dxa/DislocationAnalysisEngine.cpp
@@ -46,7 +45,7 @@ SET(SourceFiles
 	modifier/dxa/DislocationTracer.cpp
 	modifier/elasticstrain/ElasticStrainModifier.cpp
 	modifier/elasticstrain/ElasticStrainEngine.cpp
-	modifier/microstructure/SimplifyMicrostructureModifier.cpp
+#	modifier/microstructure/SimplifyMicrostructureModifier.cpp
 	util/DelaunayTessellation.cpp
 )
 
@@ -54,7 +53,7 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 	LIST(APPEND SourceFiles 
 		objects/dislocations/DislocationSliceModifierDelegate.cpp
 		objects/dislocations/DislocationReplicateModifierDelegate.cpp
-		objects/microstructure/MicrostructureReplicateModifierDelegate.cpp
+#		objects/microstructure/MicrostructureReplicateModifierDelegate.cpp
 		)
 ENDIF()
 

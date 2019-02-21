@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,11 +23,9 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/data/ClusterGraph.h>
-#include <plugins/crystalanalysis/data/Microstructure.h>
+#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
-#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -45,14 +43,14 @@ class OVITO_CRYSTALANALYSIS_EXPORT DislocImporter : public ParticleImporter
 
 		/// Returns the file filter that specifies the files that can be imported by this service.
 		virtual QString fileFilter() const override { return QStringLiteral("*"); }
-	
+
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("Fix disloc files"); }
-	
+
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;	
+		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
 	};
-	
+
 	OVITO_CLASS_META(DislocImporter, OOMetaClass)
 	Q_OBJECT
 
@@ -81,18 +79,21 @@ protected:
 
 		/// Inherit constructor from base class.
 		using ParticleFrameData::ParticleFrameData;
-		
+
 		/// Inserts the loaded data into the provided pipeline state structure. This function is
 		/// called by the system from the main thread after the asynchronous loading task has finished.
 		virtual OORef<DataCollection> handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource) override;
 
 		/// Returns the loaded microstructure.
-		const MicrostructurePtr& microstructure() { return _microstructure; }
+		const Microstructure& microstructure() const { return _microstructure; }
+
+		/// Returns the microstructure being loaded.
+		Microstructure& microstructure() { return _microstructure; }
 
 	protected:
 
 		/// The loaded microstructure.
-		MicrostructurePtr _microstructure = std::make_shared<Microstructure>(std::make_shared<ClusterGraph>());
+		Microstructure _microstructure;
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in a worker thread.
@@ -109,7 +110,7 @@ protected:
 		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// Connects the slip faces to form two-dimensional manifolds.
-		static void connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qlonglong,qlonglong>>& slipSurfaceMap);
+		static void connectSlipFaces(Microstructure& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap);
 	};
 };
 

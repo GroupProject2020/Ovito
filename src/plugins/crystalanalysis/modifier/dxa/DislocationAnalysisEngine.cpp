@@ -48,7 +48,7 @@ DislocationAnalysisEngine::DislocationAnalysisEngine(
 		std::vector<Matrix3> preferredCrystalOrientations,
 		bool onlyPerfectDislocations, int defectMeshSmoothingLevel,
 		int lineSmoothingLevel, FloatType linePointInterval,
-		bool outputInterfaceMesh) :
+		bool doOutputInterfaceMesh) :
 	StructureIdentificationModifier::StructureIdentificationEngine(std::move(fingerprint), positions, simCell, {}, std::move(particleSelection)),
 	_simCellVolume(simCell.volume3D()),
 	_structureAnalysis(std::make_unique<StructureAnalysis>(positions, simCell, (StructureAnalysis::LatticeStructureType)inputCrystalStructure, selection(), structures(), std::move(preferredCrystalOrientations), !onlyPerfectDislocations)),
@@ -62,7 +62,7 @@ DislocationAnalysisEngine::DislocationAnalysisEngine(
 	_defectMeshSmoothingLevel(defectMeshSmoothingLevel),
 	_lineSmoothingLevel(lineSmoothingLevel),
 	_linePointInterval(linePointInterval),
-	_outputInterfaceMesh(outputInterfaceMesh ? std::make_shared<HalfEdgeMesh<>>() : nullptr)
+	_doOutputInterfaceMesh(doOutputInterfaceMesh)
 {
 	setAtomClusters(_structureAnalysis->atomClusters());
 	setDislocationNetwork(_dislocationTracer->network());
@@ -164,7 +164,7 @@ void DislocationAnalysisEngine::perform()
 #if 0
 
 	auto isWrappedFacet = [this](const InterfaceMesh::Face* f) -> bool {
-		InterfaceMesh::Edge* e = f->edges();
+		InterfaceMesh::edge_index e = f->edges();
 		do {
 			Vector3 v = e->vertex1()->pos() - e->vertex2()->pos();
 			if(_structureAnalysis.cell().isWrappedVector(v))
@@ -196,7 +196,7 @@ void DislocationAnalysisEngine::perform()
 	for(const InterfaceMesh::Face* f : _interfaceMesh.faces()) {
 		if(isWrappedFacet(f) == false) {
 			stream << f->edgeCount();
-			InterfaceMesh::Edge* e = f->edges();
+			InterfaceMesh::edge_index e = f->edges();
 			do {
 				stream << " " << e->vertex1()->index();
 				e = e->nextFaceEdge();
@@ -239,7 +239,8 @@ void DislocationAnalysisEngine::perform()
 	// Generate the defect mesh.
 	task()->nextProgressSubStep();
 //	qInfo() << QDateTime::currentDateTime().toString() << "Generating defect mesh";
-	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, *defectMesh(), *task()))
+	_defectMeshVerts = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
+	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, *defectMesh(), *_defectMeshVerts, *task()))
 		return;
 
 #if 0
@@ -250,7 +251,7 @@ void DislocationAnalysisEngine::perform()
 
 	// Post-process surface mesh.
 //	qInfo() << QDateTime::currentDateTime().toString() << "Smoothing surface mesh";
-	if(_defectMeshSmoothingLevel > 0 && !SurfaceMesh::smoothMesh(*defectMesh(), cell(), _defectMeshSmoothingLevel, *task()))
+	if(_defectMeshSmoothingLevel > 0 && !SurfaceMesh::smoothMesh(*defectMesh(), *_defectMeshVerts, cell(), _defectMeshSmoothingLevel, *task()))
 		return;
 
 	task()->nextProgressSubStep();
@@ -264,10 +265,11 @@ void DislocationAnalysisEngine::perform()
 	task()->endProgressSubSteps();
 	
 	// Return the results of the compute engine.
-	_isGoodEverywhere = interfaceMesh().isCompletelyGood();
 	_isBadEverywhere = interfaceMesh().isCompletelyBad();
-	if(_outputInterfaceMesh)
-		_outputInterfaceMesh->copyFrom(interfaceMesh());
+	if(_doOutputInterfaceMesh) {
+		_outputInterfaceMesh = std::make_shared<HalfEdgeMesh>(interfaceMesh());
+		_outputInterfaceMeshVerts = interfaceMesh().vertexCoords();
+	}
 }
 
 /******************************************************************************
@@ -280,16 +282,18 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 
 	// Output defect mesh.
 	SurfaceMesh* defectMeshObj = state.createObject<SurfaceMesh>(QStringLiteral("dxa-defect-mesh"), modApp, DislocationAnalysisModifier::tr("Defect mesh"));
-	defectMeshObj->setStorage(defectMesh());
-	defectMeshObj->setIsCompletelySolid(isBadEverywhere());	
+	defectMeshObj->setTopology(defectMesh());
+	defectMeshObj->vertices()->createProperty(_defectMeshVerts);
+	defectMeshObj->setSpaceFillingRegion(isBadEverywhere() ? 1 : 0);	
 	defectMeshObj->setDomain(state.getObject<SimulationCellObject>());
 	defectMeshObj->setVisElement(modifier->defectMeshVis());
 
 	// Output interface mesh.
 	if(outputInterfaceMesh()) {
 		SurfaceMesh* interfaceMeshObj = state.createObject<SurfaceMesh>(QStringLiteral("dxa-interface-mesh"), modApp, DislocationAnalysisModifier::tr("Interface mesh"));
-		interfaceMeshObj->setStorage(outputInterfaceMesh());
-		interfaceMeshObj->setIsCompletelySolid(isBadEverywhere());
+		interfaceMeshObj->setTopology(outputInterfaceMesh());
+		interfaceMeshObj->vertices()->createProperty(_outputInterfaceMeshVerts);
+		interfaceMeshObj->setSpaceFillingRegion(isBadEverywhere() ? 1 : 0);
 		interfaceMeshObj->setDomain(state.getObject<SimulationCellObject>());
 		interfaceMeshObj->setVisElement(modifier->interfaceMeshVis());
 	}

@@ -60,10 +60,11 @@ PropertyStorage::PropertyStorage(const PropertyStorage& other) :
 	_dataType(other._dataType),
 	_dataTypeSize(other._dataTypeSize), 
 	_numElements(other._numElements),
+	_capacity(other._numElements),
 	_stride(other._stride), 
 	_componentCount(other._componentCount),
 	_componentNames(other._componentNames),
-	_data(new uint8_t[_numElements * _stride])
+	_data(new uint8_t[other._numElements * other._stride])
 {
 	memcpy(_data.get(), other._data.get(), _numElements * _stride);
 }
@@ -109,6 +110,7 @@ void PropertyStorage::loadFromStream(LoadStream& stream)
 	stream.readSizeT(_componentCount);
 	stream >> _componentNames;
 	stream.readSizeT(_numElements);
+	_capacity = _numElements;
 	_data.reset(new uint8_t[_numElements * _stride]);
 	stream.read(_data.get(), _stride * _numElements);
 	stream.closeChunk();
@@ -149,16 +151,34 @@ void PropertyStorage::loadFromStream(LoadStream& stream)
 ******************************************************************************/
 void PropertyStorage::resize(size_t newSize, bool preserveData)
 {
-	std::unique_ptr<uint8_t[]> newBuffer(new uint8_t[newSize * _stride]);
-	if(preserveData)
-		std::memcpy(newBuffer.get(), _data.get(), _stride * std::min(_numElements, newSize));
-	_data.swap(newBuffer);
-
+	if(newSize > _capacity || newSize < _capacity * 3 / 4) {
+		std::unique_ptr<uint8_t[]> newBuffer(new uint8_t[newSize * _stride]);
+		if(preserveData)
+			std::memcpy(newBuffer.get(), _data.get(), _stride * std::min(_numElements, newSize));
+		_data.swap(newBuffer);
+		_capacity = newSize;
+	}
 	// Initialize new elements to zero.
 	if(newSize > _numElements && preserveData) {
 		std::memset(_data.get() + _numElements * _stride, 0, (newSize - _numElements) * _stride);
 	}
 	_numElements = newSize;
+}
+
+/******************************************************************************
+* Grows the storage buffer to accomodate at least the given number of data elements
+******************************************************************************/
+void PropertyStorage::growCapacity(size_t newSize)
+{
+	OVITO_ASSERT(newSize >= _numElements);
+	OVITO_ASSERT(newSize > _capacity);
+	size_t newCapacity = (newSize < 1024)
+		? std::max(newSize * 2, (size_t)256)
+		: (newSize * 3 / 2);
+	std::unique_ptr<uint8_t[]> newBuffer(new uint8_t[newCapacity * _stride]);
+	std::memcpy(newBuffer.get(), _data.get(), _stride * _numElements);
+	_data.swap(newBuffer);
+	_capacity = newCapacity;
 }
 
 /******************************************************************************

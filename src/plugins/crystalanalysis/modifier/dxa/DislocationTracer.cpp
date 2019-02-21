@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -222,9 +222,9 @@ bool DislocationTracer::findPrimarySegments(int maxBurgersCircuitSize, PromiseSt
 	int progressCounter = 0;
 
 	// Find an appropriate start node for the recursive search.
-	for(InterfaceMesh::Vertex* startNode : mesh().vertices()) {
-		OVITO_ASSERT(startNode->edges() != nullptr);
-		OVITO_ASSERT(startNode->burgersSearchStruct == nullptr);
+	for(InterfaceMesh::Vertex& startNode : mesh().vertices()) {
+		OVITO_ASSERT(startNode.edges() != nullptr);
+		OVITO_ASSERT(startNode.burgersSearchStruct == nullptr);
 
 		// Update progress indicator.
 		if(!promise.setProgressValueIntermittent(progressCounter++))
@@ -238,12 +238,12 @@ bool DislocationTracer::findPrimarySegments(int maxBurgersCircuitSize, PromiseSt
 		start->recursiveDepth = 0;
 		start->nextToProcess = nullptr;
 		start->tm.setIdentity();
-		start->node = startNode;
-		startNode->burgersSearchStruct = start;
+		start->node = &startNode;
+		startNode.burgersSearchStruct = start;
 
 		// This is the cluster we work in.
-		OVITO_ASSERT(startNode->edges()->clusterTransition);
-		Cluster* cluster = startNode->edges()->clusterTransition->cluster1;
+		OVITO_ASSERT(startNode.edges()->clusterTransition);
+		Cluster* cluster = startNode.edges()->clusterTransition->cluster1;
 		OVITO_ASSERT(cluster && cluster->id != 0);
 
 		bool foundBurgersCircuit = false;

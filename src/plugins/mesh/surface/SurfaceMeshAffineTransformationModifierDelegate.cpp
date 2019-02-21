@@ -46,10 +46,15 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 	
 	for(const DataObject* obj : state.data()->objects()) {
 		if(const SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
+			// Create a copy of the SurfaceMesh.
 			SurfaceMesh* newSurface = state.makeMutable(existingSurface);
-			// Apply transformation to the vertices of the surface mesh.
-			for(HalfEdgeMesh<>::Vertex* vertex : newSurface->modifiableStorage()->vertices())
-				vertex->pos() = tm * vertex->pos();
+			// Create a copy of the vertices sub-object (no need to copy the topology when only moving vertices).
+			SurfaceMeshVertices* newVertices = newSurface->makeVerticesMutable();
+			// Create a copy of the vertex coordinates array.
+			PropertyObject* positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
+			// Apply transformation to the vertices coordinates.
+			for(Point3& p : positionProperty->point3Range())
+				p = tm * p;
 			// Apply transformation to the cutting planes attached to the surface mesh.
 			QVector<Plane3> cuttingPlanes = newSurface->cuttingPlanes();
 			for(Plane3& plane : cuttingPlanes)

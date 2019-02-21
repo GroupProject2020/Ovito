@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,7 +34,7 @@ struct DislocationNode;		// Defined in DislocationNetwork.h
  * A closed circuit on the interface mesh that consists of a sequence of mesh edges.
  *
  * During line tracing, every DislocationNode is associated with a circuit that
- * marks the beginning/end of the dislocation segment on the interface mesh.
+ * marks the beginning or end of the dislocation line on the interface mesh.
  */
 struct BurgersCircuit
 {
@@ -50,7 +50,7 @@ struct BurgersCircuit
 	std::vector<InterfaceMesh::Edge*> segmentMeshCap;
 
 	/// Number of points in the segment's line array that are considered preliminary.
-	size_t numPreliminaryPoints;
+	size_t numPreliminaryPoints = 0;
 
 	/// The dislocation node this circuit belongs to.
 	DislocationNode* dislocationNode;
@@ -62,10 +62,7 @@ struct BurgersCircuit
 	bool isCompletelyBlocked;
 
 	/// Flag that indicates that this end of a segment does not merge into a junction.
-	bool isDangling;
-
-	/// Constructor.
-	BurgersCircuit() : numPreliminaryPoints(0), isDangling(true) {}
+	bool isDangling = true;
 
 	/// Calculates the Burgers vector of the dislocation enclosed by the circuit by summing up the
 	/// ideal vectors of the interface mesh edges that make up the circuit.
@@ -145,6 +142,3 @@ struct BurgersCircuit
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-
-

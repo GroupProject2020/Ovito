@@ -26,6 +26,7 @@
 #include <plugins/particles/objects/BondsObject.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
+#include <plugins/mesh/surface/SurfaceMeshVertices.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 
@@ -98,9 +99,12 @@ private:
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 	
-		/// Returns the generated mesh.
-		const std::shared_ptr<HalfEdgeMesh<>>& mesh() const { return _mesh; }
+		/// Returns the generated surface mesh topology.
+		const HalfEdgeMeshPtr& mesh() const { return _mesh; }
 				
+	    /// Returns the coordinates of the generated surface mesh vertices.
+    	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
+
 	private:
 
 		/// Constructs the convex hull from a set of points and adds the resulting polyhedron to the mesh.
@@ -114,7 +118,12 @@ private:
 		ConstPropertyPtr _bondTopology;
 		ConstPropertyPtr _bondPeriodicImages;
 		const SimulationCell _simCell;
-		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
+
+		/// The topology of the output mesh.
+		HalfEdgeMeshPtr _mesh = std::make_shared<HalfEdgeMesh>();
+
+		/// The vertex coordinates of the output mesh.
+    	PropertyPtr _vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
 	};
 
 	/// The vis element for rendering the polyhedra.

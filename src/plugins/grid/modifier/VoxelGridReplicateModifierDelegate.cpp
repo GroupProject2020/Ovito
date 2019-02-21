@@ -78,7 +78,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, Pip
 	simCell.column(0) *= (newImages.sizeX() + 1);
 	simCell.column(1) *= (newImages.sizeY() + 1);
 	simCell.column(2) *= (newImages.sizeZ() + 1);
-	newVoxelGrid->domain()->setCellMatrix(simCell);
+	newVoxelGrid->mutableDomain()->setCellMatrix(simCell);
 
 	// Replicate voxel property data.
 	newVoxelGrid->makePropertiesMutable();

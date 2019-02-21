@@ -23,8 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/data/Microstructure.h>
-#include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -76,17 +75,15 @@ private:
 	public:
 
 		/// Constructor.
-		SimplifyMicrostructureEngine(ConstMicrostructurePtr microstructure, const SimulationCell& simCell, int smoothingLevel,
-                FloatType kPB, FloatType lambda) :
-			_inputMicrostructure(std::move(microstructure)),
-            _cell(simCell),
+		SimplifyMicrostructureEngine(Microstructure microstructure, int smoothingLevel, FloatType kPB, FloatType lambda) :
+			_microstructure(std::move(microstructure)),
             _smoothingLevel(smoothingLevel),
             _kPB(kPB),
             _lambda(lambda) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
-			_inputMicrostructure.reset();
+//			_inputMicrostructure.reset();
 			ComputeEngine::cleanup();
 		}
 
@@ -97,29 +94,21 @@ private:
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 		/// Returns the output microstructure.
-		const MicrostructurePtr& microstructure() const { return _microstructure; }
+		const Microstructure& microstructure() const { return _microstructure; }
 
 		/// Returns the input simulation cell.
-		const SimulationCell& cell() const { return _cell; }
+		const SimulationCell& cell() const { return microstructure().cell(); }
 
 	private:
 
         /// Performs one iteration of the smoothing algorithm.
         void smoothMeshIteration(FloatType prefactor);
 
-        /// Returns the spatial vector corresponding to an half-edge of the microstructure mesh.
-        Vector3 edgeVector(Microstructure::Edge* edge) const { 
-            return cell().wrapVector(edge->vertex2()->pos() - edge->vertex1()->pos());
-        }
-
-		ConstMicrostructurePtr _inputMicrostructure;
-		const SimulationCell _cell;
+		/// The microstructure modified by the modifier.
+		Microstructure _microstructure;
         int _smoothingLevel;
         FloatType _kPB;
         FloatType _lambda;
-
-		/// The output microstructure produced by the modifier.
-		MicrostructurePtr _microstructure;
 	};
 
 	/// Controls the number of smoothing iterations to perform.

@@ -159,18 +159,21 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
 
-	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], _simCell.pbcFlags(), fieldData, property()->componentCount(), *mesh(), false);
+	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], _simCell.pbcFlags(), fieldData, property()->componentCount(), false);
 	if(!mc.generateIsosurface(_isolevel, *task()))
 		return;
-	setIsCompletelySolid(mc.isCompletelySolid());
+	_mesh = mc.mesh();
+	_vertexCoords = mc.vertexCoords();
+	_isSpaceFilling = mc.isSpaceFilling();
 
 	// Transform mesh vertices from orthogonal grid space to world space.
 	const AffineTransformation tm = _simCell.matrix() * Matrix3(
 		FloatType(1) / (_gridShape[0] - (_simCell.pbcFlags()[0]?0:1)), 0, 0, 
 		0, FloatType(1) / (_gridShape[1] - (_simCell.pbcFlags()[1]?0:1)), 0, 
 		0, 0, FloatType(1) / (_gridShape[2] - (_simCell.pbcFlags()[2]?0:1)));
-	for(HalfEdgeMesh<>::Vertex* vertex : mesh()->vertices())
-		vertex->setPos(tm * vertex->pos());
+	for(Point3& p : vertexCoords()->point3Range()) {
+		p = tm * p;
+	}
 
 	// Flip surface orientation if cell matrix is a mirror transformation.
 	if(tm.determinant() < 0) {
@@ -210,11 +213,12 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
 
 	// Look up the input grid.
-	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {		
-		// Create the output data object.
+	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {
+		// Create the output mesh data object.
 		SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("isosurface"), modApp, tr("Isosurface"));
-		meshObj->setStorage(mesh());
-		meshObj->setIsCompletelySolid(isCompletelySolid());
+		meshObj->setTopology(mesh());
+		meshObj->vertices()->createProperty(vertexCoords());
+		meshObj->setSpaceFillingRegion(isSpaceFilling() ? 1 : 0);
 		meshObj->setDomain(voxelGrid->domain());
 		meshObj->setVisElement(modifier->surfaceMeshVis());
 	}

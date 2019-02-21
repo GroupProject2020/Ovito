@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -64,11 +64,11 @@ public:
 	/// Sets the transparency of the surface cap mesh.
 	void setCapTransparency(FloatType transparency) { if(capTransparencyController()) capTransparencyController()->setCurrentFloatValue(transparency); }
 
-	/// Generates the final triangle mesh, which will be rendered.
-	static bool buildSurfaceMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
+	/// Generates the triangle mesh from the periodic surface mesh, which will be rendered.
+	static bool buildSurfaceTriangleMesh(const HalfEdgeMesh& input, const PropertyStorage& vertexCoords, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
 
-	/// Generates the triangle mesh for the PBC cap.
-	static void buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
+	/// Generates the cap polygons where the periodic surface mesh intersects the periodic cell boundaries.
+	static void buildCapTriangleMesh(const HalfEdgeMesh& input, const PropertyStorage& vertexCoords, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
 
 protected:
 
@@ -86,20 +86,27 @@ protected:
 	public:
 
 		/// Constructor.
-		PrepareSurfaceEngine(std::shared_ptr<HalfEdgeMesh<>> mesh, const SimulationCell& simCell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, bool smoothShading) :
-			_inputMesh(std::move(mesh)), _simCell(simCell), _isCompletelySolid(isCompletelySolid), _reverseOrientation(reverseOrientation), _cuttingPlanes(cuttingPlanes), _smoothShading(smoothShading) {}
+		PrepareSurfaceEngine(ConstHalfEdgeMeshPtr mesh, ConstPropertyPtr vertexCoords, const SimulationCell& simCell, int spaceFillingRegion, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, bool smoothShading) :
+			_inputMesh(std::move(mesh)), 
+			_vertexCoords(std::move(vertexCoords)), 
+			_simCell(simCell), 
+			_spaceFillingRegion(spaceFillingRegion), 
+			_reverseOrientation(reverseOrientation), 
+			_cuttingPlanes(cuttingPlanes), 
+			_smoothShading(smoothShading) {}
 
 		/// Computes the results.
 		virtual void perform() override;
 
 	private:
 
-		std::shared_ptr<HalfEdgeMesh<>> _inputMesh;
-		SimulationCell _simCell;
-		bool _isCompletelySolid;
-		bool _reverseOrientation;
-		bool _smoothShading;
-		QVector<Plane3> _cuttingPlanes;
+		ConstHalfEdgeMeshPtr _inputMesh; 	///< The topology of the input mesh.
+		ConstPropertyPtr _vertexCoords; 	///< The vertex coordinates of the input mesh.
+		SimulationCell _simCell; 			///< The input simulation cell.
+		int _spaceFillingRegion;			///< The index of the space-filling volumetric region.
+		bool _reverseOrientation;			///< Flag for inside-out display of the mesh.
+		bool _smoothShading;				///< Flag for interpolated-normal shading
+		QVector<Plane3> _cuttingPlanes;		///< List of cutting planes at which the mesh should be truncated.
 	};
 
 private:
@@ -108,7 +115,7 @@ private:
 	static bool splitFace(TriMesh& output, TriMeshFace& face, int oldVertexCount, std::vector<Point3>& newVertices, std::map<std::pair<int,int>,std::pair<int,int>>& newVertexLookupMap, const SimulationCell& cell, size_t dim);
 
 	/// Traces the closed contour of the surface-boundary intersection.
-	static std::vector<Point2> traceContour(HalfEdgeMesh<>::Edge* firstEdge, const std::vector<Point3>& reducedPos, const SimulationCell& cell, size_t dim);
+	static std::vector<Point2> traceContour(const HalfEdgeMesh& inputMesh, HalfEdgeMesh::edge_index firstEdge, const std::vector<Point3>& reducedPos, std::vector<bool>& visitedFaces, const SimulationCell& cell, size_t dim);
 
 	/// Clips a 2d contour at a periodic boundary.
 	static void clipContour(std::vector<Point2>& input, std::array<bool,2> periodic, std::vector<std::vector<Point2>>& openContours, std::vector<std::vector<Point2>>& closedContours);

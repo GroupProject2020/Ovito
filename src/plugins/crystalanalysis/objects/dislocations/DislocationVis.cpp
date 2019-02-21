@@ -99,6 +99,7 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 		}
 	}
 	else if(const MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(periodicDomainObj)) {
+#if 0
 		// Extract the dislocation segments from the microstructure object.
 		size_t segmentIndex = 0;
 		std::deque<Point3> line(2);
@@ -125,6 +126,7 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 			}
 			segmentIndex++;
 		}
+#endif
 	}
 
 	// Create output RenderableDislocationLines object.
@@ -696,25 +698,33 @@ QString DislocationPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 		}
 	}
 	else if(microstructureObj()) {
-		if(segmentIndex >= 0 && segmentIndex < microstructureObj()->storage()->faces().size()) {
-			const Microstructure::Face* face = microstructureObj()->storage()->faces()[segmentIndex];
+#if 0
+		const PropertyObject* burgersVectorProperty = microstructureObj()->faces()->getProperty(SurfaceMeshFaces::BurgersVectorProperty);
+		const PropertyObject* faceRegionProperty = microstructureObj()->faces()->getProperty(SurfaceMeshFaces::RegionProperty);
+		const PropertyObject* regionOrientationProperty = microstructureObj()->regions()->getProperty(SurfaceMeshRegions::OrientationProperty);
+		if(burgersVectorProperty && faceRegionProperty && segmentIndex >= 0 && segmentIndex < burgersVectorProperty->size()) {
 			StructurePattern* structure = nullptr;
-			if(patternCatalog() != nullptr) {
-				structure = patternCatalog()->structureById(face->cluster()->structure);
-			}
-			QString formattedBurgersVector = DislocationVis::formatBurgersVector(face->burgersVector(), structure);
-			str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
-			Vector3 transformedVector = face->cluster()->orientation * face->burgersVector();
-			str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
-					.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
-					.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
-					.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
-			str += tr(" | Cluster Id: %1").arg(face->cluster()->id);
-			str += tr(" | Dislocation Id: %1").arg(segmentIndex);
-			if(structure) {
-				str += tr(" | Crystal structure: %1").arg(structure->name());
+			int region = faceRegionProperty->getInt(segmentIndex);
+			if(Cluster* cluster = microstructureObj()->clusterGraph()->findCluster(region)) {
+				if(patternCatalog()) {
+					structure = patternCatalog()->structureById(cluster->structure);
+				}
+				const Vector3& burgersVector = burgersVectorProperty->getVector3(segmentIndex);
+				QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVector, structure);
+				str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
+				Vector3 transformedVector = cluster->orientation * burgersVector;
+				str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
+						.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
+						.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
+						.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
+				str += tr(" | Cluster Id: %1").arg(cluster->id);
+				str += tr(" | Dislocation Id: %1").arg(segmentIndex);
+				if(structure) {
+					str += tr(" | Crystal structure: %1").arg(structure->name());
+				}
 			}
 		}
+#endif
 	}
 	return str;
 }

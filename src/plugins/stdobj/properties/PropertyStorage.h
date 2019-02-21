@@ -66,6 +66,21 @@ public:
 	};
 
 public:
+	
+	/// Helper method for implementing copy-on-write semantics.
+	/// Checks if the property storage referred to by the shared_ptr is exclusive owned.
+	/// If yes, it is returned as is. Otherwise, a copy of the data storage is made,
+	/// stored in the shared_ptr, and returned by the function.
+	static const std::shared_ptr<PropertyStorage>& makeMutable(std::shared_ptr<PropertyStorage>& propertyPtr) {
+		OVITO_ASSERT(propertyPtr);
+		OVITO_ASSERT(propertyPtr.use_count() >= 1);
+		if(propertyPtr.use_count() > 1)
+			propertyPtr = std::make_shared<PropertyStorage>(*propertyPtr);
+		OVITO_ASSERT(propertyPtr.use_count() == 1);
+		return propertyPtr;
+	}
+
+public:
 
 	/// \brief Default constructor that creates an empty, uninitialized storage.
 	PropertyStorage() = default;
@@ -99,6 +114,22 @@ public:
 	///                     This also determines whether newly allocated memory is initialized to zero.
 	void resize(size_t newSize, bool preserveData);
 
+	/// \brief Grows the number of data elements while preserving the exiting data.
+	/// Newly added elements are *not* initialized to zero by this method. 
+	void grow(size_t numAdditionalElements) {
+		size_t newSize = _numElements + numAdditionalElements;
+		OVITO_ASSERT(newSize >= _numElements);
+		if(newSize > _capacity)
+			growCapacity(newSize);
+		_numElements = newSize;		
+	}
+
+	/// \brief Reduces the number of data elements while preserving the exiting data.
+	void truncate(size_t numElementsToRemove) {
+		OVITO_ASSERT(numElementsToRemove <= _numElements);
+		_numElements -= numElementsToRemove;
+	}
+
 	/// \brief Returns the data type of the property.
 	/// \return The identifier of the data type used for the elements stored in
 	///         this property storage according to the Qt meta type system.
@@ -130,6 +161,13 @@ public:
 	/// \brief Returns a read-only pointer to the raw elements stored in this property object.
 	const void* constData() const {
 		return _data.get();
+	}
+
+	/// \brief Returns a read-only pointer to the first element stored in this object.
+	template<typename T>
+	const T* constDataGeneric() const {
+		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
+		return reinterpret_cast<const T*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first integer element stored in this object.
@@ -286,6 +324,13 @@ public:
 		return _data.get();
 	}
 
+	/// \brief Returns a read-write pointer to the first element stored in this object.
+	template<typename T>
+	T* dataGeneric() {
+		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
+		return reinterpret_cast<T*>(data());
+	}
+
 	/// \brief Returns a read-write pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type integer.
 	int* dataInt() {
@@ -435,6 +480,16 @@ public:
 		return boost::make_iterator_range(dataQuaternion(), dataQuaternion() + size());
 	}
 
+	/// \brief Returns an element at the given index.
+	template<typename T>
+	const T& getValue(size_t index) const {
+		OVITO_ASSERT(index < size());
+		OVITO_ASSERT(componentCount() == 1);
+		OVITO_ASSERT(dataTypeSize() == sizeof(T));
+		OVITO_ASSERT(stride() == sizeof(T));
+		return constDataGeneric<T>()[index];
+	}
+
 	/// \brief Returns an integer element at the given index (if this is an integer property).
 	int getInt(size_t index) const {
 		OVITO_ASSERT(index < size() && componentCount() == 1);
@@ -523,6 +578,13 @@ public:
 	const Quaternion& getQuaternion(size_t index) const {
 		OVITO_ASSERT(index < size());
 		return constDataQuaternion()[index];
+	}
+
+	/// Sets the value of an element at the given index.
+	template<typename T>
+	void setValue(size_t index, const T& newValue) {
+		OVITO_ASSERT(index < size());
+		dataGeneric<T>()[index] = newValue;
 	}
 
 	/// Sets the value of an integer element at the given index (if this is an integer property).
@@ -682,6 +744,9 @@ public:
 
 protected:
 
+	/// Grows the storage buffer to accomodate at least the given number of data elements.
+	void growCapacity(size_t newSize);
+
 	/// The type of this property.
 	int _type = 0;
 	
@@ -697,6 +762,9 @@ protected:
 	/// The number of elements in the property storage.
 	size_t _numElements = 0;
 
+	/// The capacity of the allocated buffer.
+	size_t _capacity = 0;
+
 	/// The number of bytes per element.
 	size_t _stride = 0;
 
@@ -706,7 +774,7 @@ protected:
 	/// The names of the vector components if this property consists of more than one value per element.
 	QStringList _componentNames;
 
-	/// The internal data array that holds the elements.
+	/// The internal memory buffer holding the data elements.
 	std::unique_ptr<uint8_t[]> _data;
 };
 

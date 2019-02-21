@@ -410,35 +410,39 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 		else if(stream.lineStartsWith("DEFECT_MESH_VERTICES ")) {
 			// Read defect mesh vertices.
 			int numDefectMeshVertices;
-			if(sscanf(stream.line(), "DEFECT_MESH_VERTICES %i", &numDefectMeshVertices) != 1)
+			if(sscanf(stream.line(), "DEFECT_MESH_VERTICES %i", &numDefectMeshVertices) != 1 || numDefectMeshVertices < 0)
 				throw Exception(tr("Failed to parse file. Invalid number of defect mesh vertices in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading defect surface"));
 			setProgressMaximum(numDefectMeshVertices);
-			auto defectSurface = frameData->defectSurface();
-			defectSurface->reserveVertices(numDefectMeshVertices);
+			HalfEdgeMeshPtr defectSurface = std::make_shared<HalfEdgeMesh>();
+			PropertyPtr vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(numDefectMeshVertices, SurfaceMeshVertices::PositionProperty, false);
+			defectSurface->createVertices(numDefectMeshVertices);
 			for(int index = 0; index < numDefectMeshVertices; index++) {
 				if(!setProgressValueIntermittent(index)) return {};
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				defectSurface->createVertex(p);
+				vertexCoords->setPoint3(index, p);
 			}
+			frameData->setDefectSurface(std::move(defectSurface), std::move(vertexCoords));
 		}
-		else if(stream.lineStartsWith("DEFECT_MESH_FACETS ")) {
+		else if(stream.lineStartsWith("DEFECT_MESH_FACETS ") && frameData->defectSurface()) {
 			// Read defect mesh facets.
 			int numDefectMeshFacets;
-			if(sscanf(stream.line(), "DEFECT_MESH_FACETS %i", &numDefectMeshFacets) != 1)
+			if(sscanf(stream.line(), "DEFECT_MESH_FACETS %i", &numDefectMeshFacets) != 1 || numDefectMeshFacets < 0)
 				throw Exception(tr("Failed to parse file. Invalid number of defect mesh facets in line %1.").arg(stream.lineNumber()));
 			setProgressMaximum(numDefectMeshFacets * 2);
 			auto defectSurface = frameData->defectSurface();
-			defectSurface->reserveFaces(numDefectMeshFacets);
 			for(int index = 0; index < numDefectMeshFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return {};
 				int v[3];
-				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
+				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3
+					 	|| v[0] < 0 || v[0] >= defectSurface->vertexCount()
+					  	|| v[1] < 0 || v[1] >= defectSurface->vertexCount()
+					   	|| v[2] < 0 || v[2] >= defectSurface->vertexCount())
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
-				defectSurface->createFace({ defectSurface->vertex(v[0]), defectSurface->vertex(v[1]), defectSurface->vertex(v[2]) });
+				defectSurface->createFace({ v[0], v[1], v[2] });
 			}
 
 			// Read facet adjacency information.
@@ -448,14 +452,13 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
 					throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
-				HalfEdgeMesh<>::Edge* edge = defectSurface->face(index)->edges();
-				for(int i = 0; i < 3; i++, edge = edge->nextFaceEdge()) {
-					OVITO_CHECK_POINTER(edge);
-					if(edge->oppositeEdge() != nullptr) continue;
-					HalfEdgeMesh<>::Face* oppositeFace = defectSurface->face(v[i]);
-					HalfEdgeMesh<>::Edge* oppositeEdge = oppositeFace->findEdge(edge->vertex2(), edge->vertex1());
-					OVITO_ASSERT(oppositeEdge != nullptr);
-					edge->linkToOppositeEdge(oppositeEdge);
+				HalfEdgeMesh::edge_index edge = defectSurface->firstFaceEdge(index);
+				for(int i = 0; i < 3; i++, edge = defectSurface->nextFaceEdge(edge)) {
+					if(defectSurface->hasOppositeEdge(edge)) continue;
+					HalfEdgeMesh::edge_index oppositeEdge = defectSurface->findEdge(v[i], defectSurface->vertex2(edge), defectSurface->vertex1(edge));
+					if(oppositeEdge == HalfEdgeMesh::InvalidIndex)
+						throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
+					defectSurface->linkOppositeEdges(edge, oppositeEdge);
 				}
 			}
 		}
@@ -509,7 +512,8 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 			output->addObject(defectSurfaceObj);
 		}
 		defectSurfaceObj->setDomain(output->getObject<SimulationCellObject>());
-		defectSurfaceObj->setStorage(defectSurface());
+		defectSurfaceObj->setTopology(defectSurface());
+		defectSurfaceObj->vertices()->createProperty(_defectSurfaceVerts);
 	}
 
 	// Insert pattern catalog.

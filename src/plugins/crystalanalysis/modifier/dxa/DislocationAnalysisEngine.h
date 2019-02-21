@@ -48,7 +48,7 @@ public:
 			std::vector<Matrix3> preferredCrystalOrientations,
 			bool onlyPerfectDislocations, int defectMeshSmoothingLevel,
 			int lineSmoothingLevel, FloatType linePointInterval,
-			bool outputInterfaceMesh);
+			bool doOutputInterfaceMesh);
 
 	/// This method is called by the system after the computation was successfully completed.
 	virtual void cleanup() override {
@@ -68,7 +68,7 @@ public:
 	virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Returns the computed defect mesh.
-	const SurfaceMeshPtr& defectMesh() { return _defectMesh; }
+	const HalfEdgeMeshPtr& defectMesh() { return _defectMesh; }
 
 	/// Returns the array of atom cluster IDs.
 	const PropertyPtr& atomClusters() const { return _atomClusters; }
@@ -82,14 +82,11 @@ public:
 	/// Sets the created cluster graph.
 	void setClusterGraph(std::shared_ptr<ClusterGraph> graph) { _clusterGraph = std::move(graph); }
 	
-	/// Indicates whether the entire simulation cell is part of the 'good' crystal region.
-	bool isGoodEverywhere() const { return _isGoodEverywhere; }
-	
 	/// Indicates whether the entire simulation cell is part of the 'bad' crystal region.
 	bool isBadEverywhere() const { return _isBadEverywhere; }
 
 	/// Returns the defect interface.
-	const SurfaceMeshPtr& outputInterfaceMesh() const { return _outputInterfaceMesh; }
+	const HalfEdgeMeshPtr& outputInterfaceMesh() const { return _outputInterfaceMesh; }
 
 	/// Returns the extracted dislocations.
 	const std::shared_ptr<DislocationNetwork>& dislocationNetwork() const { return _dislocationNetwork; }
@@ -123,11 +120,20 @@ private:
 	std::unique_ptr<DislocationTracer> _dislocationTracer;
 	ConstPropertyPtr _crystalClusters;	
 
-	/// This stores the cached defect mesh produced by the modifier.
-	SurfaceMeshPtr _defectMesh = std::make_shared<HalfEdgeMesh<>>();
-	
-	/// This stores the cached defect interface produced by the modifier.
-	SurfaceMeshPtr _outputInterfaceMesh;
+	/// This stores the defect mesh produced by the modifier.
+	HalfEdgeMeshPtr _defectMesh = std::make_shared<HalfEdgeMesh>();
+
+	/// Stores the vertex coordinates of the defect mesh.
+	PropertyPtr _defectMeshVerts = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
+
+	/// Indicates whether the engine should output the generated interface mesh to the pipeline for debugging purposes. 
+	bool _doOutputInterfaceMesh;
+
+	/// This stores the interface mesh produced by the modifier for visualization purposes.
+	HalfEdgeMeshPtr _outputInterfaceMesh;
+
+	/// Stores the vertex coordinates of the interface output mesh.
+	PropertyPtr _outputInterfaceMeshVerts;
 
 	/// This stores the cached atom-to-cluster assignments computed by the modifier.
 	PropertyPtr _atomClusters;
@@ -137,9 +143,6 @@ private:
 
 	/// This stores the cached dislocations computed by the modifier.
 	std::shared_ptr<DislocationNetwork> _dislocationNetwork;
-
-	/// Indicates that the entire simulation cell is part of the 'good' crystal region.
-	bool _isGoodEverywhere;
 
 	/// Indicates that the entire simulation cell is part of the 'bad' crystal region.
 	bool _isBadEverywhere;
@@ -151,5 +154,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

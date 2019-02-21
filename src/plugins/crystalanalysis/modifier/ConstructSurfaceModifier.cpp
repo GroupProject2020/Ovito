@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -152,7 +152,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	};
 
 	//  This callback function is called for every surface facet created by the manifold construction helper. 
-	auto prepareMeshFace = [this](HalfEdgeMesh<>::Face* face, const std::array<size_t,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
+	auto prepareMeshFace = [this](HalfEdgeMesh::face_index face, const std::array<size_t,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
 		// Mark vertex atoms as belonging to the surface.
 		if(surfaceParticleSelection()) {
 			for(size_t vi : vertexIndices) {
@@ -162,7 +162,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		}
 	};
 
-	ManifoldConstructionHelper<HalfEdgeMesh<>, true> manifoldConstructor(tessellation, *mesh(), alpha, *positions());
+	ManifoldConstructionHelper<true> manifoldConstructor(tessellation, *mesh(), *vertexCoords(), alpha, *positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), prepareMeshFace))
 		return;
 	setIsCompletelySolid(manifoldConstructor.spaceFillingRegion() == 1);
@@ -170,17 +170,25 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	task()->nextProgressSubStep();
 
 	// Make sure every mesh vertex is only part of one surface manifold.
-	mesh()->duplicateSharedVertices();
+	mesh()->makeManifold([this](HalfEdgeMesh::vertex_index copiedVertex) {
+		vertexCoords()->grow(1);
+		vertexCoords()->setPoint3(vertexCoords()->size() - 1, vertexCoords()->getPoint3(copiedVertex));
+	});
 
 	task()->nextProgressSubStep();
-	if(!SurfaceMesh::smoothMesh(*mesh(), _simCell, _smoothingLevel, *task()))
+	if(!SurfaceMesh::smoothMesh(*mesh(), *vertexCoords(), _simCell, _smoothingLevel, *task()))
 		return;
 
-	// Compute surface area.
-	for(const HalfEdgeMesh<>::Face* facet : mesh()->faces()) {
+	// Compute total surface area.
+	for(HalfEdgeMesh::edge_index edge : mesh()->firstFaceEdges()) {
 		if(task()->isCanceled()) return;
-		Vector3 e1 = _simCell.wrapVector(facet->edges()->vertex1()->pos() - facet->edges()->vertex2()->pos());
-		Vector3 e2 = _simCell.wrapVector(facet->edges()->prevFaceEdge()->vertex1()->pos() - facet->edges()->vertex2()->pos());
+		const Point3& v1 = vertexCoords()->getPoint3(mesh()->vertex2(edge));
+		edge = mesh()->nextFaceEdge(edge);
+		const Point3& v2 = vertexCoords()->getPoint3(mesh()->vertex2(edge));
+		edge = mesh()->nextFaceEdge(edge);
+		const Point3& v3 = vertexCoords()->getPoint3(mesh()->vertex2(edge));
+		Vector3 e1 = _simCell.wrapVector(v2 - v1);
+		Vector3 e2 = _simCell.wrapVector(v3 - v1);
 		addSurfaceArea(e1.cross(e2).length() / 2);
 	}
 
@@ -196,10 +204,11 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint tim
 
 	// Create the output data object.
 	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("surface"), modApp, tr("Surface"));
-	meshObj->setStorage(mesh());
-	meshObj->setIsCompletelySolid(isCompletelySolid());
+	meshObj->setTopology(mesh());
+	meshObj->vertices()->createProperty(vertexCoords());
+	meshObj->setSpaceFillingRegion(isCompletelySolid() ? 1 : 0);
 	meshObj->setDomain(state.getObject<SimulationCellObject>());
-	meshObj->addVisElement(modifier->surfaceMeshVis());
+	meshObj->setVisElement(modifier->surfaceMeshVis());
 	
 	if(surfaceParticleSelection()) {
 		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();

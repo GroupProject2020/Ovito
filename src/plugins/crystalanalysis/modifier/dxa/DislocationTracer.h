@@ -57,6 +57,9 @@ public:
 	/// Returns the interface mesh that separates the crystal defects from the perfect regions.
 	const InterfaceMesh& mesh() const { return _mesh; }
 
+	/// Returns the interface mesh that separates the crystal defects from the perfect regions.
+	InterfaceMesh& mesh() { return _mesh; }
+
 	/// Returns a reference to the cluster graph.
 	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _clusterGraph; }
 
@@ -148,5 +151,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

@@ -175,13 +175,13 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 	}
 
 	// Select the dislocation network to be exported.
-	// Optionally, convert a Microstructure object to a DislocationNetwork object for export.
+	// Optionally, convert the selected Microstructure object to a DislocationNetwork object for export.
 	std::shared_ptr<DislocationNetwork> dislocations;
 	if(dislocationObj) {
 		dislocations = dislocationObj->storage();
 	}
 	else if(microstructureObj) {
-		dislocations = std::make_shared<DislocationNetwork>(*microstructureObj->storage(), microstructureObj->domain()->data());
+		dislocations = std::make_shared<DislocationNetwork>(Microstructure(microstructureObj));
 	}
 
 	if(dislocations) {
@@ -229,36 +229,36 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 	}
 
 	if(defectMesh) {
+		defectMesh->verifyMeshIntegrity();
+		const ConstPropertyPtr& vertexCoords = defectMesh->vertices()->getPropertyStorage(SurfaceMeshVertices::PositionProperty);
+		ConstHalfEdgeMeshPtr topology = defectMesh->topology();
+
 		// Serialize list of vertices.
-		textStream() << "DEFECT_MESH_VERTICES " << defectMesh->storage()->vertices().size() << "\n";
-		for(const HalfEdgeMesh<>::Vertex* vertex : defectMesh->storage()->vertices()) {
-
-			// Make sure indices have been assigned to vertices.
-			OVITO_ASSERT(vertex->index() >= 0 && vertex->index() < defectMesh->storage()->vertices().size());
-
-			textStream() << vertex->pos().x() << " " << vertex->pos().y() << " " << vertex->pos().z() << "\n";
+		textStream() << "DEFECT_MESH_VERTICES " << vertexCoords->size() << "\n";
+		for(const Point3& vertex : vertexCoords->constPoint3Range()) {
+			textStream() << vertex.x() << " " << vertex.y() << " " << vertex.z() << "\n";
 		}
 
 		// Serialize list of facets.
-		textStream() << "DEFECT_MESH_FACETS " << defectMesh->storage()->faces().size() << "\n";
-		for(const HalfEdgeMesh<>::Face* facet : defectMesh->storage()->faces()) {
-			const HalfEdgeMesh<>::Edge* e = facet->edges();
+		textStream() << "DEFECT_MESH_FACETS " << topology->faceCount() << "\n";
+		for(HalfEdgeMesh::face_index face = 0; face < topology->faceCount(); face++) {
+			HalfEdgeMesh::edge_index e = topology->firstFaceEdge(face);
 			do {
-				textStream() << e->vertex1()->index() << " ";
-				e = e->nextFaceEdge();
+				textStream() << topology->vertex1(e) << " ";
+				e = topology->nextFaceEdge(e);
 			}
-			while(e != facet->edges());
+			while(e != topology->firstFaceEdge(face));
 			textStream() << "\n";
 		}
 
-		// Serialize facet adjacency information.
-		for(const HalfEdgeMesh<>::Face* facet : defectMesh->storage()->faces()) {
-			const HalfEdgeMesh<>::Edge* e = facet->edges();
+		// Serialize face adjacency information.
+		for(HalfEdgeMesh::face_index face = 0; face < topology->faceCount(); face++) {
+			HalfEdgeMesh::edge_index e = topology->firstFaceEdge(face);
 			do {
-				textStream() << e->oppositeEdge()->face()->index() << " ";
-				e = e->nextFaceEdge();
+				textStream() << topology->adjacentFace(topology->oppositeEdge(e)) << " ";
+				e = topology->nextFaceEdge(e);
 			}
-			while(e != facet->edges());
+			while(e != topology->firstFaceEdge(face));
 			textStream() << "\n";
 		}
 	}

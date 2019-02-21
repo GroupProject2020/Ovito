@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -89,15 +89,23 @@ Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(TimePoint time, cons
 	if(!surfaceMeshObj)
 		return std::move(flowState);
 
+	// Make sure the surface mesh is ok.
+	surfaceMeshObj->verifyMeshIntegrity();
+
 	// Get the simulation cell.
 	const SimulationCellObject* cellObject = surfaceMeshObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
 
 	// Create compute engine.
-	auto engine = std::make_shared<PrepareSurfaceEngine>(surfaceMeshObj->storage(), cellObject->data(), 
-		surfaceMeshObj->isCompletelySolid(), reverseOrientation(), 
-		surfaceMeshObj->cuttingPlanes(), smoothShading());
+	auto engine = std::make_shared<PrepareSurfaceEngine>(
+		surfaceMeshObj->topology(),
+		surfaceMeshObj->vertices()->getPropertyStorage(SurfaceMeshVertices::PositionProperty),
+		cellObject->data(), 
+		surfaceMeshObj->spaceFillingRegion(), 
+		reverseOrientation(), 
+		surfaceMeshObj->cuttingPlanes(), 
+		smoothShading());
 
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(engine)
@@ -116,18 +124,21 @@ Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(TimePoint time, cons
 ******************************************************************************/
 void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 {
+	OVITO_ASSERT(_inputMesh);
+	OVITO_ASSERT(_vertexCoords);
+
 	setProgressText(tr("Preparing surface mesh for display"));
 
 	TriMesh surfaceMesh;
 	TriMesh capPolygonsMesh;
 
-	if(!buildSurfaceMesh(*_inputMesh, _simCell, _reverseOrientation, _cuttingPlanes, surfaceMesh, this) && !isCanceled())
+	if(!buildSurfaceTriangleMesh(*_inputMesh, *_vertexCoords, _simCell, _reverseOrientation, _cuttingPlanes, surfaceMesh, this) && !isCanceled())
 		throw Exception(tr("Failed to generate non-periodic mesh. Periodic domain might be too small."));
 
 	if(isCanceled())
 		return;
 
-	buildCapMesh(*_inputMesh, _simCell, _isCompletelySolid, _reverseOrientation, _cuttingPlanes, capPolygonsMesh, this);
+	buildCapTriangleMesh(*_inputMesh, *_vertexCoords, _simCell, _spaceFillingRegion != 0, _reverseOrientation, _cuttingPlanes, capPolygonsMesh, this);
 
 	if(_smoothShading) {
 		// Assign smoothing group to faces to interpolate normals.
@@ -146,7 +157,7 @@ Box3 SurfaceMeshVis::boundingBox(TimePoint time, const std::vector<const DataObj
 	Box3 bb;
 
 	// Compute mesh bounding box.
-	// Requires that we have already transformed the periodic SurfaceMesh into a non-periodic RenderableSurfaceMesh.
+	// Requires that the periodic SurfaceMesh has already been transformed into a non-periodic RenderableSurfaceMesh.
 	if(const RenderableSurfaceMesh* meshObj = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
 		bb.addBox(meshObj->capPolygonsMesh().boundingBox());
@@ -232,9 +243,9 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 }
 
 /******************************************************************************
-* Generates the final triangle mesh, which will be rendered.
+* Generates the triangle mesh from the periodic surface mesh, which will be rendered.
 ******************************************************************************/
-bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress)
+bool SurfaceMeshVis::buildSurfaceTriangleMesh(const HalfEdgeMesh& input, const PropertyStorage& vertexCoords, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress)
 {
 	if(cell.is2D())
 		throw Exception(tr("Cannot generate surface triangle mesh when domain is two-dimensional."));
@@ -252,9 +263,11 @@ bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const Simulat
 	if(progress && progress->isCanceled())
 		return false;
 
-	// Convert vertex positions to reduced coordinates.
+	// Convert vertex positions to reduced coordinates and transfer them to the output mesh.
+	auto input_coord = vertexCoords.constDataPoint3();
+	OVITO_ASSERT(vertexCoords.size() == output.vertices().size());
 	for(Point3& p : output.vertices()) {
-		p = cell.absoluteToReduced(p);
+		p = cell.absoluteToReduced(*input_coord++);
 		OVITO_ASSERT(std::isfinite(p.x()) && std::isfinite(p.y()) && std::isfinite(p.z()));
 	}
 
@@ -268,7 +281,7 @@ bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const Simulat
 		// Make sure all vertices are located inside the periodic box.
 		for(Point3& p : output.vertices()) {
 			OVITO_ASSERT(std::isfinite(p[dim]));
-			p[dim] -= floor(p[dim]);
+			p[dim] -= std::floor(p[dim]);
 			OVITO_ASSERT(p[dim] >= FloatType(0) && p[dim] <= FloatType(1));
 		}
 
@@ -287,13 +300,11 @@ bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const Simulat
 		output.setVertexCount(oldVertexCount + (int)newVertices.size());
 		std::copy(newVertices.cbegin(), newVertices.cend(), output.vertices().begin() + oldVertexCount);
 	}
-
-	// Check for early abortion.
 	if(progress && progress->isCanceled())
 		return false;
 
 	// Convert vertex positions back from reduced coordinates to absolute coordinates.
-	AffineTransformation cellMatrix = cell.matrix();
+	const AffineTransformation cellMatrix = cell.matrix();
 	for(Point3& p : output.vertices())
 		p = cellMatrix * p;
 
@@ -396,20 +407,22 @@ bool SurfaceMeshVis::splitFace(TriMesh& output, TriMeshFace& face, int oldVertex
 }
 
 /******************************************************************************
-* Generates the triangle mesh for the PBC caps.
+* Generates the cap polygons where the periodic surface mesh intersects the 
+* periodic cell boundaries.
 ******************************************************************************/
-void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* promise)
+void SurfaceMeshVis::buildCapTriangleMesh(const HalfEdgeMesh& input, const PropertyStorage& vertexCoords, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* promise)
 {
 	bool flipCapNormal = (cell.matrix().determinant() < 0);
 
 	// Convert vertex positions to reduced coordinates.
-	std::vector<Point3> reducedPos(input.vertexCount());
-	auto inputVertex = input.vertices().begin();
 	AffineTransformation invCellMatrix = cell.inverseMatrix();
 	if(flipCapNormal)
 		invCellMatrix.column(0) = -invCellMatrix.column(0);
+
+	std::vector<Point3> reducedPos(vertexCoords.size());
+	auto inputVertex = vertexCoords.constDataPoint3();
 	for(Point3& p : reducedPos)
-		p = invCellMatrix * (*inputVertex++)->pos();
+		p = invCellMatrix * (*inputVertex++);
 
 	int isBoxCornerInside3DRegion = -1;
 
@@ -424,32 +437,32 @@ void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationC
 		for(Point3& p : reducedPos) {
 			FloatType& c = p[dim];
 			OVITO_ASSERT(std::isfinite(c));
-			if(FloatType s = floor(c)) c -= s;
+			if(FloatType s = std::floor(c)) 
+				c -= s;
 			OVITO_ASSERT(std::isfinite(c));
 		}
 
-		// Reset 'visited' flag for all faces.
-		input.clearFaceFlag(1);
+		// Used to keep track of already visited faces during the current pass.
+		std::vector<bool> visitedFaces(input.faceCount(), false);
 
 		/// The list of clipped contours.
 		std::vector<std::vector<Point2>> openContours;
 		std::vector<std::vector<Point2>> closedContours;
 
-		// Find a first edge that crosses the boundary.
-		for(HalfEdgeMesh<>::Vertex* vert : input.vertices()) {
+		// Find a first edge that crosses a periodic cell boundary.
+		for(HalfEdgeMesh::edge_index edge = 0; edge < input.edgeCount(); edge++) {
 			if(promise && promise->isCanceled())
 				return;
-			for(HalfEdgeMesh<>::Edge* edge = vert->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
-				// Skip faces that have already been visited.
-				if(edge->face()->testFlag(1)) continue;
 
-				const Point3& v1 = reducedPos[edge->vertex1()->index()];
-				const Point3& v2 = reducedPos[edge->vertex2()->index()];
-				if(v2[dim] - v1[dim] >= FloatType(0.5)) {
-					std::vector<Point2> contour = traceContour(edge, reducedPos, cell, dim);
-					if(contour.empty()) throw Exception(tr("Surface mesh is not a proper manifold."));
-					clipContour(contour, std::array<bool,2>{{ cell.pbcFlags()[(dim+1)%3], cell.pbcFlags()[(dim+2)%3] }}, openContours, closedContours);
-				}
+			// Skip faces that have already been visited.
+			if(visitedFaces[input.adjacentFace(edge)]) continue;
+
+			const Point3& v1 = reducedPos[input.vertex1(edge)];
+			const Point3& v2 = reducedPos[input.vertex2(edge)];
+			if(v2[dim] - v1[dim] >= FloatType(0.5)) {
+				std::vector<Point2> contour = traceContour(input, edge, reducedPos, visitedFaces, cell, dim);
+				if(contour.empty()) throw Exception(tr("Surface mesh is not a proper manifold."));
+				clipContour(contour, std::array<bool,2>{{ cell.pbcFlags()[(dim+1)%3], cell.pbcFlags()[(dim+2)%3] }}, openContours, closedContours);
 			}
 		}
 
@@ -533,7 +546,7 @@ void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationC
 		else {
 			if(isBoxCornerInside3DRegion == -1) {
 				if(closedContours.empty()) {
-					isBoxCornerInside3DRegion = (SurfaceMesh::locatePointStatic(Point3::Origin() + cell.matrix().column(3), input, cell, isCompletelySolid, 0) < 0);
+					isBoxCornerInside3DRegion = (SurfaceMesh::locatePointStatic(Point3::Origin() + cell.matrix().column(3), input, vertexCoords, cell, isCompletelySolid, 0) < 0);
 				}
 				else {
 					isBoxCornerInside3DRegion = isCornerInside2DRegion(closedContours);
@@ -574,34 +587,34 @@ void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationC
 /******************************************************************************
 * Traces the closed contour of the surface-boundary intersection.
 ******************************************************************************/
-std::vector<Point2> SurfaceMeshVis::traceContour(HalfEdgeMesh<>::Edge* firstEdge, const std::vector<Point3>& reducedPos, const SimulationCell& cell, size_t dim)
+std::vector<Point2> SurfaceMeshVis::traceContour(const HalfEdgeMesh& inputMesh, HalfEdgeMesh::edge_index firstEdge, const std::vector<Point3>& reducedPos, std::vector<bool>& visitedFaces, const SimulationCell& cell, size_t dim)
 {
 	size_t dim1 = (dim + 1) % 3;
 	size_t dim2 = (dim + 2) % 3;
 	std::vector<Point2> contour;
-	HalfEdgeMesh<>::Edge* edge = firstEdge;
+	HalfEdgeMesh::edge_index edge = firstEdge;
 	do {
-		OVITO_ASSERT(edge->face() != nullptr);
-		OVITO_ASSERT(!edge->face()->testFlag(1));
+		OVITO_ASSERT(inputMesh.adjacentFace(edge) != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(!visitedFaces[inputMesh.adjacentFace(edge)]);
 
 		// Mark face as visited.
-		edge->face()->setFlag(1);
+		visitedFaces[inputMesh.adjacentFace(edge)] = true;
 
 		// Compute intersection point.
-		const Point3& v1 = reducedPos[edge->vertex1()->index()];
-		const Point3& v2 = reducedPos[edge->vertex2()->index()];
+		Point3 v1 = reducedPos[inputMesh.vertex1(edge)];
+		Point3 v2 = reducedPos[inputMesh.vertex2(edge)];
 		Vector3 delta = v2 - v1;
 		OVITO_ASSERT(delta[dim] >= FloatType(0.5));
 
 		delta[dim] -= FloatType(1);
 		if(cell.pbcFlags()[dim1]) {
 			FloatType& c = delta[dim1];
-			if(FloatType s = floor(c + FloatType(0.5)))
+			if(FloatType s = std::floor(c + FloatType(0.5)))
 				c -= s;
 		}
 		if(cell.pbcFlags()[dim2]) {
 			FloatType& c = delta[dim2];
-			if(FloatType s = floor(c + FloatType(0.5)))
+			if(FloatType s = std::floor(c + FloatType(0.5)))
 				c -= s;
 		}
 		if(std::abs(delta[dim]) > FloatType(1e-9f)) {
@@ -627,23 +640,23 @@ std::vector<Point2> SurfaceMeshVis::traceContour(HalfEdgeMesh<>::Edge* firstEdge
 		}
 
 		// Find the face edge that crosses the boundary in the reverse direction.
+		FloatType v1d = v2[dim];
 		for(;;) {
-			edge = edge->nextFaceEdge();
-			const Point3& v1 = reducedPos[edge->vertex1()->index()];
-			const Point3& v2 = reducedPos[edge->vertex2()->index()];
-			if(v2[dim] - v1[dim] <= FloatType(-0.5))
+			edge = inputMesh.nextFaceEdge(edge);
+			FloatType v2d = reducedPos[inputMesh.vertex2(edge)][dim];
+			if(v2d - v1d <= FloatType(-0.5))
 				break;
+			v1d = v2d;
 		}
 
-		edge = edge->oppositeEdge();
-		if(!edge) {
+		edge = inputMesh.oppositeEdge(edge);
+		if(edge == HalfEdgeMesh::InvalidIndex) {
 			// Mesh is not closed (not a proper manifold).
 			contour.clear();
 			break;
 		}
 	}
 	while(edge != firstEdge);
-
 	return contour;
 }
 

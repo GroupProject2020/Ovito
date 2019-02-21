@@ -51,13 +51,8 @@ PropertyObject::PropertyObject(DataSet* dataset, const PropertyPtr& storage) : D
 ******************************************************************************/
 const PropertyPtr& PropertyObject::modifiableStorage() 
 {
-	// Copy data storage on write if there is more than one reference to the storage.
-	OVITO_ASSERT(storage());
-	OVITO_ASSERT(storage().use_count() >= 1);
-	if(storage().use_count() > 1)
-		_storage.mutableValue() = std::make_shared<PropertyStorage>(*storage());
-	OVITO_ASSERT(storage().use_count() == 1);
-	return storage();
+	// Copy data buffer if there is more than one active reference to the storage.
+	return PropertyStorage::makeMutable(_storage.mutableValue());
 }
 
 /******************************************************************************
@@ -114,6 +109,21 @@ void PropertyObject::loadFromStream(ObjectLoadStream& stream)
 	s->loadFromStream(stream);
 	setStorage(std::move(s));
 	stream.closeChunk();
+}
+
+/******************************************************************************
+* Extends the data array and replicates the old data N times. 
+******************************************************************************/
+void PropertyObject::replicate(size_t n)
+{
+	OVITO_ASSERT(n >= 1);
+	if(n <= 1) return;
+	ConstPropertyPtr oldData = storage();
+	resize(oldData->size() * n, false);
+	size_t chunkSize = stride() * oldData->size();
+	for(size_t i = 0; i < n; i++) {
+		memcpy((char*)data() + i * chunkSize, oldData->constData(), chunkSize);
+	}
 }
 
 /******************************************************************************

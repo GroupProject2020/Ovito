@@ -22,9 +22,13 @@
 SET(SourceFiles 
 	tri/TriMeshObject.cpp
 	tri/TriMeshVis.cpp
+	halfedge/HalfEdgeMesh.cpp		
 	surface/SurfaceMesh.cpp
 	surface/RenderableSurfaceMesh.cpp
-	surface/SurfaceMeshVis.cpp		
+	surface/SurfaceMeshVis.cpp
+	surface/SurfaceMeshVertices.cpp
+	surface/SurfaceMeshFaces.cpp
+	surface/SurfaceMeshRegions.cpp
 	io/TriMeshFrameData.cpp
 	io/VTKFileImporter.cpp
 	io/VTKTriangleMeshExporter.cpp

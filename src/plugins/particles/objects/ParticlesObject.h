@@ -124,8 +124,8 @@ public:
 	size_t deleteParticles(const boost::dynamic_bitset<>& mask);
 
 	/// Duplicates the BondsObject if it is shared with other particle objects.
-	/// After this method returns, all BondsObject are exclusively owned by the container and 
-	/// can be safely modified without unwanted side effects.
+	/// After this method returns, the BondsObject is exclusively owned by the ParticlesObject and 
+	/// can be safely modified without expected side effects.
 	BondsObject* makeBondsMutable();
 
 	/// Convinience method that makes sure that there is a BondsObject.

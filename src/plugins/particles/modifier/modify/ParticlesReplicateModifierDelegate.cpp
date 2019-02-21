@@ -65,35 +65,28 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 	// Ensure that the particles can be modified. 
 	ParticlesObject* outputParticles = state.makeMutable(inputParticles);
-	OVITO_ASSERT(outputParticles != inputParticles);
 	outputParticles->makePropertiesMutable();
 
 	// Replicate particle property values.
 	Box3I newImages = mod->replicaRange();
 	for(PropertyObject* property : outputParticles->properties()) {
-		ConstPropertyPtr oldData = property->storage();
-		property->resize(newParticleCount, false);
+		property->replicate(numCopies);
 
-		size_t destinationIndex = 0;
-
-		for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
-			for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
-				for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
-
-					// Duplicate property data.
-					memcpy((char*)property->data() + (destinationIndex * property->stride()),
-							oldData->constData(), property->stride() * oldParticleCount);
-
-					if(property->type() == ParticlesObject::PositionProperty && (imageX != 0 || imageY != 0 || imageZ != 0)) {
-						// Shift particle positions by the periodicity vector.
-						const Vector3 imageDelta = simCell * Vector3(imageX, imageY, imageZ);
-
-						const Point3* pend = property->dataPoint3() + (destinationIndex + oldParticleCount);
-						for(Point3* p = property->dataPoint3() + destinationIndex; p != pend; ++p)
-							*p += imageDelta;
+		// Shift particle positions by the periodicity vector.
+		if(property->type() == ParticlesObject::PositionProperty) {
+			Point3* p = property->dataPoint3();
+			for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
+				for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
+					for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
+						if(imageX != 0 || imageY != 0 || imageZ != 0) {
+							const Vector3 imageDelta = simCell * Vector3(imageX, imageY, imageZ);
+							for(size_t i = 0; i < oldParticleCount; i++)
+								*p++ += imageDelta;
+						}
+						else {
+							p += oldParticleCount;
+						}
 					}
-
-					destinationIndex += oldParticleCount;
 				}
 			}
 		}

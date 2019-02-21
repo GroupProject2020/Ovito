@@ -24,6 +24,7 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/mesh/halfedge/HalfEdgeMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshVertices.h>
 #include <core/utilities/concurrent/PromiseState.h>
 
 namespace Ovito { namespace Grid {
@@ -36,11 +37,11 @@ class MarchingCubes
 public:
 
     // Constructor
-    MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* fielddata, size_t stride, HalfEdgeMesh<>& outputMesh, bool lowerIsSolid);
+    MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* fielddata, size_t stride, bool lowerIsSolid);
 
     /// Returns the field value in a specific cube of the grid.
     /// Takes into account periodic boundary conditions.
-    inline const FloatType getFieldValue(int i, int j, int k) const {         
+    inline FloatType getFieldValue(int i, int j, int k) const {         
         if(_pbcFlags[0]) {
             if(i == _size_x) i = 0;
         }
@@ -68,9 +69,16 @@ public:
         return _data[(i + j*_data_size_x + k*_data_size_x*_data_size_y) * _dataStride];
     }
   
-    bool isCompletelySolid() const { return _isCompletelySolid; }
-
     bool generateIsosurface(FloatType iso, PromiseState& promise);
+
+    /// Indicates that all cells are part of the interior region.
+    bool isSpaceFilling() const { return _isSpaceFilling; }
+
+    /// Returns the generated surface mesh topology.
+    const HalfEdgeMeshPtr& mesh() const { return _outputMesh; }
+
+    /// Returns the coordinates of the generated mesh vertices.
+    const PropertyPtr& vertexCoords() const { return _vertexCoords; }
 
 protected:
 
@@ -89,43 +97,51 @@ protected:
     void computeIntersectionPoints(FloatType iso, PromiseState& promise);
 
     /// Adds triangles to the mesh.
-    void addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh<>::Vertex* v12 = nullptr);
+    void addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh::vertex_index v12 = HalfEdgeMesh::InvalidIndex);
+
+    /// Create a new vertex in the output mesh at the given coordinates.
+    HalfEdgeMesh::vertex_index createVertex(const Point3& p) {
+        auto v = _outputMesh->createVertex();
+        _vertexCoords->grow(1);
+        _vertexCoords->setPoint3(v, p);
+        return v;
+    }
 
     /// Adds a vertex on the current horizontal edge.
-    HalfEdgeMesh<>::Vertex* createEdgeVertexX(int i, int j, int k, FloatType u) {
+    HalfEdgeMesh::vertex_index createEdgeVertexX(int i, int j, int k, FloatType u) {
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
-        auto v = _outputMesh.createVertex(Point3(i + u - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
+        auto v = createVertex(Point3(i + u - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
         _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 0] = v; 
         return v;
     }
     
     /// Adds a vertex on the current longitudinal edge.
-    HalfEdgeMesh<>::Vertex* createEdgeVertexY(int i, int j, int k, FloatType u) {
+    HalfEdgeMesh::vertex_index createEdgeVertexY(int i, int j, int k, FloatType u) {
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
-        auto v = _outputMesh.createVertex(Point3(i - (_pbcFlags[0]?0:1), j + u - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
+        auto v = createVertex(Point3(i - (_pbcFlags[0]?0:1), j + u - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
         _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 1] = v; 
         return v;
     }
 
     /// Adds a vertex on the current vertical edge.
-    HalfEdgeMesh<>::Vertex* createEdgeVertexZ(int i, int j, int k, FloatType u) {
+    HalfEdgeMesh::vertex_index createEdgeVertexZ(int i, int j, int k, FloatType u) {
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
-        auto v = _outputMesh.createVertex(Point3(i - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k + u - (_pbcFlags[2]?0:1)));
+        auto v = createVertex(Point3(i - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k + u - (_pbcFlags[2]?0:1)));
         _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 2] = v; 
         return v;
     }
     
     /// Adds a vertex inside the current cube.
-    HalfEdgeMesh<>::Vertex* createCenterVertex(int i, int j, int k);
+    HalfEdgeMesh::vertex_index createCenterVertex(int i, int j, int k);
 
     /// Accesses the pre-computed vertex on a lower edge of a specific cube.
-    HalfEdgeMesh<>::Vertex* getEdgeVert(int i, int j, int k, int axis) const {
+    HalfEdgeMesh::vertex_index getEdgeVert(int i, int j, int k, int axis) const {
         OVITO_ASSERT(i >= 0 && i <= _size_x);
         OVITO_ASSERT(j >= 0 && j <= _size_y);
         OVITO_ASSERT(k >= 0 && k <= _size_z);
@@ -150,7 +166,7 @@ protected:
     bool _lowerIsSolid; ///< Controls the inward/outward orientation of the created triangle surface.
 
     /// Vertices created along cube edges.
-    std::vector<HalfEdgeMesh<>::Vertex*> _cubeVerts;
+    std::vector<HalfEdgeMesh::vertex_index> _cubeVerts;
 
     FloatType     _cube[8];   ///< values of the implicit function on the active cube
     unsigned char _lut_entry; ///< cube sign representation in [0..255]
@@ -158,11 +174,14 @@ protected:
     unsigned char _config;    ///< configuration of the active cube
     unsigned char _subconfig; ///< subconfiguration of the active cube
 
-    /// The generated mesh.
-    HalfEdgeMesh<>& _outputMesh;
+    /// The generated surface mesh topology.
+    HalfEdgeMeshPtr _outputMesh = std::make_shared<HalfEdgeMesh>();
 
     /// Flag that indicates whether all cube cells are on one side of the isosurface.
-    bool _isCompletelySolid;
+    bool _isSpaceFilling = false;
+
+    /// The coordinates of the generated mesh vertices.
+    PropertyPtr _vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
 
 #ifdef FLOATTYPE_FLOAT
     static constexpr FloatType _epsilon = FloatType(1e-12);

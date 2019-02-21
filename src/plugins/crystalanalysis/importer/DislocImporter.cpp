@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,13 +23,10 @@
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/crystalanalysis/objects/microstructure/SlipSurfaceVis.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>
-#include <plugins/crystalanalysis/data/Microstructure.h>
 #include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
-#include <core/utilities/io/CompressedTextReader.h>
 #include "DislocImporter.h"
 
 #include <3rdparty/netcdf_integration/NetCDFIntegration.h>
@@ -94,17 +91,16 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 
 	// Create the container structures for holding the loaded data.
 	auto frameData = std::make_shared<DislocFrameData>();
-	auto microstructure = frameData->microstructure();
-	Cluster* defaultCluster = microstructure->clusterGraph()->createCluster(1);
-	
+	Microstructure& microstructure = frameData->microstructure();
+	int defaultRegion = 0;
+
 	// Fix disloc specific data.
 	std::vector<Vector3> latticeVectors;
 	std::vector<Vector3> transformedLatticeVectors;
 	size_t segmentCount = 0;
 
-	// Working data structures.
-	//std::map<std::array<qlonglong,4>, Microstructure::Vertex*> vertexMap;
-	std::map<Microstructure::Face*, std::pair<qlonglong,qlonglong>> slipSurfaceMap;
+	// Temporary data structure.
+	std::vector<std::pair<qlonglong,qlonglong>> slipSurfaceMap;
 
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker(this);
@@ -122,17 +118,17 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		NCERR(nc_get_att_text(root_ncid, NC_GLOBAL, "Conventions", conventions_str.get()));
 		conventions_str[len] = '\0';
 		if(strcmp(conventions_str.get(), "FixDisloc"))
-			throw Exception(tr("NetCDF file follows '%1' conventions; expected 'FixDisloc'.").arg(conventions_str.get()));
+			throw Exception(tr("NetCDF file follows '%1' conventions; expected 'FixDisloc' convention.").arg(conventions_str.get()));
 
 		// Read lattice structure.
 		NCERR(nc_inq_attlen(root_ncid, NC_GLOBAL, "LatticeStructure", &len));
 		auto lattice_structure_str = std::make_unique<char[]>(len+1);
 		NCERR(nc_get_att_text(root_ncid, NC_GLOBAL, "LatticeStructure", lattice_structure_str.get()));
-		lattice_structure_str[len] = '\0';		
-		if(strcmp(lattice_structure_str.get(), "bcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_BCC;
-		else if(strcmp(lattice_structure_str.get(), "fcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
-		else if(strcmp(lattice_structure_str.get(), "fcc_perfect") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
-		else throw Exception(tr("File parsing error. Unknown lattice structure type: %1").arg(lattice_structure_str.get()));
+		lattice_structure_str[len] = '\0';
+//		if(strcmp(lattice_structure_str.get(), "bcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_BCC;
+//		else if(strcmp(lattice_structure_str.get(), "fcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
+//		else if(strcmp(lattice_structure_str.get(), "fcc_perfect") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
+//		else throw Exception(tr("File parsing error. Unknown lattice structure type: %1").arg(lattice_structure_str.get()));
 
 		// Get NetCDF dimensions.
 		int spatial_dim, nodes_dim, dislocation_segments_dim, pair_dim, node_id_dim;
@@ -167,11 +163,12 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		// Read lattice orientation matrix.
 		int lattice_orientation_var;
 		NCERR(nc_inq_varid(root_ncid, "lattice_orientation", &lattice_orientation_var));
+		Matrix3 latticeOrientation;
 #ifdef FLOATTYPE_FLOAT
-		NCERR(nc_get_var_float(root_ncid, lattice_orientation_var, defaultCluster->orientation.elements()));
+		NCERR(nc_get_var_float(root_ncid, lattice_orientation_var, latticeOrientation.elements()));
 #else
-		NCERR(nc_get_var_double(root_ncid, lattice_orientation_var, defaultCluster->orientation.elements()));		
-#endif		
+		NCERR(nc_get_var_double(root_ncid, lattice_orientation_var, latticeOrientation.elements()));
+#endif
 
 		// Read node list.
 		int nodal_ids_var, nodal_positions_var;
@@ -187,14 +184,14 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		}
 
 		// Build list of unique nodes.
-		std::vector<Microstructure::Vertex*> vertexMap(numNodeRecords);
-		std::map<std::array<qlonglong,4>, Microstructure::Vertex*> idMap;
+		std::vector<Microstructure::vertex_index> vertexMap(numNodeRecords);
+		std::unordered_map<std::array<qlonglong,4>, Microstructure::vertex_index, boost::hash<std::array<qlonglong,4>>> idMap;
 		auto vertexMapIter = vertexMap.begin();
 		auto nodalPositionsIter = nodalPositions.cbegin();
 		for(const auto& id : nodalIds) {
 			auto iter = idMap.find(id);
 			if(iter == idMap.end())
-				iter = idMap.emplace(id, microstructure->createVertex(Point3(*nodalPositionsIter))).first;
+				iter = idMap.emplace(id, microstructure.createVertex(Point3(*nodalPositionsIter))).first;
 			*vertexMapIter = iter->second;
 			++vertexMapIter;
 			++nodalPositionsIter;
@@ -218,9 +215,9 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		for(const auto& seg : dislocationSegments) {
 			OVITO_ASSERT(seg[0] >= 0 && seg[0] < vertexMap.size());
 			OVITO_ASSERT(seg[1] >= 0 && seg[1] < vertexMap.size());
-			Microstructure::Vertex* vertex1	= vertexMap[seg[0]];
-			Microstructure::Vertex* vertex2	= vertexMap[seg[1]];
-			microstructure->createDislocationSegment(vertex1, vertex2, Vector3(*burgersVector++), defaultCluster);
+			Microstructure::vertex_index vertex1	= vertexMap[seg[0]];
+			Microstructure::vertex_index vertex2	= vertexMap[seg[1]];
+			microstructure.createDislocationSegment(vertex1, vertex2, Vector3(*burgersVector++), defaultRegion);
 		}
 		segmentCount = dislocationSegments.size();
 
@@ -250,42 +247,37 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				NCERR(nc_get_var_int(root_ncid, slip_facet_edge_counts_var, slipFacetEdgeCounts.data()));
 			}
 			if(numSlipFacetVertices) {
-				NCERR(nc_get_var_longlong(root_ncid, slip_facet_vertices_var, slipFacetVertices.data()));				
+				NCERR(nc_get_var_longlong(root_ncid, slip_facet_vertices_var, slipFacetVertices.data()));
 			}
 
 			// Create slip surface facets.
 			auto slipVector = slipVectors.cbegin();
 			auto slipFacetEdgeCount = slipFacetEdgeCounts.cbegin();
 			auto slipFacetVertex = slipFacetVertices.cbegin();
+			slipSurfaceMap.resize(microstructure.topology()->faceCount());
+			slipSurfaceMap.reserve(slipSurfaceMap.size() + numSlipFacets*2);
 			for(const auto& slippedEdge : slippedEdges) {
-				Microstructure::Face* face = microstructure->createFace();
-				face->setBurgersVector(Vector3(*slipVector));
-				face->setCluster(defaultCluster);
-				face->setSlipSurfaceFace(true);
-				slipSurfaceMap.emplace(face, std::make_pair(slippedEdge[0], slippedEdge[1]));
-				Microstructure::Vertex* node0 = vertexMap[*slipFacetVertex++];
-				Microstructure::Vertex* node1 = node0;
-				Microstructure::Vertex* node2;
+				Microstructure::face_index face = microstructure.createFace(Microstructure::SLIP_FACET, defaultRegion, Vector3(*slipVector));
+				slipSurfaceMap.push_back({ slippedEdge[0], slippedEdge[1] });
+				Microstructure::vertex_index node0 = vertexMap[*slipFacetVertex++];
+				Microstructure::vertex_index node1 = node0;
+				Microstructure::vertex_index node2;
 				for(int i = 1; i < *slipFacetEdgeCount; i++, node1 = node2) {
 					node2 = vertexMap[*slipFacetVertex++];
-					microstructure->createEdge(node1, node2, face);
+					microstructure.createEdge(node1, node2, face);
 				}
-				microstructure->createEdge(node1, node0, face);
-				
+				microstructure.createEdge(node1, node0, face);
+
 				// Create the opposite face.
-				Microstructure::Face* oppositeFace = microstructure->createFace();
-				oppositeFace->setBurgersVector(-face->burgersVector());
-				oppositeFace->setCluster(defaultCluster);
-				oppositeFace->setSlipSurfaceFace(true);
-				face->setOppositeFace(oppositeFace);
-				oppositeFace->setOppositeFace(face);
-				slipSurfaceMap.emplace(oppositeFace, std::make_pair(slippedEdge[1], slippedEdge[0]));
-				Microstructure::Edge* edge = face->edges();
+				Microstructure::face_index oppositeFace = microstructure.createFace(Microstructure::SLIP_FACET, defaultRegion, -Vector3(*slipVector));
+				microstructure.topology()->linkOppositeFaces(face, oppositeFace);
+				slipSurfaceMap.push_back({ slippedEdge[1], slippedEdge[0] });
+				Microstructure::edge_index edge = microstructure.firstFaceEdge(face);
 				do {
-					microstructure->createEdge(edge->vertex2(), edge->vertex1(), oppositeFace);
-					edge = edge->prevFaceEdge();
+					microstructure.createEdge(microstructure.vertex2(edge), microstructure.vertex1(edge), oppositeFace);
+					edge = microstructure.prevFaceEdge(edge);
 				}
-				while(edge != face->edges());
+				while(edge != microstructure.firstFaceEdge(face));
 
 				++slipVector;
 				++slipFacetEdgeCount;
@@ -300,9 +292,9 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		if(root_ncid)
 			nc_close(root_ncid);
 		throw;
-	}	
+	}
 
-#if 0	
+#if 0
 		else if(stream.lineStartsWith("slip surfaces:")) {
 			for(;;) {
 				stream.readLine();
@@ -332,7 +324,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				std::array<qulonglong,2> edgeVertexCodes;
 				int numVertices;
 				if(sscanf(line, "%llx %llx %i%n", &edgeVertexCodes[0], &edgeVertexCodes[1], &numVertices, &charCount) != 3)
-					throw Exception(tr("File parsing error. Invalid slip edge specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));				
+					throw Exception(tr("File parsing error. Invalid slip edge specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 				line += charCount;
 				Microstructure::Face* face = microstructure->createFace();
 				face->setBurgersVector(slipVector);
@@ -367,7 +359,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				Microstructure::Vertex* node2 = createVertexFromCode({edgeVertexCodes[0], edgeVertexCodes[1], cellVertexCode1, cellVertexCode0});
 				microstructure->createEdge(node1, node2, face);
 				microstructure->createEdge(node2, node0, face);
-				
+
 				// Create the opposite face.
 				Microstructure::Face* oppositeFace = microstructure->createFace();
 				oppositeFace->setBurgersVector(-slipVector);
@@ -383,7 +375,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				}
 				while(edge != face->edges());
 			}
-		}	
+		}
 		else if(stream.lineStartsWith("nodes:")) {
 			int nnodes;
 			if(sscanf(stream.readLine(), "%i", &nnodes) != 1)
@@ -391,10 +383,10 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 			for(int i = 0; i < nnodes; i++) {
 				if(!setProgressValueIntermittent(stream.underlyingByteOffset() / progressUpdateInterval))
 					return {};
-				
+
 				std::array<qulonglong,4> vertexCodes;
 				Point3 position;
-				if(sscanf(stream.readLine(), "%llx %llx %llx %llx " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
+				if(sscanf(stream.readLine(), "%llx %llx %llx %llx " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
 						&vertexCodes[0], &vertexCodes[1], &vertexCodes[2], &vertexCodes[3], &position.x(), &position.y(), &position.z()) != 7)
 					throw Exception(tr("File parsing error. Invalid node specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 				OVITO_ASSERT(std::is_sorted(std::begin(vertexCodes), std::end(vertexCodes)));
@@ -413,16 +405,16 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 #endif
 
 	// Form continuous dislocation lines from the segments.
-	microstructure->makeContinuousDislocationLines();
+	microstructure.makeContinuousDislocationLines();
 
 	// Connect half-edges of slip faces.
-	connectSlipFaces(*microstructure, slipSurfaceMap);
+	connectSlipFaces(microstructure, slipSurfaceMap);
 
 	// Generate slip surfaces along which the slip vector is constant.
-	microstructure->makeSlipSurfaces();
+	microstructure.makeSlipSurfaces();
 
 	frameData->setStatus(tr("Number of nodes: %1\nNumber of segments: %2")
-		.arg(microstructure->vertices().size())
+		.arg(microstructure.topology()->vertexCount())
 		.arg(segmentCount));
 
 #if 0
@@ -444,121 +436,122 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 /*************************************************************************************
 * Connects the slip faces to form two-dimensional manifolds.
 **************************************************************************************/
-void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qlonglong,qlonglong>>& slipSurfaceMap)
+void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap)
 {
-	// Link slip surface faces with their neighbors, i.e. find the opposite edge for every half-edge of a slip face. 
-	for(Microstructure::Vertex* vertex1 : microstructure.vertices()) {
-		for(Microstructure::Edge* edge1 = vertex1->edges(); edge1 != nullptr; edge1 = edge1->nextVertexEdge()) {
-			// Only process edges which haven't been linked to their neighbors yet.
-			if(edge1->oppositeEdge() != nullptr) continue;
-			if(!edge1->face()->isSlipSurfaceFace()) continue;
+	// Link slip surface faces with their neighbors, i.e. find the opposite edge for every half-edge of a slip face.
+	Microstructure::size_type edgeCount = microstructure.topology()->edgeCount();
+	for(Microstructure::edge_index edge1 = 0; edge1 < edgeCount; edge1++) {
+		// Only process edges which haven't been linked to their neighbors yet.
+		if(microstructure.hasOppositeEdge(edge1)) continue;
+		Microstructure::face_index face1 = microstructure.adjacentFace(edge1);
+		if(!microstructure.isSlipSurfaceFace(face1)) continue;
 
-			Microstructure::Edge* oppositeEdge1 = edge1->face()->oppositeFace()->findEdge(edge1->vertex2(), edge1->vertex1());;
-			OVITO_ASSERT(oppositeEdge1 != nullptr);
-			OVITO_ASSERT(edge1->nextManifoldEdge() == nullptr);
-			OVITO_ASSERT(oppositeEdge1->nextManifoldEdge() == nullptr);
+		Microstructure::vertex_index vertex1 = microstructure.vertex1(edge1);
+		Microstructure::vertex_index vertex2 = microstructure.vertex2(edge1);
+		Microstructure::edge_index oppositeEdge1 = microstructure.topology()->findEdge(microstructure.oppositeFace(face1), vertex2, vertex1);
+		OVITO_ASSERT(oppositeEdge1 != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(microstructure.nextManifoldEdge(edge1) == HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge1) == HalfEdgeMesh::InvalidIndex);
 
-			// At an edge, either 1, 2, or 3 slip surface manifolds can meet.
-			// Here, we will link them together in the right order.
+		// At an edge, either 1, 2, or 3 slip surface manifolds can meet.
+		// Here, we will link them together in the right order.
 
-			OVITO_ASSERT(slipSurfaceMap.find(edge1->face()) != slipSurfaceMap.end());
-			const std::pair<qulonglong,qulonglong>& edgeVertexCodes = slipSurfaceMap.find(edge1->face())->second;
+		const std::pair<qulonglong,qulonglong>& edgeVertexCodes = slipSurfaceMap[face1];
 
-			// Find the other two manifolds meeting at the current edge (if they exist).
-			Microstructure::Edge* edge2 = nullptr;
-			Microstructure::Edge* edge3 = nullptr;
-			Microstructure::Edge* oppositeEdge2 = nullptr;
-			Microstructure::Edge* oppositeEdge3 = nullptr;
-			for(Microstructure::Edge* e = vertex1->edges(); e != nullptr; e = e->nextVertexEdge()) {
-				if(e->vertex2() == edge1->vertex2() && e->face()->isSlipSurfaceFace() && e->face() != edge1->face()) {					
-					OVITO_ASSERT(slipSurfaceMap.find(e->face()) != slipSurfaceMap.end());
-					const std::pair<qulonglong,qulonglong>& edgeVertexCodes2 = slipSurfaceMap.find(e->face())->second;
-					if(edgeVertexCodes.second == edgeVertexCodes2.first) {
-						OVITO_ASSERT(edgeVertexCodes.first != edgeVertexCodes2.second);
-						OVITO_ASSERT(edge2 == nullptr);
-						OVITO_ASSERT(e->oppositeEdge() == nullptr);
-						OVITO_ASSERT(e->nextManifoldEdge() == nullptr);
-						edge2 = e;
-						oppositeEdge2 = edge2->face()->oppositeFace()->findEdge(e->vertex2(), e->vertex1());
-						OVITO_ASSERT(oppositeEdge2);
-						OVITO_ASSERT(oppositeEdge2->nextManifoldEdge() == nullptr);
-					}
-					else {
-						OVITO_ASSERT(edgeVertexCodes.first == edgeVertexCodes2.second);
-						OVITO_ASSERT(edge3 == nullptr);
-						OVITO_ASSERT(e->oppositeEdge() == nullptr);
-						OVITO_ASSERT(e->nextManifoldEdge() == nullptr);
-						edge3 = e;
-						oppositeEdge3 = edge3->face()->oppositeFace()->findEdge(e->vertex2(), e->vertex1());
-						OVITO_ASSERT(oppositeEdge3);
-						OVITO_ASSERT(oppositeEdge3->nextManifoldEdge() == nullptr);
-					}
-				}
-			}
-
-			if(edge2) {
-				edge1->linkToOppositeEdge(oppositeEdge2);
-				edge1->setNextManifoldEdge(edge2);
-				oppositeEdge2->setNextManifoldEdge(oppositeEdge1);
-				if(edge3) {
-					edge2->linkToOppositeEdge(oppositeEdge3);
-					edge3->linkToOppositeEdge(oppositeEdge1);
-					edge2->setNextManifoldEdge(edge3);
-					oppositeEdge3->setNextManifoldEdge(oppositeEdge2);
-					edge3->setNextManifoldEdge(edge1);
-					oppositeEdge1->setNextManifoldEdge(oppositeEdge3);
-					OVITO_ASSERT(edge1->countManifolds() == 3);
-					OVITO_ASSERT(edge2->countManifolds() == 3);
-					OVITO_ASSERT(edge3->countManifolds() == 3);
+		// Find the other two manifolds meeting at the current edge (if they exist).
+		Microstructure::edge_index edge2 = HalfEdgeMesh::InvalidIndex;
+		Microstructure::edge_index edge3 = HalfEdgeMesh::InvalidIndex;
+		Microstructure::edge_index oppositeEdge2 = HalfEdgeMesh::InvalidIndex;
+		Microstructure::edge_index oppositeEdge3 = HalfEdgeMesh::InvalidIndex;
+		for(Microstructure::edge_index e = microstructure.firstVertexEdge(vertex1); e != HalfEdgeMesh::InvalidIndex; e = microstructure.nextVertexEdge(e)) {
+			Microstructure::face_index face2 = microstructure.adjacentFace(e);
+			if(microstructure.vertex2(e) == vertex2 && microstructure.isSlipSurfaceFace(face2) && face2 != face1) {
+				const std::pair<qulonglong,qulonglong>& edgeVertexCodes2 = slipSurfaceMap[face2];
+				if(edgeVertexCodes.second == edgeVertexCodes2.first) {
+					OVITO_ASSERT(edgeVertexCodes.first != edgeVertexCodes2.second);
+					OVITO_ASSERT(edge2 == HalfEdgeMesh::InvalidIndex);
+					OVITO_ASSERT(!microstructure.hasOppositeEdge(e));
+					OVITO_ASSERT(microstructure.nextManifoldEdge(e) == HalfEdgeMesh::InvalidIndex);
+					edge2 = e;
+					oppositeEdge2 = microstructure.topology()->findEdge(microstructure.oppositeFace(face2), vertex2, vertex1);
+					OVITO_ASSERT(oppositeEdge2 != HalfEdgeMesh::InvalidIndex);
+					OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge2) == HalfEdgeMesh::InvalidIndex);
 				}
 				else {
-					edge2->linkToOppositeEdge(oppositeEdge1);
-					edge2->setNextManifoldEdge(edge1);
-					oppositeEdge1->setNextManifoldEdge(oppositeEdge2);
-					OVITO_ASSERT(edge1->countManifolds() == 2);
-					OVITO_ASSERT(edge2->countManifolds() == 2);
-					OVITO_ASSERT(oppositeEdge1->countManifolds() == 2);
-					OVITO_ASSERT(oppositeEdge2->countManifolds() == 2);
+					OVITO_ASSERT(edgeVertexCodes.first == edgeVertexCodes2.second);
+					OVITO_ASSERT(edge3 == HalfEdgeMesh::InvalidIndex);
+					OVITO_ASSERT(!microstructure.hasOppositeEdge(e));
+					OVITO_ASSERT(microstructure.nextManifoldEdge(e) == HalfEdgeMesh::InvalidIndex);
+					edge3 = e;
+					oppositeEdge3 = microstructure.topology()->findEdge(microstructure.oppositeFace(face2), vertex2, vertex1);
+					OVITO_ASSERT(oppositeEdge3 != HalfEdgeMesh::InvalidIndex);
+					OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge3) == HalfEdgeMesh::InvalidIndex);
 				}
+			}
+		}
+
+		if(edge2 != HalfEdgeMesh::InvalidIndex) {
+			microstructure.topology()->linkOppositeEdges(edge1, oppositeEdge2);
+			microstructure.setNextManifoldEdge(edge1, edge2);
+			microstructure.setNextManifoldEdge(oppositeEdge2, oppositeEdge1);
+			if(edge3 != HalfEdgeMesh::InvalidIndex) {
+				microstructure.linkOppositeEdges(edge2, oppositeEdge3);
+				microstructure.linkOppositeEdges(edge3, oppositeEdge1);
+				microstructure.setNextManifoldEdge(edge2, edge3);
+				microstructure.setNextManifoldEdge(oppositeEdge3, oppositeEdge2);
+				microstructure.setNextManifoldEdge(edge3, edge1);
+				microstructure.setNextManifoldEdge(oppositeEdge1, oppositeEdge3);
+				OVITO_ASSERT(microstructure.countManifolds(edge1) == 3);
+				OVITO_ASSERT(microstructure.countManifolds(edge2) == 3);
+				OVITO_ASSERT(microstructure.countManifolds(edge3) == 3);
 			}
 			else {
-				if(edge3) {
-					edge1->linkToOppositeEdge(oppositeEdge3);
-					oppositeEdge1->linkToOppositeEdge(edge3);
-					edge1->setNextManifoldEdge(edge3);
-					oppositeEdge3->setNextManifoldEdge(oppositeEdge1);
-					edge3->setNextManifoldEdge(edge1);
-					oppositeEdge1->setNextManifoldEdge(oppositeEdge3);
-					OVITO_ASSERT(edge1->countManifolds() == 2);
-					OVITO_ASSERT(oppositeEdge1->countManifolds() == 2);
-					OVITO_ASSERT(edge3->countManifolds() == 2);
-					OVITO_ASSERT(oppositeEdge3->countManifolds() == 2);
-				}
-				else {
-					oppositeEdge1->linkToOppositeEdge(edge1);
-					edge1->setNextManifoldEdge(edge1);
-					oppositeEdge1->setNextManifoldEdge(oppositeEdge1);
-					OVITO_ASSERT(edge1->countManifolds() == 1);
-					OVITO_ASSERT(oppositeEdge1->countManifolds() == 1);
-				}
+				microstructure.linkOppositeEdges(edge2, oppositeEdge1);
+				microstructure.setNextManifoldEdge(edge2, edge1);
+				microstructure.setNextManifoldEdge(oppositeEdge1, oppositeEdge2);
+				OVITO_ASSERT(microstructure.countManifolds(edge1) == 2);
+				OVITO_ASSERT(microstructure.countManifolds(edge2) == 2);
+				OVITO_ASSERT(microstructure.countManifolds(oppositeEdge1) == 2);
+				OVITO_ASSERT(microstructure.countManifolds(oppositeEdge2) == 2);
 			}
-
-			OVITO_ASSERT(edge1->nextManifoldEdge() != nullptr);
-			OVITO_ASSERT(edge1->nextManifoldEdge()->vertex2() == edge1->vertex2());
-			OVITO_ASSERT(edge1->nextManifoldEdge()->vertex1() == edge1->vertex1());
-			OVITO_ASSERT(oppositeEdge1->nextManifoldEdge() != nullptr);
-			OVITO_ASSERT(!edge2 || edge2->nextManifoldEdge() != nullptr);
-			OVITO_ASSERT(!oppositeEdge2 || oppositeEdge2->nextManifoldEdge() != nullptr);
-			OVITO_ASSERT(!edge3 || edge3->nextManifoldEdge() != nullptr);
-			OVITO_ASSERT(!oppositeEdge3 || oppositeEdge3->nextManifoldEdge() != nullptr);
 		}
+		else {
+			if(edge3 != HalfEdgeMesh::InvalidIndex) {
+				microstructure.linkOppositeEdges(edge1, oppositeEdge3);
+				microstructure.linkOppositeEdges(oppositeEdge1, edge3);
+				microstructure.setNextManifoldEdge(edge1, edge3);
+				microstructure.setNextManifoldEdge(oppositeEdge3, oppositeEdge1);
+				microstructure.setNextManifoldEdge(edge3, edge1);
+				microstructure.setNextManifoldEdge(oppositeEdge1, oppositeEdge3);
+				OVITO_ASSERT(microstructure.countManifolds(edge1) == 2);
+				OVITO_ASSERT(microstructure.countManifolds(oppositeEdge1) == 2);
+				OVITO_ASSERT(microstructure.countManifolds(edge3) == 2);
+				OVITO_ASSERT(microstructure.countManifolds(oppositeEdge3) == 2);
+			}
+			else {
+				microstructure.linkOppositeEdges(oppositeEdge1, edge1);
+				microstructure.setNextManifoldEdge(edge1, edge1);
+				microstructure.setNextManifoldEdge(oppositeEdge1, oppositeEdge1);
+				OVITO_ASSERT(microstructure.countManifolds(edge1) == 1);
+				OVITO_ASSERT(microstructure.countManifolds(oppositeEdge1) == 1);
+			}
+		}
+
+		OVITO_ASSERT(microstructure.nextManifoldEdge(edge1) != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(microstructure.vertex2(microstructure.nextManifoldEdge(edge1)) == vertex2);
+		OVITO_ASSERT(microstructure.vertex1(microstructure.nextManifoldEdge(edge1)) == vertex1);
+		OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge1) != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(edge2 == HalfEdgeMesh::InvalidIndex || microstructure.nextManifoldEdge(edge2) != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(oppositeEdge2 == HalfEdgeMesh::InvalidIndex || microstructure.nextManifoldEdge(oppositeEdge2) != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(edge3 == HalfEdgeMesh::InvalidIndex || microstructure.nextManifoldEdge(edge3) != HalfEdgeMesh::InvalidIndex);
+		OVITO_ASSERT(oppositeEdge3 == HalfEdgeMesh::InvalidIndex || microstructure.nextManifoldEdge(oppositeEdge3) != HalfEdgeMesh::InvalidIndex);
 	}
 }
 
 /******************************************************************************
-* Inserts the data loaded by perform() into the provided pipeline state.
+* Inserts the data loaded by the FrameLoader into the provided data collection.
 * This function is called by the system from the main thread after the
-* asynchronous loading task has finished.
+* asynchronous loading operation has finished.
 ******************************************************************************/
 OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource)
 {
@@ -633,45 +626,32 @@ OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollec
 		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 41, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
 		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 42, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
 		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 43, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 44, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));		
+		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 44, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
 	}
 	else {
 		output->addObject(patternCatalog);
 	}
-		
-	if(microstructure()) {
 
-		// Insert microstructure.
-		MicrostructureObject* microstructureObj = const_cast<MicrostructureObject*>(existing ? existing->getObject<MicrostructureObject>() : nullptr);
-		if(!microstructureObj) {
-			microstructureObj = output->createObject<MicrostructureObject>(fileSource);
-			// Create a display object for the dislocation lines.
-			OORef<DislocationVis> dislocationVis = new DislocationVis(fileSource->dataset());
-			if(!Application::instance()->scriptMode())
-				dislocationVis->loadUserDefaults();
-			microstructureObj->addVisElement(dislocationVis);
-			// Create a display object for the slip surfaces.
-			OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(fileSource->dataset());
-			if(!Application::instance()->scriptMode())
-				slipSurfaceVis->loadUserDefaults();
-			microstructureObj->addVisElement(slipSurfaceVis);
-		}
-		else {
-			output->addObject(microstructureObj);
-		}
-		microstructureObj->setDomain(output->getObject<SimulationCellObject>());
-		microstructureObj->setStorage(microstructure());
-
-		// Insert cluster graph as a separate data object.
-		OORef<ClusterGraphObject> clusterGraphObj = existing ? existing->getObject<ClusterGraphObject>() : nullptr;
-		if(!clusterGraphObj) {
-			clusterGraphObj = output->createObject<ClusterGraphObject>(fileSource);
-		}
-		else {
-			output->addObject(clusterGraphObj);		
-		}
-		clusterGraphObj->setStorage(microstructure()->clusterGraph());
+	// Insert microstructure.
+	MicrostructureObject* microstructureObj = const_cast<MicrostructureObject*>(existing ? existing->getObject<MicrostructureObject>() : nullptr);
+	if(!microstructureObj) {
+		microstructureObj = output->createObject<MicrostructureObject>(fileSource);
+		// Create a display object for the dislocation lines.
+		OORef<DislocationVis> dislocationVis = new DislocationVis(fileSource->dataset());
+		if(!Application::instance()->scriptMode())
+			dislocationVis->loadUserDefaults();
+		microstructureObj->addVisElement(dislocationVis);
+		// Create a display object for the slip surfaces.
+		OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(fileSource->dataset());
+		if(!Application::instance()->scriptMode())
+			slipSurfaceVis->loadUserDefaults();
+		microstructureObj->addVisElement(slipSurfaceVis);
 	}
+	else {
+		output->addObject(microstructureObj);
+	}
+	microstructureObj->setDomain(output->getObject<SimulationCellObject>());
+	microstructureObj->setStorage(microstructure());
 
 	return output;
 }

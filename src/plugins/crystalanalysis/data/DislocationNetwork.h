@@ -258,13 +258,13 @@ class OVITO_CRYSTALANALYSIS_EXPORT DislocationNetwork
 public:
 
 	/// Constructor that creates an empty dislocation network.
-	DislocationNetwork(std::shared_ptr<ClusterGraph> clusterGraph) : _clusterGraph(std::move(clusterGraph)) {}
+	explicit DislocationNetwork(std::shared_ptr<ClusterGraph> clusterGraph) : _clusterGraph(std::move(clusterGraph)) {}
 
 	/// Copy constructor.
 	DislocationNetwork(const DislocationNetwork& other);
 
 	/// Conversion constructor.
-	DislocationNetwork(const Microstructure& other, const SimulationCell& cell);
+	explicit DislocationNetwork(const Microstructure microstructure);
 
 	/// Returns a const-reference to the cluster graph.
 	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }

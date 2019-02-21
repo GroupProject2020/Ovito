@@ -107,7 +107,7 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, P
 			simCell.column(0) *= (newImages.sizeX() + 1);
 			simCell.column(1) *= (newImages.sizeY() + 1);
 			simCell.column(2) *= (newImages.sizeZ() + 1);
-			newDislocations->domain()->setCellMatrix(simCell);			
+			newDislocations->mutableDomain()->setCellMatrix(simCell);			
 		}
 	}
 

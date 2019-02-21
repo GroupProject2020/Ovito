@@ -113,7 +113,7 @@ PYBIND11_MODULE(MeshPython, m)
 			"The methods :py:meth:`.get_vertices`, :py:meth:`.get_faces` and :py:meth:`.get_face_adjacency` methods provide access to the internal data of the "
 			"surface mesh. "
 		)
-
+#if 0
 		.def("locate_point", &SurfaceMesh::locatePoint,
 			"locate_point(pos, eps=1e-6)"
 			"\n\n"
@@ -212,7 +212,6 @@ PYBIND11_MODULE(MeshPython, m)
 			"\n\n"
 			"Sets the cutting planes to be applied to this :py:class:`!SurfaceMesh`. "
 			"The array *planes* must follow the same format as the one returned by :py:meth:`.get_cutting_planes`. ")
-			
 		// For backward compatibility with Ovito 2.8.2:	
 		.def("export_vtk", [](SurfaceMesh& mesh, const QString& filename, SimulationCellObject* simCellObj) {
 				if(!simCellObj)
@@ -233,9 +232,10 @@ PYBIND11_MODULE(MeshPython, m)
 				CompressedTextWriter writer(file, mesh.dataset());
 				output.saveToVTK(writer);
 			})
+#endif
 	;
-	createDataPropertyAccessors(SurfaceMesh_py, "all_interior", &SurfaceMesh::isCompletelySolid, &SurfaceMesh::setIsCompletelySolid,
-		"Boolean flag indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.");
+	createDataPropertyAccessors(SurfaceMesh_py, "all_interior", &SurfaceMesh::spaceFillingRegion, &SurfaceMesh::setSpaceFillingRegion,
+		"Indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.");
 	createDataSubobjectAccessors(SurfaceMesh_py, "domain", &PeriodicDomainDataObject::domain, &PeriodicDomainDataObject::setDomain, 
 		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
 		"surface mesh is embedded in. Note that this cell generally is indepenent of and may be different from the :py:attr:`~ovito.data.DataCollection.cell` "
