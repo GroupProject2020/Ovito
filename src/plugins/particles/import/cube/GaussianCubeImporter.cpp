@@ -69,21 +69,21 @@ bool GaussianCubeImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 	stream.readLine(1024);
 
 	// Read number of atoms and cell origin coordinates.
-	size_t numAtoms;
+	int numAtoms;
 	Vector3 cellOrigin;
 	char c;
-	if(sscanf(stream.readLine(), "%zu " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %c", &numAtoms, &cellOrigin.x(), &cellOrigin.y(), &cellOrigin.z(), &c) != 4)
+	if(sscanf(stream.readLine(), "%i " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %c", &numAtoms, &cellOrigin.x(), &cellOrigin.y(), &cellOrigin.z(), &c) != 4)
 		return false;
-	if(numAtoms == 0 || numAtoms > (size_t)std::numeric_limits<int>::max())
+	if(numAtoms == 0)
 		return false;
 
 	// Read voxel count and cell vectors.
-	size_t gridSize[3];
+	int gridSize[3];
 	Vector3 cellVectors[3];
 	for(size_t dim = 0; dim < 3; dim++) {
-		if(sscanf(stream.readLine(), "%zu " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %c", &gridSize[dim], &cellVectors[dim].x(), &cellVectors[dim].y(), &cellVectors[dim].z(), &c) != 4)
+		if(sscanf(stream.readLine(), "%i " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %c", &gridSize[dim], &cellVectors[dim].x(), &cellVectors[dim].y(), &cellVectors[dim].z(), &c) != 4)
 			return false;
-		if(gridSize[dim] == 0 || gridSize[dim] > (size_t)std::numeric_limits<int>::max())
+		if(gridSize[dim] == 0)
 			return false;
 	}
 
@@ -114,23 +114,37 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 	stream.readLine();
 
 	// Read number of atoms and cell origin coordinates.
-	unsigned long long numAtoms;
-	Vector3 cellOrigin;
-	if(sscanf(stream.readLine(), "%llu " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &numAtoms, &cellOrigin.x(), &cellOrigin.y(), &cellOrigin.z()) != 4)
+	long long numAtoms;
+	bool voxelFieldTablePresent = false;
+	AffineTransformation cellMatrix;
+	if(sscanf(stream.readLine(), "%lli " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &numAtoms, &cellMatrix.translation().x(), &cellMatrix.translation().y(), &cellMatrix.translation().z()) != 4)
 		throw Exception(tr("Invalid number of atoms or origin coordinates in line %1 of Cube file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+	if(numAtoms < 0) {
+		numAtoms = -numAtoms;
+		voxelFieldTablePresent = true;
+	}
 
 	// Read voxel counts and cell vectors.
+	bool isBohrUnits = true;
 	size_t gridSize[3];
-	Vector3 cellVectors[3];
 	for(size_t dim = 0; dim < 3; dim++) {
-		if(sscanf(stream.readLine(), "%zu " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &gridSize[dim], &cellVectors[dim].x(), &cellVectors[dim].y(), &cellVectors[dim].z()) != 4)
+		int gs;
+		if(sscanf(stream.readLine(), "%i " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &gs, &cellMatrix.column(dim).x(), &cellMatrix.column(dim).y(), &cellMatrix.column(dim).z()) != 4)
 			throw Exception(tr("Invalid number of voxels or cell vector in line %1 of Cube file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-		if(gridSize[dim] == 0 || gridSize[dim] > (size_t)std::numeric_limits<int>::max())
+		if(gs < 0) {
+			gs = -gs;
+			isBohrUnits = false;
+		}
+		if(gs == 0)
 			throw Exception(tr("Number of grid voxels out of range in line %1 of Cube file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-		cellVectors[dim] *= gridSize[dim];
+		gridSize[dim] = gs;
+		cellMatrix.column(dim) *= gs;
 	}
+	// Automatically convert from Bohr units to Angstroms units.
+	if(isBohrUnits)
+		cellMatrix = cellMatrix * 0.52917721067;
 	frameData->simulationCell().setPbcFlags(true, true, true);
-	frameData->simulationCell().setMatrix(AffineTransformation(cellVectors[0], cellVectors[1], cellVectors[2], cellOrigin));
+	frameData->simulationCell().setMatrix(cellMatrix);
 
 	// Create the particle properties.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, false);
@@ -138,7 +152,7 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 
-	// Read atom coordinates.
+	// Read atomic coordinates.
 	Point3* p = posProperty->dataPoint3();
 	int* a = typeProperty->dataInt();
 	setProgressMaximum(numAtoms + gridSize[0]*gridSize[1]*gridSize[2]);
@@ -148,6 +162,9 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 		if(sscanf(stream.readLine(), "%i " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
 				a, &secondColumn, &p->x(), &p->y(), &p->z()) != 5)
 			throw Exception(tr("Invalid atom information in line %1 of Cube file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+		// Automatically convert from Bohr units to Angstroms units.
+		if(isBohrUnits)
+			(*p) *= 0.52917721067;
 	}
 
 	// Translate atomic numbers into element names.
@@ -159,27 +176,65 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 			typeList->addTypeId(a);
 	}
 
+	// Parse voxel field table.
+	const char* s = stream.readLine();
+	size_t nfields = 0;
+	QStringList componentNames;
+	if(voxelFieldTablePresent) {
+		int m = -1;
+		const char* token;
+		for(;;) {
+			for(;;) {
+				while(*s == ' ' || *s == '\t') ++s;
+				token = s;
+				while(*s > ' ' || *s < 0) ++s;
+				if(s != token) break;
+				s = stream.readLine();
+			}
+			int value;
+			if(!parseInt(token, s, value))
+				throw Exception(tr("Invalid integer value in line %1 of Cube file: \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
+			if(*s != '\0')
+				s++;
+			if(m == -1) {
+				m = value;
+				if(m <= 0) throw Exception(tr("Invalid field count in line %1 of Cube file: \"%2\"").arg(stream.lineNumber()).arg(value));
+				nfields = m;
+			}
+			else if(m != 0) {
+				componentNames.push_back(QStringLiteral("MO%1").arg(value));
+				if(--m == 0) break;
+			}
+		}
+	}
+	else {
+		// No field table present. Assume file contains a single field property.
+		nfields = 1;
+	}
+	PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(gridSize[0]*gridSize[1]*gridSize[2], PropertyStorage::Float, nfields, 0, QStringLiteral("Property"), false);
+	fieldQuantity->setComponentNames(std::move(componentNames));
+
 	// Parse voxel data.
 	frameData->setVoxelGridShape({gridSize[0], gridSize[1], gridSize[2]});
-	PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(gridSize[0]*gridSize[1]*gridSize[2], PropertyStorage::Float, 1, 0, QStringLiteral("Property"), false);
-	const char* s = stream.readLine();
 	for(size_t x = 0; x < gridSize[0]; x++) {
 		for(size_t y = 0; y < gridSize[1]; y++) {
 			for(size_t z = 0; z < gridSize[2]; z++) {
-				const char* token;
-				for(;;) {
-					while(*s == ' ' || *s == '\t') ++s;
-					token = s;
-					while(*s > ' ' || *s < 0) ++s;
-					if(s != token) break;
-					s = stream.readLine();
+				for(size_t compnt = 0; compnt < fieldQuantity->componentCount(); compnt++) {
+					const char* token;
+					for(;;) {
+						while(*s == ' ' || *s == '\t') ++s;
+						token = s;
+						while(*s > ' ' || *s < 0) ++s;
+						if(s != token) break;
+						s = stream.readLine();
+					}
+					FloatType value;
+					if(!parseFloatType(token, s, value))
+						throw Exception(tr("Invalid value in line %1 of Cube file: \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
+					fieldQuantity->setFloatComponent(z * gridSize[0] * gridSize[1] + y * gridSize[0] + x, compnt, value);
+					if(*s != '\0')
+						s++;
 				}
-				FloatType value;
-				if(!parseFloatType(token, s, value))
-					throw Exception(tr("Invalid value in line %1 of Cube file: \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
-				fieldQuantity->setFloat(z * gridSize[0] * gridSize[1] + y * gridSize[0] + x, value);
-				if(*s != '\0')
-					s++;
 				if(!setProgressValueIntermittent(progressValue() + 1)) 
 					return {};
 			}

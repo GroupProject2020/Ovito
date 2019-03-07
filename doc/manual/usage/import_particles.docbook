@@ -240,7 +240,7 @@
             </row>
             <row>
               <entry>Cube</entry>
-              <entry><para>File format used by the <emphasis>Gaussian</emphasis> simulation package. A description of the format can be found  <link xlink:href="http://paulbourke.net/dataformats/cube/">here</link>.</para></entry>
+              <entry><para>File format used by the <emphasis>Gaussian</emphasis> simulation package. Specifications of the format can be found <link xlink:href="https://h5cube-spec.readthedocs.io/en/latest/cubeformat.html">here</link> and <link xlink:href="http://paulbourke.net/dataformats/cube/">here</link>.</para></entry>
               <entry>particles, voxel&#xA0;grid</entry>
             </row>
             <row>
