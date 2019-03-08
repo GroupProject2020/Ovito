@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,8 +21,8 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -40,7 +40,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 * Constructor.
 ******************************************************************************/
 DislocationAnalysisEngine::DislocationAnalysisEngine(
-		ParticleOrderingFingerprint fingerprint, 
+		ParticleOrderingFingerprint fingerprint,
 		ConstPropertyPtr positions, const SimulationCell& simCell,
 		int inputCrystalStructure, int maxTrialCircuitSize, int maxCircuitElongation,
 		ConstPropertyPtr particleSelection,
@@ -75,20 +75,16 @@ DislocationAnalysisEngine::DislocationAnalysisEngine(
 void DislocationAnalysisEngine::perform()
 {
 	task()->setProgressText(DislocationAnalysisModifier::tr("Dislocation analysis (DXA)"));
-//	qInfo() << QDateTime::currentDateTime().toString() << "Beginning DXA";
 
 	task()->beginProgressSubStepsWithWeights({ 35, 6, 1, 220, 60, 1, 53, 190, 146, 20, 4, 4 });
-//	qInfo() << QDateTime::currentDateTime().toString() << "Identifying structures";
 	if(!_structureAnalysis->identifyStructures(*task()))
 		return;
 
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Building clusters";
 	if(!_structureAnalysis->buildClusters(*task()))
 		return;
 
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Connecting clusters";
 	if(!_structureAnalysis->connectClusters(*task()))
 		return;
 
@@ -121,26 +117,22 @@ void DislocationAnalysisEngine::perform()
 
 	task()->nextProgressSubStep();
 	FloatType ghostLayerSize = FloatType(3.0) * _structureAnalysis->maximumNeighborDistance();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Building Delaunay tessellation";
 	if(!_tessellation->generateTessellation(_structureAnalysis->cell(), positions()->constDataPoint3(),
 			_structureAnalysis->atomCount(), ghostLayerSize, selection() ? selection()->constDataInt() : nullptr, *task()))
 		return;
 
 	// Build list of edges in the tessellation.
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Generating tessellation edges";
 	if(!_elasticMapping->generateTessellationEdges(*task()))
 		return;
 
 	// Assign each vertex to a cluster.
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Assigning vertices to clusters";
 	if(!_elasticMapping->assignVerticesToClusters(*task()))
 		return;
 
 	// Determine the ideal vector corresponding to each edge of the tessellation.
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Assigning ideal vectors to edges";
 	if(!_elasticMapping->assignIdealVectorsToEdges(4, *task()))
 		return;
 
@@ -149,16 +141,13 @@ void DislocationAnalysisEngine::perform()
 
 	// Create the mesh facets.
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Creating interface mesh";
 	if(!_interfaceMesh->createMesh(_structureAnalysis->maximumNeighborDistance(), crystalClusters().get(), *task()))
 		return;
 
 	// Trace dislocation lines.
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Tracing dislocation lines";
 	if(!_dislocationTracer->traceDislocationSegments(*task()))
 		return;
-//	qInfo() << QDateTime::currentDateTime().toString() << "Finishing dislocation lines";
 	_dislocationTracer->finishDislocationSegments(_inputCrystalStructure);
 
 #if 0
@@ -238,9 +227,7 @@ void DislocationAnalysisEngine::perform()
 
 	// Generate the defect mesh.
 	task()->nextProgressSubStep();
-//	qInfo() << QDateTime::currentDateTime().toString() << "Generating defect mesh";
-	_defectMeshVerts = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
-	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, *defectMesh(), *_defectMeshVerts, *task()))
+	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, _defectMesh, *task()))
 		return;
 
 #if 0
@@ -250,12 +237,11 @@ void DislocationAnalysisEngine::perform()
 	task()->nextProgressSubStep();
 
 	// Post-process surface mesh.
-//	qInfo() << QDateTime::currentDateTime().toString() << "Smoothing surface mesh";
-	if(_defectMeshSmoothingLevel > 0 && !SurfaceMesh::smoothMesh(*defectMesh(), *_defectMeshVerts, cell(), _defectMeshSmoothingLevel, *task()))
+	if(_defectMeshSmoothingLevel > 0 && !_defectMesh.smoothMesh(_defectMeshSmoothingLevel, *task()))
 		return;
 
 	task()->nextProgressSubStep();
-		
+
 	// Post-process dislocation lines.
 	if(_lineSmoothingLevel > 0 || _linePointInterval > 0) {
 		if(!dislocationNetwork()->smoothDislocationLines(_lineSmoothingLevel, _linePointInterval, *task()))
@@ -263,12 +249,11 @@ void DislocationAnalysisEngine::perform()
 	}
 
 	task()->endProgressSubSteps();
-	
+
 	// Return the results of the compute engine.
-	_isBadEverywhere = interfaceMesh().isCompletelyBad();
 	if(_doOutputInterfaceMesh) {
-		_outputInterfaceMesh = std::make_shared<HalfEdgeMesh>(interfaceMesh());
-		_outputInterfaceMeshVerts = interfaceMesh().vertexCoords();
+		_outputInterfaceMesh = interfaceMesh().topology();
+		_outputInterfaceMeshVerts = interfaceMesh().vertexProperty(SurfaceMeshVertices::PositionProperty);
 	}
 }
 
@@ -282,9 +267,7 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 
 	// Output defect mesh.
 	SurfaceMesh* defectMeshObj = state.createObject<SurfaceMesh>(QStringLiteral("dxa-defect-mesh"), modApp, DislocationAnalysisModifier::tr("Defect mesh"));
-	defectMeshObj->setTopology(defectMesh());
-	defectMeshObj->vertices()->createProperty(_defectMeshVerts);
-	defectMeshObj->setSpaceFillingRegion(isBadEverywhere() ? 1 : 0);	
+	defectMesh().transferTo(defectMeshObj);
 	defectMeshObj->setDomain(state.getObject<SimulationCellObject>());
 	defectMeshObj->setVisElement(modifier->defectMeshVis());
 
@@ -293,7 +276,7 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 		SurfaceMesh* interfaceMeshObj = state.createObject<SurfaceMesh>(QStringLiteral("dxa-interface-mesh"), modApp, DislocationAnalysisModifier::tr("Interface mesh"));
 		interfaceMeshObj->setTopology(outputInterfaceMesh());
 		interfaceMeshObj->vertices()->createProperty(_outputInterfaceMeshVerts);
-		interfaceMeshObj->setSpaceFillingRegion(isBadEverywhere() ? 1 : 0);
+		interfaceMeshObj->setSpaceFillingRegion(defectMesh().spaceFillingRegion());
 		interfaceMeshObj->setDomain(state.getObject<SimulationCellObject>());
 		interfaceMeshObj->setVisElement(modifier->interfaceMeshVis());
 	}
@@ -307,21 +290,25 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 	// Output dislocations.
 	DislocationNetworkObject* dislocationsObj = state.createObject<DislocationNetworkObject>(modApp);
 	dislocationsObj->setStorage(dislocationNetwork());
+	while(!dislocationsObj->crystalStructures().empty())
+		dislocationsObj->removeCrystalStructure(dislocationsObj->crystalStructures().size()-1);
+	for(ElementType* stype : modifier->structureTypes())
+		dislocationsObj->addCrystalStructure(static_object_cast<MicrostructurePhase>(stype));
 	dislocationsObj->setDomain(state.getObject<SimulationCellObject>());
 	dislocationsObj->setVisElement(modifier->dislocationVis());
 
 	std::map<BurgersVectorFamily*,FloatType> dislocationLengths;
 	std::map<BurgersVectorFamily*,int> segmentCounts;
-	std::map<BurgersVectorFamily*,StructurePattern*> dislocationStructurePatterns;
-	StructurePattern* defaultPattern = modifier->patternCatalog()->structureById(modifier->inputCrystalStructure());
-	if(defaultPattern) {
-		for(BurgersVectorFamily* family : defaultPattern->burgersVectorFamilies()) {
+	std::map<BurgersVectorFamily*,MicrostructurePhase*> dislocationCrystalStructures;
+	MicrostructurePhase* defaultStructure = dislocationsObj->structureById(modifier->inputCrystalStructure());
+	if(defaultStructure) {
+		for(BurgersVectorFamily* family : defaultStructure->burgersVectorFamilies()) {
 			dislocationLengths[family] = 0;
 			segmentCounts[family] = 0;
-			dislocationStructurePatterns[family] = defaultPattern;
+			dislocationCrystalStructures[family] = defaultStructure;
 		}
 	}
-	
+
 	// Classify, count and measure length of dislocation segments.
 	FloatType totalLineLength = 0;
 	int totalSegmentCount = 0;
@@ -332,18 +319,18 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 
 		Cluster* cluster = segment->burgersVector.cluster();
 		OVITO_ASSERT(cluster != nullptr);
-		StructurePattern* pattern = modifier->patternCatalog()->structureById(cluster->structure);
-		if(pattern == nullptr) continue;
-		BurgersVectorFamily* family = pattern->defaultBurgersVectorFamily();
-		for(BurgersVectorFamily* f : pattern->burgersVectorFamilies()) {
-			if(f->isMember(segment->burgersVector.localVec(), pattern)) {
+		MicrostructurePhase* structure = dislocationsObj->structureById(cluster->structure);
+		if(structure == nullptr) continue;
+		BurgersVectorFamily* family = structure->defaultBurgersVectorFamily();
+		for(BurgersVectorFamily* f : structure->burgersVectorFamilies()) {
+			if(f->isMember(segment->burgersVector.localVec(), structure)) {
 				family = f;
 				break;
 			}
 		}
 		segmentCounts[family]++;
 		dislocationLengths[family] += len;
-		dislocationStructurePatterns[family] = pattern;
+		dislocationCrystalStructures[family] = structure;
 	}
 
 	// Output a data series object with the dislocation line lengths.
@@ -357,24 +344,17 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 	PropertyObject* yProperty = lengthSeriesObj->createProperty(dislocationLengthsProperty);
 	for(const auto& entry : dislocationLengths)
 		yProperty->addElementType(entry.first);
-	lengthSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));	
+	lengthSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));
 
 	// Output a data series object with the dislocation segment counts.
-	PropertyPtr dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Segment count"), true, DataSeriesObject::YProperty);
+	PropertyPtr dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation count"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : segmentCounts)
 		dislocationCountsProperty->setInt(entry.first->numericId(), entry.second);
 	DataSeriesObject* countSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"));
 	yProperty = countSeriesObj->createProperty(dislocationCountsProperty);
 	for(const auto& entry : segmentCounts)
 		yProperty->addElementType(entry.first);
-	countSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));	
-
-	// Output pattern catalog.
-	if(modifier->patternCatalog()) {
-		if(const PatternCatalog* oldCatalog = state.getObject<PatternCatalog>())
-			state.removeObject(oldCatalog);
-		state.addObject(modifier->patternCatalog());
-	}
+	countSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));
 
 	// Output particle properties.
 	if(atomClusters()) {
@@ -391,10 +371,10 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 	state.addAttribute(QStringLiteral("DislocationAnalysis.counts.HexagonalDiamond"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_HEX_DIAMOND)), modApp);
 
 	for(const auto& dlen : dislocationLengths) {
-		StructurePattern* pattern = dislocationStructurePatterns[dlen.first];
+		MicrostructurePhase* structure = dislocationCrystalStructures[dlen.first];
 		QString bstr;
 		if(dlen.first->burgersVector() != Vector3::Zero()) {
-			bstr = DislocationVis::formatBurgersVector(dlen.first->burgersVector(), pattern);
+			bstr = DislocationVis::formatBurgersVector(dlen.first->burgersVector(), structure);
 			bstr.remove(QChar(' '));
 			bstr.replace(QChar('['), QChar('<'));
 			bstr.replace(QChar(']'), QChar('>'));

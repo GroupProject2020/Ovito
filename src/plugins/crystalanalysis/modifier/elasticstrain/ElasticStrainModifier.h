@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,6 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -69,9 +68,6 @@ private:
 
 	/// The c/a ratio of the ideal crystal.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, axialRatio, setAxialRatio, PROPERTY_FIELD_MEMORIZE);
-
-	/// The catalog of structure patterns.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PatternCatalog, patternCatalog, setPatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

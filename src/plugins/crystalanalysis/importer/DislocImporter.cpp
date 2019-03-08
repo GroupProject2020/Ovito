@@ -20,10 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
-#include <plugins/crystalanalysis/objects/microstructure/SlipSurfaceVis.h>
-#include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
+#include <plugins/crystalanalysis/objects/MicrostructurePhase.h>
+#include <plugins/crystalanalysis/objects/DislocationVis.h>
+#include <plugins/crystalanalysis/objects/SlipSurfaceVis.h>
 #include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>
 #include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
@@ -76,10 +76,10 @@ void DislocImporter::setupPipeline(PipelineSceneNode* pipeline, FileSource* impo
 	ParticleImporter::setupPipeline(pipeline, importObj);
 
 	// Insert a SimplyMicrostructureModifier into the data pipeline by default.
-	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(pipeline->dataset());
-	if(!Application::instance()->scriptMode())
-		modifier->loadUserDefaults();
-	pipeline->applyModifier(modifier);
+//	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(pipeline->dataset());
+//	if(!Application::instance()->scriptMode())
+//		modifier->loadUserDefaults();
+//	pipeline->applyModifier(modifier);
 }
 
 /******************************************************************************
@@ -91,8 +91,9 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 
 	// Create the container structures for holding the loaded data.
 	auto frameData = std::make_shared<DislocFrameData>();
-	Microstructure& microstructure = frameData->microstructure();
-	int defaultRegion = 0;
+	MicrostructureData& microstructure = frameData->microstructure();
+	int emptyRegion = microstructure.createRegion(0);
+	int crystalRegion = microstructure.createRegion(1);
 
 	// Fix disloc specific data.
 	std::vector<Vector3> latticeVectors;
@@ -125,10 +126,6 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		auto lattice_structure_str = std::make_unique<char[]>(len+1);
 		NCERR(nc_get_att_text(root_ncid, NC_GLOBAL, "LatticeStructure", lattice_structure_str.get()));
 		lattice_structure_str[len] = '\0';
-//		if(strcmp(lattice_structure_str.get(), "bcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_BCC;
-//		else if(strcmp(lattice_structure_str.get(), "fcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
-//		else if(strcmp(lattice_structure_str.get(), "fcc_perfect") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
-//		else throw Exception(tr("File parsing error. Unknown lattice structure type: %1").arg(lattice_structure_str.get()));
 
 		// Get NetCDF dimensions.
 		int spatial_dim, nodes_dim, dislocation_segments_dim, pair_dim, node_id_dim;
@@ -159,6 +156,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		NCERR(nc_get_vara_int(root_ncid, cell_pbc_var, startp, countp, cellPbc));
 		frameData->simulationCell().setPbcFlags({cellPbc[0] != 0, cellPbc[1] != 0, cellPbc[2] != 0});
 		frameData->simulationCell().setMatrix(cellMatrix);
+		frameData->microstructure().cell() = frameData->simulationCell();
 
 		// Read lattice orientation matrix.
 		int lattice_orientation_var;
@@ -169,6 +167,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 #else
 		NCERR(nc_get_var_double(root_ncid, lattice_orientation_var, latticeOrientation.elements()));
 #endif
+		frameData->setLatticeStructure(lattice_structure_str.get(), latticeOrientation);
 
 		// Read node list.
 		int nodal_ids_var, nodal_positions_var;
@@ -184,8 +183,8 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		}
 
 		// Build list of unique nodes.
-		std::vector<Microstructure::vertex_index> vertexMap(numNodeRecords);
-		std::unordered_map<std::array<qlonglong,4>, Microstructure::vertex_index, boost::hash<std::array<qlonglong,4>>> idMap;
+		std::vector<MicrostructureData::vertex_index> vertexMap(numNodeRecords);
+		std::unordered_map<std::array<qlonglong,4>, MicrostructureData::vertex_index, boost::hash<std::array<qlonglong,4>>> idMap;
 		auto vertexMapIter = vertexMap.begin();
 		auto nodalPositionsIter = nodalPositions.cbegin();
 		for(const auto& id : nodalIds) {
@@ -215,11 +214,14 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		for(const auto& seg : dislocationSegments) {
 			OVITO_ASSERT(seg[0] >= 0 && seg[0] < vertexMap.size());
 			OVITO_ASSERT(seg[1] >= 0 && seg[1] < vertexMap.size());
-			Microstructure::vertex_index vertex1	= vertexMap[seg[0]];
-			Microstructure::vertex_index vertex2	= vertexMap[seg[1]];
-			microstructure.createDislocationSegment(vertex1, vertex2, Vector3(*burgersVector++), defaultRegion);
+			MicrostructureData::vertex_index vertex1 = vertexMap[seg[0]];
+			MicrostructureData::vertex_index vertex2 = vertexMap[seg[1]];
+			microstructure.createDislocationSegment(vertex1, vertex2, Vector3(*burgersVector++), crystalRegion);
 		}
 		segmentCount = dislocationSegments.size();
+
+		// Form continuous dislocation lines from the segments.
+		microstructure.makeContinuousDislocationLines();
 
 		// Read slip facets.
 		int slip_facets_dim = -1, slip_facet_vertices_dim = -1;
@@ -254,14 +256,14 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 			auto slipVector = slipVectors.cbegin();
 			auto slipFacetEdgeCount = slipFacetEdgeCounts.cbegin();
 			auto slipFacetVertex = slipFacetVertices.cbegin();
-			slipSurfaceMap.resize(microstructure.topology()->faceCount());
+			slipSurfaceMap.resize(microstructure.faceCount());
 			slipSurfaceMap.reserve(slipSurfaceMap.size() + numSlipFacets*2);
 			for(const auto& slippedEdge : slippedEdges) {
-				Microstructure::face_index face = microstructure.createFace(Microstructure::SLIP_FACET, defaultRegion, Vector3(*slipVector));
+				MicrostructureData::face_index face = microstructure.createFace({}, crystalRegion, MicrostructureData::SLIP_FACET, Vector3(*slipVector));
 				slipSurfaceMap.push_back({ slippedEdge[0], slippedEdge[1] });
-				Microstructure::vertex_index node0 = vertexMap[*slipFacetVertex++];
-				Microstructure::vertex_index node1 = node0;
-				Microstructure::vertex_index node2;
+				MicrostructureData::vertex_index node0 = vertexMap[*slipFacetVertex++];
+				MicrostructureData::vertex_index node1 = node0;
+				MicrostructureData::vertex_index node2;
 				for(int i = 1; i < *slipFacetEdgeCount; i++, node1 = node2) {
 					node2 = vertexMap[*slipFacetVertex++];
 					microstructure.createEdge(node1, node2, face);
@@ -269,20 +271,21 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				microstructure.createEdge(node1, node0, face);
 
 				// Create the opposite face.
-				Microstructure::face_index oppositeFace = microstructure.createFace(Microstructure::SLIP_FACET, defaultRegion, -Vector3(*slipVector));
-				microstructure.topology()->linkOppositeFaces(face, oppositeFace);
+				MicrostructureData::face_index oppositeFace = microstructure.createFace({}, crystalRegion, MicrostructureData::SLIP_FACET, -Vector3(*slipVector));
 				slipSurfaceMap.push_back({ slippedEdge[1], slippedEdge[0] });
-				Microstructure::edge_index edge = microstructure.firstFaceEdge(face);
+				MicrostructureData::edge_index edge = microstructure.firstFaceEdge(face);
 				do {
 					microstructure.createEdge(microstructure.vertex2(edge), microstructure.vertex1(edge), oppositeFace);
 					edge = microstructure.prevFaceEdge(edge);
 				}
 				while(edge != microstructure.firstFaceEdge(face));
+				microstructure.topology()->linkOppositeFaces(face, oppositeFace);
 
 				++slipVector;
 				++slipFacetEdgeCount;
 			}
 			OVITO_ASSERT(slipFacetVertex == slipFacetVertices.cend());
+			OVITO_ASSERT(slipSurfaceMap.size() == microstructure.faceCount());
 		}
 
 		// Close the input file again.
@@ -294,119 +297,6 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		throw;
 	}
 
-#if 0
-		else if(stream.lineStartsWith("slip surfaces:")) {
-			for(;;) {
-				stream.readLine();
-				if(stream.lineStartsWith("end of slip surfaces:"))
-					break;
-				if(!setProgressValueIntermittent(stream.underlyingByteOffset() / progressUpdateInterval))
-					return {};
-
-				int slipVectorCode;
-				int charCount;
-				const char* line = stream.line();
-				if(sscanf(line, "%i%n", &slipVectorCode, &charCount) != 1)
-					throw Exception(tr("File parsing error. Invalid slip surface specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				Vector3 slipVector;
-				line += charCount;
-				if(slipVectorCode == -1) {
-					if(sscanf(line, FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING "%n", &slipVector.x(), &slipVector.y(), &slipVector.z(), &charCount) != 3)
-						throw Exception(tr("File parsing error. Invalid slip vector specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-					line += charCount;
-				}
-				else {
-					if(slipVectorCode < 0 || slipVectorCode > latticeVectors.size())
-						throw Exception(tr("File parsing error. Invalid slip vector code in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-					slipVector = latticeVectors[slipVectorCode];
-				}
-
-				std::array<qulonglong,2> edgeVertexCodes;
-				int numVertices;
-				if(sscanf(line, "%llx %llx %i%n", &edgeVertexCodes[0], &edgeVertexCodes[1], &numVertices, &charCount) != 3)
-					throw Exception(tr("File parsing error. Invalid slip edge specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				line += charCount;
-				Microstructure::Face* face = microstructure->createFace();
-				face->setBurgersVector(slipVector);
-				face->setCluster(defaultCluster);
-				face->setSlipSurfaceFace(true);
-				slipSurfaceMap.emplace(face, std::make_pair(edgeVertexCodes[0], edgeVertexCodes[1]));
-				Microstructure::Vertex* node0;
-				Microstructure::Vertex* node1;
-				qulonglong cellVertexCode0;
-				qulonglong cellVertexCode1;
-				for(int i = 0; i < numVertices; i++) {
-					qulonglong cellVertexCode2;
-					if(sscanf(line, "%llx%n", &cellVertexCode2, &charCount) != 1)
-						throw Exception(tr("File parsing error. Invalid slip edge specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-					line += charCount;
-					OVITO_ASSERT(cellVertexCode2 != edgeVertexCodes[0] && cellVertexCode2 != edgeVertexCodes[1]);
-					if(i == 0) {
-						cellVertexCode0 = cellVertexCode1 = cellVertexCode2;
-					}
-					else {
-						Microstructure::Vertex* node2 = createVertexFromCode({edgeVertexCodes[0], edgeVertexCodes[1], cellVertexCode1, cellVertexCode2});
-						cellVertexCode1 = cellVertexCode2;
-						if(i == 1) {
-							node0 = node1 = node2;
-						}
-						else {
-							microstructure->createEdge(node1, node2, face);
-							node1 = node2;
-						}
-					}
-				}
-				Microstructure::Vertex* node2 = createVertexFromCode({edgeVertexCodes[0], edgeVertexCodes[1], cellVertexCode1, cellVertexCode0});
-				microstructure->createEdge(node1, node2, face);
-				microstructure->createEdge(node2, node0, face);
-
-				// Create the opposite face.
-				Microstructure::Face* oppositeFace = microstructure->createFace();
-				oppositeFace->setBurgersVector(-slipVector);
-				oppositeFace->setCluster(defaultCluster);
-				oppositeFace->setSlipSurfaceFace(true);
-				face->setOppositeFace(oppositeFace);
-				oppositeFace->setOppositeFace(face);
-				slipSurfaceMap.emplace(oppositeFace, std::make_pair(edgeVertexCodes[1], edgeVertexCodes[0]));
-				Microstructure::Edge* edge = face->edges();
-				do {
-					microstructure->createEdge(edge->vertex2(), edge->vertex1(), oppositeFace);
-					edge = edge->prevFaceEdge();
-				}
-				while(edge != face->edges());
-			}
-		}
-		else if(stream.lineStartsWith("nodes:")) {
-			int nnodes;
-			if(sscanf(stream.readLine(), "%i", &nnodes) != 1)
-				throw Exception(tr("File parsing error. Invalid number of nodes (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			for(int i = 0; i < nnodes; i++) {
-				if(!setProgressValueIntermittent(stream.underlyingByteOffset() / progressUpdateInterval))
-					return {};
-
-				std::array<qulonglong,4> vertexCodes;
-				Point3 position;
-				if(sscanf(stream.readLine(), "%llx %llx %llx %llx " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
-						&vertexCodes[0], &vertexCodes[1], &vertexCodes[2], &vertexCodes[3], &position.x(), &position.y(), &position.z()) != 7)
-					throw Exception(tr("File parsing error. Invalid node specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				OVITO_ASSERT(std::is_sorted(std::begin(vertexCodes), std::end(vertexCodes)));
-
-				auto vertex = vertexMap.find(vertexCodes);
-				if(vertex != vertexMap.end())
-					vertex->second->setPos(position);
-			}
-		}
-	}
-
-	// Consistency check.
-	if(numProcessorPiecesLoaded != processorGrid.x() * processorGrid.y() * processorGrid.z())
-		throw Exception(tr("File parsing error. Number of read data pieces %i is not consistent with processor grid size %i x %i x %i.")
-			.arg(numProcessorPiecesLoaded).arg(processorGrid.x()).arg(processorGrid.y()).arg(processorGrid.z()));
-#endif
-
-	// Form continuous dislocation lines from the segments.
-	microstructure.makeContinuousDislocationLines();
-
 	// Connect half-edges of slip faces.
 	connectSlipFaces(microstructure, slipSurfaceMap);
 
@@ -414,21 +304,19 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 	microstructure.makeSlipSurfaces();
 
 	frameData->setStatus(tr("Number of nodes: %1\nNumber of segments: %2")
-		.arg(microstructure.topology()->vertexCount())
+		.arg(microstructure.vertexCount())
 		.arg(segmentCount));
 
-#if 0
 	// Verify dislocation network.
-	for(Microstructure::Vertex* vertex : microstructure->vertices()) {
+	for(MicrostructureData::vertex_index vertex = 0; vertex < microstructure.vertexCount(); vertex++) {
 		Vector3 sum = Vector3::Zero();
-		for(auto e = vertex->edges(); e != nullptr; e = e->nextVertexEdge()) {
-			if(e->isDislocation()) sum += e->burgersVector();
+		for(auto e = microstructure.firstVertexEdge(vertex); e != HalfEdgeMesh::InvalidIndex; e = microstructure.nextVertexEdge(e)) {
+			if(microstructure.isPhysicalDislocationEdge(e))
+				sum += microstructure.burgersVector(microstructure.adjacentFace(e));
 		}
-		if(!sum.isZero())
-			qDebug() << "Detected violation of Burgers vector conservation at location" << vertex->pos() << "(" << vertex->countDislocationArms() << "arms; delta_b =" << sum << ")";
-
+		if(!sum.isZero(1e-6))
+			qDebug() << "Detected violation of Burgers vector conservation at location" << microstructure.vertexPosition(vertex) << "(" << microstructure.countDislocationArms(vertex) << "arms; delta_b =" << sum << ")";
 	}
-#endif
 
 	return frameData;
 }
@@ -436,19 +324,20 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 /*************************************************************************************
 * Connects the slip faces to form two-dimensional manifolds.
 **************************************************************************************/
-void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap)
+void DislocImporter::FrameLoader::connectSlipFaces(MicrostructureData& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap)
 {
 	// Link slip surface faces with their neighbors, i.e. find the opposite edge for every half-edge of a slip face.
-	Microstructure::size_type edgeCount = microstructure.topology()->edgeCount();
-	for(Microstructure::edge_index edge1 = 0; edge1 < edgeCount; edge1++) {
+	MicrostructureData::size_type edgeCount = microstructure.edgeCount();
+	for(MicrostructureData::edge_index edge1 = 0; edge1 < edgeCount; edge1++) {
 		// Only process edges which haven't been linked to their neighbors yet.
-		if(microstructure.hasOppositeEdge(edge1)) continue;
-		Microstructure::face_index face1 = microstructure.adjacentFace(edge1);
+		if(microstructure.nextManifoldEdge(edge1) != HalfEdgeMesh::InvalidIndex) continue;
+		MicrostructureData::face_index face1 = microstructure.adjacentFace(edge1);
 		if(!microstructure.isSlipSurfaceFace(face1)) continue;
 
-		Microstructure::vertex_index vertex1 = microstructure.vertex1(edge1);
-		Microstructure::vertex_index vertex2 = microstructure.vertex2(edge1);
-		Microstructure::edge_index oppositeEdge1 = microstructure.topology()->findEdge(microstructure.oppositeFace(face1), vertex2, vertex1);
+		OVITO_ASSERT(!microstructure.hasOppositeEdge(edge1));
+		MicrostructureData::vertex_index vertex1 = microstructure.vertex1(edge1);
+		MicrostructureData::vertex_index vertex2 = microstructure.vertex2(edge1);
+		MicrostructureData::edge_index oppositeEdge1 = microstructure.findEdge(microstructure.oppositeFace(face1), vertex2, vertex1);
 		OVITO_ASSERT(oppositeEdge1 != HalfEdgeMesh::InvalidIndex);
 		OVITO_ASSERT(microstructure.nextManifoldEdge(edge1) == HalfEdgeMesh::InvalidIndex);
 		OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge1) == HalfEdgeMesh::InvalidIndex);
@@ -459,12 +348,12 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 		const std::pair<qulonglong,qulonglong>& edgeVertexCodes = slipSurfaceMap[face1];
 
 		// Find the other two manifolds meeting at the current edge (if they exist).
-		Microstructure::edge_index edge2 = HalfEdgeMesh::InvalidIndex;
-		Microstructure::edge_index edge3 = HalfEdgeMesh::InvalidIndex;
-		Microstructure::edge_index oppositeEdge2 = HalfEdgeMesh::InvalidIndex;
-		Microstructure::edge_index oppositeEdge3 = HalfEdgeMesh::InvalidIndex;
-		for(Microstructure::edge_index e = microstructure.firstVertexEdge(vertex1); e != HalfEdgeMesh::InvalidIndex; e = microstructure.nextVertexEdge(e)) {
-			Microstructure::face_index face2 = microstructure.adjacentFace(e);
+		MicrostructureData::edge_index edge2 = HalfEdgeMesh::InvalidIndex;
+		MicrostructureData::edge_index edge3 = HalfEdgeMesh::InvalidIndex;
+		MicrostructureData::edge_index oppositeEdge2 = HalfEdgeMesh::InvalidIndex;
+		MicrostructureData::edge_index oppositeEdge3 = HalfEdgeMesh::InvalidIndex;
+		for(MicrostructureData::edge_index e = microstructure.firstVertexEdge(vertex1); e != HalfEdgeMesh::InvalidIndex; e = microstructure.nextVertexEdge(e)) {
+			MicrostructureData::face_index face2 = microstructure.adjacentFace(e);
 			if(microstructure.vertex2(e) == vertex2 && microstructure.isSlipSurfaceFace(face2) && face2 != face1) {
 				const std::pair<qulonglong,qulonglong>& edgeVertexCodes2 = slipSurfaceMap[face2];
 				if(edgeVertexCodes.second == edgeVertexCodes2.first) {
@@ -473,7 +362,7 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 					OVITO_ASSERT(!microstructure.hasOppositeEdge(e));
 					OVITO_ASSERT(microstructure.nextManifoldEdge(e) == HalfEdgeMesh::InvalidIndex);
 					edge2 = e;
-					oppositeEdge2 = microstructure.topology()->findEdge(microstructure.oppositeFace(face2), vertex2, vertex1);
+					oppositeEdge2 = microstructure.findEdge(microstructure.oppositeFace(face2), vertex2, vertex1);
 					OVITO_ASSERT(oppositeEdge2 != HalfEdgeMesh::InvalidIndex);
 					OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge2) == HalfEdgeMesh::InvalidIndex);
 				}
@@ -483,7 +372,7 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 					OVITO_ASSERT(!microstructure.hasOppositeEdge(e));
 					OVITO_ASSERT(microstructure.nextManifoldEdge(e) == HalfEdgeMesh::InvalidIndex);
 					edge3 = e;
-					oppositeEdge3 = microstructure.topology()->findEdge(microstructure.oppositeFace(face2), vertex2, vertex1);
+					oppositeEdge3 = microstructure.findEdge(microstructure.oppositeFace(face2), vertex2, vertex1);
 					OVITO_ASSERT(oppositeEdge3 != HalfEdgeMesh::InvalidIndex);
 					OVITO_ASSERT(microstructure.nextManifoldEdge(oppositeEdge3) == HalfEdgeMesh::InvalidIndex);
 				}
@@ -491,7 +380,7 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 		}
 
 		if(edge2 != HalfEdgeMesh::InvalidIndex) {
-			microstructure.topology()->linkOppositeEdges(edge1, oppositeEdge2);
+			microstructure.linkOppositeEdges(edge1, oppositeEdge2);
 			microstructure.setNextManifoldEdge(edge1, edge2);
 			microstructure.setNextManifoldEdge(oppositeEdge2, oppositeEdge1);
 			if(edge3 != HalfEdgeMesh::InvalidIndex) {
@@ -529,7 +418,7 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 				OVITO_ASSERT(microstructure.countManifolds(oppositeEdge3) == 2);
 			}
 			else {
-				microstructure.linkOppositeEdges(oppositeEdge1, edge1);
+//				microstructure.linkOppositeEdges(oppositeEdge1, edge1);
 				microstructure.setNextManifoldEdge(edge1, edge1);
 				microstructure.setNextManifoldEdge(oppositeEdge1, oppositeEdge1);
 				OVITO_ASSERT(microstructure.countManifolds(edge1) == 1);
@@ -558,90 +447,18 @@ OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollec
 	// Insert simulation cell.
 	OORef<DataCollection> output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
 
-	// Insert pattern catalog.
-	OORef<PatternCatalog> patternCatalog = existing ? existing->getObject<PatternCatalog>() : nullptr;
-	if(!patternCatalog) {
-		patternCatalog = output->createObject<PatternCatalog>(fileSource);
-
-		// Create the structure types.
-		ParticleType::PredefinedStructureType predefTypes[] = {
-				ParticleType::PredefinedStructureType::OTHER,
-				ParticleType::PredefinedStructureType::FCC,
-				ParticleType::PredefinedStructureType::HCP,
-				ParticleType::PredefinedStructureType::BCC,
-				ParticleType::PredefinedStructureType::CUBIC_DIAMOND,
-				ParticleType::PredefinedStructureType::HEX_DIAMOND
-		};
-		OVITO_STATIC_ASSERT(sizeof(predefTypes)/sizeof(predefTypes[0]) == StructureAnalysis::NUM_LATTICE_TYPES);
-		for(int id = 0; id < StructureAnalysis::NUM_LATTICE_TYPES; id++) {
-			OORef<StructurePattern> stype = patternCatalog->structureById(id);
-			if(!stype) {
-				stype = new StructurePattern(patternCatalog->dataset());
-				stype->setNumericId(id);
-				stype->setStructureType(StructurePattern::Lattice);
-				patternCatalog->addPattern(stype);
-			}
-			stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
-			stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
-		}
-
-		// Create Burgers vector families.
-
-		StructurePattern* fccPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_FCC);
-		fccPattern->setSymmetryType(StructurePattern::CubicSymmetry);
-		fccPattern->setShortName(QStringLiteral("fcc"));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 1, tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 2, tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 3, tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 4, tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 5, tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
-
-		StructurePattern* bccPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_BCC);
-		bccPattern->setSymmetryType(StructurePattern::CubicSymmetry);
-		bccPattern->setShortName(QStringLiteral("bcc"));
-		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 11, tr("1/2<111>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 1.0f/2.0f), Color(0,1,0)));
-		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 12, tr("<100>"), Vector3(1.0f, 0.0f, 0.0f), Color(1, 0.3f, 0.8f)));
-		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 13, tr("<110>"), Vector3(1.0f, 1.0f, 0.0f), Color(0.2f, 0.5f, 1.0f)));
-
-		StructurePattern* hcpPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_HCP);
-		hcpPattern->setShortName(QStringLiteral("hcp"));
-		hcpPattern->setSymmetryType(StructurePattern::HexagonalSymmetry);
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 21, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 22, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 23, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 24, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 25, tr("1/3<1-213>"), Vector3(sqrt(0.5f), 0.0f, sqrt(4.0f/3.0f)), Color(1,1,0)));
-
-		StructurePattern* cubicDiaPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_CUBIC_DIAMOND);
-		cubicDiaPattern->setShortName(QStringLiteral("diamond"));
-		cubicDiaPattern->setSymmetryType(StructurePattern::CubicSymmetry);
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 31, tr("1/2<110>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 32, tr("1/6<112>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 33, tr("1/6<110>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f), Color(1,0,1)));
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 34, tr("1/3<111>"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
-
-		StructurePattern* hexDiaPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_HEX_DIAMOND);
-		hexDiaPattern->setShortName(QStringLiteral("hex_diamond"));
-		hexDiaPattern->setSymmetryType(StructurePattern::HexagonalSymmetry);
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 41, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 42, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 43, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 44, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
-	}
-	else {
-		output->addObject(patternCatalog);
-	}
-
 	// Insert microstructure.
-	MicrostructureObject* microstructureObj = const_cast<MicrostructureObject*>(existing ? existing->getObject<MicrostructureObject>() : nullptr);
+	Microstructure* microstructureObj = const_cast<Microstructure*>(existing ? existing->getObject<Microstructure>() : nullptr);
 	if(!microstructureObj) {
-		microstructureObj = output->createObject<MicrostructureObject>(fileSource);
-		// Create a display object for the dislocation lines.
+		microstructureObj = output->createObject<Microstructure>(fileSource);
+
+		// Create a visual element for the dislocation lines.
 		OORef<DislocationVis> dislocationVis = new DislocationVis(fileSource->dataset());
 		if(!Application::instance()->scriptMode())
 			dislocationVis->loadUserDefaults();
-		microstructureObj->addVisElement(dislocationVis);
-		// Create a display object for the slip surfaces.
+		microstructureObj->setVisElement(dislocationVis);
+
+		// Create a visual element for the slip surfaces.
 		OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(fileSource->dataset());
 		if(!Application::instance()->scriptMode())
 			slipSurfaceVis->loadUserDefaults();
@@ -651,7 +468,53 @@ OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollec
 		output->addObject(microstructureObj);
 	}
 	microstructureObj->setDomain(output->getObject<SimulationCellObject>());
-	microstructureObj->setStorage(microstructure());
+	microstructure().transferTo(microstructureObj);
+
+	// Define crystal phase.
+	PropertyObject* phaseProperty = microstructureObj->regions()->expectMutableProperty(SurfaceMeshRegions::PhaseProperty);
+	OORef<MicrostructurePhase> phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(1));
+	if(!phase) {
+		phase = new MicrostructurePhase(phaseProperty->dataset());
+		phase->setNumericId(1);
+		phaseProperty->addElementType(phase);
+	}
+	if(_latticeStructure == "bcc") {
+		phase->setCrystalSymmetryClass(MicrostructurePhase::CrystalSymmetryClass::CubicSymmetry);
+		phase->setName(ParticleType::getPredefinedStructureTypeName(ParticleType::PredefinedStructureType::BCC));
+		phase->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, phase->name(), ParticleType::PredefinedStructureType::BCC));
+		if(phase->burgersVectorFamilies().empty()) {
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset()));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 11, tr("1/2<111>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 1.0f/2.0f), Color(0,1,0)));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 12, tr("<100>"), Vector3(1.0f, 0.0f, 0.0f), Color(1, 0.3f, 0.8f)));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 13, tr("<110>"), Vector3(1.0f, 1.0f, 0.0f), Color(0.2f, 0.5f, 1.0f)));
+		}
+	}
+	else if(_latticeStructure == "fcc" || _latticeStructure == "fcc_perfect") {
+		phase->setCrystalSymmetryClass(MicrostructurePhase::CrystalSymmetryClass::CubicSymmetry);
+		phase->setName(ParticleType::getPredefinedStructureTypeName(ParticleType::PredefinedStructureType::FCC));
+		phase->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, phase->name(), ParticleType::PredefinedStructureType::FCC));
+		if(phase->burgersVectorFamilies().empty()) {
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset()));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 1, tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 2, tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 3, tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 4, tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset(), 5, tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
+		}
+	}
+	else {
+		phase->setCrystalSymmetryClass(MicrostructurePhase::CrystalSymmetryClass::NoSymmetry);
+		phase->setName(QString::fromStdString(_latticeStructure));
+		if(phase->burgersVectorFamilies().empty()) {
+			phase->addBurgersVectorFamily(new BurgersVectorFamily(phase->dataset()));
+		}
+	}
+
+	// Store lattice orientation information.
+	OVITO_ASSERT(microstructureObj->regions()->elementCount() == 2);
+	PropertyObject* correspondenceProperty = microstructureObj->regions()->createProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
+	correspondenceProperty->setMatrix3(0, Matrix3::Zero());		// The "empty" region.
+	correspondenceProperty->setMatrix3(1, _latticeOrientation);	// The "crystal" region.
 
 	return output;
 }

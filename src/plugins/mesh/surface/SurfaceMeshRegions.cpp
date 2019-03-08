@@ -34,13 +34,28 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 	int dataType;
 	size_t componentCount;
 	size_t stride;
-	
+
 	switch(type) {
 	case ColorProperty:
 		dataType = PropertyStorage::Float;
 		componentCount = 3;
 		stride = componentCount * sizeof(FloatType);
 		OVITO_ASSERT(stride == sizeof(Color));
+		break;
+	case PhaseProperty:
+		dataType = PropertyStorage::Int;
+		componentCount = 1;
+		stride = sizeof(int);
+		break;
+	case VolumeProperty:
+		dataType = PropertyStorage::Float;
+		componentCount = 1;
+		stride = sizeof(FloatType);
+		break;
+	case LatticeCorrespondenceProperty:
+		dataType = PropertyStorage::Float;
+		componentCount = 9;
+		stride = sizeof(Matrix3);
 		break;
 	default:
 		OVITO_ASSERT_MSG(false, "SurfaceMeshRegions::createStandardStorage", "Invalid standard property type");
@@ -51,7 +66,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 
 	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
 
-	PropertyPtr property = std::make_shared<PropertyStorage>(regionCount, dataType, componentCount, stride, 
+	PropertyPtr property = std::make_shared<PropertyStorage>(regionCount, dataType, componentCount, stride,
 								propertyName, false, type, componentNames);
 
 	if(initializeMemory) {
@@ -59,7 +74,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 		std::memset(property->data(), 0, property->size() * property->stride());
 	}
 
-	return property;	
+	return property;
 }
 
 /******************************************************************************
@@ -75,8 +90,12 @@ void SurfaceMeshRegions::OOMetaClass::initialize()
 
 	const QStringList emptyList;
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
-	
+	const QStringList tensorList = QStringList() << "XX" << "YX" << "ZX" << "XY" << "YY" << "ZY" << "XZ" << "YZ" << "ZZ";
+
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Region colors"));
+	registerStandardProperty(PhaseProperty, tr("Phase"), PropertyStorage::Int, emptyList, tr("Phases"));
+	registerStandardProperty(VolumeProperty, tr("Volume"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(LatticeCorrespondenceProperty, tr("Lattice Correspondence"), PropertyStorage::Float, tensorList);
 }
 
 }	// End of namespace

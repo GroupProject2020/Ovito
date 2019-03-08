@@ -264,7 +264,7 @@ public:
 	DislocationNetwork(const DislocationNetwork& other);
 
 	/// Conversion constructor.
-	explicit DislocationNetwork(const Microstructure microstructure);
+	explicit DislocationNetwork(const MicrostructureData microstructure);
 
 	/// Returns a const-reference to the cluster graph.
 	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }
@@ -288,7 +288,7 @@ private:
 
 	/// Removes some of the sampling points from a dislocation line.
 	static void coarsenDislocationLine(FloatType linePointInterval, const std::deque<Point3>& input, const std::deque<int>& coreSize, std::deque<Point3>& output, std::deque<int>& outputCoreSize, bool isClosedLoop, bool isInfiniteLine);
-		
+
 	/// The associated cluster graph.
 	const std::shared_ptr<ClusterGraph> _clusterGraph;
 

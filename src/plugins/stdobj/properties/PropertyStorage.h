@@ -27,7 +27,7 @@
 
 
 namespace Ovito { namespace StdObj {
-	
+
 /**
  * \brief Memory storage used for e.g. particle and bond properties.
  */
@@ -49,7 +49,7 @@ public:
 		Float = QMetaType::Float
 #else
 		Float = QMetaType::Double
-#endif	
+#endif
 #endif
 	};
 
@@ -60,13 +60,13 @@ public:
 		GenericColorProperty = 2,
 		GenericTypeProperty = 3,
 		GenericIdentifierProperty = 4,
-		
+
 		// This is value at which type IDs of specific standard properties start:
 		FirstSpecificProperty = 1000
 	};
 
 public:
-	
+
 	/// Helper method for implementing copy-on-write semantics.
 	/// Checks if the property storage referred to by the shared_ptr is exclusive owned.
 	/// If yes, it is returned as is. Otherwise, a copy of the data storage is made,
@@ -93,7 +93,7 @@ public:
 
 	/// \brief Move constructor.
 	PropertyStorage(PropertyStorage&& other) = default;
-		
+
 	/// \brief Returns the type of this property.
 	int type() const { return _type; }
 
@@ -115,16 +115,22 @@ public:
 	void resize(size_t newSize, bool preserveData);
 
 	/// \brief Grows the number of data elements while preserving the exiting data.
-	/// Newly added elements are *not* initialized to zero by this method. 
-	void grow(size_t numAdditionalElements) {
+	/// Newly added elements are *not* initialized to zero by this method.
+	/// \return True if the memory buffer was reallocated, because the current capacity was insufficient
+	/// to accommodate the new elements.
+	bool grow(size_t numAdditionalElements) {
 		size_t newSize = _numElements + numAdditionalElements;
 		OVITO_ASSERT(newSize >= _numElements);
-		if(newSize > _capacity)
+		bool needToGrow;
+		if((needToGrow = (newSize > _capacity)))
 			growCapacity(newSize);
-		_numElements = newSize;		
+		_numElements = newSize;
+		return needToGrow;
 	}
 
 	/// \brief Reduces the number of data elements while preserving the exiting data.
+	/// Note: This method never reallocates the memory buffer. Thus, the capacity of the array remains unchanged and the
+	/// memory of the truncated elements is not released by the method.
 	void truncate(size_t numElementsToRemove) {
 		OVITO_ASSERT(numElementsToRemove <= _numElements);
 		_numElements -= numElementsToRemove;
@@ -157,10 +163,16 @@ public:
 		OVITO_ASSERT(names.empty() || names.size() == componentCount());
 		_componentNames = std::move(names);
 	}
-	
+
 	/// \brief Returns a read-only pointer to the raw elements stored in this property object.
 	const void* constData() const {
 		return _data.get();
+	}
+
+	/// Returns a read-only pointer to the i-th element in the property storage.
+	const void* constDataAt(size_t i) const {
+		OVITO_ASSERT(i < size());
+		return reinterpret_cast<const char*>(constData()) + (i * stride());
 	}
 
 	/// \brief Returns a read-only pointer to the first element stored in this object.
@@ -210,7 +222,7 @@ public:
 	const Point2* constDataPoint2() const {
 		OVITO_ASSERT(dataType() == qMetaTypeId<Point2>() || (dataType() == Float && componentCount() == 2));
 		return reinterpret_cast<const Point2*>(constData());
-	}	
+	}
 
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
@@ -282,7 +294,7 @@ public:
 	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const Point2*> constPoint2Range() const {
 		return boost::make_iterator_range(constDataPoint2(), constDataPoint2() + size());
-	}	
+	}
 
 	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const Vector3*> constVector3Range() const {
@@ -322,6 +334,12 @@ public:
 	/// Returns a read-write pointer to the raw elements in the property storage.
 	void* data() {
 		return _data.get();
+	}
+
+	/// Returns a read-write pointer to the i-th element in the property storage.
+	void* dataAt(size_t i) {
+		OVITO_ASSERT(i < size());
+		return reinterpret_cast<char*>(data()) + (i * stride());
 	}
 
 	/// \brief Returns a read-write pointer to the first element stored in this object.
@@ -379,7 +397,7 @@ public:
 	Point2* dataPoint2() {
 		OVITO_ASSERT(dataType() == qMetaTypeId<Point2>() || (dataType() == Float && componentCount() == 2));
 		return reinterpret_cast<Point2*>(data());
-	}	
+	}
 
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
@@ -428,7 +446,7 @@ public:
 		OVITO_ASSERT(componentCount() == 1);
 		return boost::make_iterator_range(dataInt64(), dataInt64() + size());
 	}
-	
+
 	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<FloatType*> floatRange() {
 		OVITO_ASSERT(componentCount() == 1);
@@ -443,7 +461,7 @@ public:
 	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<Point2*> point2Range() {
 		return boost::make_iterator_range(dataPoint2(), dataPoint2() + size());
-	}	
+	}
 
 	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<Vector3*> vector3Range() {
@@ -501,7 +519,7 @@ public:
 		OVITO_ASSERT(index < size() && componentCount() == 1);
 		return constDataInt64()[index];
 	}
-	
+
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloat(size_t index) const {
 		OVITO_ASSERT(index < size() && componentCount() == 1);
@@ -519,7 +537,7 @@ public:
 		OVITO_ASSERT(index < size() && componentIndex < componentCount());
 		return constDataInt64()[index*componentCount() + componentIndex];
 	}
-	
+
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloatComponent(size_t index, size_t componentIndex) const {
 		OVITO_ASSERT(index < size() && componentIndex < componentCount());
@@ -542,7 +560,7 @@ public:
 	const Point2& getPoint2(size_t index) const {
 		OVITO_ASSERT(index < size());
 		return constDataPoint2()[index];
-	}	
+	}
 
 	/// Returns a Vector3I element at the given index (if this is a point property).
 	const Vector3I& getVector3I(size_t index) const {
@@ -598,7 +616,7 @@ public:
 		OVITO_ASSERT(index < size());
 		dataInt64()[index] = newValue;
 	}
-	
+
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloat(size_t index, FloatType newValue) {
 		OVITO_ASSERT(index < size());
@@ -616,7 +634,7 @@ public:
 		OVITO_ASSERT(index < size() && componentIndex < componentCount());
 		dataInt64()[index*componentCount() + componentIndex] = newValue;
 	}
-	
+
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloatComponent(size_t index, size_t componentIndex, FloatType newValue) {
 		OVITO_ASSERT(index < size() && componentIndex < componentCount());
@@ -639,13 +657,13 @@ public:
 	void setPoint2(size_t index, const Point2& newValue) {
 		OVITO_ASSERT(index < size());
 		dataPoint2()[index] = newValue;
-	}	
+	}
 
 	/// Sets the value of a Vector3I element at the given index (if this is an integer vector property).
 	void setVector3I(size_t index, const Vector3I& newValue) {
 		OVITO_ASSERT(index < size());
 		dataVector3I()[index] = newValue;
-	}	
+	}
 
 	/// Sets the value of a Point3I element at the given index (if this is a point property).
 	void setPoint3I(size_t index, const Point3I& newValue) {
@@ -677,7 +695,7 @@ public:
 		dataQuaternion()[index] = newValue;
 	}
 
-	/// Reduces the size of the storage array, removing elements for which 
+	/// Reduces the size of the storage array, removing elements for which
 	/// the corresponding bits in the bit array are set.
 	void filterResize(const boost::dynamic_bitset<>& mask);
 
@@ -715,7 +733,7 @@ public:
 		return false;
 	}
 
-	/// Calls a functor provided by the caller for every value of the given vector component. 
+	/// Calls a functor provided by the caller for every value of the given vector component.
 	template<typename F>
 	bool forEach(F f, size_t component) const {
 		size_t cmpntCount = componentCount();
@@ -749,7 +767,7 @@ protected:
 
 	/// The type of this property.
 	int _type = 0;
-	
+
 	/// The name of the property.
 	QString _name;
 

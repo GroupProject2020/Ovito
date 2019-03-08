@@ -44,7 +44,7 @@ bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const Dat
 PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
-	
+
 	std::array<int,3> nPBC;
 	nPBC[0] = std::max(mod->numImagesX(),1);
 	nPBC[1] = std::max(mod->numImagesY(),1);
@@ -68,7 +68,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 
 			// Make sure surface mesh is in a good state.
 			existingSurface->verifyMeshIntegrity();
-			
+
 			// Create a copy of the input surface.
 			SurfaceMesh* newSurface = state.makeMutable(existingSurface);
 
@@ -109,14 +109,24 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 				}
 			}
 
-			// Add right number of new topology vertices.
+			// Create a copy of the faces sub-object.
+			SurfaceMeshFaces* newFaces = newSurface->makeFacesMutable();
+			newFaces->makePropertiesMutable();
+
+			// Replicate all face properties
+			size_t oldFaceCount = newFaces->elementCount();
+			size_t newFaceCount = oldFaceCount * numCopies;
+			for(PropertyObject* property : newFaces->properties()) {
+				// Replicate property data N times.
+				property->replicate(numCopies);
+			}
+
+			// Add right number of new vertices to the topology.
 			for(size_t i = oldVertexCount; i < newVertexCount; i++) {
 				mesh->createVertex();
 			}
 
-			// Replicate faces.
-			size_t oldFaceCount = mesh->faceCount();
-			size_t newFaceCount = oldFaceCount * numCopies;
+			// Replicate topology faces.
 			std::vector<HalfEdgeMesh::vertex_index> newFaceVertices;
 			for(int imageX = 0; imageX < nPBC[0]; imageX++) {
 				for(int imageY = 0; imageY < nPBC[1]; imageY++) {
@@ -133,7 +143,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 								edge = mesh->nextFaceEdge(edge);
 							}
 							while(edge != mesh->firstFaceEdge(face));
-							mesh->createFace(newFaceVertices.begin(), newFaceVertices.end());
+							mesh->createFaceAndEdges(newFaceVertices.begin(), newFaceVertices.end());
 						}
 						// Copy face connectivity.
 						for(HalfEdgeMesh::face_index oldFace = 0; oldFace < oldFaceCount; oldFace++) {
@@ -205,7 +215,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 							HalfEdgeMesh::face_index oppositeFaceIndex = mesh->adjacentFace(mesh->oppositeEdge(edge)) % oldFaceCount;
 							mesh->setOppositeEdge(edge, HalfEdgeMesh::InvalidIndex);
 							for(size_t i = 0; i < numCopies; i++) {
-								HalfEdgeMesh::edge_index newOppositeEdge = mesh->findEdge(oppositeFaceIndex + i * oldFaceCount, mesh->vertex2(edge), mesh->vertex1(edge));														
+								HalfEdgeMesh::edge_index newOppositeEdge = mesh->findEdge(oppositeFaceIndex + i * oldFaceCount, mesh->vertex2(edge), mesh->vertex1(edge));
 								if(newOppositeEdge != HalfEdgeMesh::InvalidIndex) {
 									mesh->setOppositeEdge(edge, newOppositeEdge);
 									break;
@@ -220,7 +230,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 				}
 			}
 			OVITO_ASSERT(mesh->isClosed());
-			
+
 			// Extend the periodic domain the surface is embedded in.
 			simCell.translation() += (FloatType)newImages.minc.x() * simCell.column(0);
 			simCell.translation() += (FloatType)newImages.minc.y() * simCell.column(1);

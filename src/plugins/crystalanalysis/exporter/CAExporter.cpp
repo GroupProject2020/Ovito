@@ -20,9 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 #include <core/utilities/concurrent/Promise.h>
@@ -68,7 +67,7 @@ void CAExporter::closeOutputFile(bool exportCompleted)
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
 bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
-{	
+{
 	// Evaluate data pipeline.
 	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
 
@@ -82,7 +81,7 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 	const DislocationNetworkObject* dislocationObj = state.getObject<DislocationNetworkObject>();
 
 	// Get microstructure object.
-	const MicrostructureObject* microstructureObj = state.getObject<MicrostructureObject>();
+	const Microstructure* microstructureObj = state.getObject<Microstructure>();
 
 	// Get defect surface mesh.
 	const SurfaceMesh* defectMesh = meshExportEnabled() ? state.getObject<SurfaceMesh>() : nullptr;
@@ -95,27 +94,22 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 	if(dislocationObj && !clusterGraph)
 		throwException(tr("Dataset to be exported contains no cluster graph. Cannot write CA file."));
 
-	// Get pattern catalog.
-	const PatternCatalog* patternCatalog = state.getObject<PatternCatalog>();
-	if(dislocationObj && !patternCatalog)
-		throwException(tr("Dataset to be exported contains no structure catalog. Cannot write CA file."));
-
 	// Write file header.
 	textStream() << "CA_FILE_VERSION 6\n";
 	textStream() << "CA_LIB_VERSION 0.0.0\n";
 
-	if(patternCatalog) {
+	if(dislocationObj) {
 		// Write list of structure types.
-		textStream() << "STRUCTURE_TYPES " << (patternCatalog->patterns().size() - 1) << "\n";
-		for(const StructurePattern* s : patternCatalog->patterns()) {
+		textStream() << "STRUCTURE_TYPES " << (dislocationObj->crystalStructures().size() - 1) << "\n";
+		for(const MicrostructurePhase* s : dislocationObj->crystalStructures()) {
 			if(s->numericId() == 0) continue;
 			textStream() << "STRUCTURE_TYPE " << s->numericId() << "\n";
 			textStream() << "NAME " << s->shortName() << "\n";
 			textStream() << "FULL_NAME " << s->longName() << "\n";
 			textStream() << "COLOR " << s->color().r() << " " << s->color().g() << " " << s->color().b() << "\n";
-			if(s->structureType() == StructurePattern::Lattice) textStream() << "TYPE LATTICE\n";
-			else if(s->structureType() == StructurePattern::Interface) textStream() << "TYPE INTERFACE\n";
-			else if(s->structureType() == StructurePattern::PointDefect) textStream() << "TYPE POINTDEFECT\n";
+			if(s->dimensionality() == MicrostructurePhase::Dimensionality::Volumetric) textStream() << "TYPE LATTICE\n";
+			else if(s->dimensionality() == MicrostructurePhase::Dimensionality::Planar) textStream() << "TYPE INTERFACE\n";
+			else if(s->dimensionality() == MicrostructurePhase::Dimensionality::Pointlike) textStream() << "TYPE POINTDEFECT\n";
 			textStream() << "BURGERS_VECTOR_FAMILIES " << s->burgersVectorFamilies().size() << "\n";
 			int bvfId = 0;
 			for(BurgersVectorFamily* bvf : s->burgersVectorFamilies()) {
@@ -181,7 +175,7 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 		dislocations = dislocationObj->storage();
 	}
 	else if(microstructureObj) {
-		dislocations = std::make_shared<DislocationNetwork>(Microstructure(microstructureObj));
+		dislocations = std::make_shared<DislocationNetwork>(MicrostructureData(microstructureObj));
 	}
 
 	if(dislocations) {

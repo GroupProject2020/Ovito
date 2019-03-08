@@ -23,12 +23,12 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
+#include <plugins/crystalanalysis/objects/MicrostructurePhase.h>
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
-#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
+#include <plugins/mesh/surface/HalfEdgeMesh.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -46,14 +46,14 @@ class OVITO_CRYSTALANALYSIS_EXPORT CAImporter : public ParticleImporter
 
 		/// Returns the file filter that specifies the files that can be imported by this service.
 		virtual QString fileFilter() const override { return QStringLiteral("*"); }
-	
+
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("Crystal Analysis files"); }
-	
+
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;	
+		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
 	};
-	
+
 	OVITO_CLASS_META(CAImporter, OOMetaClass)
 	Q_OBJECT
 
@@ -81,7 +81,7 @@ protected:
 	class CrystalAnalysisFrameData : public ParticleFrameData
 	{
 	public:
-		
+
 		struct BurgersVectorFamilyInfo {
 			int id = 0;
 			QString name;
@@ -91,20 +91,19 @@ protected:
 
 		struct PatternInfo {
 			int id = 0;
-			StructurePattern::StructureType type = StructurePattern::Lattice;
-			StructurePattern::SymmetryType symmetryType = StructurePattern::CubicSymmetry;
+			MicrostructurePhase::Dimensionality type = MicrostructurePhase::Dimensionality::Volumetric;
+			MicrostructurePhase::CrystalSymmetryClass symmetryType = MicrostructurePhase::CrystalSymmetryClass::CubicSymmetry;
 			QString shortName;
 			QString longName;
 			Color color = Color(1,1,1);
 			QVector<BurgersVectorFamilyInfo> burgersVectorFamilies;
 		};
 
-		
 	public:
 
 		/// Inherit constructor from base class.
 		using ParticleFrameData::ParticleFrameData;
-		
+
 		/// Inserts the loaded data into the provided pipeline state structure. This function is
 		/// called by the system from the main thread after the asynchronous loading task has finished.
 		virtual OORef<DataCollection> handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource) override;
@@ -128,13 +127,12 @@ protected:
 			return _dislocations;
 		}
 
-		const HalfEdgeMeshPtr& defectSurface() const {
+		const std::unique_ptr<SurfaceMeshData>& defectSurface() const {
 			return _defectSurface;
 		}
 
-		void setDefectSurface(HalfEdgeMeshPtr&& topology, PropertyPtr&& verts) {
-			_defectSurface = std::move(topology);
-			_defectSurfaceVerts = std::move(verts);
+		void setDefectSurface(std::unique_ptr<SurfaceMeshData> mesh) {
+			_defectSurface = std::move(mesh);
 		}
 
 	protected:
@@ -148,11 +146,8 @@ protected:
 		/// The dislocation lines.
 		std::shared_ptr<DislocationNetwork> _dislocations;
 
-		/// The topology of the defect surface mesh.
-		HalfEdgeMeshPtr _defectSurface;
-
-		/// The vertex coordinates of the defect surface mesh.
-		PropertyPtr _defectSurfaceVerts;
+		/// The defect surface mesh.
+		std::unique_ptr<SurfaceMeshData> _defectSurface;
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in the background.
@@ -169,7 +164,7 @@ protected:
 		virtual FrameDataPtr loadFile(QFile& file) override;
 	};
 
-	/// The format-specific task object that is responsible for scanning the input file for animation frames. 
+	/// The format-specific task object that is responsible for scanning the input file for animation frames.
 	class FrameFinder : public FileSourceImporter::FrameFinder
 	{
 	public:
@@ -180,12 +175,10 @@ protected:
 	protected:
 
 		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;	
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;
 	};
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

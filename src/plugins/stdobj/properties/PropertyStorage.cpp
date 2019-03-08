@@ -25,12 +25,12 @@
 #include <cstring>
 
 namespace Ovito { namespace StdObj {
-	
+
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyStorage::PropertyStorage(size_t elementCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory, int type, QStringList componentNames) : 
-	_dataType(dataType), 
+PropertyStorage::PropertyStorage(size_t elementCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory, int type, QStringList componentNames) :
+	_dataType(dataType),
 	_dataTypeSize(QMetaType::sizeOf(dataType)),
 	_stride(stride),
 	_componentCount(componentCount),
@@ -54,14 +54,14 @@ PropertyStorage::PropertyStorage(size_t elementCount, int dataType, size_t compo
 /******************************************************************************
 * Copy constructor.
 ******************************************************************************/
-PropertyStorage::PropertyStorage(const PropertyStorage& other) : 
+PropertyStorage::PropertyStorage(const PropertyStorage& other) :
 	_type(other._type),
-	_name(other._name), 
+	_name(other._name),
 	_dataType(other._dataType),
-	_dataTypeSize(other._dataTypeSize), 
+	_dataTypeSize(other._dataTypeSize),
 	_numElements(other._numElements),
 	_capacity(other._numElements),
-	_stride(other._stride), 
+	_stride(other._stride),
 	_componentCount(other._componentCount),
 	_componentNames(other._componentNames),
 	_data(new uint8_t[other._numElements * other._stride])
@@ -151,7 +151,7 @@ void PropertyStorage::loadFromStream(LoadStream& stream)
 ******************************************************************************/
 void PropertyStorage::resize(size_t newSize, bool preserveData)
 {
-	if(newSize > _capacity || newSize < _capacity * 3 / 4) {
+	if(newSize > _capacity || newSize < _capacity * 3 / 4 || !_data) {
 		std::unique_ptr<uint8_t[]> newBuffer(new uint8_t[newSize * _stride]);
 		if(preserveData)
 			std::memcpy(newBuffer.get(), _data.get(), _stride * std::min(_numElements, newSize));
@@ -182,7 +182,7 @@ void PropertyStorage::growCapacity(size_t newSize)
 }
 
 /******************************************************************************
-* Reduces the size of the storage array, removing elements for which 
+* Reduces the size of the storage array, removing elements for which
 * the corresponding bits in the bit array are set.
 ******************************************************************************/
 void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
@@ -220,7 +220,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 			}
 		}
 		resize((dst - dataInt64())/2, true);
-	}	
+	}
 	else if(dataType() == PropertyStorage::Int64 && stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
 		auto src = constDataInt64();
@@ -334,7 +334,7 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 			OVITO_ASSERT(mapping[i] < this->size());
 			dst[mapping[i]] = *src;
 		}
-	}	
+	}
 	else {
 		// General case:
 		const uint8_t* src = source._data.get();

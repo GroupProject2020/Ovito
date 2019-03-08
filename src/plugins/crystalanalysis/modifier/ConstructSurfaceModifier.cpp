@@ -49,8 +49,8 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ConstructSurfaceModifier, smoothingLevel, I
 * Constructs the modifier object.
 ******************************************************************************/
 ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_smoothingLevel(8), 
-	_probeSphereRadius(4), 
+	_smoothingLevel(8),
+	_probeSphereRadius(4),
 	_onlySelectedParticles(false),
 	_selectSurfaceParticles(false)
 {
@@ -67,7 +67,7 @@ bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const DataCollection&
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -85,8 +85,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ConstructSurfaceEngine>(posProperty->storage(),
 			std::move(selProperty),
-			simCell->data(), 
-			probeSphereRadius(), 
+			simCell->data(),
+			probeSphereRadius(),
 			smoothingLevel(),
 			selectSurfaceParticles());
 }
@@ -101,16 +101,16 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	if(_radius <= 0)
 		throw Exception(tr("Radius parameter must be positive."));
 
-	if(_simCell.volume3D() <= FLOATTYPE_EPSILON*FLOATTYPE_EPSILON*FLOATTYPE_EPSILON)
+	if(mesh().cell().volume3D() <= FLOATTYPE_EPSILON*FLOATTYPE_EPSILON*FLOATTYPE_EPSILON)
 		throw Exception(tr("Simulation cell is degenerate."));
-		
+
 	double alpha = _radius * _radius;
 	FloatType ghostLayerSize = _radius * FloatType(3);
 
 	// Check if combination of radius parameter and simulation cell size is valid.
 	for(size_t dim = 0; dim < 3; dim++) {
-		if(_simCell.pbcFlags()[dim]) {
-			int stencilCount = (int)ceil(ghostLayerSize / _simCell.matrix().column(dim).dot(_simCell.cellNormalVector(dim)));
+		if(mesh().cell().pbcFlags()[dim]) {
+			int stencilCount = (int)ceil(ghostLayerSize / mesh().cell().matrix().column(dim).dot(mesh().cell().cellNormalVector(dim)));
 			if(stencilCount > 1)
 				throw Exception(tr("Cannot generate Delaunay tessellation. Simulation cell is too small, or radius parameter is too large."));
 		}
@@ -132,7 +132,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 
 	// Generate Delaunay tessellation.
 	DelaunayTessellation tessellation;
-	if(!tessellation.generateTessellation(_simCell, positions()->constDataPoint3(), positions()->size(), ghostLayerSize,
+	if(!tessellation.generateTessellation(mesh().cell(), positions()->constDataPoint3(), positions()->size(), ghostLayerSize,
 			selection() ? selection()->constDataInt() : nullptr, *task()))
 		return;
 
@@ -151,7 +151,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		return 1;
 	};
 
-	//  This callback function is called for every surface facet created by the manifold construction helper. 
+	//  This callback function is called for every surface facet created by the manifold construction helper.
 	auto prepareMeshFace = [this](HalfEdgeMesh::face_index face, const std::array<size_t,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
 		// Mark vertex atoms as belonging to the surface.
 		if(surfaceParticleSelection()) {
@@ -162,33 +162,24 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		}
 	};
 
-	ManifoldConstructionHelper<true> manifoldConstructor(tessellation, *mesh(), *vertexCoords(), alpha, *positions());
+	ManifoldConstructionHelper<> manifoldConstructor(tessellation, _mesh, alpha, *positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), prepareMeshFace))
 		return;
-	setIsCompletelySolid(manifoldConstructor.spaceFillingRegion() == 1);
 
 	task()->nextProgressSubStep();
 
 	// Make sure every mesh vertex is only part of one surface manifold.
-	mesh()->makeManifold([this](HalfEdgeMesh::vertex_index copiedVertex) {
-		vertexCoords()->grow(1);
-		vertexCoords()->setPoint3(vertexCoords()->size() - 1, vertexCoords()->getPoint3(copiedVertex));
-	});
+	_mesh.makeManifold();
 
 	task()->nextProgressSubStep();
-	if(!SurfaceMesh::smoothMesh(*mesh(), *vertexCoords(), _simCell, _smoothingLevel, *task()))
+	if(!_mesh.smoothMesh(_smoothingLevel, *task()))
 		return;
 
-	// Compute total surface area.
-	for(HalfEdgeMesh::edge_index edge : mesh()->firstFaceEdges()) {
+	// Compute total surface area by summing up the triangle face areas.
+	for(HalfEdgeMesh::edge_index edge : _mesh.firstFaceEdges()) {
 		if(task()->isCanceled()) return;
-		const Point3& v1 = vertexCoords()->getPoint3(mesh()->vertex2(edge));
-		edge = mesh()->nextFaceEdge(edge);
-		const Point3& v2 = vertexCoords()->getPoint3(mesh()->vertex2(edge));
-		edge = mesh()->nextFaceEdge(edge);
-		const Point3& v3 = vertexCoords()->getPoint3(mesh()->vertex2(edge));
-		Vector3 e1 = _simCell.wrapVector(v2 - v1);
-		Vector3 e2 = _simCell.wrapVector(v3 - v1);
+		Vector3 e1 = mesh().edgeVector(edge);
+		Vector3 e2 = mesh().edgeVector(mesh().nextFaceEdge(edge));
 		addSurfaceArea(e1.cross(e2).length() / 2);
 	}
 
@@ -204,12 +195,10 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint tim
 
 	// Create the output data object.
 	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("surface"), modApp, tr("Surface"));
-	meshObj->setTopology(mesh());
-	meshObj->vertices()->createProperty(vertexCoords());
-	meshObj->setSpaceFillingRegion(isCompletelySolid() ? 1 : 0);
+	mesh().transferTo(meshObj);
 	meshObj->setDomain(state.getObject<SimulationCellObject>());
 	meshObj->setVisElement(modifier->surfaceMeshVis());
-	
+
 	if(surfaceParticleSelection()) {
 		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 		particles->createProperty(surfaceParticleSelection());

@@ -23,7 +23,8 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
+#include <plugins/crystalanalysis/objects/DislocationVis.h>
+#include <plugins/crystalanalysis/objects/MicrostructurePhase.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
@@ -32,7 +33,7 @@
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /*
- * Extracts dislocation lines from a crystal.
+ * Identifies dislocation lines in a crystal and generates a line model of these defects.
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationAnalysisModifier : public StructureIdentificationModifier
 {
@@ -46,11 +47,19 @@ public:
 	/// Constructor.
 	Q_INVOKABLE DislocationAnalysisModifier(DataSet* dataset);
 
+	/// Returns the crystal structure with the given ID, or null if no such structure exists.
+	MicrostructurePhase* structureById(int id) const {
+		for(ElementType* stype : structureTypes())
+			if(stype->numericId() == id)
+				return dynamic_object_cast<MicrostructurePhase>(stype);
+		return nullptr;
+	}
+
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
+
 private:
 
 	/// The type of crystal to be analyzed.
@@ -68,12 +77,9 @@ private:
 	/// Restricts the identification to perfect lattice dislocations.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlyPerfectDislocations, setOnlyPerfectDislocations);
 
-	/// The catalog of structure patterns.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PatternCatalog, patternCatalog, setPatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
-
 	/// The number of iterations of the mesh smoothing algorithm.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, defectMeshSmoothingLevel, setDefectMeshSmoothingLevel);
-	
+
 	/// Stores whether smoothing is enabled.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, lineSmoothingEnabled, setLineSmoothingEnabled);
 

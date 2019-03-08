@@ -28,20 +28,23 @@ namespace Ovito { namespace Grid {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* data, size_t stride, bool lowerIsSolid) :
-    _data_size_x(size_x), 
-    _data_size_y(size_y), 
-    _data_size_z(size_z), 
-    _size_x(size_x + (pbcFlags[0]?0:1)), 
-    _size_y(size_y + (pbcFlags[1]?0:1)), 
-    _size_z(size_z + (pbcFlags[2]?0:1)),
-    _pbcFlags(pbcFlags),
-    _data(data), 
-    _dataStride(stride), 
+MarchingCubes::MarchingCubes(SurfaceMeshData& outputMesh, int size_x, int size_y, int size_z, const FloatType* data, size_t stride, bool lowerIsSolid) :
+    _outputMesh(outputMesh),
+    _pbcFlags(outputMesh.cell().pbcFlags()),
+    _data_size_x(size_x),
+    _data_size_y(size_y),
+    _data_size_z(size_z),
+    _size_x(size_x + (_pbcFlags[0]?0:1)),
+    _size_y(size_y + (_pbcFlags[1]?0:1)),
+    _size_z(size_z + (_pbcFlags[2]?0:1)),
+    _data(data),
+    _dataStride(stride),
     _cubeVerts(_size_x * _size_y * _size_z * 3, HalfEdgeMesh::InvalidIndex),
     _lowerIsSolid(lowerIsSolid)
 {
     OVITO_ASSERT(stride >= 1);
+    OVITO_ASSERT(outputMesh.vertexCount() == 0);
+    OVITO_ASSERT(outputMesh.faceCount() == 0);
 }
 
 /******************************************************************************
@@ -75,7 +78,8 @@ bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise
 ******************************************************************************/
 void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& promise)
 {
-    _isSpaceFilling = (_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2]);
+    if(_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2])
+        _outputMesh.setSpaceFillingRegion(1);
     for(int k = 0; k < _size_z && !promise.isCanceled(); k++, promise.incrementProgressValue()) {
         for(int j = 0; j < _size_y; j++) {
             for(int i = 0; i < _size_x; i++) {
@@ -91,10 +95,10 @@ void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& 
                 if(std::abs(cube[4]) < _epsilon) cube[4] = _epsilon;
 
                 if(_lowerIsSolid) {
-                    if(cube[0] > 0) _isSpaceFilling = false;
+                    if(cube[0] > 0) _outputMesh.setSpaceFillingRegion(0);
                 }
                 else {
-                    if(cube[0] < 0) _isSpaceFilling = false;
+                    if(cube[0] < 0) _outputMesh.setSpaceFillingRegion(0);
                 }
                 if(cube[1]*cube[0] < 0) createEdgeVertexX(i,j,k, cube[0] / (cube[0] - cube[1]));
                 if(cube[3]*cube[0] < 0) createEdgeVertexY(i,j,k, cube[0] / (cube[0] - cube[3]));
@@ -629,9 +633,9 @@ void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, H
 
         if(t%3 == 2) {
             if(_lowerIsSolid)
-                _outputMesh->createFace({tv[0], tv[1], tv[2]});
+                _outputMesh.createFace({tv[0], tv[1], tv[2]});
             else
-                _outputMesh->createFace({tv[2], tv[1], tv[0]});
+                _outputMesh.createFace({tv[2], tv[1], tv[0]});
         }
     }
 }
@@ -648,7 +652,7 @@ HalfEdgeMesh::vertex_index MarchingCubes::createCenterVertex(int i, int j, int k
     auto addPosition = [this, &p, &u](int i, int j, int k, int axis) {
         HalfEdgeMesh::vertex_index v = getEdgeVert(i, j, k, axis);
         if(v != HalfEdgeMesh::InvalidIndex) {
-            const Point3& vp = _vertexCoords->getPoint3(v);
+            const Point3& vp = mesh().vertexPosition(v);
             p.x() += vp.x();
             p.y() += vp.y();
             p.z() += vp.z();
@@ -675,7 +679,7 @@ HalfEdgeMesh::vertex_index MarchingCubes::createCenterVertex(int i, int j, int k
     p.y() /= u;
     p.z() /= u;
 
-    return createVertex(p);
+    return _outputMesh.createVertex(p);
 }
 
 }	// End of namespace

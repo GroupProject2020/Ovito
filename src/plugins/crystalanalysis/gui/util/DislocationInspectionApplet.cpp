@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/viewport/ViewportWindow.h>
@@ -33,7 +33,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(DislocationInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline dataset contains data that can be 
+* Determines whether the given pipeline dataset contains data that can be
 * displayed by this applet.
 ******************************************************************************/
 bool DislocationInspectionApplet::appliesTo(const DataCollection& data)
@@ -42,8 +42,8 @@ bool DislocationInspectionApplet::appliesTo(const DataCollection& data)
 }
 
 /******************************************************************************
-* Lets the applet create the UI widget that is to be placed into the data 
-* inspector panel. 
+* Lets the applet create the UI widget that is to be placed into the data
+* inspector panel.
 ******************************************************************************/
 QWidget* DislocationInspectionApplet::createWidget(MainWindow* mainWindow)
 {
@@ -53,7 +53,7 @@ QWidget* DislocationInspectionApplet::createWidget(MainWindow* mainWindow)
 	layout->setSpacing(0);
 
 	_pickingMode = new PickingMode(this);
-	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);	
+	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);
 	pickModeAction->setIcon(QIcon(":/particles/icons/select_mode.svg"));
 
 	QToolBar* toolbar = new QToolBar();
@@ -67,7 +67,7 @@ QWidget* DislocationInspectionApplet::createWidget(MainWindow* mainWindow)
 	QWidget* pickModeButton = toolbar->widgetForAction(pickModeAction);
 	connect(_pickingMode, &ViewportInputMode::statusChanged, pickModeButton, [pickModeButton,this](bool active) {
 		if(active) {
-			QToolTip::showText(pickModeButton->mapToGlobal(pickModeButton->rect().bottomRight()), 
+			QToolTip::showText(pickModeButton->mapToGlobal(pickModeButton->rect().bottomRight()),
 #ifndef Q_OS_MACX
 				tr("Pick a dislocation in the viewports. Hold down the CONTROL key to select multiple dislocations."),
 #else
@@ -76,7 +76,7 @@ QWidget* DislocationInspectionApplet::createWidget(MainWindow* mainWindow)
 				pickModeButton, QRect(), 2000);
 		}
 	});
-	
+
 	_tableView = new QTableView();
 	_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	_tableModel = new DislocationTableModel(_tableView);
@@ -130,7 +130,7 @@ void DislocationInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow*
 				_applet->_tableView->scrollTo(_applet->_tableView->model()->index(pickedSegment, 0));
 			}
 			else {
-				_applet->_tableView->selectionModel()->select(_applet->_tableView->model()->index(pickedSegment, 0), 
+				_applet->_tableView->selectionModel()->select(_applet->_tableView->model()->index(pickedSegment, 0),
 					QItemSelectionModel::Toggle | QItemSelectionModel::Rows);
 			}
 		}
@@ -186,7 +186,7 @@ void DislocationInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Vie
 	if(!dislocationObj) return;
 	DislocationVis* vis = dynamic_object_cast<DislocationVis>(dislocationObj->visElement());
 	if(!vis) return;
-	
+
 	for(const QModelIndex& index : _applet->_tableView->selectionModel()->selectedRows()) {
 		int segmentIndex = index.row();
 		if(segmentIndex >= 0 && segmentIndex < dislocationObj->segments().size())

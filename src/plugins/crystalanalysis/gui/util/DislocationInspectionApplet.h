@@ -23,9 +23,8 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
-#include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/DislocationVis.h>
 #include <gui/mainwin/data_inspector/DataInspectionApplet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/viewport/input/ViewportInputManager.h>
@@ -53,7 +52,7 @@ public:
 	/// Determines whether the given pipeline data contains data that can be displayed by this applet.
 	virtual bool appliesTo(const DataCollection& data) override;
 
-	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
+	/// Lets the applet create the UI widget that is to be placed into the data inspector panel.
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;
 
 	/// Updates the contents displayed in the inspector.
@@ -88,18 +87,15 @@ private:
 				DislocationSegment* segment = _dislocationObj->segments()[index.row()];
 				switch(index.column()) {
 				case 0: return _dislocationObj->segments()[index.row()]->id;
-				case 1: return DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), _patternCatalog ? _patternCatalog->structureById(segment->burgersVector.cluster()->structure) : nullptr);
-				case 2: { Vector3 b = segment->burgersVector.toSpatialVector(); 
+				case 1: return DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), _dislocationObj->structureById(segment->burgersVector.cluster()->structure));
+				case 2: { Vector3 b = segment->burgersVector.toSpatialVector();
 						return QStringLiteral("%1 %2 %3")
 									.arg(QLocale::c().toString(b.x(), 'f', 4), 7)
 									.arg(QLocale::c().toString(b.y(), 'f', 4), 7)
 									.arg(QLocale::c().toString(b.z(), 'f', 4), 7); }
 				case 3: return QLocale::c().toString(segment->calculateLength());
 				case 4: return segment->burgersVector.cluster()->id;
-				case 5: if(_patternCatalog) 
-							return _patternCatalog->structureById(segment->burgersVector.cluster()->structure)->name(); 
-						else
-							break;
+				case 5: return _dislocationObj->structureById(segment->burgersVector.cluster()->structure)->name();
 				case 6: { Point3 headLocation = segment->backwardNode().position();
 							if(_dislocationObj->domain()) headLocation = _dislocationObj->domain()->data().wrapPoint(headLocation);
 							return QStringLiteral("%1 %2 %3")
@@ -114,12 +110,12 @@ private:
 								.arg(QLocale::c().toString(tailLocation.z(), 'f', 4), 7); }
 				}
 			}
-			else if(role == Qt::DecorationRole && index.column() == 1 && _patternCatalog) {
+			else if(role == Qt::DecorationRole && index.column() == 1) {
 				DislocationSegment* segment = _dislocationObj->segments()[index.row()];
-				StructurePattern* pattern = _patternCatalog->structureById(segment->burgersVector.cluster()->structure);
-				BurgersVectorFamily* family = pattern->defaultBurgersVectorFamily();
-				for(BurgersVectorFamily* f : pattern->burgersVectorFamilies()) {
-					if(f->isMember(segment->burgersVector.localVec(), pattern)) {
+				MicrostructurePhase* crystalStructure = _dislocationObj->structureById(segment->burgersVector.cluster()->structure);
+				BurgersVectorFamily* family = crystalStructure->defaultBurgersVectorFamily();
+				for(BurgersVectorFamily* f : crystalStructure->burgersVectorFamilies()) {
+					if(f->isMember(segment->burgersVector.localVec(), crystalStructure)) {
 						family = f;
 						break;
 					}
@@ -139,8 +135,8 @@ private:
 				case 3: return tr("Length");
 				case 4: return tr("Cluster");
 				case 5: return tr("Crystal structure");
-				case 6: return tr("Head vertex");
-				case 7: return tr("Tail vertex");
+				case 6: return tr("Head vertex coordinates");
+				case 7: return tr("Tail vertex coordinates");
 				}
 			}
 			return QAbstractTableModel::headerData(section, orientation, role);
@@ -151,11 +147,9 @@ private:
 			beginResetModel();
 			if(!state.isEmpty()) {
 				_dislocationObj = state.getObject<DislocationNetworkObject>();
-				_patternCatalog = state.getObject<PatternCatalog>();
 			}
 			else {
 				_dislocationObj.reset();
-				_patternCatalog.reset();
 			}
 			endResetModel();
 		}
@@ -163,7 +157,6 @@ private:
 	private:
 
 		OORef<DislocationNetworkObject> _dislocationObj;
-		OORef<PatternCatalog> _patternCatalog;
 	};
 
 
@@ -185,7 +178,7 @@ private:
 		virtual void deactivated(bool temporary) override {
 			inputManager()->removeViewportGizmo(this);
 			ViewportInputMode::deactivated(temporary);
-		}		
+		}
 
 		/// Handles the mouse up events for a viewport.
 		virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
@@ -217,7 +210,7 @@ private:
 	PickingMode* _pickingMode;
 
 	/// The currently selected scene node.
-	QPointer<PipelineSceneNode> _sceneNode;	
+	QPointer<PipelineSceneNode> _sceneNode;
 };
 
 }	// End of namespace

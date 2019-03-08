@@ -24,7 +24,7 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/grid/objects/VoxelGrid.h>
-#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshData.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -37,7 +37,7 @@ namespace Ovito { namespace Grid {
 class OVITO_GRID_EXPORT CreateIsosurfaceModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class CreateIsosurfaceModifierClass : public ModifierClass 
+	class CreateIsosurfaceModifierClass : public ModifierClass
 	{
 	public:
 
@@ -47,13 +47,13 @@ class OVITO_GRID_EXPORT CreateIsosurfaceModifier : public AsynchronousModifier
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
 		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
-		
+
 	Q_OBJECT
 	OVITO_CLASS_META(CreateIsosurfaceModifier, CreateIsosurfaceModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Create isosurface");
 	Q_CLASSINFO("ModifierCategory", "Visualization");
-	
+
 public:
 
 	/// Constructor.
@@ -65,10 +65,10 @@ public:
 	/// Asks the modifier for its validity interval at the given time.
 	virtual TimeInterval modifierValidity(TimePoint time) override;
 
-	/// Decides whether a preliminary viewport update is performed after the modifier has been 
+	/// Decides whether a preliminary viewport update is performed after the modifier has been
 	/// evaluated but before the entire pipeline evaluation is complete.
 	/// We suppress such preliminary updates for this modifier, because it produces a surface mesh,
-	/// which requires further asynchronous processing before a viewport update makes sense. 
+	/// which requires further asynchronous processing before a viewport update makes sense.
 	virtual bool performPreliminaryUpdateAfterEvaluation() override { return false; }
 
 	/// Returns the level at which to create the isosurface.
@@ -93,9 +93,9 @@ private:
 		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const VoxelGrid::GridDimensions& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
 			ComputeEngine(validityInterval),
 			_gridShape(gridShape),
-			_property(std::move(property)), 
-			_vectorComponent(vectorComponent), 
-			_simCell(simCell), 
+			_property(std::move(property)),
+			_vectorComponent(vectorComponent),
+			_mesh(simCell),
 			_isolevel(isolevel) {}
 
 		/// This method is called by the system after the computation was successfully completed.
@@ -109,9 +109,6 @@ private:
 
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
-		
-		/// Indicates whether the entire simulation cell is part of the inner region.
-		bool isSpaceFilling() const { return _isSpaceFilling; }
 
 		/// Returns the minimum field value that was encountered.
 		FloatType minValue() const { return _minValue; }
@@ -120,10 +117,10 @@ private:
 		FloatType maxValue() const { return _maxValue; }
 
 		/// Returns the generated mesh.
-		const HalfEdgeMeshPtr& mesh() { return _mesh; }
+		const SurfaceMeshData& mesh() { return _mesh; }
 
-	    /// Returns the coordinates of the generated surface mesh vertices.
-    	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
+		/// Returns the simulation cell geometry.
+		const SimulationCell& cell() { return _mesh.cell(); }
 
 		/// Adjust the min/max values to include the given value.
 		void updateMinMax(FloatType val) {
@@ -143,16 +140,9 @@ private:
 		const FloatType _isolevel;
 		const int _vectorComponent;
 		ConstPropertyPtr _property;
-		const SimulationCell _simCell;
 
 		/// The surface mesh produced by the modifier.
-		HalfEdgeMeshPtr _mesh;
-
-	    /// The coordinates of the generated surface mesh vertices.
-    	PropertyPtr _vertexCoords;
-
-		/// Indicates that the entire periodic simulation cell is part of the inner region.
-		bool _isSpaceFilling = false;
+		SurfaceMeshData _mesh;
 
 		/// The minimum field value that was encountered.
 		FloatType _minValue =  FLOATTYPE_MAX;

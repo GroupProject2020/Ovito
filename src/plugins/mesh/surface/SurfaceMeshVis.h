@@ -24,11 +24,11 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/mesh/surface/SurfaceMeshData.h>
 #include <core/dataset/data/TransformingDataVis.h>
-#include <core/utilities/mesh/TriMesh.h>
-#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
-#include <core/utilities/concurrent/Task.h>
 #include <core/dataset/animation/controller/Controller.h>
+#include <core/utilities/mesh/TriMesh.h>
+#include <core/utilities/concurrent/Task.h>
 
 namespace Ovito { namespace Mesh {
 
@@ -64,12 +64,6 @@ public:
 	/// Sets the transparency of the surface cap mesh.
 	void setCapTransparency(FloatType transparency) { if(capTransparencyController()) capTransparencyController()->setCurrentFloatValue(transparency); }
 
-	/// Generates the triangle mesh from the periodic surface mesh, which will be rendered.
-	static bool buildSurfaceTriangleMesh(const HalfEdgeMesh& input, const PropertyStorage& vertexCoords, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
-
-	/// Generates the cap polygons where the periodic surface mesh intersects the periodic cell boundaries.
-	static void buildCapTriangleMesh(const HalfEdgeMesh& input, const PropertyStorage& vertexCoords, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
-
 protected:
 
 	/// Lets the vis element transform a data object in preparation for rendering.
@@ -78,53 +72,81 @@ protected:
 	/// Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
-protected:
-	
 	/// Computation engine that builds the rendering mesh.
-	class PrepareSurfaceEngine : public AsynchronousTask<TriMesh, TriMesh>
+	class PrepareSurfaceEngine : public AsynchronousTask<TriMesh, TriMesh, std::vector<ColorA>, std::vector<size_t>>
 	{
 	public:
 
 		/// Constructor.
-		PrepareSurfaceEngine(ConstHalfEdgeMeshPtr mesh, ConstPropertyPtr vertexCoords, const SimulationCell& simCell, int spaceFillingRegion, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, bool smoothShading) :
-			_inputMesh(std::move(mesh)), 
-			_vertexCoords(std::move(vertexCoords)), 
-			_simCell(simCell), 
-			_spaceFillingRegion(spaceFillingRegion), 
-			_reverseOrientation(reverseOrientation), 
-			_cuttingPlanes(cuttingPlanes), 
-			_smoothShading(smoothShading) {}
+		PrepareSurfaceEngine(const SurfaceMesh* mesh, bool reverseOrientation, QVector<Plane3> cuttingPlanes, bool smoothShading, bool generateCapPolygons = true) :
+			_inputMesh(mesh),
+			_reverseOrientation(reverseOrientation),
+			_cuttingPlanes(std::move(cuttingPlanes)),
+			_smoothShading(smoothShading),
+			_generateCapPolygons(generateCapPolygons) {}
 
-		/// Computes the results.
+		/// Builds the non-periodic representation of the surface mesh.
 		virtual void perform() override;
+
+		/// Returns the input surface mesh.
+		const SurfaceMeshData& inputMesh() const { return _inputMesh; }
+
+	protected:
+
+		/// This method can be overriden by subclasses to restrict the set of visible mesh faces,
+		virtual void determineVisibleFaces() {}
+
+		/// This method can be overriden by subclasses to assign colors to invidual mesh faces.
+		virtual void determineFaceColors() {}
 
 	private:
 
-		ConstHalfEdgeMeshPtr _inputMesh; 	///< The topology of the input mesh.
-		ConstPropertyPtr _vertexCoords; 	///< The vertex coordinates of the input mesh.
-		SimulationCell _simCell; 			///< The input simulation cell.
-		int _spaceFillingRegion;			///< The index of the space-filling volumetric region.
+		/// Generates the triangle mesh from the periodic surface mesh, which will be rendered.
+		bool buildSurfaceTriangleMesh();
+
+		/// Generates the cap polygons where the surface mesh intersects the periodic domain boundaries.
+		void buildCapTriangleMesh();
+
+		/// Returns the periodic domain the surface mesh is embedded in.
+		const SimulationCell& cell() const { return _inputMesh.cell(); }
+
+	private:
+
+		/// Splits a triangle face at a periodic boundary.
+		bool splitFace(int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices, std::map<std::pair<int,int>,std::tuple<int,int,FloatType>>& newVertexLookupMap, size_t dim);
+
+		/// Traces the closed contour of the surface-boundary intersection.
+		std::vector<Point2> traceContour(HalfEdgeMesh::edge_index firstEdge, const std::vector<Point3>& reducedPos, std::vector<bool>& visitedFaces, size_t dim) const;
+
+		/// Clips a 2d contour at a periodic boundary.
+		static void clipContour(std::vector<Point2>& input, std::array<bool,2> periodic, std::vector<std::vector<Point2>>& openContours, std::vector<std::vector<Point2>>& closedContours);
+
+		/// Computes the intersection point of a 2d contour segment crossing a periodic boundary.
+		static void computeContourIntersection(size_t dim, FloatType t, Point2& base, Vector2& delta, int crossDir, std::vector<std::vector<Point2>>& contours);
+
+		/// Determines if the 2D box corner (0,0) is inside the closed region described by the 2d polygon.
+		static bool isCornerInside2DRegion(const std::vector<std::vector<Point2>>& contours);
+
+	protected:
+
+		SurfaceMeshData _inputMesh;			///< The input surface mesh.
 		bool _reverseOrientation;			///< Flag for inside-out display of the mesh.
 		bool _smoothShading;				///< Flag for interpolated-normal shading
+		bool _generateCapPolygons;			///< Controls the generation of cap polygons where the mesh intersection periodic cell boundaries.
 		QVector<Plane3> _cuttingPlanes;		///< List of cutting planes at which the mesh should be truncated.
+
+		TriMesh _surfaceMesh;					///< The output mesh generated by clipping the surface mesh at the cell boundaries.
+		TriMesh _capPolygonsMesh;				///< The output mesh containing the generated cap polygons.
+		boost::dynamic_bitset<> _faceSubset;	///< Bit array indicating which surface mesh faces are part of the render set.
+		std::vector<ColorA> _materialColors;	///< The list of material colors for the output TriMesh.
+		std::vector<size_t> _originalFaceMap;	///< Maps output mesh triangles to input mesh facets.
 	};
 
+	/// Creates the asynchronous task that builds the non-peridic representation of the input surface mesh.
+	/// This method may be overriden by subclasses who want to implement custom behavior.
+	virtual std::shared_ptr<PrepareSurfaceEngine> createSurfaceEngine(const SurfaceMesh* mesh) const;
+
 private:
-
-	/// Splits a triangle face at a periodic boundary.
-	static bool splitFace(TriMesh& output, TriMeshFace& face, int oldVertexCount, std::vector<Point3>& newVertices, std::map<std::pair<int,int>,std::pair<int,int>>& newVertexLookupMap, const SimulationCell& cell, size_t dim);
-
-	/// Traces the closed contour of the surface-boundary intersection.
-	static std::vector<Point2> traceContour(const HalfEdgeMesh& inputMesh, HalfEdgeMesh::edge_index firstEdge, const std::vector<Point3>& reducedPos, std::vector<bool>& visitedFaces, const SimulationCell& cell, size_t dim);
-
-	/// Clips a 2d contour at a periodic boundary.
-	static void clipContour(std::vector<Point2>& input, std::array<bool,2> periodic, std::vector<std::vector<Point2>>& openContours, std::vector<std::vector<Point2>>& closedContours);
-
-	/// Computes the intersection point of a 2d contour segment crossing a periodic boundary.
-	static void computeContourIntersection(size_t dim, FloatType t, Point2& base, Vector2& delta, int crossDir, std::vector<std::vector<Point2>>& contours);
-
-	/// Determines if the 2D box corner (0,0) is inside the closed region described by the 2d polygon.
-	static bool isCornerInside2DRegion(const std::vector<std::vector<Point2>>& contours);
 
 	/// Controls the display color of the surface mesh.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, surfaceColor, setSurfaceColor, PROPERTY_FIELD_MEMORIZE);
@@ -140,6 +162,9 @@ private:
 
 	/// Controls whether the mesh' orientation is flipped.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, reverseOrientation, setReverseOrientation);
+
+	/// Controls whether mesh faces facing away from the viewer are not rendered.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, cullFaces, setCullFaces);
 
 	/// Controls the transparency of the surface mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);

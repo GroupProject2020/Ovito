@@ -25,10 +25,10 @@
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/crystalanalysis/modifier/elasticstrain/ElasticStrainModifier.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
-#include <plugins/crystalanalysis/objects/patterns/BurgersVectorFamily.h>
+#include <plugins/crystalanalysis/objects/DislocationVis.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
+#include <plugins/crystalanalysis/objects/BurgersVectorFamily.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
@@ -47,7 +47,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -288,7 +288,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 
 	ovito_class<VTKDislocationsExporter, FileExporter>{m}
 	;
-	
+
 	auto DislocationVis_py = ovito_class<DislocationVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`. "
@@ -406,11 +406,11 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 					}
 					return array;
 				},
-				"The list of space points that define the shape of this dislocation segment. " 
+				"The list of space points that define the shape of this dislocation segment. "
         		"This is a *N* x 3 Numpy array, where *N* is the number of points along the "
         		"segment. For closed loops, the first and the last point coincide.")
-		.def_property_readonly("cluster_id", [](const DislocationSegment& segment) { 
-					return segment.burgersVector.cluster()->id; 
+		.def_property_readonly("cluster_id", [](const DislocationSegment& segment) {
+					return segment.burgersVector.cluster()->id;
 				},
 				"The numeric identifier of the crystal cluster of atoms containing this dislocation segment. "
 				"\n\n"

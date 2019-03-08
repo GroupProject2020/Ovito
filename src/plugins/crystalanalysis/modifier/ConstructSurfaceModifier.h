@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshData.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
@@ -38,7 +38,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 class OVITO_CRYSTALANALYSIS_EXPORT ConstructSurfaceModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass
 	{
 	public:
 
@@ -60,17 +60,17 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ConstructSurfaceModifier(DataSet* dataset);
 
-	/// Decides whether a preliminary viewport update is performed after the modifier has been 
+	/// Decides whether a preliminary viewport update is performed after the modifier has been
 	/// evaluated but before the entire pipeline evaluation is complete.
 	/// We suppress such preliminary updates for this modifier, because it produces a surface mesh,
-	/// which requires further asynchronous processing before a viewport update makes sense. 
+	/// which requires further asynchronous processing before a viewport update makes sense.
 	virtual bool performPreliminaryUpdateAfterEvaluation() override { return false; }
 
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
+
 private:
 
 	/// Computation engine that builds the surface mesh.
@@ -80,11 +80,11 @@ private:
 
 		/// Constructor.
 		ConstructSurfaceEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel, bool selectSurfaceParticles) :
-			_positions(positions), 
-			_selection(std::move(selection)), 
-			_simCell(simCell), 
-			_radius(radius), 
-			_smoothingLevel(smoothingLevel), 
+			_positions(positions),
+			_selection(std::move(selection)),
+			_mesh(simCell),
+			_radius(radius),
+			_smoothingLevel(smoothingLevel),
 			_totalVolume(std::abs(simCell.matrix().determinant())),
 			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::SelectionProperty, true) : nullptr) {}
 
@@ -100,25 +100,16 @@ private:
 
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
-		
-		/// Indicates whether the entire simulation cell is part of the solid region.
-		bool isCompletelySolid() const { return _isCompletelySolid; }
 
-		/// Sets whether the entire simulation cell is part of the solid region.
-		void setIsCompletelySolid(bool isSolid) { _isCompletelySolid = isSolid; }
-
-		/// Returns the topology of the generated surface mesh.
-		const HalfEdgeMeshPtr& mesh() { return _mesh; }
-		
-	    /// Returns the coordinates of the generated surface mesh vertices.
-    	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
+		/// Returns the generated surface mesh.
+		const SurfaceMeshData& mesh() const { return _mesh; }
 
 		/// Returns the computed solid volume.
 		FloatType solidVolume() const { return (FloatType)_solidVolume; }
 
 		/// Sums a contribution to the total solid volume.
 		void addSolidVolume(FloatType v) { _solidVolume += v; }
-		
+
 		/// Returns the computed total volume.
 		FloatType totalVolume() const { return (FloatType)_totalVolume; }
 
@@ -143,23 +134,16 @@ private:
 		const int _smoothingLevel;
 		ConstPropertyPtr _positions;
 		ConstPropertyPtr _selection;
-		const SimulationCell _simCell;
 
 		/// The generated surface mesh.
-		HalfEdgeMeshPtr _mesh = std::make_shared<HalfEdgeMesh>();
-
-		/// The vertex coordinates of the surface mesh mesh.
-    	PropertyPtr _vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
-
-		/// Indicates that the entire simulation cell is part of the solid region.
-		bool _isCompletelySolid = false;
+		SurfaceMeshData _mesh;
 
 		/// The computed solid volume.
 		double _solidVolume = 0;
-	
+
 		/// The computed total volume.
 		double _totalVolume = 0;
-	
+
 		/// The computed surface area.
 		double _surfaceArea = 0;
 

@@ -37,7 +37,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class StructureIdentificationModifierClass : public AsynchronousModifier::OOMetaClass 
+	class StructureIdentificationModifierClass : public AsynchronousModifier::OOMetaClass
 	{
 	public:
 
@@ -50,7 +50,7 @@ class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public Asynchrono
 
 	Q_OBJECT
 	OVITO_CLASS_META(StructureIdentificationModifier, StructureIdentificationModifierClass)
-	
+
 public:
 
 	/// Computes the modifier's results.
@@ -61,7 +61,7 @@ public:
 		/// Constructor.
 		StructureIdentificationEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection = {}) :
 			ComputeEngine(),
-			_positions(std::move(positions)), 
+			_positions(std::move(positions)),
 			_simCell(simCell),
 			_typesToIdentify(std::move(typesToIdentify)),
 			_selection(std::move(selection)),
@@ -104,7 +104,7 @@ public:
 
 		/// Gives subclasses the possibility to post-process per-particle structure types
 		/// before they are output to the data pipeline.
-		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) { 
+		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) {
 			return structures;
 		}
 
@@ -126,7 +126,7 @@ public:
 
 	/// This method indicates whether cached computation results of the modifier should be discarded whenever
 	/// a parameter of the modifier changes.
-	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override {
 		// Avoid a recomputation from scratch if the color-by-type option is being changed.
 		if(event.field() == &PROPERTY_FIELD(colorByType)) return false;
 		return AsynchronousModifier::discardResultsOnModifierChange(event);
@@ -141,7 +141,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// Inserts a structure type into the list.
-	void addStructureType(ParticleType* type) { _structureTypes.push_back(this, PROPERTY_FIELD(structureTypes), type); }
+	void addStructureType(ElementType* type) { _structureTypes.push_back(this, PROPERTY_FIELD(structureTypes), type); }
 
 	/// Create an instance of the ParticleType class to represent a structure type.
 	ParticleType* createStructureType(int id, ParticleType::PredefinedStructureType predefType);

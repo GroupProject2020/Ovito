@@ -24,9 +24,8 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshData.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
-#include <plugins/mesh/surface/SurfaceMeshVertices.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 
@@ -38,7 +37,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class OVITO_PARTICLES_EXPORT CoordinationPolyhedraModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class CoordinationPolyhedraModifierClass : public AsynchronousModifier::OOMetaClass 
+	class CoordinationPolyhedraModifierClass : public AsynchronousModifier::OOMetaClass
 	{
 	public:
 
@@ -64,7 +63,7 @@ protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-		
+
 private:
 
 	/// Computation engine that builds the polyhedra.
@@ -73,15 +72,15 @@ private:
 	public:
 
 		/// Constructor.
-		ComputePolyhedraEngine(ConstPropertyPtr positions, 
-				ConstPropertyPtr selection, ConstPropertyPtr particleTypes, 
+		ComputePolyhedraEngine(ConstPropertyPtr positions,
+				ConstPropertyPtr selection, ConstPropertyPtr particleTypes,
 				ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages, const SimulationCell& simCell) :
-			_positions(std::move(positions)), 
-			_selection(std::move(selection)), 
-			_particleTypes(std::move(particleTypes)), 
-			_bondTopology(std::move(bondTopology)), 
+			_positions(std::move(positions)),
+			_selection(std::move(selection)),
+			_particleTypes(std::move(particleTypes)),
+			_bondTopology(std::move(bondTopology)),
 			_bondPeriodicImages(std::move(bondPeriodicImages)),
-			_simCell(simCell) {}
+			_mesh(simCell) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -98,12 +97,15 @@ private:
 
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
-	
-		/// Returns the generated surface mesh topology.
-		const HalfEdgeMeshPtr& mesh() const { return _mesh; }
-				
-	    /// Returns the coordinates of the generated surface mesh vertices.
-    	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
+
+		/// Returns the generated surface mesh.
+		const SurfaceMeshData& mesh() const { return _mesh; }
+
+		/// Returns the generated surface mesh.
+		SurfaceMeshData& mesh() { return _mesh; }
+
+		/// Returns the simulation cell geometry.
+		const SimulationCell& cell() const { return mesh().cell(); }
 
 	private:
 
@@ -117,17 +119,13 @@ private:
 		ConstPropertyPtr _particleTypes;
 		ConstPropertyPtr _bondTopology;
 		ConstPropertyPtr _bondPeriodicImages;
-		const SimulationCell _simCell;
 
-		/// The topology of the output mesh.
-		HalfEdgeMeshPtr _mesh = std::make_shared<HalfEdgeMesh>();
-
-		/// The vertex coordinates of the output mesh.
-    	PropertyPtr _vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
+		/// The output mesh.
+		SurfaceMeshData _mesh;
 	};
 
 	/// The vis element for rendering the polyhedra.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, surfaceMeshVis, setSurfaceMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);	
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, surfaceMeshVis, setSurfaceMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
 
 OVITO_END_INLINE_NAMESPACE

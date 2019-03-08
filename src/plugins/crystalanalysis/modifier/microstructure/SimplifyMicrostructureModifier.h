@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -34,7 +34,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 class OVITO_CRYSTALANALYSIS_EXPORT SimplifyMicrostructureModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass
 	{
 	public:
 
@@ -56,17 +56,17 @@ public:
 	/// Constructor.
 	Q_INVOKABLE SimplifyMicrostructureModifier(DataSet* dataset);
 
-	/// Decides whether a preliminary viewport update is performed after the modifier has been 
+	/// Decides whether a preliminary viewport update is performed after the modifier has been
 	/// evaluated but before the entire pipeline evaluation is complete.
 	/// We suppress such preliminary updates for this modifier, because it produces a microstructure object,
-	/// which requires further asynchronous processing before a viewport update makes sense. 
+	/// which requires further asynchronous processing before a viewport update makes sense.
 	virtual bool performPreliminaryUpdateAfterEvaluation() override { return false; }
 
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
+
 private:
 
 	/// Computation engine of the modifier.
@@ -75,15 +75,14 @@ private:
 	public:
 
 		/// Constructor.
-		SimplifyMicrostructureEngine(Microstructure microstructure, int smoothingLevel, FloatType kPB, FloatType lambda) :
-			_microstructure(std::move(microstructure)),
+		SimplifyMicrostructureEngine(const Microstructure* microstructureObj, int smoothingLevel, FloatType kPB, FloatType lambda) :
+			_microstructure(microstructureObj),
             _smoothingLevel(smoothingLevel),
             _kPB(kPB),
             _lambda(lambda) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
-//			_inputMicrostructure.reset();
 			ComputeEngine::cleanup();
 		}
 
@@ -94,7 +93,7 @@ private:
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 		/// Returns the output microstructure.
-		const Microstructure& microstructure() const { return _microstructure; }
+		const MicrostructureData& microstructure() const { return _microstructure; }
 
 		/// Returns the input simulation cell.
 		const SimulationCell& cell() const { return microstructure().cell(); }
@@ -105,14 +104,14 @@ private:
         void smoothMeshIteration(FloatType prefactor);
 
 		/// The microstructure modified by the modifier.
-		Microstructure _microstructure;
+		MicrostructureData _microstructure;
         int _smoothingLevel;
         FloatType _kPB;
         FloatType _lambda;
 	};
 
 	/// Controls the number of smoothing iterations to perform.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, smoothingLevel, setSmoothingLevel, PROPERTY_FIELD_MEMORIZE);    
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, smoothingLevel, setSmoothingLevel, PROPERTY_FIELD_MEMORIZE);
 
 	/// First control parameter of the smoothing algorithm.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, kPB, setkPB, PROPERTY_FIELD_MEMORIZE);

@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
 
@@ -85,15 +85,27 @@ protected:
 		virtual OORef<DataCollection> handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource) override;
 
 		/// Returns the loaded microstructure.
-		const Microstructure& microstructure() const { return _microstructure; }
+		const MicrostructureData& microstructure() const { return _microstructure; }
 
 		/// Returns the microstructure being loaded.
-		Microstructure& microstructure() { return _microstructure; }
+		MicrostructureData& microstructure() { return _microstructure; }
+
+		/// Sets the type of crystal ("fcc", "bcc", etc.)
+		void setLatticeStructure(const char* s, const Matrix3& latticeOrientation) {
+			_latticeStructure = s;
+			_latticeOrientation = latticeOrientation;
+		}
 
 	protected:
 
 		/// The loaded microstructure.
-		Microstructure _microstructure;
+		MicrostructureData _microstructure;
+
+		/// The type of crystal ("fcc", "bcc", etc.)
+		std::string _latticeStructure;
+
+		/// The lattice orientation matrix.
+		Matrix3 _latticeOrientation;
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in a worker thread.
@@ -110,7 +122,7 @@ protected:
 		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// Connects the slip faces to form two-dimensional manifolds.
-		static void connectSlipFaces(Microstructure& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap);
+		static void connectSlipFaces(MicrostructureData& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap);
 	};
 };
 

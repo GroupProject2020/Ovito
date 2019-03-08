@@ -67,12 +67,12 @@ public:
 	/// Injects the computed results into the data pipeline.
 	virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
-	/// Returns the computed defect mesh.
-	const HalfEdgeMeshPtr& defectMesh() { return _defectMesh; }
+	/// Returns the generated defect mesh.
+	const SurfaceMeshData& defectMesh() const { return _defectMesh; }
 
 	/// Returns the array of atom cluster IDs.
 	const PropertyPtr& atomClusters() const { return _atomClusters; }
-		
+
 	/// Assigns the array of atom cluster IDs.
 	void setAtomClusters(PropertyPtr prop) { _atomClusters = std::move(prop); }
 
@@ -81,9 +81,6 @@ public:
 
 	/// Sets the created cluster graph.
 	void setClusterGraph(std::shared_ptr<ClusterGraph> graph) { _clusterGraph = std::move(graph); }
-	
-	/// Indicates whether the entire simulation cell is part of the 'bad' crystal region.
-	bool isBadEverywhere() const { return _isBadEverywhere; }
 
 	/// Returns the defect interface.
 	const HalfEdgeMeshPtr& outputInterfaceMesh() const { return _outputInterfaceMesh; }
@@ -93,10 +90,10 @@ public:
 
 	/// Sets the extracted dislocations.
 	void setDislocationNetwork(std::shared_ptr<DislocationNetwork> network) { _dislocationNetwork = std::move(network); }
-	
+
 	/// Returns the total volume of the input simulation cell.
 	FloatType simCellVolume() const { return _simCellVolume; }
-		
+
 	/// Returns the computed interface mesh.
 	const InterfaceMesh& interfaceMesh() const { return *_interfaceMesh; }
 
@@ -118,15 +115,12 @@ private:
 	std::unique_ptr<ElasticMapping> _elasticMapping;
 	std::unique_ptr<InterfaceMesh> _interfaceMesh;
 	std::unique_ptr<DislocationTracer> _dislocationTracer;
-	ConstPropertyPtr _crystalClusters;	
+	ConstPropertyPtr _crystalClusters;
 
-	/// This stores the defect mesh produced by the modifier.
-	HalfEdgeMeshPtr _defectMesh = std::make_shared<HalfEdgeMesh>();
+	/// The defect mesh produced by the modifier.
+	SurfaceMeshData _defectMesh;
 
-	/// Stores the vertex coordinates of the defect mesh.
-	PropertyPtr _defectMeshVerts = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
-
-	/// Indicates whether the engine should output the generated interface mesh to the pipeline for debugging purposes. 
+	/// Indicates whether the engine should output the generated interface mesh to the pipeline for debugging purposes.
 	bool _doOutputInterfaceMesh;
 
 	/// This stores the interface mesh produced by the modifier for visualization purposes.
@@ -143,9 +137,6 @@ private:
 
 	/// This stores the cached dislocations computed by the modifier.
 	std::shared_ptr<DislocationNetwork> _dislocationNetwork;
-
-	/// Indicates that the entire simulation cell is part of the 'bad' crystal region.
-	bool _isBadEverywhere;
 
 	/// The total volume of the input simulation cell.
 	FloatType _simCellVolume;

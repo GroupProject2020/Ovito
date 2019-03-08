@@ -170,9 +170,17 @@ void TriMesh::flipFaces()
 		face.setVertices(face.vertex(2), face.vertex(1), face.vertex(0));
 		face.setEdgeVisibility(face.edgeVisible(2), face.edgeVisible(1), face.edgeVisible(0));
 	}
-	if(_hasNormals) {
-		for(Vector3& n : _normals)
-			n = -n;
+	if(hasNormals()) {
+		// Negate normal vectors and swap normals of first and third face vertex.
+		for(auto n = _normals.begin(); n != _normals.end(); ) {
+			Vector3& n1 = *n++;
+			*n = -(*n);
+			++n;
+			Vector3 temp = -(*n);
+			*n = -n1;
+			n1 = temp;
+			++n;
+		}
 	}
 	invalidateFaces();
 }
@@ -290,13 +298,14 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 	// Clip vertices.
 	std::vector<int> existingVertexMapping(vertexCount(), -1);
 	for(int vindex = 0; vindex < vertexCount(); vindex++) {
-		if(plane.classifyPoint(vertex(vindex)) != +1) {
+		if(plane.classifyPoint(vertex(vindex)) != 1) {
 			existingVertexMapping[vindex] = clippedMesh.addVertex(vertex(vindex));
 		}
 	}
 
 	// Clip edges.
-	std::map<std::pair<int,int>, int> newVertexMapping;
+	clippedMesh.setHasNormals(hasNormals());
+	std::map<std::pair<int,int>, std::pair<int,FloatType>> newVertexMapping;
 	for(const TriMeshFace& face : faces()) {
 		for(int v = 0; v < 3; v++) {
 			auto vindices = std::make_pair(face.vertex(v), face.vertex((v+1)%3));
@@ -308,20 +317,23 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 			FloatType z2 = plane.pointDistance(v2);
 			if((z1 < FLOATTYPE_EPSILON && z2 > FLOATTYPE_EPSILON) || (z2 < FLOATTYPE_EPSILON && z1 > FLOATTYPE_EPSILON)) {
 				if(newVertexMapping.find(vindices) == newVertexMapping.end()) {
-					Point3 intersection = v1 + (v1 - v2) * (z1 / (z2 - z1));
-					newVertexMapping.insert(std::make_pair(vindices, clippedMesh.addVertex(intersection)));
+					FloatType t = z1 / (z1 - z2);
+					Point3 intersection = v1 + (v2 - v1) * t;
+					newVertexMapping.emplace(vindices, std::make_pair(clippedMesh.addVertex(intersection), t));
 				}
 			}
 		}
 	}
 
 	// Clip faces.
+	int faceIndex = 0;
 	for(const TriMeshFace& face : faces()) {
 		for(int v0 = 0; v0 < 3; v0++) {
 			Point3 current_pos = vertex(face.vertex(v0));
 			int current_classification = plane.classifyPoint(current_pos);
 			if(current_classification == -1) {
 				int newface[4];
+				Vector3 newface_normals[4];
 				int newface_vcount = 0;
 				int next_classification;
 				for(int v = v0; v < v0 + 3; v++, current_classification = next_classification) {
@@ -329,6 +341,8 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 					if((next_classification <= 0 && current_classification <= 0) || (next_classification == 1 && current_classification == 0)) {
 						OVITO_ASSERT(existingVertexMapping[face.vertex(v%3)] >= 0);
 						OVITO_ASSERT(newface_vcount <= 3);
+						if(hasNormals())
+							newface_normals[newface_vcount] = faceVertexNormal(faceIndex, v%3);
 						newface[newface_vcount++] = existingVertexMapping[face.vertex(v%3)];
 					}
 					else if((current_classification == +1 && next_classification == -1) || (current_classification == -1 && next_classification == +1)) {
@@ -338,10 +352,18 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 						OVITO_ASSERT(ve != newVertexMapping.end());
 						if(current_classification == -1) {
 							OVITO_ASSERT(newface_vcount <= 3);
+							if(hasNormals())
+								newface_normals[newface_vcount] = faceVertexNormal(faceIndex, v%3);
 							newface[newface_vcount++] = existingVertexMapping[face.vertex(v%3)];
 						}
 						OVITO_ASSERT(newface_vcount <= 3);
-						newface[newface_vcount++] = ve->second;
+						if(hasNormals()) {
+							FloatType t = ve->second.second;
+							if(vindices.first != face.vertex(v%3)) t = FloatType(1)-t;
+							newface_normals[newface_vcount] = faceVertexNormal(faceIndex, v%3) * t + faceVertexNormal(faceIndex, (v+1)%3) * (FloatType(1) - t);
+							newface_normals[newface_vcount].normalizeSafely();
+						}
+						newface[newface_vcount++] = ve->second.first;
 					}
 				}
 				if(newface_vcount >= 3) {
@@ -352,6 +374,12 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 					face1.setVertices(newface[0], newface[1], newface[2]);
 					face1.setSmoothingGroups(face.smoothingGroups());
 					face1.setMaterialIndex(face.materialIndex());
+					if(hasNormals()) {
+						auto n = clippedMesh.normals().end() - 3;
+						*n++ = newface_normals[0];
+						*n++ = newface_normals[1];
+						*n = newface_normals[2];
+					}
 					if(newface_vcount == 4) {
 						OVITO_ASSERT(newface[3] >= 0 && newface[3] < clippedMesh.vertexCount());
 						OVITO_ASSERT(newface[3] != newface[0]);
@@ -359,11 +387,18 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 						face2.setVertices(newface[0], newface[2], newface[3]);
 						face2.setSmoothingGroups(face.smoothingGroups());
 						face2.setMaterialIndex(face.materialIndex());
+						if(hasNormals()) {
+							auto n = clippedMesh.normals().end() - 3;
+							*n++ = newface_normals[0];
+							*n++ = newface_normals[2];
+							*n = newface_normals[3];
+						}
 					}
 				}
 				break;
 			}
 		}
+		faceIndex++;
 	}
 
 	this->swap(clippedMesh);

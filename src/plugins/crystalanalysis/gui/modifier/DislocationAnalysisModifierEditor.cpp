@@ -98,7 +98,7 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	sublayout->addWidget(onlyPerfectDislocationsUI->checkBox(), 3, 0);
 
 	// Status label.
-	layout->addWidget(statusLabel());	
+	layout->addWidget(statusLabel());
 
 	// Structure list.
 	StructureListParameterUI* structureTypesPUI = new StructureListParameterUI(this);
@@ -150,7 +150,7 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 
 	// Surface post-processing.
 	rollout = createRollout(tr("Surface post-processing"), rolloutParams.after(rollout), "particles.modifiers.dislocation_analysis.html");
-	
+
 	QGridLayout* gridlayout = new QGridLayout(rollout);
 	gridlayout->setContentsMargins(4,4,4,4);
 	gridlayout->setSpacing(6);
@@ -165,27 +165,27 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 * Constructor.
 ******************************************************************************/
 DislocationTypeListParameterUI::DislocationTypeListParameterUI(QObject* parent)
-	: RefTargetListParameterUI(parent, PROPERTY_FIELD(StructurePattern::burgersVectorFamilies))
+	: RefTargetListParameterUI(parent, PROPERTY_FIELD(MicrostructurePhase::burgersVectorFamilies))
 {
 	connect(tableWidget(220), &QTableWidget::doubleClicked, this, &DislocationTypeListParameterUI::onDoubleClickDislocationType);
 	tableWidget()->setAutoScroll(false);
 }
 
 /******************************************************************************
-* Obtains the current statistics from the pipeline. 
+* Obtains the current statistics from the pipeline.
 ******************************************************************************/
 void DislocationTypeListParameterUI::updateDislocationCounts(const PipelineFlowState& state, ModifierApplication* modApp)
 {
 	// Access the data series in the pipeline state containing the dislocation counts and lengths.
 	_dislocationCounts = (modApp && !state.isEmpty()) ? state.getObjectBy<DataSeriesObject>(modApp, QStringLiteral("disloc-counts")) : nullptr;
 	_dislocationLengths = (modApp && !state.isEmpty()) ? state.getObjectBy<DataSeriesObject>(modApp, QStringLiteral("disloc-lengths")) : nullptr;
-	const PatternCatalog* patternCatalog = !state.isEmpty() ? state.getObject<PatternCatalog>() : nullptr;
+	const DislocationNetworkObject* dislocationsObj = !state.isEmpty() ? state.getObject<DislocationNetworkObject>() : nullptr;
 	int crystalStructure = 0;
 	if(modApp) {
 		if(DislocationAnalysisModifier* modifier = dynamic_object_cast<DislocationAnalysisModifier>(modApp->modifier()))
 			crystalStructure = modifier->inputCrystalStructure();
 	}
-	setEditObject(patternCatalog ? patternCatalog->structureById(crystalStructure) : nullptr);
+	setEditObject(dislocationsObj ? dislocationsObj->structureById(crystalStructure) : nullptr);
 }
 
 /******************************************************************************

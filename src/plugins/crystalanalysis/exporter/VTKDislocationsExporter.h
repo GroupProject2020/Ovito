@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 

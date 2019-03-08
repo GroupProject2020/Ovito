@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,7 +36,7 @@ class ElasticStrainEngine : public StructureIdentificationModifier::StructureIde
 public:
 
 	/// Constructor.
-	ElasticStrainEngine(ParticleOrderingFingerprint fingerprint, 
+	ElasticStrainEngine(ParticleOrderingFingerprint fingerprint,
 			ConstPropertyPtr positions, const SimulationCell& simCell,
 			int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
 			bool calculateDeformationGradients, bool calculateStrainTensors,
@@ -59,7 +59,7 @@ public:
 
 	/// Assigns the array of atom cluster IDs.
 	void setAtomClusters(PropertyPtr prop) { _atomClusters = std::move(prop); }
-	
+
 	/// Returns the created cluster graph.
 	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _clusterGraph; }
 
@@ -70,7 +70,7 @@ public:
 	const PropertyPtr& strainTensors() const { return _strainTensors; }
 
 	/// Returns the property storage that contains the computed per-particle deformation gradient tensors.
-	const PropertyPtr& deformationGradients() const { return _deformationGradients; }	
+	const PropertyPtr& deformationGradients() const { return _deformationGradients; }
 
 private:
 
@@ -82,7 +82,7 @@ private:
 
 	/// This stores the cached atom-to-cluster assignments computed by the modifier.
 	PropertyPtr _atomClusters;
-	
+
 	/// This stores the cached cluster graph computed by the modifier.
 	const std::shared_ptr<ClusterGraph> _clusterGraph;
 
@@ -93,7 +93,7 @@ private:
 	const PropertyPtr _strainTensors;
 
 	/// This stores the cached results of the modifier.
-	const PropertyPtr _deformationGradients;	
+	const PropertyPtr _deformationGradients;
 };
 
 }	// End of namespace

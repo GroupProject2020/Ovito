@@ -28,7 +28,7 @@
 #include "PropertyStorage.h"
 
 namespace Ovito { namespace StdObj {
-	
+
 /**
  * \brief Stores a property data array.
  */
@@ -36,7 +36,7 @@ class OVITO_STDOBJ_EXPORT PropertyObject : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(PropertyObject)
-	
+
 public:
 
 	/// \brief Creates a property object.
@@ -98,10 +98,10 @@ public:
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const PropertyPtr& modifiableStorage();
 
-	/// Extends the data array and replicates the old data N times. 
+	/// Extends the data array and replicates the old data N times.
 	void replicate(size_t n);
 
-	/// Reduces the size of the storage array, removing elements for which 
+	/// Reduces the size of the storage array, removing elements for which
 	/// the corresponding bits in the bit array are set.
 	void filterResize(const boost::dynamic_bitset<>& mask) {
 		modifiableStorage()->filterResize(mask);
@@ -124,7 +124,7 @@ public:
 	const qlonglong* constDataInt64() const {
 		return storage()->constDataInt64();
 	}
-	
+
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
 	/// \note This method may only be used if this property is of data type float.
 	const FloatType* constDataFloat() const {
@@ -182,7 +182,7 @@ public:
 	boost::iterator_range<const qlonglong*> constInt64Range() const {
 		return storage()->constInt64Range();
 	}
-	
+
 	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const FloatType*> constFloatRange() const {
 		return storage()->constFloatRange();
@@ -239,7 +239,7 @@ public:
 	qlonglong* dataInt64() {
 		return modifiableStorage()->dataInt64();
 	}
-	
+
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
 	/// \note This method may only be used if this property is of data type float.
 	FloatType* dataFloat() {
@@ -297,7 +297,7 @@ public:
 	boost::iterator_range<qlonglong*> int64Range() {
 		return modifiableStorage()->int64Range();
 	}
-	
+
 	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<FloatType*> floatRange() {
 		return modifiableStorage()->floatRange();
@@ -362,7 +362,7 @@ public:
 	qlonglong getInt64Component(size_t index, size_t componentIndex) const {
 		return storage()->getInt64Component(index, componentIndex);
 	}
-	
+
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloatComponent(size_t index, size_t componentIndex) const {
 		return storage()->getFloatComponent(index, componentIndex);
@@ -381,7 +381,7 @@ public:
 	/// Returns a Vector3I element at the given index (if this is a point property).
 	const Vector3I& getVector3I(size_t index) const {
 		return storage()->getVector3I(index);
-	}	
+	}
 
 	/// Returns a Point3I element at the given index (if this is a point property).
 	const Point3I& getPoint3I(size_t index) const {
@@ -393,12 +393,17 @@ public:
 		return storage()->getColor(index);
 	}
 
-	/// Returns a SymmetricTensor2 element stored for the given particle.
+	/// Returns the given element's value of a SymmetricTensor2 property.
 	const SymmetricTensor2& getSymmetricTensor2(size_t index) const {
 		return storage()->getSymmetricTensor2(index);
 	}
 
-	/// Returns a Quaternion element stored for the given particle.
+	/// Returns the given element's value of a Matrix3 property.
+	const Matrix3& getMatrix3(size_t index) const {
+		return storage()->getMatrix3(index);
+	}
+
+	/// Returns the given element's value of a Quaternion property.
 	const Quaternion& getQuaternion(size_t index) const {
 		return storage()->getQuaternion(index);
 	}
@@ -412,7 +417,7 @@ public:
 	void setInt64(size_t index, qlonglong newValue) {
 		modifiableStorage()->setInt64(index, newValue);
 	}
-	
+
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloat(size_t index, FloatType newValue) {
 		modifiableStorage()->setFloat(index, newValue);
@@ -427,7 +432,7 @@ public:
 	void setInt64Component(size_t index, size_t componentIndex, qlonglong newValue) {
 		modifiableStorage()->setInt64Component(index, componentIndex, newValue);
 	}
-	
+
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloatComponent(size_t index, size_t componentIndex, FloatType newValue) {
 		modifiableStorage()->setFloatComponent(index, componentIndex, newValue);
@@ -446,7 +451,7 @@ public:
 	/// Sets the value of a Vector3I element at the given index (if this is a point property).
 	void setVector3I(size_t index, const Vector3I& newValue) {
 		modifiableStorage()->setVector3I(index, newValue);
-	}	
+	}
 
 	/// Sets the value of a Point3I element at the given index (if this is a point property).
 	void setPoint3I(size_t index, const Point3I& newValue) {
@@ -458,18 +463,23 @@ public:
 		modifiableStorage()->setColor(index, newValue);
 	}
 
-	/// Sets the value of a SymmetricTensor2 element for the given particle.
+	/// Sets the given element's value of a SymmetricTensor2 property.
 	void setSymmetricTensor2(size_t index, const SymmetricTensor2& newValue) {
 		modifiableStorage()->setSymmetricTensor2(index, newValue);
 	}
 
-	/// Sets the value of a Quaternion element for the given particle.
+	/// Sets the given element's value of a Matrix3 property.
+	void setMatrix3(size_t index, const Matrix3& newValue) {
+		modifiableStorage()->setMatrix3(index, newValue);
+	}
+
+	/// Sets the given element's value of a Quaternion property.
 	void setQuaternion(size_t index, const Quaternion& newValue) {
 		modifiableStorage()->setQuaternion(index, newValue);
 	}
 
 	//////////////////////////////// Element types //////////////////////////////
-	
+
 	/// Appends an element type to the list of types.
 	void addElementType(const ElementType* type) {
 		OVITO_ASSERT(elementTypes().contains(const_cast<ElementType*>(type)) == false);
@@ -507,7 +517,7 @@ public:
 	void clearElementTypes() {
 		_elementTypes.clear(this, PROPERTY_FIELD(elementTypes));
 	}
-	
+
 	/// Builds a mapping from numeric IDs to type colors.
 	std::map<int,Color> typeColorMap() const {
 		std::map<int,Color> m;
@@ -526,7 +536,7 @@ public:
 
 	////////////////////////////// Support functions for the Python bindings //////////////////////////////
 
-	/// Indicates to the Python binding layer that this property object has been temporarily put into a 
+	/// Indicates to the Python binding layer that this property object has been temporarily put into a
 	/// writable state. In this state, the binding layer will allow write access to the property's internal data.
 	bool isWritableFromPython() const { return _isWritableFromPython != 0; }
 
@@ -534,20 +544,20 @@ public:
 	/// In the writable state, the Python binding layer will allow write access to the property's internal data.
 	void makeWritableFromPython();
 
-	/// Puts the property array back into the default read-only state. 
+	/// Puts the property array back into the default read-only state.
 	/// In the read-only state, the Python binding layer will not permit write access to the property's internal data.
 	void makeReadOnlyFromPython() {
 		OVITO_ASSERT(_isWritableFromPython > 0);
 		_isWritableFromPython--;
 	}
-	
-	/// Returns whether this data object wants to be shown in the pipeline editor 
+
+	/// Returns whether this data object wants to be shown in the pipeline editor
 	/// under the data source section.
 	/// This implementation returns true only it this is a typed property, i.e. if the 'elementTypes' list contains
 	/// some elements. In this case we want the property to appear in the pipeline editor so that the user can
 	/// edit the individual types.
-	virtual bool showInPipelineEditor() const override { 
-		return !elementTypes().empty(); 
+	virtual bool showInPipelineEditor() const override {
+		return !elementTypes().empty();
 	}
 
 	/// Returns the display title of this property object in the user interface.

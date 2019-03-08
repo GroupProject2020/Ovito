@@ -64,7 +64,7 @@ const PropertyObject* PropertyContainer::expectProperty(const QString& propertyN
 
 /******************************************************************************
 * Duplicates any property objects that are shared with other containers.
-* After this method returns, all property objects are exclusively owned by the container and 
+* After this method returns, all property objects are exclusively owned by the container and
 * can be safely modified without unwanted side effects.
 ******************************************************************************/
 void PropertyContainer::makePropertiesMutable()
@@ -75,7 +75,7 @@ void PropertyContainer::makePropertiesMutable()
 }
 
 /******************************************************************************
-* Creates a property and adds it to the container. 
+* Creates a property and adds it to the container.
 * In case the property already exists, it is made sure that it's safe to modify it.
 ******************************************************************************/
 PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath, size_t elementCountHint)
@@ -114,7 +114,7 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 }
 
 /******************************************************************************
-* Creates a user-defined property and adds it to the container. 
+* Creates a user-defined property and adds it to the container.
 * In case the property already exists, it is made sure that it's safe to modify it.
 ******************************************************************************/
 PropertyObject* PropertyContainer::createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory, size_t elementCountHint)
@@ -164,8 +164,12 @@ PropertyObject* PropertyContainer::createProperty(const PropertyPtr& storage)
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
 
 	// Length of new property array must match the existing number of elements.
-	if(!properties().empty() && storage->size() != properties().front()->size())
+	if(!properties().empty() && storage->size() != properties().front()->size()) {
+#ifdef OVITO_DEBUG
+		qDebug() << "Property array size mismatch. Existing property '" << properties().front()->name() << "' in the container has" << properties().front()->size() << "elements. New property '" << storage->name() << "' to be added has" << storage->size() << "element.";
+#endif
 		throwException(tr("Cannot add new %1 property '%2': Number of elements does not match.").arg(getOOMetaClass().propertyClassDisplayName()).arg(storage->name()));
+	}
 
 	// Check if property already exists in the output.
 	const PropertyObject* existingProperty;

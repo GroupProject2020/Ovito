@@ -20,10 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
-#include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/DislocationVis.h>
+#include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <core/app/Application.h>
@@ -124,7 +123,7 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<CrystalAnalysisFrameData>();
-	
+
 	QString caFilename;
 	QString atomsFilename;
 	AffineTransformation cell = AffineTransformation::Zero();
@@ -172,9 +171,9 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 					}
 					else if(stream.lineStartsWith("TYPE ")) {
 						QString patternTypeString = stream.lineString().mid(5).trimmed();
-						if(patternTypeString == QStringLiteral("LATTICE")) pattern.type = StructurePattern::Lattice;
-						else if(patternTypeString == QStringLiteral("INTERFACE")) pattern.type = StructurePattern::Interface;
-						else if(patternTypeString == QStringLiteral("POINTDEFECT")) pattern.type = StructurePattern::PointDefect;
+						if(patternTypeString == QStringLiteral("LATTICE")) pattern.type = MicrostructurePhase::Dimensionality::Volumetric;
+						else if(patternTypeString == QStringLiteral("INTERFACE")) pattern.type = MicrostructurePhase::Dimensionality::Planar;
+						else if(patternTypeString == QStringLiteral("POINTDEFECT")) pattern.type = MicrostructurePhase::Dimensionality::Pointlike;
 						else throw Exception(tr("Failed to parse file. Invalid pattern type in line %1: %2").arg(stream.lineNumber()).arg(patternTypeString));
 					}
 					else if(stream.lineStartsWith("COLOR ")) {
@@ -414,17 +413,15 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 				throw Exception(tr("Failed to parse file. Invalid number of defect mesh vertices in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading defect surface"));
 			setProgressMaximum(numDefectMeshVertices);
-			HalfEdgeMeshPtr defectSurface = std::make_shared<HalfEdgeMesh>();
-			PropertyPtr vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(numDefectMeshVertices, SurfaceMeshVertices::PositionProperty, false);
-			defectSurface->createVertices(numDefectMeshVertices);
+			std::unique_ptr<SurfaceMeshData> defectSurface = std::make_unique<SurfaceMeshData>();
 			for(int index = 0; index < numDefectMeshVertices; index++) {
 				if(!setProgressValueIntermittent(index)) return {};
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				vertexCoords->setPoint3(index, p);
+				defectSurface->createVertex(p);
 			}
-			frameData->setDefectSurface(std::move(defectSurface), std::move(vertexCoords));
+			frameData->setDefectSurface(std::move(defectSurface));
 		}
 		else if(stream.lineStartsWith("DEFECT_MESH_FACETS ") && frameData->defectSurface()) {
 			// Read defect mesh facets.
@@ -432,17 +429,17 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 			if(sscanf(stream.line(), "DEFECT_MESH_FACETS %i", &numDefectMeshFacets) != 1 || numDefectMeshFacets < 0)
 				throw Exception(tr("Failed to parse file. Invalid number of defect mesh facets in line %1.").arg(stream.lineNumber()));
 			setProgressMaximum(numDefectMeshFacets * 2);
-			auto defectSurface = frameData->defectSurface();
+			SurfaceMeshData& defectSurface = *frameData->defectSurface();
 			for(int index = 0; index < numDefectMeshFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return {};
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3
-					 	|| v[0] < 0 || v[0] >= defectSurface->vertexCount()
-					  	|| v[1] < 0 || v[1] >= defectSurface->vertexCount()
-					   	|| v[2] < 0 || v[2] >= defectSurface->vertexCount())
+					 	|| v[0] < 0 || v[0] >= defectSurface.vertexCount()
+					  	|| v[1] < 0 || v[1] >= defectSurface.vertexCount()
+					   	|| v[2] < 0 || v[2] >= defectSurface.vertexCount())
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
-				defectSurface->createFace({ v[0], v[1], v[2] });
+				defectSurface.createFace({v[0], v[1], v[2]});
 			}
 
 			// Read facet adjacency information.
@@ -452,13 +449,13 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
 					throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
-				HalfEdgeMesh::edge_index edge = defectSurface->firstFaceEdge(index);
-				for(int i = 0; i < 3; i++, edge = defectSurface->nextFaceEdge(edge)) {
-					if(defectSurface->hasOppositeEdge(edge)) continue;
-					HalfEdgeMesh::edge_index oppositeEdge = defectSurface->findEdge(v[i], defectSurface->vertex2(edge), defectSurface->vertex1(edge));
+				HalfEdgeMesh::edge_index edge = defectSurface.firstFaceEdge(index);
+				for(int i = 0; i < 3; i++, edge = defectSurface.nextFaceEdge(edge)) {
+					if(defectSurface.hasOppositeEdge(edge)) continue;
+					HalfEdgeMesh::edge_index oppositeEdge = defectSurface.findEdge(v[i], defectSurface.vertex2(edge), defectSurface.vertex1(edge));
 					if(oppositeEdge == HalfEdgeMesh::InvalidIndex)
 						throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
-					defectSurface->linkOppositeEdges(edge, oppositeEdge);
+					defectSurface.linkOppositeEdges(edge, oppositeEdge);
 				}
 			}
 		}
@@ -484,7 +481,7 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 	frameData->simulationCell().setMatrix(cell);
 	frameData->simulationCell().setPbcFlags(pbcFlags[0], pbcFlags[1], pbcFlags[2]);
 
-	frameData->setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));	
+	frameData->setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));
 	return frameData;
 }
 
@@ -499,11 +496,16 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 	OORef<DataCollection> output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
 
 	// Insert defect surface.
-	if(_defectSurface) {
+	if(defectSurface()) {
 		SurfaceMesh* defectSurfaceObj = const_cast<SurfaceMesh*>(existing ? existing->getObject<SurfaceMesh>() : nullptr);
 		if(!defectSurfaceObj) {
 			defectSurfaceObj = output->createObject<SurfaceMesh>(fileSource, tr("Defect mesh"));
 			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(fileSource->dataset());
+			vis->setShowCap(true);
+			vis->setSmoothShading(true);
+			vis->setReverseOrientation(true);
+			vis->setCapTransparency(0.5);
+			vis->setObjectTitle(tr("Defect mesh"));
 			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			defectSurfaceObj->setVisElement(vis);
@@ -511,60 +513,9 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 		else {
 			output->addObject(defectSurfaceObj);
 		}
+		defectSurface()->transferTo(defectSurfaceObj);
 		defectSurfaceObj->setDomain(output->getObject<SimulationCellObject>());
-		defectSurfaceObj->setTopology(defectSurface());
-		defectSurfaceObj->vertices()->createProperty(_defectSurfaceVerts);
 	}
-
-	// Insert pattern catalog.
-	PatternCatalog* patternCatalog = const_cast<PatternCatalog*>(existing ? existing->getObject<PatternCatalog>() : nullptr);
-	if(!patternCatalog) {
-		patternCatalog = output->createObject<PatternCatalog>(fileSource);
-	}
-	else {
-		output->addObject(patternCatalog);
-	}
-
-	// Update pattern catalog.
-	for(int i = 0; i < _patterns.size(); i++) {
-		OORef<StructurePattern> pattern;
-		if(patternCatalog->patterns().size() > i+1) {
-			pattern = patternCatalog->patterns()[i+1];
-		}
-		else {
-			pattern.reset(new StructurePattern(patternCatalog->dataset()));
-			patternCatalog->addPattern(pattern);
-		}
-		if(pattern->shortName() != _patterns[i].shortName)
-			pattern->setColor(_patterns[i].color);
-		pattern->setShortName(_patterns[i].shortName);
-		pattern->setLongName(_patterns[i].longName);
-		pattern->setStructureType(_patterns[i].type);
-		pattern->setNumericId(_patterns[i].id);
-		pattern->setSymmetryType(_patterns[i].symmetryType);
-
-		// Update Burgers vector families.
-		for(int j = 0; j < _patterns[i].burgersVectorFamilies.size(); j++) {
-			OORef<BurgersVectorFamily> family;
-			if(pattern->burgersVectorFamilies().size() > j+1) {
-				family = pattern->burgersVectorFamilies()[j+1];
-			}
-			else {
-				family.reset(new BurgersVectorFamily(pattern->dataset()));
-				pattern->addBurgersVectorFamily(family);
-			}
-			if(family->name() != _patterns[i].burgersVectorFamilies[j].name)
-				family->setColor(_patterns[i].burgersVectorFamilies[j].color);
-			family->setName(_patterns[i].burgersVectorFamilies[j].name);
-			family->setBurgersVector(_patterns[i].burgersVectorFamilies[j].burgersVector);
-		}
-		// Remove excess families.
-		for(int j = pattern->burgersVectorFamilies().size() - 1; j > _patterns[i].burgersVectorFamilies.size(); j--)
-			pattern->removeBurgersVectorFamily(j);
-	}
-	// Remove excess patterns from the catalog.
-	for(int i = patternCatalog->patterns().size() - 1; i > _patterns.size(); i--)
-		patternCatalog->removePattern(i);
 
 	// Insert cluster graph.
 	if(_clusterGraph) {
@@ -593,6 +544,47 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 		}
 		dislocationNetwork->setDomain(output->getObject<SimulationCellObject>());
 		dislocationNetwork->setStorage(dislocations());
+
+		// Update structure catalog.
+		for(int i = 0; i < _patterns.size(); i++) {
+			OORef<MicrostructurePhase> pattern;
+			if(dislocationNetwork->crystalStructures().size() > i+1) {
+				pattern = dislocationNetwork->crystalStructures()[i+1];
+			}
+			else {
+				pattern.reset(new MicrostructurePhase(dislocationNetwork->dataset()));
+				dislocationNetwork->addCrystalStructure(pattern);
+			}
+			if(pattern->shortName() != _patterns[i].shortName)
+				pattern->setColor(_patterns[i].color);
+			pattern->setShortName(_patterns[i].shortName);
+			pattern->setLongName(_patterns[i].longName);
+			pattern->setDimensionality(_patterns[i].type);
+			pattern->setNumericId(_patterns[i].id);
+			pattern->setCrystalSymmetryClass(_patterns[i].symmetryType);
+
+			// Update Burgers vector families.
+			for(int j = 0; j < _patterns[i].burgersVectorFamilies.size(); j++) {
+				OORef<BurgersVectorFamily> family;
+				if(pattern->burgersVectorFamilies().size() > j+1) {
+					family = pattern->burgersVectorFamilies()[j+1];
+				}
+				else {
+					family.reset(new BurgersVectorFamily(pattern->dataset()));
+					pattern->addBurgersVectorFamily(family);
+				}
+				if(family->name() != _patterns[i].burgersVectorFamilies[j].name)
+					family->setColor(_patterns[i].burgersVectorFamilies[j].color);
+				family->setName(_patterns[i].burgersVectorFamilies[j].name);
+				family->setBurgersVector(_patterns[i].burgersVectorFamilies[j].burgersVector);
+			}
+			// Remove excess families.
+			for(int j = pattern->burgersVectorFamilies().size() - 1; j > _patterns[i].burgersVectorFamilies.size(); j--)
+				pattern->removeBurgersVectorFamily(j);
+		}
+		// Remove excess patterns from the catalog.
+		for(int i = dislocationNetwork->crystalStructures().size() - 1; i > _patterns.size(); i--)
+			dislocationNetwork->removeCrystalStructure(i);
 	}
 
 	return output;

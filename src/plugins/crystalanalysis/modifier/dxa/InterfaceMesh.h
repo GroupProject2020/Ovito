@@ -23,8 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
-#include <plugins/mesh/surface/SurfaceMeshVertices.h>
+#include <plugins/mesh/surface/SurfaceMeshData.h>
 #include "ElasticMapping.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -37,7 +36,7 @@ class DislocationTracer;			// defined in DislocationTracer.h
 /**
  * The interface mesh that separates the 'bad' crystal regions from the 'good' crystal regions.
  */
-class InterfaceMesh : public HalfEdgeMesh
+class InterfaceMesh : public SurfaceMeshData
 {
 public:
 
@@ -117,7 +116,7 @@ public:
 
 		/// Returns the vertex this half-edge is pointing to.
 		Vertex* vertex2() const { return _vertex2; }
-		
+
 		/// Returns a pointer to the face that is adjacent to this half-edge.
 		Face* face() const { return _face; }
 
@@ -158,7 +157,7 @@ public:
 public:
 
 	/// Constructor.
-	InterfaceMesh(ElasticMapping& elasticMapping) :
+	InterfaceMesh(ElasticMapping& elasticMapping) : SurfaceMeshData(elasticMapping.structureAnalysis().cell()),
 		_elasticMapping(elasticMapping) {}
 
 	/// Returns the mapping from the physical configuration of the system
@@ -178,17 +177,8 @@ public:
 	/// Creates the mesh facets separating good and bad tetrahedra.
 	bool createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, PromiseState& progress);
 
-	/// Returns whether all tessellation cells belong to the bad region.
-	bool isCompletelyBad() const { return _isCompletelyBad; }
-
 	/// Generates the nodes and facets of the defect mesh based on the interface mesh.
-	bool generateDefectMesh(const DislocationTracer& tracer, HalfEdgeMesh& defectMesh, PropertyStorage& defectMeshVerts, PromiseState& progress);
-
-	/// Returns the coordinates of the given mesh vertex.
-	const Point3& vertexPosition(vertex_index v) const { return _vertexCoords->getPoint3(v); }
-
-	/// Returns the data array holding the vertex coordinates of the mesh.
-	const PropertyPtr& vertexCoords() const { return _vertexCoords; }
+	bool generateDefectMesh(const DislocationTracer& tracer, SurfaceMeshData& defectMesh, PromiseState& progress);
 
 	/// Returns the list of extra per-vertex infos kept by the interface mesh.
 	std::vector<Vertex>& vertices() { return _vertices; }
@@ -215,9 +205,6 @@ private:
 	/// to the stress-free imaginary configuration.
 	ElasticMapping& _elasticMapping;
 
-	/// Indicates that all tessellation cells belong to the bad region.
-	bool _isCompletelyBad;
-
 	/// Extra per-vertex info kept by the interface mesh.
 	std::vector<Vertex> _vertices;
 
@@ -226,9 +213,6 @@ private:
 
 	/// Extra per-face info kept by the interface mesh.
 	std::vector<Face> _faces;
-
-	/// The data array storing the vertex coordinates of the mesh.
-	PropertyPtr _vertexCoords = SurfaceMeshVertices::OOClass().createStandardStorage(0, SurfaceMeshVertices::PositionProperty, false);
 };
 
 }	// End of namespace

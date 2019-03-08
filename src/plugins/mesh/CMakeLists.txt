@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -19,11 +19,12 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
+SET(SourceFiles
 	tri/TriMeshObject.cpp
 	tri/TriMeshVis.cpp
-	halfedge/HalfEdgeMesh.cpp		
+	surface/HalfEdgeMesh.cpp
 	surface/SurfaceMesh.cpp
+	surface/SurfaceMeshData.cpp
 	surface/RenderableSurfaceMesh.cpp
 	surface/SurfaceMeshVis.cpp
 	surface/SurfaceMeshVertices.cpp
@@ -35,7 +36,7 @@ SET(SourceFiles
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)
-	LIST(APPEND SourceFiles 
+	LIST(APPEND SourceFiles
 		surface/SurfaceMeshSliceModifierDelegate.cpp
 		surface/SurfaceMeshAffineTransformationModifierDelegate.cpp
 		surface/SurfaceMeshReplicateModifierDelegate.cpp)
@@ -57,9 +58,9 @@ SET(GLUSourceFiles
 
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(Mesh
-	SOURCES 
-		Mesh.cpp 
-		${SourceFiles} 
+	SOURCES
+		Mesh.cpp
+		${SourceFiles}
 		${GLUSourceFiles}
 	OPTIONAL_PLUGIN_DEPENDENCIES StdObj StdMod
 )

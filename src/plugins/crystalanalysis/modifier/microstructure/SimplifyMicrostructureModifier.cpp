@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -44,7 +44,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SimplifyMicrostructureModifier, lambda, Flo
 * Constructor.
 ******************************************************************************/
 SimplifyMicrostructureModifier::SimplifyMicrostructureModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-    _smoothingLevel(8), 
+    _smoothingLevel(8),
     _kPB(0.1),
     _lambda(0.7)
 {
@@ -55,23 +55,22 @@ SimplifyMicrostructureModifier::SimplifyMicrostructureModifier(DataSet* dataset)
 ******************************************************************************/
 bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
-	return input.containsObject<MicrostructureObject>();
+	return input.containsObject<Microstructure>();
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> SimplifyMicrostructureModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	const MicrostructureObject* microstructure = input.getObject<MicrostructureObject>();
+	const Microstructure* microstructure = input.getObject<Microstructure>();
 	if(!microstructure)
 		throwException(tr("No microstructure found in the modifier's input."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<SimplifyMicrostructureEngine>(microstructure->storage(), 
-        microstructure->domain()->data(), smoothingLevel(), kPB(), lambda());
+	return std::make_shared<SimplifyMicrostructureEngine>(microstructure, smoothingLevel(), kPB(), lambda());
 }
 
 /******************************************************************************
@@ -80,12 +79,6 @@ Future<AsynchronousModifier::ComputeEnginePtr> SimplifyMicrostructureModifier::c
 void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::perform()
 {
 	task()->setProgressText(tr("Simplifying microstructure"));
-
-    // Make a one-to-one copy of the input microstructure first.
-    _microstructure = std::make_shared<Microstructure>(*_inputMicrostructure);
-
-    // No need to hold on to the input structure any longer.
-    _inputMicrostructure.reset();
 
     // Implementation of the mesh smoothing algorithm:
 	// Gabriel Taubin
@@ -107,6 +100,7 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::perform()
 ******************************************************************************/
 void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIteration(FloatType prefactor)
 {
+#if 0
 	// Compute displacement for each vertex.
 	std::vector<Vector3> displacements(microstructure()->vertexCount(), Vector3::Zero());
 	std::vector<int> edgeCount(microstructure()->vertexCount(), 0);
@@ -139,6 +133,7 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIte
         ++d;
         ++c;
     }
+#endif
 }
 
 /******************************************************************************
@@ -146,10 +141,9 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIte
 ******************************************************************************/
 void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	 // Replace input microstructure with computed output microstructure.
-	if(const MicrostructureObject* microstructureObj = state.getObject<MicrostructureObject>()) {
-		MicrostructureObject* mutableMicrostructureObj = state.makeMutable(microstructureObj);
-        mutableMicrostructureObj->setStorage(microstructure());
+	 // Output simplified microstructure to the pipeline state, overwriting the input microstructure.
+	if(const Microstructure* microstructureObj = state.getObject<Microstructure>()) {
+        microstructure().transferTo(state.makeMutable(microstructureObj));
     }
 }
 

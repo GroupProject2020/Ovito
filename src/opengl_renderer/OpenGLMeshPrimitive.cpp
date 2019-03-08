@@ -167,7 +167,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
 					_hasAlpha |= (rv->color.a() != 1);
 				}
-				else if(face->materialIndex() < materialColors().size() && face->materialIndex() >= 0) {
+				else if(face->materialIndex() >= 0 && face->materialIndex() < materialColors().size()) {
 					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);
 				}
 				else {

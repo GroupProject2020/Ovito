@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include <plugins/crystalanalysis/objects/MicrostructurePhase.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "ElasticStrainModifier.h"
 #include "ElasticStrainEngine.h"
@@ -35,7 +35,6 @@ DEFINE_PROPERTY_FIELD(ElasticStrainModifier, calculateStrainTensors);
 DEFINE_PROPERTY_FIELD(ElasticStrainModifier, latticeConstant);
 DEFINE_PROPERTY_FIELD(ElasticStrainModifier, axialRatio);
 DEFINE_PROPERTY_FIELD(ElasticStrainModifier, pushStrainTensorsForward);
-DEFINE_REFERENCE_FIELD(ElasticStrainModifier, patternCatalog);
 SET_PROPERTY_FIELD_LABEL(ElasticStrainModifier, inputCrystalStructure, "Input crystal structure");
 SET_PROPERTY_FIELD_LABEL(ElasticStrainModifier, calculateDeformationGradients, "Output deformation gradient tensors");
 SET_PROPERTY_FIELD_LABEL(ElasticStrainModifier, calculateStrainTensors, "Output strain tensors");
@@ -49,16 +48,13 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ElasticStrainModifier, axialRatio, FloatPar
 * Constructs the modifier object.
 ******************************************************************************/
 ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
-	_inputCrystalStructure(StructureAnalysis::LATTICE_FCC), 
-	_calculateDeformationGradients(false), 
+	_inputCrystalStructure(StructureAnalysis::LATTICE_FCC),
+	_calculateDeformationGradients(false),
 	_calculateStrainTensors(true),
-	_latticeConstant(1), 
-	_axialRatio(sqrt(8.0/3.0)), 
+	_latticeConstant(1),
+	_axialRatio(sqrt(8.0/3.0)),
 	_pushStrainTensorsForward(true)
 {
-	// Create pattern catalog.
-	setPatternCatalog(new PatternCatalog(dataset));
-
 	// Create the structure types.
 	ParticleType::PredefinedStructureType predefTypes[] = {
 			ParticleType::PredefinedStructureType::OTHER,
@@ -70,13 +66,9 @@ ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdenti
 	};
 	OVITO_STATIC_ASSERT(sizeof(predefTypes)/sizeof(predefTypes[0]) == StructureAnalysis::NUM_LATTICE_TYPES);
 	for(int id = 0; id < StructureAnalysis::NUM_LATTICE_TYPES; id++) {
-		OORef<StructurePattern> stype = _patternCatalog->structureById(id);
-		if(!stype) {
-			stype = new StructurePattern(dataset);
-			stype->setNumericId(id);
-			stype->setStructureType(StructurePattern::Lattice);
-			_patternCatalog->addPattern(stype);
-		}
+		OORef<MicrostructurePhase> stype = new MicrostructurePhase(dataset);
+		stype->setNumericId(id);
+		stype->setDimensionality(MicrostructurePhase::Dimensionality::Volumetric);
 		stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
 		stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
 		addStructureType(stype);
@@ -111,4 +103,3 @@ Future<AsynchronousModifier::ComputeEnginePtr> ElasticStrainModifier::createEngi
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-

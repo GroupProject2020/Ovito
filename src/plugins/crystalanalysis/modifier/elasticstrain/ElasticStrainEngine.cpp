@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
+#include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/DataSet.h>
@@ -33,7 +33,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 * Constructor.
 ******************************************************************************/
 ElasticStrainEngine::ElasticStrainEngine(
-		ParticleOrderingFingerprint fingerprint, 
+		ParticleOrderingFingerprint fingerprint,
 		ConstPropertyPtr positions, const SimulationCell& simCell,
 		int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
 		bool calculateDeformationGradients, bool calculateStrainTensors,
@@ -183,15 +183,12 @@ void ElasticStrainEngine::perform()
 void ElasticStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	ElasticStrainModifier* modifier = static_object_cast<ElasticStrainModifier>(modApp->modifier());
-	
+
 	StructureIdentificationEngine::emitResults(time, modApp, state);
 
 	// Output cluster graph.
 	ClusterGraphObject* clusterGraphObj = state.createObject<ClusterGraphObject>(modApp);
 	clusterGraphObj->setStorage(clusterGraph());
-
-	// Output pattern catalog.
-	state.addObject(modifier->patternCatalog());
 
 	// Output particle properties.
 	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
@@ -209,4 +206,3 @@ void ElasticStrainEngine::emitResults(TimePoint time, ModifierApplication* modAp
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-

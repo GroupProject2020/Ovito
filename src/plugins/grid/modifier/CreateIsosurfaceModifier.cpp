@@ -21,9 +21,10 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/grid/objects/VoxelGrid.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/app/Application.h>
-#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "CreateIsosurfaceModifier.h"
 #include "MarchingCubes.h"
@@ -86,7 +87,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
 		}
 	}
-	
+
 	// Use the first available property from the input grid as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
@@ -102,7 +103,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -139,7 +140,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 	FloatType isolevel = isolevelController() ? isolevelController()->getFloatValue(time, validityInterval) : 0;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, voxelGrid->shape(), property->storage(), 
+	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, voxelGrid->shape(), property->storage(),
 			sourceProperty().vectorComponent(), voxelGrid->domain()->data(), isolevel);
 }
 
@@ -150,7 +151,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 {
 	task()->setProgressText(tr("Constructing isosurface"));
 
-	if(_simCell.is2D())
+	if(_mesh.cell().is2D())
 		throw Exception(tr("Cannot construct isosurfaces for two-dimensional voxel grids."));
 	if(property()->dataType() != PropertyStorage::Float)
 		throw Exception(tr("Wrong data type. Can construct isosurface only for floating-point values."));
@@ -159,30 +160,25 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
 
-	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], _simCell.pbcFlags(), fieldData, property()->componentCount(), false);
+	MarchingCubes mc(_mesh, _gridShape[0], _gridShape[1], _gridShape[2], fieldData, property()->componentCount(), false);
 	if(!mc.generateIsosurface(_isolevel, *task()))
 		return;
-	_mesh = mc.mesh();
-	_vertexCoords = mc.vertexCoords();
-	_isSpaceFilling = mc.isSpaceFilling();
 
 	// Transform mesh vertices from orthogonal grid space to world space.
-	const AffineTransformation tm = _simCell.matrix() * Matrix3(
-		FloatType(1) / (_gridShape[0] - (_simCell.pbcFlags()[0]?0:1)), 0, 0, 
-		0, FloatType(1) / (_gridShape[1] - (_simCell.pbcFlags()[1]?0:1)), 0, 
-		0, 0, FloatType(1) / (_gridShape[2] - (_simCell.pbcFlags()[2]?0:1)));
-	for(Point3& p : vertexCoords()->point3Range()) {
-		p = tm * p;
-	}
+	const AffineTransformation tm = cell().matrix() * Matrix3(
+		FloatType(1) / (_gridShape[0] - (cell().pbcFlags()[0]?0:1)), 0, 0,
+		0, FloatType(1) / (_gridShape[1] - (cell().pbcFlags()[1]?0:1)), 0,
+		0, 0, FloatType(1) / (_gridShape[2] - (cell().pbcFlags()[2]?0:1)));
+	_mesh.transformVertices(tm);
 
 	// Flip surface orientation if cell matrix is a mirror transformation.
 	if(tm.determinant() < 0) {
-		mesh()->flipFaces();
+		_mesh.flipFaces();
 	}
 	if(task()->isCanceled())
 		return;
 
-	if(!mesh()->connectOppositeHalfedges())
+	if(!_mesh.connectOppositeHalfedges())
 		throw Exception(tr("Something went wrong. Isosurface mesh is not closed."));
 	if(task()->isCanceled())
 		return;
@@ -202,7 +198,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {
 		int binIndex = (*v - minValue()) / binSize;
 		histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
-	}	
+	}
 }
 
 /******************************************************************************
@@ -216,9 +212,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {
 		// Create the output mesh data object.
 		SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("isosurface"), modApp, tr("Isosurface"));
-		meshObj->setTopology(mesh());
-		meshObj->vertices()->createProperty(vertexCoords());
-		meshObj->setSpaceFillingRegion(isSpaceFilling() ? 1 : 0);
+		mesh().transferTo(meshObj);
 		meshObj->setDomain(voxelGrid->domain());
 		meshObj->setVisElement(modifier->surfaceMeshVis());
 	}
@@ -227,7 +221,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("isosurface-histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
 	seriesObj->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(minValue());
-	seriesObj->setIntervalEnd(maxValue());	
+	seriesObj->setIntervalEnd(maxValue());
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Field value range: [%1, %2]").arg(minValue()).arg(maxValue())));
 }

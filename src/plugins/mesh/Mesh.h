@@ -37,6 +37,7 @@ namespace Ovito {
 		class TriMeshObject;
 		class TriMeshVis;
 		class SurfaceMesh;
+		class SurfaceMeshData;
 		class SurfaceMeshVis;
 		class HalfEdgeMesh;
 	}

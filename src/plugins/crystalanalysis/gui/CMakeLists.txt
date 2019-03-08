@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -23,15 +23,15 @@
 OVITO_STANDARD_PLUGIN(CrystalAnalysisGui
 	SOURCES
 		importer/CAImporterEditor.cpp
-		objects/patterns/BurgersVectorFamilyEditor.cpp
-		objects/patterns/StructurePatternEditor.cpp
-		objects/patterns/PatternCatalogEditor.cpp
-		objects/dislocations/DislocationVisEditor.cpp
-#		objects/microstructure/SlipSurfaceVisEditor.cpp
+		objects/BurgersVectorFamilyEditor.cpp
+		objects/MicrostructurePhaseEditor.cpp
+		objects/DislocationNetworkObjectEditor.cpp
+		objects/DislocationVisEditor.cpp
+		objects/SlipSurfaceVisEditor.cpp
 		modifier/ConstructSurfaceModifierEditor.cpp
 		modifier/DislocationAnalysisModifierEditor.cpp
 		modifier/ElasticStrainModifierEditor.cpp
-#		modifier/SimplifyMicrostructureModifierEditor.cpp
+		modifier/SimplifyMicrostructureModifierEditor.cpp
 		util/DislocationInspectionApplet.cpp
 	PLUGIN_DEPENDENCIES CrystalAnalysis ParticlesGui
 	GUI_PLUGIN

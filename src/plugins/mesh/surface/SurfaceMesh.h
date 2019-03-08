@@ -25,7 +25,7 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
+#include <plugins/mesh/surface/HalfEdgeMesh.h>
 #include "SurfaceMeshVertices.h"
 #include "SurfaceMeshFaces.h"
 #include "SurfaceMeshRegions.h"
@@ -39,10 +39,10 @@ class OVITO_MESH_EXPORT SurfaceMesh : public PeriodicDomainDataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(SurfaceMesh)
-	
+
 public:
 
-	/// \brief Constructor that creates an empty SurfaceMesh object.
+	/// Constructor creating an empty SurfaceMesh object.
 	Q_INVOKABLE SurfaceMesh(DataSet* dataset, const QString& title = QString());
 
 	/// Returns the title of this object.
@@ -52,51 +52,41 @@ public:
 		else return tr("Surface mesh");
 	}
 
-	/// Checks if the surface mesh is valid and all vertex and face properties 
-	/// are consistent with the topology of the mesh. If this is not the case, 
-	/// the method throws an exception. 
+	/// Checks if the surface mesh is valid and all vertex and face properties
+	/// are consistent with the topology of the mesh. If this is not the case,
+	/// the method throws an exception.
 	void verifyMeshIntegrity() const;
 
 	/// Returns the topology data after making sure it is not shared with any other owners.
 	const HalfEdgeMeshPtr& modifiableTopology();
 
 	/// Duplicates the SurfaceMeshVertices sub-object if it is shared with other surface meshes.
-	/// After this method returns, the sub-object is exclusively owned by the container and 
+	/// After this method returns, the sub-object is exclusively owned by the container and
 	/// can be safely modified without unwanted side effects.
-	SurfaceMeshVertices* makeVerticesMutable();
-
-	/// Duplicates the SurfaceMeshFaces sub-object if it is shared with other surface meshes.
-	/// After this method returns, the sub-object is exclusively owned by the container and 
-	/// can be safely modified without unwanted side effects.
-	SurfaceMeshFaces* makeFacesMutable();
-
-	/// Fairs the triangle mesh stored in this object.
-	bool smoothMesh(int numIterations, PromiseState& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5)) {
-		if(!domain() || !topology() || !vertices())
-			return true;
-		PropertyObject* vertexCoords = makeVerticesMutable()->expectMutableProperty(SurfaceMeshVertices::PositionProperty); 
-		if(!vertexCoords)
-			return true;
-		if(!smoothMesh(*topology(), *vertexCoords->modifiableStorage(), domain()->data(), numIterations, promise, k_PB, lambda))
-			return false;
-		notifyTargetChanged();
-		return true;
+	SurfaceMeshVertices* makeVerticesMutable() {
+		OVITO_ASSERT(vertices());
+	    return makeMutable(vertices());
 	}
 
-	/// Fairs a triangle mesh.
-	static bool smoothMesh(const HalfEdgeMesh& mesh, PropertyStorage& vertexCoords, const SimulationCell& cell, int numIterations, PromiseState& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
+	/// Duplicates the SurfaceMeshFaces sub-object if it is shared with other surface meshes.
+	/// After this method returns, the sub-object is exclusively owned by the container and
+	/// can be safely modified without unwanted side effects.
+	SurfaceMeshFaces* makeFacesMutable() {
+		OVITO_ASSERT(faces());
+	    return makeMutable(faces());
+	}
+
+	/// Duplicates the SurfaceMeshRegions sub-object if it is shared with other surface meshes.
+	/// After this method returns, the sub-object is exclusively owned by the container and
+	/// can be safely modified without unwanted side effects.
+	SurfaceMeshRegions* makeRegionsMutable() {
+		OVITO_ASSERT(regions());
+	    return makeMutable(regions());
+	}
 
 	/// Determines which spatial region contains the given point in space.
 	/// Returns -1 if the point is exactly on a region boundary.
 	int locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON) const;
-	
-	/// Static implementation function of the locatePoint() method.
-	static int locatePointStatic(const Point3& location, const HalfEdgeMesh& mesh, const PropertyStorage& vertexCoords, const SimulationCell cell, int spaceFillingRegion, const ConstPropertyPtr& faceRegions = nullptr, FloatType epsilon = FLOATTYPE_EPSILON);
-
-protected:
-
-	/// Performs one iteration of the smoothing algorithm.
-	static void smoothMeshIteration(const HalfEdgeMesh& mesh, PropertyStorage& vertexCoords, FloatType prefactor, const SimulationCell& cell);
 
 private:
 
@@ -115,10 +105,9 @@ private:
 	/// The container holding the properties of the volumetric regions enclosed by the mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(SurfaceMeshRegions, regions, setRegions);
 
-	/// If the mesh has zero faces and is embedded in a fully periodic domain, 
+	/// If the mesh has zero faces and is embedded in a fully periodic domain,
 	/// this indicates the volumetric region that fills the entire space.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, spaceFillingRegion, setSpaceFillingRegion);
-
 };
 
 }	// End of namespace

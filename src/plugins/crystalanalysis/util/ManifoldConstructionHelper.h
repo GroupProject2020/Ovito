@@ -25,7 +25,7 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
-#include <plugins/mesh/halfedge/HalfEdgeMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshData.h>
 #include <core/utilities/concurrent/PromiseState.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 
@@ -58,8 +58,8 @@ public:
 public:
 
 	/// Constructor.
-	ManifoldConstructionHelper(DelaunayTessellation& tessellation, HalfEdgeMesh& outputMesh, PropertyStorage& outputvertexCoords, FloatType alpha,
-			const PropertyStorage& positions) : _tessellation(tessellation), _mesh(outputMesh), _vertexCoords(outputvertexCoords), _alpha(alpha), _positions(positions) {}
+	ManifoldConstructionHelper(DelaunayTessellation& tessellation, SurfaceMeshData& outputMesh, FloatType alpha,
+			const PropertyStorage& positions) : _tessellation(tessellation), _mesh(outputMesh), _alpha(alpha), _positions(positions) {}
 
 	/// This is the main function, which constructs the manifold triangle mesh.
 	template<typename CellRegionFunc, typename PrepareMeshFaceFunc = DefaultPrepareMeshFaceFunc, typename LinkManifoldsFunc = DefaultLinkManifoldsFunc>
@@ -91,9 +91,6 @@ public:
 		return !promise.isCanceled();
 	}
 
-	/// Returns the region to which all tetrahedra belong (or -1 if they belong to multiple regions).
-	int spaceFillingRegion() const { return _spaceFillingRegion; }
-
 private:
 
 	/// Assigns each tetrahedron to a region.
@@ -104,7 +101,7 @@ private:
 		promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
 
 		_numSolidCells = 0;
-		_spaceFillingRegion = -2;
+		_mesh.setSpaceFillingRegion(-1);
 		size_t progressCounter = 0;
 		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 			DelaunayTessellation::CellHandle cell = *cellIter;
@@ -116,26 +113,26 @@ private:
 			// Alpha shape criterion: This determines whether the Delaunay tetrahedron is part of the solid region.
 			bool isSolid = _tessellation.isValidCell(cell) && _tessellation.alphaTest(cell, _alpha);
 
-			if(!isSolid) {
-				_tessellation.setUserField(cell, 0);
+			int region = 0;
+			if(isSolid) {
+				region = determineCellRegion(cell);
+				OVITO_ASSERT(region >= 0);
 			}
-			else {
-				_tessellation.setUserField(cell, determineCellRegion(cell));
-			}
+			_tessellation.setUserField(cell, region);
 
 			if(!_tessellation.isGhostCell(cell)) {
-				if(_spaceFillingRegion == -2) _spaceFillingRegion = _tessellation.getUserField(cell);
-				else if(_spaceFillingRegion != _tessellation.getUserField(cell)) _spaceFillingRegion = -1;
+				if(_mesh.spaceFillingRegion() == -1) _mesh.setSpaceFillingRegion(region);
+				else if(_mesh.spaceFillingRegion() != region) _mesh.setSpaceFillingRegion(0);
 			}
 
-			if(_tessellation.getUserField(cell) != 0 && !_tessellation.isGhostCell(cell)) {
+			if(region != 0 && !_tessellation.isGhostCell(cell)) {
 				_tessellation.setCellIndex(cell, _numSolidCells++);
 			}
 			else {
 				_tessellation.setCellIndex(cell, -1);
 			}
 		}
-		if(_spaceFillingRegion == -2) _spaceFillingRegion = 0;
+		if(_mesh.spaceFillingRegion() == -1) _mesh.setSpaceFillingRegion(0);
 
 		return !promise.isCanceled();
 	}
@@ -191,13 +188,11 @@ private:
 				std::array<DelaunayTessellation::VertexHandle,3> vertexHandles;
 				std::array<size_t,3> vertexIndices;
 				for(int v = 0; v < 3; v++) {
-					vertexHandles[v] = _tessellation.cellVertex(cell, DelaunayTessellation::cellFacetVertexIndex(f, FlipOrientation ? (2-v) : v));
+					vertexHandles[v] = _tessellation.cellVertex(cell, DelaunayTessellation::cellFacetVertexIndex(f, FlipOrientation ? v : (2-v)));
 					size_t vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 					OVITO_ASSERT(vertexIndex < vertexMap.size());
 					if(vertexMap[vertexIndex] == HalfEdgeMesh::InvalidIndex) {
-						vertexMap[vertexIndex] = _mesh.createVertex();
-						_vertexCoords.grow(1);
-						_vertexCoords.setPoint3(vertexMap[vertexIndex], _positions.getPoint3(vertexIndex));
+						vertexMap[vertexIndex] = _mesh.createVertex(_positions.getPoint3(vertexIndex));
 					}
 					facetVertices[v] = vertexMap[vertexIndex];
 				}
@@ -215,7 +210,7 @@ private:
 					std::reverse(std::begin(vertexHandles), std::end(vertexHandles));
 					std::array<size_t,3> reverseVertexIndices;
 					for(int v = 0; v < 3; v++) {
-						vertexHandles[v] = _tessellation.cellVertex(adjacentCell, DelaunayTessellation::cellFacetVertexIndex(mirrorFacet.second, FlipOrientation ? (2-v) : v));
+						vertexHandles[v] = _tessellation.cellVertex(adjacentCell, DelaunayTessellation::cellFacetVertexIndex(mirrorFacet.second, FlipOrientation ? v : (2-v)));
 						size_t vertexIndex = reverseVertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 						OVITO_ASSERT(vertexIndex < vertexMap.size());
 						OVITO_ASSERT(vertexMap[vertexIndex] != HalfEdgeMesh::InvalidIndex);
@@ -253,12 +248,12 @@ private:
 	{
 		int vertexIndex1, vertexIndex2;
 		if(!FlipOrientation) {
-			vertexIndex1 = DelaunayTessellation::cellFacetVertexIndex(f, (e+1)%3);
-			vertexIndex2 = DelaunayTessellation::cellFacetVertexIndex(f, e);
-		}
-		else {
 			vertexIndex1 = DelaunayTessellation::cellFacetVertexIndex(f, 2-e);
 			vertexIndex2 = DelaunayTessellation::cellFacetVertexIndex(f, (4-e)%3);
+		}
+		else {
+			vertexIndex1 = DelaunayTessellation::cellFacetVertexIndex(f, (e+1)%3);
+			vertexIndex2 = DelaunayTessellation::cellFacetVertexIndex(f, e);
 		}
 		DelaunayTessellation::FacetCirculator circulator_start = _tessellation.incident_facets(cell, vertexIndex1, vertexIndex2, cell, f);
 		DelaunayTessellation::FacetCirculator circulator = circulator_start;
@@ -358,7 +353,7 @@ private:
 			++tet;
 		}
 		OVITO_ASSERT(tet == _tetrahedraFaceList.cend());
-		OVITO_ASSERT(_mesh.isClosed());
+		OVITO_ASSERT(_mesh.topology()->isClosed());
 		return !promise.isCanceled();
 	}
 
@@ -373,7 +368,7 @@ private:
 		else {
 			std::array<size_t,3> faceVerts;
 			for(size_t i = 0; i < 3; i++) {
-				int vertexIndex = DelaunayTessellation::cellFacetVertexIndex(facet.second, FlipOrientation ? (2-i) : i);
+				int vertexIndex = DelaunayTessellation::cellFacetVertexIndex(facet.second, FlipOrientation ? i : (2-i));
 				faceVerts[i] = _tessellation.vertexIndex(_tessellation.cellVertex(cell, vertexIndex));
 			}
 			reorderFaceVertices(faceVerts);
@@ -407,17 +402,11 @@ private:
 	/// Counts the number of tetrehedral cells that belong to the solid region.
 	size_t _numSolidCells = 0;
 
-	/// The region filling the entire periodic domain in case all Delaunay cells belong to the same region.
-	int _spaceFillingRegion = -1;
-
 	/// The input particle positions.
 	const PropertyStorage& _positions;
 
 	/// The output mesh topology.
-	HalfEdgeMesh& _mesh;
-
-	/// The output mesh vertex coordinates.
-	PropertyStorage& _vertexCoords;
+	SurfaceMeshData& _mesh;
 
 	/// Stores the faces of the local tetrahedra that have a least one facet for which a triangle has been created.
 	std::vector<std::array<HalfEdgeMesh::face_index, 4>> _tetrahedraFaceList;

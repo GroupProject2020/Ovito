@@ -59,7 +59,9 @@ public:
 	enum Type {
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
 		ColorProperty = PropertyStorage::GenericColorProperty,
-		PhaseProperty = PropertyStorage::FirstSpecificProperty
+		PhaseProperty = PropertyStorage::FirstSpecificProperty,
+		VolumeProperty,
+		LatticeCorrespondenceProperty
 	};
 
 	/// \brief Constructor.

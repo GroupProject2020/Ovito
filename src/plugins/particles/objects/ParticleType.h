@@ -68,14 +68,14 @@ public:
 	Q_INVOKABLE ParticleType(DataSet* dataset);
 
 	//////////////////////////////////// Utility methods ////////////////////////////////
-	
+
 	/// Builds a map from type identifiers to particle radii.
 	static std::map<int,FloatType> typeRadiusMap(const PropertyObject* typeProperty) {
 		std::map<int,FloatType> m;
 		for(const ElementType* type : typeProperty->elementTypes())
 			m.insert({ type->numericId(), static_object_cast<ParticleType>(type)->radius() });
 		return m;
-	}	
+	}
 
 	//////////////////////////////////// Default settings ////////////////////////////////
 
@@ -104,7 +104,7 @@ public:
 	static FloatType getDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
 
 	/// Changes the default radius for a named particle type.
-	static void setDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType radius);	
+	static void setDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType radius);
 
 private:
 
@@ -118,10 +118,8 @@ private:
 	static std::array<PredefinedTypeInfo, NUMBER_OF_PREDEFINED_PARTICLE_TYPES> _predefinedParticleTypes;
 
 	/// Contains default names, colors, and radii for the predefined structure types.
-	static std::array<PredefinedTypeInfo, NUMBER_OF_PREDEFINED_STRUCTURE_TYPES> _predefinedStructureTypes;	
+	static std::array<PredefinedTypeInfo, NUMBER_OF_PREDEFINED_STRUCTURE_TYPES> _predefinedStructureTypes;
 };
 
 }	// End of namespace
 }	// End of namespace
-
-

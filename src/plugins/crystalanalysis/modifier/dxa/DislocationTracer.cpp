@@ -154,6 +154,9 @@ void DislocationTracer::finishDislocationSegments(int crystalStructure)
 		std::deque<Point3>& line = segment->line;
 		OVITO_ASSERT(line.size() >= 2);
 
+		// Change sense of all dislocations for backward compatibility with OVITO 2.9.0:
+		segment->burgersVector = -segment->burgersVector;
+
 		Vector3 dir = line.back() - line.front();
 		if(dir.isZero(CA_ATOM_VECTOR_EPSILON))
 			continue;

@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/RenderableDislocationLines.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/RenderableDislocationLines.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "VTKDislocationsExporter.h"
@@ -63,7 +63,7 @@ void VTKDislocationsExporter::closeOutputFile(bool exportCompleted)
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
 bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
-{	
+{
 	// Evaluate data pipeline.
 	// Note: We are requesting the renderable flow state from the pipeline,
 	// because we are interested in clipped (post-processed) dislocation lines.
@@ -75,10 +75,10 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
 
 	// Get the original dislocation lines.
-	const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(renderableLines->sourceDataObject().get());	
-	if(!dislocationsObj) 
+	const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(renderableLines->sourceDataObject().get());
+	if(!dislocationsObj)
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
-		
+
 	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
 	// Count disloction polylines and output vertices.
@@ -97,7 +97,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 		else polyVertexCounts.push_back(2);
 	}
 	size_t vertexCount = std::accumulate(polyVertexCounts.begin(), polyVertexCounts.end(), (size_t)0);
-	
+
 	textStream() << "# vtk DataFile Version 3.0\n";
 	textStream() << "# Dislocation lines written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
 	textStream() << "ASCII\n";
@@ -158,7 +158,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 		segment += c - 1;
 	}
 	OVITO_ASSERT(segment == renderableLines->lineSegments().end());
-	
+
 	return !operation.isCanceled();
 }
 

@@ -23,8 +23,8 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
+#include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 
@@ -45,7 +45,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public FileExporter
 
 		/// Returns the file filter that specifies the extension of files written by this service.
 		virtual QString fileFilter() const override { return QStringLiteral("*.ca"); }
-	
+
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("Crystal Analysis File"); }
 	};
@@ -66,7 +66,7 @@ public:
 
 	/// \brief Returns the type(s) of data objects that this exporter service can export.
 	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const override {
-		return { &DislocationNetworkObject::OOClass(), &MicrostructureObject::OOClass() };
+		return { &DislocationNetworkObject::OOClass(), &Microstructure::OOClass() };
 	}
 
 protected:
@@ -79,7 +79,7 @@ protected:
 
 	/// \brief Exports a single animation frame to the current output file.
 	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
-	
+
 	/// Returns the current file this exporter is writing to.
 	QFile& outputFile() { return _outputFile; }
 

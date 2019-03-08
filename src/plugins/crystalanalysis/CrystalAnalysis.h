@@ -32,13 +32,12 @@
 namespace Ovito {
 	namespace Plugins {
 		namespace CrystalAnalysis {
-			
+
 			using namespace Ovito::Particles;
 			using namespace Ovito::Mesh;
 
-			class StructurePattern;
+			class MicrostructurePhase;
 			class BurgersVectorFamily;
-			class PatternCatalog;
 			class DislocationVis;
 			class DislocationNetworkObject;
 			class ClusterGraphObject;
@@ -47,7 +46,7 @@ namespace Ovito {
 			struct DislocationNode;
 			struct DislocationSegment;
 			class Microstructure;
-			class MicrostructureObject;
+			class MicrostructureData;
 		}
 	}
 }

@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -24,15 +24,14 @@ SET(SourceFiles
 	importer/DislocImporter.cpp
 	exporter/CAExporter.cpp
 	exporter/VTKDislocationsExporter.cpp
-	objects/patterns/BurgersVectorFamily.cpp
-	objects/patterns/StructurePattern.cpp
-	objects/patterns/PatternCatalog.cpp
-	objects/clusters/ClusterGraphObject.cpp
-	objects/dislocations/DislocationNetworkObject.cpp
-	objects/dislocations/DislocationVis.cpp
-	objects/dislocations/RenderableDislocationLines.cpp
-	objects/microstructure/MicrostructureObject.cpp
-#	objects/microstructure/SlipSurfaceVis.cpp
+	objects/BurgersVectorFamily.cpp
+	objects/ClusterGraphObject.cpp
+	objects/DislocationNetworkObject.cpp
+	objects/DislocationVis.cpp
+	objects/RenderableDislocationLines.cpp
+	objects/Microstructure.cpp
+	objects/MicrostructurePhase.cpp
+	objects/SlipSurfaceVis.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
 	modifier/ConstructSurfaceModifier.cpp
@@ -45,22 +44,22 @@ SET(SourceFiles
 	modifier/dxa/DislocationTracer.cpp
 	modifier/elasticstrain/ElasticStrainModifier.cpp
 	modifier/elasticstrain/ElasticStrainEngine.cpp
-#	modifier/microstructure/SimplifyMicrostructureModifier.cpp
+	modifier/microstructure/SimplifyMicrostructureModifier.cpp
 	util/DelaunayTessellation.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)
-	LIST(APPEND SourceFiles 
-		objects/dislocations/DislocationSliceModifierDelegate.cpp
-		objects/dislocations/DislocationReplicateModifierDelegate.cpp
-#		objects/microstructure/MicrostructureReplicateModifierDelegate.cpp
+	LIST(APPEND SourceFiles
+		objects/DislocationSliceModifierDelegate.cpp
+		objects/DislocationReplicateModifierDelegate.cpp
+#		objects/MicrostructureReplicateModifierDelegate.cpp
 		)
 ENDIF()
 
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(CrystalAnalysis
-	SOURCES 
-		CrystalAnalysis.cpp 
+	SOURCES
+		CrystalAnalysis.cpp
 		${SourceFiles}
 	PLUGIN_DEPENDENCIES Particles Mesh StdObj
 	LIB_DEPENDENCIES geogram
