@@ -50,7 +50,7 @@ PYBIND11_MODULE(StdModPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -65,7 +65,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"  * Surfaces (:py:class:`~ovito.data.SurfaceMesh`)\n"
 			"  * Dislocation lines (:py:class:`~ovito.data.DislocationNetwork`)\n"
 			"\n\n"
-			"The modifier will act on all these elements types simultaneously by default. " 
+			"The modifier will act on all these elements types simultaneously by default. "
 			"Restricting the slice operation to a particlular type of element is possible by setting the :py:attr:`.operate_on` field. "
 			"Furthermore, you can restrict the operation to only selected particles, by setting the :py:attr:`.only_selected` option. "
 			"\n\n"
@@ -99,7 +99,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"\n\n"
 				":Default: ``False``\n")
 	;
-	modifier_operate_on_list(SliceModifier_py, std::mem_fn(&SliceModifier::delegates), "operate_on", 
+	modifier_operate_on_list(SliceModifier_py, std::mem_fn(&SliceModifier::delegates), "operate_on",
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"
@@ -128,7 +128,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"                                [0,       1,0,0],\n"
 			"                                [0,       0,1,0]])\n"
 			"\n\n")
-		.def_property("transformation", MatrixGetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::transformationTM>(), 
+		.def_property("transformation", MatrixGetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::transformationTM>(),
 										MatrixSetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::setTransformationTM>(),
 				"The 3x4 transformation matrix being applied to input elements. "
 				"The first three matrix columns define the linear part of the transformation, while the fourth "
@@ -137,7 +137,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"This matrix describes a relative transformation and is used only if :py:attr:`.relative_mode` == ``True``."
 				"\n\n"
 				":Default: ``[[ 1.  0.  0.  0.] [ 0.  1.  0.  0.] [ 0.  0.  1.  0.]]``\n")
-		.def_property("target_cell", MatrixGetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::targetCell>(), 
+		.def_property("target_cell", MatrixGetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::targetCell>(),
 									 MatrixSetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::setTargetCell>(),
 				"This 3x4 matrix specifies the target cell shape. It is used when :py:attr:`.relative_mode` == ``False``. "
 				"\n\n"
@@ -158,7 +158,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"\n\n"
 				":Default: ``False``\n")
 	;
-	modifier_operate_on_list(AffineTransformationModifier_py, std::mem_fn(&AffineTransformationModifier::delegates), "operate_on", 
+	modifier_operate_on_list(AffineTransformationModifier_py, std::mem_fn(&AffineTransformationModifier::delegates), "operate_on",
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"
@@ -204,7 +204,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"\n\n"
 				":Default: ``True``\n")
 	;
-	modifier_operate_on_list(ReplicateModifier_py, std::mem_fn(&ReplicateModifier::delegates), "operate_on", 
+	modifier_operate_on_list(ReplicateModifier_py, std::mem_fn(&ReplicateModifier::delegates), "operate_on",
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"
@@ -225,7 +225,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
-				":Default: ``'particles'``\n")		
+				":Default: ``'particles'``\n")
 	;
 
 	ovito_class<InvertSelectionModifier, GenericPropertyModifier>(m,
@@ -243,9 +243,9 @@ PYBIND11_MODULE(StdModPython, m)
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
-				":Default: ``'particles'``\n")		
+				":Default: ``'particles'``\n")
 	;
-			
+
 	auto ColorCodingModifier_py = ovito_class<ColorCodingModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -280,7 +280,7 @@ PYBIND11_MODULE(StdModPython, m)
 			" * ``Color`` (:py:class:`~ovito.data.BondProperty`):\n"
 			"   The compute bond colors if :py:attr:`.operate_on` is set to ``'bonds'``.\n"
 			"\n")
-		
+
 		.def_property("property", &ColorCodingModifier::sourceProperty, [](ColorCodingModifier& mod, py::object val) {
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
 				},
@@ -445,8 +445,8 @@ PYBIND11_MODULE(StdModPython, m)
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
-				":Default: ``'particles'``\n")		
-		.def_property("property", &HistogramModifier::sourceProperty, [](HistogramModifier& mod, py::object val) {					
+				":Default: ``'particles'``\n")
+		.def_property("property", &HistogramModifier::sourceProperty, [](HistogramModifier& mod, py::object val) {
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the input property for which to compute the histogram. "
@@ -476,9 +476,9 @@ PYBIND11_MODULE(StdModPython, m)
 				"\n\n"
 				":Default: ``False``\n")
 	;
-	
+
 	ovito_class<ScatterPlotModifier, GenericPropertyModifier>{m};
-	
+
 	ovito_class<AssignColorModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -495,7 +495,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"The modifier uses the ``'Selection'`` property as input to decide which elements "
 			"are being assigned the color. If the  ``'Selection'`` property does not exist in the modifier's input, "
 			"the color will be assigned to all elements. ")
-		.def_property("color", VectorGetter<AssignColorModifier, Color, &AssignColorModifier::color>(), 
+		.def_property("color", VectorGetter<AssignColorModifier, Color, &AssignColorModifier::color>(),
 							   VectorSetter<AssignColorModifier, Color, &AssignColorModifier::setColor>(),
 				"The uniform RGB color that will be assigned to elements by the modifier."
 				"\n\n"
@@ -519,13 +519,13 @@ PYBIND11_MODULE(StdModPython, m)
 			"The modifier will act on all of them simultaneously by default. Restricting the delete operation to a subset is possible by setting the :py:attr:`.operate_on` field. "
 			"See also the corresponding `user manual page <../../particles.modifiers.delete_selected_particles.html>`__ for this modifier. "
 			)
-	;	
-	modifier_operate_on_list(DeleteSelectedModifier_py, std::mem_fn(&DeleteSelectedModifier::delegates), "operate_on", 
+	;
+	modifier_operate_on_list(DeleteSelectedModifier_py, std::mem_fn(&DeleteSelectedModifier::delegates), "operate_on",
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"
-			":Default: ``{'particles', 'bonds'}``\n");	
-	
+			":Default: ``{'particles', 'bonds'}``\n");
+
 	ovito_class<ColorLegendOverlay, ViewportOverlay>(m,
 			":Base class: :py:class:`ovito.vis.ViewportOverlay`\n\n"
 			"Renders a color legend for a :py:class:`~ovito.modifiers.ColorCodingModifier` on top of the three-dimensional "
@@ -563,7 +563,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"\n\n"
 				":Default: 0.1\n")
 		.def_property("format_string", &ColorLegendOverlay::valueFormatString, &ColorLegendOverlay::setValueFormatString,
-				"The format string used with the `sprintf() <http://en.cppreference.com/w/cpp/io/c/fprintf>`__ function to "
+				"The format string used with the `sprintf() <https://en.cppreference.com/w/cpp/io/c/fprintf>`__ function to "
 				"generate the text representation of floating-point values. You can change this format string to control the "
 				"number of decimal places or add units to the numeric values, for example. "
 				"\n\n"
@@ -609,7 +609,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"  * Particles (setting the ``'Selection'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Bonds (setting the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
 			"\n\n"
-			"The modifier will act on particles by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "			
+			"The modifier will act on particles by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -654,16 +654,16 @@ PYBIND11_MODULE(StdModPython, m)
 			".. literalinclude:: ../example_snippets/freeze_property_modifier.py\n"
 			"   :emphasize-lines: 12-14\n"
 			"\n")
-		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {					
+		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the input property that should be evaluated by the modifier on the animation frame specified by :py:attr:`.freeze_at`. ")
-		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, [](FreezePropertyModifier& mod, py::object val) {					
+		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, [](FreezePropertyModifier& mod, py::object val) {
 					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the output property that should be created by the modifier. "
 				"It may be the same as :py:attr:`.source_property`. If the destination property already exists in the modifier's input, the values are overwritten. ")
-		.def_property("freeze_at", 
+		.def_property("freeze_at",
 				[](FreezePropertyModifier& mod) {
 					return mod.dataset()->animationSettings()->timeToFrame(mod.freezeTime());
 				},
@@ -723,7 +723,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"See the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for a description of the expression syntax. "
 				"\n\n"
 				":Default: ``[\"0\"]``\n")
-		.def_property("output_property", &ComputePropertyModifier::outputProperty, [](ComputePropertyModifier& mod, py::object val) {					
+		.def_property("output_property", &ComputePropertyModifier::outputProperty, [](ComputePropertyModifier& mod, py::object val) {
 					mod.setOutputProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
 				},
 				"The output property that will receive the computed values. "
