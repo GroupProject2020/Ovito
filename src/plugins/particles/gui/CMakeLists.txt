@@ -69,6 +69,7 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 		export/FileColumnParticleExporterEditor.cpp
 		export/lammps/LAMMPSDataExporterEditor.cpp
 		export/lammps/LAMMPSDumpExporterEditor.cpp
+		export/vasp/POSCARExporterEditor.cpp
 		export/xyz/XYZExporterEditor.cpp
 		${ResourceFiles}
 	PRIVATE_LIB_DEPENDENCIES Qwt

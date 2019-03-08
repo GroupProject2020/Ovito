@@ -100,7 +100,7 @@ void CFGHeader::parse(CompressedTextReader& stream)
 
 		size_t splitChar = line.find('=');
 		if(splitChar == string::npos) {
-			if(stream.lineStartsWith(".NO_VELOCITY.")) {
+			if(stream.lineStartsWithToken(".NO_VELOCITY.")) {
 				containsVelocities = false;
 				continue;
 			}

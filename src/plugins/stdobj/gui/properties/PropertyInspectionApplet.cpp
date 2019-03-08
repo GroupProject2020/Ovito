@@ -54,7 +54,7 @@ void PropertyInspectionApplet::createBaseWidgets()
 	connect(_resetFilterAction, &QAction::triggered, _filterExpressionEdit, &AutocompleteLineEdit::editingFinished);
 	connect(_filterExpressionEdit, &AutocompleteLineEdit::editingFinished, this, &PropertyInspectionApplet::onFilterExpressionEntered);
 
-	_tableView = new QTableView();
+	_tableView = new TableView();
 	_tableView->setWordWrap(false);
 	_tableModel = new PropertyTableModel(this, _tableView);
 	_filterModel = new PropertyFilterModel(this, _tableView);

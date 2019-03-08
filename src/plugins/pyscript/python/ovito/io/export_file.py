@@ -89,10 +89,10 @@ def export_file(data, file, format, **params):
             for i in range(pipeline.source.num_frames):
                 export_file(pipeline, "output.%i.dump" % i, "lammps/dump", frame=i)
 
-        **Floating-point formatting precision**
+        **Floating-point number precision**
 
-        For text-based file formats, you can set the desired formatting precision for floating-point numbers using the
-        ``precision`` keyword parameter. The default output precision is 10 digits, the maximum is 17.
+        For text-based file formats, you can set the desired formatting precision for floating-point values using the
+        ``precision`` keyword parameter. The default output precision is 10 digits; the maximum is 17.
        
         **LAMMPS atom style**
         
@@ -103,7 +103,14 @@ def export_file(data, file, format, **params):
         
         The following `LAMMPS atom styles <http://lammps.sandia.gov/doc/atom_style.html>`_ are currently supported by OVITO:
         ``angle``, ``atomic``, ``bond``, ``charge``, ``dipole``, ``full``, ``molecular``, ``sphere``.
+
+        **VASP (POSCAR) format**
         
+        When exporting to the *vasp* file format, OVITO will output atomic positions and velocities in Cartesian coordinates by default. 
+        You can request output in reduced cell coordinates instead by specifying the ``reduced`` keyword parameter::
+
+            export_file(pipeline, "structure.poscar", "vasp", reduced=True)
+
         **Global attributes**
         
         The *txt/attr* file format allows you to export global quantities computed by the data pipeline to a text file. 

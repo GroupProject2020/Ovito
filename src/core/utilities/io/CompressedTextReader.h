@@ -87,7 +87,7 @@ public:
 	/// Returns the last line read via readLine().
 	const char* line() const { return _line.data(); }
 
-	/// Tests \c true if the last line read via readLine() begins with the given substring.
+	/// Returns \c true if the last line read via readLine() begins with the given substring.
 	bool lineStartsWith(const char* s, bool ignoreLeadingWhitespace = false) const {
 		const char* l = line();
 		if(ignoreLeadingWhitespace) {
@@ -97,6 +97,18 @@ public:
 			if(*l != *s) return false;
 		}
 		return true;
+	}
+
+	/// Returns \c true if the last line read via readLine() begins with the given substring, followed by whitespace or an end-of-line.
+	bool lineStartsWithToken(const char* s, bool ignoreLeadingWhitespace = false) const {
+		const char* l = line();
+		if(ignoreLeadingWhitespace) {
+			while(*l > '\0' && *l <= ' ') ++l;
+		}
+		for(; *s; ++s, ++l) {
+			if(*l != *s) return false;
+		}
+		return *l <= ' ';
 	}
 
 	/// Returns the last line read via readLine() as a Qt string.

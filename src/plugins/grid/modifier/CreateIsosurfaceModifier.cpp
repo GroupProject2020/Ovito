@@ -92,10 +92,8 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const VoxelGrid* grid = dynamic_object_cast<VoxelGrid>(input.getLeafObject(subject()))) {
 			for(const PropertyObject* property : grid->properties()) {
-				if(property->componentCount() == 1) {
-					setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
-					break;
-				}
+				setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
+				break;
 			}
 		}
 	}

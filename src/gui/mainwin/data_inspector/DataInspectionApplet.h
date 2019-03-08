@@ -51,6 +51,25 @@ public:
 
 	/// This is called when the applet is no longer visible.
 	virtual void deactivate(MainWindow* mainWindow) {}
+
+public:
+
+	/// A specialized QTableView widget, which allows copying the selected contents of the 
+	/// table to the clipboard.
+	class TableView : public QTableView
+	{
+	public:
+
+		/// Constructor.
+		TableView(QWidget* parent = nullptr) : QTableView(parent) {
+			setWordWrap(false);
+		}
+
+	protected:
+
+		/// Handles key press events for this widget.
+		virtual void keyPressEvent(QKeyEvent* event) override;		
+	};
 };
 
 OVITO_END_INLINE_NAMESPACE

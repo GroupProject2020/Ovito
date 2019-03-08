@@ -71,15 +71,15 @@ FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& f
 
 	// Read encoding type.
 	stream.readLine();
-	if(!stream.lineStartsWith("ASCII"))
+	if(!stream.lineStartsWithToken("ASCII"))
 		throw Exception(tr("Can read only text-based VTK files (ASCII format)."));
 
 	// Read data set type.
 	stream.readNonEmptyLine();
 	bool isPolyData;
-	if(stream.lineStartsWith("DATASET UNSTRUCTURED_GRID"))
+	if(stream.lineStartsWithToken("DATASET UNSTRUCTURED_GRID"))
 		isPolyData = false;
-	else if(stream.lineStartsWith("DATASET POLYDATA"))
+	else if(stream.lineStartsWithToken("DATASET POLYDATA"))
 		isPolyData = true;
 	else
 		throw Exception(tr("Can read only read VTK files containing triangle polydata or unstructured grids with triangle cells."));
