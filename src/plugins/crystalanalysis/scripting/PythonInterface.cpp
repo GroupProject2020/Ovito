@@ -204,6 +204,10 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 				"Lets the modifier perform the analysis only for selected particles. Particles that are not selected will be treated as if they did not exist."
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("disloc_vis", &DislocationAnalysisModifier::dislocationVis, &DislocationAnalysisModifier::setDislocationVis,
+				"The :py:class:`~ovito.vis.DislocationVis` element controlling the visual representation of the generated dislocation lines.\n")
+		.def_property("defect_vis", &DislocationAnalysisModifier::defectMeshVis, &DislocationAnalysisModifier::setDefectMeshVis,
+				"The :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the generated defect mesh.\n")
 		.def_property("output_interface_mesh", &DislocationAnalysisModifier::outputInterfaceMesh, &DislocationAnalysisModifier::setOutputInterfaceMesh)
 	;
 
