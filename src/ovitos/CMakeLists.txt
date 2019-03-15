@@ -111,7 +111,9 @@ SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "
 		MarkupSafe sphinxcontrib-websupport)
 	# Remove __pycache__ files from installation bundle.
 	IF(NOT WIN32)
-		MESSAGE(\"Removing __pycache__ files.\")
+		MESSAGE(\"Removing .pyc files.\")
+		EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name *.pyc -delete)
+		MESSAGE(\"Removing __pycache__ directories.\")
 		EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
 	ENDIF()
 ")
