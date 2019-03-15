@@ -158,57 +158,6 @@ void MicrostructureData::makeContinuousDislocationLines()
     }
 }
 
-/*************************************************************************************
-* Aligns the orientation of slip facets and builds contiguous two-dimensional manifolds
-* of maximum extent, i.e. slip surfaces with constant slip vector.
-**************************************************************************************/
-void MicrostructureData::makeSlipSurfaces()
-{
-#if 0
-    // We assume in the following that every slip facet half-edge has an opposite half-edge.
-
-    // Reset flags.
-    for(face_index face : faces()) {
-        if(face->isSlipSurfaceFace())
-            face->setEvenFace(false);
-    }
-
-    // Build contiguous surfaces with constant slip vector.
-    std::deque<face_index> toVisit;
-    auto faceCount = topology()->faceCount();
-    for(face_index seedFace = 0; seedFace < faceCount; seedFace++) {
-
-        // Find a first slip surface face which hasn't been aligned yet.
-        if(!isSlipSurfaceFace(seedFace)) continue;
-        if(seedFace->isEvenFace() || seedFace->oppositeFace()->isEvenFace()) continue;
-
-        // Starting at the current seed face, recursively visit all neighboring faces
-        // and align them. Stop at triple lines and slip surface boundaries.
-        seedFace->setEvenFace(true);
-        toVisit.push_back(seedFace);
-        do {
-            face_index face = toVisit.front();
-            toVisit.pop_front();
-            edge_index edge = firstFaceEdge(face);
-            do {
-                OVITO_ASSERT(hasOppositeEdge(edge));
-                MicrostructureData::face_index neighborFace = adjacentFace(oppositeEdge(edge));
-                OVITO_ASSERT(neighborFace->isSlipSurfaceFace());
-                if(!neighborFace->isEvenFace() && !neighborFace->oppositeFace()->isEvenFace()) {
-                    if(burgersVector(neighborFace).equals(burgersVector(face)) && neighborFace->cluster() == face->cluster()) {
-                        neighborFace->setEvenFace(true);
-                        toVisit.push_back(neighborFace);
-                    }
-                }
-                edge = edge->nextFaceEdge();
-            }
-            while(edge != face->edges());
-        }
-        while(!toVisit.empty());
-    }
-#endif
-}
-
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace

@@ -89,37 +89,45 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 	if(!dislocationObj && !defectMesh && !microstructureObj)
 		throwException(tr("Dataset to be exported contains no dislocation lines nor a surface mesh. Cannot write CA file."));
 
-	// Get cluster graph.
-	const ClusterGraphObject* clusterGraph = state.getObject<ClusterGraphObject>();
-	if(dislocationObj && !clusterGraph)
-		throwException(tr("Dataset to be exported contains no cluster graph. Cannot write CA file."));
-
 	// Write file header.
 	textStream() << "CA_FILE_VERSION 6\n";
 	textStream() << "CA_LIB_VERSION 0.0.0\n";
 
+	std::vector<MicrostructurePhase*> crystalStructures;
 	if(dislocationObj) {
-		// Write list of structure types.
-		textStream() << "STRUCTURE_TYPES " << (dislocationObj->crystalStructures().size() - 1) << "\n";
-		for(const MicrostructurePhase* s : dislocationObj->crystalStructures()) {
-			if(s->numericId() == 0) continue;
-			textStream() << "STRUCTURE_TYPE " << s->numericId() << "\n";
-			textStream() << "NAME " << s->shortName() << "\n";
-			textStream() << "FULL_NAME " << s->longName() << "\n";
-			textStream() << "COLOR " << s->color().r() << " " << s->color().g() << " " << s->color().b() << "\n";
-			if(s->dimensionality() == MicrostructurePhase::Dimensionality::Volumetric) textStream() << "TYPE LATTICE\n";
-			else if(s->dimensionality() == MicrostructurePhase::Dimensionality::Planar) textStream() << "TYPE INTERFACE\n";
-			else if(s->dimensionality() == MicrostructurePhase::Dimensionality::Pointlike) textStream() << "TYPE POINTDEFECT\n";
-			textStream() << "BURGERS_VECTOR_FAMILIES " << s->burgersVectorFamilies().size() << "\n";
-			int bvfId = 0;
-			for(BurgersVectorFamily* bvf : s->burgersVectorFamilies()) {
-				textStream() << "BURGERS_VECTOR_FAMILY ID " << bvfId << "\n" << bvf->name() << "\n";
-				textStream() << bvf->burgersVector().x() << " " << bvf->burgersVector().y() << " " << bvf->burgersVector().z() << "\n";
-				textStream() << bvf->color().r() << " " << bvf->color().g() << " " << bvf->color().b() << "\n";
-				bvfId++;
-			}
-			textStream() << "END_STRUCTURE_TYPE\n";
+		for(MicrostructurePhase* phase : dislocationObj->crystalStructures()) {
+			if(phase->numericId() != 0)
+				crystalStructures.push_back(phase);
 		}
+	}
+	else if(microstructureObj) {
+		const PropertyObject* phaseProperty = microstructureObj->regions()->expectProperty(SurfaceMeshRegions::PhaseProperty);
+		for(ElementType* t : phaseProperty->elementTypes()) {
+			if(MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(t))
+				if(phase->numericId() != 0)
+					crystalStructures.push_back(phase);
+		}
+	}
+
+	// Write list of structure types.
+	textStream() << "STRUCTURE_TYPES " << crystalStructures.size() << "\n";
+	for(const MicrostructurePhase* s : crystalStructures) {
+		textStream() << "STRUCTURE_TYPE " << s->numericId() << "\n";
+		textStream() << "NAME " << (s->shortName().isEmpty() ? s->name() : s->shortName()) << "\n";
+		textStream() << "FULL_NAME " << s->longName() << "\n";
+		textStream() << "COLOR " << s->color().r() << " " << s->color().g() << " " << s->color().b() << "\n";
+		if(s->dimensionality() == MicrostructurePhase::Dimensionality::Volumetric) textStream() << "TYPE LATTICE\n";
+		else if(s->dimensionality() == MicrostructurePhase::Dimensionality::Planar) textStream() << "TYPE INTERFACE\n";
+		else if(s->dimensionality() == MicrostructurePhase::Dimensionality::Pointlike) textStream() << "TYPE POINTDEFECT\n";
+		textStream() << "BURGERS_VECTOR_FAMILIES " << s->burgersVectorFamilies().size() << "\n";
+		int bvfId = 0;
+		for(BurgersVectorFamily* bvf : s->burgersVectorFamilies()) {
+			textStream() << "BURGERS_VECTOR_FAMILY ID " << bvfId << "\n" << bvf->name() << "\n";
+			textStream() << bvf->burgersVector().x() << " " << bvf->burgersVector().y() << " " << bvf->burgersVector().z() << "\n";
+			textStream() << bvf->color().r() << " " << bvf->color().g() << " " << bvf->color().b() << "\n";
+			bvfId++;
+		}
+		textStream() << "END_STRUCTURE_TYPE\n";
 	}
 
 	// Write simulation cell geometry.
@@ -134,12 +142,24 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 			<< (int)simulationCell->pbcFlags()[1] << " "
 			<< (int)simulationCell->pbcFlags()[2] << "\n";
 
+	// Select the dislocation network to be exported.
+	// Optionally, convert the selected Microstructure object to a DislocationNetwork object for export.
+	std::shared_ptr<DislocationNetwork> dislocations;
+	if(dislocationObj) {
+		dislocations = dislocationObj->storage();
+	}
+	else if(microstructureObj) {
+		dislocations = std::make_shared<DislocationNetwork>(microstructureObj);
+	}
+	// Get cluster graph.
+	const auto clusterGraph = dislocations->clusterGraph();
+
 	// Write list of clusters.
 	if(clusterGraph) {
-		textStream() << "CLUSTERS " << (clusterGraph->storage()->clusters().size() - 1) << "\n";
-		for(const Cluster* cluster : clusterGraph->storage()->clusters()) {
+		textStream() << "CLUSTERS " << (clusterGraph->clusters().size() - 1) << "\n";
+		for(const Cluster* cluster : clusterGraph->clusters()) {
 			if(cluster->id == 0) continue;
-			OVITO_ASSERT(clusterGraph->storage()->clusters()[cluster->id] == cluster);
+			OVITO_ASSERT(clusterGraph->clusters()[cluster->id] == cluster);
 			textStream() << "CLUSTER " << cluster->id << "\n";
 			textStream() << "CLUSTER_STRUCTURE " << cluster->structure << "\n";
 			textStream() << "CLUSTER_ORIENTATION\n";
@@ -152,30 +172,20 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 
 		// Count cluster transitions.
 		size_t numClusterTransitions = 0;
-		for(const ClusterTransition* t : clusterGraph->storage()->clusterTransitions()) {
+		for(const ClusterTransition* t : clusterGraph->clusterTransitions()) {
 			if(!t->isSelfTransition())
 				numClusterTransitions++;
 		}
 
 		// Serialize cluster transitions.
 		textStream() << "CLUSTER_TRANSITIONS " << numClusterTransitions << "\n";
-		for(const ClusterTransition* t : clusterGraph->storage()->clusterTransitions()) {
+		for(const ClusterTransition* t : clusterGraph->clusterTransitions()) {
 			if(t->isSelfTransition()) continue;
 			textStream() << "TRANSITION " << (t->cluster1->id - 1) << " " << (t->cluster2->id - 1) << "\n";
 			textStream() << t->tm.column(0).x() << " " << t->tm.column(1).x() << " " << t->tm.column(2).x() << " "
 					<< t->tm.column(0).y() << " " << t->tm.column(1).y() << " " << t->tm.column(2).y() << " "
 					<< t->tm.column(0).z() << " " << t->tm.column(1).z() << " " << t->tm.column(2).z() << "\n";
 		}
-	}
-
-	// Select the dislocation network to be exported.
-	// Optionally, convert the selected Microstructure object to a DislocationNetwork object for export.
-	std::shared_ptr<DislocationNetwork> dislocations;
-	if(dislocationObj) {
-		dislocations = dislocationObj->storage();
-	}
-	else if(microstructureObj) {
-		dislocations = std::make_shared<DislocationNetwork>(MicrostructureData(microstructureObj));
 	}
 
 	if(dislocations) {
@@ -222,7 +232,7 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 		}
 	}
 
-	if(defectMesh) {
+	if(defectMesh && defectMesh->topology()->isClosed()) {
 		defectMesh->verifyMeshIntegrity();
 		const ConstPropertyPtr& vertexCoords = defectMesh->vertices()->getPropertyStorage(SurfaceMeshVertices::PositionProperty);
 		ConstHalfEdgeMeshPtr topology = defectMesh->topology();

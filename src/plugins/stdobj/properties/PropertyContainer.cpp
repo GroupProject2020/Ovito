@@ -41,6 +41,8 @@ PropertyContainer::PropertyContainer(DataSet* dataset) : DataObject(dataset)
 ******************************************************************************/
 const PropertyObject* PropertyContainer::expectProperty(int typeId) const
 {
+	if(!getOOMetaClass().isValidStandardPropertyId(typeId))
+		throwException(tr("Selections are not supported for %1.").arg(getOOMetaClass().propertyClassDisplayName()));
 	const PropertyObject* property = getProperty(typeId);
 	if(!property)
 		throwException(tr("Required property '%1' does not exist in the input dataset.").arg(getOOMetaClass().standardPropertyName(typeId)));
@@ -85,9 +87,9 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 
 	if(getOOMetaClass().isValidStandardPropertyId(typeId) == false) {
 		if(typeId == PropertyStorage::GenericSelectionProperty)
-			throwException(tr("Selection is not supported by the '%2' object class.").arg(getOOMetaClass().propertyClassDisplayName()));
+			throwException(tr("Creating selections is not supported for %1.").arg(getOOMetaClass().propertyClassDisplayName()));
 		else if(typeId == PropertyStorage::GenericColorProperty)
-			throwException(tr("Coloring is not supported by the '%2' object class.").arg(getOOMetaClass().propertyClassDisplayName()));
+			throwException(tr("Assigning colors is not supported for %1.").arg(getOOMetaClass().propertyClassDisplayName()));
 		else
 			throwException(tr("%1 is not a standard property ID supported by the '%2' object class.").arg(typeId).arg(getOOMetaClass().propertyClassDisplayName()));
 	}

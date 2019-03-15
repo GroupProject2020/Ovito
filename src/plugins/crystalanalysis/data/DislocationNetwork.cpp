@@ -67,16 +67,30 @@ DislocationNetwork::DislocationNetwork(const DislocationNetwork& other) :
 /******************************************************************************
 * Conversion constructor.
 ******************************************************************************/
-DislocationNetwork::DislocationNetwork(const MicrostructureData microstructure) :
+DislocationNetwork::DislocationNetwork(const Microstructure* microstructureObj) :
 	_clusterGraph(std::make_shared<ClusterGraph>())
 {
-	// This is used to keep track which input edges have already been converted to a continuous dislocation
+	MicrostructureData microstructure(microstructureObj);
+
+	// Create clusters from microstructure regions.
+	const auto regionCount = microstructure.regionCount();
+	const PropertyPtr phaseProperty = microstructure.regionProperty(SurfaceMeshRegions::PhaseProperty);
+	const PropertyPtr latticeCorrespondonceProperty = microstructure.regionProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
+	for(MicrostructureData::region_index inputRegion = 1; inputRegion < regionCount; inputRegion++) {
+		Cluster* cluster = _clusterGraph->createCluster(inputRegion);
+		if(phaseProperty)
+			cluster->structure = phaseProperty->getInt(inputRegion);
+		if(latticeCorrespondonceProperty)
+			cluster->orientation = latticeCorrespondonceProperty->getMatrix3(inputRegion);
+	}
+
+	// This is used to keep track of which input edges have already been converted to a continuous dislocation
 	// line. For each visited edge, we store the ID of the output dislocation line.
 	// The sign of the ID number indicates whether the input edge and the output line
 	// have the same or reverse orientation.
 	std::unordered_map<MicrostructureData::edge_index, int> visitedEdges;
 
-	auto edgeCount = microstructure.topology()->edgeCount();
+	const auto edgeCount = microstructure.edgeCount();
 	for(MicrostructureData::edge_index inputEdge = 0; inputEdge < edgeCount; inputEdge++) {
 		// Ignore non-dislocation edges.
 		if(!microstructure.isPhysicalDislocationEdge(inputEdge)) continue;
@@ -85,6 +99,7 @@ DislocationNetwork::DislocationNetwork(const MicrostructureData microstructure) 
 		// Create a new line in the output network.
 		Cluster* cluster = clusterGraph()->findCluster(microstructure.edgeRegion(inputEdge));
 		OVITO_ASSERT(cluster != nullptr);
+		if(!cluster) continue;
 		DislocationSegment* outputSegment = createSegment(ClusterVector(microstructure.burgersVector(microstructure.adjacentFace(inputEdge)), cluster));
 		outputSegment->line.push_back(microstructure.vertexPosition(microstructure.vertex1(inputEdge)));
 		outputSegment->coreSize.push_back(3);
@@ -142,7 +157,7 @@ DislocationNetwork::DislocationNetwork(const MicrostructureData microstructure) 
 	}
 
 	// Join dislocation lines at nodes with three or more arms.
-	auto vertexCount = microstructure.topology()->vertexCount();
+	const auto vertexCount = microstructure.vertexCount();
 	for(MicrostructureData::edge_index vertex = 0; vertex < vertexCount; vertex++) {
 		if(microstructure.countDislocationArms(vertex) >= 3) {
 			DislocationNode* headNode = nullptr;

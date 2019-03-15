@@ -113,8 +113,7 @@ protected:
 		}
 
 		Cluster* createCluster(int patternId) {
-			if(!_clusterGraph) _clusterGraph = std::make_shared<ClusterGraph>();
-			return _clusterGraph->createCluster(patternId);
+			return clusterGraph()->createCluster(patternId);
 		}
 
 		const std::shared_ptr<ClusterGraph>& clusterGraph() const {
@@ -141,7 +140,7 @@ protected:
 		QVector<PatternInfo> _patterns;
 
 		/// The crystal cluster list.
-		ClusterGraphPtr _clusterGraph;
+		ClusterGraphPtr _clusterGraph = std::make_shared<ClusterGraph>();
 
 		/// The dislocation lines.
 		std::shared_ptr<DislocationNetwork> _dislocations;

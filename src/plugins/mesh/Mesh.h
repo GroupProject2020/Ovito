@@ -39,6 +39,10 @@ namespace Ovito {
 		class SurfaceMesh;
 		class SurfaceMeshData;
 		class SurfaceMeshVis;
+		class SurfaceMeshVertices;
+		class SurfaceMeshFaces;
+		class SurfaceMeshRegions;
+		class RenderableSurfaceMesh;
 		class HalfEdgeMesh;
 	}
 }

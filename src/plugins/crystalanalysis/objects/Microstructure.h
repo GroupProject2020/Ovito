@@ -101,10 +101,6 @@ public:
 	/// Merges virtual dislocation faces to build continuous lines from individual dislocation segments.
 	void makeContinuousDislocationLines();
 
-	/// Aligns the orientation of slip faces and builds contiguous two-dimensional manifolds
-	/// of maximum extent, i.e. slip surfaces with constant slip vector.
-	void makeSlipSurfaces();
-
 	/// Creates a new face without any edges.
 	/// Returns the index of the new face.
 	face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion, MicrostructureFaceType faceType, const Vector3& burgersVector) {

@@ -339,7 +339,7 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 							lineColor = family->color();
 					}
 					else if(lineColoringMode() == ColorByBurgersVector) {
-						lineColor = MicrostructurePhase::getBurgersVectorColor(phase->shortName(), lineSegment.burgersVector);
+						lineColor = MicrostructurePhase::getBurgersVectorColor(phase->name(), lineSegment.burgersVector);
 					}
 				}
 			}

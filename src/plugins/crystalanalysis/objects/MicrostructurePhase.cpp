@@ -48,10 +48,10 @@ MicrostructurePhase::MicrostructurePhase(DataSet* dataset) : ElementType(dataset
 ******************************************************************************/
 Color MicrostructurePhase::getBurgersVectorColor(const QString& latticeName, const Vector3& b)
 {
-	if(latticeName == "bcc") {
+	if(latticeName == ParticleType::getPredefinedStructureTypeName(ParticleType::PredefinedStructureType::BCC)) {
 		return getBurgersVectorColor(ParticleType::PredefinedStructureType::BCC, b);
 	}
-	else if(latticeName == "fcc") {
+	else if(latticeName == ParticleType::getPredefinedStructureTypeName(ParticleType::PredefinedStructureType::FCC)) {
 		return getBurgersVectorColor(ParticleType::PredefinedStructureType::FCC, b);
 	}
 	return getBurgersVectorColor(ParticleType::PredefinedStructureType::OTHER, b);

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(PropertyContainerParameterUI);
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyContainerParameterUI::PropertyContainerParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField) : 
+PropertyContainerParameterUI::PropertyContainerParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField) :
 	PropertyParameterUI(parentEditor, propField),
 	_comboBox(new QComboBox())
 {
@@ -46,18 +46,18 @@ PropertyContainerParameterUI::PropertyContainerParameterUI(QObject* parentEditor
 ******************************************************************************/
 PropertyContainerParameterUI::~PropertyContainerParameterUI()
 {
-	delete comboBox(); 
+	delete comboBox();
 }
 
 /******************************************************************************
 * This method is called when a new editable object has been assigned to the properties owner this
-* parameter UI belongs to. 
+* parameter UI belongs to.
 ******************************************************************************/
 void PropertyContainerParameterUI::resetUI()
 {
-	PropertyParameterUI::resetUI();	
-	
-	if(comboBox()) 
+	PropertyParameterUI::resetUI();
+
+	if(comboBox())
 		comboBox()->setEnabled(editObject() && isEnabled());
 }
 
@@ -74,20 +74,20 @@ bool PropertyContainerParameterUI::referenceEvent(RefTarget* source, const Refer
 }
 
 /******************************************************************************
-* This method is called when a new editable object has been assigned to the 
-* properties owner this parameter UI belongs to. 
+* This method is called when a new editable object has been assigned to the
+* properties owner this parameter UI belongs to.
 ******************************************************************************/
 void PropertyContainerParameterUI::updateUI()
 {
 	PropertyParameterUI::updateUI();
-	
+
 	if(comboBox() && editObject()) {
 
 		// Get the current property class.
 		QVariant val = editObject()->getPropertyFieldValue(*propertyField());
 		OVITO_ASSERT_MSG(val.isValid() && val.canConvert<PropertyContainerReference>(), "PropertyContainerParameterUI::updateUI()", QString("The property field of object class %1 is not of type <PropertyContainerClassPtr> or <PropertyContainerReference>.").arg(editObject()->metaObject()->className()).toLocal8Bit().constData());
-		PropertyContainerReference selectedPropertyContainer = val.value<PropertyContainerReference>();	
-		
+		PropertyContainerReference selectedPropertyContainer = val.value<PropertyContainerReference>();
+
 		// Update list of property containers available in the pipeline.
 		comboBox()->clear();
 		int selectedIndex = -1;
@@ -146,10 +146,10 @@ void PropertyContainerParameterUI::updateUI()
 			if(selectedPropertyContainer) {
 				// Add a place-holder item if the selected container does not exist anymore.
 				QString title = selectedPropertyContainer.dataTitle();
-				if(title.isEmpty() && selectedPropertyContainer.dataClass()) 
+				if(title.isEmpty() && selectedPropertyContainer.dataClass())
 					title = selectedPropertyContainer.dataClass()->propertyClassDisplayName();
 				if(!currentContainerFilteredOut)
-					title += tr(" (no longer available)");
+					title += tr(" (not available)");
 				comboBox()->addItem(title, QVariant::fromValue(selectedPropertyContainer));
 				QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(comboBox()->count()-1);
 				item->setIcon(warningIcon);
@@ -165,7 +165,7 @@ void PropertyContainerParameterUI::updateUI()
 			item->setIcon(warningIcon);
 			selectedIndex = 0;
 		}
-		
+
 		comboBox()->setCurrentIndex(selectedIndex);
 
 		// Sort list entries alphabetically.
@@ -174,7 +174,7 @@ void PropertyContainerParameterUI::updateUI()
 }
 
 /******************************************************************************
-* Takes the value entered by the user and stores it in the property field 
+* Takes the value entered by the user and stores it in the property field
 * this property UI is bound to.
 ******************************************************************************/
 void PropertyContainerParameterUI::updatePropertyValue()
@@ -190,7 +190,7 @@ void PropertyContainerParameterUI::updatePropertyValue()
 				return;
 
 			editObject()->setPropertyFieldValue(*propertyField(), QVariant::fromValue(containerRef));
-			
+
 			Q_EMIT valueEntered();
 		});
 	}

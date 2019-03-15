@@ -43,6 +43,7 @@ DislocationNetworkObject::DislocationNetworkObject(DataSet* dataset) : PeriodicD
 	OORef<MicrostructurePhase> defaultStructure(new MicrostructurePhase(dataset));
 	defaultStructure->setName(tr("Unidentified structure"));
 	defaultStructure->setColor(Color(1,1,1));
+	defaultStructure->addBurgersVectorFamily(new BurgersVectorFamily(dataset));
 	addCrystalStructure(defaultStructure);
 }
 

@@ -155,63 +155,63 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 	ColorA color_surface(surfaceColor(), surface_alpha);
 	ColorA color_cap(capColor(), cap_alpha);
 
-	// The key type used for caching the rendering primitive:
+	// The key type used for caching the surface primitive:
 	using SurfaceCacheKey = std::tuple<
 		CompatibleRendererGroup,	// The scene renderer
 		VersionedDataObjectRef,		// Mesh object
-		ColorA						// Surface color
-	>;
-
-	// The key type used for caching the rendering primitive:
-	using CapCacheKey = std::tuple<
-		CompatibleRendererGroup,	// The scene renderer
-		VersionedDataObjectRef,		// Mesh object
+		ColorA,						// Surface color
 		ColorA						// Cap color
 	>;
 
+    // The values stored in the vis cache.
+    struct CacheValue {
+        std::shared_ptr<MeshPrimitive> surfacePrimitive;
+        std::shared_ptr<MeshPrimitive> capPrimitive;
+        OORef<ObjectPickInfo> pickInfo;
+    };
+
+    // Get the renderable mesh.
+    const RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back());
+    if(!renderableMesh) return;
+
 	// Lookup the rendering primitive in the vis cache.
-	auto& surfacePrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(SurfaceCacheKey(renderer, objectStack.back(), color_surface));
+    auto& visCache = dataset()->visCache().get<CacheValue>(SurfaceCacheKey(renderer, objectStack.back(), color_surface, color_cap));
 
 	// Check if we already have a valid rendering primitive that is up to date.
-	if(!surfacePrimitive || !surfacePrimitive->isValid(renderer)) {
-		if(const RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
-			surfacePrimitive = renderer->createMeshPrimitive();
-			auto materialColors = renderableMesh->materialColors();
-			for(ColorA& c : materialColors) {
-				c.a() = surface_alpha;
-			}
-			surfacePrimitive->setMaterialColors(std::move(materialColors));
-			surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
+	if(!visCache.surfacePrimitive || !visCache.surfacePrimitive->isValid(renderer)) {
+		visCache.surfacePrimitive = renderer->createMeshPrimitive();
+		auto materialColors = renderableMesh->materialColors();
+		for(ColorA& c : materialColors) {
+			c.a() = surface_alpha;
 		}
-		else {
-			surfacePrimitive.reset();
-		}
+		visCache.surfacePrimitive->setMaterialColors(std::move(materialColors));
+		visCache.surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
+
+        // Get the original surface mesh.
+        const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(renderableMesh->sourceDataObject().get());
+
+        // Create the pick record that keeps a reference to the original data.
+        visCache.pickInfo = createPickInfo(surfaceMesh, renderableMesh);
 	}
 
-	// Lookup the rendering primitive in the vis cache.
-	auto& capPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CapCacheKey(renderer, objectStack.back(), color_cap));
-
 	// Check if we already have a valid rendering primitive that is up to date.
-	if(!capPrimitive || !capPrimitive->isValid(renderer)) {
-		capPrimitive.reset();
-		if(const RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
-			if(showCap()) {
-				capPrimitive = renderer->createMeshPrimitive();
-				capPrimitive->setMesh(renderableMesh->capPolygonsMesh(), color_cap);
-			}
+	if(!visCache.capPrimitive || !visCache.capPrimitive->isValid(renderer)) {
+		if(showCap()) {
+			visCache.capPrimitive = renderer->createMeshPrimitive();
+			visCache.capPrimitive->setMesh(renderableMesh->capPolygonsMesh(), color_cap);
 		}
 	}
 
 	// Handle picking of triangles.
-	renderer->beginPickObject(contextNode);
-	if(surfacePrimitive) {
-		surfacePrimitive->setCullFaces(cullFaces());
-		surfacePrimitive->render(renderer);
+	renderer->beginPickObject(contextNode, visCache.pickInfo);
+	if(visCache.surfacePrimitive) {
+		visCache.surfacePrimitive->setCullFaces(cullFaces());
+		visCache.surfacePrimitive->render(renderer);
 	}
 	if(showCap())
-		capPrimitive->render(renderer);
+		visCache.capPrimitive->render(renderer);
 	else
-		capPrimitive.reset();
+		visCache.capPrimitive.reset();
 	renderer->endPickObject();
 }
 
@@ -442,15 +442,27 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 		p = cellMatrix * p;
 
 	// Clip mesh at cutting planes.
-	for(const Plane3& plane : _cuttingPlanes) {
-		if(isCanceled())
-			return false;
+	if(!_cuttingPlanes.empty()) {
+		auto of = _originalFaceMap.begin();
+		for(TriMeshFace& face : _surfaceMesh.faces())
+			face.setMaterialIndex(*of++);
 
-		_surfaceMesh.clipAtPlane(plane);
+		for(const Plane3& plane : _cuttingPlanes) {
+			if(isCanceled())
+				return false;
+
+			_surfaceMesh.clipAtPlane(plane);
+		}
+
+		_originalFaceMap.resize(_surfaceMesh.faces().size());
+		of = _originalFaceMap.begin();
+		for(TriMeshFace& face : _surfaceMesh.faces())
+			*of++ = face.materialIndex();
 	}
 
 	_surfaceMesh.invalidateVertices();
 	_surfaceMesh.invalidateFaces();
+	OVITO_ASSERT(_originalFaceMap.size() == _surfaceMesh.faces().size());
 
 	return true;
 }

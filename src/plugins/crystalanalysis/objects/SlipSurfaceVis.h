@@ -27,7 +27,6 @@
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <plugins/mesh/surface/RenderableSurfaceMesh.h>
 #include <plugins/particles/objects/ParticleType.h>
-#include <core/dataset/animation/controller/Controller.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -77,11 +76,14 @@ protected:
 	virtual std::shared_ptr<PrepareSurfaceEngine> createSurfaceEngine(const SurfaceMesh* mesh) const override {
 		return std::make_shared<PrepareMeshEngine>(mesh, mesh->cuttingPlanes(), smoothShading());
 	}
+
+	/// Create the viewport picking record for the surface mesh object.
+	virtual OORef<ObjectPickInfo> createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const override;
 };
 
 /**
- * \brief This information record is attached to the slip surface mesh by the SlipSurfaceVis when rendering
- * them in the viewports. It facilitates the picking of slip surface facets with the mouse.
+ * \brief This data structure is attached to the slip surface mesh by the SlipSurfaceVis when rendering
+ * it in the viewports. It facilitates the picking of slip surface facets with the mouse.
  */
 class OVITO_CRYSTALANALYSIS_EXPORT SlipSurfacePickInfo : public ObjectPickInfo
 {
@@ -91,22 +93,22 @@ class OVITO_CRYSTALANALYSIS_EXPORT SlipSurfacePickInfo : public ObjectPickInfo
 public:
 
 	/// Constructor.
-	SlipSurfacePickInfo(SlipSurfaceVis* visElement, const Microstructure* microstructureObj, const RenderableSurfaceMesh* renderableMesh) :
-		_visElement(visElement), _microstructureObj(microstructureObj), _renderableMesh(renderableMesh) {}
+	SlipSurfacePickInfo(const SlipSurfaceVis* visElement, const SurfaceMesh* surfaceMesh, const RenderableSurfaceMesh* renderableMesh) :
+		_visElement(visElement), _surfaceMesh(surfaceMesh), _renderableMesh(renderableMesh) {}
 
 	/// The data object containing the slip surfaces.
-	const Microstructure* microstructureObj() const { return _microstructureObj; }
+	const SurfaceMesh* surfaceMesh() const { return _surfaceMesh; }
 
 	/// The renderable surface mesh for the slip surfaces.
-	const RenderableSurfaceMesh* renderableMesh() const { return _renderableMesh; }
+	const RenderableSurfaceMesh* renderableMesh() const { OVITO_ASSERT(_renderableMesh); return _renderableMesh; }
 
 	/// Returns the vis element that rendered the slip surfaces.
-	SlipSurfaceVis* visElement() const { return _visElement; }
+	const SlipSurfaceVis* visElement() const { return _visElement; }
 
 	/// \brief Given an sub-object ID returned by the Viewport::pick() method, looks up the
 	/// corresponding slip surface facet.
 	int slipFacetIndexFromSubObjectID(quint32 subobjID) const {
-		if(renderableMesh() && subobjID < renderableMesh()->originalFaceMap().size())
+		if(subobjID < renderableMesh()->originalFaceMap().size())
 			return renderableMesh()->originalFaceMap()[subobjID];
 		else
 			return -1;
@@ -118,7 +120,7 @@ public:
 private:
 
 	/// The data object containing the slip surfaces.
-	OORef<Microstructure> _microstructureObj;
+	OORef<SurfaceMesh> _surfaceMesh;
 
 	/// The renderable surface mesh for the slip surfaces.
 	OORef<RenderableSurfaceMesh> _renderableMesh;

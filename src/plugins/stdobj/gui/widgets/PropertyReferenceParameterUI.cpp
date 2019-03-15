@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -27,16 +27,16 @@
 #include "PropertyReferenceParameterUI.h"
 
 namespace Ovito { namespace StdObj {
-	
+
 IMPLEMENT_OVITO_CLASS(PropertyReferenceParameterUI);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor, const char* propertyName, PropertyContainerClassPtr containerClass, bool showComponents, bool inputProperty) :
-	PropertyParameterUI(parentEditor, propertyName), 
-	_comboBox(new PropertySelectionComboBox(containerClass)), 
-	_showComponents(showComponents), 
+	PropertyParameterUI(parentEditor, propertyName),
+	_comboBox(new PropertySelectionComboBox(containerClass)),
+	_showComponents(showComponents),
 	_inputProperty(inputProperty),
 	_containerRef(containerClass)
 {
@@ -50,9 +50,9 @@ PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor
 * Constructor.
 ******************************************************************************/
 PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField, PropertyContainerClassPtr containerClass, bool showComponents, bool inputProperty) :
-	PropertyParameterUI(parentEditor, propField), 
-	_comboBox(new PropertySelectionComboBox(containerClass)), 
-	_showComponents(showComponents), 
+	PropertyParameterUI(parentEditor, propField),
+	_comboBox(new PropertySelectionComboBox(containerClass)),
+	_showComponents(showComponents),
 	_inputProperty(inputProperty),
 	_containerRef(containerClass)
 {
@@ -67,18 +67,18 @@ PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor
 ******************************************************************************/
 PropertyReferenceParameterUI::~PropertyReferenceParameterUI()
 {
-	delete comboBox(); 
+	delete comboBox();
 }
 
 /******************************************************************************
 * This method is called when a new editable object has been assigned to the properties owner this
-* parameter UI belongs to. 
+* parameter UI belongs to.
 ******************************************************************************/
 void PropertyReferenceParameterUI::resetUI()
 {
-	PropertyParameterUI::resetUI();	
-	
-	if(comboBox()) 
+	PropertyParameterUI::resetUI();
+
+	if(comboBox())
 		comboBox()->setEnabled(editObject() && isEnabled());
 }
 
@@ -118,13 +118,13 @@ PropertyReference PropertyReferenceParameterUI::getPropertyReference()
 }
 
 /******************************************************************************
-* This method is called when a new editable object has been assigned to the 
-* properties owner this parameter UI belongs to. 
+* This method is called when a new editable object has been assigned to the
+* properties owner this parameter UI belongs to.
 ******************************************************************************/
 void PropertyReferenceParameterUI::updateUI()
 {
-	PropertyParameterUI::updateUI();	
-	
+	PropertyParameterUI::updateUI();
+
 	if(comboBox() && editObject() && containerRef()) {
 
 		PropertyReference pref = getPropertyReference();
@@ -146,7 +146,7 @@ void PropertyReferenceParameterUI::updateUI()
 			if(selIndex < 0) {
 				if(!pref.isNull() && pref.containerClass() == containerRef().dataClass()) {
 					// Add a place-holder item if the selected property does not exist anymore.
-					_comboBox->addItem(pref, tr("%1 (no longer available)").arg(pref.name()));
+					_comboBox->addItem(pref, tr("%1 (not available)").arg(pref.name()));
 					QStandardItem* item = static_cast<QStandardItemModel*>(_comboBox->model())->item(_comboBox->count()-1);
 					item->setIcon(warningIcon);
 				}
@@ -185,9 +185,9 @@ void PropertyReferenceParameterUI::addItemsToComboBox(const PipelineFlowState& s
 		for(const PropertyObject* property : container->properties()) {
 
 			// The client can apply a filter to the displayed property list.
-			if(_propertyFilter && !_propertyFilter(property)) 
+			if(_propertyFilter && !_propertyFilter(property))
 				continue;
-			
+
 			// Properties with a non-numeric data type cannot be used as source properties.
 			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float)
 				continue;
@@ -217,14 +217,14 @@ void PropertyReferenceParameterUI::setEnabled(bool enabled)
 }
 
 /******************************************************************************
-* Takes the value entered by the user and stores it in the property field 
+* Takes the value entered by the user and stores it in the property field
 * this property UI is bound to.
 ******************************************************************************/
 void PropertyReferenceParameterUI::updatePropertyValue()
 {
 	if(comboBox() && editObject() && comboBox()->currentText().isEmpty() == false) {
 		undoableTransaction(tr("Change parameter"), [this]() {
-			PropertyReference pref = _comboBox->currentProperty();			
+			PropertyReference pref = _comboBox->currentProperty();
 			if(isQtPropertyUI()) {
 
 				// Check if new value differs from old value.

@@ -74,8 +74,6 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 
 			// Create a copy of the mesh topology.
 			HalfEdgeMeshPtr mesh = newSurface->modifiableTopology();
-			// This code can only handle closed meshes at the moment.
-			OVITO_ASSERT(mesh->isClosed());
 
 			// Create a copy of the vertices sub-object.
 			SurfaceMeshVertices* newVertices = newSurface->makeVerticesMutable();
@@ -151,15 +149,24 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 							HalfEdgeMesh::edge_index oldEdge = mesh->firstFaceEdge(oldFace);
 							HalfEdgeMesh::edge_index newEdge = mesh->firstFaceEdge(newFace);
 							do {
-								HalfEdgeMesh::face_index oppositeFaceIndex = mesh->adjacentFace(mesh->oppositeEdge(oldEdge));
-								oppositeFaceIndex += imageIndexShift * oldFaceCount;
-								HalfEdgeMesh::edge_index newOppositeEdge = mesh->findEdge(oppositeFaceIndex, mesh->vertex2(newEdge), mesh->vertex1(newEdge));
-								OVITO_ASSERT(newOppositeEdge != HalfEdgeMesh::InvalidIndex);
-								if(!mesh->hasOppositeEdge(newEdge)) {
-									mesh->linkOppositeEdges(newEdge, newOppositeEdge);
+								if(mesh->hasOppositeEdge(oldEdge)) {
+									HalfEdgeMesh::face_index oppositeFaceIndex = mesh->adjacentFace(mesh->oppositeEdge(oldEdge));
+									oppositeFaceIndex += imageIndexShift * oldFaceCount;
+									HalfEdgeMesh::edge_index newOppositeEdge = mesh->findEdge(oppositeFaceIndex, mesh->vertex2(newEdge), mesh->vertex1(newEdge));
+									OVITO_ASSERT(newOppositeEdge != HalfEdgeMesh::InvalidIndex);
+									if(!mesh->hasOppositeEdge(newEdge)) {
+										mesh->linkOppositeEdges(newEdge, newOppositeEdge);
+									}
+									else {
+										OVITO_ASSERT(mesh->oppositeEdge(newEdge) == newOppositeEdge);
+									}
 								}
-								else {
-									OVITO_ASSERT(mesh->oppositeEdge(newEdge) == newOppositeEdge);
+								if(mesh->nextManifoldEdge(oldEdge) != HalfEdgeMesh::InvalidIndex) {
+									HalfEdgeMesh::face_index nextManifoldFaceIndex = mesh->adjacentFace(mesh->nextManifoldEdge(oldEdge));
+									nextManifoldFaceIndex += imageIndexShift * oldFaceCount;
+									HalfEdgeMesh::edge_index newManifoldEdge = mesh->findEdge(nextManifoldFaceIndex, mesh->vertex1(newEdge), mesh->vertex2(newEdge));
+									OVITO_ASSERT(newManifoldEdge != HalfEdgeMesh::InvalidIndex);
+									mesh->setNextManifoldEdge(newEdge, newManifoldEdge);
 								}
 								oldEdge = mesh->nextFaceEdge(oldEdge);
 								newEdge = mesh->nextFaceEdge(newEdge);
@@ -170,7 +177,6 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 				}
 			}
 			OVITO_ASSERT(mesh->faceCount() == newFaceCount);
-			OVITO_ASSERT(mesh->isClosed());
 
 			if(pbcFlags[0] || pbcFlags[1] || pbcFlags[2]) {
 				ConstPropertyPtr vertexCoords = newVertices->getPropertyStorage(SurfaceMeshVertices::PositionProperty);
@@ -210,8 +216,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 				for(HalfEdgeMesh::face_index face = 0; face < newFaceCount; face++) {
 					HalfEdgeMesh::edge_index edge = mesh->firstFaceEdge(face);
 					do {
-						if(mesh->vertex2(mesh->oppositeEdge(edge)) != mesh->vertex1(edge)) {
-//							OVITO_ASSERT((edge->oppositeEdge()->vertex2()->index() % oldVertexCount) == (edge->vertex1()->index() % oldVertexCount));
+						if(mesh->hasOppositeEdge(edge) && mesh->vertex2(mesh->oppositeEdge(edge)) != mesh->vertex1(edge)) {
 							HalfEdgeMesh::face_index oppositeFaceIndex = mesh->adjacentFace(mesh->oppositeEdge(edge)) % oldFaceCount;
 							mesh->setOppositeEdge(edge, HalfEdgeMesh::InvalidIndex);
 							for(size_t i = 0; i < numCopies; i++) {
@@ -224,12 +229,25 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 							OVITO_ASSERT(mesh->hasOppositeEdge(edge));
 							OVITO_ASSERT(mesh->vertex2(mesh->oppositeEdge(edge)) == mesh->vertex1(edge));
 						}
+						if(mesh->nextManifoldEdge(edge) != HalfEdgeMesh::InvalidIndex && mesh->vertex2(mesh->nextManifoldEdge(edge)) != mesh->vertex2(edge)) {
+							HalfEdgeMesh::face_index nextManifoldFaceIndex = mesh->adjacentFace(mesh->nextManifoldEdge(edge)) % oldFaceCount;
+							mesh->setNextManifoldEdge(edge, HalfEdgeMesh::InvalidIndex);
+							for(size_t i = 0; i < numCopies; i++) {
+								HalfEdgeMesh::edge_index newNextManifoldEdge = mesh->findEdge(nextManifoldFaceIndex + i * oldFaceCount, mesh->vertex1(edge), mesh->vertex2(edge));
+								if(newNextManifoldEdge != HalfEdgeMesh::InvalidIndex) {
+									mesh->setNextManifoldEdge(edge, newNextManifoldEdge);
+									break;
+								}
+							}
+							OVITO_ASSERT(mesh->nextManifoldEdge(edge)!= HalfEdgeMesh::InvalidIndex);
+							OVITO_ASSERT(mesh->vertex1(mesh->nextManifoldEdge(edge)) == mesh->vertex1(edge));
+							OVITO_ASSERT(mesh->vertex2(mesh->nextManifoldEdge(edge)) == mesh->vertex2(edge));
+						}
 						edge = mesh->nextFaceEdge(edge);
 					}
 					while(edge != mesh->firstFaceEdge(face));
 				}
 			}
-			OVITO_ASSERT(mesh->isClosed());
 
 			// Extend the periodic domain the surface is embedded in.
 			simCell.translation() += (FloatType)newImages.minc.x() * simCell.column(0);

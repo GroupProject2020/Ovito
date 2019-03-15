@@ -100,6 +100,7 @@ void SlipSurfaceVis::PrepareMeshEngine::determineFaceColors()
         face.setMaterialIndex(materialIndex);
         ++originalFace;
     }
+    OVITO_ASSERT(originalFace == _originalFaceMap.end());
 
     // Increase brightness of slip surface colors.
     for(ColorA& c : _materialColors) {
@@ -109,72 +110,13 @@ void SlipSurfaceVis::PrepareMeshEngine::determineFaceColors()
     }
 }
 
-#if 0
 /******************************************************************************
-* Lets the visualization element render the data object.
+* Create the viewport picking record for the surface mesh object.
 ******************************************************************************/
-void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
+OORef<ObjectPickInfo> SlipSurfaceVis::createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const
 {
-    // Ignore render calls for the original Microstructure.
-    // We are only interested in the RenderableSurfaceMesh.
-    if(dynamic_object_cast<Microstructure>(objectStack.back()) != nullptr)
-        return;
-
-    if(renderer->isBoundingBoxPass()) {
-        TimeInterval validityInterval;
-        renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
-        return;
-    }
-
-    // Get the rendering colors for the surface.
-    FloatType surface_alpha = 1;
-    TimeInterval iv;
-    if(surfaceTransparencyController()) surface_alpha = FloatType(1) - surfaceTransparencyController()->getFloatValue(time, iv);
-    ColorA color_surface(1, 1, 1, surface_alpha);
-
-    // The key type used for caching the rendering primitive:
-    using SurfaceCacheKey = std::tuple<
-        CompatibleRendererGroup,	// The scene renderer
-        VersionedDataObjectRef,		// Data object
-        FloatType					// Alpha
-    >;
-
-    // The values stored in the vis cache.
-    struct CacheValue {
-        std::shared_ptr<MeshPrimitive> surfacePrimitive;
-        OORef<SlipSurfacePickInfo> pickInfo;
-    };
-
-    // Get the renderable mesh.
-    const RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back());
-    if(!renderableMesh) return;
-
-    // Lookup the rendering primitive in the vis cache.
-    auto& visCache = dataset()->visCache().get<CacheValue>(SurfaceCacheKey(renderer, objectStack.back(), surface_alpha));
-
-    // Check if we already have a valid rendering primitive that is up to date.
-    if(!visCache.surfacePrimitive || !visCache.surfacePrimitive->isValid(renderer)) {
-        visCache.surfacePrimitive = renderer->createMeshPrimitive();
-        auto materialColors = renderableMesh->materialColors();
-        for(ColorA& c : materialColors)
-            c.a() = surface_alpha;
-        visCache.surfacePrimitive->setMaterialColors(materialColors);
-        visCache.surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
-		visCache.surfacePrimitive->setCullFaces(true);
-
-        // Get the original microstructure object and the pattern catalog.
-        const Microstructure* microstructureObj = dynamic_object_cast<Microstructure>(renderableMesh->sourceDataObject().get());
-
-        // Create the pick record that keeps a reference to the original data.
-        visCache.pickInfo = new SlipSurfacePickInfo(this, microstructureObj, renderableMesh);
-    }
-
-    // Handle picking of triangles.
-    renderer->beginPickObject(contextNode, visCache.pickInfo);
-    visCache.surfacePrimitive->render(renderer);
-    renderer->endPickObject();
+    return new SlipSurfacePickInfo(this, mesh, renderableMesh);
 }
-#endif
 
 /******************************************************************************
 * Returns a human-readable string describing the picked object,
@@ -183,22 +125,27 @@ void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>
 QString SlipSurfacePickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjectId)
 {
     QString str;
-#if 0
+
     int facetIndex = slipFacetIndexFromSubObjectID(subobjectId);
-    if(facetIndex >= 0 && facetIndex < microstructureObj()->storage()->faces().size()) {
-        Microstructure::Face* face = microstructureObj()->storage()->faces()[facetIndex];
-        StructurePattern* structure = nullptr;
-        if(patternCatalog() != nullptr) {
-            structure = patternCatalog()->structureById(face->cluster()->structure);
-        }
-        QString formattedBurgersVector = DislocationVis::formatBurgersVector(face->burgersVector(), structure);
-        str = tr("Slip vector: %1").arg(formattedBurgersVector);
-        str += tr(" | Cluster Id: %1").arg(face->cluster()->id);
-        if(structure) {
-            str += tr(" | Crystal structure: %1").arg(structure->name());
+    if(const PropertyObject* regionProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::RegionProperty)) {
+        if(facetIndex >= 0 && facetIndex < regionProperty->size()) {
+            if(const PropertyObject* burgersVectorProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::BurgersVectorProperty)) {
+                int region = regionProperty->getInt(facetIndex);
+                if(const PropertyObject* phaseProperty = surfaceMesh()->regions()->getProperty(SurfaceMeshRegions::PhaseProperty)) {
+                    if(region >= 0 && region < phaseProperty->size()) {
+                        int phaseId = phaseProperty->getInt(region);
+                        if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
+                            QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVectorProperty->getVector3(facetIndex), phase);
+                            str = tr("Slip vector: %1").arg(formattedBurgersVector);
+                            str += tr(" | Crystal region: %1").arg(region);
+                            str += tr(" | Crystal structure: %1").arg(phase->name());
+                        }
+                    }
+                }
+            }
         }
     }
-#endif
+
     return str;
 }
 

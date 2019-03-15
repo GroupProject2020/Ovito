@@ -264,7 +264,7 @@ public:
 	DislocationNetwork(const DislocationNetwork& other);
 
 	/// Conversion constructor.
-	explicit DislocationNetwork(const MicrostructureData microstructure);
+	explicit DislocationNetwork(const Microstructure* microstructureObj);
 
 	/// Returns a const-reference to the cluster graph.
 	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }

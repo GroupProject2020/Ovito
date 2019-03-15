@@ -91,10 +91,13 @@ protected:
 		MicrostructureData& microstructure() { return _microstructure; }
 
 		/// Sets the type of crystal ("fcc", "bcc", etc.)
-		void setLatticeStructure(const char* s, const Matrix3& latticeOrientation) {
-			_latticeStructure = s;
+		void setLatticeStructure(ParticleType::PredefinedStructureType latticeStructure, const Matrix3& latticeOrientation) {
+			_latticeStructure = latticeStructure;
 			_latticeOrientation = latticeOrientation;
 		}
+
+		/// Returns the type of crystal structure.
+		ParticleType::PredefinedStructureType latticeStructure() const { return _latticeStructure; }
 
 	protected:
 
@@ -102,7 +105,7 @@ protected:
 		MicrostructureData _microstructure;
 
 		/// The type of crystal ("fcc", "bcc", etc.)
-		std::string _latticeStructure;
+		ParticleType::PredefinedStructureType _latticeStructure;
 
 		/// The lattice orientation matrix.
 		Matrix3 _latticeOrientation;

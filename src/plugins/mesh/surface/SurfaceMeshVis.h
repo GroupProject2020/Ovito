@@ -146,6 +146,12 @@ protected:
 	/// This method may be overriden by subclasses who want to implement custom behavior.
 	virtual std::shared_ptr<PrepareSurfaceEngine> createSurfaceEngine(const SurfaceMesh* mesh) const;
 
+	/// Create the viewport picking record for the surface mesh object.
+	/// The default implementation returns null, because standard surface meshes do not support picking of
+	/// mesh faces or vertices. Sub-classes can override this method to implement object-specific picking
+	/// strategies.
+	virtual OORef<ObjectPickInfo> createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const { return {}; }
+
 private:
 
 	/// Controls the display color of the surface mesh.
