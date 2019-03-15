@@ -161,7 +161,7 @@ handle type_caster<QVariant>::cast(const QVariant& src, return_value_policy /* p
 				lst.append(pybind11::cast(vlist[i]));
 			return lst.release();
 		}
-		default: return pybind11::none();
+		default: return pybind11::none().release();
 	}
 }
 
