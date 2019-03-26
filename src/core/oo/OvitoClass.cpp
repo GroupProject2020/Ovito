@@ -36,17 +36,17 @@ OvitoClass* OvitoClass::_firstMetaClass = nullptr;
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-OvitoClass::OvitoClass(const QString& name, OvitoClassPtr superClass, const char* pluginId, const QMetaObject* qtClassInfo) : 
-	_name(name), 
-	_displayName(name), 
-	_plugin(nullptr), 
+OvitoClass::OvitoClass(const QString& name, OvitoClassPtr superClass, const char* pluginId, const QMetaObject* qtClassInfo) :
+	_name(name),
+	_displayName(name),
+	_plugin(nullptr),
 	_superClass(superClass),
 	_isAbstract(false),
-	_pluginId(pluginId), 
+	_pluginId(pluginId),
 	_qtClassInfo(qtClassInfo)
 {
 	OVITO_ASSERT(superClass != nullptr || name == QStringLiteral("OvitoObject"));
-	
+
 	// Insert into linked list of all object types.
 	_nextMetaclass = _firstMetaClass;
 	_firstMetaClass = this;
@@ -61,7 +61,7 @@ void OvitoClass::initialize()
 	if(qtMetaObject()) {
 		// Mark classes that don't have an invokable constructor as abstract.
 		setAbstract(qtMetaObject()->constructorCount() == 0);
-	
+
 		_pureClassName = qtMetaObject()->className();
 		for(const char* p = _pureClassName; *p != '\0'; p++) {
 			if(p[0] == ':' && p[1] == ':') {
@@ -80,7 +80,7 @@ void OvitoClass::initialize()
 				// Load name alias assigned to the Qt object class.
 				setNameAlias(QString::fromLocal8Bit(qtMetaObject()->classInfo(i).value()));
 			}
-		}	
+		}
 	}
 	else {
 		setAbstract(true);
@@ -90,7 +90,7 @@ void OvitoClass::initialize()
 /******************************************************************************
 * Determines if an object is an instance of the class or one of its subclasses.
 ******************************************************************************/
-bool OvitoClass::isMember(const OvitoObject* obj) const 
+bool OvitoClass::isMember(const OvitoObject* obj) const
 {
 	if(!obj) return false;
 	return obj->getOOClass().isDerivedFrom(*this);
@@ -116,7 +116,7 @@ OORef<OvitoObject> OvitoClass::createInstance(DataSet* dataset) const
 		}
 	}
 	if(isAbstract())
-		dataset->throwException(OvitoObject::tr("Cannot instantiate abstract class '%1'.").arg(name()));
+		throw Exception(OvitoObject::tr("Cannot instantiate abstract class '%1'.").arg(name()), dataset);
 
 	OVITO_ASSERT_MSG(!isDerivedFrom(RefTarget::OOClass()) || dataset != nullptr || *this == DataSet::OOClass(), "OvitoClass::createInstance()", "Tried to create instance of RefTarget derived class without passing a DatSet.");
 	OVITO_ASSERT_MSG(isDerivedFrom(RefTarget::OOClass()) || dataset == nullptr, "OvitoClass::createInstance()", "Passed a DatSet to the constructor of a class that is not derived from RefTarget.");

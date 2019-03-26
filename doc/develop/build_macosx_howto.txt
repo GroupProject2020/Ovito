@@ -1,8 +1,8 @@
 **************************************************************************
 Install third-party tools
 **************************************************************************
-export MACOSX_DEPLOYMENT_TARGET=10.9
-sudo echo "macos_deployment_target 10.9" >> /opt/local/etc/macports/macports.conf
+export MACOSX_DEPLOYMENT_TARGET=10.12
+sudo echo "macos_deployment_target 10.12" >> /opt/local/etc/macports/macports.conf
 sudo port install cmake docbook-xml doxygen libxslt boost yasm povray
 sudo port install -s fftw-3 libssh
 
@@ -71,7 +71,7 @@ install_name_tool -id $PWD/libqscintilla2_qt5.13.2.1.dylib libqscintilla2_qt5.13
 Build static Libav:
 **************************************************************************
 cd libav-11.12
-export MACOSX_DEPLOYMENT_TARGET=10.9
+export MACOSX_DEPLOYMENT_TARGET=10.12
 ./configure \
 	--disable-network \
 	--disable-programs \
@@ -137,7 +137,7 @@ cd embree
 git checkout v3.2.0
 mkdir build
 cd build
-export MACOSX_DEPLOYMENT_TARGET=10.9
+export MACOSX_DEPLOYMENT_TARGET=10.12
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
       -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
       -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20180312oss/include/ \
@@ -156,7 +156,7 @@ cd ospray
 git checkout v1.6.0
 mkdir build
 cd build
-export MACOSX_DEPLOYMENT_TARGET=10.9
+export MACOSX_DEPLOYMENT_TARGET=10.12
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
       -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
@@ -177,7 +177,7 @@ install_name_tool -change @rpath/libospray.0.dylib $PWD/libospray.0.dylib libosp
 **************************************************************************
 Build OVITO:
 **************************************************************************
-export MACOSX_DEPLOYMENT_TARGET=10.9
+export MACOSX_DEPLOYMENT_TARGET=10.12
 cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
