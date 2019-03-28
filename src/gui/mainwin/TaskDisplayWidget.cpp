@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -22,7 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include <core/utilities/concurrent/TaskManager.h>
-#include <core/utilities/concurrent/PromiseWatcher.h>
+#include <core/utilities/concurrent/TaskWatcher.h>
 #include "TaskDisplayWidget.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -63,7 +63,7 @@ TaskDisplayWidget::TaskDisplayWidget(MainWindow* mainWindow) : QWidget(nullptr),
 /******************************************************************************
 * Is called when a task has started to run.
 ******************************************************************************/
-void TaskDisplayWidget::taskStarted(PromiseWatcher* taskWatcher)
+void TaskDisplayWidget::taskStarted(TaskWatcher* taskWatcher)
 {
 	// Show progress indicator only if the task doesn't finish within 200 milliseconds.
 	if(isHidden())
@@ -71,15 +71,15 @@ void TaskDisplayWidget::taskStarted(PromiseWatcher* taskWatcher)
 	else
 		updateIndicator();
 
-	connect(taskWatcher, &PromiseWatcher::progressRangeChanged, this, &TaskDisplayWidget::taskProgressChanged);
-	connect(taskWatcher, &PromiseWatcher::progressValueChanged, this, &TaskDisplayWidget::taskProgressChanged);
-	connect(taskWatcher, &PromiseWatcher::progressTextChanged, this, &TaskDisplayWidget::taskProgressChanged);
+	connect(taskWatcher, &TaskWatcher::progressRangeChanged, this, &TaskDisplayWidget::taskProgressChanged);
+	connect(taskWatcher, &TaskWatcher::progressValueChanged, this, &TaskDisplayWidget::taskProgressChanged);
+	connect(taskWatcher, &TaskWatcher::progressTextChanged, this, &TaskDisplayWidget::taskProgressChanged);
 }
 
 /******************************************************************************
 * Is called when a task has finished.
 ******************************************************************************/
-void TaskDisplayWidget::taskFinished(PromiseWatcher* taskWatcher)
+void TaskDisplayWidget::taskFinished(TaskWatcher* taskWatcher)
 {
 	updateIndicator();
 }
@@ -123,7 +123,7 @@ void TaskDisplayWidget::updateIndicator()
 	}
 	else {
 		for(auto iter = taskManager.runningTasks().crbegin(); iter != taskManager.runningTasks().crend(); iter++) {
-			PromiseWatcher* watcher = *iter;
+			TaskWatcher* watcher = *iter;
 			qlonglong maximum = watcher->progressMaximum();
 			if(watcher->progressMaximum() != 0 || watcher->progressText().isEmpty() == false) {
 				if(maximum < (qlonglong)std::numeric_limits<int>::max()) {

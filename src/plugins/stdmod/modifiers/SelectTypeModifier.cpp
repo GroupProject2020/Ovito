@@ -57,14 +57,14 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 
 	if(sourceProperty().isNull() && subject()) {
 
-		// When the modifier is first inserted, automatically select the most recently added 
+		// When the modifier is first inserted, automatically select the most recently added
 		// typed property (in GUI mode) or the canonical type property (in script mode).
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
 				if(property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int) {
-					if(!Application::instance()->scriptMode() || property->type() == PropertyStorage::GenericTypeProperty) {
+					if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive || property->type() == PropertyStorage::GenericTypeProperty) {
 						bestProperty = PropertyReference(subject().dataClass(), property);
 					}
 				}
@@ -128,7 +128,7 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 		else
 			throwException(tr("Type '%1' does not exist in the type list of property '%2'.").arg(typeName).arg(typeProperty->name()));
 	}
-	
+
 	OVITO_ASSERT(selProperty->size() == typeProperty->size());
 	const int* t = typeProperty->constDataInt();
 	for(int& s : selProperty->intRange()) {
@@ -140,7 +140,7 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 	}
 
 	state.addAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected), modApp);
-	
+
 	QString statusMessage = tr("%1 out of %2 %3 selected (%4%)")
 		.arg(nSelected)
 		.arg(typeProperty->size())

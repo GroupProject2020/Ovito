@@ -26,7 +26,7 @@
 #include <core/dataset/io/FileImporter.h>
 #include <core/dataset/pipeline/PipelineStatus.h>
 #include <core/utilities/concurrent/Future.h>
-#include <core/utilities/concurrent/Task.h>
+#include <core/utilities/concurrent/AsynchronousTask.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
@@ -37,7 +37,7 @@ class OVITO_CORE_EXPORT FileSourceImporter : public FileImporter
 {
 	Q_OBJECT
 	OVITO_CLASS(FileSourceImporter)
-	
+
 public:
 
 	/// Data structure that stores meta information about a source animation frame.
@@ -67,7 +67,7 @@ public:
 		QString label;
 
 		/// An informational field that can be used by the file parser to store additional info about the frame.
-		qint64 parserData = 0; 
+		qint64 parserData = 0;
 
 		/// Compares two data records.
 		bool operator!=(const Frame& other) const {
@@ -82,7 +82,7 @@ public:
 	/**
 	 * Base class for data structures holding a single frame's data.
 	 */
-	class OVITO_CORE_EXPORT FrameData 
+	class OVITO_CORE_EXPORT FrameData
 	{
 	public:
 
@@ -134,16 +134,16 @@ public:
 		Frame _frame;
 
 		/// The local copy of the input file.
-		QString _localFilename;		
+		QString _localFilename;
 	};
 
 	/// A managed pointer to a FrameLoader instance.
-	using FrameLoaderPtr = std::shared_ptr<FrameLoader>;	
+	using FrameLoaderPtr = std::shared_ptr<FrameLoader>;
 
 	/**
 	 * Base class for frame discovery routines.
 	 */
-	class OVITO_CORE_EXPORT FrameFinder : public AsynchronousTask<QVector<Frame>> 
+	class OVITO_CORE_EXPORT FrameFinder : public AsynchronousTask<QVector<Frame>>
 	{
 	public:
 

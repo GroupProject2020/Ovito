@@ -124,7 +124,7 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<CrystalAnalysisFrameData>();
-	
+
 	QString caFilename;
 	QString atomsFilename;
 	AffineTransformation cell = AffineTransformation::Zero();
@@ -481,7 +481,7 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 	frameData->simulationCell().setMatrix(cell);
 	frameData->simulationCell().setPbcFlags(pbcFlags[0], pbcFlags[1], pbcFlags[2]);
 
-	frameData->setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));	
+	frameData->setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));
 	return frameData;
 }
 
@@ -501,7 +501,7 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 		if(!defectSurfaceObj) {
 			defectSurfaceObj = output->createObject<SurfaceMesh>(fileSource, tr("Defect mesh"));
 			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(fileSource->dataset());
-			if(!Application::instance()->scriptMode())
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				vis->loadUserDefaults();
 			defectSurfaceObj->setVisElement(vis);
 		}
@@ -580,7 +580,7 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 		if(!dislocationNetwork) {
 			dislocationNetwork = output->createObject<DislocationNetworkObject>(fileSource);
 			OORef<DislocationVis> vis = new DislocationVis(fileSource->dataset());
-			if(!Application::instance()->scriptMode())
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				vis->loadUserDefaults();
 			dislocationNetwork->setVisElement(vis);
 		}

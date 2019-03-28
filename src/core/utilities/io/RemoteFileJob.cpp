@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -21,7 +21,7 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
-#include <core/utilities/concurrent/PromiseWatcher.h>
+#include <core/utilities/concurrent/TaskWatcher.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
 #include <core/utilities/io/ssh/SshConnection.h>
@@ -46,7 +46,7 @@ constexpr int MaximumNumberOfSimulateousJobs = 2;
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-RemoteFileJob::RemoteFileJob(QUrl url, PromiseStatePtr promiseState) :
+RemoteFileJob::RemoteFileJob(QUrl url, TaskPtr promiseState) :
 		_url(std::move(url)), _promiseState(std::move(promiseState))
 {
 	// Run all event handlers of this class in the main thread.
@@ -84,8 +84,8 @@ void RemoteFileJob::start()
 	}
 
 	// Get notified if user has canceled the promise.
-	_promiseWatcher = new PromiseWatcher(this);
-	connect(_promiseWatcher, &PromiseWatcher::canceled, this, &RemoteFileJob::connectionCanceled);
+	_promiseWatcher = new TaskWatcher(this);
+	connect(_promiseWatcher, &TaskWatcher::canceled, this, &RemoteFileJob::connectionCanceled);
 	_promiseWatcher->watch(_promiseState);
 
 	SshConnectionParameters connectionParams;
@@ -183,7 +183,7 @@ void RemoteFileJob::authenticationFailed()
 ******************************************************************************/
 void RemoteFileJob::connectionCanceled()
 {
-	// If use has canceled the SSH connection, 
+	// If use has canceled the SSH connection,
 	// cancel the file retrievel operation as well.
 	_promiseState->cancel();
 	shutdown(false);
@@ -233,7 +233,7 @@ void DownloadRemoteFileJob::channelError()
 		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
 			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
 			.arg(_scpChannel->errorMessage()))));
-	
+
 	shutdown(false);
 }
 
@@ -310,7 +310,7 @@ void DownloadRemoteFileJob::receivingFile(qint64 fileSize)
 /******************************************************************************
 * Is called after the file has been downloaded.
 ******************************************************************************/
-void DownloadRemoteFileJob::receivedFileComplete() 
+void DownloadRemoteFileJob::receivedFileComplete()
 {
 	if(_promiseState->isCanceled()) {
 		shutdown(false);
@@ -374,7 +374,7 @@ void ListRemoteDirectoryJob::channelError()
 		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
 			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
 			.arg(_lsChannel->errorMessage()))));
-	
+
 	shutdown(false);
 }
 

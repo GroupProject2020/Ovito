@@ -288,7 +288,7 @@ void ActionManager::on_FileRemoteImport_triggered()
 		ImportRemoteFileDialog dialog(PluginManager::instance().metaclassMembers<FileImporter>(), _dataset, mainWindow(), tr("Load Remote File"));
 		if(dialog.exec() != QDialog::Accepted)
 			return;
-		
+
 		// Import URL.
 		mainWindow()->datasetContainer().importFile(dialog.fileToImport(), dialog.selectedFileImporterType());
 	}
@@ -312,7 +312,7 @@ void ActionManager::on_FileExport_triggered()
 	for(const FileExporterClass* exporterClass : exporterTypes) {
 #ifndef Q_OS_WIN
 		filterStrings << QStringLiteral("%1 (%2)").arg(exporterClass->fileFilterDescription(), exporterClass->fileFilter());
-#else 
+#else
 		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
 		filterStrings << QStringLiteral("%1 (*)").arg(exporterClass->fileFilterDescription());
 #endif
@@ -343,7 +343,7 @@ void ActionManager::on_FileExport_triggered()
 	QStringList files = dialog.selectedFiles();
 	if(files.isEmpty())
 		return;
-	
+
 	QString exportFile = files.front();
 
 	// Remember directory for the next time...
@@ -368,7 +368,7 @@ void ActionManager::on_FileExport_triggered()
 		// Wait until the scene is ready.
 		{
 			ProgressDialog progressDialog(mainWindow(), tr("File export"));
-			if(!progressDialog.taskManager().waitForTask(_dataset->whenSceneReady()))
+			if(!progressDialog.taskManager().waitForFuture(_dataset->whenSceneReady()))
 				return;
 		}
 
@@ -384,7 +384,7 @@ void ActionManager::on_FileExport_triggered()
 		ProgressDialog progressDialog(mainWindow(), tr("File export"));
 
 		// Let the exporter do its work.
-		exporter->doExport(progressDialog.taskManager().createSynchronousPromise<>(true));
+		exporter->doExport(progressDialog.taskManager().createMainThreadOperation<>(true));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

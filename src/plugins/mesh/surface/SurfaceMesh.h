@@ -33,7 +33,7 @@ namespace Ovito { namespace Mesh {
 using SurfaceMeshPtr = std::shared_ptr<HalfEdgeMesh<>>;
 
 /// This pointer type is used to indicate that we only need read-only access to the mesh data.
-using ConstSurfaceMeshPtr = std::shared_ptr<const HalfEdgeMesh<>>;	
+using ConstSurfaceMeshPtr = std::shared_ptr<const HalfEdgeMesh<>>;
 
 /**
  * \brief A closed triangle mesh representing a surface.
@@ -42,14 +42,14 @@ class OVITO_MESH_EXPORT SurfaceMesh : public PeriodicDomainDataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(SurfaceMesh)
-	
+
 public:
 
 	/// \brief Constructor that creates an empty SurfaceMesh object.
 	Q_INVOKABLE SurfaceMesh(DataSet* dataset, const QString& title = QString());
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() const override { 
+	virtual QString objectTitle() const override {
 		if(!title().isEmpty()) return title();
 		else if(!identifier().isEmpty()) return identifier();
 		else return tr("Surface mesh");
@@ -64,9 +64,9 @@ public:
 	///      0 : The point is right on the surface (approximately, within the given epsilon)
 	///     +1 : The point is outside the enclosed region
 	int locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON) const;
-	
+
 	/// Fairs the triangle mesh stored in this object.
-	bool smoothMesh(int numIterations, PromiseState& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5)) {
+	bool smoothMesh(int numIterations, Task& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5)) {
 		if(!domain() || !storage())
 			return true;
 		if(!smoothMesh(*modifiableStorage(), domain()->data(), numIterations, promise, k_PB, lambda))
@@ -76,11 +76,11 @@ public:
 	}
 
 	/// Fairs a triangle mesh.
-	static bool smoothMesh(HalfEdgeMesh<>& mesh, const SimulationCell& cell, int numIterations, PromiseState& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
+	static bool smoothMesh(HalfEdgeMesh<>& mesh, const SimulationCell& cell, int numIterations, Task& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
 
 	/// Static implementation function of the locatePoint() method.
 	static int locatePointStatic(const Point3& location, const HalfEdgeMesh<>& mesh, const SimulationCell cell, bool isCompletelySolid, FloatType epsilon = FLOATTYPE_EPSILON);
-		
+
 protected:
 
 	/// Performs one iteration of the smoothing algorithm.

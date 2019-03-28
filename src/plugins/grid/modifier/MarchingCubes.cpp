@@ -29,15 +29,15 @@ namespace Ovito { namespace Grid {
 * Constructor.
 ******************************************************************************/
 MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* data, size_t stride, HalfEdgeMesh<>& outputMesh, bool lowerIsSolid) :
-    _data_size_x(size_x), 
-    _data_size_y(size_y), 
-    _data_size_z(size_z), 
-    _size_x(size_x + (pbcFlags[0]?0:1)), 
-    _size_y(size_y + (pbcFlags[1]?0:1)), 
+    _data_size_x(size_x),
+    _data_size_y(size_y),
+    _data_size_z(size_z),
+    _size_x(size_x + (pbcFlags[0]?0:1)),
+    _size_y(size_y + (pbcFlags[1]?0:1)),
     _size_z(size_z + (pbcFlags[2]?0:1)),
     _pbcFlags(pbcFlags),
-    _data(data), 
-    _dataStride(stride), 
+    _data(data),
+    _dataStride(stride),
     _outputMesh(outputMesh),
     _cubeVerts(_size_x * _size_y * _size_z * 3, nullptr),
     _isCompletelySolid(false),
@@ -49,7 +49,7 @@ MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool
 /******************************************************************************
 * Main method that constructs the isosurface mesh.
 ******************************************************************************/
-bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise)
+bool MarchingCubes::generateIsosurface(FloatType isolevel, Task& promise)
 {
     promise.setProgressMaximum(_size_z * 2);
     promise.setProgressValue(0);
@@ -75,7 +75,7 @@ bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise
 /******************************************************************************
 * Compute the intersection points with the isosurface along the cube edges.
 ******************************************************************************/
-void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& promise)
+void MarchingCubes::computeIntersectionPoints(FloatType isolevel, Task& promise)
 {
     _isCompletelySolid = (_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2]);
     for(int k = 0; k < _size_z && !promise.isCanceled(); k++, promise.incrementProgressValue()) {

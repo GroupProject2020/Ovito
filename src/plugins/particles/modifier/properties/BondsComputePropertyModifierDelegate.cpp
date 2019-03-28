@@ -39,26 +39,26 @@ BondsComputePropertyModifierDelegate::BondsComputePropertyModifierDelegate(DataS
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> BondsComputePropertyModifierDelegate::createEngine(
-				TimePoint time, 
-				const PipelineFlowState& input, 
+				TimePoint time,
+				const PipelineFlowState& input,
 				const PropertyContainer* container,
-				PropertyPtr outputProperty, 
-				ConstPropertyPtr selectionProperty, 
+				PropertyPtr outputProperty,
+				ConstPropertyPtr selectionProperty,
 				QStringList expressions)
 {
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputeEngine>(
-			input.stateValidity(), 
-			time, 
-			std::move(outputProperty), 
+			input.stateValidity(),
+			time,
+			std::move(outputProperty),
 			container,
-			std::move(selectionProperty), 
-			std::move(expressions), 
-			dataset()->animationSettings()->timeToFrame(time), 
+			std::move(selectionProperty),
+			std::move(expressions),
+			dataset()->animationSettings()->timeToFrame(time),
 			input);
 }
 
@@ -66,23 +66,23 @@ std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> BondsCom
 * Constructor.
 ******************************************************************************/
 BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
-		const TimeInterval& validityInterval, 
+		const TimeInterval& validityInterval,
 		TimePoint time,
-		PropertyPtr outputProperty, 
+		PropertyPtr outputProperty,
 		const PropertyContainer* container,
 		ConstPropertyPtr selectionProperty,
-		QStringList expressions, 
-		int frameNumber, 
+		QStringList expressions,
+		int frameNumber,
 		const PipelineFlowState& input) :
 	ComputePropertyModifierDelegate::PropertyComputeEngine(
-			validityInterval, 
-			time, 
-			input, 
+			validityInterval,
+			time,
+			input,
 			container,
-			std::move(outputProperty), 
-			std::move(selectionProperty), 
-			std::move(expressions), 
-			frameNumber, 
+			std::move(outputProperty),
+			std::move(selectionProperty),
+			std::move(expressions),
+			frameNumber,
 			std::make_unique<BondExpressionEvaluator>()),
 	_inputFingerprint(input.expectObject<ParticlesObject>())
 {
@@ -92,7 +92,7 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 	_topology = bonds->getPropertyStorage(BondsObject::TopologyProperty);
 	ConstPropertyPtr periodicImages = bonds->getPropertyStorage(BondsObject::PeriodicImageProperty);
 
-	// Define 'BondLength' computed variable which yields the length of the current bond. 
+	// Define 'BondLength' computed variable which yields the length of the current bond.
 	if(positions) {
 		SimulationCell simCell;
 		if(const SimulationCellObject* simCellObj = input.getObject<SimulationCellObject>())
@@ -151,7 +151,7 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 	task()->setProgressMaximum(outputProperty()->size());
 
 	// Parallelized loop over all particles.
-	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, PromiseState& promise) {
+	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
 
 		size_t endIndex = startIndex + count;

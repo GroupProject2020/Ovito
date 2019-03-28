@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "CutoffNeighborFinder.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -28,7 +28,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 /******************************************************************************
 * Initialization function.
 ******************************************************************************/
-bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& cellData, const PropertyStorage* selectionProperty, PromiseState* promise)
+bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& cellData, const PropertyStorage* selectionProperty, Task* promise)
 {
 	OVITO_ASSERT(&positions);
 	if(promise) promise->setProgressMaximum(0);

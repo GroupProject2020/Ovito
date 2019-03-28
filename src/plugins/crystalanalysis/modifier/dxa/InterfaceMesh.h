@@ -103,7 +103,7 @@ public:
 	const StructureAnalysis& structureAnalysis() const { return elasticMapping().structureAnalysis(); }
 
 	/// Creates the mesh facets separating good and bad tetrahedra.
-	bool createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, PromiseState& progress);
+	bool createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, Task& progress);
 
 	/// Returns whether all tessellation cells belong to the good region.
 	bool isCompletelyGood() const { return _isCompletelyGood; }
@@ -112,7 +112,7 @@ public:
 	bool isCompletelyBad() const { return _isCompletelyBad; }
 
 	/// Generates the nodes and facets of the defect mesh based on the interface mesh.
-	bool generateDefectMesh(const DislocationTracer& tracer, HalfEdgeMesh<>& defectMesh, PromiseState& progress);
+	bool generateDefectMesh(const DislocationTracer& tracer, HalfEdgeMesh<>& defectMesh, Task& progress);
 
 private:
 

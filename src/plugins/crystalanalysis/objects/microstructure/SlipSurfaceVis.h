@@ -31,7 +31,7 @@
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/utilities/mesh/TriMesh.h>
-#include <core/utilities/concurrent/Task.h>
+#include <core/utilities/concurrent/AsynchronousTask.h>
 #include <core/dataset/animation/controller/Controller.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -64,16 +64,16 @@ public:
 	void setSurfaceTransparency(FloatType transparency) { if(surfaceTransparencyController()) surfaceTransparencyController()->setCurrentFloatValue(transparency); }
 
 	/// Generates the final triangle mesh, which will be rendered.
-	static bool buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, std::vector<size_t>& originalFaceMap, PromiseState& promise);
+	static bool buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, std::vector<size_t>& originalFaceMap, Task& promise);
 
 protected:
-	
+
 	/// Lets the vis elementt transform a data object in preparation for rendering.
 	virtual Future<PipelineFlowState> transformDataImpl(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode) override;
-	
+
 	/// Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-	
+
 protected:
 
 	/// Computation engine that builds the render mesh.
@@ -109,7 +109,7 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, smoothShading, setSmoothShading);
 
 	/// Controls the transparency of the surface mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);	
+	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);
 };
 
 /**

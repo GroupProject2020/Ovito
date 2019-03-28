@@ -43,7 +43,7 @@ void defineIOSubmodule(py::module m)
 		.def_static("autodetect_format", [](DataSet& dataset, const QUrl& url) {
 			auto future = FileImporter::autodetectFileFormat(&dataset, url);
 			// Block until detection is complete and result is available.
-			if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
+			if(!ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future)) {
 				PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 				throw py::error_already_set();
 			}
@@ -70,7 +70,7 @@ void defineIOSubmodule(py::module m)
 		.def_property("end_frame", &FileExporter::endFrame, &FileExporter::setEndFrame)
 		.def_property("every_nth_frame", &FileExporter::everyNthFrame, &FileExporter::setEveryNthFrame)
 		.def_property("precision", &FileExporter::floatOutputPrecision, &FileExporter::setFloatOutputPrecision)
-		
+
 		// These are required by implementation of export_file():
 		.def_property("pipeline", &FileExporter::nodeToExport, &FileExporter::setNodeToExport)
 		.def_property("key",
@@ -86,14 +86,14 @@ void defineIOSubmodule(py::module m)
 					throw py::error_already_set();
 				}
 			})
-		.def("select_default_exportable_data", &FileExporter::selectDefaultExportableData)		
+		.def("select_default_exportable_data", &FileExporter::selectDefaultExportableData)
 	;
 
 	ovito_class<AttributeFileExporter, FileExporter>(m)
 		.def_property("columns", &AttributeFileExporter::attributesToExport, &AttributeFileExporter::setAttributesToExport)
 	;
 
-	ovito_class<FileSource, CachingPipelineObject>(m, 
+	ovito_class<FileSource, CachingPipelineObject>(m,
 			"This object type serves as a :py:attr:`Pipeline.source` and takes care of reading the input data for a :py:class:`Pipeline` from an external file. "
 			"\n\n"
 			"You normally do not need to create an instance of this class yourself; the :py:func:`~ovito.io.import_file` function does it for you and wires the fully configured :py:class:`!FileSource` "
@@ -136,12 +136,12 @@ void defineIOSubmodule(py::module m)
 		// Required by the implementation of FileSource.load():
 		.def("wait_until_ready", [](FileSource& fs, TimePoint time) {
 			SharedFuture<PipelineFlowState> future = fs.evaluate(time);
-			return ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future);
+			return ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future);
 		})
 		// Required by the implementations of import_file() and FileSource.load():
 		.def("wait_for_frames_list", [](FileSource& fs) {
 			auto future = fs.requestFrameList(false, false);
-			return ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future);
+			return ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future);
 		})
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"This read-only attribute reports the number of frames found in the input file or sequence of input files. "
@@ -154,13 +154,13 @@ void defineIOSubmodule(py::module m)
 		.def_property_readonly("data", &FileSource::dataCollection,
 			"This field exposes the internal :py:class:`~ovito.data.DataCollection` of the source object holding "
 			"the master copy of the data loaded from the input file (at frame 0). ")
-		
+
 		// For backward compatibility with OVITO 2.9.0:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.
 		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex)
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("loaded_file", [](FileSource& fs) -> QUrl {
-					// Return the path or URL of the data file that is currently loaded and kept in memory by the FileSource. 
+					// Return the path or URL of the data file that is currently loaded and kept in memory by the FileSource.
 					if(fs.storedFrameIndex() < 0 || fs.storedFrameIndex() >= fs.frames().size()) return QUrl();
 					const FileSourceImporter::Frame& frameInfo = fs.frames()[fs.storedFrameIndex()];
 					return frameInfo.sourceFile;

@@ -57,10 +57,10 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, capTransparencyController, Pe
 * Constructor.
 ******************************************************************************/
 SurfaceMeshVis::SurfaceMeshVis(DataSet* dataset) : TransformingDataVis(dataset),
-	_surfaceColor(1, 1, 1), 
-	_capColor(0.8, 0.8, 1.0), 
-	_showCap(true), 
-	_smoothShading(true), 
+	_surfaceColor(1, 1, 1),
+	_capColor(0.8, 0.8, 1.0),
+	_showCap(true),
+	_smoothShading(true),
 	_reverseOrientation(false)
 {
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
@@ -95,8 +95,8 @@ Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(TimePoint time, cons
 		return std::move(flowState);
 
 	// Create compute engine.
-	auto engine = std::make_shared<PrepareSurfaceEngine>(surfaceMeshObj->storage(), cellObject->data(), 
-		surfaceMeshObj->isCompletelySolid(), reverseOrientation(), 
+	auto engine = std::make_shared<PrepareSurfaceEngine>(surfaceMeshObj->storage(), cellObject->data(),
+		surfaceMeshObj->isCompletelySolid(), reverseOrientation(),
 		surfaceMeshObj->cuttingPlanes(), smoothShading());
 
 	// Submit engine for execution and post-process results.
@@ -132,7 +132,7 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 	if(_smoothShading) {
 		// Assign smoothing group to faces to interpolate normals.
 		for(auto& face : surfaceMesh.faces())
-			face.setSmoothingGroups(1);	
+			face.setSmoothingGroups(1);
 	}
 
 	setResult(std::move(surfaceMesh), std::move(capPolygonsMesh));
@@ -219,7 +219,7 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 				capPrimitive->setMesh(meshObj->capPolygonsMesh(), color_cap);
 			}
 		}
-	}	
+	}
 
 	// Handle picking of triangles.
 	renderer->beginPickObject(contextNode);
@@ -234,11 +234,11 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 /******************************************************************************
 * Generates the final triangle mesh, which will be rendered.
 ******************************************************************************/
-bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress)
+bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, Task* progress)
 {
 	if(cell.is2D())
 		throw Exception(tr("Cannot generate surface triangle mesh when domain is two-dimensional."));
-	
+
 	OVITO_ASSERT(input.isClosed());
 
 	// Convert half-edge mesh to triangle mesh.
@@ -398,7 +398,7 @@ bool SurfaceMeshVis::splitFace(TriMesh& output, TriMeshFace& face, int oldVertex
 /******************************************************************************
 * Generates the triangle mesh for the PBC caps.
 ******************************************************************************/
-void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* promise)
+void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, Task* promise)
 {
 	bool flipCapNormal = (cell.matrix().determinant() < 0);
 
@@ -517,7 +517,7 @@ void SurfaceMeshVis::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationC
 								switch(corner) {
 								case 0: tessellator.vertex(Point2(0,0)); break;
 								case 1: tessellator.vertex(Point2(0,1)); break;
-								case 2: tessellator.vertex(Point2(1,1)); break;	
+								case 2: tessellator.vertex(Point2(1,1)); break;
 								case 3: tessellator.vertex(Point2(1,0)); break;
 								}
 								corner = (corner + 3) % 4;
@@ -735,8 +735,8 @@ void SurfaceMeshVis::clipContour(std::vector<Point2>& input, std::array<bool,2> 
 		firstSegment.insert(firstSegment.begin(), lastSegment.begin(), lastSegment.end());
 		contours.pop_back();
 		for(auto& contour : contours) {
-			bool isDegenerate = std::all_of(contour.begin(), contour.end(), [&contour](const Point2& p) { 
-				return p.equals(contour.front()); 
+			bool isDegenerate = std::all_of(contour.begin(), contour.end(), [&contour](const Point2& p) {
+				return p.equals(contour.front());
 			});
 			if(!isDegenerate)
 				openContours.push_back(std::move(contour));

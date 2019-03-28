@@ -23,27 +23,27 @@
 
 
 #include <core/Core.h>
-#include "PromiseState.h"
+#include "Task.h"
 #include "FutureDetail.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-/******************************************************************************
-* This shared state is returned by the Future::then() method.
-******************************************************************************/
-class OVITO_CORE_EXPORT TrackingPromiseState : public PromiseState
+/**
+ * \brief This type of Task is returned by the Future::then() method and is needed to implement continuation functions.
+ */
+class OVITO_CORE_EXPORT TrackingTask : public Task
 {
 public:
 
 	/// Constructor.
-	TrackingPromiseState(PromiseStateCountedPtr creatorState) : _creatorState(std::move(creatorState)) {}
+	TrackingTask(TaskDependency creatorState) : _creatorState(std::move(creatorState)) {}
 
 #ifdef OVITO_DEBUG
 	/// Destructor.
-	virtual ~TrackingPromiseState();
-#endif	
+	virtual ~TrackingTask();
+#endif
 
-	/// Returns the maximum value for progress reporting. 
+	/// Returns the maximum value for progress reporting.
     virtual qlonglong progressMaximum() const override { return trackedState() ? trackedState()->progressMaximum() : 0; }
 
 	/// Returns the current progress value (in the range 0 to progressMaximum()).
@@ -59,7 +59,7 @@ public:
 	virtual void setFinished() override;
 
 	/// Returns the promise that created this promise as a continuation.
-	const PromiseStatePtr& creatorState() const { return _creatorState.get(); }
+	const TaskPtr& creatorState() const { return _creatorState.get(); }
 
 	template<typename FC, typename FunctionParams>
 	void fulfillWith(FC&& closure, FunctionParams&& params) noexcept
@@ -68,7 +68,7 @@ public:
 			// Call the continuation function with the results of the fulfilled promise.
 			// Assign the returned future to this tracking promise state.
 			auto future = detail::apply(std::forward<FC>(closure), std::forward<FunctionParams>(params));
-			setTrackedState(std::move(future._sharedState));
+			setTrackedState(std::move(future._task));
 		}
 		catch(...) {
 			setStarted();
@@ -80,29 +80,27 @@ public:
 protected:
 
 	/// Makes this promise state track the given other state.
-	void setTrackedState(PromiseStateCountedPtr&& state);
+	void setTrackedState(TaskDependency&& state);
 
 	/// Returns the inner promise state.
-	const PromiseStatePtr& trackedState() const {
+	const TaskPtr& trackedState() const {
 		return _trackedState.get();
 	}
 
 	/// The promise being tracked by this promise state.
-	PromiseStateCountedPtr _trackedState;
+	TaskDependency _trackedState;
 
 	/// The promise that created this promise as a continuation.
-	PromiseStateCountedPtr _creatorState;
+	TaskDependency _creatorState;
 
 	/// Linked list pointer.
-	std::shared_ptr<TrackingPromiseState> _nextInList;
+	std::shared_ptr<TrackingTask> _nextInList;
 
 	template<typename... R2> friend class Future;
-	friend class PromiseState;
-	friend class PromiseStateWithProgress;
+	friend class Task;
+	friend class ProgressiveTask;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

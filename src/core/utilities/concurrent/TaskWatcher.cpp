@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -20,44 +20,44 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include "PromiseWatcher.h"
-#include "PromiseState.h"
+#include "TaskWatcher.h"
+#include "Task.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-void PromiseWatcher::watch(const PromiseStatePtr& promiseState, bool pendingAssignment)
+void TaskWatcher::watch(const TaskPtr& task, bool pendingAssignment)
 {
-	OVITO_ASSERT_MSG(QCoreApplication::closingDown() || QThread::currentThread() == QCoreApplication::instance()->thread(), "PromiseWatcher::watch", "Function may only be called from the main thread.");
+	OVITO_ASSERT_MSG(QCoreApplication::closingDown() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskWatcher::watch", "Function may only be called from the main thread.");
 
-	if(promiseState == _sharedState)
+	if(task == _task)
 		return;
 
-	if(_sharedState) {
-		_sharedState->unregisterWatcher(this);
+	if(_task) {
+		_task->unregisterWatcher(this);
 		if(pendingAssignment) {
 	        _finished = false;
 	        QCoreApplication::removePostedEvents(this);
 		}
 	}
-	_sharedState = promiseState;
-	if(_sharedState)
-		_sharedState->registerWatcher(this);
+	_task = task;
+	if(_task)
+		_task->registerWatcher(this);
 }
 
 /// Cancels the operation being watched by this watcher.
-void PromiseWatcher::cancel() 
+void TaskWatcher::cancel()
 {
 	if(isWatching())
-		sharedState()->cancel();
+		task()->cancel();
 }
 
-void PromiseWatcher::promiseCanceled()
+void TaskWatcher::promiseCanceled()
 {
 	if(isWatching())
 		Q_EMIT canceled();
 }
 
-void PromiseWatcher::promiseFinished()
+void TaskWatcher::promiseFinished()
 {
 	if(isWatching()) {
 		_finished = true;
@@ -65,53 +65,53 @@ void PromiseWatcher::promiseFinished()
 	}
 }
 
-void PromiseWatcher::promiseStarted()
+void TaskWatcher::promiseStarted()
 {
 	if(isWatching())
     	Q_EMIT started();
 }
 
-void PromiseWatcher::promiseProgressRangeChanged(qlonglong maximum)
+void TaskWatcher::promiseProgressRangeChanged(qlonglong maximum)
 {
-	if(isWatching() && !sharedState()->isCanceled())
+	if(isWatching() && !task()->isCanceled())
 		Q_EMIT progressRangeChanged(maximum);
 }
 
-void PromiseWatcher::promiseProgressValueChanged(qlonglong progressValue)
+void TaskWatcher::promiseProgressValueChanged(qlonglong progressValue)
 {
-	if(isWatching() && !sharedState()->isCanceled())
+	if(isWatching() && !task()->isCanceled())
 		Q_EMIT progressValueChanged(progressValue);
 }
 
-void PromiseWatcher::promiseProgressTextChanged(const QString& progressText)
+void TaskWatcher::promiseProgressTextChanged(const QString& progressText)
 {
-	if(isWatching() && !sharedState()->isCanceled())
+	if(isWatching() && !task()->isCanceled())
 		Q_EMIT progressTextChanged(progressText);
 }
 
-bool PromiseWatcher::isCanceled() const
+bool TaskWatcher::isCanceled() const
 {
-	return isWatching() ? sharedState()->isCanceled() : false;
+	return isWatching() ? task()->isCanceled() : false;
 }
 
-bool PromiseWatcher::isFinished() const
+bool TaskWatcher::isFinished() const
 {
 	return _finished;
 }
 
-qlonglong PromiseWatcher::progressMaximum() const
+qlonglong TaskWatcher::progressMaximum() const
 {
-	return isWatching() ? sharedState()->totalProgressMaximum() : 0;
+	return isWatching() ? task()->totalProgressMaximum() : 0;
 }
 
-qlonglong PromiseWatcher::progressValue() const
+qlonglong TaskWatcher::progressValue() const
 {
-	return isWatching() ? sharedState()->totalProgressValue() : 0;
+	return isWatching() ? task()->totalProgressValue() : 0;
 }
 
-QString PromiseWatcher::progressText() const
+QString TaskWatcher::progressText() const
 {
-	return isWatching() ? sharedState()->progressText() : QString();
+	return isWatching() ? task()->progressText() : QString();
 }
 
 OVITO_END_INLINE_NAMESPACE

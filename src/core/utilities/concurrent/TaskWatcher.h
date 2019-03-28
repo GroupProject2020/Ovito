@@ -26,32 +26,30 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-/******************************************************************************
-* A utility class that integrates the Promise class into the Qt signal/slots
-* framework. It allows to have signals generated when the shared state of a 
-* Future or a Promise changes.
-******************************************************************************/
-class OVITO_CORE_EXPORT PromiseWatcher : public QObject
+/**
+ * \brief Provides a Qt signal/slots interface to an asynchronous task.
+ */
+class OVITO_CORE_EXPORT TaskWatcher : public QObject
 {
 public:
 
-	/// Constructor that creates a watcher that is not associated with 
+	/// Constructor that creates a watcher that is not associated with
 	/// any future/promise yet.
-	PromiseWatcher(QObject* parent = nullptr) : QObject(parent) {}
+	TaskWatcher(QObject* parent = nullptr) : QObject(parent) {}
 
 	/// Destructor.
-	virtual ~PromiseWatcher() {
+	virtual ~TaskWatcher() {
 		watch(nullptr, false);
 	}
 
 	/// Returns whether this watcher is currently monitoring a shared state.
-	bool isWatching() const { return (bool)_sharedState; }
+	bool isWatching() const { return (bool)_task; }
 
 	/// Returns the shared state being monitored by this watcher.
-	const PromiseStatePtr& sharedState() const { return _sharedState; }
+	const TaskPtr& task() const { return _task; }
 
 	/// Makes this watcher monitor the given shared state.
-	void watch(const PromiseStatePtr& promiseState, bool pendingAssignment = true);
+	void watch(const TaskPtr& promiseState, bool pendingAssignment = true);
 
 	/// Detaches this watcher from the shared state.
 	void reset() { watch(nullptr); }
@@ -97,18 +95,18 @@ private Q_SLOTS:
 private:
 
 	/// The shared state being monitored.
-	PromiseStatePtr _sharedState;
+	TaskPtr _task;
 
 	/// Indicates that the shared state has reached the 'finished' state.
     bool _finished = false;
 
 	/// Linked list pointer for list of registered watchers of the current shared state.
-	PromiseWatcher* _nextInList;	
+	TaskWatcher* _nextInList;
 
 	Q_OBJECT
 
-	friend class PromiseState;
-	friend class PromiseStateWithProgress;
+	friend class Task;
+	friend class ProgressiveTask;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -48,6 +48,7 @@
 #include <atomic>
 #include <tuple>
 #include <numeric>
+#include <functional>
 
 /******************************************************************************
 * QT Library
@@ -69,6 +70,8 @@
 #include <QMatrix4x4>
 #include <QDateTime>
 #include <QThread>
+#include <QMutex>
+#include <QRunnable>
 #include <QImage>
 #include <QFont>
 #include <QPainter>

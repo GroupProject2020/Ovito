@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include "PromiseStateWithProgress.h"
-#include "TrackingPromiseState.h"
-#include "PromiseWatcher.h"
+#include "ProgressiveTask.h"
+#include "TrackingTask.h"
+#include "TaskWatcher.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -30,7 +30,7 @@ enum {
     MaxProgressEmitsPerSecond = 20
 };
 
-void PromiseStateWithProgress::setProgressMaximum(qlonglong maximum)
+void ProgressiveTask::setProgressMaximum(qlonglong maximum)
 {
 	if(maximum == _progressMaximum || isCanceled() || isFinished())
 		return;
@@ -38,15 +38,15 @@ void PromiseStateWithProgress::setProgressMaximum(qlonglong maximum)
     _progressMaximum = maximum;
     computeTotalProgress();
 
-	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressMaximum()));
-	for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-		for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
+	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
+		for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressMaximum()));
 	}
 }
 
-bool PromiseStateWithProgress::setProgressValue(qlonglong value)
+bool ProgressiveTask::setProgressValue(qlonglong value)
 {
 	_intermittentUpdateCounter = 0;
 
@@ -59,10 +59,10 @@ bool PromiseStateWithProgress::setProgressValue(qlonglong value)
     if(!_progressTime.isValid() || _progressValue == _progressMaximum || _progressTime.elapsed() >= (1000 / MaxProgressEmitsPerSecond)) {
 		_progressTime.start();
 
-		for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+		for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-		for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-			for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
+		for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
+			for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
 				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 		}
     }
@@ -70,7 +70,7 @@ bool PromiseStateWithProgress::setProgressValue(qlonglong value)
     return !isCanceled();
 }
 
-bool PromiseStateWithProgress::setProgressValueIntermittent(qlonglong progressValue, int updateEvery)
+bool ProgressiveTask::setProgressValueIntermittent(qlonglong progressValue, int updateEvery)
 {
 	if(_intermittentUpdateCounter == 0 || _intermittentUpdateCounter > updateEvery) {
 		setProgressValue(progressValue);
@@ -79,7 +79,7 @@ bool PromiseStateWithProgress::setProgressValueIntermittent(qlonglong progressVa
 	return !isCanceled();
 }
 
-bool PromiseStateWithProgress::incrementProgressValue(qlonglong increment)
+bool ProgressiveTask::incrementProgressValue(qlonglong increment)
 {
     if(isCanceled() || isFinished())
         return !isCanceled();
@@ -90,10 +90,10 @@ bool PromiseStateWithProgress::incrementProgressValue(qlonglong increment)
     if(!_progressTime.isValid() || _progressValue == _progressMaximum || _progressTime.elapsed() >= (1000 / MaxProgressEmitsPerSecond)) {
 		_progressTime.start();
 
-		for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+		for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-		for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-			for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
+		for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
+			for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
 				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 		}
     }
@@ -101,7 +101,7 @@ bool PromiseStateWithProgress::incrementProgressValue(qlonglong increment)
     return !isCanceled();
 }
 
-void PromiseStateWithProgress::computeTotalProgress()
+void ProgressiveTask::computeTotalProgress()
 {
 	if(subStepsStack.empty()) {
 		_totalProgressMaximum = _progressMaximum;
@@ -124,7 +124,7 @@ void PromiseStateWithProgress::computeTotalProgress()
 	}
 }
 
-void PromiseStateWithProgress::beginProgressSubStepsWithWeights(std::vector<int> weights)
+void ProgressiveTask::beginProgressSubStepsWithWeights(std::vector<int> weights)
 {
     OVITO_ASSERT(std::accumulate(weights.cbegin(), weights.cend(), 0) > 0);
     subStepsStack.emplace_back(0, std::move(weights));
@@ -133,7 +133,7 @@ void PromiseStateWithProgress::beginProgressSubStepsWithWeights(std::vector<int>
     computeTotalProgress();
 }
 
-void PromiseStateWithProgress::nextProgressSubStep()
+void ProgressiveTask::nextProgressSubStep()
 {
     if(isCanceled() || isFinished())
         return;
@@ -145,15 +145,15 @@ void PromiseStateWithProgress::nextProgressSubStep()
     _progressValue = 0;
     computeTotalProgress();
 
-	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-	for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-		for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
+	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
+		for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 	}
 }
 
-void PromiseStateWithProgress::endProgressSubSteps()
+void ProgressiveTask::endProgressSubSteps()
 {
 	OVITO_ASSERT(!subStepsStack.empty());
 	subStepsStack.pop_back();
@@ -162,17 +162,17 @@ void PromiseStateWithProgress::endProgressSubSteps()
     computeTotalProgress();
 }
 
-void PromiseStateWithProgress::setProgressText(const QString& progressText)
+void ProgressiveTask::setProgressText(const QString& progressText)
 {
     if(isCanceled() || isFinished())
         return;
 
     _progressText = progressText;
-	
-	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+
+	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseProgressTextChanged", Qt::QueuedConnection, Q_ARG(QString, progressText));
-	for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-		for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
+	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
+		for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressTextChanged", Qt::QueuedConnection, Q_ARG(QString, progressText));
 	}
 }

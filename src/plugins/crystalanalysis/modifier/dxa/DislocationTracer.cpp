@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "DislocationTracer.h"
 #include "InterfaceMesh.h"
 
@@ -54,7 +54,7 @@ void DislocationTracer::discardCircuit(BurgersCircuit* circuit)
 * trial Burgers circuits. Identified dislocation segments are converted to
 * a continuous line representation.
 ******************************************************************************/
-bool DislocationTracer::traceDislocationSegments(PromiseState& promise)
+bool DislocationTracer::traceDislocationSegments(Task& promise)
 {
 	if(_maxBurgersCircuitSize < 3 || _maxBurgersCircuitSize > _maxExtendedBurgersCircuitSize)
 		throw Exception("Invalid maximum circuit size parameter(s).");
@@ -210,7 +210,7 @@ struct BurgersCircuitSearchStruct
 * Then moves the Burgers circuit in both directions along the dislocation
 * segment until the maximum circuit size has been reached.
 ******************************************************************************/
-bool DislocationTracer::findPrimarySegments(int maxBurgersCircuitSize, PromiseState& promise)
+bool DislocationTracer::findPrimarySegments(int maxBurgersCircuitSize, Task& promise)
 {
 	int searchDepth =  (maxBurgersCircuitSize - 1) / 2;
 	OVITO_ASSERT(searchDepth >= 1);

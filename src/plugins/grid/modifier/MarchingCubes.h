@@ -24,13 +24,13 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/mesh/halfedge/HalfEdgeMesh.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 
 namespace Ovito { namespace Grid {
 
-/** 
+/**
 * The Marching Cubes algorithm for constructing isosurfaces from grid data.
-*/ 
+*/
 class MarchingCubes
 {
 public:
@@ -40,7 +40,7 @@ public:
 
     /// Returns the field value in a specific cube of the grid.
     /// Takes into account periodic boundary conditions.
-    inline const FloatType getFieldValue(int i, int j, int k) const {         
+    inline const FloatType getFieldValue(int i, int j, int k) const {
         if(_pbcFlags[0]) {
             if(i == _size_x) i = 0;
         }
@@ -67,26 +67,26 @@ public:
         OVITO_ASSERT(k >= 0 && k < _data_size_z);
         return _data[(i + j*_data_size_x + k*_data_size_x*_data_size_y) * _dataStride];
     }
-  
+
     bool isCompletelySolid() const { return _isCompletelySolid; }
 
-    bool generateIsosurface(FloatType iso, PromiseState& promise);
+    bool generateIsosurface(FloatType iso, Task& promise);
 
 protected:
 
     /// Tessellates one cube.
     void processCube(int i, int j, int k);
 
-    /// tTests if the components of the tessellation of the cube should be 
+    /// tTests if the components of the tessellation of the cube should be
     /// connected by the interior of an ambiguous face.
     bool testFace(char face);
 
-    /// Tests if the components of the tessellation of the cube should be 
+    /// Tests if the components of the tessellation of the cube should be
     /// connected through the interior of the cube.
     bool testInterior(char s);
 
     /// Computes almost all the vertices of the mesh by interpolation along the cubes edges.
-    void computeIntersectionPoints(FloatType iso, PromiseState& promise);
+    void computeIntersectionPoints(FloatType iso, Task& promise);
 
     /// Adds triangles to the mesh.
     void addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh<>::Vertex* v12 = nullptr);
@@ -97,17 +97,17 @@ protected:
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
         auto v = _outputMesh.createVertex(Point3(i + u - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
-        _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 0] = v; 
+        _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 0] = v;
         return v;
     }
-    
+
     /// Adds a vertex on the current longitudinal edge.
     HalfEdgeMesh<>::Vertex* createEdgeVertexY(int i, int j, int k, FloatType u) {
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
         auto v = _outputMesh.createVertex(Point3(i - (_pbcFlags[0]?0:1), j + u - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
-        _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 1] = v; 
+        _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 1] = v;
         return v;
     }
 
@@ -117,10 +117,10 @@ protected:
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
         auto v = _outputMesh.createVertex(Point3(i - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k + u - (_pbcFlags[2]?0:1)));
-        _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 2] = v; 
+        _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 2] = v;
         return v;
     }
-    
+
     /// Adds a vertex inside the current cube.
     HalfEdgeMesh<>::Vertex* createCenterVertex(int i, int j, int k);
 
@@ -133,7 +133,7 @@ protected:
         if(i == _size_x) i = 0;
         if(j == _size_y) j = 0;
         if(k == _size_z) k = 0;
-        return _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + axis]; 
+        return _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + axis];
     }
 
 protected:
@@ -145,7 +145,7 @@ protected:
     int _size_y;  ///< depth  of the grid
     int _size_z;  ///< height of the grid
     const FloatType* _data;  ///< implicit function values sampled on the grid
-    size_t _dataStride;	
+    size_t _dataStride;
 	std::array<bool,3> _pbcFlags; ///< PBC flags
     bool _lowerIsSolid; ///< Controls the inward/outward orientation of the created triangle surface.
 

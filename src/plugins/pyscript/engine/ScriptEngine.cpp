@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,7 @@ namespace PyScript {
 /// Points to the script engine that is currently active (i.e. which is executing a script).
 std::shared_ptr<ScriptEngine> ScriptEngine::_activeEngine;
 
-/// Head of linked list containing all initXXX functions. 
+/// Head of linked list containing all initXXX functions.
 PythonPluginRegistration* PythonPluginRegistration::linkedlist = nullptr;
 
 /******************************************************************************
@@ -72,7 +72,7 @@ ScriptEngine::~ScriptEngine()
 void ScriptEngine::initializeEmbeddedInterpreter()
 {
 	// This is a one-time global initialization.
-	static bool isInterpreterInitialized = false; 
+	static bool isInterpreterInitialized = false;
 	if(isInterpreterInitialized)
 		return;	// Interpreter is already initialized.
 
@@ -90,7 +90,7 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 
 		// Make our internal script modules available by registering their initXXX functions with the Python interpreter.
 		// This is required for static builds where all Ovito plugins are linked into the main executable file.
-		// On Windows this is needed, because OVITO plugins have an .dll extension and the Python interpreter 
+		// On Windows this is needed, because OVITO plugins have an .dll extension and the Python interpreter
 		// only looks for modules that have a .pyd extension.
 		for(const PythonPluginRegistration* r = PythonPluginRegistration::linkedlist; r != nullptr; r = r->_next) {
 			const char* name = r->_moduleName.c_str();
@@ -107,7 +107,7 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 		// Let the ovito.plugins module know that it is running in a statically linked
 		// interpreter.
 		sys_module.attr("__OVITO_BUILD_MONOLITHIC") = py::cast(true);
-#endif		
+#endif
 
 		// Install output redirection (don't do this in console mode as it interferes with the interactive interpreter).
 		if(Application::instance()->guiMode()) {
@@ -170,7 +170,7 @@ DataSet* ScriptEngine::getCurrentDataset()
 }
 
 /******************************************************************************
-* Creates a global script engine instance. This is used when loading the 
+* Creates a global script engine instance. This is used when loading the
 * OVITO Python modules from an external interpreter.
 ******************************************************************************/
 void ScriptEngine::createAdhocEngine(DataSet* dataset)
@@ -181,9 +181,9 @@ void ScriptEngine::createAdhocEngine(DataSet* dataset)
 	// Create the global engine instance.
 	_activeEngine = createEngine(dataset);
 
-	// Inform the application that script execution is in progress.
+	// Inform the application that script execution is in progress (for an indefinite period).
 	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
-	Application::instance()->scriptExecutionStarted();
+	Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 }
 
 /******************************************************************************
@@ -200,9 +200,9 @@ int ScriptEngine::execute(const std::function<void()>& func)
 
 	// Inform the application that a script execution has started.
 	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
-	Application::instance()->scriptExecutionStarted();
+	Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 
-	// Keep track which script engine was active before this function was called. 
+	// Keep track which script engine was active before this function was called.
 	std::shared_ptr<ScriptEngine> previousEngine = std::move(_activeEngine);
 	// And mark this engine as the active one.
 	_activeEngine = shared_from_this();
@@ -218,7 +218,7 @@ int ScriptEngine::execute(const std::function<void()>& func)
 
 			// This is for backward compatibility with OVITO 2.9.0:
 			py::setattr(ovito_module, "dataset", py::cast(dataset(), py::return_value_policy::reference));
-		
+
 			func();
 		}
 		catch(py::error_already_set& ex) {
@@ -237,12 +237,12 @@ int ScriptEngine::execute(const std::function<void()>& func)
 	}
 	catch(...) {
 		_activeEngine = std::move(previousEngine);
-		Application::instance()->scriptExecutionStopped();
+	Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
 		throw;
 	}
 	_activeEngine = std::move(previousEngine);
-	Application::instance()->scriptExecutionStopped();
-	return 0;
+	Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+	return returnValue;
 }
 
 /******************************************************************************
@@ -297,7 +297,7 @@ int ScriptEngine::handlePythonException(py::error_already_set& ex, const QString
 	}
 
 	// Prepare C++ exception object.
-	Exception exception(filename.isEmpty() ? 
+	Exception exception(filename.isEmpty() ?
 		tr("The Python script has exited with an error.") :
 		tr("The Python script '%1' has exited with an error.").arg(filename), dataset());
 
@@ -390,7 +390,7 @@ int ScriptEngine::handleSystemExit()
 				auto write = py::module::import("sys").attr("stderr").attr("write");
     	        write(s);
 				write("\n");
-			} 
+			}
 			catch(const py::error_already_set&) {}
 			exitcode = 1;
 		}
@@ -402,4 +402,4 @@ done:
 	return exitcode;
 }
 
-};
+}

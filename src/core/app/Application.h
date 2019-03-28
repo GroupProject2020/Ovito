@@ -33,7 +33,7 @@ namespace Ovito {
 class OVITO_CORE_EXPORT Application : public QObject
 {
 	Q_OBJECT
-	
+
 public:
 
 	/// \brief Returns the one and only instance of this class.
@@ -64,15 +64,6 @@ public:
 	/// \return \c true if the application has been started in the non-graphical console mode;
 	///         \c false if the application should use a graphical user interface.
 	bool consoleMode() const { return _consoleMode; }
-
-	/// \brief Returns whether the application is currently executing a Python script.
-	/// \return \c true if the actions are performed by a Python script.
-	///         \c false if the user is performing the actions manually.
-	/// \note It is only safe to call this method from the main thread.
-	bool scriptMode() const { 
-		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-		return _scriptExecutionCounter != 0; 
-	}
 
 	/// \brief Returns whether the application runs in headless mode (without an X server on Linux and no OpenGL support).
 	bool headlessMode() const { return _headlessMode; }
@@ -109,19 +100,27 @@ public:
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking);
 
-	/// Notifies the application that script execution has started.
-	/// This is an internal method that should only be called by script engines.
-	void scriptExecutionStarted() {
+	/// The possibles types of contexts in which the program's actions are performed.
+	enum class ExecutionContext {
+		Interactive,	///< Actions are currently performed by the interactive user.
+		Scripting		///< Actions are currently performed by a script.
+	};
+
+	/// \brief Returns type of context in which the program's actions are currently performed.
+	/// \note It is only safe to call this method from the main thread.
+	ExecutionContext executionContext() const {
 		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-		_scriptExecutionCounter++;
+		return (_scriptExecutionCounter > 0) ? ExecutionContext::Scripting : ExecutionContext::Interactive;
 	}
 
-	/// Notifies the application that script execution has stopped.
+	/// Notifies the application that script execution has started or stopped.
 	/// This is an internal method that should only be called by script engines.
-	void scriptExecutionStopped() { 
+	void switchExecutionContext(ExecutionContext context) {
 		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-		OVITO_ASSERT(_scriptExecutionCounter > 0); 
-		_scriptExecutionCounter--; 
+		if(context == ExecutionContext::Scripting)
+			_scriptExecutionCounter++;
+		else
+			_scriptExecutionCounter--;
 	}
 
 protected:
@@ -136,7 +135,7 @@ protected:
 	bool _headlessMode;
 
 	/// Indicates how many script engines are executing code right now.
-	/// If zero, the program is running in interactive mode and all actions are manually performed by the user.
+	/// If zero, the program is running in interactive mode and all actions are performed by the human user.
 	int _scriptExecutionCounter = 0;
 
 	/// In console mode, this is the exit code returned by the application on shutdown.

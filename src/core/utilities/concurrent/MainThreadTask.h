@@ -23,21 +23,25 @@
 
 
 #include <core/Core.h>
-#include "PromiseStateWithProgress.h"
+#include "ProgressiveTask.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-/******************************************************************************
-* Generic base class for promises, which implements the basic state management,
-* progress reporting, and event processing.
-******************************************************************************/
-class OVITO_CORE_EXPORT SynchronousPromiseState : public PromiseStateWithProgress
+/**
+ * \brief Type of Task to be used within a single-thread context.
+ *
+ * The methods of this class are not thread-safe and may only be from the main thread.
+ * A new main-thread task is typically created using the TaskManager::createMainThreadOperation() method.
+ *
+ * \sa ThreadSafeTask
+ */
+class OVITO_CORE_EXPORT MainThreadTask : public ProgressiveTask
 {
 public:
 
 	/// Constructor.
-	SynchronousPromiseState(State initialState, TaskManager& taskManager) :
-		PromiseStateWithProgress(initialState), _taskManager(taskManager) {}
+	MainThreadTask(State initialState, TaskManager& taskManager) :
+		ProgressiveTask(initialState), _taskManager(taskManager) {}
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
@@ -51,8 +55,8 @@ public:
 	virtual void setProgressText(const QString& progressText) override;
 
 	/// Creates a child operation.
-	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa. 
-	virtual Promise<> createSubOperation() override;
+	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
+	virtual Promise<> createSubTask() override;
 
 	/// Blocks execution until the given future enters the completed state.
 	virtual bool waitForFuture(const FutureBase& future) override;

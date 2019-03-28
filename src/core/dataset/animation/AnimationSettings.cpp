@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2014) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -21,7 +21,7 @@
 
 #include <core/Core.h>
 #include <core/app/Application.h>
-#include <core/utilities/concurrent/PromiseWatcher.h>
+#include <core/utilities/concurrent/TaskWatcher.h>
 #include <core/dataset/DataSet.h>
 #include "AnimationSettings.h"
 
@@ -38,9 +38,9 @@ DEFINE_PROPERTY_FIELD(AnimationSettings, loopPlayback);
 * Constructor.
 ******************************************************************************/
 AnimationSettings::AnimationSettings(DataSet* dataset) : RefTarget(dataset),
-		_ticksPerFrame(TICKS_PER_SECOND/10), 
+		_ticksPerFrame(TICKS_PER_SECOND/10),
 		_playbackSpeed(1),
-		_animationInterval(0, 0), 
+		_animationInterval(0, 0),
 		_time(0),
 		_loopPlayback(true)
 {
@@ -191,11 +191,11 @@ void AnimationSettings::jumpToNextFrame()
 /******************************************************************************
 * Starts or stops animation playback in the viewports.
 ******************************************************************************/
-void AnimationSettings::setAnimationPlayback(bool on) 
+void AnimationSettings::setAnimationPlayback(bool on)
 {
 	if(on) {
 		bool reverse = false;
-		if(!Application::instance()->scriptMode()) {
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 			if(QGuiApplication::keyboardModifiers() & Qt::ShiftModifier)
 				reverse = true;
 		}
@@ -231,7 +231,7 @@ void AnimationSettings::startAnimationPlayback(FloatType playbackRate)
 }
 
 /******************************************************************************
-* Jumps to the given animation time, then schedules the next frame as soon as 
+* Jumps to the given animation time, then schedules the next frame as soon as
 * the scene was completely shown.
 ******************************************************************************/
 void AnimationSettings::continuePlaybackAtTime(TimePoint time)
@@ -239,11 +239,11 @@ void AnimationSettings::continuePlaybackAtTime(TimePoint time)
 	setTime(time);
 
 	if(isPlaybackActive()) {
-		PromiseWatcher* watcher = new PromiseWatcher(this);
-		connect(watcher, &PromiseWatcher::finished, this, &AnimationSettings::scheduleNextAnimationFrame);
-		connect(watcher, &PromiseWatcher::canceled, this, &AnimationSettings::stopAnimationPlayback);
-		connect(watcher, &PromiseWatcher::finished, watcher, &QObject::deleteLater);	// Self-destruct watcher object when it's no longer needed.
-		watcher->watch(dataset()->whenSceneReady().sharedState());
+		TaskWatcher* watcher = new TaskWatcher(this);
+		connect(watcher, &TaskWatcher::finished, this, &AnimationSettings::scheduleNextAnimationFrame);
+		connect(watcher, &TaskWatcher::canceled, this, &AnimationSettings::stopAnimationPlayback);
+		connect(watcher, &TaskWatcher::finished, watcher, &QObject::deleteLater);	// Self-destruct watcher object when it's no longer needed.
+		watcher->watch(dataset()->whenSceneReady().task());
 	}
 }
 
@@ -309,10 +309,10 @@ void AnimationSettings::onPlaybackTimer()
 }
 
 /******************************************************************************
-* uspends the automatic generation of animation keys by calling 
+* uspends the automatic generation of animation keys by calling
 * AnimationSettings::suspendAnim().
 ******************************************************************************/
-AnimationSuspender::AnimationSuspender(RefMaker* object) : AnimationSuspender(object->dataset()->animationSettings()) 
+AnimationSuspender::AnimationSuspender(RefMaker* object) : AnimationSuspender(object->dataset()->animationSettings())
 {
 }
 

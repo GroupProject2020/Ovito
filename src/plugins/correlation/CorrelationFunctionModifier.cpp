@@ -90,7 +90,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRan
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
 
-// This global mutex is used to serialize access to the FFTW3 planner 
+// This global mutex is used to serialize access to the FFTW3 planner
 // routines, which are not thread-safe.
 QMutex CorrelationFunctionModifier::_fftwMutex;
 
@@ -98,29 +98,29 @@ QMutex CorrelationFunctionModifier::_fftwMutex;
 * Constructs the modifier object.
 ******************************************************************************/
 CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_averagingDirection(RADIAL), 
-	_fftGridSpacing(3.0), 
-	_applyWindow(true), 
-	_doComputeNeighCorrelation(false), 
-	_neighCutoff(5.0), 
+	_averagingDirection(RADIAL),
+	_fftGridSpacing(3.0),
+	_applyWindow(true),
+	_doComputeNeighCorrelation(false),
+	_neighCutoff(5.0),
 	_numberOfNeighBins(50),
-	_normalizeRealSpace(VALUE_CORRELATION), 
-	_normalizeRealSpaceByRDF(false), 
-	_normalizeRealSpaceByCovariance(false), 
-	_typeOfRealSpacePlot(0), 
-	_normalizeReciprocalSpace(false), 
+	_normalizeRealSpace(VALUE_CORRELATION),
+	_normalizeRealSpaceByRDF(false),
+	_normalizeRealSpaceByCovariance(false),
+	_typeOfRealSpacePlot(0),
+	_normalizeReciprocalSpace(false),
 	_typeOfReciprocalSpacePlot(0),
-	_fixRealSpaceXAxisRange(false), 
-	_realSpaceXAxisRangeStart(0.0), 
+	_fixRealSpaceXAxisRange(false),
+	_realSpaceXAxisRangeStart(0.0),
 	_realSpaceXAxisRangeEnd(1.0),
-	_fixRealSpaceYAxisRange(false), 
-	_realSpaceYAxisRangeStart(0.0), 
+	_fixRealSpaceYAxisRange(false),
+	_realSpaceYAxisRangeStart(0.0),
 	_realSpaceYAxisRangeEnd(1.0),
-	_fixReciprocalSpaceXAxisRange(false), 
-	_reciprocalSpaceXAxisRangeStart(0.0), 
+	_fixReciprocalSpaceXAxisRange(false),
+	_reciprocalSpaceXAxisRangeStart(0.0),
 	_reciprocalSpaceXAxisRangeEnd(1.0),
-	_fixReciprocalSpaceYAxisRange(false), 
-	_reciprocalSpaceYAxisRangeStart(0.0), 
+	_fixReciprocalSpaceYAxisRange(false),
+	_reciprocalSpaceYAxisRangeStart(0.0),
 	_reciprocalSpaceYAxisRangeEnd(1.0)
 {
 }
@@ -142,7 +142,7 @@ void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if((sourceProperty1().isNull() || sourceProperty2().isNull()) && !Application::instance()->scriptMode()) {
+	if((sourceProperty1().isNull() || sourceProperty2().isNull()) && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const ParticlesObject* container = input.getObject<ParticlesObject>()) {
 			ParticlePropertyReference bestProperty;
@@ -338,7 +338,7 @@ std::vector<std::complex<FloatType>> CorrelationFunctionModifier::CorrelationAna
 	std::vector<std::complex<FloatType>> cData(nX * nY * (nZ/2+1));
 
 	// Only serial access to FFTW3 functions allowed because they are not thread-safe.
-	QMutexLocker locker(&_fftwMutex);		
+	QMutexLocker locker(&_fftwMutex);
 	auto plan = fftw_plan_dft_r2c_3d(
 		nX, nY, nZ,
 		rData.data(),
@@ -356,7 +356,7 @@ std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::c
 {
 	std::vector<FloatType> rData(nX * nY * nZ);
 	// Only serial access to FFTW3 functions allowed because they are not thread-safe.
-	QMutexLocker locker(&_fftwMutex);		
+	QMutexLocker locker(&_fftwMutex);
 	auto plan = fftw_plan_dft_c2r_3d(
 		nX, nY, nZ,
 		reinterpret_cast<fftw_complex*>(cData.data()),
@@ -408,7 +408,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 					 _vecComponent1,
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
-					 _applyWindow);	
+					 _applyWindow);
 	task()->nextProgressSubStep();
 	if(task()->isCanceled())
 		return;
@@ -603,9 +603,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	const FloatType* floatData1 = nullptr;
 	const FloatType* floatData2 = nullptr;
 	const int* intData1 = nullptr;
-	const int* intData2 = nullptr; 
+	const int* intData2 = nullptr;
 	const qlonglong* int64Data1 = nullptr;
-	const qlonglong* int64Data2 = nullptr; 
+	const qlonglong* int64Data2 = nullptr;
 	size_t componentCount1 = sourceProperty1()->componentCount();
 	size_t componentCount2 = sourceProperty2()->componentCount();
 	if(sourceProperty1()->dataType() == PropertyStorage::Float) {
@@ -641,7 +641,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(particleCount);
 	std::mutex mutex;
-	parallelForChunks(particleCount, *task(), [&,this](size_t startIndex, size_t chunkSize, PromiseState& promise) {
+	parallelForChunks(particleCount, *task(), [&,this](size_t startIndex, size_t chunkSize, Task& promise) {
 		FloatType gridSpacing = (neighCutoff() + FLOATTYPE_EPSILON) / neighCorrelation()->size();
 		std::vector<FloatType> threadLocalCorrelation(neighCorrelation()->size(), 0);
 		std::vector<int> threadLocalRDF(neighCorrelation()->size(), 0);
@@ -704,9 +704,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 	const FloatType* floatData1 = nullptr;
 	const FloatType* floatData2 = nullptr;
 	const int* intData1 = nullptr;
-	const int* intData2 = nullptr; 
+	const int* intData2 = nullptr;
 	const qlonglong* int64Data1 = nullptr;
-	const qlonglong* int64Data2 = nullptr; 
+	const qlonglong* int64Data2 = nullptr;
 	size_t componentCount1 = sourceProperty1()->componentCount();
 	size_t componentCount2 = sourceProperty2()->componentCount();
 	if(sourceProperty1()->dataType() == PropertyStorage::Float) {
@@ -789,19 +789,19 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 ******************************************************************************/
 void CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	// Output real-space correlation function to the pipeline as a data series. 
+	// Output real-space correlation function to the pipeline as a data series.
 	DataSeriesObject* realSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space"), modApp, DataSeriesObject::Line, tr("Real-space correlation"), realSpaceCorrelation());
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
 
-	// Output real-space RDF to the pipeline as a data series. 
+	// Output real-space RDF to the pipeline as a data series.
 	DataSeriesObject* realSpaceRDFObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space-rdf"), modApp, DataSeriesObject::Line, tr("Real-space RDF"), realSpaceRDF());
 	realSpaceRDFObj->setAxisLabelX(tr("Distance r"));
 	realSpaceRDFObj->setIntervalStart(0);
 	realSpaceRDFObj->setIntervalEnd(_realSpaceCorrelationRange);
 
-	// Output short-ranged part of the real-space correlation function to the pipeline as a data series. 
+	// Output short-ranged part of the real-space correlation function to the pipeline as a data series.
 	if(neighCorrelation()) {
 		DataSeriesObject* neighCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor"), modApp, DataSeriesObject::Line, tr("Neighbor correlation"), neighCorrelation());
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
@@ -809,7 +809,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoi
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
 	}
 
-	// Output short-ranged part of the RDF to the pipeline as a data series. 
+	// Output short-ranged part of the RDF to the pipeline as a data series.
 	if(neighRDF()) {
 		DataSeriesObject* neighRDFObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor-rdf"), modApp, DataSeriesObject::Line, tr("Neighbor RDF"), neighRDF());
 		neighRDFObj->setAxisLabelX(tr("Distance r"));
@@ -817,7 +817,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoi
 		neighRDFObj->setIntervalEnd(neighCutoff());
 	}
 
-	// Output reciprocal-space correlation function to the pipeline as a data series. 
+	// Output reciprocal-space correlation function to the pipeline as a data series.
 	DataSeriesObject* reciprocalSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-reciprocal-space"), modApp, DataSeriesObject::Line, tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);

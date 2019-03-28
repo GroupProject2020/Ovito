@@ -62,15 +62,15 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(HistogramModifier, numberOfBins, IntegerParam
 * Constructs the modifier object.
 ******************************************************************************/
 HistogramModifier::HistogramModifier(DataSet* dataset) : GenericPropertyModifier(dataset),
-	_numberOfBins(200), 
+	_numberOfBins(200),
 	_selectInRange(false),
-	_selectionRangeStart(0), 
+	_selectionRangeStart(0),
 	_selectionRangeEnd(1),
-	_fixXAxisRange(false), 
-	_xAxisRangeStart(0), 
+	_fixXAxisRange(false),
+	_xAxisRangeStart(0),
 	_xAxisRangeEnd(0),
-	_fixYAxisRange(false), 
-	_yAxisRangeStart(0), 
+	_fixYAxisRange(false),
+	_yAxisRangeStart(0),
 	_yAxisRangeEnd(0),
 	_onlySelectedElements(false)
 {
@@ -87,7 +87,7 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {	
+	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
@@ -127,7 +127,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 	if(sourceProperty().containerClass() != subject().dataClass())
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
 			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
-		
+
 	// Look up the property container object.
 	const PropertyContainer* container = state.expectLeafObject(subject());
 
@@ -306,7 +306,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 					else *s = 0;
 				}
 			}
-		}		
+		}
 		else {
 			throwException(tr("The property '%1' has a data type that is not supported by the histogram modifier.").arg(property->name()));
 		}

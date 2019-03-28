@@ -27,7 +27,7 @@
 namespace Ovito { namespace VoroTop {
 
 /**
- * A filter is a specification of topological types, recorded with Weinberg codes. 
+ * A filter is a specification of topological types, recorded with Weinberg codes.
  */
 class OVITO_VOROTOP_EXPORT Filter
 {
@@ -43,7 +43,7 @@ public:
 public:
 
 	/// Loads the filter definition from the given input stream.
-	bool load(CompressedTextReader& stream, bool readHeaderOnly, PromiseState& operation);
+	bool load(CompressedTextReader& stream, bool readHeaderOnly, Task& operation);
 
 	/// Returns the comment text loaded from the filter definition file.
 	const QString& filterDescription() const { return _filterDescription; }

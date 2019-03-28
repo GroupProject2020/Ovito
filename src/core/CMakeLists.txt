@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -28,7 +28,7 @@ FIND_PACKAGE(ZLIB REQUIRED)
 # Locate the libssh library. It is required for the built-in SSH client.
 FIND_PACKAGE(Libssh REQUIRED)
 
-SET(SourceFiles 
+SET(SourceFiles
 	utilities/Exception.cpp
 	utilities/linalg/AffineDecomposition.cpp
 	utilities/io/SaveStream.cpp
@@ -100,17 +100,17 @@ SET(SourceFiles
 	utilities/io/ssh/SshChannel.cpp
 	utilities/io/ssh/ProcessChannel.cpp
 	utilities/io/ssh/ScpChannel.cpp
-	utilities/io/ssh/LsChannel.cpp	
-	utilities/io/ssh/CatChannel.cpp	
-	utilities/concurrent/PromiseWatcher.cpp
+	utilities/io/ssh/LsChannel.cpp
+	utilities/io/ssh/CatChannel.cpp
+	utilities/concurrent/TaskWatcher.cpp
 	utilities/concurrent/Promise.cpp
-	utilities/concurrent/PromiseState.cpp
-	utilities/concurrent/SynchronousPromiseState.cpp
-	utilities/concurrent/PromiseStateWithProgress.cpp
-	utilities/concurrent/ThreadSafePromiseState.cpp
-	utilities/concurrent/TrackingPromiseState.cpp
-	utilities/concurrent/TaskManager.cpp
 	utilities/concurrent/Task.cpp
+	utilities/concurrent/MainThreadTask.cpp
+	utilities/concurrent/ProgressiveTask.cpp
+	utilities/concurrent/ThreadSafeTask.cpp
+	utilities/concurrent/TrackingTask.cpp
+	utilities/concurrent/TaskManager.cpp
+	utilities/concurrent/AsynchronousTask.cpp
 	utilities/mesh/TriMesh.cpp
 	rendering/SceneRenderer.cpp
 	rendering/noninteractive/NonInteractiveSceneRenderer.cpp
@@ -201,9 +201,9 @@ IF(OVITO_BUILD_MONOLITHIC)
 ENDIF()
 
 # Pass version information to source code.
-SET_SOURCE_FILES_PROPERTIES(app/Application.cpp app/StandaloneApplication.cpp PROPERTIES COMPILE_DEFINITIONS 
+SET_SOURCE_FILES_PROPERTIES(app/Application.cpp app/StandaloneApplication.cpp PROPERTIES COMPILE_DEFINITIONS
     "OVITO_VERSION_MAJOR=${OVITO_VERSION_MAJOR};OVITO_VERSION_MINOR=${OVITO_VERSION_MINOR};OVITO_VERSION_REVISION=${OVITO_VERSION_REVISION};OVITO_VERSION_STRING=\"${OVITO_VERSION_STRING}\"")
-SET_SOURCE_FILES_PROPERTIES(utilities/io/SaveStream.cpp utilities/io/LoadStream.cpp PROPERTIES COMPILE_DEFINITIONS 
+SET_SOURCE_FILES_PROPERTIES(utilities/io/SaveStream.cpp utilities/io/LoadStream.cpp PROPERTIES COMPILE_DEFINITIONS
     "OVITO_FILE_FORMAT_VERSION=${OVITO_FILE_FORMAT_VERSION}")
 
 # Run clang-tidy to check C++ code and perform static analysis.
@@ -236,7 +236,7 @@ INSTALL(TARGETS Core EXPORT OVITO
 	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
 
 # Install Libav video encoding libraries.
-IF(LIBAV_FOUND)	
+IF(LIBAV_FOUND)
 	FOREACH(lib ${Libav_LIBRARIES})
 		GET_FILENAME_COMPONENT(base_name "${lib}" NAME_WE)
 		GET_FILENAME_COMPONENT(lib_path "${lib}" PATH)
@@ -270,14 +270,14 @@ IF(WIN32)
 	GET_FILENAME_COMPONENT(LIBSSH_LIBRARY_DIR "${LIBSSH_FIRST_LIBRARY}" PATH)
 	GET_FILENAME_COMPONENT(LIBSSH_LIBRARY_NAME "${LIBSSH_FIRST_LIBRARY}" NAME_WE)
 	OVITO_INSTALL_DLL("${LIBSSH_LIBRARY_DIR}/../bin/${LIBSSH_LIBRARY_NAME}.dll")
-	
+
 	# Also install the OpenSSL DLLs needed by libssh.
 	FIND_FILE(OPENSSL_LIBRARY_DLL libeay32.dll DOC "Location of OpenSSL library (libeay32.dll)")
 	IF(NOT OPENSSL_LIBRARY_DLL)
 		MESSAGE(FATAL_ERROR "Please specify the location of the OpenSSL library by setting the OPENSSL_LIBRARY_DLL variable.")
 	ENDIF()
 	OVITO_INSTALL_DLL("${OPENSSL_LIBRARY_DLL}")
-	
+
 ELSEIF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 
 	FOREACH(lib ${LIBSSH_LIBRARIES})

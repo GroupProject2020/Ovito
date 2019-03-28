@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2016) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include "PromiseState.h"
+#include "Task.h"
 
 #include <QThreadPool>
 #include <QMetaObject>
@@ -53,10 +53,10 @@ public:
 	/// Returns the dataset container owning this task manager.
 	DataSetContainer& datasetContainer() { return _owner; }
 
-	/// \brief Returns the list of watchers of all currently running tasks.
-	///
-	/// This method may only be called from the main thread.
-	const std::vector<PromiseWatcher*>& runningTasks() const { return _runningTaskStack; }
+    /// \brief Returns the watchers for all currently running tasks.
+    /// \return A list of TaskWatcher objects, one for each registered task that is currently in the 'started' state.
+    /// \note This method is *not* thread-safe and may only be called from the main thread.
+	const std::vector<TaskWatcher*>& runningTasks() const { return _runningTaskStack; }
 
 	/// \brief Executes an asynchronous task in a background thread.
 	///
@@ -69,48 +69,54 @@ public:
 		return task->future();
 	}
 
-	/// \brief Registers a future's promise with the progress manager, which will display the progress of the background task
-	///        in the main window.
-	///
-	/// This function is thread-safe.
-	void registerTask(const FutureBase& future);
+    /// \brief Registers a future with the TaskManager, which will subsequently track the progress of the associated operation.
+    /// \param future The Future whose shared state should be registered.
+    /// \note This function is thread-safe.
+    /// \sa registerTask()
+    /// \sa FutureBase::task()
+    void registerFuture(const FutureBase& future);
 
-	/// \brief Registers a promise with the progress manager, which will display the progress of the background task
-	///        in the main window.
-	///
-	/// This function is thread-safe.
-	void registerTask(const PromiseBase& promise);
+    /// \brief Registers a promise with the TaskManager, which will subsequently track the progress of the associated operation.
+    /// \param promise The Promise whose shared state should be registered.
+    /// \note This function is thread-safe.
+    /// \sa registerTask()
+    /// \sa PromiseBase::task()
+    void registerPromise(const PromiseBase& promise);
 
-	/// \brief Registers a promise with the progress manager, which will display the progress of the background task
-	///        in the main window.
-	///
-	/// This function is thread-safe.
-	void registerTask(const PromiseStatePtr& sharedState);
+    /// \brief Registers a Task with the TaskManager, which will subsequently track the progress of the associated operation.
+    /// \note This function is thread-safe.
+	void registerTask(const TaskPtr& task);
 
-	/// Create a new promise for operations that run in the main thread and registers it with this task manager.
+    /// \brief Creates a new promise for an asynchronous operation executing in the main thread and registers it with the TaskManager.
+    /// \param startedState If true, the new task is put into the 'started' state right away. Otherwise, it must be put into the 'started' via PromiseBase::setStarted() by the caller.
+    /// \tparam R The result value type of the operation.
+    /// \return The Promise which allows controlling the task and setting the result value of the operation.
+    /// \note This method may only be called from the main thread.
 	template<typename... R>
-	Promise<R...> createSynchronousPromise(bool startedState) {
+	Promise<R...> createMainThreadOperation(bool startedState) {
 		using tuple_type = std::tuple<R...>;
-		Promise<R...> promise(std::make_shared<PromiseStateWithResultStorage<SynchronousPromiseState, tuple_type>>(
-			PromiseState::no_result_init_t(), 
-			startedState ? PromiseState::State(PromiseState::Started) : PromiseState::NoState, *this));
-		addTaskInternal(promise.sharedState());
+		Promise<R...> promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
+			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
+			startedState ? Task::State(Task::Started) : Task::NoState, *this));
+		addTaskInternal(promise.task());
 		return promise;
 	}
 
-	/// \brief Waits for the given task to finish and displays a modal progress dialog
-	///        to show the task's progress.
-	/// \return False if the task has been cancelled by the user.
-	///
-	/// This function must be called from the main thread.
-	bool waitForTask(const FutureBase& future);
+    /// \brief Waits for the given future to be fulfilled and displays a modal progress dialog to show the progress.
+    /// \return False if the operation has been cancelled by the user.
+    ///
+    /// This function must be called from the main thread.
+    bool waitForFuture(const FutureBase& future);
 
-	/// \brief Waits for the given task to finish.
-	bool waitForTask(const PromiseStatePtr& sharedState);
+    /// \brief Waits for the given task to finish.
+	/// \param task The task for which to wait.
+	/// \param dependentTask Optionally another task that is waiting for \a task. The method will return early if the dependent task has been canceled.
+	/// \return false if either \a task or \a dependentTask have been canceled.
+    bool waitForTask(const TaskPtr& task, const TaskPtr& dependentTask = {});
 
 	/// \brief Process events from the event queue when the tasks manager has started
 	///        a local event loop. Otherwise does nothing and lets the main event loop
-	///        do the processing. 
+	///        do the processing.
 	void processEvents();
 
 	/// \brief This should be called whenever a local event handling loop is entered.
@@ -132,17 +138,18 @@ public Q_SLOTS:
 
 Q_SIGNALS:
 
-	/// \brief This signal is generated by the task manager whenever a new task started to run.
-	/// The PromiseWatcher can be used to track the task's progress.
-	void taskStarted(PromiseWatcher* taskWatcher);
+    /// \brief This signal is generated by the task manager whenever one of the registered tasks started to run.
+    /// \param watcher The TaskWatcher can be used to track the operation's progress.
+	void taskStarted(TaskWatcher* taskWatcher);
 
-	/// \brief This signal is generated by the task manager whenever a task finished or stopped running.
-	void taskFinished(PromiseWatcher* taskWatcher);
+    /// \brief This signal is generated by the task manager whenever one of the registered tasks has finished or stopped running.
+    /// \param watcher The TaskWatcher that was used by the task manager to track the running task.
+	void taskFinished(TaskWatcher* taskWatcher);
 
 private:
 
 	/// \brief Registers a promise with the progress manager.
-	Q_INVOKABLE PromiseWatcher* addTaskInternal(const PromiseStatePtr& sharedState);
+	Q_INVOKABLE TaskWatcher* addTaskInternal(const TaskPtr& sharedState);
 
 private Q_SLOTS:
 
@@ -155,22 +162,22 @@ private Q_SLOTS:
 private:
 
 	/// The list of watchers for the active tasks.
-	std::vector<PromiseWatcher*> _runningTaskStack;
+	std::vector<TaskWatcher*> _runningTaskStack;
 
 	/// Indicates that waitForTask() has started a local event loop.
-	int _inLocalEventLoop = 0; 
+	int _inLocalEventLoop = 0;
 
 	/// The dataset container owning this task manager.
 	DataSetContainer& _owner;
 
-	// Needed by SynchronousPromiseState::createSubOperation():
-	friend class SynchronousPromiseState;
+	// Needed by MainThreadTask::createSubOperation():
+	friend class MainThreadTask;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::PromiseStatePtr);
+Q_DECLARE_METATYPE(Ovito::TaskPtr);
 
 

@@ -188,7 +188,7 @@ void DislocationNetwork::discardSegment(DislocationSegment* segment)
 /******************************************************************************
 * Smoothens and coarsens the dislocation lines.
 ******************************************************************************/
-bool DislocationNetwork::smoothDislocationLines(int lineSmoothingLevel, FloatType linePointInterval, PromiseState& promise)
+bool DislocationNetwork::smoothDislocationLines(int lineSmoothingLevel, FloatType linePointInterval, Task& promise)
 {
 	promise.setProgressMaximum(segments().size());
 

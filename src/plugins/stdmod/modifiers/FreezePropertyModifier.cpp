@@ -49,7 +49,7 @@ SET_MODIFIER_APPLICATION_TYPE(FreezePropertyModifier, FreezePropertyModifierAppl
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : GenericPropertyModifier(dataset), 
+FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : GenericPropertyModifier(dataset),
 	_freezeTime(0)
 {
 	// Operate on particles by default.
@@ -65,7 +65,7 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {	
+	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			for(PropertyObject* property : container->properties()) {
@@ -104,12 +104,12 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 			return std::move(output);
 		}
 	}
-		
+
 	// Request the frozen state from the pipeline.
 	return modApp->evaluateInput(freezeTime())
 		.then(executor(), [this, time, modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
 			UndoSuspender noUndo(this);
-			
+
 			// Extract the input property.
 			if(FreezePropertyModifierApplication* myModApp = dynamic_object_cast<FreezePropertyModifierApplication>(modApp.data())) {
 				if(myModApp->modifier() == this && !sourceProperty().isNull() && subject()) {
@@ -118,10 +118,10 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 					if(const PropertyObject* property = sourceProperty().findInContainer(container)) {
 
 						// Cache the property to be frozen in the ModifierApplication.
-						myModApp->updateStoredData(property, 
+						myModApp->updateStoredData(property,
 							container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty)
 								? container->getProperty(PropertyStorage::GenericIdentifierProperty)
-								: nullptr, 
+								: nullptr,
 							frozenState.stateValidity());
 
 						// Perform the actual replacement of the property in the input pipeline state.
@@ -146,7 +146,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 {
 	if(!subject())
 		throwException(tr("No property type selected."));
-	
+
 	if(sourceProperty().isNull()) {
 		state.setStatus(PipelineStatus(PipelineStatus::Warning, tr("No source property selected.")));
 		return;
@@ -161,7 +161,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 
 	// Look up the property container object.
    	PropertyContainer* container = state.expectMutableLeafObject(subject());
-	
+
 	// Get the property that will be overwritten by the stored one.
 	PropertyObject* outputProperty;
 	if(destinationProperty().type() != PropertyStorage::GenericUserProperty) {
@@ -171,19 +171,19 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 			throwException(tr("Types of source property and output property are not compatible. Cannot restore saved property values."));
 	}
 	else {
-		outputProperty = container->createProperty(destinationProperty().name(), 
+		outputProperty = container->createProperty(destinationProperty().name(),
 			myModApp->property()->dataType(), myModApp->property()->componentCount(),
 			0, true);
 	}
 	OVITO_ASSERT(outputProperty->stride() == myModApp->property()->stride());
-	
+
 	// Check if particle IDs are present and if the order of particles has changed
 	// since we took the snapshot of the property values.
 	const PropertyObject* idProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty)
 		? container->getProperty(PropertyStorage::GenericIdentifierProperty)
 		: nullptr;
-	if(myModApp->identifiers() && idProperty && 
-			(idProperty->size() != myModApp->identifiers()->size() || 
+	if(myModApp->identifiers() && idProperty &&
+			(idProperty->size() != myModApp->identifiers()->size() ||
 			!std::equal(idProperty->constDataInt64(), idProperty->constDataInt64() + idProperty->size(), myModApp->identifiers()->constDataInt64()))) {
 
 		// Build ID-to-index map.
@@ -208,7 +208,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 		}
 	}
 	else {
-		
+
 		// Make sure the number of elements didn't change when no IDs are defined.
 		if(myModApp->property()->size() != outputProperty->size())
 			throwException(tr("Number of input element has changed. Cannot restore saved property values. There were %1 elements when the snapshot was created. Now there are %2.").arg(myModApp->property()->size()).arg(outputProperty->size()));

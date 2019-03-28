@@ -279,7 +279,7 @@ public:
 	void discardSegment(DislocationSegment* segment);
 
 	/// Smoothens and coarsens the dislocation lines.
-	bool smoothDislocationLines(int lineSmoothingLevel, FloatType linePointInterval, PromiseState& promise);
+	bool smoothDislocationLines(int lineSmoothingLevel, FloatType linePointInterval, Task& promise);
 
 private:
 
@@ -288,7 +288,7 @@ private:
 
 	/// Removes some of the sampling points from a dislocation line.
 	static void coarsenDislocationLine(FloatType linePointInterval, const std::deque<Point3>& input, const std::deque<int>& coreSize, std::deque<Point3>& output, std::deque<int>& outputCoreSize, bool isClosedLoop, bool isInfiniteLine);
-		
+
 	/// The associated cluster graph.
 	const std::shared_ptr<ClusterGraph> _clusterGraph;
 

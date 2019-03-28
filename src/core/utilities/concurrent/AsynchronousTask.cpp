@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,13 +20,37 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include "Promise.h"
-#include "TaskManager.h"
+#include "AsynchronousTask.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-AsyncOperation::AsyncOperation(TaskManager& taskManager) : Promise(taskManager.createMainThreadOperation<>(true))
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+AsynchronousTaskBase::~AsynchronousTaskBase()
 {
+	// If task was never started, cancel and finish it.
+	if(Task::setStarted()) {
+		Task::cancel();
+		Task::setFinishedNoSelfLock();
+	}
+	OVITO_ASSERT(isFinished());
+}
+
+/******************************************************************************
+* Implementation of QRunnable.
+******************************************************************************/
+void AsynchronousTaskBase::run()
+{
+	OVITO_ASSERT(!isStarted() && !isFinished());
+	if(!this->setStarted()) return;
+	try {
+		perform();
+	}
+	catch(...) {
+		this->captureException();
+	}
+	this->setFinished();
 }
 
 OVITO_END_INLINE_NAMESPACE

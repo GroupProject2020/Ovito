@@ -58,9 +58,9 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(FileSource, sourceUrls, ReferenceEvent::TitleCha
 * Constructs the object.
 ******************************************************************************/
 FileSource::FileSource(DataSet* dataset) : CachingPipelineObject(dataset),
-	_adjustAnimationIntervalEnabled(true), 
-	_playbackSpeedNumerator(1), 
-	_playbackSpeedDenominator(1), 
+	_adjustAnimationIntervalEnabled(true),
+	_playbackSpeedNumerator(1),
+	_playbackSpeedDenominator(1),
 	_playbackStartTime(0)
 {
 }
@@ -124,9 +124,9 @@ bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* imp
 			_oldUrls = std::move(urls);
 			_oldImporter = importer;
 		}
-		QString displayName() const override { 
-			return QStringLiteral("Set file source url"); 
-		}		
+		QString displayName() const override {
+			return QStringLiteral("Set file source url");
+		}
 	private:
 		std::vector<QUrl> _oldUrls;
 		OORef<FileSourceImporter> _oldImporter;
@@ -163,7 +163,7 @@ void FileSource::updateListOfFrames()
 	SharedFuture<QVector<FileSourceImporter::Frame>> framesFuture = requestFrameList(true, true);
 
 	// Show progress in the main window status bar.
-	dataset()->taskManager().registerTask(framesFuture);
+	dataset()->taskManager().registerFuture(framesFuture);
 
 	// Catch exceptions and display error messages.
 	framesFuture.finally_future(executor(), [](SharedFuture<QVector<FileSourceImporter::Frame>> future) {
@@ -178,7 +178,7 @@ void FileSource::updateListOfFrames()
 }
 
 /******************************************************************************
-* Updates the internal list of input frames. 
+* Updates the internal list of input frames.
 * Invalidates cached frames in case they did change.
 ******************************************************************************/
 void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
@@ -199,7 +199,7 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 		if(frames[frameIndex] != _frames[frameIndex])
 			invalidateFrameCache(frameIndex);
 	}
-	
+
 	// Replace our internal list of frames.
 	_frames = std::move(frames);
 
@@ -368,7 +368,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 			// Retrieve the file.
 			Future<PipelineFlowState> loadFrameFuture = Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frameInfo.sourceFile)
 				.then(executor(), [this, frameInfo, frame, interval](const QString& filename) -> Future<PipelineFlowState> {
-					
+
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {
 						// In case of an error, just return the stale data that we have cached.
@@ -378,7 +378,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Create the frame loader for the requested frame.
 					FileSourceImporter::FrameLoaderPtr frameLoader = importer()->createFrameLoader(frameInfo, filename);
 					OVITO_ASSERT(frameLoader);
-					
+
 					// Execute the loader in a background thread.
 					// Collect results from the loader in the UI thread once it has finished running.
 					return dataset()->container()->taskManager().runTaskAsync(frameLoader)
@@ -405,8 +405,8 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 								_handOverInProgress = false;
 								loadedData->addAttribute(QStringLiteral("SourceFrame"), frame, this);
 								loadedData->addAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded), this);
-								
-								// When loading the current frame, make the new data collection the data collection of this 
+
+								// When loading the current frame, make the new data collection the data collection of this
 								// FileSource so that it appears in the pipeline editor.
 								if(interval.contains(dataset()->animationSettings()->time())) {
 									setDataCollection(loadedData);
@@ -440,7 +440,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 		})
 		// Post-process the results of the load operation before returning them to the caller.
 		//
-		//  - Turn any exception that was thrown during loading into a 
+		//  - Turn any exception that was thrown during loading into a
 		//    valid pipeline state with an error code.
 		//
 		.then_future(executor(), [this, frame](Future<PipelineFlowState> future) {
@@ -469,7 +469,7 @@ void FileSource::reloadFrame(int frameIndex)
 	if(!importer())
 		return;
 
-	// Remove source file from file cache so that it will be downloaded again 
+	// Remove source file from file cache so that it will be downloaded again
 	// if it came from a remote location.
 	if(frameIndex >= 0 && frameIndex < frames().size())
 		Application::instance()->fileManager()->removeFromCache(frames()[frameIndex].sourceFile);
@@ -517,7 +517,7 @@ void FileSource::adjustAnimationInterval(int gotoFrameIndex)
 	TimeInterval interval(sourceFrameToAnimationTime(0), sourceFrameToAnimationTime(std::max(numberOfFrames()-1,0)));
 	animSettings->setAnimationInterval(interval);
 
-	// Jump to the frame corresponding to the file picked by the user in the file selection dialog.	
+	// Jump to the frame corresponding to the file picked by the user in the file selection dialog.
 	if(gotoFrameIndex >= 0 && gotoFrameIndex < numberOfFrames()) {
 		animSettings->setTime(sourceFrameToAnimationTime(gotoFrameIndex));
 	}
@@ -529,7 +529,7 @@ void FileSource::adjustAnimationInterval(int gotoFrameIndex)
 	// The file importer might assign names to different input frames, e.g. the file name when
 	// a file sequence was loaded, or the simulation time when it was parsed from the file headers.
 	// We pass the frame names to the animation system so that they can be displayed in the
-	// time line.  
+	// time line.
 	animSettings->clearNamedFrames();
 	for(int animFrame = animSettings->timeToFrame(interval.start()); animFrame <= animSettings->timeToFrame(interval.end()); animFrame++) {
 		int inputFrame = animationTimeToSourceFrame(animSettings->frameToTime(animFrame));
@@ -603,7 +603,7 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			return false;
 		}
 		else if(!event.sender()->isBeingLoaded()) {
-			// Whenever the user actively edits the data collection of this FileSource, 
+			// Whenever the user actively edits the data collection of this FileSource,
 			// cached pipeline states become (mostly) invalid.
 			invalidatePipelineCache(TimeInterval(dataset()->animationSettings()->time()));
 

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -29,7 +29,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-namespace Ssh {	
+namespace Ssh {
 	// These classes are defined elsewhere:
 	class SshConnection;
 	class ScpChannel;
@@ -47,7 +47,7 @@ class RemoteFileJob : public QObject
 public:
 
 	/// Constructor.
-	RemoteFileJob(QUrl url, PromiseStatePtr promiseState);
+	RemoteFileJob(QUrl url, TaskPtr promiseState);
 
 	/// Returns the URL being accessed.
 	const QUrl& url() const { return _url; }
@@ -83,10 +83,10 @@ protected:
 	Ovito::Ssh::SshConnection* _connection = nullptr;
 
     /// The associated future interface of the job.
-    PromiseStatePtr _promiseState;
+    TaskPtr _promiseState;
 
 	/// This is for listening to signals from the promise object.
-	PromiseWatcher* _promiseWatcher = nullptr;
+	TaskWatcher* _promiseWatcher = nullptr;
 
     /// Indicates whether this job is currently active.
     bool _isActive = false;
@@ -109,7 +109,7 @@ public:
 
 	/// Constructor.
 	DownloadRemoteFileJob(QUrl url, Promise<QString>&& promise) :
-		RemoteFileJob(std::move(url), promise.sharedState()), _promise(std::move(promise)) {}
+		RemoteFileJob(std::move(url), promise.task()), _promise(std::move(promise)) {}
 
 protected:
 
@@ -162,7 +162,7 @@ public:
 
 	/// Constructor.
 	ListRemoteDirectoryJob(QUrl url, Promise<QStringList>&& promise) :
-		RemoteFileJob(std::move(url), promise.sharedState()), _promise(std::move(promise)) {}
+		RemoteFileJob(std::move(url), promise.task()), _promise(std::move(promise)) {}
 
 protected:
 
@@ -192,7 +192,7 @@ private:
     Ovito::Ssh::LsChannel* _lsChannel = nullptr;
 
 	/// The promise through which the result of this job is returned.
-	Promise<QStringList> _promise;	
+	Promise<QStringList> _promise;
 };
 
 OVITO_END_INLINE_NAMESPACE

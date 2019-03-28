@@ -39,8 +39,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
 /******************************************************************************
 * Sorts the types w.r.t. their name. Reassigns the per-element type IDs too.
-* This method is used by file parsers that create particle/bond types on the 
-* go while the read the data. In such a case, the assignment of IDs to types 
+* This method is used by file parsers that create particle/bond types on the
+* go while the read the data. In such a case, the assignment of IDs to types
 * depends on the storage order of particles/bonds in the file, which is not desirable.
 ******************************************************************************/
 void ParticleFrameData::TypeList::sortTypesByName(const PropertyPtr& typeProperty)
@@ -92,13 +92,13 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 {
 	PropertyPtr posProperty = findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(!posProperty) return;
-	
+
 	PropertyPtr bondTopologyProperty = findStandardBondProperty(BondsObject::TopologyProperty);
 	if(!bondTopologyProperty) return;
-		
+
 	PropertyPtr bondPeriodicImageProperty = BondsObject::OOClass().createStandardStorage(bondTopologyProperty->size(), BondsObject::PeriodicImageProperty, true);
 	addBondProperty(bondPeriodicImageProperty);
-	
+
 	if(!simulationCell().pbcFlags()[0] && !simulationCell().pbcFlags()[1] && !simulationCell().pbcFlags()[2])
 		return;
 
@@ -106,7 +106,7 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 		size_t index1 = bondTopologyProperty->getInt64Component(bondIndex, 0);
 		size_t index2 = bondTopologyProperty->getInt64Component(bondIndex, 1);
 		OVITO_ASSERT(index1 < posProperty->size() && index2 < posProperty->size());
-		Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(index2) - posProperty->getPoint3(index1));		
+		Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(index2) - posProperty->getPoint3(index1));
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(simulationCell().pbcFlags()[dim])
 				bondPeriodicImageProperty->setIntComponent(bondIndex, dim, -(int)floor(delta[dim] + FloatType(0.5)));
@@ -130,7 +130,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		cell = output->createObject<SimulationCellObject>(fileSource, simulationCell());
 
 		// Initialize the simulation cell and its vis element with default values.
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			cell->loadUserDefaults();
 
 		// Set up the vis element for the simulation cell.
@@ -153,13 +153,13 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 	}
 
 	if(!_particleProperties.empty()) {
-	
+
 		// Hand over particles.
 		const ParticlesObject* existingParticles = existing ? existing->getObject<ParticlesObject>() : nullptr;
 		ParticlesObject* particles = output->createObject<ParticlesObject>(fileSource);
 		if(!existingParticles) {
 			// Initialize the particles object and its vis element to default values.
-			if(!Application::instance()->scriptMode())
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				particles->loadUserDefaults();
 		}
 		else {
@@ -174,7 +174,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 						simulationCell().matrix().column(0) +
 						simulationCell().matrix().column(1) +
 						simulationCell().matrix().column(2)).length();
-				// Limit particle radius to a fraction of the cell diameter. 
+				// Limit particle radius to a fraction of the cell diameter.
 				// This is to avoid extremely large particles when the length scale of the simulation is <<1.
 				cellDiameter /= 2;
 				if(particleVis->defaultParticleRadius() > cellDiameter && cellDiameter != 0)
@@ -223,7 +223,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 			bonds->setDataSource(fileSource);
 			if(!existingBonds) {
 				// Initialize the bonds object and its vis element to default values.
-				if(!Application::instance()->scriptMode())
+				if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 					bonds->loadUserDefaults();
 			}
 			else {
@@ -272,7 +272,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		VoxelGrid* voxelGrid = output->createObject<VoxelGrid>(QStringLiteral("imported"), fileSource);
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
-		
+
 		for(auto& property : voxelProperties()) {
 
 			// Look for existing field quantity object.

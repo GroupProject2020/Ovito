@@ -48,7 +48,7 @@ OORef<DataCollection> TriMeshFrameData::handOver(const DataCollection* existing,
 
 		// Assign a TriMeshVis to the TriMeshObject.
 		OORef<TriMeshVis> triMeshVis = new TriMeshVis(fileSource->dataset());
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			triMeshVis->loadUserDefaults();
 		triMeshObj->setVisElement(triMeshVis);
 	}

@@ -50,12 +50,12 @@ public:
 	SharedFuture(Future<R...>&& other) noexcept : FutureBase(std::move(other)) {}
 
 	/// A future may directly be initialized from r-values.
-	template<typename... R2, size_t C = sizeof...(R), 
-		typename = std::enable_if_t<C != 0 
+	template<typename... R2, size_t C = sizeof...(R),
+		typename = std::enable_if_t<C != 0
 			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<SharedFuture<R...>>>::value
 			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<Future<R...>>>::value
-			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<PromiseStatePtr>>::value>>
-	SharedFuture(R2&&... val) noexcept : FutureBase(std::move(promise_type::createImmediate(std::forward<R2>(val)...)._sharedState)) {}
+			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<TaskPtr>>::value>>
+	SharedFuture(R2&&... val) noexcept : FutureBase(std::move(promise_type::createImmediate(std::forward<R2>(val)...)._task)) {}
 
 	/// Cancels the shared state associated with this Future.
 	/// The Future is no longer valid after calling this function.
@@ -70,8 +70,8 @@ public:
 		OVITO_ASSERT_MSG(isFinished(), "SharedFuture::results()", "Future must be in fulfilled state.");
 		OVITO_ASSERT_MSG(!isCanceled(), "SharedFuture::results()", "Future must not be canceled.");
 		OVITO_ASSERT_MSG(std::tuple_size<tuple_type>::value != 0, "SharedFuture::results()", "Future must not be of type <void>.");
-	    sharedState()->throwPossibleException();
-		return sharedState()->template getResults<tuple_type>();
+	    task()->throwPossibleException();
+		return task()->template getResults<tuple_type>();
 	}
 
 	/// Returns the results computed by the associated Promise.
@@ -103,7 +103,7 @@ public:
 protected:
 
 	/// Constructor that constructs a SharedFuture that is associated with the given shared state.
-	explicit SharedFuture(PromiseStatePtr p) noexcept : FutureBase(std::move(p)) {}
+	explicit SharedFuture(TaskPtr p) noexcept : FutureBase(std::move(p)) {}
 
 	template<typename... R2> friend class WeakSharedFuture;
 };
@@ -122,7 +122,7 @@ typename detail::resulting_future_type<FC,std::add_lvalue_reference_t<const type
 	OVITO_ASSERT_MSG(isValid(), "SharedFuture::then()", "Future must be valid.");
 
 	// Create an unfulfilled promise state for the result of the continuation.
-	auto trackingState = std::make_shared<ContinuationStateType>(sharedState());
+	auto trackingState = std::make_shared<ContinuationStateType>(task());
 
 	trackingState->creatorState()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
@@ -154,7 +154,7 @@ typename detail::resulting_future_type<FC,std::add_lvalue_reference_t<const type
 	// Calling then() on a SharedFuture doesn't invalidate it.
 	OVITO_ASSERT(isValid());
 
-	return ResultFutureType(PromiseStatePtr(std::move(trackingState)));
+	return ResultFutureType(TaskPtr(std::move(trackingState)));
 }
 
 /// Runs the given function once this future has reached the 'finished' state.
@@ -166,7 +166,7 @@ void SharedFuture<R...>::finally_future(Executor&& executor, FC&& cont)
 	// This future must be valid for finally_future() to work.
 	OVITO_ASSERT_MSG(isValid(), "SharedFuture::finally_future()", "Future must be valid.");
 
-	sharedState()->addContinuation(
+	task()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), future = *this](bool workCanceled) mutable {
 			if(!workCanceled) {
 				std::move(cont)(std::move(future));
@@ -178,33 +178,33 @@ void SharedFuture<R...>::finally_future(Executor&& executor, FC&& cont)
 * A weak reference to a SharedFuture
 ******************************************************************************/
 template<typename... R>
-class WeakSharedFuture : private std::weak_ptr<PromiseState>
+class WeakSharedFuture : private std::weak_ptr<Task>
 {
 public:
 
 #ifndef Q_CC_MSVC
 	constexpr WeakSharedFuture() noexcept = default;
 #else
-	constexpr WeakSharedFuture() noexcept : std::weak_ptr<PromiseState>() {}
+	constexpr WeakSharedFuture() noexcept : std::weak_ptr<Task>() {}
 #endif
 
-	WeakSharedFuture(const SharedFuture<R...>& future) noexcept : std::weak_ptr<PromiseState>(future.sharedState()) {}
+	WeakSharedFuture(const SharedFuture<R...>& future) noexcept : std::weak_ptr<Task>(future.task()) {}
 
 	WeakSharedFuture& operator=(const SharedFuture<R...>& f) noexcept {
-		std::weak_ptr<PromiseState>::operator=(f.sharedState());
+		std::weak_ptr<Task>::operator=(f.task());
 		return *this;
 	}
 
-	void reset() noexcept { 
-		std::weak_ptr<PromiseState>::reset(); 
+	void reset() noexcept {
+		std::weak_ptr<Task>::reset();
 	}
 
 	SharedFuture<R...> lock() const noexcept {
-		return SharedFuture<R...>(std::weak_ptr<PromiseState>::lock());
+		return SharedFuture<R...>(std::weak_ptr<Task>::lock());
 	}
 
 	bool expired() const noexcept {
-		return std::weak_ptr<PromiseState>::expired();
+		return std::weak_ptr<Task>::expired();
 	}
 };
 

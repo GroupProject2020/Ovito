@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "DelaunayTessellation.h"
 
 #include <boost/random/mersenne_twister.hpp>
@@ -37,7 +37,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 /******************************************************************************
 * Generates the tessellation.
 ******************************************************************************/
-bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, const Point3* positions, size_t numPoints, FloatType ghostLayerSize, const int* selectedPoints, PromiseState& promise)
+bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, const Point3* positions, size_t numPoints, FloatType ghostLayerSize, const int* selectedPoints, Task& promise)
 {
 	promise.setProgressMaximum(0);
 
@@ -85,7 +85,7 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 		_pointData.push_back((double)wp.x());
 		_pointData.push_back((double)wp.y());
 		_pointData.push_back((double)wp.z());
-#endif		
+#endif
 		_particleIndices.push_back(i);
 
 		if(promise.isCanceled())

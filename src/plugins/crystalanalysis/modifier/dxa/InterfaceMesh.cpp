@@ -21,7 +21,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/util/ManifoldConstructionHelper.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "InterfaceMesh.h"
 #include "DislocationTracer.h"
 #include "DislocationAnalysisModifier.h"
@@ -59,7 +59,7 @@ ForwardIterator most_common(ForwardIterator first, ForwardIterator last)
 /******************************************************************************
 * Creates the mesh facets separating good and bad tetrahedra.
 ******************************************************************************/
-bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, PromiseState& promise)
+bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, Task& promise)
 {
 	promise.beginProgressSubSteps(2);
 
@@ -158,7 +158,7 @@ bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const Property
 /******************************************************************************
 * Generates the nodes and facets of the defect mesh based on the interface mesh.
 ******************************************************************************/
-bool InterfaceMesh::generateDefectMesh(const DislocationTracer& tracer, HalfEdgeMesh<>& defectMesh, PromiseState& progress)
+bool InterfaceMesh::generateDefectMesh(const DislocationTracer& tracer, HalfEdgeMesh<>& defectMesh, Task& progress)
 {
 	// Copy vertices.
 	defectMesh.reserveVertices(vertexCount());

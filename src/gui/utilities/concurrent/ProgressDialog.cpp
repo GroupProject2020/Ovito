@@ -51,7 +51,7 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 	connect(buttonBox, &QDialogButtonBox::rejected, &taskManager, &TaskManager::cancelAll);
 
 	// Helper function that sets up the UI widgets in the dialog for a newly started task.
-	auto createUIForTask = [this, layout](PromiseWatcher* taskWatcher) {
+	auto createUIForTask = [this, layout](TaskWatcher* taskWatcher) {
 		QLabel* statusLabel = new QLabel(taskWatcher->progressText());
 		statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 		QProgressBar* progressBar = new QProgressBar();
@@ -63,21 +63,21 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 		}
 		layout->insertWidget(layout->count() - 2, statusLabel);
 		layout->insertWidget(layout->count() - 2, progressBar);
-		connect(taskWatcher, &PromiseWatcher::progressRangeChanged, progressBar, &QProgressBar::setMaximum);
-		connect(taskWatcher, &PromiseWatcher::progressValueChanged, progressBar, &QProgressBar::setValue);
-		connect(taskWatcher, &PromiseWatcher::progressTextChanged, statusLabel, &QLabel::setText);
-		connect(taskWatcher, &PromiseWatcher::progressTextChanged, statusLabel, [statusLabel, progressBar](const QString& text) {
+		connect(taskWatcher, &TaskWatcher::progressRangeChanged, progressBar, &QProgressBar::setMaximum);
+		connect(taskWatcher, &TaskWatcher::progressValueChanged, progressBar, &QProgressBar::setValue);
+		connect(taskWatcher, &TaskWatcher::progressTextChanged, statusLabel, &QLabel::setText);
+		connect(taskWatcher, &TaskWatcher::progressTextChanged, statusLabel, [statusLabel, progressBar](const QString& text) {
 			statusLabel->setVisible(!text.isEmpty());
 			progressBar->setVisible(!text.isEmpty());
 		});
-		
+
 		// Remove progress display when this task finished.
-		connect(taskWatcher, &PromiseWatcher::finished, progressBar, &QObject::deleteLater);
-		connect(taskWatcher, &PromiseWatcher::finished, statusLabel, &QObject::deleteLater);
+		connect(taskWatcher, &TaskWatcher::finished, progressBar, &QObject::deleteLater);
+		connect(taskWatcher, &TaskWatcher::finished, statusLabel, &QObject::deleteLater);
 	};
 
 	// Create UI for every running task.
-	for(PromiseWatcher* watcher : taskManager.runningTasks()) {
+	for(TaskWatcher* watcher : taskManager.runningTasks()) {
 		createUIForTask(watcher);
 	}
 

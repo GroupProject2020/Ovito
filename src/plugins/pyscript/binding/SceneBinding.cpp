@@ -168,7 +168,7 @@ void defineSceneSubmodule(py::module m)
 				// Start an asynchronous pipeline evaluation.
 				SharedFuture<PipelineFlowState> future = obj.evaluate(time);
 				// Block until evaluation is complete and result is available.
-				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
+				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future)) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}
@@ -528,7 +528,7 @@ void defineSceneSubmodule(py::module m)
 				// Start an asynchronous pipeline evaluation.
 				SharedFuture<PipelineFlowState> future = node.evaluatePipeline(time, true);
 				// Block until evaluation is complete and result is available.
-				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
+				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future)) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}

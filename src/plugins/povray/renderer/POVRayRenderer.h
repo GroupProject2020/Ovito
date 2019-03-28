@@ -126,17 +126,17 @@ private:
 	/// List of text primitives that need to be painted over the final image.
 	std::vector<std::tuple<QString,ColorA,QFont,Point2,int>> _textDrawCalls;
 
-	/// The stream which the POVRay script is written to. 
+	/// The stream which the POVRay script is written to.
 	QTextStream _outputStream;
 
 	/// The temporary file for passing the scene data to POV-Ray.
 	std::unique_ptr<QTemporaryFile> _sceneFile;
 
-	/// The temporary file for receiving the rendered image from POV-Ray. 
+	/// The temporary file for receiving the rendered image from POV-Ray.
 	std::unique_ptr<QTemporaryFile> _imageFile;
 
 	/// This is used by the POVRayExporter class to make the export process interruptable.
-	PromiseStatePtr _exportOperation;
+	TaskPtr _exportOperation;
 
 	/// The POV-Ray quality level to use for rendering (0 <= level <= 11).
 	/// See POV-Ray documentation for details.
@@ -179,7 +179,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofFocalLength, setDofFocalLength, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the camera's aperture, which is used for depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofAperture, setDofAperture, PROPERTY_FIELD_MEMORIZE);	
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofAperture, setDofAperture, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of sampling rays used for focal blur.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, dofSampleCount, setDofSampleCount, PROPERTY_FIELD_MEMORIZE);

@@ -42,10 +42,10 @@ SurfaceMesh::SurfaceMesh(DataSet* dataset, const QString& title) : PeriodicDomai
 }
 
 /******************************************************************************
-* Returns the data encapsulated by this object after making sure it is not 
+* Returns the data encapsulated by this object after making sure it is not
 * shared with other owners.
 ******************************************************************************/
-const SurfaceMeshPtr& SurfaceMesh::modifiableStorage() 
+const SurfaceMeshPtr& SurfaceMesh::modifiableStorage()
 {
 	// Copy data storage on write if there is more than one reference to the storage.
 	OVITO_ASSERT(storage());
@@ -59,7 +59,7 @@ const SurfaceMeshPtr& SurfaceMesh::modifiableStorage()
 /******************************************************************************
 * Fairs a closed triangle mesh.
 ******************************************************************************/
-bool SurfaceMesh::smoothMesh(HalfEdgeMesh<>& mesh, const SimulationCell& cell, int numIterations, PromiseState& promise, FloatType k_PB, FloatType lambda)
+bool SurfaceMesh::smoothMesh(HalfEdgeMesh<>& mesh, const SimulationCell& cell, int numIterations, Task& promise, FloatType k_PB, FloatType lambda)
 {
 	// This is the implementation of the mesh smoothing algorithm:
 	//
@@ -119,7 +119,7 @@ void SurfaceMesh::smoothMeshIteration(HalfEdgeMesh<>& mesh, FloatType prefactor,
 
 
 /******************************************************************************
-* Determines if a spatial location is inside or oustide of the region enclosed 
+* Determines if a spatial location is inside or oustide of the region enclosed
 * by the surface.
 *
 * Return value:
@@ -129,10 +129,10 @@ void SurfaceMesh::smoothMeshIteration(HalfEdgeMesh<>& mesh, FloatType prefactor,
 ******************************************************************************/
 int SurfaceMesh::locatePoint(const Point3& location, FloatType epsilon) const
 {
-	return locatePointStatic(location, *storage(), 
-				domain() ? domain()->data() : SimulationCell(), 
+	return locatePointStatic(location, *storage(),
+				domain() ? domain()->data() : SimulationCell(),
 				isCompletelySolid(), epsilon);
-}	
+}
 
 /******************************************************************************
 * Implementation of the locatePoint() method.

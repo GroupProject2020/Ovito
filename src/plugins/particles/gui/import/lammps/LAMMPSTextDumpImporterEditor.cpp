@@ -40,7 +40,7 @@ SET_OVITO_OBJECT_EDITOR(LAMMPSTextDumpImporter, LAMMPSTextDumpImporterEditor);
 bool LAMMPSTextDumpImporterEditor::showEditColumnMappingDialog(LAMMPSTextDumpImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
 	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForFuture(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
 
@@ -98,7 +98,7 @@ void LAMMPSTextDumpImporterEditor::createUI(const RolloutInsertionParameters& ro
 	useCustomMappingUI->buttonFalse()->setText(tr("Automatic mapping"));
 	sublayout->addWidget(useCustomMappingUI->buttonFalse());
 	useCustomMappingUI->buttonTrue()->setText(tr("User-defined mapping to particle properties"));
-	sublayout->addWidget(useCustomMappingUI->buttonTrue());	
+	sublayout->addWidget(useCustomMappingUI->buttonTrue());
 	connect(useCustomMappingUI->buttonFalse(), &QRadioButton::clicked, this, [this]() {
 		if(LAMMPSTextDumpImporter* importer = static_object_cast<LAMMPSTextDumpImporter>(editObject()))
 			importer->requestReload();

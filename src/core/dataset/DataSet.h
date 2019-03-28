@@ -35,7 +35,7 @@
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/SharedFuture.h>
 #include <core/utilities/concurrent/Promise.h>
-#include <core/utilities/concurrent/PromiseWatcher.h>
+#include <core/utilities/concurrent/TaskWatcher.h>
 #include <core/utilities/MixedKeyCache.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
@@ -55,7 +55,7 @@ class OVITO_CORE_EXPORT DataSet : public RefTarget
 {
 	OVITO_CLASS(DataSet)
 	Q_OBJECT
-	
+
 public:
 
 	/// \brief Constructs an empty dataset.
@@ -126,7 +126,7 @@ public:
 	/// \throw Exception on error.
 	bool renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, AsyncOperation&& operation);
 
-	/// \brief Returns a future that is triggered once all data pipelines in the scene 
+	/// \brief Returns a future that is triggered once all data pipelines in the scene
 	///        have been completely evaluated at the current animation time.
 	SharedFuture<> whenSceneReady();
 
@@ -204,7 +204,7 @@ private:
 
 	/// Requests the (re-)evaluation of all data pipelines in the current scene.
 	void makeSceneReady(bool forceReevaluation);
-			
+
 private Q_SLOTS:
 
 	/// Is called when the pipeline evaluation of a scene node has finished.
@@ -212,7 +212,7 @@ private Q_SLOTS:
 
 	/// Is called whenver viewport updates are resumed.
 	void onViewportUpdatesResumed();
-				
+
 private:
 
 	/// The configuration of the viewports.
@@ -253,9 +253,9 @@ private:
 
 	/// The last animation time at which the scene was made ready.
 	TimePoint _sceneReadyTime;
-		
+
 	/// The watcher object that is used to monitor the evaluation of data pipelines in the scene.
-	PromiseWatcher _pipelineEvaluationWatcher;
+	TaskWatcher _pipelineEvaluationWatcher;
 
 	/// The future for the results of the pipeline evaluation being in progress.
 	SharedFuture<PipelineFlowState> _pipelineEvaluationFuture;

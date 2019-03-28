@@ -36,14 +36,9 @@ namespace py = pybind11;
  */
 class OVITO_PYSCRIPT_EXPORT ScriptEngine : public QObject, public std::enable_shared_from_this<ScriptEngine>
 {
-private:
+	Q_OBJECT
 
-	/// \brief Initializes the scripting engine and sets up the environment.
-	/// \param dataset The engine will execute scripts in the context of this dataset.
-	ScriptEngine(DataSet* dataset);
-	
 public:
-
 	/// \brief Creates a scripting engine and sets up the scripting environment.
 	/// \param dataset The new engine will execute scripts in the context of this dataset.
 	static std::shared_ptr<ScriptEngine> createEngine(DataSet* dataset) {
@@ -94,6 +89,9 @@ Q_SIGNALS:
 	void scriptError(const QString& errorString);
 
 private:
+	/// \brief Initializes the scripting engine and sets up the environment.
+	/// \param dataset The engine will execute scripts in the context of this dataset.
+	ScriptEngine(DataSet* dataset);
 
 	/// Initializes the embedded Python interpreter and sets up the global namespace.
 	void initializeEmbeddedInterpreter();
@@ -132,8 +130,6 @@ private:
 
 	/// The script engine that is currently active (i.e. which is executing a script).
 	static std::shared_ptr<ScriptEngine> _activeEngine;
-
-	Q_OBJECT
 };
 
 }	// End of namespace

@@ -79,10 +79,10 @@ Future<PipelineFlowState> SlipSurfaceVis::transformDataImpl(TimePoint time, cons
 	const SimulationCellObject* cellObject = microstructureObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
-			
+
 	// Get the cluster graph.
 	const ClusterGraphObject* clusterGraphObject = flowState.getObject<ClusterGraphObject>();
-	
+
 	// Build lookup map of lattice structure names.
 	QStringList structureNames;
 	if(const PatternCatalog* patternCatalog = flowState.getObject<PatternCatalog>()) {
@@ -113,7 +113,7 @@ Future<PipelineFlowState> SlipSurfaceVis::transformDataImpl(TimePoint time, cons
 				c.g() = std::min(c.g() + FloatType(0.3), FloatType(1));
 				c.b() = std::min(c.b() + FloatType(0.3), FloatType(1));
 			}
-				
+
 			// Output the computed mesh as a RenderableSurfaceMesh.
 			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), {});
 			renderableMesh->setMaterialColors(std::move(materialColors));
@@ -130,7 +130,7 @@ void SlipSurfaceVis::PrepareMeshEngine::perform()
 {
 	setProgressText(tr("Preparing slip surface for display"));
 
-	TriMesh surfaceMesh;	
+	TriMesh surfaceMesh;
 	std::vector<ColorA> materialColors;
 	std::vector<size_t> originalFaceMap;
 
@@ -143,9 +143,9 @@ void SlipSurfaceVis::PrepareMeshEngine::perform()
 	if(_smoothShading) {
 		// Assign smoothing group to faces to interpolate normals.
 		for(auto& face : surfaceMesh.faces())
-			face.setSmoothingGroups(1);	
+			face.setSmoothingGroups(1);
 	}
-			
+
 	setResult(std::move(surfaceMesh), std::move(materialColors), std::move(originalFaceMap));
 }
 
@@ -215,7 +215,7 @@ void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>
 
 		// Get the original microstructure object and the pattern catalog.
 		const PatternCatalog* patternCatalog = flowState.getObject<PatternCatalog>();
-		const MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(renderableMesh->sourceDataObject().get());	
+		const MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(renderableMesh->sourceDataObject().get());
 
 		// Create the pick record that keeps a reference to the original data.
 		visCache.pickInfo = new SlipSurfacePickInfo(this, microstructureObj, renderableMesh, patternCatalog);
@@ -230,9 +230,9 @@ void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>
 /******************************************************************************
 * Generates the final triangle mesh, which will be rendered.
 ******************************************************************************/
-bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, std::vector<size_t>& originalFaceMap, PromiseState& promise)
+bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, std::vector<size_t>& originalFaceMap, Task& promise)
 {
-	// This predicate function selects the faces of the microstructure mesh 
+	// This predicate function selects the faces of the microstructure mesh
 	// that are part of the slip surfaces to be rendered.
 	auto facePredicate = [](const Microstructure::Face* face) {
 		return face->isSlipSurfaceFace() && face->isEvenFace();
@@ -241,7 +241,7 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 	// Convert all slip faces of the half-edge mesh to a triangle mesh.
 	input.convertToTriMesh(output, facePredicate);
 	originalFaceMap.reserve(output.faces().size());
-	
+
 	// Color faces according to slip vector.
 	auto fout = output.faces().begin();
 	size_t inputIndex = 0;

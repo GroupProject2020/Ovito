@@ -25,7 +25,7 @@
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/DataSet.h>
@@ -58,12 +58,12 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCut
 * Constructs the modifier object.
 ******************************************************************************/
 PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
-		_rmsdCutoff(0.1), 
-		_outputRmsd(false), 
+		_rmsdCutoff(0.1),
+		_outputRmsd(false),
 		_outputInteratomicDistance(false),
-		_outputOrientation(false), 
-		_useStandardOrientations(true), 
-		_outputDeformationGradient(false), 
+		_outputOrientation(false),
+		_useStandardOrientations(true),
+		_outputDeformationGradient(false),
 		_outputOrderingTypes(false)
 {
 	// Define the structure types.
@@ -82,7 +82,7 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 		OORef<ParticleType> otype = new ParticleType(dataset);
 		otype->setNumericId(id);
 		otype->setColor({0.75f, 0.75f, 0.75f});
-		_orderingTypes.push_back(this, PROPERTY_FIELD(orderingTypes), std::move(otype));	
+		_orderingTypes.push_back(this, PROPERTY_FIELD(orderingTypes), std::move(otype));
 	}
 	orderingTypes()[ORDERING_NONE]->setColor({0.95f, 0.95f, 0.95f});
 	orderingTypes()[ORDERING_NONE]->setName(tr("Other"));
@@ -209,7 +209,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 	if(typesToIdentify()[HEX_DIAMOND]) flags |= PTM_CHECK_DHEX;
 
 	// Perform analysis on each particle.
-	parallelForChunks(positions()->size(), *task(), [this, &nbrdata, &flags](size_t startIndex, size_t count, PromiseState& promise) {
+	parallelForChunks(positions()->size(), *task(), [this, &nbrdata, &flags](size_t startIndex, size_t count, Task& promise) {
 
 		// Initialize thread-local storage for PTM routine.
 		ptm_local_handle_t ptm_local_handle = ptm_initialize_local();
@@ -280,7 +280,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 
 	// Determine histogram bin size based on maximum RMSD value.
 	const size_t numHistogramBins = 100;
-	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty); 
+	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size()) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
@@ -306,7 +306,7 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 
 	// Enforce RMSD cutoff.
 	if(modifier->rmsdCutoff() > 0 && rmsd()) {
-		
+
 		// Start off with the original particle classifications and make a copy.
 		const PropertyPtr finalStructureTypes = std::make_shared<PropertyStorage>(*structures);
 
@@ -330,7 +330,7 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 void PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	StructureIdentificationEngine::emitResults(time, modApp, state);
-	
+
 	// Also output structure type counts, which have been computed by the base class.
 	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
 	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
@@ -362,7 +362,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, 
 	if(orderingTypes() && modifier->outputOrderingTypes()) {
 		PropertyObject* orderingProperty = particles->createProperty(orderingTypes());
 		// Attach ordering types to output particle property.
-		orderingProperty->setElementTypes(modifier->orderingTypes());		
+		orderingProperty->setElementTypes(modifier->orderingTypes());
 	}
 
 	// Output RMSD histogram.

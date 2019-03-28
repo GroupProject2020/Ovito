@@ -63,7 +63,7 @@ DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 	setSelection(new SelectionSet(this));
 	setRenderSettings(new RenderSettings(this));
 
-	connect(&_pipelineEvaluationWatcher, &PromiseWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
+	connect(&_pipelineEvaluationWatcher, &TaskWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
 }
 
 /******************************************************************************
@@ -309,7 +309,7 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 		if(!stateFuture.isFinished()) {
 			// Wait for this state to become available and return a pending future.
 			_currentEvaluationNode = node;
-			_pipelineEvaluationWatcher.watch(stateFuture.sharedState());
+			_pipelineEvaluationWatcher.watch(stateFuture.task());
 			newPipelineEvaluationFuture = std::move(stateFuture);
 			return false;
 		}
@@ -459,7 +459,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 					operation.setProgressValue(frameIndex);
 					operation.setProgressText(tr("Rendering animation (frame %1 of %2)").arg(frameIndex+1).arg(numberOfFrames));
 
-					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubOperation());
+					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubTask());
 					if(operation.isCanceled())
 						break;
 

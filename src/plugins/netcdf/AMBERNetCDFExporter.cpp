@@ -47,7 +47,7 @@ const char NC_CELL_ANGLES_STR[]   = "cell_angles";
 const char NC_UNITS_STR[]         = "units";
 const char NC_SCALE_FACTOR_STR[]  = "scale_factor";
 
-#ifdef FLOATTYPE_FLOAT 
+#ifdef FLOATTYPE_FLOAT
 	#define NC_OVITO_FLOATTYPE NC_FLOAT
 #else
 	#define NC_OVITO_FLOATTYPE NC_DOUBLE
@@ -117,7 +117,7 @@ bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFr
 	count[0] = 1;
 	count[1] = 5;
 	NCERR(nc_put_vara_text(_ncid, _cell_angular_var, index, count, "alpha"));
-	index[0] = 1;	
+	index[0] = 1;
 	count[1] = 4;
 	NCERR(nc_put_vara_text(_ncid, _cell_angular_var, index, count, "beta"));
 	index[0] = 2;
@@ -138,7 +138,7 @@ void AMBERNetCDFExporter::closeOutputFile(bool exportCompleted)
 {
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
-	
+
 	OVITO_ASSERT(!outputFile().isOpen());
 
 	if(_ncid != -1) {
@@ -164,11 +164,11 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 	const AffineTransformation simCell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
 	size_t atomsCount = particles->elementCount();
-	
+
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
-	NetCDFExclusiveAccess locker(operation.sharedState().get());
+	NetCDFExclusiveAccess locker(operation.task().get());
 	if(!locker.isLocked()) return false;
-	
+
 	// Define the "atom" dimension when writing first frame and the number of atoms is known.
 	if(_atom_dim == -1) {
 		NCERR(nc_redef(_ncid));
@@ -199,7 +199,7 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 			// Skip the particle position property. It has already been emitted above.
 			if(c->type() == ParticlesObject::PositionProperty)
 				continue;
-				
+
 			// We can export a particle property only as a whole to a NetCDF file, not individual components.
 			// Skip this column if we have already emitted an entry for the same particle property before.
 			if(std::find_if(columnMapping().begin(), c, [c](const ParticlePropertyReference& pr) { return pr.name() == c->name(); }) != c)
@@ -240,7 +240,7 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 			if(dims[2] == 0 && prop->componentCount() > 1) {
 				NCERR(nc_def_dim(_ncid, qPrintable(QStringLiteral("dim_") + prop->name()), prop->componentCount(), &dims[2]));
 			}
-			
+
 			// Create the NetCDF variable for the property.
 			nc_type ncDataType;
 			if(prop->dataType() == PropertyStorage::Int) ncDataType = NC_INT;
@@ -253,7 +253,7 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 			NCERR(nc_def_var(_ncid, mangledName ? mangledName : qPrintable(c->name()), ncDataType, (prop->componentCount() > 1) ? 3 : 2, dims, &ncvar));
 			_columns.emplace_back(*c, prop->dataType(), prop->componentCount(), ncvar);
 		}
-		
+
 		NCERR(nc_enddef(_ncid));
 	}
 	else {
@@ -267,7 +267,7 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 
 	// Write global attributes to the NetCDF file.
 	const QVariantMap& attributes = state.buildAttributesMap();
-	for(auto entry = _attributes_vars.constBegin(); entry != _attributes_vars.constEnd(); ++entry) {		
+	for(auto entry = _attributes_vars.constBegin(); entry != _attributes_vars.constEnd(); ++entry) {
 		QVariant val = attributes.value(entry.key());
 		if(val.type() == (int)QMetaType::Double || val.type() == (int)QMetaType::Float) {
 			double d = val.toDouble();
@@ -322,16 +322,16 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 	// Write atomic coordinates.
 	count[1] = atomsCount;
 	count[2] = 3;
-#ifdef FLOATTYPE_FLOAT 
+#ifdef FLOATTYPE_FLOAT
 	NCERR(nc_put_vara_float(_ncid, _coords_var, start, count, posProperty->constDataFloat()));
 #else
-	NCERR(nc_put_vara_double(_ncid, _coords_var, start, count, posProperty->constDataFloat()));	
+	NCERR(nc_put_vara_double(_ncid, _coords_var, start, count, posProperty->constDataFloat()));
 #endif
 
 	// Write out other particle properties.
 	operation.setProgressMaximum(_columns.size());
 	for(const NCOutputColumn& outColumn : _columns) {
-		
+
 		// Look up the property to be exported.
 		const PropertyObject* prop = outColumn.property.findInContainer(particles);
 		if(!prop)
@@ -350,10 +350,10 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, prop->constDataInt64()));
 		}
 		else if(outColumn.dataType == PropertyStorage::Float) {
-#ifdef FLOATTYPE_FLOAT 
+#ifdef FLOATTYPE_FLOAT
 			NCERR(nc_put_vara_float(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));
 #else
-			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));	
+			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));
 #endif
 		}
 

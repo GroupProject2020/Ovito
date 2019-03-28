@@ -213,7 +213,7 @@ bool GuiDataSetContainer::askForSaveChanges()
 bool GuiDataSetContainer::fileNew()
 {
 	OORef<DataSet> newSet = new DataSet();
-	if(!Application::instance()->scriptMode() && Application::instance()->guiMode())
+	if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive && Application::instance()->guiMode())
 		newSet->loadUserDefaults();
 	setCurrentSet(newSet);
 	return true;
@@ -249,7 +249,7 @@ bool GuiDataSetContainer::fileLoad(const QString& filename)
 		stream.close();
 
 		if(!dataSet)
-			throw Exception(tr("State file '%1' does not contain a dataset.").arg(filename), this);		
+			throw Exception(tr("State file '%1' does not contain a dataset.").arg(filename), this);
 	}
 	catch(Exception& ex) {
 		// Provide a local context for the error.
@@ -277,7 +277,7 @@ bool GuiDataSetContainer::importFile(const QUrl& url, const FileImporterClass* i
 
 		// Download file so we can determine its format.
 		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager(), url);
-		if(!taskManager().waitForTask(fetchFileFuture))
+		if(!taskManager().waitForFuture(fetchFileFuture))
 			return false;
 
 		// Detect file format.

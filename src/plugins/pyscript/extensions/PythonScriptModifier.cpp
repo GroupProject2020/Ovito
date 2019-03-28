@@ -336,7 +336,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 
 				// Python has returned a generator. We have to return a Future on the
 				// the final pipeline state that is still to be computed.
-				func_continuation.promise = dataset()->taskManager().createSynchronousPromise<PipelineFlowState>(true);
+				func_continuation.promise = dataset()->taskManager().createMainThreadOperation<PipelineFlowState>(true);
 				Future<PipelineFlowState> future = func_continuation.promise.future();
 				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));
 

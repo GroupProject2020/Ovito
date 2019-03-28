@@ -40,7 +40,7 @@ bool LAMMPSDataImporterEditor::inspectNewFile(FileImporter* importer, const QUrl
 
 	// Inspect the data file and try to detect the LAMMPS atom style.
 	Future<LAMMPSDataImporter::LAMMPSAtomStyle> inspectFuture = dataImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForFuture(inspectFuture))
 		return false;
 	LAMMPSDataImporter::LAMMPSAtomStyle detectedAtomStyle = inspectFuture.result();
 

@@ -80,15 +80,15 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available voxel grid from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const VoxelGrid* grid = input.getObject<VoxelGrid>()) {
 			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
 		}
 	}
-	
+
 	// Use the first available property from the input grid as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const VoxelGrid* grid = dynamic_object_cast<VoxelGrid>(input.getLeafObject(subject()))) {
 			for(const PropertyObject* property : grid->properties()) {
@@ -100,7 +100,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -137,7 +137,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 	FloatType isolevel = isolevelController() ? isolevelController()->getFloatValue(time, validityInterval) : 0;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, voxelGrid->shape(), property->storage(), 
+	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, voxelGrid->shape(), property->storage(),
 			sourceProperty().vectorComponent(), voxelGrid->domain()->data(), isolevel);
 }
 
@@ -164,8 +164,8 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	// Transform mesh vertices from orthogonal grid space to world space.
 	const AffineTransformation tm = _simCell.matrix() * Matrix3(
-		FloatType(1) / (_gridShape[0] - (_simCell.pbcFlags()[0]?0:1)), 0, 0, 
-		0, FloatType(1) / (_gridShape[1] - (_simCell.pbcFlags()[1]?0:1)), 0, 
+		FloatType(1) / (_gridShape[0] - (_simCell.pbcFlags()[0]?0:1)), 0, 0,
+		0, FloatType(1) / (_gridShape[1] - (_simCell.pbcFlags()[1]?0:1)), 0,
 		0, 0, FloatType(1) / (_gridShape[2] - (_simCell.pbcFlags()[2]?0:1)));
 	for(HalfEdgeMesh<>::Vertex* vertex : mesh()->vertices())
 		vertex->setPos(tm * vertex->pos());
@@ -197,7 +197,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {
 		int binIndex = (*v - minValue()) / binSize;
 		histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
-	}	
+	}
 }
 
 /******************************************************************************
@@ -208,7 +208,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
 
 	// Look up the input grid.
-	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {		
+	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {
 		// Create the output data object.
 		SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("isosurface"), modApp, tr("Isosurface"));
 		meshObj->setStorage(mesh());
@@ -221,7 +221,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("isosurface-histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
 	seriesObj->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(minValue());
-	seriesObj->setIntervalEnd(maxValue());	
+	seriesObj->setIntervalEnd(maxValue());
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Field value range: [%1, %2]").arg(minValue()).arg(maxValue())));
 }

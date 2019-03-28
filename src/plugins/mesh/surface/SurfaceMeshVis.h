@@ -27,7 +27,7 @@
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <plugins/mesh/halfedge/HalfEdgeMesh.h>
-#include <core/utilities/concurrent/Task.h>
+#include <core/utilities/concurrent/AsynchronousTask.h>
 #include <core/dataset/animation/controller/Controller.h>
 
 namespace Ovito { namespace Mesh {
@@ -65,10 +65,10 @@ public:
 	void setCapTransparency(FloatType transparency) { if(capTransparencyController()) capTransparencyController()->setCurrentFloatValue(transparency); }
 
 	/// Generates the final triangle mesh, which will be rendered.
-	static bool buildSurfaceMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
+	static bool buildSurfaceMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, Task* progress = nullptr);
 
 	/// Generates the triangle mesh for the PBC cap.
-	static void buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* progress = nullptr);
+	static void buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, Task* progress = nullptr);
 
 protected:
 
@@ -79,7 +79,7 @@ protected:
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 protected:
-	
+
 	/// Computation engine that builds the rendering mesh.
 	class PrepareSurfaceEngine : public AsynchronousTask<TriMesh, TriMesh>
 	{

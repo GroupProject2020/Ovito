@@ -41,7 +41,7 @@ bool LAMMPSBinaryDumpImporterEditor::inspectNewFile(FileImporter* importer, cons
 	// Retrieve column information of input file.
 	LAMMPSBinaryDumpImporter* lammpsImporter = static_object_cast<LAMMPSBinaryDumpImporter>(importer);
 	Future<InputColumnMapping> inspectFuture = lammpsImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForFuture(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
 
@@ -124,7 +124,7 @@ void LAMMPSBinaryDumpImporterEditor::createUI(const RolloutInsertionParameters& 
 	// Sort particles
 	BooleanParameterUI* sortParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::sortParticles));
 	sublayout->addWidget(sortParticlesUI->checkBox());
-	
+
 	QGroupBox* columnMappingBox = new QGroupBox(tr("File columns"), rollout);
 	sublayout = new QVBoxLayout(columnMappingBox);
 	sublayout->setContentsMargins(4,4,4,4);
