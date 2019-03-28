@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -60,9 +60,9 @@ void PythonScriptModifier::loadUserDefaults()
 			"    #    frame - The current animation frame number at which the pipeline is being evaluated.\n"
 			"    #    data   - The DataCollection passed in from the pipeline system. \n"
 			"    #                The function may modify the data stored in this DataCollection as needed.\n"
-			"    # \n"	
-			"    # What follows is an example code snippet doing nothing except printing the current \n" 
-			"    # list of particle properties to the log window. Use it as a starting point for developing \n" 
+			"    # \n"
+			"    # What follows is an example code snippet doing nothing except printing the current \n"
+			"    # list of particle properties to the log window. Use it as a starting point for developing \n"
 			"    # your own data modification or analysis functions. \n"
 			"    \n"
 			"    if data.particles != None:\n"
@@ -95,7 +95,7 @@ void PythonScriptModifier::compileScript(ScriptEngine& engine)
 		try {
 			// Make sure the actions of the script function are not recorded on the undo stack.
 			UndoSuspender noUndo(dataset());
-			
+
 			// Run script code within a fresh and private namespace.
 			py::dict localNamespace = py::globals().attr("copy")();
 			engine.executeCommands(script(), localNamespace);
@@ -115,7 +115,7 @@ void PythonScriptModifier::compileScript(ScriptEngine& engine)
 			});
 
 			// Update status, because log output stored by the modifier has changed.
-			notifyDependents(ReferenceEvent::ObjectStatusChanged);		
+			notifyDependents(ReferenceEvent::ObjectStatusChanged);
 		}
 		catch(const Exception& ex) {
 			_scriptCompilationOutput += ex.messages().join(QChar('\n'));
@@ -155,8 +155,7 @@ ScriptEngine* PythonScriptModifier::getScriptEngine()
 ******************************************************************************/
 Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Make sure the pipeline evaluation is not treiggered from within an
-	// ongoing pipeline evaluation.
+	// Make sure this modifier evaluation has not been triggered from within an ongoing pipeline evaluation.
 	OVITO_ASSERT(!_activeModApp);
 	if(_activeModApp)
 		throwException(tr("Python script modifier is not reentrant. It cannot be evaluated while another evaluation is already in progress."));
@@ -175,8 +174,8 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 	try {
 
 		// Reset script log output.
-		_activeModApp->clearLogOutput();	
-		
+		_activeModApp->clearLogOutput();
+
 		// Compile script source if needed.
 		if(!_modifyScriptFunction) {
 			compileScript(*engine);
@@ -188,7 +187,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 		// Check if script function has been set.
 		if(!_modifyScriptFunction)
 			throwException(tr("PythonScriptModifier has not been assigned a Python function."));
-		
+
 		try {
 			// Make sure the actions of the script function are not recorded on the undo stack.
 			UndoSuspender noUndo(dataset());
@@ -198,7 +197,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 
 			// Limit validity interval of the output to the current frame,
 			// because we don't know if the user script produces time-dependent results or not.
-			output.intersectStateValidity(time);				
+			output.intersectStateValidity(time);
 
 			// Call the user-defined modifier function.
 			py::object functionResult;
@@ -213,7 +212,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 
 				// The following code is for backward compatibility with OVITO 2.9.0:
 				//
-				// Retry to call the user-defined modifier function with a separate input and an output data collection. 
+				// Retry to call the user-defined modifier function with a separate input and an output data collection.
 				// but first check if the function has the expected signature.
 				py::object inspect_module = py::module::import("inspect");
 #if PY_MAJOR_VERSION >= 3
@@ -231,15 +230,15 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					functionResult = _modifyScriptFunction(*arguments);
 				});
 			}
-			
+
 			// Exit the modifier evaluation phase.
 			_activeModApp = nullptr;
 			notifyDependents(ReferenceEvent::ObjectStatusChanged);
-			modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);				
-			 
+			modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
+
 			// Check if the function is a generator function.
 			if(py::isinstance<py::iterator>(functionResult)) {
-				
+
 				// A data structure storing the information needed for a
 				// continued execution of the Python generator function.
 				struct {
@@ -247,7 +246,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					py::iterator generator;
 					PipelineFlowState output;
 					Promise<PipelineFlowState> promise;
-					
+
 					// This is to submit this structure as a work item to the executor:
 					void reschedule_execution() {
 						executor.createWork(std::move(*this)).post();
@@ -256,7 +255,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					// This is called by the executor at a later time:
 					void operator()(bool wasCanceled) {
 						if(wasCanceled || promise.isCanceled()) return;
-						
+
 						// Get access to the modifier and its modifier application.
 						PythonScriptModifierApplication* modApp = static_object_cast<PythonScriptModifierApplication>(const_cast<OvitoObject*>(executor.object()));
 						PythonScriptModifier* modifier = dynamic_object_cast<PythonScriptModifier>(modApp->modifier());
@@ -269,7 +268,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 
 						// Get the script engine to use.
 						ScriptEngine* engine = modifier->getScriptEngine();
-						
+
 						try {
 							try {
 								engine->execute([this]() {
@@ -294,7 +293,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 										else if(py::isinstance<py::str>(value)) {
 											promise.setProgressText(py::cast<QString>(value));
 										}
-											
+
 										// Let the Python function perform some work.
 										++generator;
 										// Check if the generator is exhausted.
@@ -304,8 +303,8 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 											promise.setFinished();
 											break;
 										}
-										// Keep calling the generator object until
-										// 20 milliseconds have passed or until it is exhausted.
+										// Keep calling the generator object for
+										// 20 milliseconds or until it becomes exhausted.
 									}
 									while(time.elapsed() < 20 && !promise.isCanceled());
 								});
@@ -334,16 +333,16 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 				func_continuation.output = std::move(output);
 				func_continuation.generator = py::reinterpret_borrow<py::iterator>(functionResult);
 				OVITO_ASSERT(func_continuation.generator);
-				
-				// Python has returned a generator. We have to return a Future on the 
-				// the final pipeline state that is till to be computed.
+
+				// Python has returned a generator. We have to return a Future on the
+				// the final pipeline state that is still to be computed.
 				func_continuation.promise = dataset()->taskManager().createSynchronousPromise<PipelineFlowState>(true);
 				Future<PipelineFlowState> future = func_continuation.promise.future();
-				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));				
+				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));
 
 				// Schedule an execution continuation of the Python function at a later time.
 				func_continuation.reschedule_execution();
-				
+
 				return future;
 			}
 			else {

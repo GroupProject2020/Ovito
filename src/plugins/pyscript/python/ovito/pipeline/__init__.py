@@ -14,7 +14,7 @@ This module contains object types that are part of OVITO's data pipeline system.
 """
 
 # Load the native modules and other dependencies.
-from ..plugins.PyScript import StaticSource, Modifier, ModifierApplication
+from ..plugins.PyScript import StaticSource, ModifierApplication, Modifier
 
 # Load submodules.
 from .pipeline_class import Pipeline

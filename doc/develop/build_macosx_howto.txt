@@ -177,7 +177,6 @@ install_name_tool -change @rpath/libospray.0.dylib $PWD/libospray.0.dylib libosp
 **************************************************************************
 Build OVITO:
 **************************************************************************
-export MACOSX_DEPLOYMENT_TARGET=10.12
 cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
@@ -198,4 +197,5 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
 	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
 	    -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       ../..
