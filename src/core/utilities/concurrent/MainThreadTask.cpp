@@ -30,7 +30,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 bool MainThreadTask::setProgressValue(qlonglong value)
 {
 	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
+	// This is necessary so that the user can interrupt the running operation.
 	_taskManager.processEvents();
 
     return ProgressiveTask::setProgressValue(value);
@@ -39,7 +39,7 @@ bool MainThreadTask::setProgressValue(qlonglong value)
 bool MainThreadTask::incrementProgressValue(qlonglong increment)
 {
 	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
+	// This is necessary so that the user can interrupt the running operation.
 	_taskManager.processEvents();
 
 	return ProgressiveTask::incrementProgressValue(increment);
@@ -50,7 +50,7 @@ void MainThreadTask::setProgressText(const QString& progressText)
 	ProgressiveTask::setProgressText(progressText);
 
 	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
+	// This is necessary so that the user can interrupt the running operation.
 	_taskManager.processEvents();
 }
 

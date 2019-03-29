@@ -200,11 +200,13 @@ int ScriptEngine::execute(const std::function<void()>& func)
 
 	// Inform the application that a script execution has started.
 	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
-	Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
+	bool wasCalledFromScript = (Application::instance()->executionContext() == Application::ExecutionContext::Scripting);
+	if(!wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 
-	// Keep track which script engine was active before this function was called.
+	// Keep track of which script engine has been the active one when this function was called.
 	std::shared_ptr<ScriptEngine> previousEngine = std::move(_activeEngine);
-	// And mark this engine as the active one.
+	// Make this engine the active one now.
 	_activeEngine = shared_from_this();
 
 	int returnValue = 0;
@@ -219,6 +221,7 @@ int ScriptEngine::execute(const std::function<void()>& func)
 			// This is for backward compatibility with OVITO 2.9.0:
 			py::setattr(ovito_module, "dataset", py::cast(dataset(), py::return_value_policy::reference));
 
+			// Invoke the supplied C++ function that executes scripting functions.
 			func();
 		}
 		catch(py::error_already_set& ex) {
@@ -237,11 +240,18 @@ int ScriptEngine::execute(const std::function<void()>& func)
 	}
 	catch(...) {
 		_activeEngine = std::move(previousEngine);
-	Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+		// Inform the application that script execution has ended.
+		if(!wasCalledFromScript)
+			Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
 		throw;
 	}
+	// Deactivate this script engine.
 	_activeEngine = std::move(previousEngine);
-	Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+
+	// Inform the application that script execution has ended.
+	if(!wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+
 	return returnValue;
 }
 

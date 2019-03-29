@@ -110,17 +110,14 @@ public:
 	/// \note It is only safe to call this method from the main thread.
 	ExecutionContext executionContext() const {
 		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-		return (_scriptExecutionCounter > 0) ? ExecutionContext::Scripting : ExecutionContext::Interactive;
+		return _executionContext;
 	}
 
 	/// Notifies the application that script execution has started or stopped.
 	/// This is an internal method that should only be called by script engines.
 	void switchExecutionContext(ExecutionContext context) {
 		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-		if(context == ExecutionContext::Scripting)
-			_scriptExecutionCounter++;
-		else
-			_scriptExecutionCounter--;
+		_executionContext = context;
 	}
 
 protected:
@@ -134,9 +131,9 @@ protected:
 	/// Indicates that the application is running in headless mode (without OpenGL support).
 	bool _headlessMode;
 
-	/// Indicates how many script engines are executing code right now.
-	/// If zero, the program is running in interactive mode and all actions are performed by the human user.
-	int _scriptExecutionCounter = 0;
+	/// Indicates that a script engine is executing code right now.
+	/// If false, the program is running in interactive mode and all actions are performed by the human user.
+	ExecutionContext _executionContext = ExecutionContext::Interactive;
 
 	/// In console mode, this is the exit code returned by the application on shutdown.
 	int _exitCode;
@@ -158,5 +155,3 @@ protected:
 };
 
 }	// End of namespace
-
-

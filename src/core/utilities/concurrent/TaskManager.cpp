@@ -23,6 +23,7 @@
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/DataSetContainer.h>
+#include <core/app/Application.h>
 
 #ifdef Q_OS_UNIX
 	#include <csignal>
@@ -249,9 +250,19 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 	});
 #endif
 
+	// If this method was called as part of a script, temporarily switch to interactive mode now since
+	// the user may perform actions in the user interface while the local event loop is active.
+	bool wasCalledFromScript = (Application::instance()->executionContext() == Application::ExecutionContext::Scripting);
+	if(wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+
 	startLocalEventHandling();
 	eventLoop.exec();
 	stopLocalEventHandling();
+
+	// Restore previous execution context state.
+	if(wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 
 #ifdef Q_OS_UNIX
 	::signal(SIGINT, oldSignalHandler);
