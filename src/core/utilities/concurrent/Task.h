@@ -243,6 +243,10 @@ protected:
     /// If the count reaches zero, the shared state is automatically canceled.
     void decrementShareCount() noexcept;
 
+    /// Cancels this task if there is only a single future that depends on it.
+    /// This is an internal method used by TaskManager::waitForTask().
+    void cancelIfSingleFutureLeft() noexcept;
+
     /// Linked list of PromiseWatchers that monitor this shared state.
     TaskWatcher* _watchers = nullptr;
 
@@ -259,7 +263,7 @@ protected:
     State _state;
 
     /// The number of Future objects currently referring to this shared state.
-    std::atomic_uint _shareCount{0};
+    std::atomic_int _shareCount{0};
 
     /// Holds the exception object when this shared state is in the failed state.
     std::exception_ptr _exceptionStore;

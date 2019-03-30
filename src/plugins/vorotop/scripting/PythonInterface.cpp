@@ -34,7 +34,7 @@ PYBIND11_MODULE(VoroTopPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -83,7 +83,7 @@ PYBIND11_MODULE(VoroTopPython, m)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("filter_file", &VoroTopModifier::filterFile, [](VoroTopModifier& mod, const QString& filename) {
-					if(!mod.loadFilterDefinition(filename, ScriptEngine::getCurrentDataset()->taskManager())) {
+					if(!mod.loadFilterDefinition(filename, ScriptEngine::currentTask()->createSubTask())) {
 						PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 						throw py::error_already_set();
 					}

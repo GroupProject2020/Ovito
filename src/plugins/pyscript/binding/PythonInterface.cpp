@@ -51,7 +51,7 @@ PYBIND11_MODULE(PyScript, m)
 		}
 	});
 
-	// Initialize an ad-hoc environment when this module has been imported by an external Python interpreter and is not running as a standalone app. 
+	// Initialize an ad-hoc environment when this module has been imported by an external Python interpreter and is not running as a standalone app.
 	// Otherwise an environment is already provided by the StandaloneApplication class.
 	if(!Application::instance()) {
 		try {
@@ -68,8 +68,8 @@ PYBIND11_MODULE(PyScript, m)
 				app->createQtApplication(argc, argv);
 			}
 
-			// Create the global ScriptEngine instance.
-			ScriptEngine::createAdhocEngine(app->datasetContainer()->currentSet());
+			// Set up script execution environment.
+			ScriptEngine::initializeExternalInterpreter(app->datasetContainer()->currentSet());
 		}
 		catch(const Exception& ex) {
 			ex.logError();
@@ -95,7 +95,6 @@ PYBIND11_MODULE(PyScript, m)
 	m.attr("headless_mode") = py::cast(Application::instance()->headlessMode());
 
 	// Set up the ad-hoc environment, which consist of the global DataSet and a TaskManager.
-	// The enviroment may get updated later on by the ScriptEngine::execute() method.
 
 	// Add an attribute to the ovito module that provides access to the active dataset.
 	DataSet* activeDataset = Application::instance()->datasetContainer()->currentSet();

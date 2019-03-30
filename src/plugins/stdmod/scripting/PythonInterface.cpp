@@ -40,6 +40,8 @@
 #include <plugins/stdmod/modifiers/ManualSelectionModifier.h>
 #include <plugins/stdmod/modifiers/ComputePropertyModifier.h>
 #include <plugins/stdmod/modifiers/CombineDatasetsModifier.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/app/PluginManager.h>
 
 namespace Ovito { namespace StdMod {

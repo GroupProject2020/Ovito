@@ -43,7 +43,7 @@ void defineIOSubmodule(py::module m)
 		.def_static("autodetect_format", [](DataSet& dataset, const QUrl& url) {
 			auto future = FileImporter::autodetectFileFormat(&dataset, url);
 			// Block until detection is complete and result is available.
-			if(!ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future)) {
+			if(!ScriptEngine::waitForFuture(future)) {
 				PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 				throw py::error_already_set();
 			}
@@ -81,7 +81,7 @@ void defineIOSubmodule(py::module m)
 				exporter.setDataObjectToExport(DataObjectReference(&DataObject::OOClass(), path));
 			})
 		.def("do_export", [](FileExporter& exporter) {
-				if(!exporter.doExport(ScriptEngine::getCurrentDataset()->taskManager())) {
+				if(!exporter.doExport(ScriptEngine::currentTask()->createSubTask())) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}
@@ -136,12 +136,12 @@ void defineIOSubmodule(py::module m)
 		// Required by the implementation of FileSource.load():
 		.def("wait_until_ready", [](FileSource& fs, TimePoint time) {
 			SharedFuture<PipelineFlowState> future = fs.evaluate(time);
-			return ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future);
+			return ScriptEngine::waitForFuture(future);
 		})
 		// Required by the implementations of import_file() and FileSource.load():
 		.def("wait_for_frames_list", [](FileSource& fs) {
 			auto future = fs.requestFrameList(false, false);
-			return ScriptEngine::getCurrentDataset()->taskManager().waitForFuture(future);
+			return ScriptEngine::waitForFuture(future);
 		})
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"This read-only attribute reports the number of frames found in the input file or sequence of input files. "

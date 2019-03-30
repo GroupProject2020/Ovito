@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT ViewportOverlay : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(ViewportOverlay)
-	
+
 protected:
 
 	/// \brief Constructor.
@@ -45,12 +45,12 @@ protected:
 public:
 
 	/// \brief This method asks the overlay to paint its contents over the rendered image.
-	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, 
+	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer,
 						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) = 0;
 
 	/// \brief This method asks the overlay to paint its contents over the given interactive viewport.
-	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, 
-						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) = 0;
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter,
+						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) = 0;
 
 	/// \brief Moves the position of the overlay in the viewport by the given amount,
 	///        which is specified as a fraction of the viewport render size.

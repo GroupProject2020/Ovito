@@ -528,7 +528,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return ov->renderBehindScene() && ov->isEnabled(); })) {
 				// Let overlays paint into QImage buffer, which will then
 				// be painted into the OpenGL frame buffer.
-				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, true);
+				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, true, renderOperation);
 			}
 		}
 
@@ -583,7 +583,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return !ov->renderBehindScene() && ov->isEnabled(); })) {
 				// Let overlays paint into QImage buffer, which will then
 				// be painted over the OpenGL frame buffer.
-				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, false);
+				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, false, renderOperation);
 			}
 		}
 
@@ -610,7 +610,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 /******************************************************************************
 * Renders the overlays to an image buffer.
 ******************************************************************************/
-void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer)
+void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer, AsyncOperation& operation)
 {
 	// Let overlays paint into QImage buffer, which will then
 	// be painted over the OpenGL frame buffer.
@@ -629,7 +629,7 @@ void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSet
 			painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
 			painter.setViewport(renderFrameRect);
 			painter.setRenderHint(QPainter::Antialiasing);
-			overlay->renderInteractive(this, time, painter, renderProjParams, renderSettings);
+			overlay->renderInteractive(this, time, painter, renderProjParams, renderSettings, operation);
 		}
 	}
 	std::shared_ptr<ImagePrimitive> overlayBufferPrim = renderer->createImagePrimitive();

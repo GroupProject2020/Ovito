@@ -74,23 +74,17 @@ void ScriptAutostarter::applicationStarted()
 		// Suppress undo recording. Actions performed by startup scripts cannot be undone.
 		UndoSuspender noUndo(dataset);
 
-		// Set up a script engine.
-		auto engine = ScriptEngine::createEngine(dataset);
-
 		// Pass command line parameters to the script.
 		QStringList scriptArguments = StandaloneApplication::instance()->cmdLineParser().values("scriptarg");
 
-		// Forward script output to the console in GUI mode. That's not needed in console mode.
-		if(Application::instance()->guiMode()) {
-			connect(engine.get(), &ScriptEngine::scriptOutput, [](const QString& s) { std::cout << qPrintable(s); });
-			connect(engine.get(), &ScriptEngine::scriptError, [](const QString& s) { std::cerr << qPrintable(s); });
-		}
+		// This is the async operation object used when calling script functions in the following.
+		AsyncOperation scriptOperation(dataset->taskManager());
 
 		// Execute script commands.
 		for(int index = scriptCommands.size() - 1; index >= 0; index--) {
 			const QString& command = scriptCommands[index];
 			try {
-				engine->executeCommands(command, py::globals(), scriptArguments);
+				ScriptEngine::executeCommands(command, dataset, scriptOperation.task(), nullptr, true, scriptArguments);
 			}
 			catch(Exception& ex) {
 				ex.prependGeneralMessage(tr("Error during Python script execution."));
@@ -100,7 +94,7 @@ void ScriptAutostarter::applicationStarted()
 
 		// Execute script files.
 		for(int index = scriptFiles.size() - 1; index >= 0; index--) {
-			engine->executeFile(scriptFiles[index], py::globals(), scriptArguments);
+			ScriptEngine::executeFile(scriptFiles[index], dataset, scriptOperation.task(), nullptr, true, scriptArguments);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -78,76 +78,61 @@ void PythonScriptModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	Modifier::propertyChanged(field);
 
-	// Throw away compiled script function whenever script source code changes.
+	// Throw away compiled script function whenever script text changes.
 	if(field == PROPERTY_FIELD(script)) {
-		_modifyScriptFunction = py::object();
+		_scriptCompilationFuture.reset();
+		_scriptCompilationOutput = tr("<Script compilation pending>\n");
 	}
 }
 
 /******************************************************************************
 * Compiles the script entered by the user.
 ******************************************************************************/
-void PythonScriptModifier::compileScript(ScriptEngine& engine)
+SharedFuture<py::function> PythonScriptModifier::compileScriptFunction()
 {
-	_modifyScriptFunction = py::function();
-	_scriptCompilationOutput.clear();
-	try {
-		try {
-			// Make sure the actions of the script function are not recorded on the undo stack.
-			UndoSuspender noUndo(dataset());
+	// Use the existing future object if the compilation is currently in progress or already completed.
+	if(!_scriptCompilationFuture.isValid()) {
+
+		_scriptCompilationOutput.clear();
+		auto scriptFunction = std::make_shared<py::function>();
+
+		// Run the following code within the context of a script engine.
+		Future<> execFuture = ScriptEngine::executeAsync(this, "appendCompilationOutput", [this, scriptFunction]() {
 
 			// Run script code within a fresh and private namespace.
 			py::dict localNamespace = py::globals().attr("copy")();
-			engine.executeCommands(script(), localNamespace);
 
-			// Extract the modify() function defined by the script.
-			engine.execute([&]() {
-				try {
-					_modifyScriptFunction = py::function(localNamespace["modify"]);
-					if(!py::isinstance<py::function>(_modifyScriptFunction)) {
-						_modifyScriptFunction = py::function();
-						throwException(tr("Invalid Python script. It does not define a callable function named modify()."));
-					}
-				}
-				catch(const py::error_already_set&) {
-					throwException(tr("Invalid Python script. It does not define the function named modify()."));
-				}
-			});
+			// Run the script code once.
+			localNamespace["__file__"] = py::none();
+			PyObject* result = PyRun_String(script().toUtf8().constData(), Py_file_input, localNamespace.ptr(), localNamespace.ptr());
+			if(!result) throw py::error_already_set();
+			Py_XDECREF(result); // We have no interest in the result object.
 
-			// Update status, because log output stored by the modifier has changed.
+			// Extract the modify() function defined within the script.
+			try {
+				*scriptFunction = py::function(localNamespace["modify"]);
+				if(!py::isinstance<py::function>(*scriptFunction)) {
+					throw Exception(tr("Invalid Python modifier script. It does not define a callable function named modify()."));
+				}
+			}
+			catch(const py::error_already_set&) {
+				throw Exception(tr("Invalid Python modifier script. There is no function with the name 'modify()'."));
+			}
+
+			return py::none();
+		});
+
+		// Update modifier status after compilation, to display Python log output.
+		execFuture.finally(executor(), [this]() {
 			notifyDependents(ReferenceEvent::ObjectStatusChanged);
-		}
-		catch(const Exception& ex) {
-			_scriptCompilationOutput += ex.messages().join(QChar('\n'));
-			throw;
-		}
-	}
-	catch(...) {
-		// Update status, because log output stored by the modifier has changed.
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-		throw;
-	}
-}
+		});
 
-/******************************************************************************
-* Prepares the script engine, which is needed for script execution.
-******************************************************************************/
-ScriptEngine* PythonScriptModifier::getScriptEngine()
-{
-	// Initialize a private script engine if there is no active global engine.
-	const std::shared_ptr<ScriptEngine>& engine = ScriptEngine::activeEngine();
-	if(!engine) {
-		if(!_scriptEngine) {
-			_scriptEngine = ScriptEngine::createEngine(dataset());
-			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonScriptModifier::onScriptOutput);
-			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonScriptModifier::onScriptOutput);
-		}
-		return _scriptEngine.get();
+		// Make sure the Python function gets returned to the caller.
+		_scriptCompilationFuture = execFuture.then([scriptFunction]() {
+			return std::move(*scriptFunction);
+		});
 	}
-	else {
-		if(!_scriptEngine) _scriptEngine = engine;
-		return engine.get();
-	}
+	return _scriptCompilationFuture;
 }
 
 /******************************************************************************
@@ -155,60 +140,42 @@ ScriptEngine* PythonScriptModifier::getScriptEngine()
 ******************************************************************************/
 Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Make sure this modifier evaluation has not been triggered from within an ongoing pipeline evaluation.
-	OVITO_ASSERT(!_activeModApp);
-	if(_activeModApp)
-		throwException(tr("Python script modifier is not reentrant. It cannot be evaluated while another evaluation is already in progress."));
-
-	// Initialize the script engine if there is no active global engine.
-	ScriptEngine* engine = getScriptEngine();
-
-	// We now enter the modifier evaluation phase.
-	_activeModApp = dynamic_object_cast<PythonScriptModifierApplication>(modApp);
-	if(!_activeModApp)
-		throwException(tr("PythonScriptModifier instance is not associated with a PythonScriptModifierApplication instance."));
-
 	if(input.isEmpty())
 		throwException(tr("Modifier input is empty."));
 
-	try {
+	// We now enter the modifier evaluation phase.
+	PythonScriptModifierApplication* pmodApp = dynamic_object_cast<PythonScriptModifierApplication>(modApp);
+	if(!pmodApp)
+		throwException(tr("PythonScriptModifier instance is not associated with a PythonScriptModifierApplication instance."));
 
-		// Reset script log output.
-		_activeModApp->clearLogOutput();
+	// Reset script log output.
+	pmodApp->clearLogOutput();
 
-		// Compile script source if needed.
-		if(!_modifyScriptFunction) {
-			compileScript(*engine);
-		}
-		else {
-			_scriptCompilationOutput.clear();
-		}
+	// First compile the script function.
+	SharedFuture<py::function> scriptFunctionFuture = compileScriptFunction();
 
-		// Check if script function has been set.
-		if(!_modifyScriptFunction)
-			throwException(tr("PythonScriptModifier has not been assigned a Python function."));
+	// Prepare the pipeline output state.
+	std::shared_ptr<PipelineFlowState> output = std::make_shared<PipelineFlowState>(input);
 
-		try {
-			// Make sure the actions of the script function are not recorded on the undo stack.
-			UndoSuspender noUndo(dataset());
+	// Limit validity interval of the pipeline output state to the current frame by default,
+	// because we don't know if the user script produces time-dependent results or not.
+	output->intersectStateValidity(time);
 
-			// Prepare arguments to be passed to the script function.
-			PipelineFlowState output = input;
+	// Now that a compiled script function is available, execute it.
+	return scriptFunctionFuture.then(pmodApp->executor(), [output = std::move(output), time, pmodApp](const py::function& scriptFunction) mutable {
 
-			// Limit validity interval of the output to the current frame,
-			// because we don't know if the user script produces time-dependent results or not.
-			output.intersectStateValidity(time);
+		// Run the following code within the context of a script engine.
+		Future<> execFuture = ScriptEngine::executeAsync(pmodApp, "appendLogOutput", [pmodApp, time, output, scriptFunction]() {
 
 			// Call the user-defined modifier function.
-			py::object functionResult;
 			try {
-				engine->execute([&]() {
-					int animationFrame = dataset()->animationSettings()->timeToFrame(time);
-					py::tuple arguments = py::make_tuple(animationFrame, output.mutableData());
-					functionResult = _modifyScriptFunction(*arguments);
-				});
+				int animationFrame = pmodApp->dataset()->animationSettings()->timeToFrame(time);
+				py::tuple arguments = py::make_tuple(animationFrame, output->mutableData());
+				return scriptFunction(*arguments);
 			}
-			catch(const Exception& ex) {
+			catch(const py::error_already_set& ex) {
+				if(!ex.matches(PyExc_TypeError))
+					throw;
 
 				// The following code is for backward compatibility with OVITO 2.9.0:
 				//
@@ -216,171 +183,47 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 				// but first check if the function has the expected signature.
 				py::object inspect_module = py::module::import("inspect");
 #if PY_MAJOR_VERSION >= 3
-				py::object argsSpec = inspect_module.attr("getfullargspec")(_modifyScriptFunction);
+				py::object argsSpec = inspect_module.attr("getfullargspec")(scriptFunction);
 #else
-				py::object argsSpec = inspect_module.attr("getargspec")(_modifyScriptFunction);
+				py::object argsSpec = inspect_module.attr("getargspec")(scriptFunction);
 #endif
 				if(py::len(argsSpec.attr("args")) != 3)
 					throw;
 
 				// Invoke the user-defined modifier function, this time with an input and an output data collection.
-				engine->execute([&]() {
-					int animationFrame = dataset()->animationSettings()->timeToFrame(time);
-					py::tuple arguments = py::make_tuple(animationFrame, input.data(), output.mutableData());
-					functionResult = _modifyScriptFunction(*arguments);
-				});
+				int animationFrame = pmodApp->dataset()->animationSettings()->timeToFrame(time);
+				PipelineFlowState input = *output;
+				py::tuple arguments = py::make_tuple(animationFrame, input.data(), output->mutableData());
+				return scriptFunction(*arguments);
 			}
+		});
 
-			// Exit the modifier evaluation phase.
-			_activeModApp = nullptr;
-			notifyDependents(ReferenceEvent::ObjectStatusChanged);
-			modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
-
-			// Check if the function is a generator function.
-			if(py::isinstance<py::iterator>(functionResult)) {
-
-				// A data structure storing the information needed for a
-				// continued execution of the Python generator function.
-				struct {
-					OvitoObjectExecutor executor;
-					py::iterator generator;
-					PipelineFlowState output;
-					Promise<PipelineFlowState> promise;
-
-					// This is to submit this structure as a work item to the executor:
-					void reschedule_execution() {
-						executor.createWork(std::move(*this)).post();
-					}
-
-					// This is called by the executor at a later time:
-					void operator()(bool wasCanceled) {
-						if(wasCanceled || promise.isCanceled()) return;
-
-						// Get access to the modifier and its modifier application.
-						PythonScriptModifierApplication* modApp = static_object_cast<PythonScriptModifierApplication>(const_cast<OvitoObject*>(executor.object()));
-						PythonScriptModifier* modifier = dynamic_object_cast<PythonScriptModifier>(modApp->modifier());
-						if(!modifier) return;
-
-						// Enter the modifier evaluation phase.
-						modifier->_activeModApp = modApp;
-						// Make sure the actions of the script function are not recorded on the undo stack.
-						UndoSuspender noUndo(modifier);
-
-						// Get the script engine to use.
-						ScriptEngine* engine = modifier->getScriptEngine();
-
-						try {
-							try {
-								engine->execute([this]() {
-									QTime time;
-									time.start();
-									do {
-										OVITO_ASSERT(generator != py::iterator::sentinel());
-
-										// The generator may report progress.
-										py::handle value = *generator;
-										if(py::isinstance<py::float_>(value)) {
-											double progressValue = py::cast<double>(value);
-											if(progressValue >= 0.0 && progressValue <= 1.0) {
-												promise.setProgressMaximum(100);
-												promise.setProgressValue((qlonglong)(progressValue * 100.0));
-											}
-											else {
-												promise.setProgressMaximum(0);
-												promise.setProgressValue(0);
-											}
-										}
-										else if(py::isinstance<py::str>(value)) {
-											promise.setProgressText(py::cast<QString>(value));
-										}
-
-										// Let the Python function perform some work.
-										++generator;
-										// Check if the generator is exhausted.
-										if(generator == py::iterator::sentinel()) {
-											// We are done. Return pipeline results.
-											promise.setResults(std::move(output));
-											promise.setFinished();
-											break;
-										}
-										// Keep calling the generator object for
-										// 20 milliseconds or until it becomes exhausted.
-									}
-									while(time.elapsed() < 20 && !promise.isCanceled());
-								});
-							}
-							catch(const Exception& ex) {
-								modApp->appendLogOutput(ex.messages().join(QChar('\n')));
-								throw;
-							}
-						}
-						catch(...) {
-							promise.captureException();
-							promise.setFinished();
-						}
-
-						// Exit the modifier evaluation phase.
-						modifier->_activeModApp = nullptr;
-						modifier->notifyDependents(ReferenceEvent::ObjectStatusChanged);
-						modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
-
-						// Continue execution at a later time.
-						if(!promise.isFinished())
-							reschedule_execution();
-					}
-				} func_continuation{ modApp->executor() };
-
-				func_continuation.output = std::move(output);
-				func_continuation.generator = py::reinterpret_borrow<py::iterator>(functionResult);
-				OVITO_ASSERT(func_continuation.generator);
-
-				// Python has returned a generator. We have to return a Future on the
-				// the final pipeline state that is still to be computed.
-				func_continuation.promise = dataset()->taskManager().createMainThreadOperation<PipelineFlowState>(true);
-				Future<PipelineFlowState> future = func_continuation.promise.future();
-				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));
-
-				// Schedule an execution continuation of the Python function at a later time.
-				func_continuation.reschedule_execution();
-
-				return future;
-			}
-			else {
-				// Return final output pipeline state.
-				return std::move(output);
-			}
-		}
-		catch(const std::runtime_error& ex) {
-			qWarning() << ex.what();
-			throwException(tr("Internal Python interface error: %1").arg(ex.what()));
-		}
-		catch(const Exception& ex) {
-			_activeModApp->appendLogOutput(ex.messages().join(QChar('\n')));
-			throw;
-		}
-	}
-	catch(...) {
-		// Exit the modifier evaluation phase.
-		_activeModApp = nullptr;
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-		modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
-		throw;
-	}
+		// Make sure the pipeline flow state is returned to the caller.
+		return execFuture.then([output]() {
+			return std::move(*output);
+		});
+	});
 }
 
 /******************************************************************************
-* Is called when the script generates some output.
+* Is called whenever the script generates some output during the compilation phase.
 ******************************************************************************/
-void PythonScriptModifier::onScriptOutput(const QString& text)
+void PythonScriptModifier::appendCompilationOutput(const QString& text)
 {
-	if(!_activeModApp) {
-		// This is to collect script output during the compilation phase.
-		_scriptCompilationOutput += text;
-	}
-	else {
-		// This is to collect script output during the modifier evaluation phase.
-		_activeModApp->appendLogOutput(text);
-	}
+	// This is to collect script output during the compilation phase.
+	_scriptCompilationOutput += text;
+	notifyDependents(ReferenceEvent::ObjectStatusChanged);
+}
+
+/******************************************************************************
+* Is called whenever the script generates some output during the compilation phase.
+******************************************************************************/
+void PythonScriptModifierApplication::appendLogOutput(const QString& text)
+{
+	// This is to collect script output during the evaluation phase.
+	_scriptLogOutput += text;
+	notifyDependents(ReferenceEvent::ObjectStatusChanged);
+	modifier()->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 }
 
 }	// End of namespace

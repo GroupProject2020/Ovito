@@ -207,7 +207,7 @@ public:
 	typename detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, FC&& cont);
 
 	/// Runs the given function once this future has reached the 'finished' state.
-	/// The function is awlays run, even if the future was canceled or set to an error state.
+	/// The function is always run, even if the future was canceled or set to an error state.
 	template<typename FC, class Executor>
 	void finally_future(Executor&& executor, FC&& cont);
 

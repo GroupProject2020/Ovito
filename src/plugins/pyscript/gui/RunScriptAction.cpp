@@ -30,7 +30,7 @@
 
 namespace PyScript {
 
-IMPLEMENT_OVITO_CLASS(RunScriptAction);		
+IMPLEMENT_OVITO_CLASS(RunScriptAction);
 
 /******************************************************************************
 * Is called when a new main window is created.
@@ -53,15 +53,12 @@ void RunScriptAction::registerActions(ActionManager& actionManager)
 		dataset->undoStack().beginCompoundOperation(tr("Script actions"));
 		try {
 			// Show a progress dialog while script is running.
-			ProgressDialog progressDialog(actionManager.mainWindow(), tr("Script execution"));	
+			ProgressDialog progressDialog(actionManager.mainWindow(), tr("Script execution"));
 			OVITO_ASSERT(&progressDialog.taskManager() == &dataset->container()->taskManager());
-
-			// Create the script engine.
-			auto engine = ScriptEngine::createEngine(dataset);
+			AsyncOperation scriptOperation(progressDialog.taskManager());
 
 			// Execute the script file in a fresh and private namespace environment.
-			py::dict localNamespace = py::globals().attr("copy")();
-			engine->executeFile(scriptFile, localNamespace);
+			ScriptEngine::executeFile(scriptFile, dataset, scriptOperation.task(), nullptr, false);
 		}
 		catch(const Exception& ex) {
 			ex.reportError();

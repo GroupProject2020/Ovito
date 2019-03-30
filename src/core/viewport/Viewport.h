@@ -80,7 +80,7 @@ class OVITO_CORE_EXPORT Viewport : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(Viewport)
-	
+
 public:
 
 	/// View types.
@@ -223,7 +223,7 @@ public:
 	/// will be visible in a rendered image.
 	/// The returned box is given in viewport coordinates (interval [-1,+1]).
 	Box2 renderFrameRect() const;
-	
+
 	/// \brief Zooms to the extents of the scene.
 	Q_INVOKABLE void zoomToSceneExtents();
 
@@ -297,7 +297,7 @@ protected:
 	void adjustProjectionForRenderFrame(ViewProjectionParameters& params);
 
 	/// Renders the overlays to an image buffer.
-	void renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer);
+	void renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer, AsyncOperation& operation);
 
 private Q_SLOTS:
 
@@ -335,7 +335,7 @@ private:
 
 	/// The list of overlay objects owned by this viewport.
 	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, overlays);
-	
+
 	/// This flag is true during the rendering phase.
 	bool _isRendering;
 

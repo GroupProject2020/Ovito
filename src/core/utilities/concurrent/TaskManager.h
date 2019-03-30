@@ -94,8 +94,14 @@ public:
     /// \note This method may only be called from the main thread.
 	template<typename... R>
 	Promise<R...> createMainThreadOperation(bool startedState) {
-		using tuple_type = std::tuple<R...>;
-		Promise<R...> promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
+		return createMainThreadOperationPromise<Promise<R...>>(startedState);
+	}
+
+    // Same as the method above, but expecting the promise type instead of a parameter pack.
+	template<typename promise_type>
+	promise_type createMainThreadOperationPromise(bool startedState) {
+		using tuple_type = typename promise_type::tuple_type;
+		promise_type promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
 			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
 			startedState ? Task::State(Task::Started) : Task::NoState, *this));
 		addTaskInternal(promise.task());

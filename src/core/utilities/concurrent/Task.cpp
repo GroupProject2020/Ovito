@@ -47,13 +47,21 @@ Task::~Task()
 
 void Task::decrementShareCount() noexcept
 {
-	// Automatically cancel this shared state when there no more futures
-	// referring to it.
+	// Automatically cancel this shared state when there are no more futures left that depend on it.
 	int oldCount = _shareCount.fetch_sub(1, std::memory_order_release);
 	OVITO_ASSERT(oldCount >= 1);
 	if(oldCount == 1) {
 		cancel();
 	}
+}
+
+void Task::cancelIfSingleFutureLeft() noexcept
+{
+	// Cancels this task if there is only a single future left that depends on it.
+    // This is an internal method used by TaskManager::waitForTask() to cancel subtasks right away if their parent task got canceled.
+	if(_shareCount.load() <= 1)
+		cancel();
+	OVITO_ASSERT(_shareCount.load() <= 1);
 }
 
 void Task::cancel() noexcept

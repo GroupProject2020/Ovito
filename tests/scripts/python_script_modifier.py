@@ -11,9 +11,10 @@ def compute_coordination(pindex, finder):
 
 def mymodify(frame, data):
     yield "Hello world"
+    print("mymodify()")
     data.particles.vis.radius = 0.5
     color_property = data.particles_.create_property("Color")
-    with color_property: 
+    with color_property:
         color_property[:] = (0,0.5,0)
     my_property = data.particles_.create_property("MyCoordination", dtype=int, components=1)
     with my_property:
@@ -21,7 +22,7 @@ def mymodify(frame, data):
         for index in range(data.particles.count):
             if index % 100 == 0: yield index/data.particles.count
             my_property[index] = compute_coordination(index, finder)
-    
+
 modifier = PythonScriptModifier(function = mymodify)
 pipeline.modifiers.append(modifier)
 data = pipeline.compute()
@@ -31,6 +32,7 @@ assert(data.particles["MyCoordination"][0] > 0)
 # Testing backward compatibility with OVITO 2.9.0:
 def mymodify_old(frame, input, output):
     yield "Hello world"
+    print("mymodify_old()")
     color_property = output.create_particle_property(int(Particles.Type.Color))
     color_property.marray[:] = (0,0.6,0)
     my_property = output.create_user_particle_property("MyCoordination", "int")

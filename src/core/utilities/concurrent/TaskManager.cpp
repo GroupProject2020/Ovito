@@ -230,6 +230,9 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 	// Stop the event loop when the dependent task gets canceled.
 	if(dependentTask) {
 		TaskWatcher* dependentWatcher = addTaskInternal(dependentTask);
+		connect(dependentWatcher, &TaskWatcher::canceled, watcher, [dependentTask, watcher]() {
+			watcher->task()->cancelIfSingleFutureLeft();
+		});
 		connect(dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
 	}
 

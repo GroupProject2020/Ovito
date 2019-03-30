@@ -547,7 +547,7 @@ void defineModifiersSubmodule(py::module m)
 			"caculating the displacement vectors is non-trivial when particles have crossed the periodic boundaries. "
 			"By default, the *minimum image convention* is used in these cases, but you can turn if off by "
 			"setting :py:attr:`.minimum_image_convention` to ``False``, for example if the input particle coordinates "
-			"are given in unwrapped form. "			
+			"are given in unwrapped form. "
 			"\n\n"
 			"Furthermore, if the simulation cell of the reference and the current configuration are different, it makes "
 			"a slight difference whether displacements are calculated in the reference or in the current frame. "
@@ -613,11 +613,11 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``ReferenceConfigurationModifier.AffineMapping.Off``\n")
 		// For backward compatibility with OVITO 2.8.2:
-		.def_property("eliminate_cell_deformation", 
-				[](ReferenceConfigurationModifier& mod) { return mod.affineMapping() != ReferenceConfigurationModifier::NO_MAPPING; }, 
+		.def_property("eliminate_cell_deformation",
+				[](ReferenceConfigurationModifier& mod) { return mod.affineMapping() != ReferenceConfigurationModifier::NO_MAPPING; },
 				[](ReferenceConfigurationModifier& mod, bool b) { mod.setAffineMapping(b ? ReferenceConfigurationModifier::TO_REFERENCE_CELL : ReferenceConfigurationModifier::NO_MAPPING); })
 		// For backward compatibility with OVITO 2.9.0:
-		.def_property("assume_unwrapped_coordinates", 
+		.def_property("assume_unwrapped_coordinates",
 				[](ReferenceConfigurationModifier& mod) { return !mod.useMinimumImageConvention(); },
 				[](ReferenceConfigurationModifier& mod, bool b) { mod.setUseMinimumImageConvention(!b); })
 	;
@@ -625,9 +625,9 @@ void defineModifiersSubmodule(py::module m)
 		.value("Off", ReferenceConfigurationModifier::NO_MAPPING)
 		.value("ToReference", ReferenceConfigurationModifier::TO_REFERENCE_CELL)
 		.value("ToCurrent", ReferenceConfigurationModifier::TO_CURRENT_CELL)
-	;	
+	;
 	ovito_class<ReferenceConfigurationModifierApplication, AsynchronousModifierApplication>{m};
-	
+
 	ovito_class<CalculateDisplacementsModifier, ReferenceConfigurationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.ReferenceConfigurationModifier`"
 			"\n\n"
@@ -638,11 +638,11 @@ void defineModifiersSubmodule(py::module m)
 			"various properties that control how the reference configuration is specified and also how displacement "
 			"vectors are calculated. "
 			"By default, frame 0 of the current simulation sequence is used as reference configuration. "
-			"\n\n"			
+			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
 			" * ``Displacement`` (:py:class:`~ovito.data.ParticleProperty`):\n"
-			"   The computed displacement vectors\n"			
+			"   The computed displacement vectors\n"
 			" * ``Displacement Magnitude`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The length of the computed displacement vectors\n"
 			"\n\n")
@@ -653,7 +653,7 @@ void defineModifiersSubmodule(py::module m)
 				"the visualization of arrows as follows: "
 				"\n\n"
 				".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
-				"   :lines: 4-\n")	
+				"   :lines: 4-\n")
 	;
 
 	ovito_class<AtomicStrainModifier, ReferenceConfigurationModifier>(m,
@@ -990,7 +990,7 @@ void defineModifiersSubmodule(py::module m)
 		"\n\n"
 		".. literalinclude:: ../example_snippets/polyhedral_template_matching.py\n"
 		"   :lines: 5-\n");
-	
+
 	py::enum_<PolyhedralTemplateMatchingModifier::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
 		.value("OTHER", PolyhedralTemplateMatchingModifier::OTHER)
 		.value("FCC", PolyhedralTemplateMatchingModifier::FCC)
@@ -1022,7 +1022,7 @@ void defineModifiersSubmodule(py::module m)
 		.def_property("vis", &CoordinationPolyhedraModifier::surfaceMeshVis, &CoordinationPolyhedraModifier::setSurfaceMeshVis,
 				"A :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the generated polyhedra.\n")
 	;
-	
+
 	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -1076,8 +1076,8 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``None``\n")
 		.def("generate", [](GenerateTrajectoryLinesModifier& modifier) {
-				if(!modifier.generateTrajectories(ScriptEngine::getCurrentDataset()->container()->taskManager()))
-					modifier.throwException(ScriptEngine::tr("Trajectory line generation has been canceled by the user."));
+				if(!modifier.generateTrajectories(ScriptEngine::currentTask()->createSubTask()))
+					modifier.throwException(GenerateTrajectoryLinesModifier::tr("Trajectory line generation has been canceled by the user."));
 			},
 			"Generates the trajectory lines by sampling the positions of the particles from the upstream pipeline in regular animation time intervals. "
 			"Make sure you call this method *after* the modifier has been inserted into the pipeline. ")
@@ -1100,8 +1100,8 @@ void defineModifiersSubmodule(py::module m)
 			"\n\n"
 			".. literalinclude:: ../example_snippets/unwrap_trajectories.py")
 		.def("update", [](UnwrapTrajectoriesModifier& modifier) {
-				if(!modifier.detectPeriodicCrossings(ScriptEngine::getCurrentDataset()->container()->taskManager()))
-					modifier.throwException(ScriptEngine::tr("Unwrapping of particle trajectories has been canceled by the user."));
+				if(!modifier.detectPeriodicCrossings(ScriptEngine::currentTask()->createSubTask()))
+					modifier.throwException(UnwrapTrajectoriesModifier::tr("Unwrapping of particle trajectories has been canceled by the user."));
 			},
 			"This method detects crossings of the particles through of the periodic cell boundaries. The list of crossing events will subsequently be used by the modifier to unwrap "
 			"the particle coordinates and produce continuous particle trajectories. The method loads and steps through all animation frames of the input trajectory, which can take some time. "
@@ -1110,7 +1110,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<UnwrapTrajectoriesModifierApplication, ModifierApplication>{m};
 
 	ovito_class<ParticlesComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m}
-		.def_property("neighbor_expressions", &ParticlesComputePropertyModifierDelegate::neighborExpressions, &ParticlesComputePropertyModifierDelegate::setNeighborExpressions)	
+		.def_property("neighbor_expressions", &ParticlesComputePropertyModifierDelegate::neighborExpressions, &ParticlesComputePropertyModifierDelegate::setNeighborExpressions)
 		.def_property("cutoff_radius", &ParticlesComputePropertyModifierDelegate::cutoff, &ParticlesComputePropertyModifierDelegate::setCutoff)
 	;
 

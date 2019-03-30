@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -29,7 +29,7 @@
 
 namespace PyScript { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_CLASS(PythonScriptModifierEditor);	
+IMPLEMENT_OVITO_CLASS(PythonScriptModifierEditor);
 SET_OVITO_OBJECT_EDITOR(PythonScriptModifier, PythonScriptModifierEditor);
 
 /******************************************************************************
@@ -52,7 +52,7 @@ void PythonScriptModifierEditor::createUI(const RolloutInsertionParameters& roll
 
 	StringParameterUI* namePUI = new StringParameterUI(this, PROPERTY_FIELD(Modifier::title));
 	layout->addWidget(new QLabel(tr("User-defined modifier name:")), row++, 0);
-	static_cast<QLineEdit*>(namePUI->textBox())->setPlaceholderText(PythonScriptModifier::OOClass().displayName());
+	static_cast<QLineEdit*>(namePUI->textBox())->setPlaceholderText(QStringLiteral("<%1>").arg(PythonScriptModifier::OOClass().displayName()));
 	sublayout->addWidget(namePUI->textBox(), 1);
 	layout->addLayout(sublayout, row++, 0);
 
@@ -105,7 +105,7 @@ void PythonScriptModifierEditor::onOpenEditor()
 
 	class ScriptEditor : public ObjectScriptEditor {
 	public:
-	
+
 		/// Constructor.
 		ScriptEditor(QWidget* parentWidget, RefTarget* scriptableObject) : ObjectScriptEditor(parentWidget, scriptableObject) {}
 
@@ -118,7 +118,7 @@ void PythonScriptModifierEditor::onOpenEditor()
 				return modifier->script();
 			}
 			else {
-				// If the user is executing an external Python script, we have no source code of the 
+				// If the user is executing an external Python script, we have no source code of the
 				// user-defined modifier function.
 				static const QString message = tr("# Modifier function was defined in an external Python file. Source code is not available here.\n");
 				return message;

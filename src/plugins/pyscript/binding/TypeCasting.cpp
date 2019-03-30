@@ -30,7 +30,7 @@ namespace pybind11 { namespace detail {
 ///////////////////////////////////////////////////////////////////////////////////////
 // Helper method for converting a Python string to a QString.
 ///////////////////////////////////////////////////////////////////////////////////////
-QString castToQString(handle src) 
+QString castToQString(handle src)
 {
 #ifndef Q_CC_MSVC
 	return src.cast<QString>();
@@ -48,11 +48,11 @@ QString castToQString(handle src)
 type_caster<QString>::type_caster() noexcept
 {
 }
-	
+
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python string <--> QString conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<QString>::load(handle src, bool) 
+bool type_caster<QString>::load(handle src, bool)
 {
 	if(!src) return false;
 	object temp;
@@ -60,22 +60,22 @@ bool type_caster<QString>::load(handle src, bool)
 	if(PyUnicode_Check(load_src.ptr())) {
 		temp = reinterpret_steal<object>(PyUnicode_AsUTF8String(load_src.ptr()));
 		if(!temp) {
-			PyErr_Clear(); 
+			PyErr_Clear();
 			return false; // UnicodeEncodeError
-		}  
+		}
 		load_src = temp;
 	}
 	char *buffer;
 	ssize_t length;
-	if(PYBIND11_BYTES_AS_STRING_AND_SIZE(load_src.ptr(), &buffer, &length)) { 
+	if(PYBIND11_BYTES_AS_STRING_AND_SIZE(load_src.ptr(), &buffer, &length)) {
 		PyErr_Clear();
 		return false; // TypeError
-	}  
+	}
 	value = QString::fromUtf8(buffer, (int)length);
 	return true;
 }
 
-handle type_caster<QString>::cast(const QString& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<QString>::cast(const QString& src, return_value_policy /* policy */, handle /* parent */)
 {
 #if PY_VERSION_HEX >= 0x03030000	// Python 3.3
 	OVITO_STATIC_ASSERT(sizeof(QChar) == 2);
@@ -96,7 +96,7 @@ type_caster<QUrl>::type_caster() noexcept
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python string <--> QUrl conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<QUrl>::load(handle src, bool) 
+bool type_caster<QUrl>::load(handle src, bool)
 {
 	if(!src) return false;
 	try {
@@ -110,7 +110,7 @@ bool type_caster<QUrl>::load(handle src, bool)
 	return false;
 }
 
-handle type_caster<QUrl>::cast(const QUrl& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<QUrl>::cast(const QUrl& src, return_value_policy /* policy */, handle /* parent */)
 {
 	QByteArray a = src.toString().toUtf8();
 	return PyUnicode_FromStringAndSize(a.data(), (ssize_t)a.length());
@@ -119,7 +119,7 @@ handle type_caster<QUrl>::cast(const QUrl& src, return_value_policy /* policy */
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> QVariant conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<QVariant>::load(handle src, bool) 
+bool type_caster<QVariant>::load(handle src, bool)
 {
 	if(!src) return false;
 	try {
@@ -140,7 +140,7 @@ bool type_caster<QVariant>::load(handle src, bool)
 	return false;
 }
 
-handle type_caster<QVariant>::cast(const QVariant& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<QVariant>::cast(const QVariant& src, return_value_policy /* policy */, handle /* parent */)
 {
 	switch(static_cast<QMetaType::Type>(src.type())) {
 		case QMetaType::Bool: return pybind11::cast(src.toBool()).release();
@@ -168,7 +168,7 @@ handle type_caster<QVariant>::cast(const QVariant& src, return_value_policy /* p
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> QStringList conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<QStringList>::load(handle src, bool) 
+bool type_caster<QStringList>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq = reinterpret_borrow<sequence>(src);
@@ -177,7 +177,7 @@ bool type_caster<QStringList>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<QStringList>::cast(const QStringList& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<QStringList>::cast(const QStringList& src, return_value_policy /* policy */, handle /* parent */)
 {
 	list lst;
 	for(const QString& s : src)
@@ -199,7 +199,7 @@ bool type_caster<Ovito::Vector3>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Vector3>::cast(const Ovito::Vector3& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Vector3>::cast(const Ovito::Vector3& src, return_value_policy /* policy */, handle /* parent */)
 {
 	return pybind11::make_tuple(src[0], src[1], src[2]).release();
 }
@@ -218,7 +218,7 @@ bool type_caster<Ovito::Vector3I>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Vector3I>::cast(const Ovito::Vector3I& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Vector3I>::cast(const Ovito::Vector3I& src, return_value_policy /* policy */, handle /* parent */)
 {
 	return pybind11::make_tuple(src[0], src[1], src[2]).release();
 }
@@ -226,7 +226,7 @@ handle type_caster<Ovito::Vector3I>::cast(const Ovito::Vector3I& src, return_val
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> Point3 conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::Point3>::load(handle src, bool) 
+bool type_caster<Ovito::Point3>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq = reinterpret_borrow<sequence>(src);
@@ -237,7 +237,7 @@ bool type_caster<Ovito::Point3>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Point3>::cast(const Ovito::Point3& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Point3>::cast(const Ovito::Point3& src, return_value_policy /* policy */, handle /* parent */)
 {
 	return pybind11::make_tuple(src[0], src[1], src[2]).release();
 }
@@ -245,7 +245,7 @@ handle type_caster<Ovito::Point3>::cast(const Ovito::Point3& src, return_value_p
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> Point3I conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::Point3I>::load(handle src, bool) 
+bool type_caster<Ovito::Point3I>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq = reinterpret_borrow<sequence>(src);
@@ -256,7 +256,7 @@ bool type_caster<Ovito::Point3I>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Point3I>::cast(const Ovito::Point3I& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Point3I>::cast(const Ovito::Point3I& src, return_value_policy /* policy */, handle /* parent */)
 {
 	return pybind11::make_tuple(src[0], src[1], src[2]).release();
 }
@@ -264,7 +264,7 @@ handle type_caster<Ovito::Point3I>::cast(const Ovito::Point3I& src, return_value
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> Color conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::Color>::load(handle src, bool) 
+bool type_caster<Ovito::Color>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq = reinterpret_borrow<sequence>(src);
@@ -275,7 +275,7 @@ bool type_caster<Ovito::Color>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Color>::cast(const Ovito::Color& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Color>::cast(const Ovito::Color& src, return_value_policy /* policy */, handle /* parent */)
 {
 	return pybind11::make_tuple(src[0], src[1], src[2]).release();
 }
@@ -283,7 +283,7 @@ handle type_caster<Ovito::Color>::cast(const Ovito::Color& src, return_value_pol
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> ColorA conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::ColorA>::load(handle src, bool) 
+bool type_caster<Ovito::ColorA>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq = reinterpret_borrow<sequence>(src);
@@ -294,7 +294,7 @@ bool type_caster<Ovito::ColorA>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::ColorA>::cast(const Ovito::ColorA& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::ColorA>::cast(const Ovito::ColorA& src, return_value_policy /* policy */, handle /* parent */)
 {
 	return pybind11::make_tuple(src[0], src[1], src[2], src[3]).release();
 }
@@ -302,14 +302,14 @@ handle type_caster<Ovito::ColorA>::cast(const Ovito::ColorA& src, return_value_p
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> AffineTransformation conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::AffineTransformation>::load(handle src, bool) 
+bool type_caster<Ovito::AffineTransformation>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq1 = reinterpret_borrow<sequence>(src);
 	if(seq1.size() != value.row_count())
 		throw value_error("Expected sequence of length 3.");
 	for(size_t i = 0; i < value.row_count(); i++) {
-		if(!isinstance<sequence>(seq1[i])) 
+		if(!isinstance<sequence>(seq1[i]))
 			throw value_error("Expected nested sequence of length 4.");
 		sequence seq2 = reinterpret_borrow<sequence>(seq1[i]);
 		if(seq2.size() != value.col_count())
@@ -321,24 +321,24 @@ bool type_caster<Ovito::AffineTransformation>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::AffineTransformation>::cast(const Ovito::AffineTransformation& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::AffineTransformation>::cast(const Ovito::AffineTransformation& src, return_value_policy /* policy */, handle /* parent */)
 {
-	return pybind11::array_t<Ovito::AffineTransformation::element_type>({ src.row_count(), src.col_count() }, 
-		{ sizeof(Ovito::AffineTransformation::element_type), sizeof(typename Ovito::AffineTransformation::column_type) }, 
+	return pybind11::array_t<Ovito::AffineTransformation::element_type>({ src.row_count(), src.col_count() },
+		{ sizeof(Ovito::AffineTransformation::element_type), sizeof(typename Ovito::AffineTransformation::column_type) },
 		src.elements()).release();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> Matrix3 conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::Matrix3>::load(handle src, bool) 
+bool type_caster<Ovito::Matrix3>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq1 = reinterpret_borrow<sequence>(src);
 	if(seq1.size() != value.row_count())
 		throw value_error("Expected sequence of length 3.");
 	for(size_t i = 0; i < value.row_count(); i++) {
-		if(!isinstance<sequence>(seq1[i])) 
+		if(!isinstance<sequence>(seq1[i]))
 			throw value_error("Expected nested sequence of length 3.");
 		sequence seq2 = reinterpret_borrow<sequence>(seq1[i]);
 		if(seq2.size() != value.col_count())
@@ -350,24 +350,24 @@ bool type_caster<Ovito::Matrix3>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Matrix3>::cast(const Ovito::Matrix3& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Matrix3>::cast(const Ovito::Matrix3& src, return_value_policy /* policy */, handle /* parent */)
 {
-	return pybind11::array_t<Ovito::Matrix3::element_type>({ src.row_count(), src.col_count() }, 
-		{ sizeof(Ovito::Matrix3::element_type), sizeof(typename Ovito::Matrix3::column_type) }, 
+	return pybind11::array_t<Ovito::Matrix3::element_type>({ src.row_count(), src.col_count() },
+		{ sizeof(Ovito::Matrix3::element_type), sizeof(typename Ovito::Matrix3::column_type) },
 		src.elements()).release();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> Matrix4 conversion
 ///////////////////////////////////////////////////////////////////////////////////////
-bool type_caster<Ovito::Matrix4>::load(handle src, bool) 
+bool type_caster<Ovito::Matrix4>::load(handle src, bool)
 {
 	if(!isinstance<sequence>(src)) return false;
 	sequence seq1 = reinterpret_borrow<sequence>(src);
 	if(seq1.size() != value.row_count())
 		throw value_error("Expected sequence of length 4.");
 	for(size_t i = 0; i < value.row_count(); i++) {
-		if(!isinstance<sequence>(seq1[i])) 
+		if(!isinstance<sequence>(seq1[i]))
 			throw value_error("Expected nested sequence of length 4.");
 		sequence seq2 = reinterpret_borrow<sequence>(seq1[i]);
 		if(seq2.size() != value.col_count())
@@ -379,13 +379,13 @@ bool type_caster<Ovito::Matrix4>::load(handle src, bool)
 	return true;
 }
 
-handle type_caster<Ovito::Matrix4>::cast(const Ovito::Matrix4& src, return_value_policy /* policy */, handle /* parent */) 
+handle type_caster<Ovito::Matrix4>::cast(const Ovito::Matrix4& src, return_value_policy /* policy */, handle /* parent */)
 {
-	return pybind11::array_t<Ovito::Matrix4::element_type>({ src.row_count(), src.col_count() }, 
-		{ sizeof(Ovito::Matrix4::element_type), sizeof(typename Ovito::Matrix4::column_type) }, 
+	return pybind11::array_t<Ovito::Matrix4::element_type>({ src.row_count(), src.col_count() },
+		{ sizeof(Ovito::Matrix4::element_type), sizeof(typename Ovito::Matrix4::column_type) },
 		src.elements()).release();
 }
-	
+
 }
 }
 
@@ -394,7 +394,7 @@ namespace PyScript {
 ///////////////////////////////////////////////////////////////////////////////////////
 // Initalizes the properties of the new object using the values stored in a dictionary.
 ///////////////////////////////////////////////////////////////////////////////////////
-void ovito_class_initialization_helper::initializeParameters(py::object pyobj, const py::args& args, const py::kwargs& kwargs, const OvitoClass& clazz) 
+void ovito_class_initialization_helper::initializeParameters(py::object pyobj, const py::args& args, const py::kwargs& kwargs, const OvitoClass& clazz)
 {
 	if(py::len(args) > 0) {
 		if(py::len(args) > 1 || !PyDict_Check(args[0].ptr()))
@@ -412,14 +412,14 @@ void ovito_class_initialization_helper::initializeParameters(py::object pyobj, c
 ///////////////////////////////////////////////////////////////////////////////////////
 // Sets attributes of the given object as specified in the dictionary.
 ///////////////////////////////////////////////////////////////////////////////////////
-void ovito_class_initialization_helper::applyParameters(py::object& pyobj, const py::dict& params, const OvitoClass& clazz) 
+void ovito_class_initialization_helper::applyParameters(py::object& pyobj, const py::dict& params, const OvitoClass& clazz)
 {
 	// Iterate over the keys of the dictionary and set attributes of the
 	// newly created object.
 	for(const auto& item : params) {
 		// Check if the attribute exists. Otherwise raise error.
 		if(!py::hasattr(pyobj, item.first)) {
-			PyErr_SetObject(PyExc_AttributeError, 
+			PyErr_SetObject(PyExc_AttributeError,
 				py::str("Object type {} does not have an attribute named '{}'.").format(clazz.className(), item.first).ptr());
 			throw py::error_already_set();
 		}
@@ -433,7 +433,7 @@ void ovito_class_initialization_helper::applyParameters(py::object& pyobj, const
 ///////////////////////////////////////////////////////////////////////////////////////
 DataSet* ovito_class_initialization_helper::getCurrentDataset()
 {
-	return ScriptEngine::getCurrentDataset();
+	return ScriptEngine::currentDataset();
 }
 
 }

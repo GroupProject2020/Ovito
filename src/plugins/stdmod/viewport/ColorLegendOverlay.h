@@ -37,7 +37,7 @@ class OVITO_STDMOD_EXPORT ColorLegendOverlay : public ViewportOverlay
 	Q_OBJECT
 	OVITO_CLASS(ColorLegendOverlay)
 	Q_CLASSINFO("DisplayName", "Color legend");
-	
+
 public:
 
 	/// \brief Constructor.
@@ -50,7 +50,7 @@ public:
 	}
 
 	/// This method asks the overlay to paint its contents over the given interactive viewport.
-	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) override {
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
 		renderImplementation(painter, projParams, renderSettings);
 	}
 

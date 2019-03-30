@@ -25,6 +25,7 @@
 #include <core/Core.h>
 #include "Task.h"
 #include "MainThreadTask.h"
+#include "FutureDetail.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -231,9 +232,38 @@ public:
 		task()->template setResults<tuple_type>(std::forward_as_tuple(std::forward<R2>(result)...));
 	}
 
+	/// Sets the result value of the promise to the return value of the given function.
+	template<typename FC>
+	std::enable_if_t<detail::is_void_continuation_func<FC,std::tuple<>>::value> setResultsWith(FC&& func)
+	{
+		std::forward<FC>(func)();
+	}
+
+	/// Sets the result value of the promise to the return value of the given function.
+	template<typename FC>
+	std::enable_if_t<!detail::is_void_continuation_func<FC,std::tuple<>>::value> setResultsWith(FC&& func)
+	{
+		setResultsDirect(std::forward<FC>(func)());
+	}
+
 protected:
 
 	Promise(TaskPtr p) noexcept : PromiseBase(std::move(p)) {}
+
+	// Assigns a result to this promise.
+	template<typename source_tuple_type>
+	auto setResultsDirect(source_tuple_type&& results) -> typename std::enable_if<std::tuple_size<source_tuple_type>::value>::type {
+		static_assert(std::tuple_size<tuple_type>::value != 0, "Must not be an empty tuple");
+		static_assert(std::is_same<tuple_type, std::decay_t<source_tuple_type>>::value, "Must assign a compatible tuple");
+		task()->template setResults<tuple_type>(std::forward<source_tuple_type>(results));
+	}
+
+	// Assigns a result to this promise.
+	template<typename value_type>
+	void setResultsDirect(value_type&& result) {
+		static_assert(std::tuple_size<tuple_type>::value == 1, "Must be a tuple of size 1");
+		task()->template setResults<tuple_type>(std::forward_as_tuple(std::forward<value_type>(result)));
+	}
 
 #ifdef OVITO_DEBUG
 	bool _futureCreated = false;
