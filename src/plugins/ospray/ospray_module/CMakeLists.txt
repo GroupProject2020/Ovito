@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2017) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,9 +19,12 @@
 #
 ###############################################################################
 
-# Locate the OSPRay library.
-FIND_PACKAGE(ospray REQUIRED)
+# Load OSPRay macros.
 INCLUDE(${OSPRAY_USE_FILE})
+
+# Use the Embree library.
+INCLUDE_DIRECTORIES("${EMBREE_INCLUDE_DIRS}")
+INCLUDE_DIRECTORIES_ISPC("${EMBREE_INCLUDE_DIRS}")
 
 # This builds the ospray extension module which implements raytracing
 # functions for disc and cone geometry.
@@ -41,24 +44,24 @@ OSPRAY_ADD_LIBRARY(ospray_module_ovito SHARED
 	geometry/Discs.cpp
 	geometry/Cones.cpp
 	geometry/Quadrics.cpp
-	
+
 	# the ispc files that contain the plugins for all vector code - ie,
 	# for ray-primitive intersection and 'postIntersect' (reporting info
 	# on a previously computed ray-prim intersection)
 	geometry/Discs.ispc
 	geometry/Cones.ispc
 	geometry/Quadrics.ispc
-	
+
 	# and finally, the module init code (not doing much, but must be there)
 	moduleInit.cpp
 )
 
-TARGET_INCLUDE_DIRECTORIES(ospray_module_ovito PRIVATE "${OSPRAY_INCLUDE_DIRS}")
-TARGET_LINK_LIBRARIES(ospray_module_ovito PRIVATE ${OSPRAY_LIBRARIES})
+TARGET_LINK_LIBRARIES(ospray_module_ovito PRIVATE "${EMBREE_LIBRARY}")
+TARGET_LINK_LIBRARIES(ospray_module_ovito PRIVATE ospray::ospray ospray::ospray_module_ispc)
 SET_TARGET_PROPERTIES(ospray_module_ovito PROPERTIES MACOSX_RPATH TRUE)
 
-# Export this target.
-INSTALL(TARGETS ospray_module_ovito EXPORT OVITO 
+# Install this target.
+INSTALL(TARGETS ospray_module_ovito EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

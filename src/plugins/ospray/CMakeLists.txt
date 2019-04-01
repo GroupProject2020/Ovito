@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2017) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -20,32 +20,48 @@
 ###############################################################################
 
 # Define the plugin module.
-OVITO_STANDARD_PLUGIN(OSPRayRenderer SOURCES 
+OVITO_STANDARD_PLUGIN(OSPRayRenderer SOURCES
 	renderer/OSPRayRenderer.cpp
 	renderer/OSPRayBackend.cpp
 )
 
 # Locate the OSPRay library.
-FIND_PACKAGE(ospray REQUIRED)
+FIND_PACKAGE(ospray 1.8.0 REQUIRED)
+
+# Locate the Embree library.
+FIND_PACKAGE(embree 3.3.0 REQUIRED)
+
+# Locate Intel Thread Building Blocks (TBB) library
+FIND_PACKAGE(TBB COMPONENTS tbb REQUIRED)
 
 # Link to the OSPRay library and its dependencies.
-TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE ${OSPRAY_INCLUDE_DIRS} "${TBB_INCLUDE_DIR}")
-TARGET_LINK_LIBRARIES(OSPRayRenderer PRIVATE ${OSPRAY_LIBRARIES})
+TARGET_LINK_LIBRARIES(OSPRayRenderer PRIVATE ospray::ospray ospray::ospray_module_ispc)
+TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE "${EMBREE_INCLUDE_DIRS}")
+TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE "$<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>")
+SET_TARGET_PROPERTIES(OSPRayRenderer PROPERTIES MACOSX_RPATH TRUE)
 
 # Build our extension module for the OSPRay system.
 ADD_SUBDIRECTORY(ospray_module)
 ADD_DEPENDENCIES(OSPRayRenderer ospray_module_ovito)
 
-IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
+# Move the OSPRay shared libraries to the directory where the OSPRay extension module is being built.
+# This is needed, because at runtime OSPRay will search for the extension module in directory containing libospray itself.
+GET_TARGET_PROPERTY(OSPRAY_LIBRARY ospray::ospray LOCATION)
+GET_TARGET_PROPERTY(OSPRAY_COMMON_LIBRARY ospray::ospray_common LOCATION)
+GET_TARGET_PROPERTY(OSPRAY_MODULE_ISPC_LIBRARY ospray::ospray_module_ispc LOCATION)
+OVITO_INSTALL_SHARED_LIB("${OSPRAY_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+OVITO_INSTALL_SHARED_LIB("${OSPRAY_COMMON_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+OVITO_INSTALL_SHARED_LIB("${OSPRAY_MODULE_ISPC_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 
+# Linux:
+IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Deploy OSPRay and Embree shared libraries.
 	FOREACH(lib ${OSPRAY_LIBRARIES})
 		OVITO_INSTALL_SHARED_LIB("${lib}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 	ENDFOREACH()
-	
+
 	OVITO_INSTALL_SHARED_LIB("${TBB_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 	OVITO_INSTALL_SHARED_LIB("${TBB_LIBRARY_MALLOC}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-
 ENDIF()
 
 # Build corresponding GUI plugin.

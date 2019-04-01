@@ -1,5 +1,5 @@
 **************************************************************************
-Compiler: 
+Compiler:
     Microsoft Visual Studio 2015
 
 spellcheck: off
@@ -28,7 +28,7 @@ nmake install
 **************************************************************************
 Qt
 **************************************************************************
-Install the following components (Qt 5.9.4) in C:\Qt\ : 
+Install the following components (Qt 5.9.4) in C:\Qt\ :
    msvc2015 32-bit
    msvc2015 64-bit
 
@@ -113,7 +113,7 @@ cmake -G "NMake Makefiles" ^
    -DZLIB_LIBRARY=%cd:\=/%/../zlib_install/lib/zlib.lib ^
    ../../netcdf-4.4.1
 nmake install
-   
+
 **************************************************************************
 QScintilla2
 **************************************************************************
@@ -173,6 +173,17 @@ export INCLUDE="$INCLUDE;C:/Users/stuko/ovito/64bit/zlib_install/include"
    --disable-debug
 make install
 
+
+
+**************************************************************************
+Download and build Intel Embree
+Also download TBB lib and ISPC compiler
+**************************************************************************
+cd embree-3.5.2
+mkdir build
+cd build
+cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe -DCMAKE_INSTALL_PREFIX=../../embree_install ..
+
 **************************************************************************
 OpenVR
 **************************************************************************
@@ -183,7 +194,7 @@ Create an app package signing certificate:
 **************************************************************************
 MakeCert /n "CN=ovito.org, O=ovito.org, L=Darmstadt, C=Germany" /r /h 0 /eku "1.3.6.1.5.5.7.3.3,1.3.6.1.4.1.311.10.3.13" /e 12/31/2017 /sv ovito.pvk ovito.cer
 Pvk2Pfx /pvk ovito.pvk  /spc ovito.cer /pfx ovito.pfx
-# Run as administrator: 
+# Run as administrator:
 Certutil -addStore TrustedPeople ovito.cer
 
 **************************************************************************
@@ -253,4 +264,3 @@ cmake -G "NMake Makefiles" ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
    -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
    ../../source
-   

@@ -134,18 +134,22 @@ Download and build Intel Embree
 cd /Users/stuko/progs/
 git clone https://github.com/embree/embree.git
 cd embree
-git checkout v3.2.0
+git checkout v3.2.4
 mkdir build
 cd build
-export MACOSX_DEPLOYMENT_TARGET=10.12
-cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
+cmake -G "Xcode" \
+      -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
       -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-      -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20180312oss/include/ \
-      -DTBB_LIBRARY=$HOME/progs/tbb2018_20180312oss/lib/libtbb.dylib \
-      -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20180312oss/lib/libtbbmalloc.dylib \
+      -DEMBREE_TBB_ROOT=$HOME/progs/tbb2019_20190320oss \
+      -DEMBREE_MAX_ISA=NONE \
+      -DTBB_INCLUDE_DIR=$HOME/progs/tbb2019_20190320oss/include/ \
+      -DTBB_LIBRARY=$HOME/progs/tbb2019_20190320oss/lib/libtbb.dylib \
+      -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2019_20190320oss/lib/libtbbmalloc.dylib \
       -DEMBREE_TUTORIALS=OFF \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       ..
-make -j4 install
+cmake --build . --config Release
+cmake --build . --config Release --target install
 
 **************************************************************************
 Download and build Intel OSPRay
@@ -153,31 +157,32 @@ Download and build Intel OSPRay
 cd /Users/stuko/progs/
 git clone https://github.com/ospray/ospray.git
 cd ospray
-git checkout v1.6.0
+git checkout v1.8.4
 mkdir build
 cd build
-export MACOSX_DEPLOYMENT_TARGET=10.12
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
-      -DOSPRAY_ENABLE_APPS=OFF \
-      -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
+      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+      -DTBB_ROOT=$HOME/progs/tbb2019_20190320oss \
       -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_CXX_STANDARD=14 \
+      -DOSPRAY_ENABLE_TUTORIALS=OFF \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       ..
 make -j4 install
 cd ../../ospray_install/lib
-install_name_tool -id $PWD/libospray.1.6.0.dylib libospray.1.6.0.dylib
-install_name_tool -id $PWD/libospray_common.0.dylib libospray_common.0.dylib
-install_name_tool -id $PWD/libospray_module_ispc.0.dylib libospray_module_ispc.dylib
-install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray.dylib
-install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray_module_ispc.dylib
-install_name_tool -change @rpath/libospray.0.dylib $PWD/libospray.0.dylib libospray_module_ispc.dylib
+install_name_tool -id @rpath/libospray.1.8.4.dylib libospray.1.8.4.dylib
+install_name_tool -id @rpath/libospray_common.1.8.4.dylib libospray_common.1.8.4.dylib
+install_name_tool -id @rpath/libospray_module_ispc.1.8.4.dylib libospray_module_ispc.1.8.4.dylib
+install_name_tool -change @rpath/libospray_common.1.8.4.dylib $PWD/libospray_common.1.8.4.dylib libospray.dylib
+install_name_tool -change @rpath/libospray_common.1.8.4.dylib $PWD/libospray_common.1.8.4.dylib libospray_module_ispc.dylib
+install_name_tool -change @rpath/libospray.1.8.4.dylib $PWD/libospray.1.8.4.dylib libospray_module_ispc.dylib
 
 **************************************************************************
 Build OVITO:
 **************************************************************************
 cmake -DOVITO_BUILD_DOCUMENTATION=ON \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       -DCMAKE_BUILD_TYPE=Release \
       -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
       -DOVITO_DOUBLE_PRECISION_FP=ON \
@@ -193,9 +198,8 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
       -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
       -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-      -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.6.0 \
-	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
+      -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.8.4 \
+	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+	    -DTBB_ROOT=$HOME/progs/tbb2019_20190320oss \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-	    -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       ../..

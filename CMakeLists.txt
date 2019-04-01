@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -45,8 +45,8 @@ IF(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
 	ENDIF()
 ENDIF()
 
-# This is to enable target debugging within Visual Studio Code. 
-# It is ignored oustide of Visual Studio Code/CMake tools. 
+# This is to enable target debugging within Visual Studio Code.
+# It is ignored oustide of Visual Studio Code/CMake tools.
 INCLUDE(CMakeToolsHelpers OPTIONAL)
 
 SET(OVITO_SOURCE_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
@@ -109,14 +109,14 @@ IF(MSVC)
 	# Suppress warning on missing definition for explicit template instantiation request.
 	ADD_COMPILE_OPTIONS("/wd4661")
 	# Compiling template code leads to large object files.
-	ADD_COMPILE_OPTIONS("/bigobj")	
+	ADD_COMPILE_OPTIONS("/bigobj")
 ENDIF()
 
 IF(UNIX)
 	IF(APPLE)
-		SET(MACOSX_BUNDLE_NAME "Ovito") 
-		SET(MACOSX_BUNDLE_BUNDLE_NAME "${MACOSX_BUNDLE_NAME}") 
-		
+		SET(MACOSX_BUNDLE_NAME "Ovito")
+		SET(MACOSX_BUNDLE_BUNDLE_NAME "${MACOSX_BUNDLE_NAME}")
+
 		# The directory where the main executable goes to.
 		SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
 		# The directory where the main libraries go to.
@@ -124,9 +124,9 @@ IF(UNIX)
 		# The directory where the auxiliary files go to.
 		SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
 		# The directory where the compiled plugins go to.
-		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")	
+		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
 		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")	
+		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
 	ELSE()
 		# The directory where the main executable goes to.
 		SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
@@ -149,7 +149,7 @@ ELSE()
 	# The directory where the compiled plugins go to.
 	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
 		# The directory where the Python source modules go to.
-	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")	
+	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
 ENDIF()
 
 IF(APPLE OR WIN32 OR NOT OVITO_REDISTRIBUTABLE_PACKAGE)
@@ -171,7 +171,7 @@ ELSE()
 		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ".so")
 	ELSE()
 		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-	ENDIF()	
+	ENDIF()
 ENDIF()
 
 # The directory where the main executable goes to.
@@ -202,7 +202,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 	FILE(MAKE_DIRECTORY "${Ovito_BINARY_DIR}/${destination_dir}")
 	# Strip version number from shared lib filename.
 	GET_FILENAME_COMPONENT(shared_lib_ext "${shared_lib}" EXT)
-	STRING(REPLACE ${shared_lib_ext} ".so" shared_lib_new "${shared_lib}")
+	STRING(REPLACE ${shared_lib_ext} ${CMAKE_SHARED_LIBRARY_SUFFIX} shared_lib_new "${shared_lib}")
 	FILE(GLOB lib_versions "${shared_lib_new}*")
 	FOREACH(lib_version ${lib_versions})
 		WHILE(IS_SYMLINK ${lib_version})
@@ -220,7 +220,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 			LIST(APPEND lib_files "${lib_version}")
 		ENDIF()
 	ENDFOREACH()
-	LIST(REMOVE_DUPLICATES lib_files)	
+	LIST(REMOVE_DUPLICATES lib_files)
 	FOREACH(lib_file ${lib_files})
 		MESSAGE("Installing shared library ${lib_file}")
 		CONFIGURE_FILE("${lib_file}" "${Ovito_BINARY_DIR}/${destination_dir}/" COPYONLY)
@@ -236,7 +236,7 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Determine the set of required Qt5 modules.
 LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui)
-IF(OVITO_BUILD_GUI) 
+IF(OVITO_BUILD_GUI)
 	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg)
 	IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 		# This is an indirect dependency required by the Xcb platform plugin of Qt:

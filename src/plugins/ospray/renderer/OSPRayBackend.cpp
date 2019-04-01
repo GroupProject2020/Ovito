@@ -48,7 +48,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayPathTracerBackend, rouletteDepth, Integ
 ******************************************************************************/
 OSPRaySciVisBackend::OSPRaySciVisBackend(DataSet* dataset) : OSPRayBackend(dataset),
 	_shadowsEnabled(true),
-	_ambientOcclusionEnabled(true), 
+	_ambientOcclusionEnabled(true),
 	_ambientOcclusionSamples(12)
 {
 }
@@ -58,7 +58,7 @@ OSPRaySciVisBackend::OSPRaySciVisBackend(DataSet* dataset) : OSPRayBackend(datas
 ******************************************************************************/
 ospray::cpp::Renderer OSPRaySciVisBackend::createOSPRenderer(const Color& backgroundColor)
 {
-	ospray::cpp::Renderer renderer("scivis"); 
+	ospray::cpp::Renderer renderer("scivis");
 	renderer.set("shadowsEnabled", shadowsEnabled());
 	renderer.set("aoSamples", ambientOcclusionEnabled() ? ambientOcclusionSamples() : 0);
 	renderer.set("aoTransparencyEnabled", true);
@@ -71,7 +71,7 @@ ospray::cpp::Renderer OSPRaySciVisBackend::createOSPRenderer(const Color& backgr
 ******************************************************************************/
 ospray::cpp::Material OSPRaySciVisBackend::createOSPMaterial(const char* type)
 {
-	return ospray::cpp::Material("scivis", type); 
+	return ospray::cpp::Material("scivis", type);
 }
 
 /******************************************************************************
@@ -79,7 +79,7 @@ ospray::cpp::Material OSPRaySciVisBackend::createOSPMaterial(const char* type)
 ******************************************************************************/
 ospray::cpp::Light OSPRaySciVisBackend::createOSPLight(const char* type)
 {
-	return ospray::cpp::Light("scivis", type); 
+	return ospray::cpp::Light(type);
 }
 
 /******************************************************************************
@@ -95,7 +95,7 @@ OSPRayPathTracerBackend::OSPRayPathTracerBackend(DataSet* dataset) : OSPRayBacke
 ******************************************************************************/
 ospray::cpp::Renderer OSPRayPathTracerBackend::createOSPRenderer(const Color& backgroundColor)
 {
-	ospray::cpp::Renderer renderer("pathtracer"); 
+	ospray::cpp::Renderer renderer("pathtracer");
 	renderer.set("rouletteDepth", rouletteDepth());
 	return renderer;
 }
@@ -105,7 +105,7 @@ ospray::cpp::Renderer OSPRayPathTracerBackend::createOSPRenderer(const Color& ba
 ******************************************************************************/
 ospray::cpp::Material OSPRayPathTracerBackend::createOSPMaterial(const char* type)
 {
-	return ospray::cpp::Material("pathtracer", type); 
+	return ospray::cpp::Material("pathtracer", type);
 }
 
 /******************************************************************************
@@ -113,7 +113,7 @@ ospray::cpp::Material OSPRayPathTracerBackend::createOSPMaterial(const char* typ
 ******************************************************************************/
 ospray::cpp::Light OSPRayPathTracerBackend::createOSPLight(const char* type)
 {
-	return ospray::cpp::Light("pathtracer", type); 
+	return ospray::cpp::Light(type);
 }
 
 }	// End of namespace

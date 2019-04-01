@@ -1,14 +1,14 @@
 **************************************************************************
-Note: This file contains instructions how to build the statically linked 
-version of OVITO on a Ubuntu 10.04 Linux system. 
-This procedure is used to create the official distribution on the website. 
+Note: This file contains instructions how to build the statically linked
+version of OVITO on a Ubuntu 10.04 Linux system.
+This procedure is used to create the official distribution on the website.
 
-Building a dynamically linked executable on a local system is simpler 
+Building a dynamically linked executable on a local system is simpler
 and is described in OVITO's user manual.
 **************************************************************************
 
 **************************************************************************
-Install essential tools and dependencies on Ubuntu 10.04 for 
+Install essential tools and dependencies on Ubuntu 10.04 for
 building the static executable:
 **************************************************************************
 
@@ -37,7 +37,7 @@ Install GNU g++ 5 compiler on Ubuntu 10.04
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 sudo apt-get update
 sudo apt-get install gcc-5 g++-5
-sudo update-alternatives --remove-all gcc 
+sudo update-alternatives --remove-all gcc
 sudo update-alternatives --remove-all g++
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
@@ -118,7 +118,7 @@ make
 Build sqlite3:
 **************************************************************************
 ./configure
-make 
+make
 sudo make install
 
 **************************************************************************
@@ -128,7 +128,7 @@ Build Python (version 3.6.x):
 Edit Modules/Setup.dist to enable SSL module:
 
 # Socket module helper for socket(2)
-_socket socketmodule.c 
+_socket socketmodule.c
 
 SSL=/usr
 _ssl _ssl.c \
@@ -259,23 +259,24 @@ Download and build Intel Embree
 cd $HOME/progs/
 git clone https://github.com/embree/embree.git
 cd embree
-git checkout v2.17.0
+git checkout v3.5.2
 - Fix compiler errors:
 - Add the followin to the source file common/sys/alloc.cpp:
   #ifndef MAP_HUGETLB
   #define MAP_HUGETLB 0x40000
   #endif
 - Fix errors "sorry, unimplemented: non-trivial designated initializers not supported" (bug in gcc 5.1.1)
-  by removing 'const' qualifiers from lmbda captured variables.
+  by removing 'const' qualifiers from lambda captured variables.
 mkdir build
 cd build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
       -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
-	  -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
-	  -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
-	  -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
-	  -DEMBREE_TUTORIALS=OFF \
+      -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
+      -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
+      -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
+      -DEMBREE_TBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+      -DEMBREE_TUTORIALS=OFF \
       ..
 make install
 
@@ -285,18 +286,19 @@ Download and build Intel OSPRay
 cd $HOME/progs/
 git clone https://github.com/ospray/ospray.git
 cd ospray
-git checkout v1.6.1
+git checkout v1.8.4
 mkdir build
 cd build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
-	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
-	  -DOSPRAY_APPS_BENCHMARK=OFF \
-	  -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
-	  -DOSPRAY_APPS_UTILITIES=OFF \
-	  -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
-	  -DBUILD_SHARED_LIBS=ON \
+	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+	    -DOSPRAY_APPS_BENCHMARK=OFF \
+	    -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
+	    -DOSPRAY_APPS_UTILITIES=OFF \
+      -DOSPRAY_ENABLE_TUTORIALS=OFF \
+	    -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+	    -DBUILD_SHARED_LIBS=ON \
       ..
 make install
 cp -d $HOME/progs/embree_install/lib/libembree*.so* $HOME/progs/ospray_install/lib/
@@ -346,8 +348,8 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
   -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
   -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-  -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.6.1 \
-  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
+  -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.8.4 \
+  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
   -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
   -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
   -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
@@ -355,5 +357,3 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh_install/include \
   -DLIBSSH_LIBRARY=$HOME/progs/libssh_install/lib/libssh.so \
   ../source/
-
-
