@@ -13,25 +13,21 @@
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
       <imagedata fileref="images/rendering/ospray_renderer_panel.png" format="PNG" scale="50" />
-    </imageobject></mediaobject></screenshot></informalfigure>       
-    This is a software-based raytracing renderer. It can produce renderings of the scene with 
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This is a software-based raytracing renderer. It can produce renderings of the scene with
     global illumination, shadows and depth of field. The OSPRay renderer has a smaller memory footprint than
     the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link>. It can thus be used for rendering very large datasets,
     with a higher visual quality than the <link linkend="rendering.opengl_renderer">OpenGL renderer</link> is able to provide.
   </para>
   <para>
-    <emphasis>Note: The OSPRay rendering engine is not yet available in the Windows version of OVITO. 
-    It is only included in the Linux and macOS versions of OVITO.</emphasis>
-  </para>
-  <para>
-    The OSPRay renderer itself offers two different backends and you can switch between them using the 
+    The OSPRay renderer itself offers two different backends and you can switch between them using the
     <guibutton>Switch OSPRay backend</guibutton> button. The default selection is the <emphasis>SciVis</emphasis> backend.
   </para>
   <para>
     For more information on the capabilities of the OSPRay engine and technical background information beyond what is found here,
     please visit the <link xlink:href="http://www.ospray.org/">www.ospray.org</link> website.
   </para>
-    
+
   <simplesect>
     <title>Parameters</title>
 
@@ -40,7 +36,7 @@
         <term>Refinement passes</term>
         <listitem>
           <para>The OSPRay renderer supports a feature called adaptive accumulation, which is a progressive rendering method.
-          During each rendering pass, the rendered image is progressively refined. 
+          During each rendering pass, the rendered image is progressively refined.
           This parameter controls the number of iterations until the refinement stops (default: 8).</para>
         </listitem>
       </varlistentry>
@@ -55,7 +51,7 @@
       <varlistentry>
         <term>Max ray recursion depth</term>
         <listitem>
-          <para>The maximum number of recursion steps during raytracing. Normally, 1 or 2 is enough, but when rendering semi-transparent 
+          <para>The maximum number of recursion steps during raytracing. Normally, 1 or 2 is enough, but when rendering semi-transparent
           objects, a larger recursion depth is needed.</para>
         </listitem>
       </varlistentry>
@@ -64,8 +60,8 @@
         <term>Direct light</term>
         <listitem>
           <para>Controls the directional light source that is positioned behind the camera and is pointing roughly along the viewing direction.
-          The <emphasis>angular diameter</emphasis> parameter specifies the apparent size (angle in degree) of the light source. 
-          Setting the angular diameter to a value greater than zero will result in soft shadows when the rendering backend uses stochastic sampling 
+          The <emphasis>angular diameter</emphasis> parameter specifies the apparent size (angle in degree) of the light source.
+          Setting the angular diameter to a value greater than zero will result in soft shadows when the rendering backend uses stochastic sampling
           (only the case for the <emphasis>Path Tracer</emphasis> backend). For instance, the apparent size of the sun is about 0.53°.</para>
         </listitem>
       </varlistentry>
@@ -80,7 +76,7 @@
   	  <varlistentry>
         <term>Material</term>
         <listitem>
-          <para>The <emphasis>specular brightness</emphasis> controls the specular reflectivity of the material (default: 5%). 
+          <para>The <emphasis>specular brightness</emphasis> controls the specular reflectivity of the material (default: 5%).
           The <emphasis>shininess</emphasis> parameter (specular Phong exponent) is usually in the range between 2.0 and 10,000 (default: 10.0).</para>
         </listitem>
       </varlistentry>
@@ -89,7 +85,7 @@
         <term>Depth of field</term>
         <listitem>
           <para>Only objects exactly at the distance from the camera specified by the <emphasis>focal length</emphasis> will appear sharp when depth-of-field rendering is active.
-          Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button 
+          Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button
           and click on that object in the viewport to be rendered. The <emphasis>focal length</emphasis> parameter will be automatically adjusted so that the picked location is in focus.
           The <emphasis>aperture</emphasis> radius controls how blurred objects will appear that are out of focus (default: 0.5).
           </para>
@@ -102,7 +98,7 @@
   <simplesect>
     <title>SciVis backend</title>
     <para>
-      The SciVis backend is a fast ray tracer for scientific visualization, which supports ambient occlusion (AO).      
+      The SciVis backend is a fast ray tracer for scientific visualization, which supports ambient occlusion (AO).
     </para>
 
     <variablelist>
@@ -121,7 +117,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    
+
   </simplesect>
 
   <simplesect>
@@ -138,7 +134,7 @@
         </listitem>
       </varlistentry>
     </variablelist>
-    
+
   </simplesect>
 
   <simplesect>
@@ -146,6 +142,6 @@
     <para>
       <link xlink:href="python/modules/ovito_vis.html#ovito.vis.OSPRayRenderer"><classname>OSPRayRenderer</classname> (Python API)</link>
     </para>
-  </simplesect>    
-  
+  </simplesect>
+
 </section>

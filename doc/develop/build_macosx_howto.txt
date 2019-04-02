@@ -33,17 +33,17 @@ python3 -m pip install PyQt5-sip
 Download and build PyQt5
 **************************************************************************
 python3 configure.py \
-	--confirm-license \
-	--no-designer-plugin \
-	--no-qml-plugin \
-	--assume-shared \
-	--qmake $HOME/Qt/5.9.7/clang_64/bin/qmake \
-	--sip=/Library/Frameworks/Python.framework/Versions/3.7/bin/sip \
-	--concatenate \
-	--enable QtCore \
-	--enable QtGui \
-	--enable QtWidgets \
-	--enable QtMacExtras && make -j4 && make install
+  --confirm-license \
+  --no-designer-plugin \
+  --no-qml-plugin \
+  --assume-shared \
+  --qmake $HOME/Qt/5.9.7/clang_64/bin/qmake \
+  --sip=/Library/Frameworks/Python.framework/Versions/3.7/bin/sip \
+  --concatenate \
+  --enable QtCore \
+  --enable QtGui \
+  --enable QtWidgets \
+  --enable QtMacExtras && make -j4 && make install
 
 **************************************************************************
 Install Sphinx, Numpy, Matplotlib, IPython
@@ -73,14 +73,14 @@ Build static Libav:
 cd libav-11.12
 export MACOSX_DEPLOYMENT_TARGET=10.12
 ./configure \
-	--disable-network \
-	--disable-programs \
-	--disable-debug \
-	--disable-doc \
-	--disable-filters \
-	--disable-static \
-	--enable-shared \
-	--prefix=$HOME/progs/libav && \
+  --disable-network \
+  --disable-programs \
+  --disable-debug \
+  --disable-doc \
+  --disable-filters \
+  --disable-static \
+  --enable-shared \
+  --prefix=$HOME/progs/libav && \
 make install      # Do not use parallel build!
 
 **************************************************************************
@@ -89,16 +89,16 @@ Download and build HDF5:
 mkdir hdf5_build
 cd hdf5_build
 cmake \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_INSTALL_PREFIX=../hdf5 \
-	-DBUILD_SHARED_LIBS=ON \
-	-DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
-	-DHDF5_BUILD_HL_LIB=ON \
-	-DHDF5_BUILD_EXAMPLES=OFF \
-	-DHDF5_BUILD_TOOLS=ON \
-	-DHDF5_BUILD_WITH_INSTALL_NAME=ON \
-	-DBUILD_TESTING=OFF \
-	../hdf5-1.10.2
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=../hdf5 \
+  -DBUILD_SHARED_LIBS=ON \
+  -DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
+  -DHDF5_BUILD_HL_LIB=ON \
+  -DHDF5_BUILD_EXAMPLES=OFF \
+  -DHDF5_BUILD_TOOLS=ON \
+  -DHDF5_BUILD_WITH_INSTALL_NAME=ON \
+  -DBUILD_TESTING=OFF \
+  ../hdf5-1.10.2
 make -j4 install
 
 **************************************************************************
@@ -171,12 +171,12 @@ cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       ..
 make -j4 install
 cd ../../ospray_install/lib
-install_name_tool -id @rpath/libospray.1.8.4.dylib libospray.1.8.4.dylib
-install_name_tool -id @rpath/libospray_common.1.8.4.dylib libospray_common.1.8.4.dylib
-install_name_tool -id @rpath/libospray_module_ispc.1.8.4.dylib libospray_module_ispc.1.8.4.dylib
-install_name_tool -change @rpath/libospray_common.1.8.4.dylib $PWD/libospray_common.1.8.4.dylib libospray.dylib
-install_name_tool -change @rpath/libospray_common.1.8.4.dylib $PWD/libospray_common.1.8.4.dylib libospray_module_ispc.dylib
-install_name_tool -change @rpath/libospray.1.8.4.dylib $PWD/libospray.1.8.4.dylib libospray_module_ispc.dylib
+install_name_tool -id $PWD/libospray.0.dylib libospray.0.dylib
+install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray.0.dylib
+install_name_tool -id $PWD/libospray_common.0.dylib libospray_common.0.dylib
+install_name_tool -id $PWD/libospray_module_ispc.0.dylib libospray_module_ispc.0.dylib
+install_name_tool -change @rpath/libospray.0.dylib $PWD/libospray.0.dylib libospray_module_ispc.0.dylib
+install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray_module_ispc.0.dylib
 
 **************************************************************************
 Build OVITO:
@@ -199,7 +199,7 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
       -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
       -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.8.4 \
-	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
-	    -DTBB_ROOT=$HOME/progs/tbb2019_20190320oss \
+      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+      -DTBB_ROOT=$HOME/progs/tbb2019_20190320oss \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
       ../..

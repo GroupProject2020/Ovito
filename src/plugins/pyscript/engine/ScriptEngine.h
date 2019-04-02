@@ -122,7 +122,7 @@ private:
 	/// Stack of currently active script execution contexts.
 	static ScriptExecutionContext* _activeContext;
 
-	friend class InterpreterOutputRedirector;
+	friend struct InterpreterOutputRedirector;
 };
 
 }	// End of namespace

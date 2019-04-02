@@ -173,8 +173,6 @@ export INCLUDE="$INCLUDE;C:/Users/stuko/ovito/64bit/zlib_install/include"
    --disable-debug
 make install
 
-
-
 **************************************************************************
 Download and build Intel Embree
 Also download TBB lib and ISPC compiler
@@ -182,7 +180,29 @@ Also download TBB lib and ISPC compiler
 cd embree-3.5.2
 mkdir build
 cd build
-cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe -DCMAKE_INSTALL_PREFIX=../../embree_install ..
+cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe -DCMAKE_INSTALL_PREFIX=../../embree_install ..
+# This is to work around a bug in the MSVC 2015 compiler which leads to a stack overflow during compilation:
+# See https://github.com/embree/embree/issues/157
+cmake -DCMAKE_CXX_FLAGS=-d2SSAOptimizer- .
+cmake --build . --config Release --target install
+
+**************************************************************************
+Download and build OSPRay
+**************************************************************************
+cd ospray-1.8.4
+mkdir build
+cd build
+cmake -G "Visual Studio 14 2015 Win64" ^
+   -DCMAKE_BUILD_TYPE=Release ^
+   -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe ^
+   -DCMAKE_INSTALL_PREFIX=../../ospray_install ^
+   -Dembree_DIR=C:\Users\stuko\ovito\64bit\embree_install ^
+   -DTBB_ROOT=../../embree-3.5.2/tbb ^
+   -DBUILD_SHARED_LIBS=ON ^
+   -DCMAKE_CXX_STANDARD=14 ^
+   -DOSPRAY_ENABLE_TUTORIALS=OFF ^
+   ..
+cmake --build . --config Release --target install
 
 **************************************************************************
 OpenVR
@@ -230,6 +250,12 @@ cmake -G "NMake Makefiles" ^
    -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libssh_install/include ^
    -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
    -DOPENSSL_LIBRARY_DLL=%cd:\=/%/../openssl_install/bin/libeay32.dll ^
+   -DOVITO_BUILD_PLUGIN_OSPRAY=ON ^
+   -Dospray_DIR=%cd:\=/%/../ospray_install/lib/cmake/ospray-1.8.4 ^
+   -Dembree_DIR=%cd:\=/%/../embree_install ^
+   -DTBB_ROOT=%cd:\=/%/../embree-3.5.2/tbb ^
+   -DTBB_DIR=%cd:\=/%/../embree-3.5.2/tbb/cmake ^
+   -DISPC_EXECUTABLE=%cd:\=/%/../ispc-1.10.0-win32\bin\ispc.exe ^
    ../../source
 
 

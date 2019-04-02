@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -24,14 +24,14 @@
 /*! _everything_ in the ospray core universe should _always_ be in the 'ospray' namespace. */
 namespace ospray {
   namespace ovito {
-      
+
     /*! the actual module initialization function. This function gets
         called exactly once, when the module gets first loaded through
         'ospLoadModule'. Notes:
         a) this function does _not_ get called if the application directly
         links to libospray_module_<modulename> (which it
         shouldn't!). Modules should _always_ be loaded through
-        ospLoadModule. 
+        ospLoadModule.
         b) it is _not_ valid for the module to do ospray _api_ calls
         inside such an intialization function. I.e., you can _not_ do a
         ospLoadModule("anotherModule") from within this function (but
@@ -42,9 +42,9 @@ namespace ospray {
         name of the module and shared library containing this module
         (see comments regarding library name in CMakeLists.txt)
     */
-    extern "C" void ospray_init_module_ovito()
+    extern "C" OSPRAY_DLLEXPORT void ospray_init_module_ovito()
     {
     }
-    
+
   } // ::ospray::ovito
 } // ::ospray

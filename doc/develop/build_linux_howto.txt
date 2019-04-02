@@ -57,52 +57,52 @@ Build Qt libraries (version 5.10):
 **************************************************************************
 
 ./configure \
-	-opensource \
-	-confirm-license \
-	-shared \
-	-no-qml-debug \
-	-nomake examples \
-	-ssl \
-	-openssl-linked \
-	-qt-libpng \
-	-qt-libjpeg \
-	-qt-pcre \
-	-qt-xcb \
-	-qt-xkbcommon-x11 \
-	-no-cups \
-	-no-glib \
-	-no-xinput2 \
-	-pch \
-	-no-eglfs \
-	-no-linuxfb \
-	-skip qtconnectivity \
-	-skip qtmultimedia \
-	-skip qt3d \
-	-skip qtcanvas3d \
-	-skip qtcharts \
-	-skip qtxmlpatterns \
-	-skip qtlocation \
-	-skip qtsensors \
-	-skip qtdeclarative \
-	-skip qtdoc \
-	-skip qtquickcontrols \
-	-skip qtquickcontrols2 \
-	-skip qtserialport \
-	-skip qtgraphicaleffects \
-	-skip qttranslations \
-	-skip qtwebchannel \
-	-skip qtactiveqt \
-	-skip qtdatavis3d \
-	-skip qtgamepad \
-	-skip qtscript \
-	-skip qtserialbus \
-	-skip qtvirtualkeyboard \
-	-skip qtwayland \
-	-skip qtwebengine \
-	-skip qtwebsockets \
-	-skip qtwebview \
-	-skip qtwebglplugin \
-	-prefix $HOME/progs/qt5
+  -opensource \
+  -confirm-license \
+  -shared \
+  -no-qml-debug \
+  -nomake examples \
+  -ssl \
+  -openssl-linked \
+  -qt-libpng \
+  -qt-libjpeg \
+  -qt-pcre \
+  -qt-xcb \
+  -qt-xkbcommon-x11 \
+  -no-cups \
+  -no-glib \
+  -no-xinput2 \
+  -pch \
+  -no-eglfs \
+  -no-linuxfb \
+  -skip qtconnectivity \
+  -skip qtmultimedia \
+  -skip qt3d \
+  -skip qtcanvas3d \
+  -skip qtcharts \
+  -skip qtxmlpatterns \
+  -skip qtlocation \
+  -skip qtsensors \
+  -skip qtdeclarative \
+  -skip qtdoc \
+  -skip qtquickcontrols \
+  -skip qtquickcontrols2 \
+  -skip qtserialport \
+  -skip qtgraphicaleffects \
+  -skip qttranslations \
+  -skip qtwebchannel \
+  -skip qtactiveqt \
+  -skip qtdatavis3d \
+  -skip qtgamepad \
+  -skip qtscript \
+  -skip qtserialbus \
+  -skip qtvirtualkeyboard \
+  -skip qtwayland \
+  -skip qtwebengine \
+  -skip qtwebsockets \
+  -skip qtwebview \
+  -skip qtwebglplugin \
+  -prefix $HOME/progs/qt5
 
 make
 make install
@@ -132,8 +132,8 @@ _socket socketmodule.c
 
 SSL=/usr
 _ssl _ssl.c \
-	-DUSE_SSL -I$(SSL)/include -I$(SSL)/include/openssl \
-	-L$(SSL)/lib -lssl -lcrypto
+  -DUSE_SSL -I$(SSL)/include -I$(SSL)/include/openssl \
+  -L$(SSL)/lib -lssl -lcrypto
 
 ./configure --enable-shared --enable-optimizations --prefix=$HOME/progs/python
 make
@@ -185,8 +185,8 @@ make install
 Build Boost libraries:
 **************************************************************************
 ./bootstrap.sh \
-	--with-libraries=system,thread \
-	--prefix=$HOME/progs/boost
+  --with-libraries=system,thread \
+  --prefix=$HOME/progs/boost
 
 ./b2 --user-config=$PWD/user-config.jam release link=shared install
 
@@ -197,17 +197,17 @@ cd $HOME/progs/
 sudo apt-get install yasm
 cd libav-11.8
 ./configure \
-	--enable-pic \
-	--enable-shared \
-	--disable-static \
-	--disable-doc \
-	--disable-network \
-	--disable-programs \
-	--disable-debug \
-	--disable-filters \
-	--disable-decoders \
-	--disable-demuxers \
-	--prefix=$HOME/progs/libav
+  --enable-pic \
+  --enable-shared \
+  --disable-static \
+  --disable-doc \
+  --disable-network \
+  --disable-programs \
+  --disable-debug \
+  --disable-filters \
+  --disable-decoders \
+  --disable-demuxers \
+  --prefix=$HOME/progs/libav
 
 make install
 
@@ -218,12 +218,12 @@ cd $HOME/progs/
 mkdir hdf5_build
 cd hdf5_build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_INSTALL_PREFIX=../hdf5 \
-	-DBUILD_SHARED_LIBS=ON \
-	-DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
-	-DHDF5_BUILD_HL_LIB=ON \
-	../hdf5-1.8.17
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=../hdf5 \
+  -DBUILD_SHARED_LIBS=ON \
+  -DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
+  -DHDF5_BUILD_HL_LIB=ON \
+  ../hdf5-1.8.17
 
 make install
 
@@ -234,18 +234,18 @@ cd $HOME/progs/
 mkdir netcdf_build
 cd netcdf_build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_INSTALL_PREFIX=../netcdf \
-	-DENABLE_DAP=OFF \
-	-DENABLE_EXAMPLES=OFF \
-	-DENABLE_TESTS=OFF \
-	-DBUILD_TESTING=OFF \
-	-DBUILD_UTILITIES=OFF \
-	-DENABLE_HDF4=OFF \
-	-DUSE_HDF5=ON \
-	-DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
-	-DHDF5_INCLUDE_DIR=$HOME/progs/hdf5/include/ \
-	../netcdf-4.4.1/
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=../netcdf \
+  -DENABLE_DAP=OFF \
+  -DENABLE_EXAMPLES=OFF \
+  -DENABLE_TESTS=OFF \
+  -DBUILD_TESTING=OFF \
+  -DBUILD_UTILITIES=OFF \
+  -DENABLE_HDF4=OFF \
+  -DUSE_HDF5=ON \
+  -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
+  -DHDF5_INCLUDE_DIR=$HOME/progs/hdf5/include/ \
+  ../netcdf-4.4.1/
 
 make install
 
@@ -292,13 +292,13 @@ cd build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
-	    -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
-	    -DOSPRAY_APPS_BENCHMARK=OFF \
-	    -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
-	    -DOSPRAY_APPS_UTILITIES=OFF \
+      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+      -DOSPRAY_APPS_BENCHMARK=OFF \
+      -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
+      -DOSPRAY_APPS_UTILITIES=OFF \
       -DOSPRAY_ENABLE_TUTORIALS=OFF \
-	    -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
-	    -DBUILD_SHARED_LIBS=ON \
+      -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+      -DBUILD_SHARED_LIBS=ON \
       ..
 make install
 cp -d $HOME/progs/embree_install/lib/libembree*.so* $HOME/progs/ospray_install/lib/
@@ -311,8 +311,8 @@ Download and build libssh
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
     -DCMAKE_INSTALL_PREFIX=$HOME/progs/libssh_install \
     -DCMAKE_BUILD_TYPE=Release \
-	-DWITH_SERVER=OFF \
-	..
+  -DWITH_SERVER=OFF \
+  ..
 make
 make install
 
@@ -354,6 +354,7 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
   -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
   -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
+  -DTBB_DIR=$HOME/progs/tbb2018_20170919oss/cmake \
   -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh_install/include \
   -DLIBSSH_LIBRARY=$HOME/progs/libssh_install/lib/libssh.so \
   ../source/

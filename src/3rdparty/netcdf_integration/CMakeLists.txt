@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2018) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -21,7 +21,7 @@
 
 ###############################################################################
 # The netcdf_integration CMake target provides a helper module that can be
-# used by other modules in OVITO that make use of the NetCDF library. It 
+# used by other modules in OVITO that make use of the NetCDF library. It
 # pulls in the necessary header files and system libraries and provides the
 # helper class NetCDFExclusiveAccess, which manages concurrent access to the
 # NetCDF functions, which are not thread-safe.
@@ -53,7 +53,7 @@ ENDIF()
 # Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
 SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-	
+
 # Link in the NetCDF library
 TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC netcdf)
 TARGET_INCLUDE_DIRECTORIES(NetCDFIntegration PUBLIC "${netcdf_INCLUDE_DIRS}")
@@ -64,7 +64,7 @@ ENDIF()
 SET_PROPERTY(TARGET NetCDFIntegration PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Export this target.
-INSTALL(TARGETS NetCDFIntegration EXPORT OVITO 
+INSTALL(TARGETS NetCDFIntegration EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
@@ -101,12 +101,12 @@ ELSEIF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 
 	# Deploy NetCDF shared library.
 	GET_TARGET_PROPERTY(NETCDF_LIBRARY netcdf LOCATION)
-	OVITO_INSTALL_SHARED_LIB("${NETCDF_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	OVITO_INSTALL_SHARED_LIB("${NETCDF_LIBRARY}" ".")
 
 	# Deploy HDF5 shared libraries, which are required by NetCDF lib.
 	GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5-shared IMPORTED_LOCATION_RELEASE)
-	OVITO_INSTALL_SHARED_LIB("${HDF5_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	OVITO_INSTALL_SHARED_LIB("${HDF5_LIBRARY}" ".")
 	GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
-	OVITO_INSTALL_SHARED_LIB("${HDF5_HL_LIBRARY}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	OVITO_INSTALL_SHARED_LIB("${HDF5_HL_LIBRARY}" ".")
 
 ENDIF()
