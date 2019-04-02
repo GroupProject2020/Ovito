@@ -209,7 +209,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 	# Strip version number from shared lib filename.
 	GET_FILENAME_COMPONENT(shared_lib_ext "${shared_lib}" EXT)
 	STRING(REPLACE ${shared_lib_ext} "" shared_lib_new "${shared_lib}")
-	FILE(GLOB lib_versions "${shared_lib_new}.*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+	FILE(GLOB lib_versions LIST_DIRECTORIES FALSE "${shared_lib_new}.*${CMAKE_SHARED_LIBRARY_SUFFIX}" "${shared_lib_new}${CMAKE_SHARED_LIBRARY_SUFFIX}.*")
 	FOREACH(lib_version ${lib_versions})
 		WHILE(IS_SYMLINK ${lib_version})
 			GET_FILENAME_COMPONENT(symlink_target "${lib_version}" REALPATH)
