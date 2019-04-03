@@ -257,7 +257,6 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		OSPReferenceWrapper<ospray::cpp::FrameBuffer> osp_fb(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
 		osp_fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
 
-#if 1
 		// Define a custom load balancer for OSPRay that performs progressive updates of the frame buffer.
 		class OVITOTiledLoadBalancer : public ospray::TiledLoadBalancer
 		{
@@ -335,7 +334,6 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			return operation.incrementProgressValue((x2-x1) * (y2-y1));
 		});
 		ospray::TiledLoadBalancer::instance = std::move(loadBalancer);
-#endif
 
 		operation.beginProgressSubSteps(refinementIterations());
 		for(int iteration = 0; iteration < refinementIterations() && !operation.isCanceled(); iteration++) {

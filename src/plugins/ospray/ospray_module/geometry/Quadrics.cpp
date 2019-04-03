@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -57,7 +57,7 @@ namespace ospray {
       colorData         = getParamData("color");
       colorOffset       = getParam1i("color_offset",0);
       texcoordData      = getParamData("texcoord");
-      
+
       if (colorData) {
         if (hasParam("color_format")) {
           colorFormat = static_cast<OSPDataType>(getParam1i("color_format", OSP_UNKNOWN));
@@ -101,13 +101,13 @@ namespace ospray {
       if (colorData && colorData->numBytes > INT32_MAX)
         huge_mesh = true;
       if (texcoordData && texcoordData->numBytes > INT32_MAX)
-        huge_mesh = true;      
-      
-      ispc::QuadricsGeometry_set(getIE(), model->getIE(), quadricData->data, 
+        huge_mesh = true;
+
+      ispc::QuadricsGeometry_set(getIE(), model->getIE(), quadricData->data,
         materialList ? ispcMaterialPtrs.data() : nullptr,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
         colorData ? colorData->data : nullptr,
-        colorOffset, colorStride, colorData,
+        colorOffset, colorStride, colorFormat,
         numQuadrics, bytesPerQuadric,
         materialID,
         offset_center, offset_coeff, offset_radius,

@@ -91,7 +91,12 @@ IF(APPLE)
 			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
 		FILE(GLOB OTHER_FRAMEWORK_DYNLIBS
 			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
-		SET(BUNDLE_LIBS \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
+		FOREACH(lib \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
+			IF(NOT IS_SYMLINK \${lib})
+				LIST(APPEND BUNDLE_LIBS \${lib})
+			ENDIF()
+		ENDFOREACH()
+		MESSAGE(\"Bundle libs: \${BUNDLE_LIBS}\")
 		SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
 		INCLUDE(BundleUtilities)
 		FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")

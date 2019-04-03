@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -35,7 +35,7 @@ namespace ospray {
     // import ospcommon component - vec3f etc
     using namespace ospcommon;
 
-    /*! a geometry type that implements quadrics. 
+    /*! a geometry type that implements quadrics.
       This implements a new ospray geometry, and as such has
       to
 
@@ -75,17 +75,16 @@ namespace ospray {
       /*! data array from which we read the per-quadric color data; if
         NULL we do not have per-quadric data */
       Ref<Data> colorData;
-      
-      
+
       /*! The color format of the colorData array, one of:
           OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
       OSPDataType colorFormat;
-      
+
       /*! stride in colorData array for accessing i'th quadric's
         color. color of disc i will be read as 3 floats from
         'colorOffset+i*colorStride */
       size_t    colorStride;
-        
+
       /*! offset in colorData array for accessing i'th quadric's
         color. color of disc i will be read as 3 floats from
         'colorOffset+i*colorStride */

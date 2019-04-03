@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -31,7 +31,7 @@
 
 struct Quadrics {
   /*! inherit from "Geometry" class: */
-  Geometry   super; 
+  Geometry   super;
 
   /*! data array that contains the quadric data (possibly but not
       necessarily including the color, which could be in color);
@@ -42,7 +42,7 @@ struct Quadrics {
   int        offset_coeff;
   int        offset_radius;
   int        offset_materialID;
-  int        offset_colorID; 
+  int        offset_colorID;
 
   int        materialID;
 
@@ -50,7 +50,7 @@ struct Quadrics {
   int        color_stride;
   int        color_offset;
   int        color_format;
- 
+
   vec2f     *texcoord;
   bool       huge_mesh;
 };
@@ -90,6 +90,12 @@ static void Quadrics_postIntersect(uniform Geometry *uniform geometry,
   uniform Quadrics *uniform self = (uniform Quadrics *uniform)geometry;
 
   dg.Ng = dg.Ns = ray.Ng;
+
+  uint8 * quadricPtr = self->data + self->stride*((int64)ray.primID);
+  float radius = *((float *)(quadricPtr + self->offset_radius));
+  // make epsilon large enough to not get lost when computing
+  // |CO| = |center-ray.org| ~ radius for 2ndary rays
+  dg.epsilon = radius * ulpEpsilon;
 
   if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;
@@ -139,7 +145,7 @@ unmasked void Quadrics_bounds(const RTCBoundsFunctionArguments *uniform args)
   uniform int primID = args->primID;
   uniform uint8 *uniform quadricPtr = self->data + self->stride*((uniform int64)primID);
   uniform float radius = *((uniform float *uniform)(quadricPtr+self->offset_radius));
-  uniform vec3f center = *((uniform vec3f *uniform)(quadricPtr+self->offset_center)); 
+  uniform vec3f center = *((uniform vec3f *uniform)(quadricPtr+self->offset_center));
   box3fa *uniform out = (box3fa *uniform)args->bounds_o;
   *out = make_box3fa(center - radius, center + radius);
 }
@@ -217,13 +223,13 @@ void Quadrics_intersect_kernel(const RTCIntersectFunctionNArguments *uniform arg
       if(t_in > ray->t0 && t_in < ray->t) {
         hit = true;
         ray->t = t_in;
-      } 
+      }
       else if (t_out > (ray->t0 + epsilon) && t_out < ray->t) {
         hit = true;
         ray->t = t_out;
       }
     }
-  }  
+  }
   if(hit) {
     if (isOcclusionTest) {
       ray->t = neg_inf;
@@ -232,17 +238,17 @@ void Quadrics_intersect_kernel(const RTCIntersectFunctionNArguments *uniform arg
       ray->geomID = self->super.geomID;
       ray->instID = args->context->instID[0];
       vec3f pnt = ray->org + ray->t * ray->dir;
-      
-      ray->Ng.x = (mat->a*(pnt.x - center.x) + 
-        mat->b*(pnt.y - center.y) + 
+
+      ray->Ng.x = (mat->a*(pnt.x - center.x) +
+        mat->b*(pnt.y - center.y) +
         mat->c*(pnt.z - center.z) + mat->d);
 
-      ray->Ng.y = (mat->b*(pnt.x - center.x) + 
-        mat->e*(pnt.y - center.y) + 
+      ray->Ng.y = (mat->b*(pnt.x - center.x) +
+        mat->e*(pnt.y - center.y) +
         mat->f*(pnt.z - center.z) + mat->g);
 
-      ray->Ng.z = (mat->c*(pnt.x - center.x) + 
-        mat->f*(pnt.y - center.y) + 
+      ray->Ng.z = (mat->c*(pnt.x - center.x) +
+        mat->f*(pnt.y - center.y) +
         mat->h*(pnt.z - center.z) + mat->i);
 
       ray->Ng = normalize(ray->Ng);
@@ -300,7 +306,7 @@ export void QuadricsGeometry_set(void  *uniform _self
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
-  
+
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numQuadrics;

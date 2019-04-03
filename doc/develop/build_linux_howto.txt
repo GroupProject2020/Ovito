@@ -355,6 +355,10 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
   -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
   -DTBB_DIR=$HOME/progs/tbb2018_20170919oss/cmake \
+  -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
   -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh_install/include \
   -DLIBSSH_LIBRARY=$HOME/progs/libssh_install/lib/libssh.so \
   ../source/
+
+#!/bin/bash
+$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake . && make && $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cpack && mv *.tar.gz /mnt/temp/
