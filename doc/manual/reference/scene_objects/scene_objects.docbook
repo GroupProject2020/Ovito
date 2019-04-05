@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="scene_objects" 
+         xml:id="scene_objects"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -11,15 +11,15 @@
   <title>Data pipelines</title>
 
   <para>
-    Data pipelines are the central concept of OVITO. You can find a general introduction to 
-    this concept in the <link linkend="usage.modification_pipeline">first part</link> of this manual. 
+    Data pipelines are the central concept of OVITO. You can find a general introduction to
+    this concept in the <link linkend="usage.modification_pipeline">first part</link> of this manual.
     The following reference sections list the different kinds of building blocks that you will
     need to create data pipelines in OVITO:
     <itemizedlist>
-      <listitem><para><link linkend="pipelines.data_sources">Data sources</link></para></listitem>
-      <listitem><para><link linkend="pipelines.data_objects">Data objects</link></para></listitem>
-      <listitem><para><link linkend="particles.modifiers">Modifiers</link></para></listitem>
-      <listitem><para><link linkend="display_objects">Visual elements</link></para></listitem>
+      <listitem><link linkend="pipelines.data_sources">Data sources</link></listitem>
+      <listitem><link linkend="pipelines.data_objects">Data objects</link></listitem>
+      <listitem><link linkend="particles.modifiers">Modifiers</link></listitem>
+      <listitem><link linkend="display_objects">Visual elements</link></listitem>
     </itemizedlist>
   </para>
 
@@ -30,8 +30,8 @@
         <imagedata fileref="images/scene_objects/data_source_and_data_objects.svg" format="SVG" scale="50" />
       </imageobject></mediaobject></screenshot></informalfigure>
 
-      A <emphasis>data source</emphasis> holds, provides or generates the input data 
-      for a <link linkend="usage.modification_pipeline">data pipeline</link>. In the pipeline editor depicted 
+      A <emphasis>data source</emphasis> holds, provides or generates the input data
+      for a <link linkend="usage.modification_pipeline">data pipeline</link>. In the pipeline editor depicted
       in the screenshot, the current data source appears under the "Data source" section.
       The type of source you will work with most of the time is the <link linkend="scene_objects.file_source">External file</link>
       source, which loads the input data for the pipeline from a file stored on your local computer or a remote machine.
@@ -48,7 +48,7 @@
               <entry>Description</entry>
             </row>
           </thead>
-          <tbody>          
+          <tbody>
             <row>
               <entry><link linkend="scene_objects.file_source">External&#xA0;file</link></entry>
               <entry>Reads data from external file and hands it to the pipeline</entry>
@@ -68,11 +68,11 @@
 
     <para>
       A dataset loaded from a file typically consists of several <emphasis>data objects</emphasis>, which represent different
-      facets of the information. Data object are the entities which get processed by <link link="usage.modification_pipeline">modifiers</link> while flowing 
-      through the data pipeline. Some of the data objects loaded from an input file, but not all, appear as sub-entries of the 
+      facets of the information. Data object are the entities which get processed by <link link="usage.modification_pipeline">modifiers</link> while flowing
+      through the data pipeline. Some of the data objects loaded from an input file, but not all, appear as sub-entries of the
       data source in the pipeline editor (see screenshot).
     </para>
-    
+
     <para>
       <informaltable>
         <tgroup cols="2">
@@ -127,19 +127,19 @@
         </tgroup>
       </informaltable>
     </para>
-  </simplesect> 
+  </simplesect>
 
   <simplesect>
     <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_data.html#ovito.data.DataObject"><classname>DataObject</classname> (Python API)</link>
     </para>
-  </simplesect> 
+  </simplesect>
 
   <xi:include href="file_source.docbook"/>
   <xi:include href="particle_types.docbook"/>
   <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
   <xi:include href="clone_pipeline.docbook"/>
-  
+
 </section>

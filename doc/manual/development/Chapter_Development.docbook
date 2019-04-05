@@ -10,16 +10,16 @@
   <title>Developer information</title>
 
    <para>
-   <itemizedlist>   
-   	<listitem><para><link linkend="development.build_linux">Compiling OVITO on Linux</link></para></listitem>
-   	<listitem><para><link linkend="development.build_windows">Compiling OVITO on Windows</link></para></listitem>
-   	<listitem><para><link linkend="development.build_macosx">Compiling OVITO on macOS</link></para></listitem>
-   	<!-- 
-   	<listitem><para><link xlink:href="http://ovito.org/apidoc/">OVITO C++ API documentation</link></para></listitem>
+   <itemizedlist>
+   	<listitem><link linkend="development.build_linux">Compiling OVITO on Linux</link></listitem>
+   	<listitem><link linkend="development.build_windows">Compiling OVITO on Windows</link></listitem>
+   	<listitem><link linkend="development.build_macosx">Compiling OVITO on macOS</link></listitem>
+   	<!--
+   	<listitem><link xlink:href="http://ovito.org/apidoc/">OVITO C++ API documentation</link></listitem>
    	 -->
    </itemizedlist>
    </para>
- 
+
   <simplesect xml:id="development.requirements">
     <title>Build requirements</title>
     <para>
@@ -48,7 +48,7 @@
 		<row><entry><link xlink:href="http://sphinx-doc.org/">Sphinx</link></entry><entry>optional</entry>
 		<entry>Tool for creating the Python scripting interface documentation</entry></row>
 	</tbody></tgroup>
-	</informaltable> 
+	</informaltable>
     The library dependencies are:
 	<informaltable>
     <tgroup cols="3"><thead><row><entry>Library</entry><entry>Requirement</entry><entry>Notes</entry></row></thead>
@@ -74,7 +74,7 @@
 		<row><entry><link xlink:href="https://embree.github.io">Embree</link></entry><entry>optional</entry>
 		<entry>Required to build the <link linkend="rendering.ospray_renderer">OSPRay renderer</link> plugin. </entry></row>
 	</tbody></tgroup>
-	</informaltable> 
+	</informaltable>
     The sources of the following third-party libraries are included with the OVITO distribution
 	and will be automatically built and used if not present on the local system:
 	<informaltable>
@@ -91,9 +91,9 @@
 		<row><entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link></entry>
 		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier.</entry></row>
 	</tbody></tgroup>
-	</informaltable> 
+	</informaltable>
     </para>
-    
+
   </simplesect>
 
   <xi:include href="build_linux.docbook"/>

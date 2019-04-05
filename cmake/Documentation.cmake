@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -44,12 +44,25 @@ FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html")
 
 # XSL transform documentation files.
 IF(XSLT_PROCESSOR)
+	# This generates the user manual as a set of static HTML pages which get shipped with
+	# the Ovito installation packages and which can be accessed from the Help menu of the application.
 	ADD_CUSTOM_TARGET(documentation
 					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/images/"
 					COMMAND ${CMAKE_COMMAND} "-E" copy "manual.css" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/"
 					COMMAND ${XSLT_PROCESSOR} "${XSLT_PROCESSOR_OPTIONS}" --nonet --stringparam base.dir "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" html-customization-layer.xsl Manual.docbook
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
+
+	# This generates the user manual which is put onto the www.ovito.org website.
+	# It consists of a set of PHP files that adopt the look and feel of the WordPress site.
+	ADD_CUSTOM_TARGET(wordpress_doc
+					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${CMAKE_BINARY_DIR}/doc/wordpress/images/"
+					COMMAND ${XSLT_PROCESSOR} "${XSLT_PROCESSOR_OPTIONS}" --nonet
+						--stringparam base.dir "${CMAKE_BINARY_DIR}/doc/wordpress/"
+						--stringparam ovito.version "${OVITO_VERSION_STRING}"
+						wordpress-customization-layer.xsl Manual.docbook
+					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
+					COMMENT "Generating user documentation (WordPress version)")
 
 	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/")
 	IF(OVITO_BUILD_DOCUMENTATION)
@@ -62,13 +75,13 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 
 	# Use OVITO's built in Python interpreter to run the Sphinx doc program.
 	ADD_CUSTOM_TARGET(scripting_documentation
-				COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E" 
-				"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
+				COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+				"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
 				"-D" "release=${OVITO_VERSION_STRING}"
-				"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/" 
+				"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/"
 				WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
 				COMMENT "Generating scripting documentation")
-	
+
 	# Run Sphinx only after OVITO and all of its plugins have been built.
 	ADD_DEPENDENCIES(scripting_documentation ovitos)
 
@@ -83,7 +96,7 @@ FIND_PACKAGE(Doxygen QUIET)
 # Generate API documentation files.
 IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(apidocs
-					COMMAND "env" "OVITO_VERSION_STRING=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}" 
+					COMMAND "env" "OVITO_VERSION_STRING=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}"
 					"OVITO_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/src/" ${DOXYGEN_EXECUTABLE} Doxyfile
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/develop/"
 					COMMENT "Generating C++ API documentation")
