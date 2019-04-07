@@ -75,15 +75,26 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 
 	# Use OVITO's built in Python interpreter to run the Sphinx doc program.
 	ADD_CUSTOM_TARGET(scripting_documentation
-				COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
-				"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
-				"-D" "release=${OVITO_VERSION_STRING}"
-				"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/"
-				WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
-				COMMENT "Generating scripting documentation")
+		COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
+			"-D" "release=${OVITO_VERSION_STRING}"
+			"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/"
+		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
+		COMMENT "Generating scripting documentation")
 
 	# Run Sphinx only after OVITO and all of its plugins have been built.
 	ADD_DEPENDENCIES(scripting_documentation ovitos)
+
+	# Use OVITO's built in Python interpreter to run the Sphinx doc program.
+	ADD_CUSTOM_TARGET(wordpress_doc_scripting
+		COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+			"-c" "${CMAKE_SOURCE_DIR}/doc/python/wordpress"
+			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
+			"-D" "release=${OVITO_VERSION_STRING}"
+			"-D" "html_short_title=Ovito ${OVITO_VERSION_STRING}"
+			"." "${CMAKE_BINARY_DIR}/doc/wordpress/python/"
+		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
+		COMMENT "Generating scripting documentation (WordPress version)")
 
 	IF(OVITO_BUILD_DOCUMENTATION)
 		ADD_DEPENDENCIES(Ovito scripting_documentation)
