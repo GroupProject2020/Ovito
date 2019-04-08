@@ -132,7 +132,7 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_data.html#ovito.data.DataObject"><classname>DataObject</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_data" anchor="ovito.data.DataObject"><classname>DataObject</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
 

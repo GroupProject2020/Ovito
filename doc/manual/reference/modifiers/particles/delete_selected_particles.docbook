@@ -16,18 +16,18 @@
     </imageobject></mediaobject></screenshot></informalfigure>
     This modifier deletes all currently selected data elements (i.e. particles, bonds).
   </para>
-  
+
   <para>
     The checkbox list in the modifier's parameter panel lets you control which classes of data elements (particles, bonds, etc.) the modifier
     should act on. Element classes that are not present in the modifier's pipeline input, are grayed out.
     The modifier will delete those data elements from the selected classes whose <literal>Selection</literal> property is non-zero.
   </para>
-  
+
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.DeleteSelectedModifier"><classname>DeleteSelectedModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.DeleteSelectedModifier"><classname>DeleteSelectedModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

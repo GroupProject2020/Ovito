@@ -10,12 +10,12 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Simulation cell</title>
 
-  <para>      
+  <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/simulation_cell_panel.png" format="PNG" scale="50" />
-    </imageobject></mediaobject></screenshot></informalfigure>    
+    </imageobject></mediaobject></screenshot></informalfigure>
     This <link linkend="display_objects">visual element</link> renders the <link linkend="scene_objects.simulation_cell">simulation cell</link>
-    as a wireframe box. 
+    as a wireframe box.
   </para>
 
    <simplesect>
@@ -27,7 +27,7 @@
         <listitem>
           <para>Determines whether the cell is visible in rendered images and movies. If you uncheck
           this option, the cell will still be visible in the interactive viewports of OVITO. To
-          hide the cell in the interactive viewports as well as in rendered images, uncheck the 
+          hide the cell in the interactive viewports as well as in rendered images, uncheck the
           box to left of the "Simulation cell" entry in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
           </para>
         </listitem>
@@ -50,18 +50,18 @@
       </varlistentry>
   	</variablelist>
     <para>
-      Note that the <emphasis>line width</emphasis> and <emphasis>line color</emphasis> settings 
+      Note that the <emphasis>line width</emphasis> and <emphasis>line color</emphasis> settings
       control how the cell appears in <link linkend="usage.rendering">rendered images</link> of the scene. In the
       <link linkend="usage.viewports">interactive viewports</link>, the
       cell is always rendered as white (or black) wireframe.
     </para>
    </simplesect>
-    
+
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.SimulationCellVis"><classname>SimulationCellVis</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.SimulationCellVis"><classname>SimulationCellVis</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
-    
+
 </section>

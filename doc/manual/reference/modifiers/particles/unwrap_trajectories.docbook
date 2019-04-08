@@ -35,16 +35,16 @@
         </tgroup>
       </informaltable>
     </informalfigure>
-  
+
     Replaces "wrapped" particle coordinates with "unwrapped" coordinates to make the trajectories of particles continuous.
   </para>
 
   <para>
     The modifier can be applied to a series of simulation frames to "unwrap" the time-dependent positions of the particles.
-    To do this, the modifier needs to step through all simulation frames to detect crossings of particles through the 
-    boundaries of the periodic simulation cell, which are associated with jumps (discontinuities) in the input trajectories. 
-    The modifier will then dynamically adjust the coordinates of particles that have crossed a periodic boundary to "unfold" their 
-    trajectories and make them continuous. 
+    To do this, the modifier needs to step through all simulation frames to detect crossings of particles through the
+    boundaries of the periodic simulation cell, which are associated with jumps (discontinuities) in the input trajectories.
+    The modifier will then dynamically adjust the coordinates of particles that have crossed a periodic boundary to "unfold" their
+    trajectories and make them continuous.
   </para>
   <para>
     The modifier uses the <link xlink:href="https://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention">minimum image principle</link>
@@ -55,10 +55,10 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/unwrap_trajectories_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    In the current program version, you must press the <guibutton>Update</guibutton> button of the modifier to manually trigger the 
+    In the current program version, you must press the <guibutton>Update</guibutton> button of the modifier to manually trigger the
     analysis of the input particle trajectories. The modifier will step through the entire sequence of input simulation frames
     and record all crossings through the periodic cell boundaries. Subsequently, it will use this information to unfold the trajectories
-    and replace particle coordinates with unwrapped versions. 
+    and replace particle coordinates with unwrapped versions.
   </para>
 
   <para>
@@ -70,8 +70,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.UnwrapTrajectoriesModifier"><classname>UnwrapTrajectoriesModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.UnwrapTrajectoriesModifier"><classname>UnwrapTrajectoriesModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

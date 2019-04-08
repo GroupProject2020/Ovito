@@ -60,7 +60,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Deletes or selects data elements located within a semi-infinite region bounded by a plane or in a slab bounded by a pair of parallel planes. "
-			"See also the corresponding `user manual page <../../particles.modifiers.slice.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.slice>` for this modifier. "
 			"The modifier can operate on several classes of data elements: "
 			"\n\n"
 			"  * Particles and bonds (:py:class:`~ovito.data.Particles`)\n"
@@ -112,7 +112,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"This modifier applies an affine transformation to data elements in order to move, rotate, shear or scale them. "
-			"See also the corresponding `user manual page <../../particles.modifiers.affine_transformation.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.affine_transformation>` for this modifier. "
 			"The transformation modifier can operate on several types of elements: "
 			"\n\n"
 			"  * Particle positions\n"
@@ -171,7 +171,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"This modifier replicates all particles and bonds to generate periodic images. "
-			"See also the corresponding `user manual page <../../particles.modifiers.show_periodic_images.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.show_periodic_images>` for this modifier. "
 			"The modifier can operate on several classes of data elements: "
 			"\n\n"
 			"  * Particles (including bonds)\n"
@@ -221,7 +221,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"  * Bonds (removing the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
 			"\n\n"
 			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. "
-			"See also the corresponding `user manual page <../../particles.modifiers.clear_selection.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.clear_selection>` for this modifier. "
 			)
 		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of data elements this modifier should operate on. "
@@ -239,7 +239,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"  * Bonds (inverting the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
 			"\n\n"
 			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. "
-			"See also the corresponding `user manual page <../../particles.modifiers.invert_selection.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.invert_selection>` for this modifier. "
 			)
 		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of data elements this modifier should operate on. "
@@ -252,7 +252,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Assigns colors to elements based on some scalar input property to visualize the property values. "
-			"See also the corresponding `user manual page <../../particles.modifiers.color_coding.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.color_coding>` for this modifier. "
 			"The modifier can operate on several kinds of data elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Color'`` :ref:`particle property <particle-types-list>`)\n"
@@ -384,7 +384,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Selects all elements of a certain type (e.g. atoms of a chemical type). "
-			"See also the corresponding `user manual page <../../particles.modifiers.select_particle_type.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.select_particle_type>` for this modifier. "
 			"The modifier can operate on different kinds of data elements: "
 			"\n\n"
 			"  * Particles\n"
@@ -426,7 +426,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Generates a histogram from the values of a property. "
-			"See also the corresponding `user manual page <../../particles.modifiers.histogram.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.histogram>` for this modifier. "
 			"The modifier can operate on properties of different kinds of elements: "
 			"\n\n"
 			"  * Particles (:py:class:`~ovito.data.Particles`)\n"
@@ -485,7 +485,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Assigns a uniform color to all selected elements. "
-			"See also the corresponding `user manual page <../../particles.modifiers.assign_color.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.assign_color>` for this modifier. "
 			"The modifier can operate on several kinds of data elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Color'`` :ref:`particle property <particle-types-list>`)\n"
@@ -519,7 +519,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"  * Bonds (deleting bonds whose ``'Selection'`` :ref:`property <bond-types-list>` is non-zero)\n"
 			"\n\n"
 			"The modifier will act on all of them simultaneously by default. Restricting the delete operation to a subset is possible by setting the :py:attr:`.operate_on` field. "
-			"See also the corresponding `user manual page <../../particles.modifiers.delete_selected_particles.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.delete_selected_particles>` for this modifier. "
 			)
 	;
 	modifier_operate_on_list(DeleteSelectedModifier_py, std::mem_fn(&DeleteSelectedModifier::delegates), "operate_on",
@@ -537,11 +537,11 @@ PYBIND11_MODULE(StdModPython, m)
 			".. literalinclude:: ../example_snippets/color_legend_overlay.py"
 			"\n")
 		.def_property("alignment", &ColorLegendOverlay::alignment, &ColorLegendOverlay::setAlignment,
-				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the code example above. "
+				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#AlignmentFlag>`__ as shown in the code example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignHCenter ^ PyQt5.QtCore.Qt.AlignBottom``")
 		.def_property("orientation", &ColorLegendOverlay::orientation, &ColorLegendOverlay::setOrientation,
-				"Selects the orientation of the color bar. This must be a valid `Qt.Orientation value <http://doc.qt.io/qt-5/qt.html#Orientation-enum>`__ as shown in the code example above. "
+				"Selects the orientation of the color bar. This must be a valid `Qt.Orientation value <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#Orientation>`__ as shown in the code example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.Horizontal``")
 		.def_property("offset_x", &ColorLegendOverlay::offsetX, &ColorLegendOverlay::setOffsetX,
@@ -605,7 +605,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Selects elements based on a user-defined Boolean expression. "
-			"See also the corresponding `user manual page <../../particles.modifiers.expression_select.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.expression_select>` for this modifier. "
 			"The modifier can operate on different classes of elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Selection'`` :ref:`particle property <particle-types-list>`)\n"
@@ -627,7 +627,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"\n")
 		.def_property("expression", &ExpressionSelectionModifier::expression, &ExpressionSelectionModifier::setExpression,
 				"A string containing the Boolean expression to be evaluated for every element. "
-				"The expression syntax is documented in `OVITO's user manual <../../particles.modifiers.expression_select.html>`__.")
+				"The expression syntax is documented in :ovitoman:`OVITO's user manual <../../particles.modifiers.expression_select>`.")
 		.def_property("operate_on", modifierDelegateGetter<ExpressionSelectionModifier>(), modifierDelegateSetter<ExpressionSelectionModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``. "
@@ -641,7 +641,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"This modifier obtains the value of a property by evaluating the data pipeline at a fixed animation time (frame 0 by default), "
 			"and injects it back into the pipeline, optionally under a different name than the original property. "
 			"Thus, the :py:class:`!FreezePropertyModifier` allows you to *freeze* a dynamically changing property and overwrite its values with those from a fixed point in time. "
-			"See also the corresponding `user manual page <../../particles.modifiers.freeze_property.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.freeze_property>` for this modifier. "
 			"\n\n"
 			"The modifier can operate on properties of different kinds of elements: "
 			"\n\n"
@@ -696,7 +696,7 @@ PYBIND11_MODULE(StdModPython, m)
 	ovito_class<ComputePropertyModifier, AsynchronousDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Evaluates a user-defined math expression for every particle or bond and assigns the computed values to the selected output property. "
-			"See also the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.compute_property>` for this modifier. "
 			"\n\n"
 			"The modifier can compute properties of different kinds of elements: "
 			"\n\n"
@@ -722,7 +722,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"A list of strings containing the math expressions to compute, one for each vector component of the selected output property. "
 				"If the output property is scalar, the list must comprise one expression string. "
 				"\n\n"
-				"See the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for a description of the expression syntax. "
+				"See the corresponding :ovitoman:`user manual page <../../particles.modifiers.compute_property>` for a description of the expression syntax. "
 				"\n\n"
 				":Default: ``[\"0\"]``\n")
 		.def_property("output_property", &ComputePropertyModifier::outputProperty, [](ComputePropertyModifier& mod, py::object val) {
@@ -748,7 +748,7 @@ PYBIND11_MODULE(StdModPython, m)
 	ovito_class<CombineDatasetsModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier loads a set of particles from a separate simulation file and merges them into the current dataset. "
-			"See also the corresponding `user manual page <../../particles.modifiers.combine_particle_sets.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.combine_particle_sets>` for this modifier. "
 			"\n\n"
 			"Example:"
 			"\n\n"

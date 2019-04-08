@@ -11,20 +11,20 @@
   <title>Voronoi analysis</title>
 
   <para>
-  
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/voronoi_analysis_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
-    This analysis modifier calculates the Voronoi tessellation of the simulation box, taking the particle positions as Voronoi cell centers. 
+
+    This analysis modifier calculates the Voronoi tessellation of the simulation box, taking the particle positions as Voronoi cell centers.
     By default two quantities are output by the analysis modifier for each particle:
     The <emphasis>volume</emphasis> of the particle's Voronoi cell and the number of faces the Voronoi cell has. Since the face count
     is equal to the number of nearest neighbors of a particle, this quantity is also called the <emphasis>coordination number</emphasis>.
     The modifier outputs both quantities as new particle properties, which allows them to be referenced in subsequent
     analysis or filtering steps.
   </para>
-  
-  <simplesect> 
+
+  <simplesect>
     <title>Voronoi indices</title>
 
   <para>
@@ -32,77 +32,77 @@
     which is a vector of integers constituting a histogram of the number of edges on the faces of the Voronoi cell.
     This index vector can be considered a characteristic signature of a particle's coordination structure and the topology of the Voronoi polyhedron.
     For instance, an icosahedral coordination structure corresponds to the Voronoi index vector (0,0,0,0,12,0,...).
-    In other words, this index vector denotes a polyhedron with exactly 12 faces with 5 edges each. 
-    To select all atoms having this kind of icosahedral coordination structure, we can use the 
+    In other words, this index vector denotes a polyhedron with exactly 12 faces with 5 edges each.
+    To select all atoms having this kind of icosahedral coordination structure, we can use the
     <link linkend="particles.modifiers.expression_select">Expression selection</link>
     modifier with the Boolean expression:
     <programlisting>VoronoiIndex.3==0 &amp;&amp; VoronoiIndex.4==0 &amp;&amp; VoronoiIndex.5==12 &amp;&amp; VoronoiIndex.6==0</programlisting>
-    Note that we don't need to include the first two indices in the selection expression, since faces with less than three edges 
-    do not exist. 
+    Note that we don't need to include the first two indices in the selection expression, since faces with less than three edges
+    do not exist.
     </para>
     <para>
     Due to limitation in OVITO's data model, which can only store per-particle Voronoi index vectors of uniform length,
     the vectors are truncated at a certain maximum face order, which is given by the <emphasis>maximum edge count</emphasis>
     parameter. Faces with more edges will be ignored and don't show up in the truncated index vector.
-    OVITO warns if it encounters any such higher order faces and will recommend to increase the vector length to avoid truncation. 
-  </para> 
-  </simplesect> 
-  
-  <simplesect> 
+    OVITO warns if it encounters any such higher order faces and will recommend to increase the vector length to avoid truncation.
+  </para>
+  </simplesect>
+
+  <simplesect>
     <title>How to analyze the computation results</title>
 
   <para>
     If you are interested in the indices computed by the modifier for a particular particle, you can open OVITO's
     <link linkend="data_inspector">Data Inspector</link>. It lists all properties of the particle, including the computed Voronoi indices.
-    If you would like to perform a statistical analysis of the Voronoi polyhedra, e.g. to determine the Voronoi index vector that 
+    If you would like to perform a statistical analysis of the Voronoi polyhedra, e.g. to determine the Voronoi index vector that
     occurs most frequently in your system, then you can use OVITO's Python scripting interface to access the computed per-particle indices.
-    You can find an example script in the <link xlink:href="python/introduction/examples.html#computing-voronoi-indices">OVITO scripting manual</link>.
+    You can find an example script in the <pydoc-link href="introduction/examples" anchor="computing-voronoi-indices">OVITO scripting manual</pydoc-link>.
   </para>
   <para>
     Note: Currently, OVITO doesn't provide an option to visualize the Voronoi cells. If this is something
     you would like to do for illustrative purposes, you have to use other tools.
   </para>
-  </simplesect> 
+  </simplesect>
 
-  <simplesect> 
+  <simplesect>
     <title>Face area and edge length thresholds</title>
 
   <para>
-    Voronoi polyhedra are known to be unstable with regard to small perturbations of the particle positions in 
+    Voronoi polyhedra are known to be unstable with regard to small perturbations of the particle positions in
     many cases. To address this issue, at least partially, the modifier provides threshold parameters for the
     <emphasis>area</emphasis> of Voronoi faces and the <emphasis>length</emphasis> of face edges to filter out very small,
     almost degenerate faces and edges.
   </para>
   <para>
     If an edge of a Voronoi face is shorter than the specified edge length threshold, then this edge is not counted toward
-    the order of the Voronoi face. Furthermore, if the face's area is below the area threshold, then the face is 
+    the order of the Voronoi face. Furthermore, if the face's area is below the area threshold, then the face is
     not included in the computed Voronoi index and it also not counted toward the coordination number of the central particle.
     The threshold face area can either be specified as an absolute value or relative to the total surface area of the Voronoi polyhedron.
     The purpose of these thresholds is to exclude very small faces/edges, which occur sporadically
     in the presence of perturbations, from the analysis and the counting. Also see <link xlink:href="http://www.pnas.org/content/112/43/E5769.short">this paper on the topic</link>.
   </para>
   </simplesect>
-  
-  <simplesect> 
+
+  <simplesect>
     <title>Potential issues with non-periodic boundaries</title>
 
   <para>
-    The algorithm calculates the Voronoi tessellation of the finite volume enclosed by the simulation cell (not 
+    The algorithm calculates the Voronoi tessellation of the finite volume enclosed by the simulation cell (not
     infinite space!). Thus, Voronoi cells get truncated at the simulation box boundaries (unless periodic boundary conditions are active).
-    Accordingly, no computation will be performed for particles located outside the finite simulation box 
+    Accordingly, no computation will be performed for particles located outside the finite simulation box
     (but they still affect the Voronoi cells of particles inside the box).
   </para>
 
   <para>
     Particles located exactly on the simulation box boundaries (in a non-periodic direction) pose a problem.
     The Voronoi cell of such particles is singular and the construction algorithm may stop with the error message "Could not compute Voronoi cell for some particles".
-    The solution to this type of problem is to slightly enlarge the simulation box to fully include all particles. 
+    The solution to this type of problem is to slightly enlarge the simulation box to fully include all particles.
     This can be done, for example, by using the <link linkend="particles.modifiers.affine_transformation">Affine Transformation</link> modifier to scale the box size by a factor greater than 1.
   </para>
 
   </simplesect>
 
-  <simplesect> 
+  <simplesect>
     <title>Parameters</title>
 
     <variablelist>
@@ -112,8 +112,8 @@
         <listitem>
           <para>
              Specifies a minimum area for the individual faces of a Voronoi cell. The modifier will ignore any Voronoi cell face whose area is smaller than this
-             threshold area when computing the coordination number and the Voronoi index of a particle. 
-             The threshold is an absolute value in units of length squared (in whatever units of length your input data is given). 
+             threshold area when computing the coordination number and the Voronoi index of a particle.
+             The threshold is an absolute value in units of length squared (in whatever units of length your input data is given).
           </para>
         </listitem>
       </varlistentry>
@@ -122,10 +122,10 @@
         <term>Relative face area threshold</term>
         <listitem>
           <para>
-             Specifies a minimum area for the individual faces of a Voronoi cell in terms of a fraction of the total surface area of a Voronoi polyhedron. 
+             Specifies a minimum area for the individual faces of a Voronoi cell in terms of a fraction of the total surface area of a Voronoi polyhedron.
              The modifier will ignore any Voronoi cell face whose area is smaller than this
-             threshold when computing the coordination number and the Voronoi index of a particle. 
-             The relative threshold is specified as a fraction of the total surface area of the Voronoi polyhedron the faces belong to. 
+             threshold when computing the coordination number and the Voronoi index of a particle.
+             The relative threshold is specified as a fraction of the total surface area of the Voronoi polyhedron the faces belong to.
 				     For example, you can use this threshold to exclude those faces from the analysis with an area less than 1% of the total area of the polyhedron surface,
              like it was done in <link xlink:href="http://dx.doi.org/10.1038/nature04421">this paper</link>.
           </para>
@@ -137,8 +137,8 @@
         <listitem>
           <para>
              Activates the calculation of Voronoi indices. The modifier stores the computed indices in a vector particle property
-             named <code>Voronoi Index</code>. The <emphasis>i</emphasis>-th component of this vector will contain the number of faces of the 
-             Voronoi cell having <emphasis>i</emphasis> edges. This implies that the leading two components of the per-particle 
+             named <code>Voronoi Index</code>. The <emphasis>i</emphasis>-th component of this vector will contain the number of faces of the
+             Voronoi cell having <emphasis>i</emphasis> edges. This implies that the leading two components of the per-particle
              vector are always zero, because the minimum number of edges a polygon can have is three.
           </para>
         </listitem>
@@ -163,23 +163,23 @@
           </para>
         </listitem>
       </varlistentry>
-      
+
       <varlistentry>
         <term>Generate neighbor bonds</term>
         <listitem>
           <para>
-             If this option is enabled, the modifier generates bonds between neighboring particles that share a Voronoi face. 
+             If this option is enabled, the modifier generates bonds between neighboring particles that share a Voronoi face.
              A bond is generated for every Voronoi face whose area is larger than the face area threshold and which has at least three edges
              longer than the specified edge length threshold.
           </para>
           <para>
              Note that bonds in periodic simulation cells are computed using the minimum image convention,
-             which requires that the cell is at least twice as large in each periodic direction as the 
+             which requires that the cell is at least twice as large in each periodic direction as the
              longest neighbor bond. In cases where the cell is shorter, the computed bonds may be incorrect.
           </para>
         </listitem>
       </varlistentry>
-            
+
       <varlistentry>
         <term>Use particle radii</term>
         <listitem>
@@ -201,12 +201,12 @@
 
     </variablelist>
   </simplesect>
-  
+
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.VoronoiAnalysisModifier"><classname>VoronoiAnalysisModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.VoronoiAnalysisModifier"><classname>VoronoiAnalysisModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

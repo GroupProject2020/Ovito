@@ -64,7 +64,7 @@
   or by loading them from a data file. Furthermore, in the bond-based mode, the modifier
   outputs the computed per-bond CNA indices as a new bond property named <literal>CNA indices</literal>,
   which can be used for further statistical analyses.
-  The computed CNA bond indices may be accessed from a Python script, <link xlink:href="python/introduction/examples.html#example-compute-cna-bond-indices">see this example</link>.
+  The computed CNA bond indices may be accessed from a Python script, <pydoc-link href="introduction/examples" anchor="example-compute-cna-bond-indices">see this example</pydoc-link>.
   </para>
   </listitem></varlistentry>
 
@@ -130,7 +130,7 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CommonNeighborAnalysisModifier"><classname>CommonNeighborAnalysisModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CommonNeighborAnalysisModifier"><classname>CommonNeighborAnalysisModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
 

@@ -129,7 +129,7 @@ html_theme_path = [better_theme_path]
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = "ovito.ico"
+#html_favicon = "ovito.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -201,6 +201,25 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
                 return (line[len("SIGNATURE:"):].strip(), return_annotation)
     return (signature, return_annotation)
 
+import docutils
+from sphinx.util.nodes import split_explicit_title
+
+def ovitoman_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
+    """Role for linking to the OVITO user manual."""
+    env = inliner.document.settings.env
+    text = docutils.utils.unescape(text)
+    has_explicit, title, target = split_explicit_title(text)
+    if '#' in target:
+        target, anchor = target.split('#')
+        anchor = '#' + anchor
+    else:
+        anchor = ''
+    url = env.config.ovito_user_manual_url + '/' + target + env.config.html_file_suffix + anchor
+    ref = docutils.nodes.reference(rawtext, title, refuri=url)
+    return [ref], []
+
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-process-signature', process_signature)
+    app.add_role('ovitoman', ovitoman_role)
+    app.add_config_value('ovito_user_manual_url', '.', 'html')

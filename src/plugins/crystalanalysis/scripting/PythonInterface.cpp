@@ -45,7 +45,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -54,7 +54,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 			"Constructs the geometric surface of a solid made of point-like particles. The modifier generates "
 			"a :py:class:`~ovito.data.SurfaceMesh`, which is a closed manifold consisting of triangles. It also computes the total "
 			"surface area and the volume of the region enclosed by the surface mesh. "
-			"See also the corresponding `user manual page <../../particles.modifiers.construct_surface_mesh.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.construct_surface_mesh>` for this modifier. "
 			"\n\n"
 			"The :py:attr:`.radius` parameter controls how many details of the solid shape are resolved during surface construction. "
 			"A larger radius leads to a surface with fewer details, reflecting only coarse features of the surface topology. "
@@ -109,7 +109,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 			"This analysis modifier extracts all dislocations in a crystal and converts them to continuous line segments. "
 			"The computational method behind this is called *Dislocation Extraction Algorithm* (DXA) and is described "
 			"in the paper `[MSMSE 20 (2012), 085007] <http://stacks.iop.org/0965-0393/20/085007>`__. "
-			"See also the corresponding `user manual page <../../particles.modifiers.dislocation_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.dislocation_analysis>` for this modifier. "
 			"\n\n"
 			"The extracted dislocation lines are output as a :py:class:`~ovito.data.DislocationNetwork` object by the modifier "
 			"and can be accessed through the :py:attr:`DataCollection.dislocations <ovito.data.DataCollection.dislocations>` field "
@@ -223,7 +223,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 	ovito_class<ElasticStrainModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier computes the atomic-level elastic strain and deformation gradient tensors in crystalline systems. "
-			"See also the corresponding `user manual page <../../particles.modifiers.elastic_strain.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.elastic_strain>` for this modifier. "
 			"\n\n"
 			"The modifier first performs an identification of the local crystal structure and stores the results in the ``Structure Type`` particle "
 			"property. Possible structure type values are listed under the :py:attr:`.input_crystal_structure` property. "
@@ -290,7 +290,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 
 	ovito_class<VTKDislocationsExporter, FileExporter>{m}
 	;
-	
+
 	auto DislocationVis_py = ovito_class<DislocationVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`. "
@@ -408,11 +408,11 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 					}
 					return array;
 				},
-				"The list of space points that define the shape of this dislocation segment. " 
+				"The list of space points that define the shape of this dislocation segment. "
         		"This is a *N* x 3 Numpy array, where *N* is the number of points along the "
         		"segment. For closed loops, the first and the last point coincide.")
-		.def_property_readonly("cluster_id", [](const DislocationSegment& segment) { 
-					return segment.burgersVector.cluster()->id; 
+		.def_property_readonly("cluster_id", [](const DislocationSegment& segment) {
+					return segment.burgersVector.cluster()->id;
 				},
 				"The numeric identifier of the crystal cluster of atoms containing this dislocation segment. "
 				"\n\n"

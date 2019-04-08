@@ -80,7 +80,7 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AcklandJonesModifier"><classname>AcklandJonesModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.AcklandJonesModifier"><classname>AcklandJonesModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
 

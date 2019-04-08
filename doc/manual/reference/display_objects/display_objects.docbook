@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="display_objects" 
+         xml:id="display_objects"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -10,15 +10,15 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Visual elements</title>
 
-  <para>  
+  <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/visual_elements_panel.svg" format="SVG" scale="65" />
     </imageobject></mediaobject></screenshot></informalfigure>
     OVITO distinguishes between the underlying data and the visual representations produced from that data.
-    One typical example for this separation between <link linkend="pipelines.data_objects"><emphasis>data objects</emphasis></link> 
+    One typical example for this separation between <link linkend="pipelines.data_objects"><emphasis>data objects</emphasis></link>
     and their visual representation is the <literal>Position</literal> particle
     property, which holds the XYZ coordinates of a set of point-like particles. To visualize this data, OVITO automatically creates
-    a <emphasis>visual element</emphasis> of the <link linkend="display_objects.particles">Particles</link> type, which is responsible for rendering a 
+    a <emphasis>visual element</emphasis> of the <link linkend="display_objects.particles">Particles</link> type, which is responsible for rendering a
     corresponding set of spheres in the viewports, using the <literal>Position</literal> particle property as input data.
     The <link linkend="display_objects.particles">Particles</link> visual element provides several parameters that let you control
     the visual appearance of the particles, e.g. the glyph shape (spheres, discs, cubes, etc.).
@@ -26,11 +26,11 @@
   <para>
     This separation of <emphasis>data objects</emphasis> and <emphasis>visual elements</emphasis> provides additional flexibility with OVITO.
     It becomes possible to visualize the same data in multiple ways (several visual elements using the same input data) and to
-    <link linkend="clone_pipeline">visualize multiple datasets side by side</link> (one visual element rendering different input data objects).  
+    <link linkend="clone_pipeline">visualize multiple datasets side by side</link> (one visual element rendering different input data objects).
   </para>
   <para>
     Visual elements are usually created automatically by OVITO's <link linkend="usage.modification_pipeline">data pipeline system</link>
-    alongside with the imported or computed data. They all appear under the "Visual elements" section of 
+    alongside with the imported or computed data. They all appear under the "Visual elements" section of
     the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> as indicated in the screenshot.
     You can disable individual visual elements by un-ticking the checkboxes next to them in the pipeline editor.
     This will turn off the visualization of the corresponding data in the interactive viewports and in rendered images.
@@ -47,7 +47,7 @@
               <entry>Description</entry>
             </row>
           </thead>
-          <tbody>          
+          <tbody>
             <row>
               <entry><link linkend="display_objects.bonds">Bonds</link></entry>
               <entry>Renders the bonds between particles as cylinders</entry>
@@ -79,7 +79,7 @@
             </row>
             <row>
               <entry>Dislocations</entry>
-              <entry>Renders dislocation lines extracted by the 
+              <entry>Renders dislocation lines extracted by the
               <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier</entry>
             </row>
           </tbody>
@@ -90,9 +90,9 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.DataVis"><classname>DataVis</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.DataVis"><classname>DataVis</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect> 
+  </simplesect>
 
   <xi:include href="bonds.docbook"/>
   <xi:include href="particles.docbook"/>
@@ -100,5 +100,5 @@
   <xi:include href="surface_mesh.docbook"/>
   <xi:include href="trajectory_lines.docbook"/>
   <xi:include href="vectors.docbook"/>
-  
+
 </section>

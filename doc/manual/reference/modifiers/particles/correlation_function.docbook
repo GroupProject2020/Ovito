@@ -110,8 +110,8 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CorrelationFunctionModifier"><classname>CorrelationFunctionModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CorrelationFunctionModifier"><classname>CorrelationFunctionModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
+  </simplesect>
 
 </section>

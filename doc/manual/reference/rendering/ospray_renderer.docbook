@@ -140,7 +140,7 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.OSPRayRenderer"><classname>OSPRayRenderer</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.OSPRayRenderer"><classname>OSPRayRenderer</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
 

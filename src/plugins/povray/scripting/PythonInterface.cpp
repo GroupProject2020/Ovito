@@ -51,7 +51,7 @@ PYBIND11_MODULE(POVRayPython, m)
 			"\n\n"
 			"For a more detailed description of the rendering parameters exposed by this Python class, please consult the "
 			"`official POV-Ray documentation <http://www.povray.org/documentation/>`__. "
-			"See also the corresponding `user manual page <../../rendering.povray_renderer.html>`__ for more information on this rendering backend. ")
+			"See also the corresponding :ovitoman:`user manual page <../../rendering.povray_renderer>` for more information on this rendering backend. ")
 		.def_property("povray_executable", &POVRayRenderer::povrayExecutable, &POVRayRenderer::setPovrayExecutable,
 				"The absolute path to the external POV-Ray executable on the local computer, which is called by this rendering backend to render an image. "
 				"If no path is set, OVITO will look for ``povray`` in the default executable search path. "
@@ -102,7 +102,7 @@ PYBIND11_MODULE(POVRayPython, m)
 				"Controls interpupillary distance (eye separation) for stereoscopic rendering. This setting is only used "
 				"if the :py:attr:`.omni_stereo` option has been set. "
 				"\n\n"
-				":Default: 0.5")		
+				":Default: 0.5")
 	;
 
 	ovito_class<POVRayExporter, FileExporter>{m}

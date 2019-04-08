@@ -2,7 +2,7 @@
 Code examples
 ==================================
 
-This page presents various example scripts in the following categories. 
+This page presents various example scripts in the following categories.
 Make sure to read the intro section of each category first:
 
    * :ref:`batch_script_examples`
@@ -25,9 +25,9 @@ Make sure to read the intro section of each category first:
 Batch scripts
 ----------------------------------
 
-As described in :ref:`scripting_running`, batch scripts carry out sequences of program actions in a non-interactive manner 
+As described in :ref:`scripting_running`, batch scripts carry out sequences of program actions in a non-interactive manner
 and are typically executed from the terminal using the :program:`ovitos` script interpreter. The following examples demonstrate
-how this can be used to automate various tasks and accomplish new things that cannot even be done with the graphical 
+how this can be used to automate various tasks and accomplish new things that cannot even be done with the graphical
 program version.
 
 .. _example_compute_voronoi_indices:
@@ -46,13 +46,13 @@ where n\ :sub:`i` is the number of polyhedron faces with *i* edges/vertices.
 The script computes the distribution of these Voronoi index vectors
 and lists the 10 most frequent polyhedron types in the dataset. In the case
 of a Cu\ :sub:`64%`-Zr\ :sub:`36%` bulk metallic glass, the most frequent polyhedron type is the icosahedron.
-It has 12 faces with five edges each. Thus, the corresponding Voronoi index 
+It has 12 faces with five edges each. Thus, the corresponding Voronoi index
 vector is:
 
    (0, 0, 0, 0, 12, 0, ...)
-   
+
 Python script:
-   
+
 .. literalinclude:: ../../../examples/scripts/voronoi_analysis.py
    :lines: 19-
 
@@ -70,7 +70,7 @@ Program output:
   (0, 0, 0, 1, 10, 4)     2068    (1.9 %)
   (0, 0, 0, 2, 8, 6)      2063    (1.9 %)
   (0, 0, 0, 2, 8, 5)      1662    (1.5 %)
-  
+
 
 .. _example_compute_cna_bond_indices:
 
@@ -81,17 +81,17 @@ Example B2: Computing CNA bond indices
 The following script demonstrates how to use the :py:class:`~ovito.modifiers.CreateBondsModifier`
 to create bonds between particles. The structural environment of each created bond
 is then characterized with the help of the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier`,
-which computes a triplet of indices for each bond from the topology of the surrounding bond network. 
-The script accesses the computed CNA bond indices in the output :py:class:`~ovito.data.DataCollection` of the 
-modification pipeline and exports them to a text file. The script enumerates the bonds of each particle 
+which computes a triplet of indices for each bond from the topology of the surrounding bond network.
+The script accesses the computed CNA bond indices in the output :py:class:`~ovito.data.DataCollection` of the
+modification pipeline and exports them to a text file. The script enumerates the bonds of each particle
 using the :py:class:`~ovito.data.BondsEnumerator` helper class.
 
 The generated text file has the following format::
 
    Atom    CNA_pair_type:Number_of_such_pairs ...
-   
-   1       [4 2 1]:2  [4 2 2]:1 [5 4 3]:1 
-   2       ...    
+
+   1       [4 2 1]:2  [4 2 2]:1 [5 4 3]:1
+   2       ...
    ...
 
 Python script:
@@ -122,7 +122,7 @@ User-defined modifier functions
 ----------------------------------
 
 OVITO allows you to implement your :ref:`own type of analysis modifier <writing_custom_modifiers>` by writing a Python function that gets called every time
-the data pipeline is evaluated. This user-defined function has access to the positions and other properties of particles 
+the data pipeline is evaluated. This user-defined function has access to the positions and other properties of particles
 and can output information and results as new properties or global attributes.
 
 .. _example_msd_calculation:
@@ -132,7 +132,7 @@ Example M1: Calculating mean square displacement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This example presents a user-defined modifier function for calculating the mean square displacement (MSD) for a system of moving particles.
-OVITO provides the built-in `Displacement Vectors <../../particles.modifiers.displacement_vectors.html>`__ modifier, which 
+OVITO provides the built-in :ovitoman:`Displacement Vectors <../../particles.modifiers.displacement_vectors>` modifier, which
 calculates the individual displacement of each particle. It stores its results in the ``"Displacement Magnitude"``
 particle property. So all our user-defined modifier function needs to do is to sum up the squared displacement magnitudes and divide by the number of particles:
 
@@ -154,11 +154,11 @@ Example M2: Custom order parameter calculation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the paper `[Phys. Rev. Lett. 86, 5530] <https://doi.org/10.1103/PhysRevLett.86.5530>`__ an order parameter is specified as a means
-of labeling an atom in the simulation as belonging to either the liquid or solid fcc crystal phase. In the following we will 
+of labeling an atom in the simulation as belonging to either the liquid or solid fcc crystal phase. In the following we will
 develop a custom analysis modifier for OVITO, which calculates this per-atom order parameter.
 
-The order parameter is defined as follows (see the paper for details): For any of the 12 nearest neighbors of a given atom one can compute the distance the neighbor 
-makes from the ideal fcc positions of the crystal in the given orientation (denoted by vector :strong:`r`:sub:`fcc`). The sum of the distances over the 12 neighbors, 
+The order parameter is defined as follows (see the paper for details): For any of the 12 nearest neighbors of a given atom one can compute the distance the neighbor
+makes from the ideal fcc positions of the crystal in the given orientation (denoted by vector :strong:`r`:sub:`fcc`). The sum of the distances over the 12 neighbors,
 phi = 1/12*sum(\| :strong:`r`:sub:`i` - :strong:`r`:sub:`fcc` \|), acts as an "order parameter" for the central atom.
 
 Calculating this parameter involves finding the 12 nearest neighbors of each atom and, for each of these neighbors, determining the
@@ -177,7 +177,7 @@ order parameter of each atom. Two nested loops run over all input atoms and thei
   :lines: 39-75
 
 Note that the ``yield`` statements in the modifier function above are only needed to support progress feedback in the
-graphical version of OVITO and to give the pipeline system the possibility to interrupt the long-running calculation when needed. 
+graphical version of OVITO and to give the pipeline system the possibility to interrupt the long-running calculation when needed.
 
 .. _example_visualize_local_lattice_orientation:
 
@@ -185,7 +185,7 @@ graphical version of OVITO and to give the pipeline system the possibility to in
 Example M3: Color mapping to visualize local lattice orientation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The `Polyhedredral Template Matching (PTM) <../../particles.modifiers.polyhedral_template_matching.html>`__ function of OVITO allows 
+The :ovitoman:`Polyhedredral Template Matching (PTM) <../../particles.modifiers.polyhedral_template_matching>` function of OVITO allows
 computing the local lattice orientation for each atom in a (poly)crystal. The computed local orientations
 are stored by the modifier as quaternions, i.e. as rotations within the fundamental zone, in the particle property named ``Orientation``.
 Each per-particle quaternion can be translated into an RGB color to visualize the local lattice orientation.
@@ -204,14 +204,14 @@ In the graphical OVITO version, simply insert a new Python modifier and copy/pas
 Example M4: Finding overlapping particles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example shows how to write a :ref:`user-defined modifier function <writing_custom_modifiers>` that searches for pairs of particles 
-whose distance of separation is within the specified cutoff distance. Then one of the two particles in the pair is selected by the modifier. 
+This example shows how to write a :ref:`user-defined modifier function <writing_custom_modifiers>` that searches for pairs of particles
+whose distance of separation is within the specified cutoff distance. Then one of the two particles in the pair is selected by the modifier.
 Subsequently, the user may apply the :py:class:`~ovito.modifiers.DeleteSelectedModifier` to remove these selected particles from the system
 and eliminate any potential overlaps among particles.
 
 The modifier function below makes use of the :py:class:`~ovito.data.CutoffNeighborFinder` utility class, which allows finding
 neighboring particles that are within a certain range of a central particles. The modifier produces the standard output particle property
-``Selection``. 
+``Selection``.
 
 .. literalinclude:: ../example_snippets/select_close_particles.py
   :lines: 8-42
@@ -223,7 +223,7 @@ User-defined overlay functions
 ----------------------------------------
 
 OVITO allows you to implement your type of viewport overlay by writing a Python function that gets called every time
-a viewport image is being rendered. 
+a viewport image is being rendered.
 
 .. _example_scale_bar_overlay:
 
@@ -231,7 +231,7 @@ a viewport image is being rendered.
 Example O1: Scale bar
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following script renders a scale bar into the viewport (with a fixed length of 4 nm, as shown in the example picture). 
+The following script renders a scale bar into the viewport (with a fixed length of 4 nm, as shown in the example picture).
 You can copy/paste the source code into the script input field and adjust the parameters in the code as needed.
 
 .. image:: /../manual/images/viewport_overlays/python_script_scale_bar_example.png

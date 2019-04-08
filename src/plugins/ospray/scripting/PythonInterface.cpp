@@ -33,7 +33,7 @@ PYBIND11_MODULE(OSPRayRendererPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -44,7 +44,7 @@ PYBIND11_MODULE(OSPRayRendererPython, m)
 			"\n\n"
 			"OSPRay can render scenes with ambient occlusion lighting, semi-transparent objects, and depth-of-field focal blur. "
 			"For technical details of the supported rendering algorithms and parameters, see the `www.ospray.org <http://www.ospray.org>`__ website. "
-			"See also the corresponding `user manual page <../../rendering.ospray_renderer.html>`__ for more information on this rendering engine. ")
+			"See also the corresponding :ovitoman:`user manual page <../../rendering.ospray_renderer>` for more information on this rendering engine. ")
 		.def_property("refinement_iterations", &OSPRayRenderer::refinementIterations, &OSPRayRenderer::setRefinementIterations,
 				"The OSPRay renderer supports a feature called adaptive accumulation, which is a progressive rendering method. "
 				"During each rendering pass, the rendered image is progressively refined. "

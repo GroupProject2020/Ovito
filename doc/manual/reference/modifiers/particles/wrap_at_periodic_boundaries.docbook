@@ -35,7 +35,7 @@
         </tgroup>
       </informaltable>
     </informalfigure>
-  
+
     This modifier remaps particles that are located outside of the simulation box
     back into the box by "wrapping" their coordinates around at
     the boundaries of the simulation box (see example on the right).
@@ -50,8 +50,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.WrapPeriodicImagesModifier"><classname>WrapPeriodicImagesModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.WrapPeriodicImagesModifier"><classname>WrapPeriodicImagesModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

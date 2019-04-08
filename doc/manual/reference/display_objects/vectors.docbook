@@ -15,7 +15,7 @@
        <imagedata fileref="images/display_objects/vectors_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     This <link linkend="display_objects">visual element</link> visualizes the values of a vectorial particle property as arrows.
-    The <link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link> modifier, for example, 
+    The <link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link> modifier, for example,
     outputs the calculated displacement vector of each particle as a new particle property named <literal>Displacement</literal>.
     This property is linked to a corresponding <emphasis>Vectors</emphasis> visual element,
     which appears under the "Visual elements" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> (see screenshot),
@@ -68,7 +68,7 @@
         <term>Arrow color</term>
         <listitem>
           <para>The display color of arrows. This uniform color is used when the <literal>Vector Color</literal>
-          particle property is not present. Otherwise the per-particle colors defined by the <literal>Vector Color</literal> property 
+          particle property is not present. Otherwise the per-particle colors defined by the <literal>Vector Color</literal> property
           are used to render the arrows.</para>
         </listitem>
       </varlistentry>
@@ -82,12 +82,12 @@
 
 	</variablelist>
     </simplesect>
-    
+
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.VectorVis"><classname>VectorVis</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.VectorVis"><classname>VectorVis</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
-    
+
 </section>

@@ -13,15 +13,15 @@
   <para>
      <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/rendering/tachyon_renderer_panel.png" format="PNG" />
-     </imageobject></mediaobject></screenshot></informalfigure>  
-     
-    This is a software-based raytracing renderer. It can produce renderings of the scene with 
+     </imageobject></mediaobject></screenshot></informalfigure>
+
+    This is a software-based raytracing renderer. It can produce renderings of the scene with
     ambient occlusion lighting, shadows and depth of field. The visual quality of the Tachyon renderer
     is slightly better than the one provided by the <link linkend="rendering.ospray_renderer">OSPRay renderer</link>,
     but it requires more memory. Both renderers offer higher visual quality than the <link linkend="rendering.opengl_renderer">OpenGL renderer</link>,
     but are typically considerably slower.
     </para>
-    
+
   <simplesect>
     <title>Parameters</title>
 
@@ -30,7 +30,7 @@
         <term>Anti-aliasing samples</term>
         <listitem>
           <para>To reduce <link xlink:href="http://en.wikipedia.org/wiki/Aliasing">aliasing
-          effects</link>, the Tachyon raytracer can perform <emphasis>supersampling</emphasis> by 
+          effects</link>, the Tachyon raytracer can perform <emphasis>supersampling</emphasis> by
           computing multiple rays per output pixel. This parameter controls the number of rays.</para>
         </listitem>
       </varlistentry>
@@ -53,7 +53,7 @@
       <varlistentry>
         <term>Ambient occlusion</term>
         <listitem>
-          <para>Enabling this lighting technique mimics some of the effects that occur under conditions of omnidirectional diffuse illumination, 
+          <para>Enabling this lighting technique mimics some of the effects that occur under conditions of omnidirectional diffuse illumination,
           e.g. outdoors on an overcast day.</para>
         </listitem>
       </varlistentry>
@@ -61,7 +61,7 @@
       <varlistentry>
         <term>Sample count</term>
         <listitem>
-          <para>Ambient occlusion is implemented using a Monte Carlo technique. This parameters controls the number of samples to compute. 
+          <para>Ambient occlusion is implemented using a Monte Carlo technique. This parameters controls the number of samples to compute.
           A higher sample number leads to a more even shading, but requires more computation time.</para>
         </listitem>
       </varlistentry>
@@ -69,7 +69,7 @@
 	  <varlistentry>
         <term>Depth of field</term>
         <listitem>
-          <para>This option enables <link xlink:href="http://en.wikipedia.org/wiki/Depth_of_field">depth-of-field</link> (DOF) rendering, which  
+          <para>This option enables <link xlink:href="http://en.wikipedia.org/wiki/Depth_of_field">depth-of-field</link> (DOF) rendering, which
           blurs objects that are not in the focus of the camera. Note that depth-of-field rendering only works for viewports with a perspective projection!
           Furthermore, anti-aliasing must be enabled for DOF to work and the number of anti-aliasing samples affects the quality of the blurring.</para>
         </listitem>
@@ -79,7 +79,7 @@
         <term>Focal length</term>
         <listitem>
           <para>This parameter sets the focus distance of the camera. Only objects at this distance from the camera will appear sharp when depth-of-field rendering is active.
-          Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button 
+          Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button
           and click on that object in the viewport to be rendered. The focal length parameter will be automatically adjusted so that the picked location is in focus.</para>
         </listitem>
       </varlistentry>
@@ -90,15 +90,15 @@
           <para>The aperture of the camera. This parameter controls the strength of the depth-of-field effect, i.e. how much objects are blurred that are out of focus.</para>
         </listitem>
       </varlistentry>
-      
+
     </variablelist>
   </simplesect>
 
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.TachyonRenderer"><classname>TachyonRenderer</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.TachyonRenderer"><classname>TachyonRenderer</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>    
-  
+  </simplesect>
+
 </section>

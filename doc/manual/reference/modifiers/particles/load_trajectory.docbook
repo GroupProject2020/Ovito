@@ -13,49 +13,49 @@
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/load_trajectory_panel.png" format="PNG" scale="50" />
-    </imageobject></mediaobject></screenshot></informalfigure>  
+    </imageobject></mediaobject></screenshot></informalfigure>
     This modifier loads atomic trajectories and other time-dependent data from a separate trajectory file
     and combines them with static topology data (e.g. bonds and atom type information) loaded from another file.
   </para>
 
   <para>
     Some molecular dynamics codes work with separate topology and trajectory files. The first kind of file serves as input
-    to the simulation code and contains the initial atomic positions and the definitions of static things like the atom types, bonds, etc. 
-    which do not change throughout the simulation. The trajectories of the particles computed by the MD code are written 
-    to a separate output file, which stores just the time-dependent 
+    to the simulation code and contains the initial atomic positions and the definitions of static things like the atom types, bonds, etc.
+    which do not change throughout the simulation. The trajectories of the particles computed by the MD code are written
+    to a separate output file, which stores just the time-dependent
     coordinates and perhaps other varying properties like atomic energies (but no constant information like the bond topology).
   </para>
-  
+
   <para>
-    LAMMPS is a simulation code that uses the described topology/trajectory scheme. LAMMPS uses the <code>data</code> file format 
+    LAMMPS is a simulation code that uses the described topology/trajectory scheme. LAMMPS uses the <code>data</code> file format
     for input files defining the atom types and bonds in the simulation whereas the <code>dump</code> format serves as output format to
     store the computed atom trajectories.
   </para>
-  
+
   <para>
-    To load such a pair of topology/trajectory files in OVITO, first open the static topology file using the normal 
+    To load such a pair of topology/trajectory files in OVITO, first open the static topology file using the normal
     <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> menu function.
     Then insert the <emphasis>Load Trajectory</emphasis> modifier and use the load button (highlighted in the screenshot)
     to select the corresponding trajectory file. After loading the trajectory file, the modifier
     will subsequently replace the initial particle positions with the time-dependent positions
-    read from the trajectory file. The same is done for the simulation cell geometry and also the values of any other particle property 
+    read from the trajectory file. The same is done for the simulation cell geometry and also the values of any other particle property
     stored in the trajectory file.
   </para>
-  
+
   <simplesect>
   <title>Technical notes</title>
-  
+
     <para>
       The modifier tries to fix the bonds between particles whose trajectories cross a periodic simulation cell
       boundary. If atomic coordinates are wrapped around by the MD code, then
-      the PBC shift vectors of bonds need to be readjusted. The method used by 
+      the PBC shift vectors of bonds need to be readjusted. The method used by
       the modifier to do this is based on the minimum image convention, which prevents bonds from spanning more than half
-      of the simulation box size. 
+      of the simulation box size.
     </para>
 
     <para>
-      The modifier needs to map the trajectories stored in the trajectory file to the right particles loaded from 
-      the topology file. To do this correctly, even in situations where the storage order of particles is dynamically changed by the MD code, 
+      The modifier needs to map the trajectories stored in the trajectory file to the right particles loaded from
+      the topology file. To do this correctly, even in situations where the storage order of particles is dynamically changed by the MD code,
       the modifier uses the unique identifiers of particles (<literal>Particle Identifier</literal> property) if available.
     </para>
   </simplesect>
@@ -63,8 +63,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.LoadTrajectoryModifier"><classname>LoadTrajectoryModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.LoadTrajectoryModifier"><classname>LoadTrajectoryModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
+  </simplesect>
 
 </section>

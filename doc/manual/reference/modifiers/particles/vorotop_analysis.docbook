@@ -14,41 +14,41 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/vorotop_analyis_panel.png" format="PNG" width="280" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  This modifier uses the Voronoi cell topology of a particle 
+  This modifier uses the Voronoi cell topology of a particle
   to characterize its local environment [<link
-  xlink:href="http://dx.doi.org/10.1073/pnas.1505788112">Lazar, Han, Srolovitz, PNAS 112:43 
-  (2015)</link>].</para> 
- 
+  xlink:href="http://dx.doi.org/10.1073/pnas.1505788112">Lazar, Han, Srolovitz, PNAS 112:43
+  (2015)</link>].</para>
+
   <para>
-  The Voronoi cell of a particle is the region of space closer to it than to any other particle.  
-  The topology of the Voronoi cell is the manner in which its faces are connected, and describes 
-  the manner in which a particle's neighbors are arranged.  The topology of a Voronoi cell can be 
+  The Voronoi cell of a particle is the region of space closer to it than to any other particle.
+  The topology of the Voronoi cell is the manner in which its faces are connected, and describes
+  the manner in which a particle's neighbors are arranged.  The topology of a Voronoi cell can be
   completely described in a vector of integers called a <emphasis>Weinberg vector</emphasis> [<link xlink:href
-   ="http://dx.doi.org/10.1109/TCT.1966.1082573">Weinberg, IEEE Trans. Circuit Theory 13:2 (1966)</link>]. 
+   ="http://dx.doi.org/10.1109/TCT.1966.1082573">Weinberg, IEEE Trans. Circuit Theory 13:2 (1966)</link>].
   </para>
-  
+
   <para>
-    This modifier requires loading a <emphasis>filter</emphasis>, which specifies structure types and associated 
-    Weinberg vectors.  Filters for several common structures can be obtained from the <link 
-    xlink:href="https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html"><emphasis>VoroTop</emphasis></link> 
-    website.  The modifier calculates the Voronoi cell topology of each particle, uses the provided 
+    This modifier requires loading a <emphasis>filter</emphasis>, which specifies structure types and associated
+    Weinberg vectors.  Filters for several common structures can be obtained from the <link
+    xlink:href="https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html"><emphasis>VoroTop</emphasis></link>
+    website.  The modifier calculates the Voronoi cell topology of each particle, uses the provided
     filter to determine the structure type, and stores the results in the <code class="literal">
-    Structure Type</code> particle property.  This allows the user to subsequently select particles 
-    of a certain structural type, e.g. by using the <link 
+    Structure Type</code> particle property.  This allows the user to subsequently select particles
+    of a certain structural type, e.g. by using the <link
     linkend="particles.modifiers.select_particle_type">Select type</link> modifier. The VoroTop
-    modifier requires access to the complete set of input particles to perform the analysis, and 
-    should therefore be placed at the beginning of the processing pipeline, preceding any modifiers 
+    modifier requires access to the complete set of input particles to perform the analysis, and
+    should therefore be placed at the beginning of the processing pipeline, preceding any modifiers
     that delete particles.
   </para>
 
   <para>
-    The VoroTop analysis method is well-suited for analyzing finite-temperature systems, including those heated to 
-    their bulk melting temperatures.  This robust behavior relieves the need to quench a sample 
+    The VoroTop analysis method is well-suited for analyzing finite-temperature systems, including those heated to
+    their bulk melting temperatures.  This robust behavior relieves the need to quench a sample
     (such as by energy minimization) prior to analysis.
   </para>
-  
+
   <para>
-    Further information about the Voronoi topology approach for local structure analysis, as well 
+    Further information about the Voronoi topology approach for local structure analysis, as well
     as additional filters, can be found on the <link xlink:href="https://www.seas.upenn.edu/~mlazar/VoroTop/">
     <emphasis>VoroTop</emphasis></link> webpage.
   </para>
@@ -56,10 +56,10 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.VoroTopModifier"><classname>VoroTopModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.VoroTopModifier"><classname>VoroTopModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 
 </section>
 

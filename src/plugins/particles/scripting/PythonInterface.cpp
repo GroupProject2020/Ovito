@@ -53,7 +53,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -119,7 +119,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 		":guilabel:`Stretch Tensor`                          float      XX, YY, ZZ, XY, XZ, YZ\n"
 		":guilabel:`Molecule Type`                           int        \n"
 		"=================================================== ========== ==================================\n"
-		
+
 		// Python class name:
 		,"Particles")
 
@@ -133,7 +133,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 		.def_property_readonly("cluster", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::ClusterProperty); })
 		.def_property_readonly("coordination", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::CoordinationProperty); })
 	;
-	createDataSubobjectAccessors(Particles_py, "bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds, 
+	createDataSubobjectAccessors(Particles_py, "bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds,
 		"The :py:class:`Bonds` data object, which stores the bond information associated with this particle dataset. ");
 
 	py::enum_<ParticlesObject::Type>(Particles_py, "Type")
@@ -178,7 +178,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 		.value("Rotation", ParticlesObject::RotationProperty)
 		.value("StretchTensor", ParticlesObject::StretchTensorProperty)
 		.value("MoleculeType", ParticlesObject::MoleculeTypeProperty)
-	;		
+	;
 
 	auto Bonds_py = ovito_class<BondsObject, PropertyContainer>(m,
 		":Base class: :py:class:`ovito.data.PropertyContainer`"
@@ -202,7 +202,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 		"New bond properties can be added using the :py:meth:`PropertyContainer.create_property` base class method. "
 		"\n\n"
 		"**Bond topology**"
-		"\n\n"    
+		"\n\n"
 		"The ``Topology`` bond property, which is always present, "
 		"defines the connectivity between particles in the form of a *N* x 2 array of indices into the :py:class:`Particles` array. "
 		"In other words, each bond is defined by a pair of particle indices. "
@@ -212,16 +212,16 @@ PYBIND11_MODULE(ParticlesPython, m)
 		"\n\n"
 		"Note that the bonds of a system are not stored in any particular order in the :py:class:`!Bonds` container. "
 		"If you need to enumerate all bonds connected to a certain particle, you can use the :py:class:`BondsEnumerator` utility class for that. "
-		"\n\n" 
+		"\n\n"
 		"**Bond display settings**"
 		"\n\n"
 		"The :py:class:`!Bonds` data object has a :py:class:`~ovito.vis.BondsVis` element attached to it, "
 		"which controls the visual appearance of the bonds in rendered images. It can be accessed through the :py:attr:`~DataObject.vis` "
 		"attribute inherited from the :py:class:`DataObject` base class: "
-		"\n\n"   
+		"\n\n"
     	".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
         "  :lines: 30-32\n"
-		"\n\n"    
+		"\n\n"
 		"**Computing bond vectors**"
 		"\n\n"
 		"Since each bond is defined by two indices into the particles array, we can use this to determine the corresponding spatial "
@@ -247,7 +247,7 @@ PYBIND11_MODULE(ParticlesPython, m)
     	"of the entire array of vectors with a single 3x3 cell matrix. "
 		"To summarize: In the two code snippets above we have performed "
 		"the following calculation for every bond (*a*, *b*) in parallel: "
-		"\n\n"    
+		"\n\n"
 		"   v = x(b) - x(a) + dot(H, pbc)"
 		"\n\n"
 		"where *H* is the cell matrix and *pbc* is the bond's PBC shift vector of the form (n\\ :sub:`x`, n\\ :sub:`y`, n\\ :sub:`z`). "
@@ -327,7 +327,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 			"\n\n"
 			".. literalinclude:: ../example_snippets/particles_vis.py\n"
 			"\n\n"
-			"See also the corresponding `user manual page <../../display_objects.particles.html>`__ for more information on this visual element. ")
+			"See also the corresponding :ovitoman:`user manual page <../../display_objects.particles>` for more information on this visual element. ")
 		.def_property("radius", &ParticlesVis::defaultParticleRadius, &ParticlesVis::setDefaultParticleRadius,
 				"The standard display radius of particles. "
 				"This value is only used if no per-particle or per-type radii have been set. "
@@ -364,9 +364,9 @@ PYBIND11_MODULE(ParticlesPython, m)
 	auto VectorVis_py = ovito_class<VectorVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"
 			"\n\n"
-			"This type of visual element is responsible for rendering arrows to visualize per-particle vector quantities. " 
+			"This type of visual element is responsible for rendering arrows to visualize per-particle vector quantities. "
 			"An instance of this class is typically attached to a :py:class:`~ovito.data.Property` data object that represents a vectorial quantity, e.g. the ``Force`` and the ``Displacement`` particle properties. "
-			"See also the corresponding `user manual page <../../display_objects.vectors.html>`__ for a description of this visual element. "
+			"See also the corresponding :ovitoman:`user manual page <../../display_objects.vectors>` for a description of this visual element. "
 			"\n\n"
 			"The parameters of the vector visual element let you control the visual appearance of the arrows in rendered images. "
 			"For the standard particle properties ``Force``, ``Dipole`` and ``Displacement``, OVITO automatically "
@@ -437,7 +437,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 			"An instance of this class is attached to every :py:class:`~ovito.data.Bonds` data object "
 			"and controls the visual appearance of the bonds in rendered images. "
 			"\n\n"
-			"See also the corresponding `user manual page <../../display_objects.bonds.html>`__ for this visual element. "
+			"See also the corresponding :ovitoman:`user manual page <../../display_objects.bonds>` for this visual element. "
 			"If you import a simulation file containing bonds, you can subsequently access the :py:class:`!BondsVis` element "
 			"through the :py:attr:`~ovito.data.DataObject.vis` field of the bonds data object, which is part in the data collection managed "
 			"by the pipeline's :py:attr:`~ovito.pipeline.Pipeline.source` object:"

@@ -62,6 +62,15 @@
     <xsl:value-of select="'inlinefigure'"/>
   </xsl:template>
 
+  <!-- Template for an element that generates a link into the Sphinx-generated Python API documentation -->
+  <xsl:template match="pydoc-link">
+    <xsl:param name="href" select="@href" />
+    <xsl:param name="anchor" select="@anchor" />
+    <xsl:call-template name="link">
+      <xsl:with-param name="xhref" select="concat('python/', @href, '.php', '#', @anchor)"/>
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template name="chunk-element-content">
     <xsl:param name="prev"/>
     <xsl:param name="next"/>

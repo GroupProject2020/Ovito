@@ -41,7 +41,7 @@ using namespace PyScript;
 // Exposes a PropertyStorage object as a Numpy array.
 static py::object buildNumpyArray(const PropertyPtr& p, bool makeWritable, py::handle base)
 {
-	if(!p) 
+	if(!p)
 		return py::none();
 
 	std::vector<ssize_t> shape;
@@ -50,7 +50,7 @@ static py::object buildNumpyArray(const PropertyPtr& p, bool makeWritable, py::h
 	shape.push_back(p->size());
 	strides.push_back(p->stride());
 	if(p->componentCount() > 1) {
-		shape.push_back(p->componentCount());		
+		shape.push_back(p->componentCount());
 		strides.push_back(p->dataTypeSize());
 	}
 	else if(p->componentCount() == 0) {
@@ -78,7 +78,7 @@ PYBIND11_MODULE(StdObjPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -135,7 +135,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			py::dict ai;
 			ai["shape"] = py::make_tuple(3, 4);
 			ai["strides"] = py::make_tuple(sizeof(AffineTransformation::element_type), sizeof(AffineTransformation::column_type));
-#ifdef FLOATTYPE_FLOAT		
+#ifdef FLOATTYPE_FLOAT
 			OVITO_STATIC_ASSERT(sizeof(AffineTransformation::element_type) == 4);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 			ai["typestr"] = py::bytes("<f4");
@@ -177,7 +177,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			"Controls the visual appearance of the simulation cell. "
 			"An instance of this class is attached to the :py:class:`~ovito.data.SimulationCell` object "
 			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` field. "
-			"See also the corresponding `user manual page <../../display_objects.simulation_cell.html>`__ for this visual element. "
+			"See also the corresponding :ovitoman:`user manual page <../../display_objects.simulation_cell>` for this visual element. "
 			"\n\n"
 			"The following example script demonstrates how to change the display line width and rendering color of the simulation cell "
 			"loaded from an input simulation file:"
@@ -203,10 +203,10 @@ PYBIND11_MODULE(StdObjPython, m)
 		// Python class name:
 		"PeriodicDomainObject")
 	;
-	createDataSubobjectAccessors(PeriodicDomainDataObject_py, "domain", &PeriodicDomainDataObject::domain, &PeriodicDomainDataObject::setDomain, 
+	createDataSubobjectAccessors(PeriodicDomainDataObject_py, "domain", &PeriodicDomainDataObject::domain, &PeriodicDomainDataObject::setDomain,
 		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
 		"object is embedded in.");
-	
+
 	auto PropertyContainer_py = ovito_abstract_class<PropertyContainer, DataObject>(m,
 		":Base class: :py:class:`ovito.data.DataObject`"
 		"\n\n"
@@ -231,7 +231,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			"The number of data elements in this container, e.g. the number of particles. This value is always equal to the lengths of the :py:class:`Property` arrays managed by this container. ")
 
 		// Required by implementation of create_property() method:
-		.def("standard_property_type_id", [](const PropertyContainer& container, const QString& name) { 
+		.def("standard_property_type_id", [](const PropertyContainer& container, const QString& name) {
 			return container.getOOMetaClass().standardPropertyTypeId(name);
 		})
 		.def("create_standard_property", [](PropertyContainer& container, int type, bool initializeMemory, size_t elementCountHint) {
@@ -254,7 +254,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			ensureDataObjectIsMutable(container);
 			// Create the new property.
 			return container.createProperty(name, dataType, componentCount, stride, initializeMemory, elementCountHint);
-		})		
+		})
 	;
 	// Needed for implementation of Python dictionary interface of PropertyContainer class:
 	expose_subobject_list(PropertyContainer_py, std::mem_fn(&PropertyContainer::properties), "properties", "PropertyList");
@@ -387,7 +387,7 @@ PYBIND11_MODULE(StdObjPython, m)
 		.def_property_readonly("name", &PropertyObject::name, "The name of the property.")
 		.def_property_readonly("components", &PropertyObject::componentCount,
 				"The number of vector components if this is a vector property; or 1 if this is a scalar property.")
-		
+
 		// Used by the type_by_name() and type_by_id() methods:
 		.def("_get_type_by_id", static_cast<ElementType* (PropertyObject::*)(int) const>(&PropertyObject::elementType))
 		.def("_get_type_by_name", static_cast<ElementType* (PropertyObject::*)(const QString&) const>(&PropertyObject::elementType))
@@ -422,7 +422,7 @@ PYBIND11_MODULE(StdObjPython, m)
 #endif
 			}
 			else if(p.dataType() == PropertyStorage::Float) {
-#ifdef FLOATTYPE_FLOAT		
+#ifdef FLOATTYPE_FLOAT
 				OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 				ai["typestr"] = py::bytes("<f4");
@@ -450,20 +450,20 @@ PYBIND11_MODULE(StdObjPython, m)
 		})
 	;
 	expose_mutable_subobject_list(Property_py,
-		std::mem_fn(&PropertyObject::elementTypes), 
+		std::mem_fn(&PropertyObject::elementTypes),
 		[](PropertyObject& prop, int index, const ElementType* type) {
 			ensureDataObjectIsMutable(prop);
 			prop.insertElementType(index, type);
-		}, 
+		},
 		[](PropertyObject& prop, int index) {
 			ensureDataObjectIsMutable(prop);
 			prop.removeElementType(index);
-		}, 
+		},
 		"types", "ElementTypeList",
 			  "The list of :py:class:`ElementType` instances attached to this property. "
 			  "\n\n"
 			  "Note that the element types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
-	
+
 	py::enum_<PropertyStorage::StandardDataType>(Property_py, "DataType")
 		.value("Int", PropertyStorage::Int)
 		.value("Int64", PropertyStorage::Int64)

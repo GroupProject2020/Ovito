@@ -37,7 +37,7 @@ import PyQt5.QtGui
 import sip # Note: Make sure SIP is loaded *after* PyQt5, because otherwise me might load the wrong version.
 
 # Load the native modules.
-from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer, 
+from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer,
                                 DataVis, CoordinateTripodOverlay, PythonViewportOverlay, TextLabelOverlay,
                                 FrameBuffer, ViewportOverlay)
 
@@ -48,17 +48,17 @@ __all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRendere
 
 def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, background=(1.0,1.0,1.0), alpha=False, renderer=None):
     """ Renders an image of the viewport's view.
-    
-        :param size: A pair of integers specifying the horizontal and vertical dimensions of the output image in pixels. 
+
+        :param size: A pair of integers specifying the horizontal and vertical dimensions of the output image in pixels.
         :param int frame: The animation frame to render. Numbering starts at 0. See the :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property for the number of loaded animation frames.
         :param str filename: The filename under which the rendered image should be saved (optional).
                              Supported output formats are: :file:`.png`, :file:`.jpeg` and :file:`.tiff`.
-        :param background: A triplet of RGB values in the range [0,1] specifying the background color of the rendered image. 
+        :param background: A triplet of RGB values in the range [0,1] specifying the background color of the rendered image.
         :param alpha: If true, the background is made transparent so that the rendered image may later be superimposed on a different backdrop.
                       When using this option, make sure to save the image in the PNG format in order to preserve the transparency information.
-        :param renderer: The rendering engine to use. If set to ``None``, either OpenGL or Tachyon are used, 
+        :param renderer: The rendering engine to use. If set to ``None``, either OpenGL or Tachyon are used,
                          depending on the availablity of OpenGL in the current execution context.
-        :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object containing the rendered picture.
+        :returns: A `QImage <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qimage.html>`__ object containing the rendered picture.
 
         **Populating the scene**
 
@@ -72,12 +72,12 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
         **Selecting a rendering engine**
 
         OVITO supports several different rendering backends for producing pictures of the three-dimensional scene:
-            
+
             * :py:class:`OpenGLRenderer`
             * :py:class:`TachyonRenderer`
             * :py:class:`OSPRayRenderer`
             * :py:class:`POVRayRenderer`
-        
+
         Each of these backends exhibits specific parameters that control the image quality and other aspect of the image
         generation process. Typically, you would create an instance of one of these renderer classes, configure it and pass
         it to the :py:meth:`!render_image()` method:
@@ -86,18 +86,18 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
            :lines: 5-
 
         Note that the :py:class:`OpenGLRenderer` backend may not be available when you are executing the script in a
-        headless environment, e.g. on a remote HPC cluster without X display and OpenGL support. 
-        
+        headless environment, e.g. on a remote HPC cluster without X display and OpenGL support.
+
         **Post-processing images**
 
         If the ``filename`` parameter is omitted, the method does not save the rendered image to disk.
-        This gives you the opportunity to paint additional graphics on top before saving the 
-        `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ later using its ``save()`` method:
-        
+        This gives you the opportunity to paint additional graphics on top before saving the
+        `QImage <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qimage.html>`__ later using its ``save()`` method:
+
         .. literalinclude:: ../example_snippets/render_to_image.py
 
         As an alternative to the direct method demonstrated above, you can also make use of a :py:class:`PythonViewportOverlay`
-        to paint custom graphics on top of rendered images. 
+        to paint custom graphics on top of rendered images.
     """
     assert(len(size) == 2 and size[0]>0 and size[1]>0)
     assert(len(background) == 3)
@@ -114,7 +114,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
     settings = RenderSettings()
     settings.output_image_width, settings.output_image_height = size
     settings.background_color = background
-    if filename: 
+    if filename:
         settings.output_filename = str(filename)
         settings.save_to_file = True
     if renderer:
@@ -133,28 +133,28 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
     else:
         # Create a temporary off-screen frame buffer.
         fb = FrameBuffer(settings.output_image_width, settings.output_image_height)
-    
+
     self.dataset.render_scene(settings, self, fb)
     return fb.image
 Viewport.render_image = _Viewport_render_image
 
 def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.0,1.0,1.0), renderer=None, range=None, every_nth=1):
     """ Renders an animation sequence.
-    
-        :param str filename: The filename under which the rendered animation should be saved. 
+
+        :param str filename: The filename under which the rendered animation should be saved.
                              Supported video formats are: :file:`.avi`, :file:`.mp4`, :file:`.mov` and :file:`.gif`.
                              Alternatively, an image format may be specified (:file:`.png`, :file:`.jpeg`).
                              In this case, a series of image files will be produced, one for each frame, which
                              may be combined into an animation using an external video encoding tool of your choice.
-        :param size: The resolution of the movie in pixels. 
-        :param fps: The number of frames per second of the encoded movie. This determines the playback speed of the animation. 
-        :param background: An RGB triplet in the range [0,1] specifying the background color of the rendered movie. 
-        :param renderer: The rendering engine to use. If none is specified, either OpenGL or Tachyon are used, 
-                         depending on the availablity of OpenGL in the script execution context.  
-        :param range: The interval of frames to render, specified in the form ``(from,to)``. 
+        :param size: The resolution of the movie in pixels.
+        :param fps: The number of frames per second of the encoded movie. This determines the playback speed of the animation.
+        :param background: An RGB triplet in the range [0,1] specifying the background color of the rendered movie.
+        :param renderer: The rendering engine to use. If none is specified, either OpenGL or Tachyon are used,
+                         depending on the availablity of OpenGL in the script execution context.
+        :param range: The interval of frames to render, specified in the form ``(from,to)``.
                       Frame numbering starts at 0. If no interval is specified, the entire animation is rendered, i.e.
                       frame 0 through (:py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>`-1).
-        :param every_nth: Frame skipping interval in case you don't want to render every frame of a very long animation. 
+        :param every_nth: Frame skipping interval in case you don't want to render every frame of a very long animation.
 
         See also the :py:meth:`.render_image` method for a more detailed discussion of some of these parameters.
     """
@@ -166,11 +166,11 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.
     assert(background[1] >= 0.0 and background[1] <= 1.0)
     assert(background[2] >= 0.0 and background[2] <= 1.0)
     assert(renderer is None or isinstance(renderer, ovito.plugins.PyScript.SceneRenderer))
-    
+
     # Rendering is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
     # In these situations, the following function call will raise an exception.
     ovito.scene.request_long_operation()
-    
+
     # Configure a RenderSettings object:
     settings = RenderSettings()
     settings.output_image_width, settings.output_image_height = size
@@ -198,16 +198,16 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.
     else:
         # Create a temporary off-screen frame buffer.
         fb = FrameBuffer(settings.output_image_width, settings.output_image_height)
-    
+
     self.dataset.render_scene(settings, self, fb)
 Viewport.render_anim = _Viewport_render_anim
 
 # Here only for backward compatibility with OVITO 2.9.0:
 def _get_RenderSettings_custom_range(self):
-    """ 
+    """
     Specifies the range of animation frames to render if :py:attr:`.range` is set to ``CustomInterval``.
-    
-    :Default: ``(0,100)`` 
+
+    :Default: ``(0,100)``
     """
     return (self.custom_range_start, self.custom_range_end)
 def _set_RenderSettings_custom_range(self, range):
@@ -218,10 +218,10 @@ RenderSettings.custom_range = property(_get_RenderSettings_custom_range, _set_Re
 
 # Here only for backward compatibility with OVITO 2.9.0:
 def _get_RenderSettings_size(self):
-    """ 
-    The size of the image or movie to be generated in pixels. 
-    
-    :Default: ``(640,480)`` 
+    """
+    The size of the image or movie to be generated in pixels.
+
+    :Default: ``(640,480)``
     """
     return (self.output_image_width, self.output_image_height)
 def _set_RenderSettings_size(self, size):
@@ -232,9 +232,9 @@ RenderSettings.size = property(_get_RenderSettings_size, _set_RenderSettings_siz
 
 # Here only for backward compatibility with OVITO 2.9.0:
 def _get_RenderSettings_filename(self):
-    """ 
+    """
     A string specifying the file path under which the rendered image or movie should be saved.
-    
+
     :Default: ``None``
     """
     if self.save_to_file and self.output_filename: return self.output_filename
@@ -256,10 +256,10 @@ FrameBuffer.image = property(_get_FrameBuffer_image)
 def _Viewport_render(self, settings = None):
     # Renders an image or movie of the viewport's view.
     #
-    #    :param settings: A settings object, which specifies the resolution, background color, output filename etc. of the image to be rendered. 
+    #    :param settings: A settings object, which specifies the resolution, background color, output filename etc. of the image to be rendered.
     #                     If ``None``, the global settings are used (given by :py:attr:`DataSet.render_settings <ovito.DataSet.render_settings>`).
     #    :type settings: :py:class:`RenderSettings`
-    #    :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object on success, which contains the rendered picture; 
+    #    :returns: A `QImage <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qimage.html>`__ object on success, which contains the rendered picture;
     #              ``None`` if the rendering operation has been canceled by the user.
     if settings is None:
         settings = self.dataset.render_settings

@@ -45,7 +45,7 @@ void defineViewportSubmodule(py::module m)
 			"Additionally, the :py:attr:`.type` field allows you to switch between perspective and parallel projection modes "
 			"or reset the camera to one of the standard axis-aligned orientations that are also found in the graphical version of OVITO. "
 			"The :py:meth:`.zoom_all` method repositions the camera automatically such that the entire scene becomes fully visible within the view. "
-			"See also the documentation of the `Adjust View <../../viewports.adjust_view_dialog.html>`__ dialog of OVITO to learn more about "
+			"See also the documentation of the :ovitoman:`Adjust View <../../viewports.adjust_view_dialog>` dialog of OVITO to learn more about "
 			"the role of these settings. "
 			"\n\n"
 			"After the viewport's virtual camera has been set up, you can render an image or movie using the "
@@ -172,7 +172,7 @@ void defineViewportSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/coordinate_tripod_overlay.py"
 			"\n\n")
 		.def_property("alignment", &CoordinateTripodOverlay::alignment, &CoordinateTripodOverlay::setAlignment,
-				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ value as shown in the example above."
+				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#AlignmentFlag>`__ value as shown in the example above."
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignBottom``")
 		.def_property("size", &CoordinateTripodOverlay::tripodSize, &CoordinateTripodOverlay::setTripodSize,
@@ -272,7 +272,7 @@ void defineViewportSubmodule(py::module m)
 			"\n\n"
 			"Text labels can display dynamically computed values. See the :py:attr:`.text` property for an example.")
 		.def_property("alignment", &TextLabelOverlay::alignment, &TextLabelOverlay::setAlignment,
-				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the example above. "
+				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#AlignmentFlag>`__ as shown in the example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignTop``")
 		.def_property("offset_x", &TextLabelOverlay::offsetX, &TextLabelOverlay::setOffsetX,
@@ -335,7 +335,7 @@ void defineViewportSubmodule(py::module m)
 			"The user-defined Python function must accept a single argument (named ``args`` in the example above). "
 			"The system will pass in an instance of the :py:class:`.Arguments` class to the function, which contains "
 			"various state information, including the current animation frame number and the viewport being rendered "
-			"as well as a `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which the "
+			"as well as a `QPainter <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qpainter.html>`__ object, which the "
 			"function should use to issue drawing calls. ")
 		.def_property("function", &PythonViewportOverlay::scriptFunction, &PythonViewportOverlay::setScriptFunction,
 				"A reference to the Python function to be called every time the viewport is repainted or when an output image is rendered."
@@ -365,7 +365,7 @@ void defineViewportSubmodule(py::module m)
 		.def_property_readonly("frame", &ViewportOverlayArguments::frame,
 			"The animation frame number being rendered (0-based).")
 		.def_property_readonly("painter", &ViewportOverlayArguments::pypainter,
-			"The `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which provides painting methods "
+			"The `QPainter <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qpainter.html>`__ object, which provides painting methods "
 			"for drawing on top of the image canvas. ")
 		.def_property_readonly("size", [](const ViewportOverlayArguments& args) {
 				return py::make_tuple(args.renderSettings()->outputImageWidth(), args.renderSettings()->outputImageHeight());

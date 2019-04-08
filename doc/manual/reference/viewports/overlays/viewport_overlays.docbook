@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="viewport_overlays" 
+         xml:id="viewport_overlays"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -14,9 +14,9 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/viewport_overlays/viewport_overlay_command_panel.png" format="PNG" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  Viewport overlays render two-dimensional graphics or text on top of the three-dimensional scene. 
+  Viewport overlays render two-dimensional graphics or text on top of the three-dimensional scene.
   OVITO provides different overlay types (see table below), which you can add to a viewport.
-  Viewport overlays are managed on the <guilabel>Overlays</guilabel> tab of OVITO's command panel 
+  Viewport overlays are managed on the <guilabel>Overlays</guilabel> tab of OVITO's command panel
   as indicated in the screenshot on the right.
   </para>
   <para>Note that overlays added to a viewport will only be visible within OVITO
@@ -24,8 +24,8 @@
   OVITO activates this mode automatically whenever you add a new overlay to a viewport.
   </para>
   <para>
-  The following types of overlays are available: 
-  
+  The following types of overlays are available:
+
   <informaltable>
         <tgroup cols="2">
           <colspec colname='name'/>
@@ -36,7 +36,7 @@
               <entry>Description</entry>
             </row>
           </thead>
-          <tbody>          
+          <tbody>
             <row>
               <entry>Coordinate&#xA0;tripod</entry>
               <entry>Renders an axes tripod to indicate the view orientation</entry>
@@ -57,15 +57,15 @@
         </tgroup>
       </informaltable>
    </para>
-  
+
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.Viewport.overlays"><classname>Viewport.overlays</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.Viewport.overlays"><classname>Viewport.overlays</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
-  
+
   <xi:include href="python_script_overlay.docbook"/>
   <xi:include href="text_label_overlay.docbook"/>
-  
+
 </section>

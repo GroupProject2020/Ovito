@@ -1,15 +1,16 @@
 <?xml version='1.0'?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns:ng="http://docbook.org/docbook-ng"
 	xmlns:db="http://docbook.org/ns/docbook"
 	xmlns:exsl="http://exslt.org/common"
+  xmlns:xlink='http://www.w3.org/1999/xlink'
 	version="1.0"
-	exclude-result-prefixes="exsl db ng">
+	exclude-result-prefixes="exsl db ng xlink">
 
 <!-- ================================================================================== -->
 <!-- Customizations of the chunked HTML style for the generation of the HTML formatted manual. -->
 <!-- ================================================================================== -->
-	
+
 <xsl:import href="docbook-xsl/html/chunk.xsl"/>
 
 <xsl:param name="chunk.section.depth" select="3"/>
@@ -60,6 +61,15 @@ set       toc
   <xsl:value-of select="'inlinefigure'"/>
 </xsl:template>
 
+<!-- Template for an element that generates a link into the Sphinx-generated Python API documentation -->
+<xsl:template match="pydoc-link">
+  <xsl:param name="href" select="@href" />
+  <xsl:param name="anchor" select="@anchor" />
+  <xsl:call-template name="link">
+    <xsl:with-param name="xhref" select="concat('python/', @href, '.html', '#', @anchor)"/>
+  </xsl:call-template>
+</xsl:template>
+
 <xsl:template name="header.navigation">
   <xsl:param name="prev" select="/foo"/>
   <xsl:param name="next" select="/foo"/>
@@ -70,7 +80,7 @@ set       toc
 
   <xsl:variable name="row1" select="$navig.showtitles != 0"/>
   <xsl:variable name="row2" select="count($prev) &gt; 0
-                                    or (count($up) &gt; 0 
+                                    or (count($up) &gt; 0
                                         and generate-id($up) != generate-id($home)
                                         and $navig.showtitles != 0)
                                     or count($next) &gt; 0"/>
@@ -121,8 +131,8 @@ set       toc
                     </a>
                   </xsl:when>
                   <xsl:otherwise>&#160;</xsl:otherwise>
-                </xsl:choose>              
-              </td>              
+                </xsl:choose>
+              </td>
             </tr>
           </xsl:if>
 

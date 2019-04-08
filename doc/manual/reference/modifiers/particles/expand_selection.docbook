@@ -11,12 +11,12 @@
   <title>Expand selection</title>
 
   <para>
- 
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/expand_selection_panel.png" format="PNG" scale="60" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier expands an existing particle selection by selecting particles that are neighbors 
+    This modifier expands an existing particle selection by selecting particles that are neighbors
     of already selected particles. You can choose between three different modes:
     <orderedlist>
     <listitem><para>A cutoff radius can be specified to select particles that are within
@@ -26,7 +26,7 @@
     <listitem><para>The modifier can expand the selection
     to particles that are connected by a bond to at least one particle that is already selected.</para></listitem>
     </orderedlist>
-    
+
   </para>
 
   <simplesect>
@@ -45,7 +45,7 @@
         <listitem>
           <para>
           The number of nearest neighbors to select around each already selected particle.
-          The modifier will sort the list of neighbors of an already selected particles by ascending distance and selects the leading <emphasis>N</emphasis> entries 
+          The modifier will sort the list of neighbors of an already selected particles by ascending distance and selects the leading <emphasis>N</emphasis> entries
           from the list.</para>
         </listitem>
       </varlistentry>
@@ -67,8 +67,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ExpandSelectionModifier"><classname>ExpandSelectionModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.ExpandSelectionModifier"><classname>ExpandSelectionModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

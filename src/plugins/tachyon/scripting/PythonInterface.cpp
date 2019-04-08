@@ -33,7 +33,7 @@ PYBIND11_MODULE(TachyonPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -43,7 +43,7 @@ PYBIND11_MODULE(TachyonPython, m)
 			"An instance of this class can be passed to the :py:meth:`Viewport.render_image` or :py:meth:`Viewport.render_anim` methods. "
 			"\n\n"
 			"Tachyon can render scenes with ambient occlusion lighting, semi-transparent objects, and depth-of-field focal blur. "
-			"See the corresponding `user manual page <../../rendering.tachyon_renderer.html>`__ for more information on this rendering backend. ")
+			"See the corresponding :ovitoman:`user manual page <../../rendering.tachyon_renderer>` for more information on this rendering backend. ")
 		.def_property("antialiasing", &TachyonRenderer::antialiasingEnabled, &TachyonRenderer::setAntialiasingEnabled,
 				"Enables supersampling to reduce aliasing effects."
 				"\n\n"

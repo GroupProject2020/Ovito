@@ -11,26 +11,26 @@
   <title>Combine datasets</title>
 
   <para>
-  
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/combine_datasets_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
+
      This modifier loads a set of particles from a second file and merges it into the current dataset
      to build a system with both sets of particles combined.
   </para>
 
   <para>
-    Note: The simulation cell loaded from the second input file is ignored. The modifier does not replace or extend the 
+    Note: The simulation cell loaded from the second input file is ignored. The modifier does not replace or extend the
     exiting simulation box. If needed, you can use e.g. the <link linkend="particles.modifiers.affine_transformation">Affine transformation</link> modifier to expand the
     simulation cell and accommodate all particles of the merged datasets.
   </para>
 
   <para>
-    If both the primary and the secondary data sources contain multiple simulation frames, then the modifier combines 
-    corresponding frames from each source. For the secondary data source, you may have to 
+    If both the primary and the secondary data sources contain multiple simulation frames, then the modifier combines
+    corresponding frames from each source. For the secondary data source, you may have to
     explicitly specify a wildcard filename pattern to
-    make OVITO load more than just one frame from the simulation sequence to be merged.    
+    make OVITO load more than just one frame from the simulation sequence to be merged.
   </para>
 
   <para>
@@ -41,8 +41,8 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CombineDatasetsModifier"><classname>CombineDatasetsModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CombineDatasetsModifier"><classname>CombineDatasetsModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
+  </simplesect>
 
 </section>

@@ -20,21 +20,21 @@
   <para>
     First, you should reduce the playback rate of the loaded simulation sequence.
     Instead of one animation frame per simulation snapshot, OVITO will then render <emphasis>N</emphasis> animation frames per snapshot.
-    See the <link linkend="usage.animation">animation</link> section for instruction how to do this. 
+    See the <link linkend="usage.animation">animation</link> section for instruction how to do this.
     The interpolation modifier is then applied to vary the particle positions on the intermediate animation frames.
   </para>
   <para>
-    The <emphasis>Use minimum image convention</emphasis> option should be used if the particle positions 
+    The <emphasis>Use minimum image convention</emphasis> option should be used if the particle positions
     in a system with periodic boundary conditions were stored in wrapped form by the molecular dynamics code.
     If activated, the modifier will automatically detect if a particle has crossed a simulation box boundary between two
-    successive simulation frames and compute the unwrapped displacement vector correctly. 
+    successive simulation frames and compute the unwrapped displacement vector correctly.
   </para>
-  
+
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.InterpolateTrajectoryModifier"><classname>InterpolateTrajectoryModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.InterpolateTrajectoryModifier"><classname>InterpolateTrajectoryModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>
