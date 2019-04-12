@@ -30,11 +30,11 @@
 // needs to happen from oustide of any C++ namespace.
 static void registerQtResources()
 {
-#ifdef OVITO_BUILD_MONOLITHIC	
+#ifdef OVITO_BUILD_MONOLITHIC
 	Q_INIT_RESOURCE(core);
 	Q_INIT_RESOURCE(gui);
 	Q_INIT_RESOURCE(resources);
-#endif	
+#endif
 }
 
 namespace Ovito {
