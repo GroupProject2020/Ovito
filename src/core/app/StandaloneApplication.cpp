@@ -27,7 +27,7 @@
 #include "StandaloneApplication.h"
 
 namespace Ovito {
-		
+
 /******************************************************************************
 * This is called on program startup.
 ******************************************************************************/
@@ -49,10 +49,18 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 	// Parse command line arguments.
 	// Ignore unknown command line options for now.
 	QStringList arguments;
-	for(int i = 0; i < argc; i++)
-		arguments << QString::fromLocal8Bit(argv[i]);
-	
-	// Because they may collide with our own options, we should ignore script arguments though. 
+	for(int i = 0; i < argc; i++) {
+		QString arg = QString::fromLocal8Bit(argv[i]);
+#ifdef Q_OS_MAC
+		// When started from the macOS Finder, the OS may pass the 'process serial number' to the application.
+		// We are not interested in this command line parameter.
+		if(arg.startsWith(QStringLiteral("-psn")))
+			continue;
+#endif
+		arguments << std::move(arg);
+	}
+
+	// Because they may collide with our own options, we should ignore script arguments though.
 	QStringList filteredArguments;
 	for(int i = 0; i < arguments.size(); i++) {
 		if(arguments[i] == QStringLiteral("--scriptarg")) {
@@ -80,7 +88,7 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		ex.reportError(true);
 		return false;
 	}
-	
+
 	// Always use desktop OpenGL implementation (avoid ANGLE on Windows).
 	QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
 
@@ -198,7 +206,7 @@ int StandaloneApplication::runApplication()
 	// When the application is shutting down, we should cancel all pending tasks.
 	if(_datasetContainer)
 		connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, &_datasetContainer->taskManager(), &TaskManager::cancelAll);
-	
+
 	if(guiMode()) {
 		// Enter the main event loop.
 		return QCoreApplication::exec();
@@ -223,15 +231,15 @@ void StandaloneApplication::shutdown()
 		datasetContainer()->setCurrentSet(nullptr);
 		datasetContainer()->taskManager().cancelAllAndWait();
 	}
-	
+
 	// Destroy Qt application object.
 	delete QCoreApplication::instance();
 
 	// Release application services.
 	_applicationServices.clear();
-	
+
 	// Unload plugins.
-	PluginManager::shutdown();	
+	PluginManager::shutdown();
 }
 
 }	// End of namespace

@@ -26,12 +26,10 @@
 	<string>${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
-	<key>LSRequiresCarbon</key>
-	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright (C) 2018 Alexander Stukowski. This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions. See the source for copying conditions.</string>
+	<string>Copyright (C) 2019 Alexander Stukowski. This program comes with ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to redistribute it under certain conditions. See the source for copying conditions.</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.8.0</string>
+	<string>10.12</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSHighResolutionCapable</key>
