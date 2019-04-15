@@ -51,11 +51,11 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
 
         :param size: A pair of integers specifying the horizontal and vertical dimensions of the output image in pixels.
         :param int frame: The animation frame to render. Numbering starts at 0. See the :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property for the number of loaded animation frames.
-        :param str filename: The filename under which the rendered image should be saved (optional).
+        :param str filename: The file path under which the rendered image should be saved (optional).
                              Supported output formats are: :file:`.png`, :file:`.jpeg` and :file:`.tiff`.
         :param background: A triplet of RGB values in the range [0,1] specifying the background color of the rendered image.
-        :param alpha: If true, the background is made transparent so that the rendered image may later be superimposed on a different backdrop.
-                      When using this option, make sure to save the image in the PNG format in order to preserve the transparency information.
+        :param alpha: This option makes the background transparent so that the rendered image may later be superimposed on a different backdrop.
+                      When using this option, make sure to save the image in the PNG format in order to preserve the generated transparency information.
         :param renderer: The rendering engine to use. If set to ``None``, either OpenGL or Tachyon are used,
                          depending on the availablity of OpenGL in the current execution context.
         :returns: A `QImage <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qimage.html>`__ object containing the rendered picture.
@@ -114,6 +114,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
     settings = RenderSettings()
     settings.output_image_width, settings.output_image_height = size
     settings.background_color = background
+    settings.generate_alpha = alpha
     if filename:
         settings.output_filename = str(filename)
         settings.save_to_file = True

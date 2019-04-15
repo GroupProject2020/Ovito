@@ -517,8 +517,8 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	ViewProjectionParameters projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio());
 
 	// Fill frame buffer with background color.
-	if(!renderSettings()->generateAlphaChannel()) {
-		frameBuffer->clear(ColorA(renderSettings()->backgroundColor()));
+	if(!settings->generateAlphaChannel()) {
+		frameBuffer->clear(ColorA(settings->backgroundColor()));
 	}
 	else {
 		frameBuffer->clear();
