@@ -33,7 +33,7 @@ img = vp.render_image(renderer=settings.renderer, size=settings.size)
 assert(img.hasAlphaChannel())
 assert(img.pixel(0,0) == 0xffffffff)
 
-img = vp.render_image(filename="/Users/stuko/temp/rendering.png", renderer=settings.renderer, size=settings.size, alpha=True)
+img = vp.render_image(renderer=settings.renderer, size=settings.size, alpha=True)
 assert(img.hasAlphaChannel())
 assert(img.pixel(0,0) == 0)
 
