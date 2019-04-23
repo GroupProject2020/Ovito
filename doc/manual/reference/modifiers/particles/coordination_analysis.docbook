@@ -18,25 +18,25 @@
     <itemizedlist>
       <listitem>
         <para>
-          It counts the number of neighbors for each particle that are within 
-          a given cutoff range around its position. This information, the so-called <emphasis>coordination number</emphasis> of the particle, 
+          It counts the number of neighbors for each particle that are within
+          a given cutoff range around its position. This information, the so-called <emphasis>coordination number</emphasis> of the particle,
           will be stored in the <literal>Coordination</literal> output property by the modifier, where is available
           for subsequent operations, for example selecting particles that have a certain number of neighbors using
           the <link linkend="particles.modifiers.expression_select">Expression selection</link> modifier
-          or visualizing the coordination numbers using the 
+          or visualizing the coordination numbers using the
           <link linkend="particles.modifiers.color_coding">Color coding</link> modifier.
         </para>
       </listitem>
       <listitem>
         <para>
           In addition, the modifier computes the radial pair distribution function (radial PDF, or simply RDF) for the particle system as a whole.
-          The radial pair distribution function <emphasis>g</emphasis>(<emphasis>r</emphasis>) measures the probability of finding a particle at distance <emphasis>r</emphasis> 
-          given that there is a particle at position <emphasis>r</emphasis>=0; it is essentially a histogram of inter-particle distances. The pair distribution function is 
+          The radial pair distribution function <emphasis>g</emphasis>(<emphasis>r</emphasis>) measures the probability of finding a particle at distance <emphasis>r</emphasis>
+          given that there is a particle at position <emphasis>r</emphasis>=0; it is essentially a histogram of inter-particle distances. The pair distribution function is
           normalized by the average number density of particles (i.e. the total number of particles in the simulation cell divided by its volume).
           See the <link xlink:href="https://en.wikipedia.org/wiki/Radial_distribution_function">Wikipedia</link> for more information on this distribution function.
         </para>
       </listitem>
-    </itemizedlist>        
+    </itemizedlist>
   </para>
 
   <simplesect>
@@ -53,8 +53,8 @@
         and g<subscript>&#x03B2;&#x03B2;</subscript>, which add up to the total distribution as follows:
     </para>
     <para>
-      g(r) = c<subscript>&#x0251;</subscript><superscript>2</superscript> g<subscript>&#x0251;&#x0251;</subscript>(r) + 
-        2 c<subscript>&#x0251;</subscript>c<subscript>&#x03B2;</subscript> g<subscript>&#x0251;&#x03B2;</subscript>(r) + 
+      g(r) = c<subscript>&#x0251;</subscript><superscript>2</superscript> g<subscript>&#x0251;&#x0251;</subscript>(r) +
+        2 c<subscript>&#x0251;</subscript>c<subscript>&#x03B2;</subscript> g<subscript>&#x0251;&#x03B2;</subscript>(r) +
         c<subscript>&#x03B2;</subscript><superscript>2</superscript> g<subscript>&#x03B2;&#x03B2;</subscript>(r)
     </para>
     <para>
@@ -71,7 +71,7 @@
       simulation frame. To calculate an average RDF over all frames of a simulation trajectory, you can use OVITO's
       scripting capabilities and let the <emphasis>Coordination analysis</emphasis> calculate the RDF for each frame and then average
       the histogram data over all frames with a few lines of Python code.
-      See the <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationAnalysisModifier">corresponding section</link> 
+      See the <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CoordinationAnalysisModifier">corresponding section</pydoc-link>
       of the scripting manual for an example.
     </para>
   </simplesect>
@@ -79,8 +79,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationAnalysisModifier"><classname>CoordinationAnalysisModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CoordinationAnalysisModifier"><classname>CoordinationAnalysisModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
+  </simplesect>
 
 </section>

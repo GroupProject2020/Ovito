@@ -64,7 +64,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<AmbientOcclusionModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Performs a quick lighting calculation to shade particles according to the degree of occlusion by other particles. "
-			"See also the corresponding `user manual page <../../particles.modifiers.ambient_occlusion.html>`__ for this modifier. ")
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.ambient_occlusion>` for this modifier. ")
 		.def_property("intensity", &AmbientOcclusionModifier::intensity, &AmbientOcclusionModifier::setIntensity,
 				"Controls the strength of the shading effect. "
 				"\n\n"
@@ -89,7 +89,7 @@ void defineModifiersSubmodule(py::module m)
 			"This modifier maps particles located outside of the simulation cell back into the cell by \"wrapping\" their coordinates "
 			"around at the periodic boundaries of the :py:class:`~ovito.data.SimulationCell`. This modifier has no parameters. "
 			"\n\n"
-			"See also the corresponding `user manual page <../../particles.modifiers.wrap_at_periodic_boundaries.html>`__ for this modifier. ")
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.wrap_at_periodic_boundaries>` for this modifier. ")
 	;
 
 	ovito_class<InterpolateTrajectoryModifier, Modifier>(m,
@@ -97,7 +97,7 @@ void defineModifiersSubmodule(py::module m)
 			"\n\n"
 			"This modifier interpolates the particle positions in between successive snapshots of a simulation trajectory. "
     		"It can be used to create smoothly looking animations from relatively coarse sequences of simulation snapshots. "
-			"See also the corresponding `user manual page <../../particles.modifiers.interpolate_trajectory.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.interpolate_trajectory>` for this modifier. "
 			)
 		.def_property("minimum_image_convention", &InterpolateTrajectoryModifier::useMinimumImageConvention, &InterpolateTrajectoryModifier::setUseMinimumImageConvention,
 				"If this option is activated, the modifier will automatically detect if a particle has crossed a simulation box boundary between two "
@@ -111,7 +111,7 @@ void defineModifiersSubmodule(py::module m)
 	auto ExpandSelectionModifier_py = ovito_class<ExpandSelectionModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Expands the current particle selection by selecting particles that are neighbors of already selected particles. "
-			"See also the corresponding `user manual page <../../particles.modifiers.expand_selection.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.expand_selection>` for this modifier. "
 			)
 		.def_property("mode", &ExpandSelectionModifier::mode, &ExpandSelectionModifier::setMode,
 				"Selects the mode of operation, i.e., how the modifier extends the selection around already selected particles. "
@@ -151,7 +151,7 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Performs the bond-angle analysis described by Ackland & Jones to identify the local "
 			"crystal structure around each particle. "
-			"See also the corresponding `user manual page <../../particles.modifiers.bond_angle_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.bond_angle_analysis>` for this modifier. "
 			"\n\n"
 			"The modifier stores the results as integer values in the ``\"Structure Type\"`` particle property. "
 			"The following structure type constants are defined: "
@@ -205,7 +205,7 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Performs the common neighbor analysis (CNA) to classify the structure of the local neighborhood "
 			"of each particle. "
-			"See also the corresponding `user manual page <../../particles.modifiers.common_neighbor_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.common_neighbor_analysis>` for this modifier. "
 			"\n\n"
 			"The modifier stores its results as integer values in the ``\"Structure Type\"`` particle property. "
 			"The following constants are defined: "
@@ -282,7 +282,7 @@ void defineModifiersSubmodule(py::module m)
 	auto IdentifyDiamondModifier_py = ovito_class<IdentifyDiamondModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This analysis modifier finds atoms that are arranged in a cubic or hexagonal diamond lattice. "
-			"See also the corresponding `user manual page <../../particles.modifiers.identify_diamond_structure.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.identify_diamond_structure>` for this modifier. "
 			"\n\n"
 			"The modifier stores its results as integer values in the ``\"Structure Type\"`` particle property. "
 			"The following structure type constants are defined: "
@@ -347,7 +347,7 @@ void defineModifiersSubmodule(py::module m)
 	auto CreateBondsModifier_py = ovito_class<CreateBondsModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Creates bonds between particles. "
-			"See also the corresponding `user manual page <../../particles.modifiers.create_bonds.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.create_bonds>` for this modifier. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -413,7 +413,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<CentroSymmetryModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Computes the centro-symmetry parameter (CSP) of each particle. "
-			"See also the corresponding `user manual page <../../particles.modifiers.centrosymmetry.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.centrosymmetry>` for this modifier. "
 			"\n\n"
 			"The modifier outputs the computed values in the ``\"Centrosymmetry\"`` particle property.")
 		.def_property("num_neighbors", &CentroSymmetryModifier::numNeighbors, &CentroSymmetryModifier::setNumNeighbors,
@@ -425,7 +425,7 @@ void defineModifiersSubmodule(py::module m)
 	auto ClusterAnalysisModifier_py = ovito_class<ClusterAnalysisModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier groups particles into clusters on the basis of a neighboring criterion. "
-			"See also the corresponding `user manual page <../../particles.modifiers.cluster_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.cluster_analysis>` for this modifier. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -438,7 +438,7 @@ void defineModifiersSubmodule(py::module m)
 			"\n"
 			"**Example:**"
 			"\n\n"
-			"The following script demonstrates the usage of the `numpy.bincount() <http://docs.scipy.org/doc/numpy/reference/generated/numpy.bincount.html>`__ "
+			"The following script demonstrates the usage of the `numpy.bincount() <https://docs.scipy.org/doc/numpy/reference/generated/numpy.bincount.html>`__ "
 			"function for the determining the size (=number of particles) of each cluster. "
 			"This function counts how often each cluster ID occurs in the ``Cluster`` particle property generated by the :py:class:`!ClusterAnalysisModifier`. "
 			"\n\n"
@@ -449,12 +449,12 @@ void defineModifiersSubmodule(py::module m)
 				"Selects the neighboring criterion for the clustering algorithm. Valid values are: "
 				"\n\n"
 				"  * ``ClusterAnalysisModifier.NeighborMode.CutoffRange``\n"
-				"  * ``ClusterAnalysisModifier.NeighborMode.Bonded``\n"
+				"  * ``ClusterAnalysisModifier.NeighborMode.Bonding``\n"
 				"\n\n"
 				"In the first mode (``CutoffRange``), the clustering algorithm treats pairs of particles as neighbors which are within a certain range of "
 				"each other given by the parameter :py:attr:`.cutoff`. "
 				"\n\n"
-				"In the second mode (``Bonded``), particles which are connected by bonds are combined into clusters. "
+				"In the second mode (``Bonding``), particles which are connected by bonds are combined into clusters. "
 				"Bonds between particles can either be loaded from the input simulation file or dynamically created using for example the "
 				":py:class:`CreateBondsModifier` or the :py:class:`VoronoiAnalysisModifier`. "
 				"\n\n"
@@ -483,7 +483,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<CoordinationAnalysisModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Computes coordination numbers of individual particles and the radial distribution function (RDF) for the entire system. "
-			"See also the corresponding `user manual page <../../particles.modifiers.coordination_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.coordination_analysis>` for this modifier. "
 			"\n\n"
 			"The modifier stores the computed per-particle coordination numbers in the ``\"Coordination\"`` output particle property. "
 			"The data points of the radial pair distribution histogram computed by the modifier can be accessed through "
@@ -547,7 +547,7 @@ void defineModifiersSubmodule(py::module m)
 			"caculating the displacement vectors is non-trivial when particles have crossed the periodic boundaries. "
 			"By default, the *minimum image convention* is used in these cases, but you can turn if off by "
 			"setting :py:attr:`.minimum_image_convention` to ``False``, for example if the input particle coordinates "
-			"are given in unwrapped form. "			
+			"are given in unwrapped form. "
 			"\n\n"
 			"Furthermore, if the simulation cell of the reference and the current configuration are different, it makes "
 			"a slight difference whether displacements are calculated in the reference or in the current frame. "
@@ -613,11 +613,11 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``ReferenceConfigurationModifier.AffineMapping.Off``\n")
 		// For backward compatibility with OVITO 2.8.2:
-		.def_property("eliminate_cell_deformation", 
-				[](ReferenceConfigurationModifier& mod) { return mod.affineMapping() != ReferenceConfigurationModifier::NO_MAPPING; }, 
+		.def_property("eliminate_cell_deformation",
+				[](ReferenceConfigurationModifier& mod) { return mod.affineMapping() != ReferenceConfigurationModifier::NO_MAPPING; },
 				[](ReferenceConfigurationModifier& mod, bool b) { mod.setAffineMapping(b ? ReferenceConfigurationModifier::TO_REFERENCE_CELL : ReferenceConfigurationModifier::NO_MAPPING); })
 		// For backward compatibility with OVITO 2.9.0:
-		.def_property("assume_unwrapped_coordinates", 
+		.def_property("assume_unwrapped_coordinates",
 				[](ReferenceConfigurationModifier& mod) { return !mod.useMinimumImageConvention(); },
 				[](ReferenceConfigurationModifier& mod, bool b) { mod.setUseMinimumImageConvention(!b); })
 	;
@@ -625,24 +625,24 @@ void defineModifiersSubmodule(py::module m)
 		.value("Off", ReferenceConfigurationModifier::NO_MAPPING)
 		.value("ToReference", ReferenceConfigurationModifier::TO_REFERENCE_CELL)
 		.value("ToCurrent", ReferenceConfigurationModifier::TO_CURRENT_CELL)
-	;	
+	;
 	ovito_class<ReferenceConfigurationModifierApplication, AsynchronousModifierApplication>{m};
-	
+
 	ovito_class<CalculateDisplacementsModifier, ReferenceConfigurationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.ReferenceConfigurationModifier`"
 			"\n\n"
 			"Computes the displacement vectors of particles with respect to a reference configuration. "
-			"See also the corresponding `user manual page <../../particles.modifiers.displacement_vectors.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.displacement_vectors>` for this modifier. "
 			"\n\n"
 			"This modifier class inherits from :py:class:`~ovito.pipeline.ReferenceConfigurationModifier`, which provides "
 			"various properties that control how the reference configuration is specified and also how displacement "
 			"vectors are calculated. "
 			"By default, frame 0 of the current simulation sequence is used as reference configuration. "
-			"\n\n"			
+			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
 			" * ``Displacement`` (:py:class:`~ovito.data.ParticleProperty`):\n"
-			"   The computed displacement vectors\n"			
+			"   The computed displacement vectors\n"
 			" * ``Displacement Magnitude`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The length of the computed displacement vectors\n"
 			"\n\n")
@@ -653,14 +653,14 @@ void defineModifiersSubmodule(py::module m)
 				"the visualization of arrows as follows: "
 				"\n\n"
 				".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
-				"   :lines: 4-\n")	
+				"   :lines: 4-\n")
 	;
 
 	ovito_class<AtomicStrainModifier, ReferenceConfigurationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.ReferenceConfigurationModifier`"
 			"\n\n"
 			"Computes the atomic-level deformation with respect to a reference configuration. "
-			"See also the corresponding `user manual page <../../particles.modifiers.atomic_strain.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.atomic_strain>` for this modifier. "
 			"\n\n"
 			"This modifier class inherits from :py:class:`~ovito.pipeline.ReferenceConfigurationModifier`, which provides "
 			"various properties that control how the reference configuration is specified and also how particle displacements "
@@ -729,7 +729,7 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.ReferenceConfigurationModifier`"
 			"\n\n"
 			"Performs the Wigner-Seitz cell analysis to identify point defects in crystals. "
-			"See also the corresponding `user manual page <../../particles.modifiers.wigner_seitz_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.wigner_seitz_analysis>` for this modifier. "
 			"\n\n"
 			"Defects are identified with respect to a perfect reference crystal configuration. "
 			"By default, frame 0 of the current simulation sequence is used as reference configuration. "
@@ -782,7 +782,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<VoronoiAnalysisModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Computes the atomic volumes and coordination numbers using a Voronoi tessellation of the particle system. "
-			"See also the corresponding `user manual page <../../particles.modifiers.voronoi_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.voronoi_analysis>` for this modifier. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -852,7 +852,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<LoadTrajectoryModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier loads trajectories of particles from a separate simulation file. "
-			"See also the corresponding `user manual page <../../particles.modifiers.load_trajectory.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.load_trajectory>` for this modifier. "
 			"\n\n"
 			"A typical usage scenario for this modifier is when the topology of a molecular system (i.e. the definition of atom types, bonds, etc.) is "
 			"stored separately from the trajectories of atoms. In this case you should load the topology file first using :py:func:`~ovito.io.import_file`. "
@@ -874,7 +874,7 @@ void defineModifiersSubmodule(py::module m)
 			"Uses the Polyhedral Template Matching (PTM) method to classify the local structural neighborhood "
 			"of each particle. Additionally, the modifier can compute local orientations, elastic lattice strains and identify "
 			"local chemical ordering. "
-			"See also the corresponding `user manual page <../../particles.modifiers.polyhedral_template_matching.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.polyhedral_template_matching>` for this modifier. "
 			"\n\n"
 			"The modifier stores its results as integer values in the ``\"Structure Type\"`` particle property. "
 			"The following constants are defined: "
@@ -990,7 +990,7 @@ void defineModifiersSubmodule(py::module m)
 		"\n\n"
 		".. literalinclude:: ../example_snippets/polyhedral_template_matching.py\n"
 		"   :lines: 5-\n");
-	
+
 	py::enum_<PolyhedralTemplateMatchingModifier::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
 		.value("OTHER", PolyhedralTemplateMatchingModifier::OTHER)
 		.value("FCC", PolyhedralTemplateMatchingModifier::FCC)
@@ -1018,17 +1018,17 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. "
-			"See also the corresponding `user manual page <../../particles.modifiers.coordination_polyhedra.html>`__ for this modifier. ")
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.coordination_polyhedra>` for this modifier. ")
 		.def_property("vis", &CoordinationPolyhedraModifier::surfaceMeshVis, &CoordinationPolyhedraModifier::setSurfaceMeshVis,
 				"A :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the generated polyhedra.\n")
 	;
-	
+
 	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"This modifier periodically samples the time-dependent positions of particles to produce a :py:class:`~ovito.data.TrajectoryLines` object. "
 			"The modifier is typically used to visualize the trajectories of particles as static lines. "
-			"See also the corresponding `user manual page <../../particles.modifiers.generate_trajectory_lines.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.generate_trajectory_lines>` for this modifier. "
 			"\n\n"
 			"The trajectory line generation must be explicitly triggered by a call to :py:meth:`.generate` as shown in the following example. "
 			"\n\n"
@@ -1076,8 +1076,8 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``None``\n")
 		.def("generate", [](GenerateTrajectoryLinesModifier& modifier) {
-				if(!modifier.generateTrajectories(ScriptEngine::getCurrentDataset()->container()->taskManager()))
-					modifier.throwException(ScriptEngine::tr("Trajectory line generation has been canceled by the user."));
+				if(!modifier.generateTrajectories(ScriptEngine::currentTask()->createSubTask()))
+					modifier.throwException(GenerateTrajectoryLinesModifier::tr("Trajectory line generation has been canceled by the user."));
 			},
 			"Generates the trajectory lines by sampling the positions of the particles from the upstream pipeline in regular animation time intervals. "
 			"Make sure you call this method *after* the modifier has been inserted into the pipeline. ")
@@ -1100,8 +1100,8 @@ void defineModifiersSubmodule(py::module m)
 			"\n\n"
 			".. literalinclude:: ../example_snippets/unwrap_trajectories.py")
 		.def("update", [](UnwrapTrajectoriesModifier& modifier) {
-				if(!modifier.detectPeriodicCrossings(ScriptEngine::getCurrentDataset()->container()->taskManager()))
-					modifier.throwException(ScriptEngine::tr("Unwrapping of particle trajectories has been canceled by the user."));
+				if(!modifier.detectPeriodicCrossings(ScriptEngine::currentTask()->createSubTask()))
+					modifier.throwException(UnwrapTrajectoriesModifier::tr("Unwrapping of particle trajectories has been canceled by the user."));
 			},
 			"This method detects crossings of the particles through of the periodic cell boundaries. The list of crossing events will subsequently be used by the modifier to unwrap "
 			"the particle coordinates and produce continuous particle trajectories. The method loads and steps through all animation frames of the input trajectory, which can take some time. "
@@ -1110,7 +1110,7 @@ void defineModifiersSubmodule(py::module m)
 	ovito_class<UnwrapTrajectoriesModifierApplication, ModifierApplication>{m};
 
 	ovito_class<ParticlesComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m}
-		.def_property("neighbor_expressions", &ParticlesComputePropertyModifierDelegate::neighborExpressions, &ParticlesComputePropertyModifierDelegate::setNeighborExpressions)	
+		.def_property("neighbor_expressions", &ParticlesComputePropertyModifierDelegate::neighborExpressions, &ParticlesComputePropertyModifierDelegate::setNeighborExpressions)
 		.def_property("cutoff_radius", &ParticlesComputePropertyModifierDelegate::cutoff, &ParticlesComputePropertyModifierDelegate::setCutoff)
 	;
 

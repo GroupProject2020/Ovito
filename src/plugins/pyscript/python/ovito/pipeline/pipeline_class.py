@@ -5,30 +5,30 @@ except ImportError:
     # Python 2.x
     import collections
 import sys
-    
+
 # Load the native modules.
 from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier, DataVis, PythonScriptModifier
 
-# Implementation of the Pipeline.modifiers collection. 
+# Implementation of the Pipeline.modifiers collection.
 def _Pipeline_modifiers(self):
     """ The sequence of modifiers in the pipeline.
-    
+
         This list contains any modifiers that are applied to the input data provided by the pipeline's data :py:attr:`.source`. You
-        can add and remove modifiers as needed using standard Python ``append()`` and ``del`` operations. The 
-        head of the list represents the beginning of the pipeline, i.e. the first modifier receives the data from the 
+        can add and remove modifiers as needed using standard Python ``append()`` and ``del`` operations. The
+        head of the list represents the beginning of the pipeline, i.e. the first modifier receives the data from the
         data :py:attr:`.source`, manipulates it and passes the results on to the second modifier in the list and so forth.
-       
+
         Example: Adding a new modifier to the end of a data pipeline::
-       
+
            pipeline.modifiers.append(WrapPeriodicImagesModifier())
-    """    
-    
+    """
+
     class PipelineModifierList(collections.MutableSequence):
-        """ This is a helper class is used for the implementation of the Pipeline.modifiers field. It emulates a 
+        """ This is a helper class is used for the implementation of the Pipeline.modifiers field. It emulates a
             mutable list of modifiers. The array is generated from the chain (linked list) of ModifierApplication instances
             that make up the pipeline.
         """
-        def __init__(self, pipeline): 
+        def __init__(self, pipeline):
             """ The constructor stores away a back-pointer to the owning Pipeline. """
             self.pipeline = pipeline
 
@@ -62,15 +62,16 @@ def _Pipeline_modifiers(self):
         def __iter__(self):
             """ Returns an iterator that visits all modifiers in the pipeline. """
             return self._modifierList().__iter__()
-        
+
         def __getitem__(self, i):
             """ Return a modifier from the pipeline by index. """
             return self._modifierList()[i]
 
         def __setitem__(self, index, newMod):
             """ Replaces an existing modifier in the pipeline with a new one. """
+            # Automatically wrap Python methods in a PythonScriptModifier object.
             if not isinstance(newMod, Modifier):
-                if callable(newMod): 
+                if callable(newMod):
                     newMod = PythonScriptModifier(function = newMod)
                 else:
                     raise TypeError("Expected a modifier instance")
@@ -111,9 +112,10 @@ def _Pipeline_modifiers(self):
                 raise IndexError("List index is out of range.")
 
         def insert(self, index, mod):
-            """ Inserts a new modifier into the pipeline at a given position. """ 
+            """ Inserts a new modifier into the pipeline at a given position. """
+            # Automatically wrap Python methods in a PythonScriptModifier object.
             if not isinstance(mod, Modifier):
-                if callable(mod): 
+                if callable(mod):
                     mod = PythonScriptModifier(function = mod)
                 else:
                     raise TypeError("Expected a modifier instance")
@@ -124,7 +126,7 @@ def _Pipeline_modifiers(self):
             modapp = mod.create_modifier_application()
             assert(isinstance(modapp, ModifierApplication))
             modapp.modifier = mod
-            if index == len(modapplist) and index >= 0: 
+            if index == len(modapplist) and index >= 0:
                 assert(self.pipeline.data_provider == modapplist[-1])
                 self.pipeline.data_provider = modapp
                 modapp.input = modapplist[-1]
@@ -136,9 +138,10 @@ def _Pipeline_modifiers(self):
             mod.initialize_modifier(modapp)
 
         def append(self, mod):
-            """ Inserts a new modifier at the end of the pipeline. """ 
+            """ Inserts a new modifier at the end of the pipeline. """
+            # Automatically wrap Python methods in a PythonScriptModifier object.
             if not isinstance(mod, Modifier):
-                if callable(mod): 
+                if callable(mod):
                     mod = PythonScriptModifier(function = mod)
                 else:
                     raise TypeError("Expected a modifier instance")
@@ -166,14 +169,14 @@ def _Pipeline_compute(self, frame = None):
         This method requests an evaluation of the pipeline and blocks until the input data has been obtained from the
         data :py:attr:`.source` and all modifiers have been applied to the data. When invoking the :py:meth:`!compute` method repeatedly
         without changing the pipeline between calls, it may return immediately with the cached results from an earlier evaluation.
-        
-        The optional *frame* parameter determines at which animation time the pipeline is evaluated. Animation frame numbering starts at 0. 
+
+        The optional *frame* parameter determines at which animation time the pipeline is evaluated. Animation frame numbering starts at 0.
         If you don't specify a frame number, the current animation position is used (frame 0 by default).
 
         The :py:meth:`!compute` method will raise a ``RuntimeError`` when the pipeline could not be successfully evaluated for some reason.
         This can happen due to invalid modifier parameters or file I/O errors, for example.
 
-        :param int frame: The animation frame number at which the pipeline should be evaluated. 
+        :param int frame: The animation frame number at which the pipeline should be evaluated.
         :returns: A :py:class:`~ovito.data.DataCollection` produced by the data pipeline.
     """
     if frame is not None:
@@ -207,7 +210,7 @@ def _Pipeline_remove_from_scene(self):
     # Remove pipeline from its parent's list of children
     if self.parent_node is not None:
         del self.parent_node.children[self.parent_node.children.index(self)]
-    
+
     # Automatically unselect pipeline
     if self is self.dataset.selected_pipeline:
         self.dataset.selected_pipeline = None
@@ -215,14 +218,14 @@ Pipeline.remove_from_scene = _Pipeline_remove_from_scene
 
 def _Pipeline_add_to_scene(self):
     """ Inserts the pipeline into the three-dimensional scene by appending it to the :py:attr:`ovito.Scene.pipelines` list.
-        The visual representation of the pipeline's output data will appear in rendered images and in the interactive viewports of the 
+        The visual representation of the pipeline's output data will appear in rendered images and in the interactive viewports of the
         graphical OVITO program.
-        
+
         You can remove the pipeline from the scene again using :py:meth:`.remove_from_scene`.
     """
     if not self in self.dataset.pipelines:
         self.dataset.pipelines.append(self)
-    
+
     # Select piepline
     self.dataset.selected_pipeline = self
 Pipeline.add_to_scene = _Pipeline_add_to_scene

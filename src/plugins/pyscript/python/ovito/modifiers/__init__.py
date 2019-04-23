@@ -1,6 +1,6 @@
 """
 This module contains all modifiers available in OVITO. See :ref:`this introduction page <modifiers_overview>` to learn more
-about modifiers and the data pipeline system of OVITO. 
+about modifiers and the data pipeline system of OVITO.
 
 The abstract base class of all modifier types is :py:class:`~ovito.pipeline.Modifier`.
 Typically, you create a modifier instance, configure its parameters and insert it into a
@@ -9,8 +9,8 @@ data :py:class:`~ovito.pipeline.Pipeline` as follows::
     mod = AssignColorModifier()
     mod.color = (0.2, 1.0, 0.9)
     pipeline.modifiers.append(mod)
-    
-The following modifier types are available. Please consult the `OVITO user manual <../../particles.modifiers.html>`__ for a
+
+The following modifier types are available. Please consult the :ovitoman:`OVITO user manual <../../particles.modifiers>` for a
 more in-depth description of what these modifiers do.
 
 ============================================== =========================================
@@ -35,7 +35,7 @@ Python class name                              User interface name
 :py:class:`CorrelationFunctionModifier`        :guilabel:`Correlation function`
 :py:class:`CreateBondsModifier`                :guilabel:`Create bonds`
 :py:class:`CreateIsosurfaceModifier`           :guilabel:`Create isosurface`
-:py:class:`DeleteSelectedModifier`             :guilabel:`Delete selected` 
+:py:class:`DeleteSelectedModifier`             :guilabel:`Delete selected`
 :py:class:`DislocationAnalysisModifier`        :guilabel:`Dislocation analysis (DXA)`
 :py:class:`ElasticStrainModifier`              :guilabel:`Elastic strain calculation`
 :py:class:`ExpandSelectionModifier`            :guilabel:`Expand selection`
@@ -61,7 +61,7 @@ Python class name                              User interface name
 :py:class:`WrapPeriodicImagesModifier`         :guilabel:`Wrap at periodic boundaries`
 ============================================== =========================================
 
-*Note that some analysis modifiers of the graphical version of OVITO are missing in the list above and are not accessible from Python. 
+*Note that some analysis modifiers of the graphical version of OVITO are missing in the list above and are not accessible from Python.
 That is because they perform computations that can be achieved equally well using the Numpy module
 in a more straightforward manner.*
 

@@ -39,7 +39,7 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 
-	textStream() << "# FHI-aims file written by OVITO\n";
+	textStream() << "# FHI-aims file written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
 
 	// Output simulation cell.
 	Point3 origin = Point3::Origin();

@@ -13,12 +13,12 @@
   <para>
      <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/rendering/opengl_renderer_panel.png" format="PNG" />
-     </imageobject></mediaobject></screenshot></informalfigure>  
-     
-	 This is the default built-in <link linkend="usage.rendering">rendering engine</link>, 
+     </imageobject></mediaobject></screenshot></informalfigure>
+
+	 This is the default built-in <link linkend="usage.rendering">rendering engine</link>,
 	 which is also used by OVITO for rendering the interactive viewports.
     </para>
-    
+
   <simplesect>
     <title>Parameters</title>
 
@@ -41,8 +41,8 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.OpenGLRenderer"><classname>OpenGLRenderer</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.OpenGLRenderer"><classname>OpenGLRenderer</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>    
+  </simplesect>
 
 </section>

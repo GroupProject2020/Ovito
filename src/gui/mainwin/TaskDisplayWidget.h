@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2016) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -49,16 +49,16 @@ public Q_SLOTS:
 private Q_SLOTS:
 
 	/// \brief Is called when a task has started to run.
-	void taskStarted(PromiseWatcher* taskWatcher);
+	void taskStarted(TaskWatcher* taskWatcher);
 
 	/// \brief Is called when a task has finished.
-	void taskFinished(PromiseWatcher* taskWatcher);
+	void taskFinished(TaskWatcher* taskWatcher);
 
 	/// \brief Is called when the progress or status of a task has changed.
 	void taskProgressChanged();
 
 private:
-	
+
 	/// The window this display widget is associated with.
 	MainWindow* _mainWindow;
 

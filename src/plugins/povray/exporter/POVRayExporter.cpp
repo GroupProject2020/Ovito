@@ -100,7 +100,7 @@ bool POVRayExporter::exportFrame(int frameNumber, TimePoint time, const QString&
 	Box3 boundingBox(Point3::Origin(), 1);
 	ViewProjectionParameters projParams = vp->computeProjectionParameters(time, _renderer->renderSettings()->outputImageAspectRatio(), boundingBox);
 	try {
-		_renderer->_exportOperation = operation.sharedState();
+		_renderer->_exportOperation = operation.task();
 		_renderer->beginFrame(time, projParams, vp);
 		if(nodeToExport())
 			_renderer->renderNode(nodeToExport(), operation);

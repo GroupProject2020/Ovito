@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -20,13 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include "TrackingPromiseState.h"
+#include "TrackingTask.h"
 #include "Future.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
 #ifdef OVITO_DEBUG
-TrackingPromiseState::~TrackingPromiseState() 
+TrackingTask::~TrackingTask()
 {
 	// Shared states must always end up in the finished state.
 	OVITO_ASSERT(isFinished());
@@ -35,7 +35,7 @@ TrackingPromiseState::~TrackingPromiseState()
 }
 #endif
 
-void TrackingPromiseState::setTrackedState(PromiseStateCountedPtr&& state) 
+void TrackingTask::setTrackedState(TaskDependency&& state)
 {
 	// The function may only be called once.
 	OVITO_ASSERT(!trackedState());
@@ -55,10 +55,10 @@ void TrackingPromiseState::setTrackedState(PromiseStateCountedPtr&& state)
 	_creatorState.reset();
 }
 
-void TrackingPromiseState::cancel() noexcept
+void TrackingTask::cancel() noexcept
 {
 	if(!isCanceled()) {
-		PromiseState::cancel();
+		Task::cancel();
 		if(trackedState())
 			trackedState()->cancel();
 		setStarted();
@@ -66,11 +66,11 @@ void TrackingPromiseState::cancel() noexcept
 	}
 }
 
-void TrackingPromiseState::setFinished()
+void TrackingTask::setFinished()
 {
 	// Our reference to the fulfilled creator state is no longer needed.
 	_creatorState.reset();
-	PromiseState::setFinished();
+	Task::setFinished();
 }
 
 OVITO_END_INLINE_NAMESPACE

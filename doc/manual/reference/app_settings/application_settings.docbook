@@ -13,28 +13,28 @@
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
       <imagedata fileref="images/app_settings/general_settings.png" format="PNG" scale="75" />
-    </imageobject></mediaobject></screenshot></informalfigure>     
+    </imageobject></mediaobject></screenshot></informalfigure>
     To open the application settings dialog, select <menuchoice><guimenu>Options</guimenu><guimenuitem>Settings</guimenuitem></menuchoice> from the main menu on Windows/Linux.
     On MacOS, select <menuchoice><guimenu>Ovito</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice> instead.
     The dialog consists of several tabs:
     <itemizedlist>
-      <listitem><para><link linkend="application_settings.general">General</link></para></listitem>
-      <listitem><para><link linkend="application_settings.viewports">Viewports</link></para></listitem>
-      <listitem><para><link linkend="modifier_templates">Modifier templates</link></para></listitem>
-      <listitem><para><link linkend="application_settings.particles">Particles</link></para></listitem>
+      <listitem><link linkend="application_settings.general">General</link></listitem>
+      <listitem><link linkend="application_settings.viewports">Viewports</link></listitem>
+      <listitem><link linkend="modifier_templates">Modifier templates</link></listitem>
+      <listitem><link linkend="application_settings.particles">Particles</link></listitem>
     </itemizedlist>
   </para>
   <simplesect>
     <title>Where OVITO stores its settings</title>
     <para>
-      The program stores all user settings in a platform-dependent location to preserve them across sessions. On Windows, the information 
+      The program stores all user settings in a platform-dependent location to preserve them across sessions. On Windows, the information
       is saved in the user section of the system registry. On Linux, it is stored in an INI configuration file in the user's
       home directory, and on MacOS, it is stored in a property list file. The precise storage
       location on your local computer is displayed by the application settings dialog at the bottom.
       You can copy the configuration data across computers to transfer your personal settings.
     </para>
     <para>
-      To reset OVITO to its factory default settings, simply delete the configuration file on Linux/MacOS or the registry branch 
+      To reset OVITO to its factory default settings, simply delete the configuration file on Linux/MacOS or the registry branch
       on Windows.
     </para>
   </simplesect>

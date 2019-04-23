@@ -50,19 +50,19 @@ namespace Ovito {
 		OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 			class PromiseBase;
 			class FutureBase;
-			class PromiseState;
+			class Task;
 			class TaskManager;
-			class PromiseWatcher;
+			class TaskWatcher;
 			class AsynchronousTaskBase;
-			class TrackingPromiseState;
-			class SynchronousPromiseState;
+			class TrackingTask;
+			class MainThreadTask;
 			class AsyncOperation;
-			template<typename tuple_type> class DirectContinuationPromiseState;
+			template<typename tuple_type> class ContinuationTask;
 			template<typename... R> class Future;
 			template<typename... R> class SharedFuture;
 			template<typename... R> class Promise;
-			template<class BaseState, class tuple_type> class PromiseStateWithResultStorage;
-			using PromiseStatePtr = std::shared_ptr<PromiseState>;
+			template<class BaseState, class tuple_type> class TaskWithResultStorage;
+			using TaskPtr = std::shared_ptr<Task>;
 		OVITO_END_INLINE_NAMESPACE
 		OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
 			class TriMesh;

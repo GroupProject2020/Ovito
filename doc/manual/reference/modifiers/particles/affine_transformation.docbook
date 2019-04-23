@@ -14,14 +14,14 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/affine_transformation_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    This modifier applies an affine transformation to the system. It may be used to translate, scale, rotate or shear 
-    the particles, the simulation cell and/or other elements. The transformation can either be explicitly specified in terms of a 3 x 3 
+    This modifier applies an affine transformation to the system. It may be used to translate, scale, rotate or shear
+    the particles, the simulation cell and/or other elements. The transformation can either be explicitly specified in terms of a 3 x 3
     matrix plus a translation vector, or implicitly by prescribing a target geometry for the simulation cell.
   </para>
-  
+
   <para>
-    Given the 3 x 3 linear transformation matrix <inlineequation><mathphrase><emphasis>M</emphasis></mathphrase></inlineequation> 
-    and the translation vector <inlineequation><mathphrase><emphasis>t</emphasis></mathphrase></inlineequation>, 
+    Given the 3 x 3 linear transformation matrix <inlineequation><mathphrase><emphasis>M</emphasis></mathphrase></inlineequation>
+    and the translation vector <inlineequation><mathphrase><emphasis>t</emphasis></mathphrase></inlineequation>,
     which are both parameters of the modifier,
     the new position <inlineequation><mathphrase><emphasis>x'</emphasis></mathphrase></inlineequation> for
     a particle at the original position <inlineequation><mathphrase><emphasis>x</emphasis></mathphrase></inlineequation>
@@ -29,18 +29,18 @@
     <inlineequation><mathphrase><emphasis>x'</emphasis> = <emphasis>M</emphasis>&#x22C5;<emphasis>x</emphasis> + <emphasis>t</emphasis></mathphrase></inlineequation>.
     This notation uses column vectors.
   </para>
-  
+
   <para>
     The <guibutton>Enter rotation</guibutton> button opens a dialog box letting you enter a rotation
-    axis, a rotation angle and a center of rotation. Based on these inputs, OVITO will compute the corresponding 
+    axis, a rotation angle and a center of rotation. Based on these inputs, OVITO will compute the corresponding
     affine transformation matrix for you.
   </para>
 
   <simplesect>
     <title>Transform to target box</title>
     <para>
-      This option lets the modifier automatically compute the affine transformation from the current shape of the input simulation cell and the specified 
-      target shape. After application of the implicitly determined transformation, the cell will take on the 
+      This option lets the modifier automatically compute the affine transformation from the current shape of the input simulation cell and the specified
+      target shape. After application of the implicitly determined transformation, the cell will take on the
       given target size and shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
       cell shape accordingly, unless you turn their transformation off (see next section).
     </para>
@@ -53,7 +53,7 @@
   <simplesect>
     <title>Transformed elements</title>
     <para>
-      You can select the kinds of elements that should be transformed by the modifier: 
+      You can select the kinds of elements that should be transformed by the modifier:
       <informaltable>
         <tgroup cols="2">
           <thead>
@@ -83,19 +83,19 @@
             </row>
           </tbody>
         </tgroup>
-      </informaltable>  
+      </informaltable>
     </para>
     <para>
-      The option <emphasis>Transform selected elements only</emphasis> restricts the application of the transformation to 
-      the currently selected particles. 
+      The option <emphasis>Transform selected elements only</emphasis> restricts the application of the transformation to
+      the currently selected particles.
     </para>
   </simplesect>
 
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AffineTransformationModifier"><classname>AffineTransformationModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.AffineTransformationModifier"><classname>AffineTransformationModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
-    
+
 </section>

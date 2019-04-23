@@ -15,7 +15,7 @@
        <imagedata fileref="images/modifiers/assign_color_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier assigns a given uniform color to all selected elements (particles, bonds, etc.) by setting their 
+    This modifier assigns a given uniform color to all selected elements (particles, bonds, etc.) by setting their
     <literal>Color</literal> property. Which elements are currently selected is determined by the value of their
     <literal>Selection</literal> property. If no selection is defined, i.e. if the <literal>Selection</literal> property
     does not exist, the color is assigned to all elements by the modifier.
@@ -47,22 +47,22 @@
           </row>
         </tbody>
       </tgroup>
-    </informaltable>  
+    </informaltable>
   </para>
 
   <para>
     Note that OVITO uses a red color to highlight selected particles in the interactive viewports.
-    Since this accentuation would mask the actual particle color assigned by this modifier, the modifier clears the current selection 
-    by default (by deleting the <literal>Selection</literal> property). If you would like to preserve the particle selection 
+    Since this accentuation would mask the actual particle color assigned by this modifier, the modifier clears the current selection
+    by default (by deleting the <literal>Selection</literal> property). If you would like to preserve the particle selection
     so that is remains available to subsequent modifiers in the data pipeline, you can request the modifier to not
     delete the <literal>Selection</literal> property by activating the <guilabel>Keep selection</guilabel> option.
   </para>
-  
+
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AssignColorModifier"><classname>AssignColorModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.AssignColorModifier"><classname>AssignColorModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
-  
+
 </section>

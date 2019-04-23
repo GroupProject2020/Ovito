@@ -8,7 +8,7 @@
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Miscellaneous</title>
-  
+
   <para>
     The following sections briefly introduce various useful functions and features of the program in arbitrary order.
   </para>
@@ -17,8 +17,8 @@
   <title>Saving the program state</title>
     <para>
       You can save the complete working state of the program, including the data pipeline, viewports, render settings, etc., to a <literal>.ovito</literal> <emphasis>state file</emphasis>
-      (main menu: <menuchoice><guimenu>File</guimenu><guimenuitem>Save Program State</guimenuitem></menuchoice>). This allows you 
-      to preserve the current visualization setup for future use. For instance, you can use a state file as a template to visualize multiple simulations 
+      (main menu: <menuchoice><guimenu>File</guimenu><guimenuitem>Save Program State</guimenuitem></menuchoice>). This allows you
+      to preserve the current visualization setup for future use. For instance, you can use a state file as a template to visualize multiple simulations
       using the same data analysis pipeline and camera setup.
     </para>
   </simplesect>
@@ -43,21 +43,21 @@
       <informalfigure>
         <mediaobject><imageobject>
           <imagedata fileref="images/usage/miscellaneous/data_inspector.png" format="PNG" scale="80" />
-        </imageobject></mediaobject>  
+        </imageobject></mediaobject>
       </informalfigure>
       The <link linkend="data_inspector">Data Inspector</link> is a panel that is located right below the viewport area in OVITO's main window.
-      It can be opened as shown in the screenshot on the right by clicking on the tab bar. 
+      It can be opened as shown in the screenshot on the right by clicking on the tab bar.
       The data inspector consists of several tabs that show different fragments of the current dataset, e.g. the property values of
-      all particles. The tool also lets you measure distances between pairs of particles. 
+      all particles. The tool also lets you measure distances between pairs of particles.
     </para>
   </simplesect>
 
   <simplesect xml:id="usage.viewport_overlays">
     <title>Viewport overlays</title>
     <para>
-      <link linkend="viewport_overlays">Viewport overlays</link> are a way to superimpose additional information 
-      such as text labels, a color legend, a coordinate tripod and other graphics on top of the three-dimensional scene. 
-      The program offers several different types of overlays, which can be added to individual viewports from the 
+      <link linkend="viewport_overlays">Viewport overlays</link> are a way to superimpose additional information
+      such as text labels, a color legend, a coordinate tripod and other graphics on top of the three-dimensional scene.
+      The program offers several different types of overlays, which can be added to individual viewports from the
       <link linkend="viewport_overlays"><guilabel>Overlays</guilabel></link> tab of the command panel.
     </para>
   </simplesect>
@@ -65,7 +65,7 @@
   <simplesect xml:id="usage.modifier_templates">
     <title>Modifier templates</title>
     <para>
-      When working with OVITO on a regular basis, you may find yourself using the same modifiers again and again. 
+      When working with OVITO on a regular basis, you may find yourself using the same modifiers again and again.
       Some modifiers are often used in the same combination to accomplish specific analysis, filter or visualization
       tasks. To make your life easier and to safe you from repetitive work, OVITO allows you to define so-called <emphasis>modifier
       templates</emphasis>. These are preconfigured modifiers or combinations of modifiers that can be inserted into
@@ -73,32 +73,32 @@
       more about this program feature.
     </para>
   </simplesect>
-  
+
   <simplesect xml:id="usage.scripting">
     <title>Python scripting</title>
     <para>
-      OVITO provides a scripting interface that lets you automate analysis and visualization tasks. 
-      This can be useful, for example, when a large number of input files needs to be batch-processed. 
-      The scripting interface provides programmatic access to most program features such as input and output 
+      OVITO provides a scripting interface that lets you automate analysis and visualization tasks.
+      This can be useful, for example, when a large number of input files needs to be batch-processed.
+      The scripting interface provides programmatic access to most program features such as input and output
       of data files, modifiers, and rendering of images and movies.
     </para>
     <para>
-      Scripts for OVITO are written in the Python programming language. If you are not familiar with Python, 
+      Scripts for OVITO are written in the Python programming language. If you are not familiar with Python,
       you can find several tutorials and books online that cover this subject. Note that OVITO is based on the Python 3.x language standard.
     </para>
     <para>
-      OVITO's scripting interface is documented in a separate 
-      <link xlink:href="python/index.html">Scripting Reference</link> manual. You can accessed it directly from OVITO's help menu.
+      OVITO's scripting interface is documented in a separate
+      <pydoc-link href="index">Scripting Reference</pydoc-link> manual. You can accessed it directly from OVITO's help menu.
     </para>
     <para>
-      In addition to automating tasks, the scripting interface allows you to extend OVITO. 
+      In addition to automating tasks, the scripting interface allows you to extend OVITO.
       For example, the <link linkend="particles.modifiers.python_script">Python script modifier</link>
       provides a mechanism for you to write your own data manipulation function and integrate it into
       OVITO's modification pipeline system. Furthermore, the <link linkend="viewport_overlays.python_script">
       Python script overlay</link> lets you write your own Python function to add arbitrary 2D graphics
-      to rendered images or movies, for example to enrich the visualization with additional information 
+      to rendered images or movies, for example to enrich the visualization with additional information
       like a <link linkend="howto.scale_bar">scale bar</link>.
-    </para>  
+    </para>
   </simplesect>
 
 </section>

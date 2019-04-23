@@ -32,14 +32,14 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(SeriesInspectionApplet);
 
 /******************************************************************************
-* Lets the applet create the UI widget that is to be placed into the data 
-* inspector panel. 
+* Lets the applet create the UI widget that is to be placed into the data
+* inspector panel.
 ******************************************************************************/
 QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 {
 	createBaseWidgets();
 	_mainWindow = mainWindow;
-	
+
 	QSplitter* splitter = new QSplitter();
 	splitter->addWidget(containerSelectionWidget());
 
@@ -99,7 +99,7 @@ void SeriesInspectionApplet::exportDataToFile()
 	HistoryFileDialog dialog("export", _mainWindow, tr("Export Data Series"));
 #ifndef Q_OS_WIN
 	QString filterString = QStringLiteral("%1 (%2)").arg(DataSeriesExporter::OOClass().fileFilterDescription(), DataSeriesExporter::OOClass().fileFilter());
-#else 
+#else
 		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
 	QString filterString = QStringLiteral("%1 (*)").arg(DataSeriesExporter::OOClass().fileFilterDescription());
 #endif
@@ -148,7 +148,7 @@ void SeriesInspectionApplet::exportDataToFile()
 		ProgressDialog progressDialog(_mainWindow, tr("File export"));
 
 		// Let the exporter do its job.
-		exporter->doExport(progressDialog.taskManager().createSynchronousPromise<>(true));
+		exporter->doExport(progressDialog.taskManager().createMainThreadOperation<>(true));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

@@ -23,30 +23,28 @@
 
 
 #include <core/Core.h>
-#include "Promise.h"
+#include "Task.h"
 
-#include <QMutex>
+#include <QElapsedTimer>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
 /******************************************************************************
-* Generic base class for promises, which implements the basic state management,
-* progress reporting, and event processing.
+* Class that provides the basic state management,
+* progress reporting, and event processing in the promise/future framework.
 ******************************************************************************/
-class OVITO_CORE_EXPORT ThreadSafePromiseState : public PromiseStateWithProgress
+class OVITO_CORE_EXPORT ProgressiveTask : public Task
 {
 public:
 
-	/// Constructor.
-	ThreadSafePromiseState() = default;
-
-#ifdef OVITO_DEBUG
-	/// Destructor.
-	virtual ~ThreadSafePromiseState();
-#endif	
+	/// Returns the maximum value for progress reporting.
+    virtual qlonglong progressMaximum() const override { return _progressMaximum; }
 
 	/// Sets the current maximum value for progress reporting.
     virtual void setProgressMaximum(qlonglong maximum) override;
+
+	/// Returns the current progress value (in the range 0 to progressMaximum()).
+	virtual qlonglong progressValue() const override { return _progressValue; }
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
@@ -56,8 +54,17 @@ public:
 	/// Returns false if the promise has been canceled.
     virtual bool incrementProgressValue(qlonglong increment = 1) override;
 
+	/// Sets the progress value of the promise but generates an update event only occasionally.
+	/// Returns false if the promise has been canceled.
+    virtual bool setProgressValueIntermittent(qlonglong progressValue, int updateEvery = 2000) override;
+
+	/// Return the current status text set for this promise.
+    virtual QString progressText() const override { return _progressText; }
+
 	/// Changes the status text of this promise.
-    virtual void setProgressText(const QString& text) override;
+	virtual void setProgressText(const QString& progressText) override;
+
+	// Progress reporting for tasks with sub-steps:
 
 	/// Begins a sequence of sub-steps in the progress range of this promise.
 	/// This is used for long and complex computations, which consist of several logical sub-steps, each with
@@ -70,33 +77,30 @@ public:
 	/// Must be called at the end of a sub-step sequence started with beginProgressSubSteps().
     virtual void endProgressSubSteps() override;
 
-	/// This must be called after creating a promise to put it into the 'started' state.
-	/// Returns false if the promise is or was already in the 'started' state.
-    virtual bool setStarted() override;
+	/// Returns the maximum progress value that can be reached (taking into account sub-steps).
+    virtual qlonglong totalProgressMaximum() const override { return _totalProgressMaximum; }
 
-	/// This must be called after the promise has been fulfilled (even if an exception occurred).
-	virtual void setFinished() override;
-
-	/// Cancels this promise.
-	virtual void cancel() noexcept override;
-
-	/// Sets the promise into the 'exception' state to signal that an exception has occurred 
-	/// while trying to fulfill it. 
-    virtual void setException(std::exception_ptr&& ex) override;
+	/// Returns the current progress value (taking into account sub-steps).
+    virtual qlonglong totalProgressValue() const override { return _totalProgressValue; }
 
 protected:
 
-    virtual void registerWatcher(PromiseWatcher* watcher) override;
-    virtual void unregisterWatcher(PromiseWatcher* watcher) override;
-    virtual void registerTracker(TrackingPromiseState* tracker) override;
-	virtual void addContinuationImpl(std::function<void()>&& cont) override;
+	/// Constructor.
+	ProgressiveTask(State initialState = NoState, const QString& progressText = QString()) :
+		Task(initialState), _progressText(progressText) {}
 
-	QMutex _mutex;
+    void computeTotalProgress();
+
+	qlonglong _totalProgressValue = 0;
+	qlonglong _totalProgressMaximum = 0;
+    qlonglong _progressValue = 0;
+    qlonglong _progressMaximum = 0;
+    int _intermittentUpdateCounter = 0;
+    QString _progressText;
+    QElapsedTimer _progressTime;
+    std::vector<std::pair<int, std::vector<int>>> subStepsStack;
 };
-
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

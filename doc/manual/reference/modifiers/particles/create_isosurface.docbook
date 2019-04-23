@@ -11,11 +11,11 @@
   <title>Create isosurface</title>
 
   <para>
-  
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/create_isosurface_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    
+
     <informalfigure>
       <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="1">
@@ -36,7 +36,7 @@
     </informalfigure>
 
     This modifier generates an <link xlink:href="https://en.wikipedia.org/wiki/Isosurface">isosurface</link> for a field quantity defined on a structured data grid.
-    The generated isosurface is represented as a <link linkend="scene_objects.surface_mesh">surface mesh</link> in OVITO and its visual appearance is controlled by 
+    The generated isosurface is represented as a <link linkend="scene_objects.surface_mesh">surface mesh</link> in OVITO and its visual appearance is controlled by
     the accompanying <link linkend="display_objects.surface_mesh">surface mesh visual element</link>.
   </para>
   <para>
@@ -50,8 +50,8 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CreateIsosurfaceModifier"><classname>CreateIsosurfaceModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CreateIsosurfaceModifier"><classname>CreateIsosurfaceModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-       
+  </simplesect>
+
 </section>

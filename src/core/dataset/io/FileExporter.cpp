@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -57,8 +57,8 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(FileExporter, floatOutputPrecision, IntegerPa
 ******************************************************************************/
 FileExporter::FileExporter(DataSet* dataset) : RefTarget(dataset),
 	_exportAnimation(false),
-	_useWildcardFilename(false), 
-	_startFrame(0), 
+	_useWildcardFilename(false),
+	_startFrame(0),
 	_endFrame(-1),
 	_everyNthFrame(1),
 	_floatOutputPrecision(10)
@@ -104,7 +104,7 @@ void FileExporter::selectDefaultExportableData()
 		}
 	}
 
-	// If no scene node is currently selected, pick the first suitable node from the scene. 
+	// If no scene node is currently selected, pick the first suitable node from the scene.
 	if(!nodeToExport()) {
 		if(isSuitableNode(dataset()->sceneRoot())) {
 			setNodeToExport(dataset()->sceneRoot());
@@ -122,12 +122,12 @@ void FileExporter::selectDefaultExportableData()
 }
 
 /******************************************************************************
-* Determines whether the given scene node is suitable for exporting with this 
-* exporter service. By default, all pipeline scene nodes are considered suitable 
-* that produce suitable data objects of the type specified by the 
-* FileExporter::exportableDataObjectClass() method. 
+* Determines whether the given scene node is suitable for exporting with this
+* exporter service. By default, all pipeline scene nodes are considered suitable
+* that produce suitable data objects of the type specified by the
+* FileExporter::exportableDataObjectClass() method.
 ******************************************************************************/
-bool FileExporter::isSuitableNode(SceneNode* node) const 
+bool FileExporter::isSuitableNode(SceneNode* node) const
 {
 	if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(node)) {
 		return isSuitablePipelineOutput(pipeline->evaluatePipelinePreliminary(true));
@@ -136,16 +136,16 @@ bool FileExporter::isSuitableNode(SceneNode* node) const
 }
 
 /******************************************************************************
-* Determines whether the given pipeline output is suitable for exporting with 
+* Determines whether the given pipeline output is suitable for exporting with
 * this exporter service. By default, all data collections are considered suitable
-* that contain suitable data objects of the type specified by the 
+* that contain suitable data objects of the type specified by the
 * FileExporter::exportableDataObjectClass() method.
 ******************************************************************************/
-bool FileExporter::isSuitablePipelineOutput(const PipelineFlowState& state) const 
-{ 
+bool FileExporter::isSuitablePipelineOutput(const PipelineFlowState& state) const
+{
 	if(state.isEmpty()) return false;
 	std::vector<const DataObject::OOMetaClass*> objClasses = exportableDataObjectClass();
-	if(objClasses.empty()) 
+	if(objClasses.empty())
 		return true;
 	for(const DataObject::OOMetaClass* objClass : objClasses) {
 		if(state.containsObjectRecursive(*objClass))
@@ -226,7 +226,7 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 	try {
 
 		// Export animation frames.
-		operation.setProgressMaximum(numberOfFrames);			
+		operation.setProgressMaximum(numberOfFrames);
 		for(int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++) {
 			operation.setProgressValue(frameIndex);
 
@@ -243,7 +243,7 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 
 			operation.setProgressText(tr("Exporting frame %1 to file '%2'").arg(frameNumber).arg(filename));
 
-			exportFrame(frameNumber, exportTime, filename, operation.createSubOperation());
+			exportFrame(frameNumber, exportTime, filename, operation.createSubTask());
 
 			if(exportAnimation() && useWildcardFilename())
 				closeOutputFile(!operation.isCanceled());

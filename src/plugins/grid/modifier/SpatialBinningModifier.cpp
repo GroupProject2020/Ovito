@@ -68,15 +68,15 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SpatialBinningModifier, numberOfBinsZ, Intege
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-SpatialBinningModifier::SpatialBinningModifier(DataSet* dataset) : AsynchronousDelegatingModifier(dataset), 
-    _reductionOperation(RED_MEAN), 
+SpatialBinningModifier::SpatialBinningModifier(DataSet* dataset) : AsynchronousDelegatingModifier(dataset),
+    _reductionOperation(RED_MEAN),
     _firstDerivative(false),
-    _binDirection(CELL_VECTOR_3), 
-    _numberOfBinsX(200), 
+    _binDirection(CELL_VECTOR_3),
+    _numberOfBinsX(200),
     _numberOfBinsY(200),
     _numberOfBinsZ(200),
-    _fixPropertyAxisRange(false), 
-    _propertyAxisRangeStart(0), 
+    _fixPropertyAxisRange(false),
+    _propertyAxisRangeStart(0),
     _propertyAxisRangeEnd(1),
 	_onlySelectedElements(false)
 {
@@ -93,7 +93,7 @@ void SpatialBinningModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousDelegatingModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && delegate() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && delegate() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(delegate()->subject())) {
 			PropertyReference bestProperty;
@@ -119,7 +119,7 @@ void SpatialBinningModifier::referenceReplaced(const PropertyFieldDescriptor& fi
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -163,7 +163,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
     if(is1D()) binCount.y() = binCount.z() = 1;
     else if(is2D()) binCount.z() = 1;
     size_t binDataSize = (size_t)binCount[0] * (size_t)binCount[1] * (size_t)binCount[2];
-	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), 
+	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(),
 		true, is1D() ? DataSeriesObject::YProperty : 0);
 
 	if(is1D() && firstDerivative())
@@ -179,12 +179,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
 	const SimulationCell& cell = input.expectObject<SimulationCellObject>()->data();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return delegate()->createEngine(time, input, cell, 
+	return delegate()->createEngine(time, input, cell,
 		binDirection(),
-        std::move(sourcePropertyData), 
+        std::move(sourcePropertyData),
         vecComponent,
-        std::move(selectionProperty), 
-        std::move(binData), binCount, binDir, 
+        std::move(selectionProperty),
+        std::move(binData), binCount, binDir,
         reductionOperation(), firstDerivative());
 }
 

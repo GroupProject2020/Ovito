@@ -325,7 +325,7 @@ public:
     }
 
 	/// Fairs the surface mesh.
-	bool smoothMesh(int numIterations, PromiseState& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
+	bool smoothMesh(int numIterations, Task& task, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
 
 	/// Determines which spatial region contains the given point in space.
 	/// Returns -1 if the point is exactly on a region boundary.

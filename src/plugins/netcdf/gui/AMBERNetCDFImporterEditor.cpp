@@ -59,7 +59,7 @@ SET_OVITO_OBJECT_EDITOR(AMBERNetCDFImporter, AMBERNetCDFImporterEditor);
 bool AMBERNetCDFImporterEditor::showEditColumnMappingDialog(AMBERNetCDFImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
 	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForFuture(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
 

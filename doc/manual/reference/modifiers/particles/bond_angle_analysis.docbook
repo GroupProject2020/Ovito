@@ -14,52 +14,36 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/bond_angle_analysis_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    This modifier implements a method for identifying common crystalline and other structures based on an analysis  
+    This modifier implements a method for identifying common crystalline and other structures based on an analysis
     of the distribution of angles formed by the pairs of neighbors of a central atom. The method is known as Ackland-Jones bond-angle method [<link
     xlink:href="http://link.aps.org/doi/10.1103/PhysRevB.73.054104">Ackland and
     Jones, Phys. Rev. B 73, 054104</link>]. The algorithm assigns a structural type
     to each particle having a local environment that matches one of the known structures (FCC, BCC, HCP, icosahedral).
-  </para> 
-  
+  </para>
+
   <simplesect>
   <title>Modifier outputs</title>
     <para>
       The modifier outputs the classification results as a new particle property named <literal>Structure Type</literal>.
-      This information allows you to subsequently select particles of a certain structural type, e.g. using the 
+      This information allows you to subsequently select particles of a certain structural type, e.g. using the
       <link linkend="particles.modifiers.select_particle_type">Select Type</link> modifier.
       The structural type determined by the algorithm is encoded as an integer value:
       <itemizedlist>
-      
-        <listitem>
-          <para>0 = Other, unknown coordination structure</para>
-        </listitem>
-      
-        <listitem>
-          <para>1 = FCC, face-centered cubic</para>
-        </listitem>
-
-        <listitem>
-          <para>2 = HCP, hexagonal close-packed</para>
-        </listitem>
-
-        <listitem>
-          <para>3 = BCC, body-centered cubic</para>
-        </listitem>
-
-        <listitem>
-          <para>4 = ICO, icosahedral coordination</para>
-        </listitem>
-
+        <listitem>0 = Other, unknown coordination structure</listitem>
+        <listitem>1 = FCC, face-centered cubic</listitem>
+        <listitem>2 = HCP, hexagonal close-packed</listitem>
+        <listitem>3 = BCC, body-centered cubic</listitem>
+        <listitem>4 = ICO, icosahedral coordination</listitem>
       </itemizedlist>
     </para>
     <para>
-      In addition, the modifier assigns colors to the particles (by setting the <literal>Color</literal> 
+      In addition, the modifier assigns colors to the particles (by setting the <literal>Color</literal>
       particle property) to indicate their computed structural type. The color representing each structural type
       can be customized by double-clicking the corresponding entry in the table or, permanently, in the <link linkend="application_settings.particles">
       application settings dialog</link>.
     </para>
     <para>
-      Furthermore, the modifier emits global attributes to the data pipeline reporting the total number of particles matching 
+      Furthermore, the modifier emits global attributes to the data pipeline reporting the total number of particles matching
       each of the supported structural types. These attributes are named <literal>AcklandJones.counts.XXX</literal>, where "<literal>XXX</literal>"
       stands for the name of a structure. These analysis statistics may be exported using OVITO's <link linkend="usage.export">data export function</link>
       or displayed as live information in the viewports using a <link linkend="viewport_overlays.text_label">text label</link>.
@@ -67,37 +51,37 @@
   </simplesect>
 
    <simplesect>
-    <title>Usage notes</title>  
+    <title>Usage notes</title>
     <para>
-      The modifier needs to see the complete set of input particles to perform the analysis. It should therefore be placed at the 
+      The modifier needs to see the complete set of input particles to perform the analysis. It should therefore be placed at the
       beginning of the data pipeline, preceding any modifiers that delete some of the particles.
-    </para>    
+    </para>
     <para>
       The <emphasis>Use only selected particles</emphasis> option restricts the analysis to the
-      currently selected particles. In this case, unselected particles will be ignored 
+      currently selected particles. In this case, unselected particles will be ignored
       (as if they did not exist) and are all assigned the structure type "Other".
-      This option is useful if you want to identify defects in a crystal type 
+      This option is useful if you want to identify defects in a crystal type
       not directly supported by the bond-angle analysis algorithm but having a sub-lattice that is supported.
-    </para>  
+    </para>
   </simplesect>
-  
+
   <simplesect>
-    <title>Alternatives</title>  
+    <title>Alternatives</title>
     <para>
       OVITO provides implementations of other structure identification methods, for instance the
       <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier,
       the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier or
       the <link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral Template Matching</link> modifier.
-      Furthermore, the <link linkend="particles.modifiers.centrosymmetry">Centrosymmetry</link> modifier can be used to 
+      Furthermore, the <link linkend="particles.modifiers.centrosymmetry">Centrosymmetry</link> modifier can be used to
       detect defects in crystal lattices.
     </para>
   </simplesect>
-  
+
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AcklandJonesModifier"><classname>AcklandJonesModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.AcklandJonesModifier"><classname>AcklandJonesModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
-  
+
 </section>

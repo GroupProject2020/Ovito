@@ -42,7 +42,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticlesComputePropertyModifierDelegate, c
 * Constructs a new instance of this class.
 ******************************************************************************/
 ParticlesComputePropertyModifierDelegate::ParticlesComputePropertyModifierDelegate(DataSet* dataset) : ComputePropertyModifierDelegate(dataset),
-	_cutoff(3), 
+	_cutoff(3),
 	_useMultilineFields(false)
 {
 }
@@ -64,15 +64,15 @@ void ParticlesComputePropertyModifierDelegate::setComponentCount(int componentCo
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> ParticlesComputePropertyModifierDelegate::createEngine(
-				TimePoint time, 
-				const PipelineFlowState& input, 
+				TimePoint time,
+				const PipelineFlowState& input,
 				const PropertyContainer* container,
-				PropertyPtr outputProperty, 
-				ConstPropertyPtr selectionProperty, 
+				PropertyPtr outputProperty,
+				ConstPropertyPtr selectionProperty,
 				QStringList expressions)
 {
 	if(!neighborExpressions().empty() && neighborExpressions().size() != outputProperty->componentCount() && (neighborExpressions().size() != 1 || !neighborExpressions().front().isEmpty()))
@@ -84,13 +84,13 @@ std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> Particle
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputeEngine>(
-			input.stateValidity(), 
-			time, 
-			std::move(outputProperty), 
+			input.stateValidity(),
+			time,
+			std::move(outputProperty),
 			container,
-			std::move(selectionProperty), 
-			std::move(expressions), 
-			dataset()->animationSettings()->timeToFrame(time), 
+			std::move(selectionProperty),
+			std::move(expressions),
+			dataset()->animationSettings()->timeToFrame(time),
 			input,
 			positions->storage(),
 			neighborExpressions(),
@@ -101,31 +101,31 @@ std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> Particle
 * Constructor.
 ******************************************************************************/
 ParticlesComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
-		const TimeInterval& validityInterval, 
+		const TimeInterval& validityInterval,
 		TimePoint time,
-		PropertyPtr outputProperty, 
+		PropertyPtr outputProperty,
 		const PropertyContainer* container,
 		ConstPropertyPtr selectionProperty,
-		QStringList expressions, 
-		int frameNumber, 
-		const PipelineFlowState& input, 
-		ConstPropertyPtr positions, 
+		QStringList expressions,
+		int frameNumber,
+		const PipelineFlowState& input,
+		ConstPropertyPtr positions,
 		QStringList neighborExpressions,
 		FloatType cutoff) :
 	ComputePropertyModifierDelegate::PropertyComputeEngine(
-			validityInterval, 
-			time, 
-			input, 
+			validityInterval,
+			time,
+			input,
 			container,
-			std::move(outputProperty), 
-			std::move(selectionProperty), 
-			std::move(expressions), 
-			frameNumber, 
+			std::move(outputProperty),
+			std::move(selectionProperty),
+			std::move(expressions),
+			frameNumber,
 			std::make_unique<ParticleExpressionEvaluator>()),
 	_inputFingerprint(input.expectObject<ParticlesObject>()),
 	_positions(std::move(positions)),
-	_neighborExpressions(std::move(neighborExpressions)), 
-	_cutoff(cutoff),	
+	_neighborExpressions(std::move(neighborExpressions)),
+	_cutoff(cutoff),
 	_neighborEvaluator(std::make_unique<ParticleExpressionEvaluator>())
 {
 	// Make sure we have the right number of expression strings.
@@ -193,7 +193,7 @@ QStringList ParticlesComputePropertyModifierDelegate::ComputeEngine::delegateInp
 }
 
 /******************************************************************************
-* Determines whether the math expressions are time-dependent, 
+* Determines whether the math expressions are time-dependent,
 * i.e. if they reference the animation frame number.
 ******************************************************************************/
 bool ParticlesComputePropertyModifierDelegate::ComputeEngine::isTimeDependent()
@@ -226,7 +226,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 	task()->setProgressMaximum(positions()->size());
 
 	// Parallelized loop over all particles.
-	parallelForChunks(positions()->size(), *task(), [this, &neighborFinder](size_t startIndex, size_t count, PromiseState& promise) {
+	parallelForChunks(positions()->size(), *task(), [this, &neighborFinder](size_t startIndex, size_t count, Task& promise) {
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
 		ParticleExpressionEvaluator::Worker neighborWorker(*_neighborEvaluator);
 

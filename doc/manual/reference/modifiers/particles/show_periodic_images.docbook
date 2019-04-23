@@ -14,12 +14,12 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/show_periodic_images_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
+
     This modifier copies all particles, bonds and other data elements multiple times to visualize periodic images of a system.
   </para>
 
   <para>
-    The <emphasis>Operate on</emphasis> list in the lower panel lets you select the types of data elements that 
+    The <emphasis>Operate on</emphasis> list in the lower panel lets you select the types of data elements that
     should be replicated by the modifier. By default, the modifier extends the simulation cell appropriately to
     encompass all generated images of the system. If not desired, you can turn off the <emphasis>Adjust simulation box size</emphasis>
     option to keep the original simulation cell geometry. You should be aware, however, that this produces an inconsistent state:
@@ -51,15 +51,15 @@
           <para>
             This option lets the modifier assign new unique IDs to the copied particles or bonds.
             Otherwise the duplicated elements will have the same identifiers as the originals, which
-            may cause problems with other modifiers (e.g. the <link linkend="particles.modifiers.manual_selection">Manual selection</link> modifier), which 
+            may cause problems with other modifiers (e.g. the <link linkend="particles.modifiers.manual_selection">Manual selection</link> modifier), which
             rely on the uniqueness of identifiers.
           </para>
         </listitem>
       </varlistentry>
-      
+
     </variablelist>
   </simplesect>
-  
+
   <simplesect>
     <title>Limitation</title>
     <para>
@@ -67,12 +67,12 @@
       have the same values of the <literal>Molecule Identifier</literal> property as the original atoms.
     </para>
   </simplesect>
-    
+
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ReplicateModifier"><classname>ReplicateModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.ReplicateModifier"><classname>ReplicateModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-    
+  </simplesect>
+
 </section>

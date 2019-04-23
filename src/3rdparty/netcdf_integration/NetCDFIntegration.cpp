@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "NetCDFIntegration.h"
 
 #include <netcdf.h>
@@ -31,7 +31,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 QMutex NetCDFExclusiveAccess::_netcdfMutex(QMutex::Recursive);
 
 /******************************************************************************
-* Constructor, which blocks until exclusive access to the NetCDF functions is 
+* Constructor, which blocks until exclusive access to the NetCDF functions is
 * available.
 ******************************************************************************/
 NetCDFExclusiveAccess::NetCDFExclusiveAccess()
@@ -41,13 +41,13 @@ NetCDFExclusiveAccess::NetCDFExclusiveAccess()
 }
 
 /******************************************************************************
-* Constructor, which blocks until exclusive access to the NetCDF functions is 
+* Constructor, which blocks until exclusive access to the NetCDF functions is
 * available or the given operation has been canceled.
 ******************************************************************************/
-NetCDFExclusiveAccess::NetCDFExclusiveAccess(PromiseState* promiseState)
+NetCDFExclusiveAccess::NetCDFExclusiveAccess(Task* task)
 {
-    OVITO_ASSERT(promiseState != nullptr);
-    while(!promiseState->isCanceled()) {
+    OVITO_ASSERT(task);
+    while(!task->isCanceled()) {
         if(_netcdfMutex.tryLock(10)) {
             _isLocked = true;
             break;

@@ -47,7 +47,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	OVITO_ASSERT(posProperty->size() == mask.size());
 	OVITO_ASSERT(!selProperty || selProperty->size() == mask.size());
 
-	// Obtain modifier parameter values. 
+	// Obtain modifier parameter values.
 	Plane3 plane;
 	FloatType sliceWidth;
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, state.mutableStateValidity());

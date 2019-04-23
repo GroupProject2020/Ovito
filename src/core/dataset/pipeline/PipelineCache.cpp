@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -27,8 +27,8 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 /******************************************************************************
-* Determines whether the cache contains a cached pipeline state for the 
-* given animation time. 
+* Determines whether the cache contains a cached pipeline state for the
+* given animation time.
 ******************************************************************************/
 bool PipelineCache::contains(TimePoint time) const
 {
@@ -37,8 +37,8 @@ bool PipelineCache::contains(TimePoint time) const
 
 /******************************************************************************
 * Returns a state from this cache that is valid at the given animation time.
-* If the cache contains no state for the given animation time, then an empty 
-* pipeline state is returned. 
+* If the cache contains no state for the given animation time, then an empty
+* pipeline state is returned.
 ******************************************************************************/
 const PipelineFlowState& PipelineCache::getAt(TimePoint time) const
 {
@@ -55,8 +55,8 @@ const PipelineFlowState& PipelineCache::getAt(TimePoint time) const
 }
 
 /******************************************************************************
-* Puts the given pipeline state into the cache for later retrieval. 
-* The cache may decide not to cache the state, in which case the method returns 
+* Puts the given pipeline state into the cache for later retrieval.
+* The cache may decide not to cache the state, in which case the method returns
 * false.
 ******************************************************************************/
 bool PipelineCache::insert(PipelineFlowState state, const RefTarget* ownerObject)
@@ -70,8 +70,8 @@ bool PipelineCache::insert(PipelineFlowState state, const RefTarget* ownerObject
 }
 
 /******************************************************************************
-* Puts the given pipeline state into the cache when it comes available. 
-* Depending on the given state validity interval, the cache may decide not to 
+* Puts the given pipeline state into the cache when it comes available.
+* Depending on the given state validity interval, the cache may decide not to
 * cache the state, in which case the method returns false.
 ******************************************************************************/
 bool PipelineCache::insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject)
@@ -92,7 +92,7 @@ void PipelineCache::invalidate(bool keepStaleContents, TimeInterval keepInterval
 	// Reduce the cache validity to the interval to be kept.
 	_mostRecentState.intersectStateValidity(keepInterval);
 	_currentAnimState.intersectStateValidity(keepInterval);
-	
+
 	// If the remaining validity interval is empty, we can clear the caches.
 	if(_mostRecentState.stateValidity().isEmpty())
 		_mostRecentState.reset();

@@ -58,10 +58,10 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, relativeFaceThreshol
 * Constructs the modifier object.
 ******************************************************************************/
 VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_onlySelected(false), 
-	_computeIndices(false), 
-	_useRadii(false), 
-	_edgeThreshold(0), 
+	_onlySelected(false),
+	_computeIndices(false),
+	_useRadii(false),
+	_edgeThreshold(0),
 	_faceThreshold(0),
 	_computeBonds(false),
 	_relativeFaceThreshold(0)
@@ -133,15 +133,15 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			_voronoiIndices = std::make_shared<PropertyStorage>(_positions->size(), PropertyStorage::Int, 3, 0, QStringLiteral("Voronoi Index"), true);
 		}
 		// Nothing else to do if there no particles.
-		return;	
+		return;
 	}
 
 	// The squared edge length threshold.
 	// Add additional factor of 4 because Voronoi cell vertex coordinates are all scaled by factor of 2.
 	FloatType sqEdgeThreshold = _edgeThreshold * _edgeThreshold * 4;
 
-	auto processCell = [this, sqEdgeThreshold](voro::voronoicell_neighbor& v, size_t index, 
-		std::vector<int>& voronoiBuffer, std::vector<size_t>& voronoiBufferIndex, QMutex* bondMutex) 
+	auto processCell = [this, sqEdgeThreshold](voro::voronoicell_neighbor& v, size_t index,
+		std::vector<int>& voronoiBuffer, std::vector<size_t>& voronoiBufferIndex, QMutex* bondMutex)
 	{
 		// Compute cell volume.
 		double vol = v.volume();
@@ -152,7 +152,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		double prevVolumeSum = voronoiVolumeSum();
 		while(!voronoiVolumeSum().compare_exchange_weak(prevVolumeSum, prevVolumeSum + vol));
 
-		// Compute total surface area of Voronoi cell when relative area threshold is used to 
+		// Compute total surface area of Voronoi cell when relative area threshold is used to
 		// filter out small faces.
 		double faceAreaThreshold = _faceThreshold;
 		if(_relativeFaceThreshold > 0)
@@ -236,7 +236,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	};
 
 	std::vector<int> voronoiBuffer;
-	std::vector<size_t> voronoiBufferIndex; 
+	std::vector<size_t> voronoiBufferIndex;
 
 	// Decide whether to use Voro++ container class or our own implementation.
 	if(_simCell.isAxisAligned()) {
@@ -323,7 +323,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		else {
 #if 1
 			voro::container_poly voroContainer(ax, bx, ay, by, az, bz, nx, ny, nz,
-					_simCell.pbcFlags()[0], _simCell.pbcFlags()[1], _simCell.pbcFlags()[2], 
+					_simCell.pbcFlags()[0], _simCell.pbcFlags()[1], _simCell.pbcFlags()[2],
 					(int)std::ceil(voro::optimal_particles));
 
 			// Insert particles into Voro++ container.
@@ -429,9 +429,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 		// Perform analysis, particle-wise parallel.
 		task()->setProgressMaximum(_positions->size());
-		parallelForChunks(_positions->size(), *task(), [&](size_t startIndex, size_t chunkSize, PromiseState& promise) {
+		parallelForChunks(_positions->size(), *task(), [&](size_t startIndex, size_t chunkSize, Task& promise) {
 			std::vector<int> localVoronoiBuffer;
-			std::vector<size_t> localVoronoiBufferIndex; 
+			std::vector<size_t> localVoronoiBufferIndex;
 			for(size_t index = startIndex; chunkSize--; index++) {
 				if(promise.isCanceled()) return;
 				if((index % 256) == 0) promise.incrementProgressValue(256);

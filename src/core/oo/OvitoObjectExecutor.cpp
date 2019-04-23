@@ -28,16 +28,16 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 /******************************************************************************
 * Submits the work for execution.
 ******************************************************************************/
-void OvitoObjectExecutor::Work::operator()() 
+void OvitoObjectExecutor::Work::operator()()
 {
     OVITO_ASSERT(_event);
-    
+
     if(!QCoreApplication::closingDown() && QThread::currentThread() != QCoreApplication::instance()->thread()) {
-        // Schedule work for later execution in main thread.
+        // Schedule work for later execution in the main thread.
         std::move(*this).post();
     }
     else {
-        // Execute work immediately by calling the event destructor. 
+        // Execute work immediately by calling the event destructor.
         _event.reset();
     }
 }
@@ -55,11 +55,11 @@ void OvitoObjectExecutor::Work::post() &&
 /******************************************************************************
 * Determines whether work can be executed in the context of the OvitoObject or not.
 ******************************************************************************/
-bool OvitoObjectExecutor::WorkEventBase::needToCancelWork() const 
-{ 
+bool OvitoObjectExecutor::WorkEventBase::needToCancelWork() const
+{
     // The OvitoObject must still be alive and the application may not be in
     // the process of shutting down for the work to be executable.
-    return _obj.isNull() || QCoreApplication::closingDown(); 
+    return _obj.isNull() || QCoreApplication::closingDown();
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -49,7 +49,7 @@ ParticlesObject::ParticlesObject(DataSet* dataset) : PropertyContainer(dataset)
 
 /******************************************************************************
 * Duplicates the BondsObject if it is shared with other particle objects.
-* After this method returns, the BondsObject is exclusively owned by the 
+* After this method returns, the BondsObject is exclusively owned by the
 * container and can be safely modified without unwanted side effects.
 ******************************************************************************/
 BondsObject* ParticlesObject::makeBondsMutable()
@@ -59,7 +59,7 @@ BondsObject* ParticlesObject::makeBondsMutable()
 }
 
 /******************************************************************************
-* Convinience method that makes sure that there is a BondsObject. 
+* Convinience method that makes sure that there is a BondsObject.
 * Throws an exception if there isn't.
 ******************************************************************************/
 const BondsObject* ParticlesObject::expectBonds() const
@@ -70,7 +70,7 @@ const BondsObject* ParticlesObject::expectBonds() const
 }
 
 /******************************************************************************
-* Convinience method that makes sure that there is a BondsObject and the 
+* Convinience method that makes sure that there is a BondsObject and the
 * bond topology property. Throws an exception if there isn't.
 ******************************************************************************/
 const PropertyObject* ParticlesObject::expectBondsTopology() const
@@ -270,7 +270,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 				const std::vector<Color>& colors = inputBondColors(true);
 				OVITO_ASSERT(colors.size() == bondPropertyObject->size());
 				std::copy(colors.cbegin() + originalBondCount, colors.cend(), bondPropertyObject->dataColor() + originalBondCount);
-			} 
+			}
 		}
 
 		// Merge new bond properties.
@@ -331,19 +331,19 @@ std::vector<Color> ParticlesObject::inputBondColors(bool ignoreExistingColorProp
 
 			// Query half-bond colors from vis element.
 			std::vector<ColorA> halfBondColors = bondsVis->halfBondColors(
-					elementCount(), 
+					elementCount(),
 					bonds()->getProperty(BondsObject::TopologyProperty),
 					!ignoreExistingColorProperty ? bonds()->getProperty(BondsObject::ColorProperty) : nullptr,
 					bonds()->getProperty(BondsObject::TypeProperty),
 					nullptr, // No selection highlighting needed here
 					nullptr, // No transparency needed here
-					particleVis, 
+					particleVis,
 					getProperty(ParticlesObject::ColorProperty),
 					getProperty(ParticlesObject::TypeProperty));
 			OVITO_ASSERT(bonds()->elementCount() * 2 == halfBondColors.size());
 
 			// Map half-bond colors to full bond colors.
-			std::vector<Color> colors(bonds()->elementCount());				
+			std::vector<Color> colors(bonds()->elementCount());
 			auto ci = halfBondColors.cbegin();
 			for(Color& co : colors) {
 				co = Color(ci->r(), ci->g(), ci->b());
@@ -380,7 +380,7 @@ std::vector<FloatType> ParticlesObject::inputParticleRadii() const
 
 
 /******************************************************************************
-* Gives the property class the opportunity to set up a newly created 
+* Gives the property class the opportunity to set up a newly created
 * property object.
 ******************************************************************************/
 void ParticlesObject::OOMetaClass::prepareNewProperty(PropertyObject* property) const
@@ -388,7 +388,7 @@ void ParticlesObject::OOMetaClass::prepareNewProperty(PropertyObject* property) 
 	if(property->type() == ParticlesObject::DisplacementProperty) {
 		OORef<VectorVis> vis = new VectorVis(property->dataset());
 		vis->setObjectTitle(tr("Displacements"));
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			vis->loadUserDefaults();
 		vis->setEnabled(false);
 		property->addVisElement(vis);
@@ -396,7 +396,7 @@ void ParticlesObject::OOMetaClass::prepareNewProperty(PropertyObject* property) 
 	else if(property->type() == ParticlesObject::ForceProperty) {
 		OORef<VectorVis> vis = new VectorVis(property->dataset());
 		vis->setObjectTitle(tr("Forces"));
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			vis->loadUserDefaults();
 		vis->setEnabled(false);
 		vis->setReverseArrowDirection(false);
@@ -406,7 +406,7 @@ void ParticlesObject::OOMetaClass::prepareNewProperty(PropertyObject* property) 
 	else if(property->type() == ParticlesObject::DipoleOrientationProperty) {
 		OORef<VectorVis> vis = new VectorVis(property->dataset());
 		vis->setObjectTitle(tr("Dipoles"));
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			vis->loadUserDefaults();
 		vis->setEnabled(false);
 		vis->setReverseArrowDirection(false);
@@ -516,7 +516,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
 
 	// Allocate the storage array.
-	PropertyPtr property = std::make_shared<PropertyStorage>(particleCount, dataType, componentCount, stride, 
+	PropertyPtr property = std::make_shared<PropertyStorage>(particleCount, dataType, componentCount, stride,
 								propertyName, false, type, componentNames);
 
 	// Initialize memory if requested.
@@ -558,7 +558,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 
 	return property;
 }
-	
+
 /******************************************************************************
 * Registers all standard properties with the property traits class.
 ******************************************************************************/
@@ -569,7 +569,7 @@ void ParticlesObject::OOMetaClass::initialize()
 	// Enable automatic conversion of a ParticlePropertyReference to a generic PropertyReference and vice versa.
 	QMetaType::registerConverter<ParticlePropertyReference, PropertyReference>();
 	QMetaType::registerConverter<PropertyReference, ParticlePropertyReference>();
-	
+
 	setPropertyClassDisplayName(tr("Particles"));
 	setElementDescriptionName(QStringLiteral("particles"));
 	setPythonName(QStringLiteral("particles"));
@@ -580,7 +580,7 @@ void ParticlesObject::OOMetaClass::initialize()
 	const QStringList symmetricTensorList = QStringList() << "XX" << "YY" << "ZZ" << "XY" << "XZ" << "YZ";
 	const QStringList tensorList = QStringList() << "XX" << "YX" << "ZX" << "XY" << "YY" << "ZY" << "XZ" << "YZ" << "ZZ";
 	const QStringList quaternionList = QStringList() << "X" << "Y" << "Z" << "W";
-	
+
 	registerStandardProperty(TypeProperty, tr("Particle Type"), PropertyStorage::Int, emptyList, tr("Particle types"));
 	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(ClusterProperty, tr("Cluster"), PropertyStorage::Int64, emptyList);
@@ -641,15 +641,15 @@ std::pair<size_t, ConstDataObjectPath> ParticlesObject::OOMetaClass::elementFrom
 }
 
 /******************************************************************************
-* Tries to remap an index from one property container to another, considering the 
-* possibility that elements may have been added or removed. 
+* Tries to remap an index from one property container to another, considering the
+* possibility that elements may have been added or removed.
 ******************************************************************************/
 size_t ParticlesObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& source, size_t elementIndex, const ConstDataObjectPath& dest) const
 {
 	const ParticlesObject* sourceParticles = static_object_cast<ParticlesObject>(source.back());
 	const ParticlesObject* destParticles = static_object_cast<ParticlesObject>(dest.back());
 
-	// If unique IDs are available try to use them to look up the particle in the other data collection. 
+	// If unique IDs are available try to use them to look up the particle in the other data collection.
 	if(const PropertyObject* sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
 		if(const PropertyObject* destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
 			qlonglong id = sourceIdentifiers->getInt64(elementIndex);
@@ -659,7 +659,7 @@ size_t ParticlesObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath
 		}
 	}
 
-	// Next, try to use the position to find the right particle in the other data collection. 
+	// Next, try to use the position to find the right particle in the other data collection.
 	if(const PropertyObject* sourcePositions = sourceParticles->getProperty(ParticlesObject::PositionProperty)) {
 		if(const PropertyObject* destPositions = destParticles->getProperty(ParticlesObject::PositionProperty)) {
 			const Point3& pos = sourcePositions->getPoint3(elementIndex);
@@ -674,7 +674,7 @@ size_t ParticlesObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath
 }
 
 /******************************************************************************
-* Determines which elements are located within the given 
+* Determines which elements are located within the given
 * viewport fence region (=2D polygon).
 ******************************************************************************/
 boost::dynamic_bitset<> ParticlesObject::OOMetaClass::viewportFenceSelection(const QVector<Point2>& fence, const ConstDataObjectPath& objectPath, PipelineSceneNode* node, const Matrix4& projectionTM) const
@@ -719,7 +719,7 @@ boost::dynamic_bitset<> ParticlesObject::OOMetaClass::viewportFenceSelection(con
 			QMutexLocker locker(&mutex);
 			fullSelection |= selection;
 		});
-		
+
 		return fullSelection;
 	}
 

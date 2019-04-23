@@ -36,9 +36,9 @@
       </informaltable>
     </informalfigure>
     This modifier performs a fast lighting calculation to shade particles based on their
-    occlusion by other particles. Ambient occlusion shading can provide 
+    occlusion by other particles. Ambient occlusion shading can provide
     an improved visual perception of complex three-dimensional structures. The example pictures
-    on the right show the positive effect of the particle shading (left: uniform particle brightness; right: AO modulated 
+    on the right show the positive effect of the particle shading (left: uniform particle brightness; right: AO modulated
     brightness). The algorithm approximately calculates the shading produced by a spherical light source enclosing the entire structure (similar to an overcast sky).
     OVITO uses the graphics card to quickly perform this illumination calculation.
   </para>
@@ -47,7 +47,7 @@
     Note that the ambient occlusion modifier is only needed if you are using the fast <link linkend="rendering.opengl_renderer">OpenGL renderer</link>
     or want quick shading of structures displayed in the interactive viewports.
     Other rendering backends, for example the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link> support ambient occlusion shading as part
-    of the image rendering process, which typically gives better visual quality than this modifier can. 
+    of the image rendering process, which typically gives better visual quality than this modifier can.
   </para>
 
   <para>
@@ -56,7 +56,7 @@
     them with the computed per-particle brightness factors.
     If the <literal>Color</literal> property is not present yet, it is created by the modifier and initialized with the
     default particle colors.
-  </para>  
+  </para>
 
   <simplesect>
     <title>Parameters</title>
@@ -91,8 +91,8 @@
         <listitem>
           <para>
             To compute the illumination produced by a single directed light source, the modifier
-            renders the particles as seen from that light source. All visible particles will receive 
-            a certain amount of light while occluded particles do not. This parameter controls 
+            renders the particles as seen from that light source. All visible particles will receive
+            a certain amount of light while occluded particles do not. This parameter controls
             the resolution of the internal rendering buffer. For systems with a large number of particles it
             might be necessary to increase this value such that every particles occupies at least one
             pixel in the rendering buffer.
@@ -101,25 +101,25 @@
       </varlistentry>
     </variablelist>
   </simplesect>
-  
+
  <simplesect>
   <title>Technical background</title>
  	<para>
-    OVITO implements the following simple <link xlink:href="http://en.wikipedia.org/wiki/Ambient_occlusion">ambient occlusion</link>	algorithm to 
+    OVITO implements the following simple <link xlink:href="http://en.wikipedia.org/wiki/Ambient_occlusion">ambient occlusion</link>	algorithm to
     determine an illumination factor for each particle, which is used to modulate the particle color. The illumination of a sky sphere
     enclosing the input structure is approximated by a large number of parallel light sources directed
     at the structure. The amount of light received by a particle from one such light surface is determined
-    by rendering a projected image of the structure from the point of view of the light source to an offscreen frame buffer. 
-    All particles appearing in that image, which are not occluded by other particles, receive an amount of light 
-    that is proportional to their exposed area (i.e. the number of pixels they cover in the image). Finally, the 
+    by rendering a projected image of the structure from the point of view of the light source to an offscreen frame buffer.
+    All particles appearing in that image, which are not occluded by other particles, receive an amount of light
+    that is proportional to their exposed area (i.e. the number of pixels they cover in the image). Finally, the
     light contributions from all light sources are added up to compute the per-particle illumination factors.</para>
   </simplesect>
-  
+
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AmbientOcclusionModifier"><classname>AmbientOcclusionModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.AmbientOcclusionModifier"><classname>AmbientOcclusionModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
-  
+
 </section>

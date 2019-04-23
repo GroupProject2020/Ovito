@@ -41,7 +41,7 @@ class OVITO_STDMOD_EXPORT ColorCodingGradient : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(ColorCodingGradient)
-	
+
 protected:
 
 	/// Constructor.
@@ -63,7 +63,7 @@ class OVITO_STDMOD_EXPORT ColorCodingHSVGradient : public ColorCodingGradient
 	OVITO_CLASS(ColorCodingHSVGradient)
 	Q_CLASSINFO("DisplayName", "Rainbow");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -83,7 +83,7 @@ class OVITO_STDMOD_EXPORT ColorCodingGrayscaleGradient : public ColorCodingGradi
 	OVITO_CLASS(ColorCodingGrayscaleGradient)
 	Q_CLASSINFO("DisplayName", "Grayscale");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -103,7 +103,7 @@ class OVITO_STDMOD_EXPORT ColorCodingHotGradient : public ColorCodingGradient
 	OVITO_CLASS(ColorCodingHotGradient)
 	Q_CLASSINFO("DisplayName", "Hot");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -127,7 +127,7 @@ class OVITO_STDMOD_EXPORT ColorCodingJetGradient : public ColorCodingGradient
 	OVITO_CLASS(ColorCodingJetGradient)
 	Q_CLASSINFO("DisplayName", "Jet");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -153,7 +153,7 @@ class OVITO_STDMOD_EXPORT ColorCodingBlueWhiteRedGradient : public ColorCodingGr
 	OVITO_CLASS(ColorCodingBlueWhiteRedGradient)
 	Q_CLASSINFO("DisplayName", "Blue-White-Red");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -178,7 +178,7 @@ class OVITO_STDMOD_EXPORT ColorCodingViridisGradient : public ColorCodingGradien
 	OVITO_CLASS(ColorCodingViridisGradient)
 	Q_CLASSINFO("DisplayName", "Viridis");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -202,7 +202,7 @@ class OVITO_STDMOD_EXPORT ColorCodingMagmaGradient : public ColorCodingGradient
 	OVITO_CLASS(ColorCodingMagmaGradient)
 	Q_CLASSINFO("DisplayName", "Magma");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -226,7 +226,7 @@ class OVITO_STDMOD_EXPORT ColorCodingTableGradient : public ColorCodingGradient
 	OVITO_CLASS(ColorCodingTableGradient)
 	Q_CLASSINFO("DisplayName", "User table");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -251,7 +251,7 @@ class OVITO_STDMOD_EXPORT ColorCodingImageGradient : public ColorCodingGradient
 	OVITO_CLASS(ColorCodingImageGradient)
 	Q_CLASSINFO("DisplayName", "User image");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -278,9 +278,9 @@ class OVITO_STDMOD_EXPORT ColorCodingModifierDelegate : public ModifierDelegate
 {
 	OVITO_CLASS(ColorCodingModifierDelegate)
 	Q_OBJECT
-	
+
 public:
-	
+
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 
@@ -291,12 +291,12 @@ public:
 	PropertyContainerReference subject() const {
 		return PropertyContainerReference(&containerClass(), containerPath());
 	}
-	
+
 protected:
 
 	/// Abstract class constructor.
 	using ModifierDelegate::ModifierDelegate;
-	
+
 	/// \brief returns the ID of the standard property that will receive the computed colors.
 	virtual int outputColorPropertyId() const = 0;
 
@@ -314,14 +314,14 @@ class OVITO_STDMOD_EXPORT ColorCodingModifier : public DelegatingModifier
 public:
 
 	/// Give this modifier class its own metaclass.
-	class ColorCodingModifierClass : public DelegatingModifier::OOMetaClass 
+	class ColorCodingModifierClass : public DelegatingModifier::OOMetaClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
 		using DelegatingModifier::OOMetaClass::OOMetaClass;
 
-		/// Return the metaclass of delegates for this modifier type. 
+		/// Return the metaclass of delegates for this modifier type.
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return ColorCodingModifierDelegate::OOClass(); }
 	};
 
@@ -329,7 +329,7 @@ public:
 	Q_CLASSINFO("DisplayName", "Color coding");
 	Q_CLASSINFO("ModifierCategory", "Coloring");
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
@@ -356,10 +356,10 @@ public:
 
 	/// Sets the start and end value to the minimum and maximum value of the selected input property
 	/// determined over the entire animation sequence.
-	bool adjustRangeGlobal(PromiseState& operation);
+	bool adjustRangeGlobal(Task& operation);
 
 	/// Returns the current delegate of this modifier.
-	ColorCodingModifierDelegate* delegate() const { 
+	ColorCodingModifierDelegate* delegate() const {
 		return static_object_cast<ColorCodingModifierDelegate>(DelegatingModifier::delegate());
 	}
 
@@ -379,7 +379,7 @@ protected:
 
 	/// Is called when the value of a reference field of this RefMaker changes.
 	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
-	
+
 private:
 
 	/// This controller stores the start value of the color scale.

@@ -11,15 +11,15 @@
   <title>Histogram</title>
 
   <para>
-  
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/histogram_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
-    This modifier computes the histogram of values of a certain property, taken over all particles, bonds or other data elements in a system. 
+
+    This modifier computes the histogram of values of a certain property, taken over all particles, bonds or other data elements in a system.
     The modifier furthermore lets you select all data elements that fall within a specified value range.
   </para>
-  
+
   <simplesect>
     <title>Parameters</title>
 
@@ -65,19 +65,19 @@
         <term>Plot axes</term>
         <listitem>
           <para>
-            These modifier parameters control the histogram plot shown in the panel and let you zoom into 
+            These modifier parameters control the histogram plot shown in the panel and let you zoom into
             a sub-region.</para>
         </listitem>
       </varlistentry>
-      
+
     </variablelist>
   </simplesect>
-    
+
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.HistogramModifier"><classname>HistogramModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.HistogramModifier"><classname>HistogramModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-    
+  </simplesect>
+
 </section>

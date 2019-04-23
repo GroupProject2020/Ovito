@@ -506,7 +506,7 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 			vis->setReverseOrientation(true);
 			vis->setCapTransparency(0.5);
 			vis->setObjectTitle(tr("Defect mesh"));
-			if(!Application::instance()->scriptMode())
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				vis->loadUserDefaults();
 			defectSurfaceObj->setVisElement(vis);
 		}
@@ -535,7 +535,7 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 		if(!dislocationNetwork) {
 			dislocationNetwork = output->createObject<DislocationNetworkObject>(fileSource);
 			OORef<DislocationVis> vis = new DislocationVis(fileSource->dataset());
-			if(!Application::instance()->scriptMode())
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				vis->loadUserDefaults();
 			dislocationNetwork->setVisElement(vis);
 		}

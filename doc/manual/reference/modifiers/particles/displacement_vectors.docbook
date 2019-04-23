@@ -11,32 +11,32 @@
   <title>Displacement vectors</title>
 
   <para>
-  
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/displacement_vectors_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
-    This modifier calculates the displacement vectors of particles from two 
-    snapshots of the system: a <emphasis>reference</emphasis> (or initial) configuration and a <emphasis>current</emphasis> configuration. 
-    The displacement vector of a particle is computed by subtracting its reference 
+
+    This modifier calculates the displacement vectors of particles from two
+    snapshots of the system: a <emphasis>reference</emphasis> (or initial) configuration and a <emphasis>current</emphasis> configuration.
+    The displacement vector of a particle is computed by subtracting its reference
     position from its current position.
   </para>
 
   <para>
-    The modifier considers the currently present particle positions as the current configuration. 
-    The reference particle positions are by default taken from frame 0 of the loaded animation sequence ("Upstream pipeline" option). 
+    The modifier considers the currently present particle positions as the current configuration.
+    The reference particle positions are by default taken from frame 0 of the loaded animation sequence ("Upstream pipeline" option).
     Alternatively, the modifier supports loading the reference particle positions from a separate data file ("External file" option).
   </para>
 
   <simplesect>
     <title>Modifier output</title>
     <para>
-      The modifier stores the calculated displacement vectors in a new particle property named <literal>Displacement</literal>. 
+      The modifier stores the calculated displacement vectors in a new particle property named <literal>Displacement</literal>.
       This particle property supports visualization of the data using graphical arrows.
       To show the arrows in the viewports, you have to activate the associated <link linkend="display_objects.vectors">vector display</link>.
       Alternatively, you can use the <link linkend="particles.modifiers.color_coding">Color coding modifier</link> to
-      visualize the displacements using a varying particle color. This can be done for one of the three components of the 
-      displacement vectors or their magnitudes, which the modifier  
+      visualize the displacements using a varying particle color. This can be done for one of the three components of the
+      displacement vectors or their magnitudes, which the modifier
       outputs as an additional particle property named <literal>Displacement Magnitude</literal>.
     </para>
   </simplesect>
@@ -44,17 +44,17 @@
   <simplesect>
     <title>Reference positions</title>
     <para>
-      By default, the modifier obtains the reference particle positions from the currently loaded 
+      By default, the modifier obtains the reference particle positions from the currently loaded
       simulation sequence by evaluating the data pipeline at animation time 0. This default mode
       is denoted as <emphasis>"Constant reference configuration"</emphasis> in the user interface.
       If desired, OVITO allows you to pick an animation frame other than 0 as reference.
     </para>
     <para>
-      Alternatively, you can let OVITO calculate incremental displacements using 
+      Alternatively, you can let OVITO calculate incremental displacements using
       the <emphasis>"Relative to current frame"</emphasis> option. In this mode, a sliding reference
       configuration is used, based on a relative time offset with respect to the current configuration.
       Negative offsets correspond to a reference configuration preceding the current configuration
-      in time. An offset of -1, for example, lets OVITO use the animation frame immediately preceding 
+      in time. An offset of -1, for example, lets OVITO use the animation frame immediately preceding
       the current frame as reference. Note that, in this case, displacements cannot be calculated at
       frame 0, because there is no preceding frame.
     </para>
@@ -81,7 +81,7 @@
       to check for the presence of the <literal>Particle Identifier</literal> property after file import.
     </para>
   </simplesect>
-  
+
   <simplesect>
     <title>Affine mapping of the simulation cell</title>
     <para>
@@ -90,24 +90,24 @@
     </para>
     <para>
       The <emphasis>affine mapping</emphasis> setting controls how OVITO treats situations in which the shape or volume of the periodic simulation cell
-      changes from the initial to the current configuration. Such a cell change typically occurs in simulations due to active straining or 
-      pressure/stress relaxation. Because the calculation of displacement vectors is ambiguous in such situations, 
-      the <emphasis>affine mapping</emphasis> option lets you control the precise calculation method. 
+      changes from the initial to the current configuration. Such a cell change typically occurs in simulations due to active straining or
+      pressure/stress relaxation. Because the calculation of displacement vectors is ambiguous in such situations,
+      the <emphasis>affine mapping</emphasis> option lets you control the precise calculation method.
     </para>
     <para>
-      If affine mapping is turned off (the default), displacements are calculated simply by subtracting the initial particle position from 
+      If affine mapping is turned off (the default), displacements are calculated simply by subtracting the initial particle position from
       the current position. Any change of the simulation cell geometry is ignored.
     </para>
     <para>
-      The <emphasis>"To reference"</emphasis> setting performs a remapping of the current particle positions into the reference simulation cell 
+      The <emphasis>"To reference"</emphasis> setting performs a remapping of the current particle positions into the reference simulation cell
       before calculating the displacement vectors. For that, OVITO computes an affine transformation from the current and the reference
-      simulation cell geometry and applies it to the particle coordinates. This mode may be used to effectively filter out contributions 
-      to the particle displacements that stem from the macroscopic deformation of the simulation cell, retaining only the internal (non-affine) 
-      displacements of the particles. 
+      simulation cell geometry and applies it to the particle coordinates. This mode may be used to effectively filter out contributions
+      to the particle displacements that stem from the macroscopic deformation of the simulation cell, retaining only the internal (non-affine)
+      displacements of the particles.
       </para>
       <para>
       The <emphasis>"To current"</emphasis> setting performs the opposite: It transforms the particles of the reference configuration to the current
-      configuration first before calculating the displacements. It does that by applying the affine transformation that is given by the 
+      configuration first before calculating the displacements. It does that by applying the affine transformation that is given by the
       simulation cell shape change.
       </para>
       <para>
@@ -115,23 +115,23 @@
         <imagedata fileref="images/modifiers/displacement_vectors_mapping.png" format="PNG" scale="105" />
       </imageobject></mediaobject></screenshot>
       </para>
-      <para>Note: The <emphasis>"To reference"</emphasis> setting corresponds to the <emphasis>eliminate homogeneous cell deformation</emphasis> option 
+      <para>Note: The <emphasis>"To reference"</emphasis> setting corresponds to the <emphasis>eliminate homogeneous cell deformation</emphasis> option
       found in older program versions.
       </para>
   </simplesect>
 
   <simplesect>
-    <title>Minimum image convention</title>      
+    <title>Minimum image convention</title>
       <para>
         This option tells OVITO whether or not to use the <link xlink:href="https://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention">minimum image convention</link>
         when calculating the displacement vectors for systems with periodic boundary conditions.
         You should deactivate this option if you work with <emphasis>unwrapped</emphasis> particle coordinates. In this case
-        OVITO assumes that particle trajectories are all continuous. On the other hand, if you work with 
+        OVITO assumes that particle trajectories are all continuous. On the other hand, if you work with
         <emphasis>wrapped</emphasis> particle coordinates, this option should be turned on. The minimum image convention
         ensures that displacements are calculated correctly even when particles cross a periodic boundary of the cell
         and were mapped back into the cell by the simulation code. On the other hand, if you intend to calculate displacements vectors
-        that span more than half of the simulation box size, then the minimum imagine convention cannot be used. You <emphasis>must</emphasis> 
-        use unwrapped coordinates in this case, because large displacements would otherwise be folded back into the periodic cell thanks to 
+        that span more than half of the simulation box size, then the minimum imagine convention cannot be used. You <emphasis>must</emphasis>
+        use unwrapped coordinates in this case, because large displacements would otherwise be folded back into the periodic cell thanks to
         the minimum image convention.
       </para>
       <para>
@@ -140,7 +140,7 @@
             <imagedata fileref="images/modifiers/displacement_vectors_mapping.svg" format="SVG" scale="120" />
           </imageobject></mediaobject></screenshot>
           Note: For cell directions without periodic boundary conditions, the minimum image convention is never used.
-      </para> 
+      </para>
   </simplesect>
 
   <simplesect>
@@ -148,9 +148,9 @@
     <para>
       <simplelist>
       <member><link linkend="particles.modifiers.atomic_strain">Atomic strain modifier</link></member>
-      <member><link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CalculateDisplacementsModifier"><classname>CalculateDisplacementsModifier</classname> (Python API)</link></member>
+      <member><pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CalculateDisplacementsModifier"><classname>CalculateDisplacementsModifier</classname> (Python API)</pydoc-link></member>
       </simplelist>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

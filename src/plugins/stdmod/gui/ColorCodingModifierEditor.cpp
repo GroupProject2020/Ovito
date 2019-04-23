@@ -73,7 +73,7 @@ void ColorCodingModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	colorGradientList->setIconSize(QSize(48,16));
 	connect(colorGradientList, (void (QComboBox::*)(int))&QComboBox::activated, this, &ColorCodingModifierEditor::onColorGradientSelected);
 	QVector<OvitoClassPtr> sortedColormapClassList = PluginManager::instance().listClasses(ColorCodingGradient::OOClass());
-	std::sort(sortedColormapClassList.begin(), sortedColormapClassList.end(), 
+	std::sort(sortedColormapClassList.begin(), sortedColormapClassList.end(),
 		[](OvitoClassPtr a, OvitoClassPtr b) { return QString::localeAwareCompare(a->displayName(), b->displayName()) < 0; });
 	for(OvitoClassPtr clazz : sortedColormapClassList) {
 		if(clazz == &ColorCodingImageGradient::OOClass() || clazz == &ColorCodingTableGradient::OOClass())
@@ -293,7 +293,7 @@ void ColorCodingModifierEditor::onAdjustRangeGlobal()
 
 	undoableTransaction(tr("Adjust range"), [this, mod]() {
 		ProgressDialog progressDialog(container(), mod->dataset()->container()->taskManager(), tr("Determining property value range"));
-		mod->adjustRangeGlobal(*progressDialog.taskManager().createSynchronousPromise<>(true).sharedState());
+		mod->adjustRangeGlobal(*progressDialog.taskManager().createMainThreadOperation<>(true).task());
 	});
 }
 

@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #  Copyright (2016) Lars Pastewka
 #
@@ -51,7 +51,7 @@ IF(WIN32)
 	OVITO_INSTALL_DLL("${FFTW3_LIBRARY_DIR}/${FFTW3_LIBRARY_NAME}.dll")
 ELSEIF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Deploy FFTW3 shared library.
-	OVITO_INSTALL_SHARED_LIB("${FFTW3_LIBRARIES}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	OVITO_INSTALL_SHARED_LIB("${FFTW3_LIBRARIES}" ".")
 ENDIF()
 
 # Propagate list of plugins to parent scope.

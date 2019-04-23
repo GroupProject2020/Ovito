@@ -47,7 +47,7 @@
       <varlistentry>
         <term>Types</term>
         <listitem>
-          <para>The list of types defined for the selected source property. 
+          <para>The list of types defined for the selected source property.
           Check one or more of them to let the modifier select all matching data elements.</para>
         </listitem>
       </varlistentry>
@@ -57,8 +57,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.SelectTypeModifier"><classname>SelectTypeModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.SelectTypeModifier"><classname>SelectTypeModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -39,14 +39,66 @@ bool PDBImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 	// Read the first N lines.
 	for(int i = 0; i < 20 && !stream.eof(); i++) {
 		stream.readLine(86);
-		if(qstrlen(stream.line()) > 83 && !stream.lineStartsWith("TITLE "))
+		if(qstrlen(stream.line()) > 83 && !stream.lineStartsWithToken("TITLE"))
 			return false;
 		if(qstrlen(stream.line()) >= 7 && stream.line()[6] != ' ')
 			return false;
-		if(stream.lineStartsWith("HEADER ") || stream.lineStartsWith("ATOM   ") || stream.lineStartsWith("HETATM "))
+		if(stream.lineStartsWithToken("HEADER") || stream.lineStartsWithToken("ATOM") || stream.lineStartsWithToken("HETATM"))
 			return true;
 	}
 	return false;
+}
+
+
+/******************************************************************************
+* Scans the given input file to find all contained simulation frames.
+******************************************************************************/
+void PDBImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+{
+	CompressedTextReader stream(file, sourceUrl.path());
+	setProgressText(tr("Scanning PDB file %1").arg(stream.filename()));
+	setProgressMaximum(stream.underlyingSize());
+
+	QFileInfo fileInfo(stream.device().fileName());
+	QString filename = fileInfo.fileName();
+	QDateTime lastModified = fileInfo.lastModified();
+	auto byteOffset = stream.byteOffset();
+	auto lineNumber = stream.lineNumber();
+
+	while(!stream.eof()) {
+
+		if(isCanceled())
+			return;
+
+		stream.readLine();
+		int lineLength = qstrlen(stream.line());
+		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWithToken("TITLE")))
+			throw Exception(tr("Invalid line length detected in Protein Data Bank (PDB) file at line %1").arg(stream.lineNumber()));
+
+		if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
+			return;
+
+		if(stream.lineStartsWithToken("ENDMDL")) {
+			Frame frame;
+			frame.sourceFile = sourceUrl;
+			frame.byteOffset = byteOffset;
+			frame.lineNumber = lineNumber;
+			frame.lastModificationTime = lastModified;
+			frames.push_back(frame);
+			byteOffset = stream.byteOffset();
+			lineNumber = stream.lineNumber();
+		}
+	}
+
+	if(frames.empty()) {
+		// It's not a trajectory file. Report just a single frame.
+		Frame frame;
+		frame.sourceFile = sourceUrl;
+		frame.byteOffset = 0;
+		frame.lineNumber = 0;
+		frame.lastModificationTime = lastModified;
+		frames.push_back(frame);
+	}
 }
 
 /******************************************************************************
@@ -75,11 +127,11 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 
 		stream.readLine();
 		int lineLength = qstrlen(stream.line());
-		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWith("TITLE ")))
+		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWithToken("TITLE")))
 			throw Exception(tr("Invalid line length detected in Protein Data Bank (PDB) file at line %1").arg(stream.lineNumber()));
 
 		// Parse simulation cell.
-		if(stream.lineStartsWith("CRYST1")) {
+		if(stream.lineStartsWithToken("CRYST1")) {
 			FloatType a,b,c,alpha,beta,gamma;
 			if(sscanf(stream.line(), "CRYST1 " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " "
 					FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &a, &b, &c, &alpha, &beta, &gamma) != 6)
@@ -112,16 +164,20 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			frameData->simulationCell().setMatrix(cell);
 			hasSimulationCell = true;
 		}
-		// Count atoms.
-		else if(stream.lineStartsWith("ATOM  ") || stream.lineStartsWith("HETATM")) {
+		else if(stream.lineStartsWithToken("ATOM") || stream.lineStartsWithToken("HETATM")) {
+			// Count atoms.
 			numAtoms++;
+		}
+		else if(stream.lineStartsWithToken("TER") || stream.lineStartsWithToken("END")) {
+			// Stop 
+			break;
 		}
 	}
 
 	setProgressMaximum(numAtoms);
 
 	// Jump back to beginning of file.
-	stream.seek(0);
+	stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the particle properties.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, true);
@@ -139,22 +195,23 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	PropertyPtr moleculeTypeProperty;
 	ParticleFrameData::TypeList* moleculeTypeList = nullptr;
 	while(!stream.eof() && atomIndex < numAtoms) {
-		if(!setProgressValueIntermittent(atomIndex)) return {};
+		if(!setProgressValueIntermittent(atomIndex)) 
+			return {};
 
 		stream.readLine();
 		int lineLength = qstrlen(stream.line());
-		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWith("TITLE ")))
+		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWithToken("TITLE")))
 			throw Exception(tr("Invalid line length detected in Protein Data Bank (PDB) file at line %1").arg(stream.lineNumber()));
 
 		// Parse atom definition.
-		if(stream.lineStartsWith("ATOM  ") || stream.lineStartsWith("HETATM")) {
+		if(stream.lineStartsWithToken("ATOM") || stream.lineStartsWithToken("HETATM")) {
 			char atomType[4];
 			int atomTypeLength = 0;
 			for(const char* c = stream.line() + 76; c <= stream.line() + std::min(77, lineLength); ++c)
-				if(*c != ' ') atomType[atomTypeLength++] = *c;
+				if(*c > ' ') atomType[atomTypeLength++] = *c;
 			if(atomTypeLength == 0) {
 				for(const char* c = stream.line() + 12; c <= stream.line() + std::min(15, lineLength); ++c)
-					if(*c != ' ') atomType[atomTypeLength++] = *c;
+					if(*c > ' ') atomType[atomTypeLength++] = *c;
 			}
 			*a = typeList->addTypeName(atomType, atomType + atomTypeLength);
 #ifdef FLOATTYPE_FLOAT
@@ -213,13 +270,17 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	// Parse bonds.
 	PropertyPtr bondTopologyProperty;
 	while(!stream.eof()) {
+
+		if(isCanceled())
+			return {};
+
 		stream.readLine();
 		int lineLength = qstrlen(stream.line());
-		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWith("TITLE ")))
+		if(lineLength < 3 || (lineLength > 83 && !stream.lineStartsWithToken("TITLE")))
 			throw Exception(tr("Invalid line length detected in Protein Data Bank (PDB) file at line %1").arg(stream.lineNumber()));
 
 		// Parse bonds.
-		if(stream.lineStartsWith("CONECT")) {
+		if(stream.lineStartsWithToken("CONECT")) {
 			// Parse first atom index.
 			qlonglong atomSerialNumber1;
 			if(lineLength <= 11 || sscanf(stream.line() + 6, "%5llu", &atomSerialNumber1) != 1 || particleIdentifierProperty == nullptr)
@@ -243,7 +304,17 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 				}
 			}
 		}
-		else if(stream.lineStartsWith("END")) {
+		else if(stream.lineStartsWithToken("END") || stream.lineStartsWithToken("TER") || stream.lineStartsWithToken("ENDMDL")) {
+			break;
+		}
+	}
+
+	// Detect if there are more simulation frames following in the file.
+	for(int i = 0; i < 10; i++) {
+		if(stream.eof()) break;
+		stream.readLine();
+		if(stream.lineStartsWithToken("MODEL") || stream.lineStartsWithToken("REMARK") || stream.lineStartsWithToken("TITLE")) {
+			frameData->signalAdditionalFrames();
 			break;
 		}
 	}
@@ -264,7 +335,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	if(bondTopologyProperty)
 		frameData->generateBondPeriodicImageProperty();
 
-	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
+	frameData->setStatus(tr("Number of atoms: %1").arg(numAtoms));
 	return frameData;
 }
 

@@ -29,7 +29,7 @@
 #include <core/app/ApplicationService.h>
 #include "GuiApplication.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) 
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 
 /******************************************************************************
 * Defines the program's command line parameters.
@@ -86,12 +86,12 @@ void GuiApplication::createQtApplication(int& argc, char** argv)
 		StandaloneApplication::createQtApplication(argc, argv);
 	}
 	else {
-		// Enable high-resolution toolbar icons on hi-dpi screens.  
+		// Enable high-resolution toolbar icons on hi-dpi screens.
 		QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
 #if defined(Q_OS_LINUX)
 		// Enforce Fusion UI style on Linux.
-		qunsetenv("QT_STYLE_OVERRIDE"); 
+		qunsetenv("QT_STYLE_OVERRIDE");
 		QApplication::setStyle("Fusion");
 #endif
 
@@ -232,7 +232,7 @@ void GuiApplication::reportError(const Exception& ex, bool blocking)
 
 	if(guiMode()) {
 		if(!blocking) {
-			
+
 			// Deferred display of the error.
 			if(_errorList.empty())
 				QMetaObject::invokeMethod(this, "showErrorMessages", Qt::QueuedConnection);
@@ -256,7 +256,7 @@ void GuiApplication::showErrorMessages()
 
 		// Show next exception from queue.
 		const Exception& exception = _errorList.front();
-		
+
 		// Prepare a message box dialog.
 		QPointer<QMessageBox> msgbox = new QMessageBox();
 		msgbox->setWindowTitle(tr("Error - %1").arg(QCoreApplication::applicationName()));

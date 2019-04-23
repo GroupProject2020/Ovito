@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "ElasticMapping.h"
 #include "CrystalPathFinder.h"
 #include "DislocationTracer.h"
@@ -34,7 +34,7 @@ static const int edgeVertices[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 /******************************************************************************
 * Builds the list of edges in the tetrahedral tessellation.
 ******************************************************************************/
-bool ElasticMapping::generateTessellationEdges(PromiseState& promise)
+bool ElasticMapping::generateTessellationEdges(Task& promise)
 {
 	promise.setProgressValue(0);
 	promise.setProgressMaximum(tessellation().numberOfPrimaryTetrahedra());
@@ -79,7 +79,7 @@ bool ElasticMapping::generateTessellationEdges(PromiseState& promise)
 /******************************************************************************
 * Assigns each tessellation vertex to a cluster.
 ******************************************************************************/
-bool ElasticMapping::assignVerticesToClusters(PromiseState& promise)
+bool ElasticMapping::assignVerticesToClusters(Task& promise)
 {
 	// Unknown runtime length.
 	promise.setProgressValue(0);
@@ -131,7 +131,7 @@ bool ElasticMapping::assignVerticesToClusters(PromiseState& promise)
 /******************************************************************************
 * Determines the ideal vector corresponding to each edge of the tessellation.
 ******************************************************************************/
-bool ElasticMapping::assignIdealVectorsToEdges(int crystalPathSteps, PromiseState& promise)
+bool ElasticMapping::assignIdealVectorsToEdges(int crystalPathSteps, Task& promise)
 {
 	CrystalPathFinder pathFinder(_structureAnalysis, crystalPathSteps);
 

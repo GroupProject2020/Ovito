@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -23,6 +23,7 @@
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/DataSetContainer.h>
+#include <core/app/Application.h>
 
 #ifdef Q_OS_UNIX
 	#include <csignal>
@@ -35,7 +36,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 ******************************************************************************/
 TaskManager::TaskManager(DataSetContainer& owner) : _owner(owner)
 {
-	qRegisterMetaType<PromiseStatePtr>("PromiseStatePtr");
+	qRegisterMetaType<TaskPtr>("TaskPtr");
 }
 
 /******************************************************************************
@@ -43,70 +44,72 @@ TaskManager::TaskManager(DataSetContainer& owner) : _owner(owner)
 ******************************************************************************/
 TaskManager::~TaskManager()
 {
-	for(PromiseWatcher* watcher : runningTasks()) {
-		OVITO_ASSERT_MSG(watcher->isFinished() || watcher->isCanceled(), "TaskManager destructor", "Some tasks are still in progress when destroying the TaskManager instance.");
-	}
+    for(TaskWatcher* watcher : runningTasks()) {
+        OVITO_ASSERT_MSG(watcher->isFinished() || watcher->isCanceled(), "TaskManager destructor",
+                        "Some tasks are still in progress while destroying the TaskManager.");
+    }
 }
 
 /******************************************************************************
-* Registers a future's promise with the progress manager, which will display 
+* Registers a future's promise with the progress manager, which will display
 * the progress of the background task in the main window.
 ******************************************************************************/
-void TaskManager::registerTask(const FutureBase& future) 
+void TaskManager::registerFuture(const FutureBase& future)
 {
-	registerTask(future.sharedState());
+	registerTask(future.task());
 }
 
 /******************************************************************************
-* Registers a promise with the progress manager, which will display 
+* Registers a promise with the progress manager, which will display
 * the progress of the background task in the main window.
 ******************************************************************************/
-void TaskManager::registerTask(const PromiseBase& promise) 
+void TaskManager::registerPromise(const PromiseBase& promise)
 {
-	registerTask(promise.sharedState());
+	registerTask(promise.task());
 }
 
 /******************************************************************************
 * Registers a promise with the task manager.
 ******************************************************************************/
-void TaskManager::registerTask(const PromiseStatePtr& sharedState) 
+void TaskManager::registerTask(const TaskPtr& task)
 {
 	// Execute the function call in the main thread.
-	QMetaObject::invokeMethod(this, "addTaskInternal", Q_ARG(PromiseStatePtr, sharedState));
+	QMetaObject::invokeMethod(this, "addTaskInternal", Q_ARG(TaskPtr, task));
 }
 
 /******************************************************************************
 * Registers a promise with the task manager.
 ******************************************************************************/
-PromiseWatcher* TaskManager::addTaskInternal(const PromiseStatePtr& sharedState)
+TaskWatcher* TaskManager::addTaskInternal(const TaskPtr& task)
 {
 	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
-	
-	// Check if task is already registered.
+
+	// Check if the task has already been registered before.
+    // In this case, a TaskWatcher must exist for the task that has been added as a child object to the TaskManager.
 	for(QObject* childObject : children()) {
-		if(PromiseWatcher* watcher = qobject_cast<PromiseWatcher*>(childObject)) {
-			if(watcher->sharedState() == sharedState)
+		if(TaskWatcher* watcher = qobject_cast<TaskWatcher*>(childObject)) {
+			if(watcher->task() == task)
 				return watcher;
 		}
 	}
 
 	// Create a task watcher, which will generate start/stop notification signals.
-	PromiseWatcher* watcher = new PromiseWatcher(this);
-	connect(watcher, &PromiseWatcher::started, this, &TaskManager::taskStartedInternal);
-	connect(watcher, &PromiseWatcher::finished, this, &TaskManager::taskFinishedInternal);
-	
+	TaskWatcher* watcher = new TaskWatcher(this);
+	connect(watcher, &TaskWatcher::started, this, &TaskManager::taskStartedInternal);
+	connect(watcher, &TaskWatcher::finished, this, &TaskManager::taskFinishedInternal);
+
 	// Activate the watcher.
-	watcher->watch(sharedState);
+	watcher->watch(task);
 	return watcher;
 }
 
 /******************************************************************************
-* Waits for the given task to finish and displays a modal progress dialog
-* to show the task's progress.
+* Waits for the given future to be fulfilled and displays a modal progress
+* dialog to show the progress.
 ******************************************************************************/
-bool TaskManager::waitForTask(const FutureBase& future) 
+bool TaskManager::waitForFuture(const FutureBase& future)
 {
-	return waitForTask(future.sharedState());
+	return waitForTask(future.task());
 }
 
 /******************************************************************************
@@ -114,7 +117,7 @@ bool TaskManager::waitForTask(const FutureBase& future)
 ******************************************************************************/
 void TaskManager::taskStartedInternal()
 {
-	PromiseWatcher* watcher = static_cast<PromiseWatcher*>(sender());
+	TaskWatcher* watcher = static_cast<TaskWatcher*>(sender());
 	_runningTaskStack.push_back(watcher);
 
 	Q_EMIT taskStarted(watcher);
@@ -125,14 +128,14 @@ void TaskManager::taskStartedInternal()
 ******************************************************************************/
 void TaskManager::taskFinishedInternal()
 {
-	PromiseWatcher* watcher = static_cast<PromiseWatcher*>(sender());
-	
+	TaskWatcher* watcher = static_cast<TaskWatcher*>(sender());
+
 	OVITO_ASSERT(std::find(_runningTaskStack.begin(), _runningTaskStack.end(), watcher) != _runningTaskStack.end());
 	_runningTaskStack.erase(std::find(_runningTaskStack.begin(), _runningTaskStack.end(), watcher));
 
 	Q_EMIT taskFinished(watcher);
 
-	watcher->deleteLater();	
+	watcher->deleteLater();
 }
 
 /******************************************************************************
@@ -140,9 +143,9 @@ void TaskManager::taskFinishedInternal()
 ******************************************************************************/
 void TaskManager::cancelAll()
 {
-	for(PromiseWatcher* watcher : runningTasks()) {
-		if(watcher->sharedState()) {
-			watcher->sharedState()->cancel();
+	for(TaskWatcher* watcher : runningTasks()) {
+		if(watcher->task()) {
+			watcher->task()->cancel();
 		}
 	}
 }
@@ -172,10 +175,10 @@ void TaskManager::waitForAll()
 /******************************************************************************
 * This should be called whenever a local event handling loop is entered.
 ******************************************************************************/
-void TaskManager::startLocalEventHandling() 
+void TaskManager::startLocalEventHandling()
 {
 	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::startLocalEventHandling", "Function may only be called from the main thread.");
-	
+
 	_inLocalEventLoop++;
 }
 
@@ -194,13 +197,16 @@ void TaskManager::stopLocalEventHandling()
 /******************************************************************************
 * Waits for the given task to finish.
 ******************************************************************************/
-bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
+bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 {
 	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may be called only from the main thread.");
 
-	// Before entering the local event loop, check if task has already finished.
-	if(sharedState->isFinished()) {
-		return !sharedState->isCanceled();
+	// Before entering the local event loop, check if the task has already finished.
+	if(task->isFinished()) {
+		return !task->isCanceled();
+	}
+	if(dependentTask && dependentTask->isCanceled()) {
+		return false;
 	}
 
 	// Make sure this method is not called while rendering a viewport.
@@ -208,19 +214,27 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 	if(DataSet* dataset = _owner.currentSet()) {
 		if(dataset->viewportConfig()->isRendering()) {
 			qWarning() << "WARNING: Do not call TaskManager::waitForTask() during interactive viewport rendering!";
-			//OVITO_ASSERT(false);
-			sharedState->setException(std::make_exception_ptr(Exception(tr("This operation is not permitted during interactive viewport rendering. "
+			task->setException(std::make_exception_ptr(Exception(tr("This operation is not permitted during interactive viewport rendering. "
 				"Note that certain long-running operations, e.g. I/O operations or complex computations, cannot be performed while viewport rendering is in progress. "), dataset)));
-			return !sharedState->isCanceled();;
+			return !task->isCanceled();;
 		}
 	}
 
 	// Register the task in case it hasn't been registered with this TaskManager yet.
-	PromiseWatcher* watcher = addTaskInternal(sharedState); 
+	TaskWatcher* watcher = addTaskInternal(task);
 
 	// Start a local event loop and wait for the task to generate a signal when it finishes.
 	QEventLoop eventLoop;
-	connect(watcher, &PromiseWatcher::finished, &eventLoop, &QEventLoop::quit);
+	connect(watcher, &TaskWatcher::finished, &eventLoop, &QEventLoop::quit);
+
+	// Stop the event loop when the dependent task gets canceled.
+	if(dependentTask) {
+		TaskWatcher* dependentWatcher = addTaskInternal(dependentTask);
+		connect(dependentWatcher, &TaskWatcher::canceled, watcher, [dependentTask, watcher]() {
+			watcher->task()->cancelIfSingleFutureLeft();
+		});
+		connect(dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
+	}
 
 #ifdef Q_OS_UNIX
 	// Boolean flag which is set by the POSIX signal handler when user
@@ -229,7 +243,7 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 	userInterrupt.storeRelease(0);
 
 	// Install POSIX signal handler to catch Ctrl+C key signal.
-	static QEventLoop* activeEventLoop = nullptr; 
+	static QEventLoop* activeEventLoop = nullptr;
 	activeEventLoop = &eventLoop;
 	auto oldSignalHandler = ::signal(SIGINT, [](int) {
 		userInterrupt.storeRelease(1);
@@ -238,10 +252,20 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 		}
 	});
 #endif
-	
+
+	// If this method was called as part of a script, temporarily switch to interactive mode now since
+	// the user may perform actions in the user interface while the local event loop is active.
+	bool wasCalledFromScript = (Application::instance()->executionContext() == Application::ExecutionContext::Scripting);
+	if(wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+
 	startLocalEventHandling();
 	eventLoop.exec();
 	stopLocalEventHandling();
+
+	// Restore previous execution context state.
+	if(wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 
 #ifdef Q_OS_UNIX
 	::signal(SIGINT, oldSignalHandler);
@@ -252,18 +276,22 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 	}
 #endif
 
-	if(!sharedState->isFinished()) {
-		qWarning() << "Warning: TaskManager::waitForTask() returning with an unfinished promise state (canceled=" << sharedState->isCanceled() << ")";
-		sharedState->cancel();
+	if(dependentTask && dependentTask->isCanceled()) {
+		return false;
 	}
 
-	return !sharedState->isCanceled();
+	if(!task->isFinished()) {
+		qWarning() << "Warning: TaskManager::waitForTask() returning with an unfinished promise state (canceled=" << task->isCanceled() << ")";
+		task->cancel();
+	}
+
+	return !task->isCanceled();
 }
 
 /******************************************************************************
 * Process events from the event queue when the tasks manager has started
 * a local event loop. Otherwise do nothing and let the main event loop
-* do the processing. 
+* do the processing.
 ******************************************************************************/
 void TaskManager::processEvents()
 {

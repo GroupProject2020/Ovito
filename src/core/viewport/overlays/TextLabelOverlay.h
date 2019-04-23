@@ -39,7 +39,7 @@ class OVITO_CORE_EXPORT TextLabelOverlay : public ViewportOverlay
 	Q_OBJECT
 	OVITO_CLASS(TextLabelOverlay)
 	Q_CLASSINFO("DisplayName", "Text label");
-	
+
 public:
 
 	/// Constructor.
@@ -61,8 +61,8 @@ public:
 	}
 
 	/// This method asks the overlay to paint its contents over the given interactive viewport.
-	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) override {
-		const PipelineFlowState& flowState = sourceNode() ? sourceNode()->evaluatePipelinePreliminary(true) : PipelineFlowState();		
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
+		const PipelineFlowState& flowState = sourceNode() ? sourceNode()->evaluatePipelinePreliminary(true) : PipelineFlowState();
 		renderImplementation(painter, renderSettings, flowState);
 	}
 

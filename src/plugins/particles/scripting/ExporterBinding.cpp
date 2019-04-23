@@ -50,6 +50,7 @@ void defineExportersSubmodule(py::module m)
 	;
 
 	ovito_class<POSCARExporter, ParticleExporter>{m}
+		.def_property("reduced", &POSCARExporter::writeReducedCoordinates, &POSCARExporter::setWriteReducedCoordinates)
 	;
 
 	ovito_class<LAMMPSDataExporter, ParticleExporter>{m}

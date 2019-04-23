@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -25,7 +25,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-AsyncOperation::AsyncOperation(TaskManager& taskManager) : Promise(taskManager.createSynchronousPromise<>(true))
+AsyncOperation::AsyncOperation(TaskManager& taskManager) : Promise(taskManager.createMainThreadOperation<>(true))
 {
 }
 

@@ -45,7 +45,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationAnalysisModifier, numberOfBins, I
 * Constructs the modifier object.
 ******************************************************************************/
 CoordinationAnalysisModifier::CoordinationAnalysisModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_cutoff(3.2), 
+	_cutoff(3.2),
 	_numberOfBins(200),
 	_computePartialRDF(false)
 {
@@ -101,7 +101,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::cre
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CoordinationAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), 
+	return std::make_shared<CoordinationAnalysisEngine>(particles, posProperty->storage(), inputCell->data(),
 		cutoff(), rdfSampleCount, typeProperty ? typeProperty->storage() : nullptr, std::move(uniqueTypeIds));
 }
 
@@ -123,7 +123,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 
 	// Parallel calculation loop:
 	std::mutex mutex;
-	parallelForChunks(particleCount, *task(), [&neighborListBuilder, &mutex, this](size_t startIndex, size_t chunkSize, PromiseState& promise) {
+	parallelForChunks(particleCount, *task(), [&neighborListBuilder, &mutex, this](size_t startIndex, size_t chunkSize, Task& promise) {
 		size_t typeCount = _computePartialRdfs ? uniqueTypeIds().size() : 1;
 		size_t binCount = rdfY()->size();
 		size_t rdfCount = rdfY()->componentCount();
@@ -172,7 +172,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 	if(task()->isCanceled())
 		return;
 
-	// Compute x values of histogram function. 
+	// Compute x values of histogram function.
 	FloatType stepSize = cutoff() / rdfY()->size();
 
 	// Helper function that normalizes a RDF histogram.

@@ -34,8 +34,8 @@
 
 #include <ospray/ospray_cpp.h>
 #include <ospray/version.h>
-#if QT_VERSION_CHECK(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH) < QT_VERSION_CHECK(1,6,0)
-	#error "OVITO requires OSPRay version 1.6.0 or newer."
+#if QT_VERSION_CHECK(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH) < QT_VERSION_CHECK(1,8,0)
+	#error "OVITO requires OSPRay version 1.8.0 or newer."
 #endif
 #include <render/LoadBalancer.h>
 #include <ospcommon/tasking/parallel_for.h>
@@ -87,15 +87,15 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, materialSpecularBrightness, P
 ******************************************************************************/
 OSPRayRenderer::OSPRayRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(dataset),
 	_refinementIterations(8),
-	_directLightSourceEnabled(true), 
+	_directLightSourceEnabled(true),
 	_samplesPerPixel(4),
 	_maxRayRecursion(20),
-	_defaultLightSourceIntensity(FloatType(3.0)), 
+	_defaultLightSourceIntensity(FloatType(3.0)),
 	_defaultLightSourceAngularDiameter(0),
 	_ambientLightEnabled(true),
-	_ambientBrightness(FloatType(0.8)), 
+	_ambientBrightness(FloatType(0.8)),
 	_depthOfFieldEnabled(false),
-	_dofFocalLength(40), 
+	_dofFocalLength(40),
 	_dofAperture(FloatType(0.5f)),
 	_materialShininess(10.0),
 	_materialSpecularBrightness(0.05)
@@ -125,27 +125,10 @@ bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 
 		// Load our extension module for OSPRay, which provides raytracing functions
 		// for various geometry primitives (discs, cones, quadrics) needed by OVITO.
-
-		// The ospLoadModule() function uses standard OS functions to load the dynamic library
-		// (e.g. dlopen() on MacOS/Linux). Let them know where to find the extension module by 
-		// setting the current working directory.
-
-		QDir oldWDir = QDir::current();
-#if defined(Q_OS_WIN)
-		QDir::setCurrent(QCoreApplication::applicationDirPath());
-#elif defined(Q_OS_MAC)
-		QDir::setCurrent(QCoreApplication::applicationDirPath());
-#else // Linux
-		QDir::setCurrent(QCoreApplication::applicationDirPath() + QStringLiteral("/../lib/ovito"));
-#endif
-
 		if(ospLoadModule("ovito") != OSP_NO_ERROR)
-			throwException(tr("Failed to load OSPRay module 'ovito': %1").arg(ospDeviceGetLastErrorMsg(device)));
+			throwException(tr("Failed to load OSPRay extension module for Ovito: %1").arg(ospDeviceGetLastErrorMsg(device)));
 
-		// Restore previous state.
-		QDir::setCurrent(oldWDir.absolutePath());
-
-		// Use only the number of parallel rendering threads allowed by the user. 
+		// Use only the number of parallel rendering threads allowed by the user.
 		ospDeviceSet1i(device, "numThreads", Application::instance()->idealThreadCount());
 		ospDeviceCommit(device);
 
@@ -169,7 +152,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		// Output image size:
 		ospcommon::vec2i imgSize;
-		imgSize.x = renderSettings()->outputImageWidth(); 
+		imgSize.x = renderSettings()->outputImageWidth();
 		imgSize.y = renderSettings()->outputImageHeight();
 
 		// Make sure the target frame buffer has the right memory format.
@@ -210,11 +193,11 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		if(projParams().isPerspective)
 			camera.set("fovy", qRadiansToDegrees(projParams().fieldOfView));
 		else
-			camera.set("height", projParams().fieldOfView * 2);	
+			camera.set("height", projParams().fieldOfView * 2);
 		if(projParams().isPerspective && depthOfFieldEnabled() && dofFocalLength() > 0 && dofAperture() > 0) {
 			camera.set("apertureRadius", dofAperture());
 			camera.set("focusDistance", dofFocalLength());
-		}	
+		}
 		camera.commit();
 
 		// Create OSPRay renderer
@@ -227,14 +210,14 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		material.set("Ks", materialSpecularBrightness(), materialSpecularBrightness(), materialSpecularBrightness());
 		material.commit();
 		_ospMaterial = &material;
-		
+
 		// Transfer renderable geometry from OVITO to OSPRay renderer.
 		OSPReferenceWrapper<ospray::cpp::Model> world;
 		_ospWorld = &world;
 		if(!renderScene(operation))
 			return false;
-		world.commit();	
-			
+		world.commit();
+
 		// Create direct light.
 		std::vector<OSPReferenceWrapper<ospray::cpp::Light>> lightSources;
 		if(directLightSourceEnabled()) {
@@ -262,7 +245,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		}
 		OSPReferenceWrapper<ospray::cpp::Data> lights(lightHandles.size(), OSP_LIGHT, lightHandles.data());
 		lights.commit();
-		
+
 		renderer.set("model",  world);
 		renderer.set("camera", camera);
 		renderer.set("lights", lights);
@@ -275,15 +258,15 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		osp_fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
 
 		// Define a custom load balancer for OSPRay that performs progressive updates of the frame buffer.
-		class OVITOTiledLoadBalancer : public ospray::TiledLoadBalancer 
+		class OVITOTiledLoadBalancer : public ospray::TiledLoadBalancer
 		{
-		public:			
-			void setProgressCallback(std::function<bool(int,int,int,int)> progressCallback) { 
-				_progressCallback = std::move(progressCallback); 
+		public:
+			void setProgressCallback(std::function<bool(int,int,int,int)> progressCallback) {
+				_progressCallback = std::move(progressCallback);
 			}
 
 			float renderFrame(ospray::Renderer *renderer, ospray::FrameBuffer *fb, const ospray::uint32 channelFlags) override {
-				void *perFrameData = renderer->beginFrame(fb);				
+				void *perFrameData = renderer->beginFrame(fb);
 				int tileCount = fb->getTotalTiles();
 				for(int taskIndex = 0; taskIndex < tileCount; taskIndex++) {
 					const size_t numTiles_x = fb->getNumTiles().x;
@@ -294,9 +277,11 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 					if(fb->tileError(tileID) <= renderer->errorThreshold)
 						continue;
+#ifndef MAX_TILE_SIZE
 #define MAX_TILE_SIZE 128
+#endif
 #if TILE_SIZE > MAX_TILE_SIZE
-					auto tilePtr = make_unique<Tile>(tileID, fb->size, accumID);
+					auto tilePtr = std::make_unique<ospray::Tile>(tileID, fb->size, accumID);
 					auto &tile   = *tilePtr;
 #else
 					ospray::Tile __aligned(64) tile(tileID, fb->size, accumID);
@@ -319,7 +304,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 				return "OVITOTiledLoadBalancer";
 			}
 		private:
-			std::function<bool(int,int,int,int)> _progressCallback;			
+			std::function<bool(int,int,int,int)> _progressCallback;
 		};
 		auto loadBalancer = std::make_unique<OVITOTiledLoadBalancer>();
 		loadBalancer->setProgressCallback([&osp_fb,frameBuffer,&frameBufferContents,imgSize,&operation,this](int x1, int y1, int x2, int y2) {
@@ -349,7 +334,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			return operation.incrementProgressValue((x2-x1) * (y2-y1));
 		});
 		ospray::TiledLoadBalancer::instance = std::move(loadBalancer);
-			
+
 		operation.beginProgressSubSteps(refinementIterations());
 		for(int iteration = 0; iteration < refinementIterations() && !operation.isCanceled(); iteration++) {
 			if(iteration != 0) operation.nextProgressSubStep();
@@ -378,7 +363,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 	catch(const std::runtime_error& ex) {
 		throwException(tr("OSPRay error: %1").arg(ex.what()));
 	}
-	
+
 	return !operation.isCanceled();
 }
 
@@ -436,7 +421,7 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			++colorIter;
 		}
 		size_t nspheres = sphereData.size();
-		
+
 		OSPReferenceWrapper<ospray::cpp::Geometry> spheres("spheres");
 		spheres.set("bytes_per_sphere", (int)sizeof(ospcommon::vec4f));
 		spheres.set("offset_radius", (int)sizeof(float) * 3);
@@ -448,7 +433,7 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		data = ospray::cpp::Data(nspheres, OSP_FLOAT4, colorData.data());
 		data.commit();
 		spheres.set("color", data);
-		
+
 		spheres.setMaterial(*_ospMaterial);
 		spheres.commit();
 		_ospWorld->addGeometry(spheres);
@@ -465,7 +450,7 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		colors.reserve(particleBuffer.positions().size() * 6 * 4);
 		normals.reserve(particleBuffer.positions().size() * 6 * 4);
 		indices.reserve(particleBuffer.positions().size() * 6 * 2 * 3);
-			
+
 		auto shape = particleBuffer.shapes().begin();
 		auto shape_end = particleBuffer.shapes().end();
 		auto orientation = particleBuffer.orientations().cbegin();
@@ -494,7 +479,7 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 					s = Vector_3<float>(*r);
 			}
 			const Point_3<float> corners[8] = {
-					tp + quat * Vector_3<float>(-s.x(), -s.y(), -s.z()), 
+					tp + quat * Vector_3<float>(-s.x(), -s.y(), -s.z()),
 					tp + quat * Vector_3<float>( s.x(), -s.y(), -s.z()),
 					tp + quat * Vector_3<float>( s.x(),  s.y(), -s.z()),
 					tp + quat * Vector_3<float>(-s.x(),  s.y(), -s.z()),
@@ -551,14 +536,14 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		OVITO_ASSERT(normals.size() == vertices.size());
 
 		// Note: This for-loop is a workaround for a bug in OSPRay 1.4.2, which crashes when rendering
-		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry 
+		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry
 		// into chunks to stay below the 2^31 bytes limit.
 		size_t nparticles = (colors.size() / (6 * 4));
 		size_t maxChunkSize = ((1ull << 31) / (sizeof(ColorAT<float>) * 6 * 4)) - 1;
 		for(size_t chunkOffset = 0; chunkOffset < nparticles; chunkOffset += maxChunkSize) {
 
-			OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");	
-			
+			OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");
+
 			size_t chunkSize = std::min(maxChunkSize, nparticles - chunkOffset);
 			OSPReferenceWrapper<ospray::cpp::Data> data(chunkSize * 6 * 4, OSP_FLOAT3, vertices.data() + (chunkOffset * 6 * 4));
 			data.commit();
@@ -571,14 +556,14 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			data = ospray::cpp::Data(chunkSize * 6 * 4, OSP_FLOAT3, normals.data() + (chunkOffset * 6 * 4));
 			data.commit();
 			triangles.set("vertex.normal", data);
-			
+
 			data = ospray::cpp::Data(chunkSize * 6 * 2, OSP_INT3, indices.data() + (chunkOffset * 6 * 3 * 2));
 			data.commit();
 			triangles.set("index", data);
-			
+
 			triangles.setMaterial(*_ospMaterial);
 			triangles.commit();
-			_ospWorld->addGeometry(triangles);		
+			_ospWorld->addGeometry(triangles);
 		}
 	}
 	else if(particleBuffer.particleShape() == ParticlePrimitive::EllipsoidShape) {
@@ -644,17 +629,17 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			(*colorIter)[2] = c->b();
 			(*colorIter)[3] = c->a();
 			++quadricIter;
-			++colorIter;		
+			++colorIter;
 		}
 		size_t nquadrics = quadricIter - quadricsData.begin();
 		if(nquadrics == 0) return;
-		
+
 		// Note: This for-loop is a workaround for a bug in OSPRay 1.4.2, which crashes when rendering
-		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry 
+		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry
 		// into chunks to stay below the 2^31 bytes limit.
 		size_t maxChunkSize = ((1ull << 31) / sizeof(std::array<float,14>)) - 1;
 		for(size_t chunkOffset = 0; chunkOffset < nquadrics; chunkOffset += maxChunkSize) {
-		
+
 			OSPReferenceWrapper<ospray::cpp::Geometry> quadrics("quadrics");
 
 			size_t chunkSize = std::min(maxChunkSize, nquadrics - chunkOffset);
@@ -665,12 +650,12 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			data = ospray::cpp::Data(chunkSize, OSP_FLOAT4, colorData.data() + chunkOffset);
 			data.commit();
 			quadrics.set("color", data);
-			
+
 			quadrics.setMaterial(*_ospMaterial);
 			quadrics.commit();
-			_ospWorld->addGeometry(quadrics);		
+			_ospWorld->addGeometry(quadrics);
 		}
-	}	
+	}
 }
 
 /******************************************************************************
@@ -725,7 +710,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 			(*discColorIter)[2] = element.color.b();
 			(*discColorIter)[3] = element.color.a();
 			++discIter;
-			++discColorIter;			
+			++discColorIter;
 		}
 		else {
 			FloatType arrowHeadRadius = element.width * FloatType(2.5);
@@ -812,7 +797,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 				++coneIter;
 				++coneColorIter;
 				continue;
-			}							
+			}
 		}
 		(*cylIter)[0] = tp.x();
 		(*cylIter)[1] = tp.y();
@@ -841,7 +826,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		data = ospray::cpp::Data(ncylinders, OSP_FLOAT4, colorData.data());
 		data.commit();
 		cylinders.set("color", data);
-		
+
 		cylinders.setMaterial(*_ospMaterial);
 		cylinders.commit();
 		_ospWorld->addGeometry(cylinders);
@@ -862,7 +847,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		data = ospray::cpp::Data(ndiscs, OSP_FLOAT4, discColorData.data());
 		data.commit();
 		discs.set("color", data);
-		
+
 		discs.setMaterial(*_ospMaterial);
 		discs.commit();
 		_ospWorld->addGeometry(discs);
@@ -883,11 +868,11 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		data = ospray::cpp::Data(ncones, OSP_FLOAT4, coneColorData.data());
 		data.commit();
 		cones.set("color", data);
-		
+
 		cones.setMaterial(*_ospMaterial);
 		cones.commit();
 		_ospWorld->addGeometry(cones);
-	}	
+	}
 }
 
 /******************************************************************************
@@ -1002,8 +987,8 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		}
 	}
 
-	OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");	
-		
+	OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");
+
 	OSPReferenceWrapper<ospray::cpp::Data> data(positions.size(), OSP_FLOAT3, positions.data());
 	data.commit();
 	triangles.set("vertex", data);
@@ -1015,11 +1000,11 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 	data = ospray::cpp::Data(normals.size(), OSP_FLOAT3, normals.data());
 	data.commit();
 	triangles.set("vertex.normal", data);
-	
+
 	data = ospray::cpp::Data(mesh.faceCount(), OSP_INT3, indices.data());
 	data.commit();
 	triangles.set("index", data);
-	
+
 	triangles.setMaterial(*_ospMaterial);
 	triangles.commit();
 	_ospWorld->addGeometry(triangles);

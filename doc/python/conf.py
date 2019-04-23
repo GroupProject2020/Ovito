@@ -52,7 +52,7 @@ copyright = '2019, Alexander Stukowski'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version. 
+# The short X.Y version.
 #version = This information will be provided on the command line using the -D option
 # The full version, including alpha/beta/rc tags.
 #release = This information will be provided on the command line using the -D option
@@ -177,7 +177,7 @@ html_show_sphinx = False
 #html_use_opensearch = ''
 
 # This is the file name suffix for HTML files (e.g. ".xhtml").
-#html_file_suffix = None
+html_file_suffix = ".html"
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'OVITOdoc'
@@ -238,6 +238,25 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
                 return (line[len("SIGNATURE:"):].strip(), return_annotation)
     return (signature, return_annotation)
 
+import docutils
+from sphinx.util.nodes import split_explicit_title
+
+def ovitoman_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
+    """Role for linking to the OVITO user manual."""
+    env = inliner.document.settings.env
+    text = docutils.utils.unescape(text)
+    has_explicit, title, target = split_explicit_title(text)
+    if '#' in target:
+        target, anchor = target.split('#')
+        anchor = '#' + anchor
+    else:
+        anchor = ''
+    url = env.config.ovito_user_manual_url + '/' + target + env.config.html_file_suffix + anchor
+    ref = docutils.nodes.reference(rawtext, title, refuri=url)
+    return [ref], []
+
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-process-signature', process_signature)
+    app.add_role('ovitoman', ovitoman_role)
+    app.add_config_value('ovito_user_manual_url', '.', 'html')

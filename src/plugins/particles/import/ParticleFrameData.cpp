@@ -130,7 +130,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		cell = output->createObject<SimulationCellObject>(fileSource, simulationCell());
 
 		// Initialize the simulation cell and its vis element with default values.
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			cell->loadUserDefaults();
 
 		// Set up the vis element for the simulation cell.
@@ -159,7 +159,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		ParticlesObject* particles = output->createObject<ParticlesObject>(fileSource);
 		if(!existingParticles) {
 			// Initialize the particles object and its vis element to default values.
-			if(!Application::instance()->scriptMode())
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				particles->loadUserDefaults();
 		}
 		else {
@@ -218,7 +218,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 			bonds->setDataSource(fileSource);
 			if(!existingBonds) {
 				// Initialize the bonds object and its vis element to default values.
-				if(!Application::instance()->scriptMode())
+				if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 					bonds->loadUserDefaults();
 			}
 			else {

@@ -58,11 +58,14 @@ protected:
 
 	/// \brief Writes the particles of one animation frame to the current output file.
 	virtual bool exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
+
+private:
+
+	/// Controls whether atomic coordinates are written in reduced form to the POSCAR file. 
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, writeReducedCoordinates, setWriteReducedCoordinates, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

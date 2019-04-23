@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT CoordinateTripodOverlay : public ViewportOverlay
 	Q_OBJECT
 	OVITO_CLASS(CoordinateTripodOverlay)
 	Q_CLASSINFO("DisplayName", "Coordinate tripod");
-	
+
 public:
 
 	/// \brief Constructor.
@@ -49,7 +49,7 @@ public:
 	}
 
 	/// This method asks the overlay to paint its contents over the given interactive viewport.
-	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) override {
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
 		renderImplementation(painter, projParams, renderSettings);
 	}
 

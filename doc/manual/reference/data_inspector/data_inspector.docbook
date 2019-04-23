@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="data_inspector" 
+         xml:id="data_inspector"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -14,31 +14,31 @@
     <informalfigure>
       <mediaobject><imageobject>
         <imagedata fileref="images/usage/miscellaneous/data_inspector.png" format="PNG" scale="85" />
-      </imageobject></mediaobject>  
+      </imageobject></mediaobject>
     </informalfigure>
 
     The data inspector gives you an overview of the numerical data loaded from the input file and/or computed within
-    OVITO. The data inspector panel is located below the viewport area in OVITO's main window. Normally, it is 
+    OVITO. The data inspector panel is located below the viewport area in OVITO's main window. Normally, it is
     in a collapsed state from where it can be opened by clicking anywhere in the tab bar.
-    The panel displays the raw data of the current dataset. For example, it 
+    The panel displays the raw data of the current dataset. For example, it
     lists all particles and bonds with their property data. Furthermore, it provides tools
     to pick individual elements in the viewports with the mouse and inspect their properties.
   </para>
 
   <para>
     The panel consists of one or more page tabs, which are dynamically shown depending on the contents
-    of the current dataset: 
+    of the current dataset:
     <itemizedlist>
-      <listitem><para><link linkend="data_inspector.particles">Particles</link></para></listitem>
-      <listitem><para><link linkend="data_inspector.bonds">Bonds</link></para></listitem>
-      <listitem><para><link linkend="data_inspector.attributes">Attributes</link></para></listitem>
-      <listitem><para><link linkend="data_inspector.dislocations">Dislocations</link></para></listitem>
+      <listitem><link linkend="data_inspector.particles">Particles</link></listitem>
+      <listitem><link linkend="data_inspector.bonds">Bonds</link></listitem>
+      <listitem><link linkend="data_inspector.attributes">Attributes</link></listitem>
+      <listitem><link linkend="data_inspector.dislocations">Dislocations</link></listitem>
     </itemizedlist>
    </para>
-  
+
   <xi:include href="particles.docbook"/>
   <xi:include href="bonds.docbook"/>
   <xi:include href="attributes.docbook"/>
   <xi:include href="dislocations.docbook"/>
-  
+
 </section>

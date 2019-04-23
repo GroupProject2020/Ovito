@@ -10,15 +10,15 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Identify diamond structure</title>
 
-  <para>  
+  <para>
   This analysis modifier finds atoms that are arranged in a cubic or hexagonal diamond lattice. This structure identification method has been described in Appendix A of
     <blockquote><para>
 <literallayout><link xlink:href="http://dx.doi.org/10.1016/j.cpc.2016.04.001">E. Maras et al.
 Global transition path search for dislocation formation in Ge on Si(001)
 Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></literallayout>
     </para></blockquote>
-    Please cite this paper when you use this structure identification algorithm for diamond lattices in your work. 
-    A preprint is available <link xlink:href="http://arxiv.org/abs/1601.06597">here</link>.   
+    Please cite this paper when you use this structure identification algorithm for diamond lattices in your work.
+    A preprint is available <link xlink:href="http://arxiv.org/abs/1601.06597">here</link>.
   </para>
 
   <para>
@@ -31,8 +31,8 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
           <colspec colname='descr'/>
           <thead>
             <row>
-              <entry>Type ID</entry>
-              <entry>Type name</entry>
+              <entry>Type&#xA0;ID</entry>
+              <entry>Type&#xA0;name</entry>
               <entry>Description</entry>
             </row>
           </thead>
@@ -50,15 +50,15 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
             <row>
               <entry>2</entry>
               <entry>Cubic diamond (1st neighbor)</entry>
-              <entry>An atom being a first neighbor of an atom that was classified as <emphasis>cubic diamond</emphasis>. 
+              <entry>An atom being a first neighbor of an atom that was classified as <emphasis>cubic diamond</emphasis>.
               Its four neighbors are positioned on lattice sites, but at least one of its second nearest neighbors is not.</entry>
-            </row>          
+            </row>
             <row>
               <entry>3</entry>
               <entry>Cubic diamond (2nd neighbor)</entry>
               <entry>An atom being a second nearest neighbor of an atom that was classified as <emphasis>cubic diamond</emphasis>.
               The atom itself is positioned on a lattice site, but at least one of its neighbors is missing or is not positioned on a lattice site.</entry>
-            </row>       
+            </row>
             <row>
               <entry>4</entry>
               <entry>Hexagonal diamond</entry>
@@ -67,15 +67,15 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
             <row>
               <entry>5</entry>
               <entry>Hexagonal diamond (1st neighbor)</entry>
-              <entry>An atom being a first neighbor of an atom that was classified as <emphasis>hexagonal diamond</emphasis>. 
+              <entry>An atom being a first neighbor of an atom that was classified as <emphasis>hexagonal diamond</emphasis>.
               Its four neighbors are positioned on lattice sites, but at least one of its second nearest neighbors is not.</entry>
-            </row>          
+            </row>
             <row>
               <entry>6</entry>
               <entry>Hexagonal diamond (2nd neighbor)</entry>
               <entry>An atom being a second nearest neighbor of an atom that was classified as <emphasis>hexagonal diamond</emphasis>.
               The atom itself is positioned on a lattice site, but at least one of its neighbors is missing or is not positioned on a lattice site.</entry>
-            </row> 
+            </row>
           </tbody>
         </tgroup>
     </informaltable>
@@ -83,13 +83,13 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
 
   <para>
     The <emphasis>Use only selected particles</emphasis> option restricts the analysis to the
-    currently selected atoms. If this option is activated, unselected atoms will be ignored 
+    currently selected atoms. If this option is activated, unselected atoms will be ignored
     (as if they did not exist) and will be assigned the structure type "Other".
-    This option can be useful if you want to identify defects in a crystal with a non-diamond structure, 
+    This option can be useful if you want to identify defects in a crystal with a non-diamond structure,
     but which has a sublattice that is a diamond lattice
     (and you do not want to delete atoms belonging to the other sublattice(s) for some reason).
   </para>
-  
+
   <simplesect>
     <title>How it works</title>
     <para>
@@ -138,11 +138,11 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
         </tgroup>
       </informaltable>
     </informalfigure>
-    To classify a central atom, this structure identification method takes into account second nearest neighbors to 
+    To classify a central atom, this structure identification method takes into account second nearest neighbors to
     discriminate between cubic and hexagonal diamond structures. The method can be considered
     an extended version of the popular <link linkend="particles.modifiers.common_neighbor_analysis">common neighbor analysis (CNA)</link>, which is typically used to identify FCC, HCP, or BCC structures.
     However, the conventional CNA is not suited for diamond structures, because nearest neighbor atoms don't have common neighbors,
-    and the second and third nearest neighbor shells are not well separated. 
+    and the second and third nearest neighbor shells are not well separated.
     </para>
     <para>
     These problems are solved as follows: First, the nearest neighbors of an atom are identified. Then, for each of these four neighbors, their respective nearest neighbors are identified.
@@ -159,8 +159,8 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.IdentifyDiamondModifier"><classname>IdentifyDiamondModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.IdentifyDiamondModifier"><classname>IdentifyDiamondModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
+  </simplesect>
 
 </section>

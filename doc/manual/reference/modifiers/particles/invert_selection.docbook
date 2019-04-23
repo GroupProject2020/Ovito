@@ -14,7 +14,7 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/invert_selection_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    This modifier inverts the current selection of elements by flipping the values of the <literal>Selection</literal> property. 
+    This modifier inverts the current selection of elements by flipping the values of the <literal>Selection</literal> property.
     The <emphasis>Operate on</emphasis> field selects the kind of elements (particles, bonds, etc.) the modifier should act on.
     See the introduction on <link linkend="usage.particle_properties">particle properties</link> to learn more
     about the role of the special <literal>Selection</literal> property.
@@ -23,8 +23,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.InvertSelectionModifier"><classname>InvertSelectionModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.InvertSelectionModifier"><classname>InvertSelectionModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
+  </simplesect>
 
 </section>

@@ -41,8 +41,8 @@ public:
     NetCDFExclusiveAccess();
 
     /// Constructor, which blocks until exclusive access to the NetCDF functions is available
-    /// or the given operation has been canceled, whichever happens first. 
-    NetCDFExclusiveAccess(PromiseState* promiseState);
+    /// or the given operation has been canceled, whichever happens first.
+    NetCDFExclusiveAccess(Task* task);
 
     /// Destructor, which releases exclusive access to the NetCDF functions.
     ~NetCDFExclusiveAccess();

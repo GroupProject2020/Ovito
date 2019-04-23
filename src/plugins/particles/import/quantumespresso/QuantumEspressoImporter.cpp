@@ -63,7 +63,7 @@ bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(QFileDevice& input, c
 			}
 			continue;
 		}
-		else if(stream.lineStartsWith("ATOMIC_SPECIES")) {
+		else if(stream.lineStartsWithToken("ATOMIC_SPECIES")) {
 			return true;
 		}
 		else if(line[0] != '\0') {
@@ -160,7 +160,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 			continue;
 		}
 
-		if(stream.lineStartsWith("ATOMIC_SPECIES")) {
+		if(stream.lineStartsWithToken("ATOMIC_SPECIES")) {
 			type_masses.resize(ntypes);
 			for(int i = 0; i < ntypes; i++) {
 				const char* line = stream.readLineTrimLeft();
@@ -175,7 +175,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 					throw Exception(tr("Invalid atom type definition in line %1 of QE file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			}
 		}
-		else if(stream.lineStartsWith("ATOMIC_POSITIONS")) {
+		else if(stream.lineStartsWithToken("ATOMIC_POSITIONS")) {
 			// Parse the unit specification.
 			const char* units_start = stream.line() + 16;
 			while(*units_start > 0 && (*units_start <= ' ' || *units_start == '(' || *units_start == '{')) ++units_start;
@@ -229,7 +229,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 			}
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 		}
-		else if(stream.lineStartsWith("CELL_PARAMETERS")) {
+		else if(stream.lineStartsWithToken("CELL_PARAMETERS")) {
 			// Parse the unit specification.
 			const char* units_start = stream.line() + 16;
 			while(*units_start > 0 && (*units_start <= ' ' || *units_start == '(' || *units_start == '{')) ++units_start;

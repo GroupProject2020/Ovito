@@ -1,0 +1,45 @@
+@import url('better/better.css');
+
+body {
+    color: #000000;
+}
+
+code {
+    color: #000000;
+}
+
+dl {
+	margin: 0px;
+}
+
+blockquote {
+	font-style: normal;
+	border-style: none;
+}
+
+.py .pre {
+    color: #0000A0;
+}
+
+
+pre {
+    color: #000000;
+}
+
+html {
+    font-size: 100%;
+}
+
+.page-header {
+	display: none;
+}
+
+#content {
+	padding-top: 100px;
+	padding-bottom: 30px;
+	margin: 0px auto;
+}
+
+table th {
+	text-transform: none;
+}

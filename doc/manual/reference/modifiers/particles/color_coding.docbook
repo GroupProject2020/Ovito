@@ -14,12 +14,12 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/color_coding_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
-    This modifier assigns colors to particles, bonds, or vector glyphs according to a selected input property. 
+
+    This modifier assigns colors to particles, bonds, or vector glyphs according to a selected input property.
     It thus provides a simple method to visualize the values of a per-particle or a per-bond quantity by means of a coloring
     scheme.
   </para>
-  
+
   <para>
     The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should assign color to.
     Depending on this choice, the modifier does the following:
@@ -42,7 +42,7 @@
           </row>
           <row>
             <entry>Particle vectors</entry>
-            <entry><para><link linkend="display_objects.vectors">Vector glyphs</link> are colored by setting the <literal>Vector Color</literal> 
+            <entry><para><link linkend="display_objects.vectors">Vector glyphs</link> are colored by setting the <literal>Vector Color</literal>
               property of the associated particles.</para></entry>
           </row>
         </tbody>
@@ -54,7 +54,7 @@
     The color to be assigned to a given element (e.g. particle) is determined as follows by the modifier:
     First, the value of the selected input property of the element is linearly mapped (and clamped) to the unit interval [0,1] according to the
     <emphasis>Start value</emphasis> and <emphasis>End value</emphasis>
-    parameters of the modifier. This normalized value is then mapped to an RGB color value based on the selected 
+    parameters of the modifier. This normalized value is then mapped to an RGB color value based on the selected
     color gradient type.
   </para>
 
@@ -73,9 +73,9 @@
     <title>Custom color maps</title>
     <para>
       The modifier offers a set of predefined color maps that you can choose from. If you would like to define your
-      own type of color map instead, select <guilabel>Load custom color map...</guilabel> from the gradient list box. 
-      The program will ask you to pick an image file containing the custom color gradient. 
-      You can prepare an appropriate image using any image editing program. OVITO will use the colors 
+      own type of color map instead, select <guilabel>Load custom color map...</guilabel> from the gradient list box.
+      The program will ask you to pick an image file containing the custom color gradient.
+      You can prepare an appropriate image using any image editing program. OVITO will use the colors
       along one row of pixels of the imported image to generate the user-defined color map. Here are two examples of color map images:
       <screenshot><mediaobject><imageobject>
         <imagedata fileref="images/modifiers/color_coding_custom_map.png" format="PNG" />
@@ -89,7 +89,7 @@
   <simplesect>
     <title>Color legend</title>
     <para>
-       You can superimpose a legend for the color coding into rendered images by adding a 
+       You can superimpose a legend for the color coding into rendered images by adding a
        <link linkend="viewport_overlays"><guilabel>Color legend</guilabel></link> overlay to the active viewport.
     </para>
   </simplesect>
@@ -127,11 +127,11 @@
           <para>Controls the value range for the linear mapping of input values to the [0,1] interval.</para>
         </listitem>
       </varlistentry>
-      
+
       <varlistentry>
         <term>Color only selected elements</term>
         <listitem>
-          <para>This option restricts the assignment of colors to currently selected particles or bonds. 
+          <para>This option restricts the assignment of colors to currently selected particles or bonds.
           The colors of unselected particles or bonds will remain unchanged.</para>
         </listitem>
       </varlistentry>
@@ -141,7 +141,7 @@
         <listitem>
           <para>
             OVITO highlights selected particles in red in the interactive viewports.
-            Since this would mask the actual colors assigned by this modifier, the modifier clears the current selection by default. 
+            Since this would mask the actual colors assigned by this modifier, the modifier clears the current selection by default.
             This option retains the current selection so that it remains available to subsequent modifiers in the data pipeline.
           </para>
         </listitem>
@@ -153,8 +153,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ColorCodingModifier"><classname>ColorCodingModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.ColorCodingModifier"><classname>ColorCodingModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

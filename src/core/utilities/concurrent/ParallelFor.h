@@ -24,7 +24,7 @@
 
 #include <core/Core.h>
 #include <core/app/Application.h>
-#include "PromiseState.h"
+#include "Task.h"
 
 #include <future>
 
@@ -33,7 +33,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 template<class Function, typename T>
 bool parallelFor(
 		T loopCount,
-		PromiseState& promise,
+		Task& promise,
 		Function kernel,
 		T progressChunkSize = 1024)
 {
@@ -116,7 +116,7 @@ void parallelFor(T loopCount, Function kernel)
 }
 
 template<class Function>
-bool parallelForChunks(size_t loopCount, PromiseState& promise, Function kernel)
+bool parallelForChunks(size_t loopCount, Task& promise, Function kernel)
 {
 	std::vector<std::future<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();

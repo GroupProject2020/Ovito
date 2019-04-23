@@ -5,3 +5,4 @@ releases/
 doc/develop/apidoc/
 doc/python/example_snippets/output/
 CMakeFiles
+__pycache__

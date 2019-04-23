@@ -11,40 +11,40 @@
   <title>Particle types / Molecule types / Bond types</title>
 
   <para>
-      
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/scene_objects/particle_types_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    
-    Molecular dynamics simulation codes typically work with atom types to encode the chemical identity of atoms. 
-    (Note that OVITO uses the more general term "particles" in place of "atoms".) During data import into OVITO, this information gets mapped to a 
-    <link linkend="usage.particle_properties">particle property</link> named <literal>Particle Type</literal>, which stores the type each particle belongs to. 
-    In addition, OVITO maintains a list of particle types, each having a unique numeric ID and a human-readable name. 
+
+    Molecular dynamics simulation codes typically work with atom types to encode the chemical identity of atoms.
+    (Note that OVITO uses the more general term "particles" in place of "atoms".) During data import into OVITO, this information gets mapped to a
+    <link linkend="usage.particle_properties">particle property</link> named <literal>Particle Type</literal>, which stores the type each particle belongs to.
+    In addition, OVITO maintains a list of particle types, each having a unique numeric ID and a human-readable name.
     Depending on the imported data format, types are named after chemical elements such as "Cu" or use generic names such as "Type 1", "Type 2", etc.
   </para>
   <para>
     The same kind of system is used by OVITO to encode <emphasis>bond types</emphasis> and <emphasis>molecule types</emphasis> if they are present in the input file.
     For each typed property, OVITO maintains a type list, which can be edited in the user interface
     as shown in the screenshot on the right. In case of particle types, each type has a color and a radius. They are used
-    to render the particles of that type (unless particles have per-particle <literal>Color</literal> or <literal>Radius</literal> properties, which take precedence over the corresponding per-type values). 
+    to render the particles of that type (unless particles have per-particle <literal>Color</literal> or <literal>Radius</literal> properties, which take precedence over the corresponding per-type values).
   </para>
   <para>
     For particle types named after chemical elements, OVITO automatically assigns a default color and a default display radius
     according to an internal preset table. This table of presets can be edited in the <link linkend="application_settings.particles">application settings dialog</link>.
-    Additionally, you can use the <guibutton>Set as default</guibutton> button to update the stored preset for the 
-    selected particle type to the current color and radius values. This even works for the generic particle types 
+    Additionally, you can use the <guibutton>Set as default</guibutton> button to update the stored preset for the
+    selected particle type to the current color and radius values. This even works for the generic particle types
     named "Type 1", "Type 2", etc., which are used by OVITO if no chemical names are available in the input file.
   </para>
   <para>
-    Note that the "Particle types" entry shown in the screenshot will be missing if the input file contains no particle type 
-    information at all. In this case OVITO does not create the "Particle type" property. 
+    Note that the "Particle types" entry shown in the screenshot will be missing if the input file contains no particle type
+    information at all. In this case OVITO does not create the "Particle type" property.
   </para>
   <simplesect>
   <title>See also</title>
   <para>
     <simplelist>
-    <member><link xlink:href="python/modules/ovito_data.html#ovito.data.ParticleProperty.types"><classname>ParticleProperty.types</classname> (Python API)</link></member>
-    <member><link xlink:href="python/modules/ovito_data.html#ovito.data.BondProperty.types"><classname>BondProperty.types</classname> (Python API)</link></member>
+    <member><pydoc-link href="modules/ovito_data" anchor="ovito.data.ParticleProperty.types"><classname>ParticleProperty.types</classname> (Python API)</pydoc-link></member>
+    <member><pydoc-link href="modules/ovito_data" anchor="ovito.data.BondProperty.types"><classname>BondProperty.types</classname> (Python API)</pydoc-link></member>
     </simplelist>
   </para>
   </simplesect>

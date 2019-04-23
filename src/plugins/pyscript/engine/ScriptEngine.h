@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,8 +23,6 @@
 
 
 #include <plugins/pyscript/PyScript.h>
-#include <core/dataset/DataSet.h>
-#include <core/app/Application.h>
 
 namespace PyScript {
 
@@ -32,108 +30,99 @@ using namespace Ovito;
 namespace py = pybind11;
 
 /**
- * \brief A scripting engine that provides bindings to OVITO's C++ classes.
+ * \brief A static class that provides functions for executing Python scripts and commands.
  */
-class OVITO_PYSCRIPT_EXPORT ScriptEngine : public QObject, public std::enable_shared_from_this<ScriptEngine>
+class OVITO_PYSCRIPT_EXPORT ScriptEngine
 {
-private:
-
-	/// \brief Initializes the scripting engine and sets up the environment.
-	/// \param dataset The engine will execute scripts in the context of this dataset.
-	ScriptEngine(DataSet* dataset);
-	
 public:
 
-	/// \brief Creates a scripting engine and sets up the scripting environment.
-	/// \param dataset The new engine will execute scripts in the context of this dataset.
-	static std::shared_ptr<ScriptEngine> createEngine(DataSet* dataset) {
-		return std::shared_ptr<ScriptEngine>(new ScriptEngine(dataset));
-	}
-
-	/// \brief Creates a global script engine instance. This is used when loading the OVITO Python modules from an external interpreter.
-	static void createAdhocEngine(DataSet* dataset);
-
-	/// \brief Destructor
-	virtual ~ScriptEngine();
-
-	/// \brief Returns the dataset that provides the context for the script execution.
-	DataSet* dataset() const { return _dataset; }
-
-	/// \brief Returns the script engine that is currently active (i.e. which is executing a script).
-	/// \return The active script engine or NULL if no script is currently being executed.
-	static const std::shared_ptr<ScriptEngine>& activeEngine() { return _activeEngine; }
-
-	/// Returns the context DataSet the current Python script is executed in.
-	static DataSet* getCurrentDataset();
-
 	/// \brief Executes a Python script consisting of one or more statements.
-	/// \param script The script commands.
-	/// \param global The Python globals dictionary to use.
+	/// \param script The Python statements to execute.
+	/// \param contextObj An object (e.g. a DataSet) that serves as context of the script execution.
+	/// \param task The asynchronous task object that serves as context of the script execution.
+	/// \param stdoutSlot The optional name of the Qt slot of the context object that is called whenever the script produces console output.
+	/// \param modifyGlobalNamespace Controls whether the script affects the Python global namespace. If false, the script will be executed in a private copy of the global namespace.
 	/// \param scriptArguments An optional list of command line arguments that will be passed to the script via sys.argv.
 	/// \return The exit code returned by the Python script.
 	/// \throw Exception on error.
-	int executeCommands(const QString& commands, const py::object& global, const QStringList& cmdLineArguments = QStringList());
+	static int executeCommands(const QString& commands, RefTarget* contextObj, const TaskPtr& task, const char* stdoutSlot, bool modifyGlobalNamespace, const QStringList& cmdLineArguments = QStringList());
 
 	/// \brief Executes a Python script file.
 	/// \param file The script file path.
-	/// \param global The Python globals dictionary to use.
+	/// \param contextObj An object (e.g. a DataSet) that serves as context of the script execution.
+	/// \param task The asynchronous task object that serves as context of the script execution.
+	/// \param stdoutSlot The optional name of the Qt slot of the context object that is called whenever the script produces console output.
+	/// \param modifyGlobalNamespace Controls whether the script affects the Python global namespace. If false, the script will be executed in a private copy of the global namespace.
 	/// \param cmdLineArguments An optional list of command line arguments that will be passed to the script via sys.argv.
 	/// \return The exit code returned by the Python script.
 	/// \throw Exception on error.
-	int executeFile(const QString& file, const py::object& global, const QStringList& cmdLineArguments = QStringList());
+	static int executeFile(const QString& file, RefTarget* contextObj, const TaskPtr& task, const char* stdoutSlot, bool modifyGlobalNamespace, const QStringList& cmdLineArguments = QStringList());
 
-	/// \brief Executes the given C++ function, which in turn may invoke Python functions, in the context of this engine.
-	int execute(const std::function<void()>& func);
+	/// \brief Executes the given C++ function, which in turn may invoke Python code, in the context of this engine.
+	/// \param contextObj An object (e.g. a DataSet) that serves as context of the script execution.
+	/// \param task The asynchronous task object that serves as context of the script execution.
+	/// \param stdoutSlot The optional name of the Qt slot of the context object that is called whenever the script produces console output.
+	static int executeSync(RefTarget* contextObj, const TaskPtr& task, const char* stdoutSlot, const std::function<void()>& func);
 
-Q_SIGNALS:
+	/// \brief Executes the given C++ function in the context of an object and a scripting engine.
+	/// \param contextObj An object (e.g. a DataSet) that serves as context of the script execution.
+	/// \param stdoutSlot The optional name of the Qt slot of the context object that is called whenever the script produces console output.
+	static Future<> executeAsync(RefTarget* context, const char* stdoutSlot, const std::function<py::object()>& func);
 
-	/// This signal is emitted when the Python script writes to the sys.stdout stream.
-	void scriptOutput(const QString& outputString);
+	/// \brief Blocks execution until the given future has completed.
+	/// \note This function may only be called from within a script execution context. Typically it is used by Python binding layer.
+	/// \return False if the operation has been canceled by the user.
+	static bool waitForFuture(const FutureBase& future);
 
-	/// This is emitted when the Python script writes to the sys.stderr stream.
-	void scriptError(const QString& errorString);
+	/// \brief Returns the DataSet which is the current context for scripts.
+	/// \note This function may only be called from within a script execution context. Typically it is used by Python binding layer.
+	static DataSet* currentDataset();
+
+	/// \brief Returns the asynchronous task object that represents the current script execution.
+	/// \note This function may only be called from within a script execution context. Typically it is used by Python binding layer.
+	static const TaskPtr& currentTask();
+
+	/// \brief This is called to set up an ad-hoc environment when the Ovito Python module is loaded from
+	///        an external Python interpreter.
+	static void initializeExternalInterpreter(DataSet* dataset);
 
 private:
 
 	/// Initializes the embedded Python interpreter and sets up the global namespace.
-	void initializeEmbeddedInterpreter();
+	static void initializeEmbeddedInterpreter(RefTarget* contextObj);
 
 	/// Handles a call to sys.exit() in the Python interpreter.
 	/// Returns the program exit code.
-	int handleSystemExit();
+	static int handleSystemExit();
 
 	/// Handles an exception raised by the Python side.
-	int handlePythonException(py::error_already_set& ex, const QString& filename = QString());
+	static int handlePythonException(py::error_already_set& ex, const QString& filename = QString());
 
-	/// This helper class redirects Python script write calls to the sys.stdout stream to this script engine.
-	struct InterpreterStdOutputRedirector {
-		void write(const QString& str) {
-			if(activeEngine()) activeEngine()->scriptOutput(str);
-			else std::cout << str.toStdString();
+	/// Information record that represents a script execution that is currently in progress.
+	struct ScriptExecutionContext {
+
+		ScriptExecutionContext(ScriptExecutionContext&&) = delete;
+		ScriptExecutionContext(RefTarget* c, const char* s, TaskPtr t) : contextObj(c), stdoutSlot(s), task(std::move(t)) {
+			// Insert myself into linked list of objects.
+			next = _activeContext;
+			_activeContext = this;
 		}
-		void flush() {
-			if(!activeEngine()) std::cout << std::flush;
+		~ScriptExecutionContext() {
+			// Remove myself from linked list of objects.
+			OVITO_ASSERT(_activeContext == this);
+			_activeContext = next;
 		}
+
+		RefTarget* contextObj;
+		const char* stdoutSlot;
+		TaskPtr task;
+		ScriptExecutionContext* next;
 	};
 
-	/// This helper class redirects Python script write calls to the sys.stderr stream to this script engine.
-	struct InterpreterStdErrorRedirector {
-		void write(const QString& str) {
-			if(activeEngine()) activeEngine()->scriptError(str);
-			else std::cerr << str.toStdString();
-		}
-		void flush() {
-			if(!activeEngine()) std::cerr << std::flush;
-		}
-	};
+	/// Stack of currently active script execution contexts.
+	static ScriptExecutionContext* _activeContext;
 
-	/// The dataset that provides the context for the script execution.
-	QPointer<DataSet> _dataset;
-
-	/// The script engine that is currently active (i.e. which is executing a script).
-	static std::shared_ptr<ScriptEngine> _activeEngine;
-
-	Q_OBJECT
+	friend struct InterpreterOutputRedirector;
 };
 
 }	// End of namespace

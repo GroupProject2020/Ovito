@@ -79,7 +79,7 @@ public:
 	/// \return \c false when the operation has been canceled by the user;s
 	///         \c true on success.
 	/// \throw Exception on error.
-	bool prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& simCell, const PropertyStorage* selectionProperty, PromiseState* promise);
+	bool prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& simCell, const PropertyStorage* selectionProperty, Task* promise);
 
 	/// Returns the cutoff radius set via prepare().
 	FloatType cutoffRadius() const { return _cutoffRadius; }

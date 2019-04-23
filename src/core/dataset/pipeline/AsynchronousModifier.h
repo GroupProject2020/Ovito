@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/utilities/concurrent/Task.h>
+#include <core/utilities/concurrent/AsynchronousTask.h>
 #include "Modifier.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT AsynchronousModifier : public Modifier
 {
 	Q_OBJECT
 	OVITO_CLASS(AsynchronousModifier)
-	
+
 public:
 
 	/**
@@ -46,7 +46,7 @@ public:
 	public:
 
 		/// Constructor.
-		ComputeEngine(const TimeInterval& validityInterval = TimeInterval::infinite()) : 
+		ComputeEngine(const TimeInterval& validityInterval = TimeInterval::infinite()) :
 			_validityInterval(validityInterval),
 			_task(std::make_shared<ComputeEngineTask>(this)) {}
 
@@ -54,7 +54,7 @@ public:
 		virtual ~ComputeEngine() = default;
 
 		/// This method is called by the system after the computation was successfully completed.
-		/// Subclasses should override this method in order to release working memory and any references to the input data. 
+		/// Subclasses should override this method in order to release working memory and any references to the input data.
 		virtual void cleanup();
 
 		/// Computes the modifier's results.
@@ -114,10 +114,10 @@ public:
 
 	/// Suppress preliminary viewport updates when a parameter of the asynchronous modifier changes.
 	virtual bool performPreliminaryUpdateAfterChange() override { return false; }
-	
+
 	/// This method indicates whether outdated computation results should be immediately discarded
 	/// whenever the inputs of the modifier changes. By default, the method returns false to indicate
-	/// that the results should be kept as long as a new computation is in progress. During this 
+	/// that the results should be kept as long as a new computation is in progress. During this
 	/// transient phase, the old resuls may still be used by the pipeline for preliminary viewport updates.
 	virtual bool discardResultsOnInputChange() const { return false; }
 
@@ -126,7 +126,7 @@ public:
 	/// this method if the asynchronous computation results do not depend on certain parameters and their change
 	/// should not trigger a recomputation.
 	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const { return true; }
-	
+
 protected:
 
 	/// Saves the class' contents to the given stream.

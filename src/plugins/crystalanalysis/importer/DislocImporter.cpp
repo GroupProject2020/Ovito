@@ -77,7 +77,7 @@ void DislocImporter::setupPipeline(PipelineSceneNode* pipeline, FileSource* impo
 
 	// Insert a SimplyMicrostructureModifier into the data pipeline by default.
 //	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(pipeline->dataset());
-//	if(!Application::instance()->scriptMode())
+//	if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 //		modifier->loadUserDefaults();
 //	pipeline->applyModifier(modifier);
 }
@@ -458,13 +458,13 @@ OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollec
 
 		// Create a visual element for the dislocation lines.
 		OORef<DislocationVis> dislocationVis = new DislocationVis(fileSource->dataset());
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			dislocationVis->loadUserDefaults();
 		microstructureObj->setVisElement(dislocationVis);
 
 		// Create a visual element for the slip surfaces.
 		OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(fileSource->dataset());
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			slipSurfaceVis->loadUserDefaults();
 		microstructureObj->addVisElement(slipSurfaceVis);
 	}

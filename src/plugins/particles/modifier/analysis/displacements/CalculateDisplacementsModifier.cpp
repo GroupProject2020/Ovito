@@ -75,7 +75,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::c
 	ConstPropertyPtr refIdentifierProperty = refParticles->getPropertyStorage(ParticlesObject::IdentifierProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<DisplacementEngine>(validityInterval, posProperty->storage(), inputCell->data(), 
+	return std::make_shared<DisplacementEngine>(validityInterval, posProperty->storage(), inputCell->data(),
 			particles, refPosProperty->storage(), refCell->data(),
 			std::move(identifierProperty), std::move(refIdentifierProperty),
 			affineMapping(), useMinimumImageConvention());
@@ -93,7 +93,7 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 
 	// Compute displacement vectors.
 	if(affineMapping() != NO_MAPPING) {
-		parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, PromiseState& promise) {
+		parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
 			Vector3* u = displacements()->dataVector3() + startIndex;
 			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
 			const Point3* p = positions()->constDataPoint3() + startIndex;
@@ -116,7 +116,7 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 		});
 	}
 	else {
-		parallelForChunks(displacements()->size(), *task(), [this] (size_t startIndex, size_t count, PromiseState& promise) {
+		parallelForChunks(displacements()->size(), *task(), [this] (size_t startIndex, size_t count, Task& promise) {
 			Vector3* u = displacements()->dataVector3() + startIndex;
 			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
 			const Point3* p = positions()->constDataPoint3() + startIndex;

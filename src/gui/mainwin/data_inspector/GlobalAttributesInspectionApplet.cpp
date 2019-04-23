@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 IMPLEMENT_OVITO_CLASS(GlobalAttributesInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline dataset contains data that can be 
+* Determines whether the given pipeline dataset contains data that can be
 * displayed by this applet.
 ******************************************************************************/
 bool GlobalAttributesInspectionApplet::appliesTo(const DataCollection& data)
@@ -43,8 +43,8 @@ bool GlobalAttributesInspectionApplet::appliesTo(const DataCollection& data)
 }
 
 /******************************************************************************
-* Lets the applet create the UI widget that is to be placed into the data 
-* inspector panel. 
+* Lets the applet create the UI widget that is to be placed into the data
+* inspector panel.
 ******************************************************************************/
 QWidget* GlobalAttributesInspectionApplet::createWidget(MainWindow* mainWindow)
 {
@@ -65,10 +65,9 @@ QWidget* GlobalAttributesInspectionApplet::createWidget(MainWindow* mainWindow)
 	connect(exportToFileAction, &QAction::triggered, this, &GlobalAttributesInspectionApplet::exportToFile);
 	toolbar->addAction(exportToFileAction);
 
-	_tableView = new QTableView();	
+	_tableView = new TableView();
 	_tableModel = new AttributeTableModel(_tableView);
 	_tableView->setModel(_tableModel);
-	_tableView->setWordWrap(false);
 	_tableView->verticalHeader()->hide();
 	_tableView->horizontalHeader()->resizeSection(0, 180);
 	_tableView->horizontalHeader()->setStretchLastSection(true);
@@ -100,7 +99,7 @@ void GlobalAttributesInspectionApplet::exportToFile()
 	HistoryFileDialog dialog("export", _mainWindow, tr("Export Attributes"));
 #ifndef Q_OS_WIN
 	QString filterString = QStringLiteral("%1 (%2)").arg(AttributeFileExporter::OOClass().fileFilterDescription(), AttributeFileExporter::OOClass().fileFilter());
-#else 
+#else
 		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
 	QString filterString = QStringLiteral("%1 (*)").arg(AttributeFileExporter::OOClass().fileFilterDescription());
 #endif
@@ -146,7 +145,7 @@ void GlobalAttributesInspectionApplet::exportToFile()
 		ProgressDialog progressDialog(_mainWindow, tr("File export"));
 
 		// Let the exporter do its job.
-		exporter->doExport(progressDialog.taskManager().createSynchronousPromise<>(true));
+		exporter->doExport(progressDialog.taskManager().createMainThreadOperation<>(true));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

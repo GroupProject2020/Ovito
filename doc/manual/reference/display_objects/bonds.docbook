@@ -11,13 +11,13 @@
   <title>Bonds</title>
 
   <para>
-      
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/bonds_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    
+
     This <link linkend="display_objects">visual element</link> renders bonds between pairs of particles.
-    Bonds can either be loaded from a data file, or can be created within OVITO, e.g. using the 
+    Bonds can either be loaded from a data file, or can be created within OVITO, e.g. using the
     <link linkend="particles.modifiers.create_bonds">Create bonds</link> modifier.
   </para>
 
@@ -73,11 +73,11 @@
       </varlistentry>
 	</variablelist>
     </simplesect>
-    
+
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.BondsVis"><classname>BondsVis</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.BondsVis"><classname>BondsVis</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
 

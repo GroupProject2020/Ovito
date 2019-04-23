@@ -27,10 +27,10 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-namespace detail 
-{	
+namespace detail
+{
 
-	template<class T>	
+	template<class T>
 	struct is_future : std::false_type {};
 
 	template<typename... T>
@@ -58,40 +58,40 @@ namespace detail
 	struct continuation_func_return_type {
 		using type = decltype(apply(std::declval<FC>(), std::declval<Args>()));
 	};
-	
+
 	/// Determines if the return type of a continuation function object is 'void'.
 	template<typename FC, typename Args>
 	struct is_void_continuation_func {
 		static constexpr auto value = std::is_void<typename continuation_func_return_type<FC,Args>::type>::value;
 	};
-	
+
 	/// For a value type, returns the corresponding Future<> type.
 	template<typename T>
 	struct future_type_from_value_type : public std::conditional<std::is_void<T>::value, Future<>, Future<T>> {};
 
 	/// Determines the Future type that results from a continuation function.
-	/// 
+	///
 	///     Future<...> func(...)   ->   Future<...>
 	///               T func(...)   ->   Future<T>
 	///            void func(...)   ->   Future<>
 	///
 	template<typename FC, typename Args>
-	struct resulting_future_type : public 
+	struct resulting_future_type : public
 		std::conditional<is_future<typename continuation_func_return_type<FC,Args>::type>::value,
 						typename continuation_func_return_type<FC,Args>::type,
 						typename future_type_from_value_type<typename continuation_func_return_type<FC,Args>::type>::type> {};
 
 	/// Determines the type of shared state returned by Future::then() etc.
-	/// 
-	///     Future<...> func(...)   ->   TrackingPromiseState
-	///               T func(...)   ->   DirectContinuationPromiseState<tuple<T>>
-	///            void func(...)   ->   DirectContinuationPromiseState<tuple<>>
+	///
+	///     Future<...> func(...)   ->   TrackingTask
+	///               T func(...)   ->   ContinuationTask<tuple<T>>
+	///            void func(...)   ->   ContinuationTask<tuple<>>
 	///
 	template<typename FC, typename Args>
 	struct continuation_state_type : public std::conditional<
 		!is_future<typename continuation_func_return_type<FC,Args>::type>::value,
-		DirectContinuationPromiseState<typename resulting_future_type<FC,Args>::type::tuple_type>,
-		TrackingPromiseState> {};
+		ContinuationTask<typename resulting_future_type<FC,Args>::type::tuple_type>,
+		TrackingTask> {};
 
 	/// The simplest implementation of the Executor concept.
 	/// The inline executor runs a work function immediately and in place.

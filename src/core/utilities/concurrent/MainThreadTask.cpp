@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -20,61 +20,61 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include "SynchronousPromiseState.h"
+#include "MainThreadTask.h"
 #include "Future.h"
 #include "TaskManager.h"
-#include "PromiseWatcher.h"
+#include "TaskWatcher.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-bool SynchronousPromiseState::setProgressValue(qlonglong value)
+bool MainThreadTask::setProgressValue(qlonglong value)
 {
 	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
+	// This is necessary so that the user can interrupt the running operation.
 	_taskManager.processEvents();
 
-    return PromiseStateWithProgress::setProgressValue(value);
+    return ProgressiveTask::setProgressValue(value);
 }
 
-bool SynchronousPromiseState::incrementProgressValue(qlonglong increment)
+bool MainThreadTask::incrementProgressValue(qlonglong increment)
 {
 	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
+	// This is necessary so that the user can interrupt the running operation.
 	_taskManager.processEvents();
 
-	return PromiseStateWithProgress::incrementProgressValue(increment);
+	return ProgressiveTask::incrementProgressValue(increment);
 }
 
-void SynchronousPromiseState::setProgressText(const QString& progressText)
+void MainThreadTask::setProgressText(const QString& progressText)
 {
-	PromiseStateWithProgress::setProgressText(progressText);
+	ProgressiveTask::setProgressText(progressText);
 
 	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
+	// This is necessary so that the user can interrupt the running operation.
 	_taskManager.processEvents();
 }
 
-Promise<> SynchronousPromiseState::createSubOperation()
+Promise<> MainThreadTask::createSubTask()
 {
 	OVITO_ASSERT(isStarted());
 	OVITO_ASSERT(!isFinished());
 
 	// Create a new promise for the sub-operation.
-	Promise<> subOperation = _taskManager.createSynchronousPromise<>(true);
+	Promise<> subOperation = _taskManager.createMainThreadOperation<>(true);
 
 	// Ensure that the sub-operation gets canceled together with the parent operation.
-	PromiseWatcher* parentOperationWatcher = _taskManager.addTaskInternal(shared_from_this());
-	PromiseWatcher* subOperationWatcher = _taskManager.addTaskInternal(subOperation.sharedState());
-	QObject::connect(parentOperationWatcher, &PromiseWatcher::canceled, subOperationWatcher, &PromiseWatcher::cancel);
-	QObject::connect(subOperationWatcher, &PromiseWatcher::canceled, parentOperationWatcher, &PromiseWatcher::cancel);
+	TaskWatcher* parentOperationWatcher = _taskManager.addTaskInternal(shared_from_this());
+	TaskWatcher* subOperationWatcher = _taskManager.addTaskInternal(subOperation.task());
+	QObject::connect(parentOperationWatcher, &TaskWatcher::canceled, subOperationWatcher, &TaskWatcher::cancel);
+	QObject::connect(subOperationWatcher, &TaskWatcher::canceled, parentOperationWatcher, &TaskWatcher::cancel);
 
 	return subOperation;
 }
 
-/// Blocks execution until the given future is in the completed state.
-bool SynchronousPromiseState::waitForFuture(const FutureBase& future)
+/// Blocks execution until the given future reaches the completed state.
+bool MainThreadTask::waitForFuture(const FutureBase& future)
 {
-	if(!_taskManager.waitForTask(future)) {
+	if(!_taskManager.waitForTask(future.task(), shared_from_this())) {
 		cancel();
 		return false;
 	}

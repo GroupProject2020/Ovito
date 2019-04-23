@@ -25,8 +25,8 @@
 #include <core/Core.h>
 #include "Promise.h"
 #include "FutureDetail.h"
-#include "TrackingPromiseState.h"
-#include "DirectContinuationPromiseState.h"
+#include "TrackingTask.h"
+#include "ContinuationTask.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 * Generic base class for futures, which implements the basic state management,
 * progress reporting, and event processing.
 ******************************************************************************/
-class OVITO_CORE_EXPORT FutureBase 
+class OVITO_CORE_EXPORT FutureBase
 {
 public:
 
@@ -42,24 +42,24 @@ public:
 	~FutureBase() { reset(); }
 
 	/// Returns true if the shared state associated with this Future has been canceled.
-	bool isCanceled() const { return sharedState()->isCanceled(); }
+	bool isCanceled() const { return task()->isCanceled(); }
 
 	/// Returns true if the shared state associated with this Future has been fulfilled.
-	bool isFinished() const { return sharedState()->isFinished(); }
+	bool isFinished() const { return task()->isFinished(); }
 
 	/// Returns true if this Future is associated with a shared state.
-	bool isValid() const { return (bool)_sharedState.get(); }
+	bool isValid() const { return (bool)_task.get(); }
 
 	/// Dissociates this Future from its shared state.
 	void reset() {
-		_sharedState.reset();
+		_task.reset();
 	}
 
-	/// Returns the shared state associated with this Future. 
+	/// Returns the shared state associated with this Future.
 	/// Make sure it has one before calling this function.
-	const PromiseStatePtr& sharedState() const {
+	const TaskPtr& task() const {
 		OVITO_ASSERT(isValid());
-		return _sharedState.get();
+		return _task.get();
 	}
 
 	/// Move constructor.
@@ -93,12 +93,12 @@ protected:
 #endif
 
 	/// Constructor that creates a Future associated with a share state.
-	explicit FutureBase(PromiseStatePtr&& p) noexcept : _sharedState(std::move(p)) {}
-	
-	/// The shared state associated with this Future.
-	PromiseStateCountedPtr _sharedState;
+	explicit FutureBase(TaskPtr&& p) noexcept : _task(std::move(p)) {}
 
-	friend class TrackingPromiseState;
+	/// The shared state associated with this Future.
+	TaskDependency _task;
+
+	friend class TrackingTask;
 };
 
 /******************************************************************************
@@ -127,11 +127,11 @@ public:
 	Future(Future&& other) noexcept = default;
 
 	/// A future may directly be initialized from r-values.
-	template<typename... R2, size_t C = sizeof...(R), 
-		typename = std::enable_if_t<C != 0 
+	template<typename... R2, size_t C = sizeof...(R),
+		typename = std::enable_if_t<C != 0
 			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<Future<R...>>>::value
-			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<PromiseStatePtr>>::value>>
-	Future(R2&&... val) noexcept : FutureBase(std::move(promise_type::createImmediate(std::forward<R2>(val)...)._sharedState)) {}
+			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<TaskPtr>>::value>>
+	Future(R2&&... val) noexcept : FutureBase(std::move(promise_type::createImmediate(std::forward<R2>(val)...)._task)) {}
 
 	/// A future is moveable.
 	Future& operator=(Future&& other) noexcept = default;
@@ -178,8 +178,8 @@ public:
 		OVITO_ASSERT_MSG(isValid(), "Future::results()", "Future must be valid.");
 		OVITO_ASSERT_MSG(isFinished(), "Future::results()", "Future must be in fulfilled state.");
 		OVITO_ASSERT_MSG(!isCanceled(), "Future::results()", "Future must not be canceled.");
-	    sharedState()->throwPossibleException();
-		tuple_type result = sharedState()->template takeResults<tuple_type>();
+	    task()->throwPossibleException();
+		tuple_type result = task()->template takeResults<tuple_type>();
 		reset();
 		return result;
 	}
@@ -207,7 +207,7 @@ public:
 	typename detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, FC&& cont);
 
 	/// Runs the given function once this future has reached the 'finished' state.
-	/// The function is awlays run, even if the future was canceled or set to an error state.
+	/// The function is always run, even if the future was canceled or set to an error state.
 	template<typename FC, class Executor>
 	void finally_future(Executor&& executor, FC&& cont);
 
@@ -225,10 +225,10 @@ public:
 #endif
 
 	/// Constructor that constructs a Future that is associated with the given shared state.
-	explicit Future(PromiseStatePtr p) noexcept : FutureBase(std::move(p)) {}
+	explicit Future(TaskPtr p) noexcept : FutureBase(std::move(p)) {}
 
 	/// Move constructor taking the promise state pointer from a r-value Promise.
-	Future(promise_type&& promise) : FutureBase(std::move(promise._sharedState)) {}
+	Future(promise_type&& promise) : FutureBase(std::move(promise._task)) {}
 
 	template<typename... R2> friend class Future;
 	template<typename... R2> friend class Promise;
@@ -250,8 +250,8 @@ typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename F
 	OVITO_ASSERT_MSG(isValid(), "Future::then()", "Future must be valid.");
 
 	// Create an unfulfilled promise state for the result of the continuation.
-	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_sharedState));
-		
+	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_task));
+
 	trackingState->creatorState()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
 
@@ -282,7 +282,7 @@ typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename F
 	// Calling then() on a Future invalidates it.
 	OVITO_ASSERT(!isValid());
 
-	return ResultFutureType(PromiseStatePtr(std::move(trackingState)));
+	return ResultFutureType(TaskPtr(std::move(trackingState)));
 }
 
 /// Returns a new future that, upon the fulfillment of this future, will
@@ -299,8 +299,8 @@ typename detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future
 	OVITO_ASSERT_MSG(isValid(), "Future::then_future()", "Future must be valid.");
 
 	// Create an unfulfilled promise state for the result of the continuation.
-	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_sharedState));
-		
+	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_task));
+
 	trackingState->creatorState()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
 
@@ -326,7 +326,7 @@ typename detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future
 	// Calling then_future() on a Future invalidates it.
 	OVITO_ASSERT(!isValid());
 
-	return ResultFutureType(PromiseStatePtr(std::move(trackingState)));
+	return ResultFutureType(TaskPtr(std::move(trackingState)));
 }
 
 /// Runs the given function once this future has reached the 'finished' state.
@@ -338,7 +338,7 @@ void Future<R...>::finally_future(Executor&& executor, FC&& cont)
 	// This future must be valid for finally_future() to work.
 	OVITO_ASSERT_MSG(isValid(), "Future::finally_future()", "Future must be valid.");
 
-	sharedState()->addContinuation(
+	task()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), future = std::move(*this)](bool workCanceled) mutable {
 			if(!workCanceled) {
 				std::move(cont)(std::move(future));
@@ -357,7 +357,7 @@ void FutureBase::finally(Executor&& executor, FC&& cont)
 	// This future must be valid for finally() to work.
 	OVITO_ASSERT_MSG(isValid(), "Future::finally()", "Future must be valid.");
 
-	sharedState()->addContinuation(
+	task()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont)](bool workCanceled) mutable {
 			if(!workCanceled)
 				std::move(cont)();

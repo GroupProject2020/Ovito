@@ -34,7 +34,7 @@ IF(APPLE)
 	# Use BundleUtilities to get all other dependencies for the application to work.
 	# It takes a bundle or executable along with possible plugins and inspects it
 	# for dependencies.  If they are not system dependencies, they are copied.
-	
+
 	# Now the work of copying dependencies into the bundle/package
 	# The quotes are escaped and variables to use at install time have their $ escaped
 	# An alternative is the do a configure_file() on a script and use install(SCRIPT  ...).
@@ -50,16 +50,17 @@ IF(APPLE)
 		SET(APPS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
 
 		# Directories to look for dependencies:
-		SET(DIRS 
-			${QT_LIBRARY_DIRS} 
-			\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}\" 
+		SET(DIRS
+			${QT_LIBRARY_DIRS}
+			\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}\"
+			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks\"
 			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/imageformats\"
 			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/platforms\"
 			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/iconengines\"
 			/opt/local/lib)
 
 		# Returns the path that others should refer to the item by when the item is embedded inside a bundle.
-		# This ensures that all plugin libraries go into the plugins/ directory of the bundle.
+		# This ensures that all plugin libraries go into the PlugIns/ directory of the bundle.
 		FUNCTION(gp_item_default_embedded_path_override item default_embedded_path_var)
 			# Embed plugin libraries (.so) in the PlugIns/ subdirectory:
             IF(item MATCHES \"\\\\${OVITO_PLUGIN_LIBRARY_SUFFIX}$\" AND (item MATCHES \"^@rpath\" OR item MATCHES \"PlugIns/\"))
@@ -68,7 +69,7 @@ IF(APPLE)
     		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
 			ENDIF()
 			# Leave core Ovito libraries in the MacOS/ directory:
-            IF(item MATCHES \"\\\\.dylib$\" AND item MATCHES \"^@rpath\")
+            IF((item MATCHES \"libCore\\\\.dylib$\" OR item MATCHES \"libOpenGLRenderer\\\\.dylib$\" OR item MATCHES \"libmuParser\\\\.dylib$\" OR item MATCHES \"libNetCDFIntegration\\\\.dylib$\" OR item MATCHES \"libGui\\\\.dylib$\" OR item MATCHES \"libQwt\\\\.dylib$\") AND item MATCHES \"^@rpath\")
 	    	    SET(path \"@executable_path\")
 		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
     		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
@@ -76,7 +77,7 @@ IF(APPLE)
 		ENDFUNCTION()
 		# This is needed to correctly install Matplotlib's shared libraries in the .dylibs/ subdirectory:
 		FUNCTION(gp_resolved_file_type_override resolved_file type)
-		    IF(resolved_file MATCHES \"@loader_path/\" AND resolved_file MATCHES \"/.dylibs/\")
+			IF(resolved_file MATCHES \"@loader_path/\" AND resolved_file MATCHES \"/.dylibs/\")
 				SET(\${type} \"system\" PARENT_SCOPE)
 			ENDIF()
 		ENDFUNCTION()
@@ -90,7 +91,12 @@ IF(APPLE)
 			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
 		FILE(GLOB OTHER_FRAMEWORK_DYNLIBS
 			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
-		SET(BUNDLE_LIBS \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
+		FOREACH(lib \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
+			IF(NOT IS_SYMLINK \${lib})
+				LIST(APPEND BUNDLE_LIBS \${lib})
+			ENDIF()
+		ENDFOREACH()
+		MESSAGE(\"Bundle libs: \${BUNDLE_LIBS}\")
 		SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
 		INCLUDE(BundleUtilities)
 		FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
@@ -117,9 +123,9 @@ IF(APPLE)
 
 		# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
 		INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
-	ENDIF()	
+	ENDIF()
 
-	# Sign bundle (starting from the inside out with all executables/libraries, 
+	# Sign bundle (starting from the inside out with all executables/libraries,
 	# then the nested 'ovitos' bundle, finally the main bundle).
 	SET(SigningIdentity "Developer ID Application: Alexander Stukowski")
 	INSTALL(CODE "

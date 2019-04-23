@@ -26,5 +26,52 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 
 IMPLEMENT_OVITO_CLASS(DataInspectionApplet);
 
+/******************************************************************************
+* Handles key press events for this widget.
+******************************************************************************/
+void DataInspectionApplet::TableView::keyPressEvent(QKeyEvent* event)
+{
+    if(event->matches(QKeySequence::Copy)) {
+
+        QItemSelectionModel* selection = selectionModel();
+        QModelIndexList indices = selection->selectedIndexes();
+
+        if(indices.isEmpty())
+            return;
+
+        // QModelIndex::operator < sorts first by row, then by column. This is what we need.
+        qSort(indices);
+
+        int lastRow = indices.first().row();
+        int lastColumn = indices.first().column();
+
+        QString selectedText;
+        for(const QModelIndex& current : indices) {
+
+            if(current.row() != lastRow) {
+                selectedText += QLatin1Char('\n');
+                lastColumn = indices.first().column();
+                lastRow = current.row();
+            }
+
+            if(current.column() != lastColumn) {
+                for(int i = 0; i < current.column() - lastColumn; ++i)
+                    selectedText += QLatin1Char('\t');
+                lastColumn = current.column();
+            }
+
+            selectedText += model()->data(current).toString();
+        }
+
+        selectedText += QLatin1Char('\n');
+
+        QApplication::clipboard()->setText(selectedText);        
+        event->accept();
+    }
+    else {
+        QTableView::keyPressEvent(event);
+    }
+}
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

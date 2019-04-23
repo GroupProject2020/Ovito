@@ -26,7 +26,7 @@
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/mesh/surface/SurfaceMeshData.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 
 #include <boost/functional/hash.hpp>
@@ -63,7 +63,7 @@ public:
 
 	/// This is the main function, which constructs the manifold triangle mesh.
 	template<typename CellRegionFunc, typename PrepareMeshFaceFunc = DefaultPrepareMeshFaceFunc, typename LinkManifoldsFunc = DefaultLinkManifoldsFunc>
-	bool construct(CellRegionFunc&& determineCellRegion, PromiseState& promise,
+	bool construct(CellRegionFunc&& determineCellRegion, Task& promise,
 			PrepareMeshFaceFunc&& prepareMeshFaceFunc = PrepareMeshFaceFunc(), LinkManifoldsFunc&& linkManifoldsFunc = LinkManifoldsFunc())
 	{
 		// Algorithm is divided into several sub-steps.
@@ -95,7 +95,7 @@ private:
 
 	/// Assigns each tetrahedron to a region.
 	template<typename CellRegionFunc>
-	bool classifyTetrahedra(CellRegionFunc&& determineCellRegion, PromiseState& promise)
+	bool classifyTetrahedra(CellRegionFunc&& determineCellRegion, Task& promise)
 	{
 		promise.setProgressValue(0);
 		promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
@@ -139,7 +139,7 @@ private:
 
 	/// Constructs the triangle facets that separate different regions in the tetrahedral mesh.
 	template<typename PrepareMeshFaceFunc>
-	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, PromiseState& promise)
+	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, Task& promise)
 	{
 		// Stores the triangle mesh vertices created for the vertices of the tetrahedral mesh.
 		std::vector<HalfEdgeMesh::vertex_index> vertexMap(_positions.size(), HalfEdgeMesh::InvalidIndex);
@@ -283,7 +283,7 @@ private:
 	}
 
 	template<typename LinkManifoldsFunc>
-	bool linkHalfedges(LinkManifoldsFunc&& linkManifoldsFunc, PromiseState& promise)
+	bool linkHalfedges(LinkManifoldsFunc&& linkManifoldsFunc, Task& promise)
 	{
 		promise.setProgressValue(0);
 		promise.setProgressMaximum(_tetrahedraFaceList.size());

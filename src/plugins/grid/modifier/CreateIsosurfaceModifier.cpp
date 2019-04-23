@@ -81,7 +81,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available voxel grid from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const VoxelGrid* grid = input.getObject<VoxelGrid>()) {
 			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
@@ -89,14 +89,12 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 	}
 
 	// Use the first available property from the input grid as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const VoxelGrid* grid = dynamic_object_cast<VoxelGrid>(input.getLeafObject(subject()))) {
 			for(const PropertyObject* property : grid->properties()) {
-				if(property->componentCount() == 1) {
-					setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
-					break;
-				}
+				setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
+				break;
 			}
 		}
 	}

@@ -16,13 +16,13 @@
        <imagedata fileref="images/modifiers/expression_select_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier let you select particles or bonds based on user-defined criteria, i.e. by entering a Boolean expression, 
-    which is evaluated by the modifier for every particle/bond in the system. 
+    This modifier let you select particles or bonds based on user-defined criteria, i.e. by entering a Boolean expression,
+    which is evaluated by the modifier for every particle/bond in the system.
     Those element for which the expression yields a non-zero value ("<emphasis>true</emphasis>")
-    will be selected; all other elements, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected. 
+    will be selected; all other elements, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected.
   </para>
   <para>
-    The Boolean expression can contain references to particle and bond properties as well as global quantities, e.g. the simulation cell size or the current timestep number. 
+    The Boolean expression can contain references to particle and bond properties as well as global quantities, e.g. the simulation cell size or the current timestep number.
     Hence, the modifier can be used to dynamically select elements based on properties such as position,
     type, energy, etc. and any combination thereof. The list of available
     input variables is displayed in the lower panel as shown in the screenshot.
@@ -31,7 +31,7 @@
     Boolean expressions can contain comparison operators like <literal>==</literal>, <literal>!=</literal>, <literal>&gt;=</literal>, etc.,
     and several conditions can be combined using logical AND and OR operators (<literal>&amp;&amp;</literal> and <literal>||</literal>).
   </para>
-  <para> 
+  <para>
     Note that variable names and function names are case-sensitive. Variable names are restricted to alphanumeric characters and
     underscores. OVITO automatically replaces invalid characters in property names with an underscore to generate valid variable names
     that can be referenced in the expression.
@@ -98,13 +98,13 @@
             <entry>logical OR operator: result is 1 if A or B differ from
             0, else 0</entry>
           </row>
-          
+
           <row>
             <entry>A ? B : C</entry>
             <entry>If A differs from 0 (i.e. is true), the resulting value of this expression
             is B, else C.</entry>
           </row>
-          
+
         </tbody></tgroup>
       </informaltable></para>
 
@@ -247,14 +247,14 @@
             <entry>sign(A)</entry>
             <entry>Returns: 1 if A is positive; -1 if A is negative; 0 if A is zero.</entry>
           </row>
-                          
+
           <row>
             <entry>sin(A)</entry>
 
             <entry>Sine of A. Returns the sine of the angle A, where A is
             measured in radians.</entry>
           </row>
-          
+
           <row>
             <entry>sinh(A)</entry>
 
@@ -271,8 +271,8 @@
             <entry>sum(A,B,...)</entry>
 
             <entry>Returns the sum of all parameter values.</entry>
-          </row>                               
-          
+          </row>
+
           <row>
             <entry>tan(A)</entry>
 
@@ -292,15 +292,15 @@
     does. The second expression will select particles within a cylindrical region of radius 10:</para>
 
     <para><programlisting>ParticleType==1 || ParticleType==2
-    
+
 sqrt(Position.X*Position.X + Position.Y*Position.Y) &lt; 10.0</programlisting></para>
   </simplesect>
 
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ExpressionSelectionModifier"><classname>ExpressionSelectionModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.ExpressionSelectionModifier"><classname>ExpressionSelectionModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

@@ -34,7 +34,7 @@ PYBIND11_MODULE(VoroTopPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -58,12 +58,12 @@ PYBIND11_MODULE(VoroTopPython, m)
 			":py:class:`SelectTypeModifier`. "
 			"\n\n"
 			"This method is well-suited for analyzing finite-temperature systems, including those heated to "
-    		"their bulk melting temperatures.  This robust behavior relieves the need to quench a sample "
+    		"their bulk melting temperatures. This robust behavior relieves the need to quench a sample "
     		"(such as by energy minimization) prior to analysis. "
 			"Further information about the Voronoi topology approach for local structure analysis, as well "
     		"as additional filters, can be found on the `VoroTop webpage <https://www.seas.upenn.edu/~mlazar/VoroTop/>`__. "
 			"\n\n"
-			"See also the corresponding `user manual page <../../particles.modifiers.vorotop_analysis.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.vorotop_analysis>` for this modifier. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -83,7 +83,7 @@ PYBIND11_MODULE(VoroTopPython, m)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("filter_file", &VoroTopModifier::filterFile, [](VoroTopModifier& mod, const QString& filename) {
-					if(!mod.loadFilterDefinition(filename, ScriptEngine::getCurrentDataset()->taskManager())) {
+					if(!mod.loadFilterDefinition(filename, ScriptEngine::currentTask()->createSubTask())) {
 						PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 						throw py::error_already_set();
 					}

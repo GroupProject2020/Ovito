@@ -40,10 +40,10 @@ bool XYZImporterEditor::inspectNewFile(FileImporter* importer, const QUrl& sourc
 {
 	XYZImporter* xyzImporter = static_object_cast<XYZImporter>(importer);
 	Future<InputColumnMapping> inspectFuture = xyzImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForFuture(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
-	
+
 	// If column names were given in the XYZ file, use them rather than popping up a dialog.
 	if(mapping.hasFileColumnNames()) {
 		return true;
@@ -91,7 +91,7 @@ bool XYZImporterEditor::inspectNewFile(FileImporter* importer, const QUrl& sourc
 bool XYZImporterEditor::showEditColumnMappingDialog(XYZImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
 	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForFuture(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
 

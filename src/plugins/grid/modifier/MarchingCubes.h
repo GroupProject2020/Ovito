@@ -24,7 +24,7 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/mesh/surface/SurfaceMeshData.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 
 namespace Ovito { namespace Grid {
 
@@ -68,7 +68,7 @@ public:
         return _data[(i + j*_data_size_x + k*_data_size_x*_data_size_y) * _dataStride];
     }
 
-    bool generateIsosurface(FloatType iso, PromiseState& promise);
+    bool generateIsosurface(FloatType iso, Task& task);
 
     /// Returns the generated surface mesh.
     const SurfaceMeshData& mesh() const { return _outputMesh; }
@@ -87,7 +87,7 @@ protected:
     bool testInterior(char s);
 
     /// Computes almost all the vertices of the mesh by interpolation along the cubes edges.
-    void computeIntersectionPoints(FloatType iso, PromiseState& promise);
+    void computeIntersectionPoints(FloatType iso, Task& promise);
 
     /// Adds triangles to the mesh.
     void addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh::vertex_index v12 = HalfEdgeMesh::InvalidIndex);

@@ -2,6 +2,7 @@ from ovito.io import *
 from ovito.vis import *
 import ovito
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 
 # Import a data file.
 pipeline = import_file("../files/CFG/shear.void.120.cfg")
@@ -20,7 +21,7 @@ print(vp.type)
 vp.zoom_all()
 
 overlay = TextLabelOverlay(
-    text = 'Some text', 
+    text = 'Some text',
     alignment = QtCore.Qt.AlignHCenter ^ QtCore.Qt.AlignBottom,
     offset_y = 0.1,
     font_size = 0.03,
@@ -28,7 +29,13 @@ overlay = TextLabelOverlay(
 
 vp.overlays.append(overlay)
 vp.render(settings)
-vp.render_image(renderer=settings.renderer, size=settings.size)
+img = vp.render_image(renderer=settings.renderer, size=settings.size)
+assert(img.hasAlphaChannel())
+assert(img.pixel(0,0) == 0xffffffff)
+
+img = vp.render_image(renderer=settings.renderer, size=settings.size, alpha=True)
+assert(img.hasAlphaChannel())
+assert(img.pixel(0,0) == 0)
 
 for vp in ovito.scene.viewports:
     print(vp)

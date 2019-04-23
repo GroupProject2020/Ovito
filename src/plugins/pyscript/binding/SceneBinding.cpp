@@ -91,9 +91,37 @@ void defineSceneSubmodule(py::module m)
 
 		.def("make_mutable", [](DataObject& parent, const DataObject* subobj) -> DataObject* {
 				if(!subobj) return nullptr;
-				if(!parent.hasReferenceTo(subobj)) throw Exception("Object to be made mutable is not a sub-object of this parent object.");
+				if(!parent.hasReferenceTo(subobj)) throw Exception("Object to be made mutable is not a sub-object of this parent.");
 				return parent.makeMutable(subobj);
-			})
+			},
+			"make_mutable(subobj)"
+			"\n\n"
+			"Requests a deep copy of a sub-object of this :py:class:`DataObject` in case it is shared with another :py:class:`DataObject`. "
+			"\n\n"
+#if 0
+			"Makes a copy of a data object from this data collection if the object is not exclusively "
+    		"owned by the data collection but shared with other collections. After the method returns, "
+    		"the data object is exclusively owned by the collection and it becomes safe to modify the object without "
+    		"causing unwanted side effects. "
+			"\n\n"
+			"Typically, this method is used within user-defined modifier functions (see :py:class:`~ovito.modifiers.PythonScriptModifier`) that "
+    		"participate in OVITO's data pipeline system. A modifier function receives an input collection of "
+    		"data objects from the system. However, modifying these input "
+    		"objects in place is not allowed, because they are owned by the pipeline and modifying them would "
+    		"lead do unexpected side effects. "
+    		"This is where this method comes into play: It makes a copy of a given data object and replaces "
+    		"the original in the data collection with the copy. The caller can now safely modify this copy in place, "
+    		"because no other data collection can possibly be referring to it. "
+			"\n\n"
+   			"The :py:meth:`!make_mutable` method first checks if *obj*, which must be a data object from this data collection, is "
+    		"shared with some other data collection. If yes, it creates an exact copy of *obj* and replaces the original "
+    		"in this data collection with the copy. Otherwise it leaves the object as is, because it is already exclusively owned "
+    		"by this data collection. "
+			"\n\n"
+#endif
+			":param DataObject subobj: The object from this data collection to be copied if needed.\n"
+    		":return: A copy of *subobj* if it was shared with somebody else. Otherwise the original object is returned.\n",
+			py::arg("subobj"))
 
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property("display", static_cast<DataVis* (DataObject::*)() const>(&DataObject::visElement), &DataObject::setVisElement)
@@ -102,8 +130,8 @@ void defineSceneSubmodule(py::module m)
 	createDataPropertyAccessors(DataObject_py, "identifier", &DataObject::identifier, &DataObject::setIdentifier,
 				"The unique identifier string of the data object. May be empty. ");
 	expose_mutable_subobject_list(DataObject_py,
-								  std::mem_fn(&DataObject::visElements), 
-								  std::mem_fn(&DataObject::insertVisElement), 
+								  std::mem_fn(&DataObject::visElements),
+								  std::mem_fn(&DataObject::insertVisElement),
 								  std::mem_fn(&DataObject::removeVisElement), "vis_list", "DataVisList");
 
 	ovito_class<AttributeDataObject, DataObject>{m}
@@ -124,10 +152,10 @@ void defineSceneSubmodule(py::module m)
 		.def("anim_time_to_source_frame", &PipelineObject::animationTimeToSourceFrame)
 		.def("source_frame_to_anim_time", &PipelineObject::sourceFrameToAnimationTime)
 
-		// Required by implementation of FileSource.compute():
+		// Required by implementations of FileSource.compute() and DataCollection.apply() methods:
 		.def("_evaluate", [](PipelineObject& obj, TimePoint time) {
 
-			// Full evaluation of the data pipeline is not possible while interactive viewport rendering 
+			// Full evaluation of the data pipeline is not possible while interactive viewport rendering
 			// is in progress. If rendering is in progress, we return a preliminary pipeline state only.
 			if(obj.dataset()->viewportConfig()->isRendering()) {
 				PipelineFlowState state = obj.evaluatePreliminary();
@@ -140,7 +168,7 @@ void defineSceneSubmodule(py::module m)
 				// Start an asynchronous pipeline evaluation.
 				SharedFuture<PipelineFlowState> future = obj.evaluate(time);
 				// Block until evaluation is complete and result is available.
-				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
+				if(!ScriptEngine::waitForFuture(future)) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}
@@ -169,7 +197,7 @@ void defineSceneSubmodule(py::module m)
 			"number of the snaphots, etc. All this information is contained in one :py:class:`!DataCollection`, which "
 			"exposes the individual pieces of information as sub-objects, for example via the :py:attr:`DataCollection.particles`, "
 			":py:attr:`DataCollection.cell` and :py:attr:`DataCollection.attributes` fields. "
-			"\n\n"			
+			"\n\n"
 			"Data collections are the elementary entities that get processed within a data :py:class:`~ovito.pipeline.Pipeline`. "
 			"Each modifier receives a data collection from the preceding modifier, alters it in some way, and passes it "
 			"on to the next modifier. The output data collection of the last modifier in the pipeline is returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` method. "
@@ -196,8 +224,8 @@ void defineSceneSubmodule(py::module m)
 			"\n\n"
 			"**Data ownership**"
 			"\n\n"
-			"One data object may be part of several :py:class:`!DataCollection` instances at a time, i.e. it may be shared by several data collections. " 
-			"OVITO' pipeline system uses shallow data copies for performance reasons and to implement efficient data caching. " 
+			"One data object may be part of several :py:class:`!DataCollection` instances at a time, i.e. it may be shared by several data collections. "
+			"OVITO' pipeline system uses shallow data copies for performance reasons and to implement efficient data caching. "
 			"Modifiers typically manipulate only certain data objects in a collection. For example, the :py:class:`~ovito.modifiers.ColorCodingModifier` "
 			"will selectively modify the values of the ``Color`` particle property but won't touch any of the other data objects "
 			"present in the input data collection. The unmodified data objects will simply be passed through to the output data collection "
@@ -221,40 +249,6 @@ void defineSceneSubmodule(py::module m)
 			":py:meth:`.copy_if_needed` first checks whether the given object is currently shared by more than one data collection. If yes, "
 			"a deep copy of the object is made and the original object in the data collection is replaced with the copy. "
 			"Now we can be confident that the copied data object is exclusively owned by the data collection and it's safe to modify it without risking side effects. "
-#endif
-			)
-
-		.def("make_mutable", [](DataCollection& dc, const DataObject* obj) -> DataObject* {
-				if(!obj) return nullptr;
-				if(!dc.contains(obj)) throw Exception("Data object is not part of this DataCollection. make_mutable() only works for objects that are currently in the DataCollection.");
-				return dc.makeMutable(obj);
-			}
-#if 0
-			, 
-			"make_mutable(obj)"
-			"\n\n"
-			"Makes a copy of a data object from this data collection if the object is not exclusively "
-    		"owned by the data collection but shared with other collections. After the method returns, "
-    		"the data object is exclusively owned by the collection and it becomes safe to modify the object without "
-    		"causing unwanted side effects. "
-			"\n\n"
-			"Typically, this method is used within user-defined modifier functions (see :py:class:`~ovito.modifiers.PythonScriptModifier`) that "
-    		"participate in OVITO's data pipeline system. A modifier function receives an input collection of "
-    		"data objects from the system. However, modifying these input "
-    		"objects in place is not allowed, because they are owned by the pipeline and modifying them would "
-    		"lead do unexpected side effects. "
-    		"This is where this method comes into play: It makes a copy of a given data object and replaces "
-    		"the original in the data collection with the copy. The caller can now safely modify this copy in place, "
-    		"because no other data collection can possibly be referring to it. "
-			"\n\n"
-   			"The :py:meth:`!make_mutable` method first checks if *obj*, which must be a data object from this data collection, is "
-    		"shared with some other data collection. If yes, it creates an exact copy of *obj* and replaces the original "
-    		"in this data collection with the copy. Otherwise it leaves the object as is, because it is already exclusively owned "
-    		"by this data collection. "
-			"\n\n"
-			":param DataObject obj: The object from this data collection to be copied if needed.\n"
-    		":return: An exact copy of *obj* if it was shared with some other data collection. Otherwise the original object is returned.\n",
-			py::arg("obj")
 #endif
 			)
 
@@ -284,10 +278,15 @@ void defineSceneSubmodule(py::module m)
 				}
 			})
 #endif
+
+		// Needed for the implementation of DataCollection.apply(): Copies the data objects over from another DataCollection.
+		.def("_assign_objects", [](DataCollection& self, const DataCollection& other) {
+			self.setObjects(other.objects());
+		});
 	;
 	expose_mutable_subobject_list(DataCollection_py,
-								  std::mem_fn(&DataCollection::objects), 
-								  std::mem_fn(&DataCollection::insertObject), 
+								  std::mem_fn(&DataCollection::objects),
+								  std::mem_fn(&DataCollection::insertObject),
 								  std::mem_fn(&DataCollection::removeObjectByIndex), "objects", "DataCollectionObjectsList",
 			"The unordered list of all :py:class:`DataObjects <DataObject>` stored in this data collection. You can add or remove data objects in this list as needed. "
 			"\n\n"
@@ -317,7 +316,7 @@ void defineSceneSubmodule(py::module m)
 
 	ovito_abstract_class<AsynchronousModifier, Modifier>{m}
 	;
-	
+
 	ovito_class<ModifierApplication, CachingPipelineObject>{m}
 		.def_property("modifier", &ModifierApplication::modifier, &ModifierApplication::setModifier)
 		.def_property("input", &ModifierApplication::input, &ModifierApplication::setInput)
@@ -449,10 +448,10 @@ void defineSceneSubmodule(py::module m)
 		.def("delete", &SceneNode::deleteNode)
 	;
 	expose_mutable_subobject_list(SceneNode_py,
-								  std::mem_fn(&SceneNode::children), 
-								  std::mem_fn(&SceneNode::insertChildNode), 
-								  std::mem_fn(&SceneNode::removeChildNode), "children", "SceneNodeChildren");		
-	
+								  std::mem_fn(&SceneNode::children),
+								  std::mem_fn(&SceneNode::insertChildNode),
+								  std::mem_fn(&SceneNode::removeChildNode), "children", "SceneNodeChildren");
+
 
 	auto Pipeline_py = ovito_class<PipelineSceneNode, SceneNode>(m,
 			"This class encapsulates a data pipeline, consisting of a *data source* and a chain of zero or more *modifiers*, "
@@ -512,11 +511,11 @@ void defineSceneSubmodule(py::module m)
 				"This typically is a :py:class:`FileSource` instance if the pipeline was created by a call to :py:func:`~ovito.io.import_file`. "
 				"You can assign a new source to the pipeline if needed. See the :py:mod:`ovito.pipeline` module for a list of available pipeline source types. "
 				"Note that you can even make several pipelines share the same source object. ")
-		
+
 		// Required by implementation of Pipeline.compute():
 		.def("evaluate_pipeline", [](PipelineSceneNode& node, TimePoint time) {
 
-			// Full evaluation of the data pipeline is not possible while interactive viewport rendering 
+			// Full evaluation of the data pipeline is not possible while interactive viewport rendering
 			// is in progress. If rendering is in progress, we return a preliminary pipeline state only.
 			if(node.dataset()->viewportConfig()->isRendering()) {
 				PipelineFlowState state = node.evaluatePipelinePreliminary(false);
@@ -529,7 +528,7 @@ void defineSceneSubmodule(py::module m)
 				// Start an asynchronous pipeline evaluation.
 				SharedFuture<PipelineFlowState> future = node.evaluatePipeline(time, true);
 				// Block until evaluation is complete and result is available.
-				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
+				if(!ScriptEngine::waitForFuture(future)) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}
@@ -545,8 +544,8 @@ void defineSceneSubmodule(py::module m)
 	auto SelectionSet_py = ovito_class<SelectionSet, RefTarget>{m}
 	;
 	expose_mutable_subobject_list(SelectionSet_py,
-								  std::mem_fn(&SelectionSet::nodes), 
-								  std::mem_fn(&SelectionSet::insert), 
+								  std::mem_fn(&SelectionSet::nodes),
+								  std::mem_fn(&SelectionSet::insert),
 								  std::mem_fn(&SelectionSet::removeByIndex), "nodes", "SelectionSetNodes");
 
 	ovito_class<PythonScriptModifier, Modifier>(m,

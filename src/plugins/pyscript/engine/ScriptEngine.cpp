@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,51 +28,45 @@
 
 namespace PyScript {
 
-/// Points to the script engine that is currently active (i.e. which is executing a script).
-std::shared_ptr<ScriptEngine> ScriptEngine::_activeEngine;
+/// Linked list of active script execution contexts.
+ScriptEngine::ScriptExecutionContext* ScriptEngine::_activeContext = nullptr;
 
-/// Head of linked list containing all initXXX functions. 
+/// Head of linked list containing all initXXX functions.
 PythonPluginRegistration* PythonPluginRegistration::linkedlist = nullptr;
 
-/******************************************************************************
-* Initializes the scripting engine and sets up the environment.
-******************************************************************************/
-ScriptEngine::ScriptEngine(DataSet* dataset) : _dataset(dataset)
+// This helper class redirects Python script write calls to the sys.stdout stream to this script engine.
+struct InterpreterOutputRedirector
 {
-	try {
-		// Initialize our embedded Python interpreter if it isn't running already.
-		if(!Py_IsInitialized())
-			initializeEmbeddedInterpreter();
-	}
-	catch(py::error_already_set& ex) {
-		ex.restore();
-		if(PyErr_Occurred())
-			PyErr_PrintEx(0);
-		throw Exception(tr("Failed to initialize Python interpreter."), dataset);
-	}
-	catch(Exception& ex) {
-		ex.setContext(dataset);
-		throw;
-	}
-	catch(const std::exception& ex) {
-		throw Exception(tr("Failed to initialize Python interpreter. %1").arg(ex.what()), dataset);
-	}
-}
+	explicit InterpreterOutputRedirector(std::ostream& stream) : _stream(stream) {}
 
-/******************************************************************************
-* Destructor.
-******************************************************************************/
-ScriptEngine::~ScriptEngine()
-{
-}
+	void write(const QString& str) {
+		for(ScriptEngine::ScriptExecutionContext* c = ScriptEngine::_activeContext; c != nullptr; c = c->next) {
+			if(c->stdoutSlot) {
+				QMetaObject::invokeMethod(c->contextObj, c->stdoutSlot, Q_ARG(QString, str));
+				return;
+			}
+		}
+		_stream << str.toStdString();
+	}
+
+	void flush() {
+		for(ScriptEngine::ScriptExecutionContext* c = ScriptEngine::_activeContext; c != nullptr; c = c->next) {
+			if(c->stdoutSlot)
+				return;
+		}
+		_stream << std::flush;
+	}
+
+	std::ostream& _stream;
+};
 
 /******************************************************************************
 * Initializes the embedded Python interpreter and sets up the global namespace.
 ******************************************************************************/
-void ScriptEngine::initializeEmbeddedInterpreter()
+void ScriptEngine::initializeEmbeddedInterpreter(RefTarget* contextObj)
 {
 	// This is a one-time global initialization.
-	static bool isInterpreterInitialized = false; 
+	static bool isInterpreterInitialized = false;
 	if(isInterpreterInitialized)
 		return;	// Interpreter is already initialized.
 
@@ -90,7 +84,7 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 
 		// Make our internal script modules available by registering their initXXX functions with the Python interpreter.
 		// This is required for static builds where all Ovito plugins are linked into the main executable file.
-		// On Windows this is needed, because OVITO plugins have an .dll extension and the Python interpreter 
+		// On Windows this is needed, because OVITO plugins have an .dll extension and the Python interpreter
 		// only looks for modules that have a .pyd extension.
 		for(const PythonPluginRegistration* r = PythonPluginRegistration::linkedlist; r != nullptr; r = r->_next) {
 			const char* name = r->_moduleName.c_str();
@@ -107,20 +101,17 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 		// Let the ovito.plugins module know that it is running in a statically linked
 		// interpreter.
 		sys_module.attr("__OVITO_BUILD_MONOLITHIC") = py::cast(true);
-#endif		
+#endif
 
 		// Install output redirection (don't do this in console mode as it interferes with the interactive interpreter).
 		if(Application::instance()->guiMode()) {
 			// Register the output redirector class.
-			py::class_<InterpreterStdOutputRedirector>(sys_module, "__StdOutStreamRedirectorHelper")
-					.def("write", &InterpreterStdOutputRedirector::write)
-					.def("flush", &InterpreterStdOutputRedirector::flush);
-			py::class_<InterpreterStdErrorRedirector>(sys_module, "__StdErrStreamRedirectorHelper")
-					.def("write", &InterpreterStdErrorRedirector::write)
-					.def("flush", &InterpreterStdErrorRedirector::flush);
+			py::class_<InterpreterOutputRedirector>(sys_module, "__StdStreamRedirectorHelper")
+					.def("write", &InterpreterOutputRedirector::write)
+					.def("flush", &InterpreterOutputRedirector::flush);
 			// Replace stdout and stderr streams.
-			sys_module.attr("stdout") = py::cast(new InterpreterStdOutputRedirector(), py::return_value_policy::take_ownership);
-			sys_module.attr("stderr") = py::cast(new InterpreterStdErrorRedirector(), py::return_value_policy::take_ownership);
+			sys_module.attr("stdout") = py::cast(new InterpreterOutputRedirector(std::cout), py::return_value_policy::take_ownership);
+			sys_module.attr("stderr") = py::cast(new InterpreterOutputRedirector(std::cerr), py::return_value_policy::take_ownership);
 		}
 
 		// Determine path where Python source files are located.
@@ -140,123 +131,164 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 		// Prepend current directory to sys.path.
 		PyList_Insert(sys_path.ptr(), 0, py::str().ptr());
 	}
-	catch(const Exception&) {
+	catch(Exception& ex) {
+		if(!ex.context()) ex.setContext(contextObj);
 		throw;
 	}
 	catch(py::error_already_set& ex) {
 		ex.restore();
 		if(PyErr_Occurred())
 			PyErr_PrintEx(0);
-		throw Exception(tr("Failed to initialize Python interpreter. %1").arg(ex.what()), dataset());
+		contextObj->throwException(DataSet::tr("Failed to initialize Python interpreter. %1").arg(ex.what()));
 	}
 	catch(const std::exception& ex) {
-		throw Exception(tr("Failed to initialize Python interpreter: %1").arg(ex.what()), dataset());
+		contextObj->throwException(DataSet::tr("Failed to initialize Python interpreter: %1").arg(ex.what()));
 	}
 	catch(...) {
-		throw Exception(tr("Unhandled exception thrown by Python interpreter."), dataset());
+		contextObj->throwException(DataSet::tr("Unhandled exception thrown by Python interpreter."));
 	}
 
 	isInterpreterInitialized = true;
 }
 
 /******************************************************************************
-* Determine the DataSet from the context the current script is running in.
+* Returns the DataSet which is the current context for scripts.
 ******************************************************************************/
-DataSet* ScriptEngine::getCurrentDataset()
+DataSet* ScriptEngine::currentDataset()
 {
-	if(!activeEngine())
-		throw Exception("Invalid interpreter state. There is no active dataset.");
-	return activeEngine()->dataset();
+	OVITO_ASSERT_MSG(_activeContext != nullptr, "ScriptEngine::currentDataset()", "This method may only be called during script execution.");
+	OVITO_ASSERT(_activeContext->contextObj != nullptr);
+	OVITO_ASSERT(_activeContext->contextObj->dataset());
+
+	if(!_activeContext)
+		throw Exception("Invalid program state. ScriptEngine::currentDataset() was called from outside a script execution context.");
+
+	return _activeContext->contextObj->dataset();
 }
 
 /******************************************************************************
-* Creates a global script engine instance. This is used when loading the 
-* OVITO Python modules from an external interpreter.
+* Blocks execution until the given future has completed.
 ******************************************************************************/
-void ScriptEngine::createAdhocEngine(DataSet* dataset)
+bool ScriptEngine::waitForFuture(const FutureBase& future)
 {
-	OVITO_ASSERT(Py_IsInitialized());
-	OVITO_ASSERT(!_activeEngine);
+	OVITO_ASSERT_MSG(_activeContext != nullptr, "ScriptEngine::waitForFuture()", "This method may only be called during script execution.");
+	OVITO_ASSERT(_activeContext->task);
 
-	// Create the global engine instance.
-	_activeEngine = createEngine(dataset);
+	if(!_activeContext)
+		throw Exception("Invalid program state. ScriptEngine::waitForFuture() was called from outside a script execution context.");
 
-	// Inform the application that script execution is in progress.
-	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
-	Application::instance()->scriptExecutionStarted();
+	bool result = _activeContext->task->waitForFuture(future);
+	return result;
+}
+
+/******************************************************************************
+* Returns the asynchronous task object that represents the current script execution.
+******************************************************************************/
+const TaskPtr& ScriptEngine::currentTask()
+{
+	OVITO_ASSERT_MSG(_activeContext != nullptr, "ScriptEngine::currentTask()", "This method may only be called during script execution.");
+	OVITO_ASSERT(_activeContext->task);
+
+	if(!_activeContext)
+		throw Exception("Invalid program state. ScriptEngine::currentTask() was called from outside a script execution context.");
+
+	return _activeContext->task;
 }
 
 /******************************************************************************
 * Executes the given C++ function, which in turn may invoke Python functions in the
 * context of this engine, and catches possible exceptions.
 ******************************************************************************/
-int ScriptEngine::execute(const std::function<void()>& func)
+int ScriptEngine::executeSync(RefTarget* contextObj, const TaskPtr& task, const char* stdoutSlot, const std::function<void()>& func)
 {
-	OVITO_ASSERT(dataset());
-	OVITO_ASSERT(dataset()->container());
-
+	OVITO_ASSERT(contextObj != nullptr);
 	if(QCoreApplication::instance() && QThread::currentThread() != QCoreApplication::instance()->thread())
-		throw Exception(tr("Python scripts can only be run from the main thread."), dataset());
+		contextObj->throwException(DataSet::tr("Python scripts can only be run from the main thread."));
+	DataSet* dataset = contextObj->dataset();
 
 	// Inform the application that a script execution has started.
 	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
-	Application::instance()->scriptExecutionStarted();
+	bool wasCalledFromScript = (Application::instance()->executionContext() == Application::ExecutionContext::Scripting);
+	if(!wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 
-	// Keep track which script engine was active before this function was called. 
-	std::shared_ptr<ScriptEngine> previousEngine = std::move(_activeEngine);
-	// And mark this engine as the active one.
-	_activeEngine = shared_from_this();
+	// Create an information record on the stack that indicates which script execution is currently in progress.
+	ScriptExecutionContext execContext(contextObj, stdoutSlot, task);
 
 	int returnValue = 0;
 	try {
 		try {
-			// Get reference to the main ovito Python module.
-			py::module ovito_module = py::module::import("ovito");
+			// Initialize the embedded Python interpreter if it isn't running already.
+			if(!Py_IsInitialized())
+				initializeEmbeddedInterpreter(contextObj);
 
-			// Add an attribute to the ovito module that provides access to the active dataset.
-			py::setattr(ovito_module, "scene", py::cast(dataset(), py::return_value_policy::reference));
+			try {
+				// Get reference to the main ovito Python module.
+				py::module ovito_module = py::module::import("ovito");
 
-			// This is for backward compatibility with OVITO 2.9.0:
-			py::setattr(ovito_module, "dataset", py::cast(dataset(), py::return_value_policy::reference));
-		
-			func();
-		}
-		catch(py::error_already_set& ex) {
-			returnValue = handlePythonException(ex);
+				// Add an attribute to the ovito module that provides access to the active dataset.
+				py::setattr(ovito_module, "scene", py::cast(dataset, py::return_value_policy::reference));
+
+				// This is for backward compatibility with OVITO 2.9.0:
+				py::setattr(ovito_module, "dataset", py::cast(dataset, py::return_value_policy::reference));
+
+				// Invoke the supplied C++ function that executes scripting functions.
+				func();
+			}
+			catch(py::error_already_set& ex) {
+				returnValue = handlePythonException(ex);
+			}
+			catch(Exception& ex) {
+				ex.setContext(dataset);
+				throw;
+			}
+			catch(const std::exception& ex) {
+				throw Exception(DataSet::tr("Script execution error: %1").arg(ex.what()), dataset);
+			}
+			catch(...) {
+				throw Exception(DataSet::tr("Unhandled exception thrown by Python interpreter."), dataset);
+			}
 		}
 		catch(Exception& ex) {
-			ex.setContext(dataset());
+			if(!ex.context())
+				ex.setContext(contextObj->dataset());
+			if(stdoutSlot && !task->isCanceled())
+				QMetaObject::invokeMethod(contextObj, stdoutSlot, Q_ARG(QString, ex.messages().join(QChar('\n'))));
 			throw;
-		}
-		catch(const std::exception& ex) {
-			throw Exception(tr("Script execution error: %1").arg(ex.what()), dataset());
-		}
-		catch(...) {
-			throw Exception(tr("Unhandled exception thrown by Python interpreter."), dataset());
 		}
 	}
 	catch(...) {
-		_activeEngine = std::move(previousEngine);
-		Application::instance()->scriptExecutionStopped();
+		// Inform the application that script execution has ended.
+		if(!wasCalledFromScript)
+			Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
 		throw;
 	}
-	_activeEngine = std::move(previousEngine);
-	Application::instance()->scriptExecutionStopped();
-	return 0;
+
+	// Inform the application that script execution has ended.
+	if(!wasCalledFromScript)
+		Application::instance()->switchExecutionContext(Application::ExecutionContext::Interactive);
+
+	return returnValue;
 }
 
 /******************************************************************************
 * Executes one or more Python statements.
 ******************************************************************************/
-int ScriptEngine::executeCommands(const QString& commands, const py::object& global, const QStringList& cmdLineArguments)
+int ScriptEngine::executeCommands(const QString& commands, RefTarget* contextObj, const TaskPtr& task, const char* stdoutSlot, bool modifyGlobalNamespace, const QStringList& cmdLineArguments)
 {
-	return execute([&]() {
+	return executeSync(contextObj, task, stdoutSlot, [&]() {
 		// Pass command line parameters to the script.
 		py::list argList;
 		argList.append(py::cast("-c"));
 		for(const QString& a : cmdLineArguments)
 			argList.append(py::cast(a));
-		py::module::import("sys").attr("argv") = argList;
+		py::module::import("sys").attr("argv") = std::move(argList);
+
+		py::dict global;
+		if(modifyGlobalNamespace)
+			global = py::globals();
+		else
+			global = py::globals().attr("copy")();
 
 		global["__file__"] = py::none();
 		PyObject* result = PyRun_String(commands.toUtf8().constData(), Py_file_input, global.ptr(), global.ptr());
@@ -268,15 +300,22 @@ int ScriptEngine::executeCommands(const QString& commands, const py::object& glo
 /******************************************************************************
 * Executes a Python program.
 ******************************************************************************/
-int ScriptEngine::executeFile(const QString& filename, const py::object& global, const QStringList& cmdLineArguments)
+int ScriptEngine::executeFile(const QString& filename, RefTarget* contextObj, const TaskPtr& task, const char* stdoutSlot, bool modifyGlobalNamespace, const QStringList& cmdLineArguments)
 {
-	return execute([&]() {
+	return executeSync(contextObj, task, stdoutSlot, [&]() {
+
 		// Pass command line parameters to the script.
 		py::list argList;
 		argList.append(py::cast(filename));
 		for(const QString& a : cmdLineArguments)
 			argList.append(py::cast(a));
 		py::module::import("sys").attr("argv") = argList;
+
+		py::dict global;
+		if(modifyGlobalNamespace)
+			global = py::globals();
+		else
+			global = py::globals().attr("copy")();
 
 		py::str nativeFilename(py::cast(QDir::toNativeSeparators(filename)));
 		global["__file__"] = nativeFilename;
@@ -297,9 +336,9 @@ int ScriptEngine::handlePythonException(py::error_already_set& ex, const QString
 	}
 
 	// Prepare C++ exception object.
-	Exception exception(filename.isEmpty() ? 
-		tr("The Python script has exited with an error.") :
-		tr("The Python script '%1' has exited with an error.").arg(filename), dataset());
+	Exception exception(filename.isEmpty() ?
+		DataSet::tr("The Python script has exited with an error.") :
+		DataSet::tr("The Python script '%1' has exited with an error.").arg(filename));
 
 	// Retrieve Python error message and traceback.
 	if(Application::instance()->guiMode()) {
@@ -390,7 +429,7 @@ int ScriptEngine::handleSystemExit()
 				auto write = py::module::import("sys").attr("stderr").attr("write");
     	        write(s);
 				write("\n");
-			} 
+			}
 			catch(const py::error_already_set&) {}
 			exitcode = 1;
 		}
@@ -402,4 +441,136 @@ done:
 	return exitcode;
 }
 
-};
+/******************************************************************************
+* Executes the given C++ function in the context of an object and a scripting engine.
+******************************************************************************/
+Future<> ScriptEngine::executeAsync(RefTarget* context, const char* stdoutSlot, const std::function<py::object()>& func)
+{
+	OVITO_ASSERT(context);
+	OVITO_ASSERT(func);
+
+	// A data structure storing the state needed for a
+	// continued execution of the Python generator function.
+	struct {
+		OvitoObjectExecutor executor;
+		std::function<py::object()> func;
+		const char* stdoutSlot;
+		py::iterator generator;
+		Promise<> promise;
+
+		// This is to submit this structure as a work item to the executor:
+		void reschedule_execution() {
+			executor.createWork(std::move(*this)).post();
+		}
+
+		// This is called by the executor at a later time:
+		void operator()(bool wasCanceled) {
+			if(wasCanceled || promise.isCanceled()) return;
+
+			// Get access to the context object.
+			RefTarget* contextObj = static_object_cast<RefTarget>(const_cast<OvitoObject*>(executor.object()));
+
+			// Make sure the actions performed by the script function are not recorded on the undo stack.
+			UndoSuspender noUndo(contextObj);
+
+			try {
+				ScriptEngine::executeSync(contextObj, promise.task(), stdoutSlot, [this]() {
+					if(func) {
+						OVITO_ASSERT(!generator);
+						// Run caller-provided script execution function.
+						py::object functionResult = std::move(func)();
+						// Throw away function object after it has been called.
+						std::function<py::object()>().swap(func);
+
+						// Check if the function is a generator function and has returned an iterator.
+						if(py::isinstance<py::iterator>(functionResult)) {
+							generator = py::reinterpret_borrow<py::iterator>(functionResult);
+							OVITO_ASSERT(generator);
+						}
+						else {
+							// We are done.
+							promise.setFinished();
+						}
+					}
+					else {
+						OVITO_ASSERT(!func);
+						QTime time;
+						time.start();
+						do {
+							OVITO_ASSERT(generator != py::iterator::sentinel());
+
+							// The generator may report progress.
+							py::handle value = *generator;
+							if(py::isinstance<py::float_>(value)) {
+								double progressValue = py::cast<double>(value);
+								if(progressValue >= 0.0 && progressValue <= 1.0) {
+									promise.setProgressMaximum(100);
+									promise.setProgressValue((qlonglong)(progressValue * 100.0));
+								}
+								else {
+									promise.setProgressMaximum(0);
+									promise.setProgressValue(0);
+								}
+							}
+							else if(py::isinstance<py::str>(value)) {
+								promise.setProgressText(py::cast<QString>(value));
+							}
+
+							// Let the Python function perform some work.
+							++generator;
+							// Check if the generator is exhausted.
+							if(generator == py::iterator::sentinel()) {
+								// We are done.
+								promise.setFinished();
+								break;
+							}
+							// Keep calling the generator object for
+							// 20 milliseconds or until it becomes exhausted.
+						}
+						while(time.elapsed() < 20 && !promise.isCanceled());
+					}
+				});
+			}
+			catch(...) {
+				promise.captureException();
+				promise.setFinished();
+			}
+
+			// Continue execution at a later time.
+			if(!promise.isFinished())
+				reschedule_execution();
+		}
+	}
+	func_continuation{ context->executor(), func, stdoutSlot };
+
+	// Python has returned a generator. We have to return a Future on the
+	// the final pipeline state that is still to be computed.
+	func_continuation.promise = context->dataset()->taskManager().createMainThreadOperation<>(true);
+	Future<> future = func_continuation.promise.future();
+	func_continuation.promise.setProgressText(DataSet::tr("Script execution"));
+
+	// Schedule an execution continuation of the Python function at some later time.
+	func_continuation.reschedule_execution();
+
+	return future;
+}
+
+/******************************************************************************
+* This is called to set up an ad-hoc environment when the Ovito Python module is loaded from
+* an external Python interpreter.
+******************************************************************************/
+void ScriptEngine::initializeExternalInterpreter(DataSet* dataset)
+{
+	OVITO_ASSERT(Py_IsInitialized());
+	OVITO_ASSERT(dataset);
+
+	// Inform the application that script execution is in progress (for an indefinite period).
+	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
+	Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
+
+	// Create script execution context and make it permanently active.
+	static AsyncOperation scriptOperation(dataset->taskManager());
+	static ScriptExecutionContext execContext(dataset, nullptr, scriptOperation.task());
+}
+
+}

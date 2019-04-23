@@ -11,19 +11,19 @@
   <title>Particles</title>
 
   <para>
-      
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/particles_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    
+
     This <link linkend="display_objects">visual element</link> is responsible for rendering particles in the viewports.
     Typically, particles are visualized as simple spheres, but you can switch to other, more complex geometric shapes
     if desired.
   </para>
   <para>
-    The <emphasis>Particles</emphasis> visual element provides a set of parameters controlling the 
+    The <emphasis>Particles</emphasis> visual element provides a set of parameters controlling the
     visual representation of all particles, which will be described in the section below.
-    Additionally, the visualization is affected by certain properties, listed in the following table, that particles may optionally 
+    Additionally, the visualization is affected by certain properties, listed in the following table, that particles may optionally
     possess. By setting the values of these particle properties, for example using the <link linkend="particles.modifiers.compute_property">
     Compute property</link> modifier, you can control the visualization on a per-particle basis.
     <informaltable>
@@ -37,7 +37,7 @@
             <entry>Data&#xA0;type / Components</entry>
             <entry>Description</entry>
           </row>
-        </thead>	
+        </thead>
         <tbody>
           <row>
             <entry><literal>Color</literal></entry>
@@ -85,14 +85,14 @@
       <varlistentry>
         <term>Shape</term>
         <listitem>
-          <para>Selects the display shape of particles. The current program version offers the choice between 
+          <para>Selects the display shape of particles. The current program version offers the choice between
           the following modes:
           <variablelist>
             <varlistentry>
               <term>Sphere/Ellipsoid</term>
               <listitem>Particles are visualized as 3d spheres. Unless the <literal>Aspherical Shape</literal> particle property
                 has been defined; then they are rendered as <link linkend="howto.aspherical_particles">ellipsoidal particles</link>.
-                In this case, the three components of the <literal>Aspherical Shape</literal> vector property control the 
+                In this case, the three components of the <literal>Aspherical Shape</literal> vector property control the
                 half lengths of the principal axes of each ellipsoid and the scalar <literal>Radius</literal> property is ignored.
               </listitem>
             </varlistentry>
@@ -103,11 +103,11 @@
             </varlistentry>
             <varlistentry>
               <term>Cube/Box</term>
-              <listitem>Particles are visualized as cubes if the <literal>Aspherical Shape</literal> particle property 
-              is not present. The <literal>Radius</literal> property can be used to 
+              <listitem>Particles are visualized as cubes if the <literal>Aspherical Shape</literal> particle property
+              is not present. The <literal>Radius</literal> property can be used to
               control the edge half-length of the cubes in this case.
               If the <literal>Aspherical Shape</literal> particle property is present, particles are rendered as non-cubic boxes
-              with the given half-lengths along the three edges. 
+              with the given half-lengths along the three edges.
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -117,7 +117,7 @@
             </varlistentry>
             <varlistentry>
               <term>Cylinder</term>
-              <listitem>Particles are visualized as cylinders. 
+              <listitem>Particles are visualized as cylinders.
                 The X-component of the <literal>Aspherical Shape</literal> vector property controls the cylinder radius
                 of particles in this mode, and the Z-component controls the length of the cylindrical particles.
                 By default, cylinders are aligned along the z-axis. If present, the <literal>Orientation</literal>
@@ -126,7 +126,7 @@
             </varlistentry>
             <varlistentry>
               <term>Spherocylinder</term>
-              <listitem>Particles are visualized as cylinders with round caps at each end (capsules). The behavior is the 
+              <listitem>Particles are visualized as cylinders with round caps at each end (capsules). The behavior is the
               same as for mode <emphasis>Cylinder</emphasis>.
               </listitem>
             </varlistentry>
@@ -137,13 +137,13 @@
       <varlistentry>
         <term>Default particle radius</term>
         <listitem>
-          <para>Specifies the display size of particles that have an otherwise unspecified size. 
+          <para>Specifies the display size of particles that have an otherwise unspecified size.
           This size value is only used for particles for which none of the following applies:
           <itemizedlist>
             <listitem><para>The <literal>Radius</literal> particle property has a non-zero value.</para></listitem>
             <listitem><para>The particle's type, as specified by the <literal>Particle Type</literal>, has a non-zero radius.</para></listitem>
           </itemizedlist>
-          In other words, this parameter provides a fallback value if no display size has been set on a 
+          In other words, this parameter provides a fallback value if no display size has been set on a
           per-particle basis or on a per-type basis.
           </para>
         </listitem>
@@ -155,7 +155,7 @@
 		    <variablelist>
 		      <varlistentry>
 		        <term>Low</term>
-		        <listitem><para>Particles are rendered as texture-mapped imposters facing the viewer. Particles do not have depth in this mode, 
+		        <listitem><para>Particles are rendered as texture-mapped imposters facing the viewer. Particles do not have depth in this mode,
 		        and intersections between spherical particles may not be displayed correctly. This mode is the fastest.</para></listitem>
 		      </varlistentry>
 		      <varlistentry>
@@ -180,12 +180,12 @@
       </varlistentry>
   	</variablelist>
     </simplesect>
-    
+
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.ParticlesVis"><classname>ParticlesVis</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.ParticlesVis"><classname>ParticlesVis</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
-    
+
 </section>

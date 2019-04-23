@@ -69,7 +69,7 @@ DEFINE_PROPERTY_FIELD(ColorCodingTableGradient, table);
 * Constructs the modifier object.
 ******************************************************************************/
 ColorCodingModifier::ColorCodingModifier(DataSet* dataset) : DelegatingModifier(dataset),
-	_colorOnlySelected(false), 
+	_colorOnlySelected(false),
 	_keepSelection(true)
 {
 	setColorGradient(new ColorCodingHSVGradient(dataset));
@@ -104,7 +104,7 @@ void ColorCodingModifier::loadUserDefaults()
 		catch(...) {}
 	}
 
-	// In the graphical program environment, we let the modifier clear the selection by default 
+	// In the graphical program environment, we let the modifier clear the selection by default
 	// in order to make the newly assigned colors visible.
 	setKeepSelection(false);
 }
@@ -129,7 +129,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 	DelegatingModifier::initializeModifier(modApp);
 
 	// When the modifier is inserted, automatically select the most recently added property from the input.
-	if(sourceProperty().isNull() && delegate() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && delegate() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(delegate()->subject())) {
 			PropertyReference bestProperty;
@@ -227,7 +227,7 @@ bool ColorCodingModifier::adjustRange()
 {
 	FloatType minValue = std::numeric_limits<FloatType>::max();
 	FloatType maxValue = std::numeric_limits<FloatType>::lowest();
-	
+
 	// Loop over all input data.
 	bool success = false;
 	for(ModifierApplication* modApp : modifierApplications()) {
@@ -236,7 +236,7 @@ bool ColorCodingModifier::adjustRange()
 		// Determine the minimum and maximum values of the selected property.
 		success |= determinePropertyValueRange(inputState, minValue, maxValue);
 	}
-	if(!success) 
+	if(!success)
 		return false;
 
 	// Adjust range of color coding.
@@ -249,13 +249,13 @@ bool ColorCodingModifier::adjustRange()
 }
 
 /******************************************************************************
-* Sets the start and end value to the minimum and maximum value of the selected 
+* Sets the start and end value to the minimum and maximum value of the selected
 * particle or bond property determined over the entire animation sequence.
 ******************************************************************************/
-bool ColorCodingModifier::adjustRangeGlobal(PromiseState& operation)
+bool ColorCodingModifier::adjustRangeGlobal(Task& operation)
 {
 	ViewportSuspender noVPUpdates(this);
-	
+
 	TimeInterval interval = dataset()->animationSettings()->animationInterval();
 	operation.setProgressMaximum(interval.duration() / dataset()->animationSettings()->ticksPerFrame() + 1);
 
@@ -266,9 +266,9 @@ bool ColorCodingModifier::adjustRangeGlobal(PromiseState& operation)
 	// minimum and maximum values.
 	for(TimePoint time = interval.start(); time <= interval.end() && !operation.isCanceled(); time += dataset()->animationSettings()->ticksPerFrame()) {
 		operation.setProgressText(tr("Analyzing frame %1").arg(dataset()->animationSettings()->timeToFrame(time)));
-		
+
 		for(ModifierApplication* modApp : modifierApplications()) {
-			
+
 			// Evaluate data pipeline up to this color coding modifier.
 			SharedFuture<PipelineFlowState> stateFuture = modApp->evaluateInput(time);
 			if(!operation.waitForFuture(stateFuture))
@@ -440,7 +440,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 /******************************************************************************
 * Converts a scalar value to a color value.
 ******************************************************************************/
-Color ColorCodingTableGradient::valueToColor(FloatType t) 
+Color ColorCodingTableGradient::valueToColor(FloatType t)
 {
 	if(table().empty()) return Color(0,0,0);
 	if(table().size() == 1) return table()[0];

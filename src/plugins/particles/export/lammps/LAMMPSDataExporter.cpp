@@ -94,7 +94,7 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	// Decide if we want to export bonds.
 	bool writeBonds = (bondTopologyProperty != nullptr) && (atomStyle() != LAMMPSDataImporter::AtomStyle_Atomic);
 
-	textStream() << "# LAMMPS data file written by OVITO\n";
+	textStream() << "# LAMMPS data file written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
 	textStream() << posProperty->size() << " atoms\n";
 	if(writeBonds)
 		textStream() << bondTopologyProperty->size() << " bonds\n";

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -122,10 +122,10 @@ void DataCollection::makeAllMutableImpl(DataObject* parent, CloneHelper& cloneHe
 }
 
 /******************************************************************************
-* Finds an object of the given type in the list of data objects stored in this 
+* Finds an object of the given type in the list of data objects stored in this
 * flow state.
 ******************************************************************************/
-const DataObject* DataCollection::getObject(const DataObject::OOMetaClass& objectClass) const 
+const DataObject* DataCollection::getObject(const DataObject::OOMetaClass& objectClass) const
 {
 	for(const DataObject* obj : objects()) {
 		if(objectClass.isMember(obj))
@@ -137,12 +137,12 @@ const DataObject* DataCollection::getObject(const DataObject::OOMetaClass& objec
 /******************************************************************************
 * Throws an exception if the input does not contain a data object of the given type.
 ******************************************************************************/
-const DataObject* DataCollection::expectObject(const DataObject::OOMetaClass& objectClass) const 
+const DataObject* DataCollection::expectObject(const DataObject::OOMetaClass& objectClass) const
 {
 	if(const DataObject* obj = getObject(objectClass))
 		return obj;
 	else {
-		if(!Application::instance()->scriptMode()) {
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 			throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
 		}
 		else {
@@ -152,21 +152,21 @@ const DataObject* DataCollection::expectObject(const DataObject::OOMetaClass& ob
 }
 
 /******************************************************************************
-* Throws an exception if the input does not contain any a data object of the 
+* Throws an exception if the input does not contain any a data object of the
 * given type and under the given hierarchy path.
 ******************************************************************************/
-const DataObject* DataCollection::expectLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const 
+const DataObject* DataCollection::expectLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const
 {
 	const DataObject* obj = getLeafObject(objectClass, pathString);
 	if(!obj) {
-		if(!Application::instance()->scriptMode()) {
-			if(pathString.isEmpty()) 
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
+			if(pathString.isEmpty())
 				throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
 			else
 				throwException(tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
 		}
 		else {
-			if(pathString.isEmpty()) 
+			if(pathString.isEmpty())
 				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
 			else
 				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
@@ -194,7 +194,7 @@ DataObject* DataCollection::makeMutable(const DataObject* obj, bool deepCopy)
 }
 
 /******************************************************************************
-* Finds an object of the given type and with the given identifier in the list 
+* Finds an object of the given type and with the given identifier in the list
 * of data objects stored in this flow state.
 ******************************************************************************/
 const DataObject* DataCollection::getObjectBy(const DataObject::OOMetaClass& objectClass, const PipelineObject* dataSource, const QString& identifier) const
@@ -202,7 +202,7 @@ const DataObject* DataCollection::getObjectBy(const DataObject::OOMetaClass& obj
 	OVITO_ASSERT(!identifier.isEmpty());
 	if(!dataSource) return nullptr;
 
-	// Look for the data object with the given ID, or with the given ID followed 
+	// Look for the data object with the given ID, or with the given ID followed
 	// an enumeration index that was appended by generateUniqueIdentifier().
 	for(const DataObject* obj : objects()) {
 		if(objectClass.isMember(obj) && obj->dataSource() == dataSource) {
@@ -263,21 +263,21 @@ ConstDataObjectPath DataCollection::getObject(const DataObject::OOMetaClass& obj
 }
 
 /******************************************************************************
-* Throws an exception if the input does not contain any a data object of the 
+* Throws an exception if the input does not contain any a data object of the
 * given type and under the given hierarchy path.
 ******************************************************************************/
-ConstDataObjectPath DataCollection::expectObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const 
+ConstDataObjectPath DataCollection::expectObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const
 {
 	ConstDataObjectPath path = getObject(objectClass, pathString);
 	if(path.empty()) {
-		if(!Application::instance()->scriptMode()) {
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 			if(pathString.isEmpty())
 				throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
 			else
 				throwException(tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
 		}
 		else {
-			if(pathString.isEmpty()) 
+			if(pathString.isEmpty())
 				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
 			else
 				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
@@ -287,21 +287,21 @@ ConstDataObjectPath DataCollection::expectObject(const DataObject::OOMetaClass& 
 }
 
 /******************************************************************************
-* Throws an exception if the input does not contain any a data object of the 
+* Throws an exception if the input does not contain any a data object of the
 * given type and under the given hierarchy path.
 ******************************************************************************/
-DataObjectPath DataCollection::expectMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) 
+DataObjectPath DataCollection::expectMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString)
 {
 	DataObjectPath path = getMutableObject(objectClass, pathString);
 	if(path.empty()) {
-		if(!Application::instance()->scriptMode()) {
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 			if(pathString.isEmpty())
 				throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
 			else
 				throwException(tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
 		}
 		else {
-			if(pathString.isEmpty()) 
+			if(pathString.isEmpty())
 				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
 			else
 				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
@@ -311,10 +311,10 @@ DataObjectPath DataCollection::expectMutableObject(const DataObject::OOMetaClass
 }
 
 /******************************************************************************
-* Throws an exception if the input does not contain any a data object of the 
+* Throws an exception if the input does not contain any a data object of the
 * given type and under the given hierarchy path.
 ******************************************************************************/
-DataObject* DataCollection::expectMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) 
+DataObject* DataCollection::expectMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString)
 {
 	DataObjectPath path = expectMutableObject(objectClass, pathString);
 	OVITO_ASSERT(!path.empty());
@@ -404,8 +404,8 @@ const DataObject* DataCollection::getLeafObjectImpl(const DataObject::OOMetaClas
 }
 
 /******************************************************************************
-* Finds an object of the given type and under the hierarchy path in this flow state. 
-* Duplicates it, and all its parent objects, if needed so that it can be safely 
+* Finds an object of the given type and under the hierarchy path in this flow state.
+* Duplicates it, and all its parent objects, if needed so that it can be safely
 * modified without unwanted side effects.
 ******************************************************************************/
 DataObjectPath DataCollection::getMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString)
@@ -414,7 +414,7 @@ DataObjectPath DataCollection::getMutableObject(const DataObject::OOMetaClass& o
 	const ConstDataObjectPath path = getObject(objectClass, pathString);
 	DataObjectPath resultPath;
 
-	// If found, clone the object as well as all parents up the hierarchy. 
+	// If found, clone the object as well as all parents up the hierarchy.
 	if(!path.empty()) {
 		resultPath.resize(path.size());
 		resultPath.front() = makeMutable(path.front());
@@ -426,8 +426,8 @@ DataObjectPath DataCollection::getMutableObject(const DataObject::OOMetaClass& o
 }
 
 /******************************************************************************
-* Finds an object of the given type and under the hierarchy path in this flow state. 
-* Duplicates it, and all its parent objects, if needed so that it can be safely 
+* Finds an object of the given type and under the hierarchy path in this flow state.
+* Duplicates it, and all its parent objects, if needed so that it can be safely
 * modified without unwanted side effects.
 ******************************************************************************/
 DataObject* DataCollection::getMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString)
@@ -462,8 +462,8 @@ QVariantMap DataCollection::buildAttributesMap() const
 }
 
 /******************************************************************************
-* Looks up the value for the given global attribute. 
-* Returns a given default value if the attribute is not defined in this pipeline state. 
+* Looks up the value for the given global attribute.
+* Returns a given default value if the attribute is not defined in this pipeline state.
 ******************************************************************************/
 QVariant DataCollection::getAttributeValue(const QString& attrName, const QVariant& defaultValue) const
 {
@@ -477,8 +477,8 @@ QVariant DataCollection::getAttributeValue(const QString& attrName, const QVaria
 }
 
 /******************************************************************************
-* Looks up the value for the global attribute with the given base name and creator. 
-* Returns a given default value if the attribute is not defined in this pipeline state. 
+* Looks up the value for the global attribute with the given base name and creator.
+* Returns a given default value if the attribute is not defined in this pipeline state.
 ******************************************************************************/
 QVariant DataCollection::getAttributeValue(const PipelineObject* dataSource, const QString& attrBaseName, const QVariant& defaultValue) const
 {
@@ -497,8 +497,8 @@ AttributeDataObject* DataCollection::addAttribute(const QString& key, QVariant v
 }
 
 /******************************************************************************
-* Returns a new unique data object identifier that does not collide with the 
-* identifiers of any existing data object of the given type in the same data 
+* Returns a new unique data object identifier that does not collide with the
+* identifiers of any existing data object of the given type in the same data
 * collection.
 ******************************************************************************/
 QString DataCollection::generateUniqueIdentifier(const QString& baseName, const OvitoClass& dataObjectClass) const

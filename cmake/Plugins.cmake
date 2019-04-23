@@ -17,7 +17,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
     ADD_LIBRARY(${target_name} ${OVITO_DEFAULT_LIBRARY_TYPE} ${plugin_sources})
 
     # Set default include directory.
-    TARGET_INCLUDE_DIRECTORIES(${target_name} PUBLIC 
+    TARGET_INCLUDE_DIRECTORIES(${target_name} PUBLIC
         "$<BUILD_INTERFACE:${OVITO_SOURCE_BASE_DIR}/src>")
 
 	# Make the name of current plugin available to the source code.
@@ -59,7 +59,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
         	TARGET_LINK_LIBRARIES(${target_name} PUBLIC ${plugin_name})
 		ENDIF()
 	ENDFOREACH()
-	
+
 	# Set prefix and suffix of library name.
 	# This is needed so that the Python interpreter can load OVITO plugins as modules.
 	SET_TARGET_PROPERTIES(${target_name} PROPERTIES PREFIX "" SUFFIX "${OVITO_PLUGIN_LIBRARY_SUFFIX}")
@@ -84,23 +84,23 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 
     # Enable the use of @rpath on macOS.
     SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
-    SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/")
-    
+    SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
+
 	IF(APPLE)
 	    # The build tree target should have rpath of install tree target.
 	    SET_TARGET_PROPERTIES(${target_name} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 	ELSEIF(UNIX)
-        SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")	
-	ENDIF()  
- 
+        SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
+	ENDIF()
+
     # Place compiled plugin module into the plugins directory.
     SET_TARGET_PROPERTIES(${target_name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
     SET_TARGET_PROPERTIES(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
-	
+
 	# Install Python wrapper files.
 	IF(python_wrappers AND OVITO_BUILD_PLUGIN_PYSCRIPT)
 		# Install the Python source files that belong to the plugin, which provide the scripting interface.
-		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD 
+		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} "-E" copy_directory "${python_wrappers}" "${OVITO_PYTHON_DIRECTORY}/"
 			COMMENT "Copying Python files for plugin ${target_name}")
 	ENDIF()
@@ -110,7 +110,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
 		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
 		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
-	
+
 	# Keep a list of plugins.
 	LIST(APPEND OVITO_PLUGIN_LIST ${target_name})
 	SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

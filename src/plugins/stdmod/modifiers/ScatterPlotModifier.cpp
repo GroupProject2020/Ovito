@@ -64,17 +64,17 @@ SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisProperty, "Y-axis property");
 * Constructs the modifier object.
 ******************************************************************************/
 ScatterPlotModifier::ScatterPlotModifier(DataSet* dataset) : GenericPropertyModifier(dataset),
-	_selectXAxisInRange(false),	
-	_selectionXAxisRangeStart(0), 
+	_selectXAxisInRange(false),
+	_selectionXAxisRangeStart(0),
 	_selectionXAxisRangeEnd(1),
-	_selectYAxisInRange(false),	
-	_selectionYAxisRangeStart(0), 
+	_selectYAxisInRange(false),
+	_selectionYAxisRangeStart(0),
 	_selectionYAxisRangeEnd(1),
-	_fixXAxisRange(false), 
+	_fixXAxisRange(false),
 	_xAxisRangeStart(0),
-	_xAxisRangeEnd(0), 
+	_xAxisRangeEnd(0),
 	_fixYAxisRange(false),
-	_yAxisRangeStart(0), 
+	_yAxisRangeStart(0),
 	_yAxisRangeEnd(0)
 {
 	// Operate on particle properties by default.
@@ -90,7 +90,7 @@ void ScatterPlotModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if((xAxisProperty().isNull() || yAxisProperty().isNull()) && subject() && !Application::instance()->scriptMode()) {	
+	if((xAxisProperty().isNull() || yAxisProperty().isNull()) && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
@@ -155,8 +155,8 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 
 	ConstPropertyPtr xProperty = xPropertyObj->storage();
 	ConstPropertyPtr yProperty = yPropertyObj->storage();
-	OVITO_ASSERT(xProperty->size() == yProperty->size());		
-				
+	OVITO_ASSERT(xProperty->size() == yProperty->size());
+
 	size_t xVecComponent = std::max(0, xAxisProperty().vectorComponent());
 	size_t xVecComponentCount = xProperty->componentCount();
 	size_t yVecComponent = std::max(0, yAxisProperty().vectorComponent());
@@ -174,7 +174,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	if(selectionXAxisRangeStart > selectionXAxisRangeEnd)
 		std::swap(selectionXAxisRangeStart, selectionXAxisRangeEnd);
 	if(selectionYAxisRangeStart > selectionYAxisRangeEnd)
-		std::swap(selectionYAxisRangeStart, selectionYAxisRangeEnd);	
+		std::swap(selectionYAxisRangeStart, selectionYAxisRangeEnd);
 
 	// Create output selection property.
 	PropertyPtr outputSelection;

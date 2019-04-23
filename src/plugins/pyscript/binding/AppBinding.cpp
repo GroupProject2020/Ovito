@@ -58,7 +58,7 @@ void defineAppSubmodule(py::module m)
 	;
 
 	ovito_abstract_class<RefMaker, OvitoObject>{m}
-		.def_property_readonly("dataset", 
+		.def_property_readonly("dataset",
 			[](RefMaker& obj) {
 				return obj.dataset().data();
 			}, py::return_value_policy::reference)
@@ -95,7 +95,7 @@ void defineAppSubmodule(py::module m)
 			":param str filename: The output file path\n"
 			"\n\n"
 			"The saved program state can be loaded again using the :command:`-o` :ref:`command line option <preloading_program_state>` of :program:`ovitos` "
-			"or in the `graphical version of OVITO <../../usage.import.html#usage.import.command_line>`__. "
+			"or in the :ovitoman:`graphical version of OVITO <../../usage.import#usage.import.command_line>`. "
 			"After loading the state file, the :py:attr:`.pipelines` list will contain again all :py:class:`~ovito.pipeline.Pipeline` objects "
 			"that were part of the scene when it was saved. See also :py:ref:`here <saving_loading_pipelines>`."
 			,
@@ -104,7 +104,7 @@ void defineAppSubmodule(py::module m)
 		.def_property_readonly("selection", &DataSet::selection)
 		// This is needed by Viewport.render_image() and Viewport.render_anim():
 		.def("render_scene", [](DataSet& dataset, RenderSettings& settings, Viewport& viewport, FrameBuffer& frameBuffer) {
-				if(!dataset.renderScene(&settings, &viewport, &frameBuffer, ScriptEngine::getCurrentDataset()->taskManager())) {
+				if(!dataset.renderScene(&settings, &viewport, &frameBuffer, ScriptEngine::currentTask()->createSubTask())) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}

@@ -11,26 +11,26 @@
   <title>External file source</title>
 
   <para>
-      
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/scene_objects/file_source_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    
-    This panel lets you manage how OVITO loads the input data for the data pipeline 
+
+    This panel lets you manage how OVITO loads the input data for the data pipeline
     from an external source. The panel is automatically opened after you first <link linkend="usage.import">import a data file</link>.
-    You can open it at any later time by selecting the first entry from the "Data source" section of the 
+    You can open it at any later time by selecting the first entry from the "Data source" section of the
     <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
   </para>
 
    <simplesect>
      <title>Toolbar</title>
-    
+
      <para>
       The toolbar at the top of the panel provides access to several basic functions, which will be described below:
       <informalfigure role="inline"><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/scene_objects/file_source_toolbar.svg" format="SVG" />
       </imageobject></mediaobject></screenshot></informalfigure>
-     
+
      <variablelist>
       <varlistentry>
         <term>Pick new file</term>
@@ -43,13 +43,13 @@
           <para>
             Note that, when you switch to a new input file using this function, OVITO will <emphasis>not</emphasis>
             automatically recognize whether it is part of a sequence of numbered files. It will load just that one file you picked.
-            In order to load en entire sequence of files, you will have to manually specify a corresponding filename pattern 
-            afterwards.  
+            In order to load en entire sequence of files, you will have to manually specify a corresponding filename pattern
+            afterwards.
           </para>
 		  <para>
 		    After loading the new file, OVITO automatically adjusts the viewports
-		    to show the entire dataset. If you want to suppress this behavior and keep the current view configuration, 
-		    first use the <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function from the 
+		    to show the entire dataset. If you want to suppress this behavior and keep the current view configuration,
+		    first use the <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function from the
         <link linkend="usage.viewports.menu">viewport menu</link> before loading the new data file.
 		  </para>
           </listitem>
@@ -73,37 +73,37 @@
           </para>
         </listitem>
       </varlistentry>
-      
+
       <varlistentry>
         <term>Update time series</term>
         <listitem>
           <para>
              Searches the directory for new files that match the current file pattern. When working
              with a file that contains multiple simulation frames, the file is re-scanned to rebuild the list of
-             frames. 
+             frames.
           </para>
         </listitem>
       </varlistentry>
-         
+
     </variablelist>
-         
-     </para>    
+
+     </para>
 
    </simplesect>
-   
+
    <simplesect>
      <title>Animation panel</title>
      <para>
         This sub-panel controls how simulation frames loaded from the input file(s) are mapped to
-        OVITO's animation timeline. Please see the <link linkend="usage.animation">animation section</link> 
+        OVITO's animation timeline. Please see the <link linkend="usage.animation">animation section</link>
         in this user manual for further information on this advanced topic.
      </para>
    </simplesect>
-    
+
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_pipeline.html#ovito.pipeline.FileSource"><classname>FileSource</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_pipeline" anchor="ovito.pipeline.FileSource"><classname>FileSource</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
 

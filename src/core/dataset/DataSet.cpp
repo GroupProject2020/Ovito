@@ -63,7 +63,7 @@ DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 	setSelection(new SelectionSet(this));
 	setRenderSettings(new RenderSettings(this));
 
-	connect(&_pipelineEvaluationWatcher, &PromiseWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
+	connect(&_pipelineEvaluationWatcher, &TaskWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
 }
 
 /******************************************************************************
@@ -156,7 +156,7 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 				makeSceneReady(false);
 			}
 		}
-			
+
 		// Propagate event only from certain sources to the DataSetContainer:
 		return (source == sceneRoot() || source == selection() || source == renderSettings());
 	}
@@ -233,7 +233,7 @@ void DataSet::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeIn
 }
 
 /******************************************************************************
-* Returns a future that is triggered once all data pipelines in the scene 
+* Returns a future that is triggered once all data pipelines in the scene
 * have been completely evaluated at the current animation time.
 ******************************************************************************/
 SharedFuture<> DataSet::whenSceneReady()
@@ -248,7 +248,7 @@ SharedFuture<> DataSet::whenSceneReady()
 		_sceneReadyFuture.reset();
 		_sceneReadyPromise.reset();
 	}
-	
+
 	if(!_sceneReadyFuture.isValid()) {
 		_sceneReadyPromise = SignalPromise::create(true);
 		_sceneReadyFuture = _sceneReadyPromise.future();
@@ -266,14 +266,14 @@ SharedFuture<> DataSet::whenSceneReady()
 void DataSet::makeSceneReady(bool forceReevaluation)
 {
 	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
-	
+
 	// Make sure whenSceneReady() was called before.
 	if(!_sceneReadyFuture.isValid()) {
 		OVITO_ASSERT(!_currentEvaluationNode);
 		OVITO_ASSERT(!_pipelineEvaluationFuture.isValid());
 		return;
 	}
-	
+
 	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
 
 	// If scene is already ready, we are done.
@@ -309,20 +309,20 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 		if(!stateFuture.isFinished()) {
 			// Wait for this state to become available and return a pending future.
 			_currentEvaluationNode = node;
-			_pipelineEvaluationWatcher.watch(stateFuture.sharedState());
+			_pipelineEvaluationWatcher.watch(stateFuture.task());
 			newPipelineEvaluationFuture = std::move(stateFuture);
 			return false;
 		}
 		else if(!stateFuture.isCanceled()) {
 			try { stateFuture.results(); }
-			catch(...) { 
+			catch(...) {
 				qWarning() << "DataSet::makeSceneReady(): An exception was thrown in a data pipeline. This should never happen.";
 				OVITO_ASSERT(false);
 			}
 		}
 		return true;
 	});
-	
+
 	if(_pipelineEvaluationFuture.isValid()) {
 		_pipelineEvaluationFuture.cancelRequest();
 	}
@@ -357,10 +357,10 @@ void DataSet::pipelineEvaluationFinished()
 
 	// Query results of the pipeline evaluation to see if an exception has been thrown.
 	if(!_pipelineEvaluationFuture.isCanceled()) {
-		try { 
+		try {
 			_pipelineEvaluationFuture.results();
 		}
-		catch(...) { 
+		catch(...) {
 			qWarning() << "DataSet::pipelineEvaluationFinished(): An exception was thrown in a data pipeline. This should never happen.";
 			OVITO_ASSERT(false);
 		}
@@ -370,7 +370,7 @@ void DataSet::pipelineEvaluationFinished()
 	_pipelineEvaluationWatcher.reset();
 	_currentEvaluationNode.clear();
 
-	// One of the pipelines in the scene became ready. 
+	// One of the pipelines in the scene became ready.
 	// Check if there are more pending pipelines in the scene.
 	makeSceneReady(false);
 }
@@ -459,7 +459,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 					operation.setProgressValue(frameIndex);
 					operation.setProgressText(tr("Rendering animation (frame %1 of %2)").arg(frameIndex+1).arg(numberOfFrames));
 
-					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubOperation());
+					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubTask());
 					if(operation.isCanceled())
 						break;
 
@@ -515,15 +515,15 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 
 	// Set up preliminary projection.
 	ViewProjectionParameters projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio());
-		
+
 	// Fill frame buffer with background color.
-	if(!renderSettings()->generateAlphaChannel()) {
-		frameBuffer->clear(ColorA(renderSettings()->backgroundColor()));
+	if(!settings->generateAlphaChannel()) {
+		frameBuffer->clear(ColorA(settings->backgroundColor()));
 	}
 	else {
 		frameBuffer->clear();
 	}
-	
+
 	// Request scene bounding box.
 	Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, operation);
 	if(operation.isCanceled()) {

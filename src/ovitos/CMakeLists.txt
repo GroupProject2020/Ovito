@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -24,7 +24,7 @@ TARGET_LINK_LIBRARIES(ovitos Core Gui)
 TARGET_LINK_LIBRARIES(ovitos Qt5::Core Qt5::Gui)
 
 # Under Linux, Qt's Xcb platform plugin will dynamically load the DBus Qt module.
-# To avoid the dynamic linker pulling the wrong versions of the Qt module from the 
+# To avoid the dynamic linker pulling the wrong versions of the Qt module from the
 # system path, we make the executable preload the module on application startup.
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	TARGET_LINK_LIBRARIES(ovitos Qt5::DBus)
@@ -34,7 +34,7 @@ IF(APPLE)
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES OUTPUT_NAME "ovitos.exe")
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
 	INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-	
+
 	# Build the launch helper, which is needed because the 'ovitos' interpreter is located in a nested app bundle under macOS.
 	ADD_EXECUTABLE(MacOSWrapper MacOSWrapper.cpp)
 	SET_TARGET_PROPERTIES(MacOSWrapper PROPERTIES OUTPUT_NAME "ovitos")
@@ -47,7 +47,8 @@ ENDIF()
 
 IF(APPLE)
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES MACOSX_RPATH TRUE)
-	SET_TARGET_PROPERTIES(ovitos PROPERTIES INSTALL_RPATH "@executable_path/")
+    SET_TARGET_PROPERTIES(ovitos PROPERTIES INSTALL_RPATH "@executable_path/;@executable_path/../Frameworks/")
+	SET_TARGET_PROPERTIES(ovitos PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 ELSEIF(UNIX)
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES INSTALL_RPATH "$ORIGIN/../lib/ovito/")
 ENDIF()
@@ -91,7 +92,7 @@ FOREACH(test_script ${PYTHON_EXAMPLE_SNIPPETS})
 	ENDIF()
 ENDFOREACH()
 
-# Uninstall Python PIP packages (e.g. Sphinx) from the embedded interpreter that should not be shipped with 
+# Uninstall Python PIP packages (e.g. Sphinx) from the embedded interpreter that should not be shipped with
 # the official OVITO distribution.
 SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "
 	MESSAGE(\"Uninstalling unnecessary Python packages.\")
@@ -106,12 +107,14 @@ SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "
 		SET(ENV{PYTHONHOME} \"\${CMAKE_INSTALL_PREFIX}\")
 	ENDIF()
 	# Execute PIP uninstall via ovitos interpreter.
-	EXECUTE_PROCESS(COMMAND \"\${OVITOS_COMMAND}\" -m pip --disable-pip-version-check uninstall --yes Sphinx alabaster babel 
-		Jinja2 imagesize docutils requests snowballstemmer packaging idna chardet urllib3 certifi 
+	EXECUTE_PROCESS(COMMAND \"\${OVITOS_COMMAND}\" -m pip --disable-pip-version-check uninstall --yes Sphinx alabaster babel
+		Jinja2 imagesize docutils requests snowballstemmer packaging idna chardet urllib3 certifi
 		MarkupSafe sphinxcontrib-websupport)
 	# Remove __pycache__ files from installation bundle.
 	IF(NOT WIN32)
-		MESSAGE(\"Removing __pycache__ files.\")
+		MESSAGE(\"Removing .pyc files.\")
+		EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name *.pyc -delete)
+		MESSAGE(\"Removing __pycache__ directories.\")
 		EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
 	ENDIF()
 ")
@@ -121,7 +124,7 @@ IF(WIN32)
 ELSE()
 	# Propagate variable to parent scope.
 	SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}" PARENT_SCOPE)
-	# Python module uninstall via PIP will be performed at a later point in time 
+	# Python module uninstall via PIP will be performed at a later point in time
 	# in FixupMacBundle.cmake (on macOS), or after building the main executable (on Linux),
 	# because the installation must be brought into a fully-working state prior to invoking 'ovitos'.
 ENDIF()

@@ -257,7 +257,7 @@ bool FileSourceEditor::importNewFile(FileSource* fileSource, const QUrl& url, Ov
 		// Download file so we can determine its format.
 		TaskManager& taskManager = fileSource->dataset()->taskManager();
 		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager, url);
-		if(!fileSource->dataset()->taskManager().waitForTask(fetchFileFuture))
+		if(!fileSource->dataset()->taskManager().waitForFuture(fetchFileFuture))
 			return false;
 
 		// Inspect file to detect its format.
@@ -364,7 +364,7 @@ void FileSourceEditor::updateInformationLabel()
 			_framesListBox->clear();
 			_framesListBox->setEnabled(false);
 		}
-		if(_fileSeriesLabel) 
+		if(_fileSeriesLabel)
 			_fileSeriesLabel->setText(QString());
 		return;
 	}

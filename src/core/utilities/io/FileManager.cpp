@@ -1,5 +1,5 @@
 	///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -80,7 +80,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		}
 
 		// Start the background download job.
-		Promise<QString> promise = taskManager.createSynchronousPromise<QString>(false);
+		Promise<QString> promise = taskManager.createMainThreadOperation<QString>(false);
 		SharedFuture<QString> future(promise.future());
 		_pendingFiles.emplace(normalizedUrl, future);
 		new DownloadRemoteFileJob(url, std::move(promise));
@@ -97,7 +97,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.scheme() == QStringLiteral("sftp")) {
-		Promise<QStringList> promise = taskManager.createSynchronousPromise<QStringList>(false);
+		Promise<QStringList> promise = taskManager.createMainThreadOperation<QStringList>(false);
 		Future<QStringList> future = promise.future();
 		new ListRemoteDirectoryJob(url, std::move(promise));
 		return future;
@@ -239,7 +239,7 @@ void FileManager::unknownSshServer()
 			return;
 	}
 	connection->cancel();
-} 
+}
 
 /******************************************************************************
 * Informs the user about an unknown SSH host.
@@ -263,7 +263,7 @@ void FileManager::sshAuthenticationFailed(int auth)
     SshConnection* connection = qobject_cast<SshConnection*>(sender());
     if(!connection)
         return;
-	
+
 	SshConnection::AuthMethods supported = connection->supportedAuthMethods();
 	if(auth & SshConnection::UseAuthPassword && supported & SshConnection::AuthMethodPassword) {
         connection->usePasswordAuth(true);
@@ -283,7 +283,7 @@ void FileManager::needSshPassword()
         return;
 
 	QString password = connection->password();
-	if(askUserForPassword(connection->hostname(), connection->username(), password)) {		
+	if(askUserForPassword(connection->hostname(), connection->username(), password)) {
 		connection->setPassword(password);
 	}
 	else {
@@ -321,7 +321,7 @@ bool FileManager::askUserForPassword(const QString& hostname, const QString& use
 {
 	std::string pw;
 	std::cout << "Please enter the password for user '" << qPrintable(username) << "' ";
-	std::cout << "on SSH remote host '" << qPrintable(hostname) << "' (set echo off beforehand!): " << std::flush;	
+	std::cout << "on SSH remote host '" << qPrintable(hostname) << "' (set echo off beforehand!): " << std::flush;
 	std::cin >> pw;
 	password = QString::fromStdString(pw);
 	return true;
@@ -363,7 +363,7 @@ void FileManager::needSshPassphrase(const QString& prompt)
 bool FileManager::askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase)
 {
 	std::string pp;
-	std::cout << qPrintable(prompt) << std::flush;	
+	std::cout << qPrintable(prompt) << std::flush;
 	std::cin >> pp;
 	passphrase = QString::fromStdString(pp);
 	return true;

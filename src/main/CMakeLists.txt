@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -48,7 +48,7 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "ovito")
 TARGET_LINK_LIBRARIES(Ovito Qt5::Core Qt5::Gui)
 
 # Under Linux, Qt's Xcb platform plugin will dynamically load the DBus Qt module.
-# To avoid the dynamic linker pulling the wrong versions of the Qt module from the 
+# To avoid the dynamic linker pulling the wrong versions of the Qt module from the
 # system path, we make the executable preload the module on application startup.
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	TARGET_LINK_LIBRARIES(Ovito Qt5::DBus)
@@ -57,7 +57,8 @@ ENDIF()
 IF(APPLE)
     # Enable the use of @rpath on OSX.
     SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_RPATH TRUE)
-    SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "@executable_path/")
+    SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "@executable_path/;@executable_path/../Frameworks/")
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 ELSEIF(UNIX)
     SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "$ORIGIN/../lib/ovito/")
 ENDIF()
@@ -91,7 +92,7 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
 		GET_TARGET_PROPERTY(lib Qt5::${component} LOCATION)
 		GET_TARGET_PROPERTY(lib_soname Qt5::${component} IMPORTED_SONAME_RELEASE)
-		CONFIGURE_FILE("${lib}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)		
+		CONFIGURE_FILE("${lib}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)
 		GET_FILENAME_COMPONENT(lib_realname "${lib}" NAME)
 		EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink "${lib_realname}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/${lib_soname}")
 		EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink "../${lib_soname}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib/${lib_soname}")
@@ -114,17 +115,17 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/iconengines" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
 	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/xcbglintegrations" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
 	# The XcbQpa library is required by the Qt5 Gui module.
-	OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5XcbQpa.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
+	OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5XcbQpa.so" "./lib")
 
 	# Make the executable look in lib/ovito/ directory for shared libraries.
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib/ovito")
-	SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH "1")
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
 	# Update: No longer bundle libstdc++.so.6 with OVITO, because it causes conflicts with the OpenGL driver on
 	# some systems.
 	#FIND_LIBRARY(OVITO_LIBSTDCXX NAMES libstdc++.so.6 PATHS /usr/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
 	#IF(NOT OVITO_LIBSTDCXX)
-	#	MESSAGE(FATAL_ERROR "Please specify the location of the C++ standard library with the OVITO_LIBSTDCXX option.") 
+	#	MESSAGE(FATAL_ERROR "Please specify the location of the C++ standard library with the OVITO_LIBSTDCXX option.")
 	#ENDIF()
 	#GET_FILENAME_COMPONENT(OVITO_LIBSTDCXX_REAL ${OVITO_LIBSTDCXX} REALPATH)
 	#INSTALL(FILES "${OVITO_LIBSTDCXX}" "${OVITO_LIBSTDCXX_REAL}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
@@ -146,7 +147,7 @@ IF(WIN32)
 			ENDIF()
 		ENDIF()
 	ENDFOREACH()
-	
+
 	# Install Qt plugins.
 	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindowsd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/")
@@ -159,7 +160,7 @@ IF(WIN32)
 		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgif.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/iconengines/qsvgicon.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/iconengines/")
 	ENDIF()
-	
+
 	# Create a qt.conf file.
 	# This is required to let Qt search for its plugin modules in the program directory.
 	INSTALL(CODE "
@@ -171,7 +172,7 @@ ENDIF()
 # Fix Mac app bundle.
 INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/FixupMacBundle.cmake)
 
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT AND UNIX AND NOT APPLE)
+IF(OVITO_REDISTRIBUTABLE_PACKAGE AND OVITO_BUILD_PLUGIN_PYSCRIPT AND UNIX AND NOT APPLE)
 	# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
 	INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
 ENDIF()

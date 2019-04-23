@@ -51,11 +51,11 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(AtomicStrainModifier, cutoff, WorldParamete
 * Constructs the modifier object.
 ******************************************************************************/
 AtomicStrainModifier::AtomicStrainModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset),
-    _cutoff(3), 
-	_calculateDeformationGradients(false), 
-	_calculateStrainTensors(false), 
+    _cutoff(3),
+	_calculateDeformationGradients(false),
+	_calculateStrainTensors(false),
 	_calculateNonaffineSquaredDisplacements(false),
-	_calculateStretchTensors(false), 
+	_calculateStretchTensors(false),
 	_calculateRotations(false),
     _selectInvalidParticles(true)
 {
@@ -112,7 +112,7 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 		return;
 
 	// Compute displacement vectors of particles in the reference configuration.
-	parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, PromiseState& promise) {
+	parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
 		Vector3* u = displacements()->dataVector3() + startIndex;
 		const Point3* p0 = refPositions()->constDataPoint3() + startIndex;
 		auto index = refToCurrentIndexMap().cbegin() + startIndex;
@@ -138,7 +138,7 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 		return;
 
 	task()->setProgressText(tr("Computing atomic strain tensors"));
-	
+
 	// Prepare the neighbor list for the reference configuration.
 	CutoffNeighborFinder neighborFinder;
 	if(!neighborFinder.prepare(_cutoff, *refPositions(), refCell(), nullptr, task().get()))

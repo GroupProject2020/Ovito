@@ -44,9 +44,9 @@ public:
 	typedef GEO::index_t VertexHandle;
 #if 1
 	typedef boost::counting_iterator<size_type> CellIterator;
-#else	
+#else
 	typedef boost::permutation_iterator<boost::counting_iterator<size_type>, std::vector<int>::const_iterator> CellIterator;
-#endif	
+#endif
 
 	/// Data structure attached to each tessellation cell.
 	struct CellInfo {
@@ -120,7 +120,7 @@ public:
 	};
 
 	/// Generates the Delaunay tessellation.
-	bool generateTessellation(const SimulationCell& simCell, const Point3* positions, size_t numPoints, FloatType ghostLayerSize, const int* selectedPoints, PromiseState& promise);
+	bool generateTessellation(const SimulationCell& simCell, const Point3* positions, size_t numPoints, FloatType ghostLayerSize, const int* selectedPoints, Task& promise);
 
 	/// Returns the total number of tetrahedra in the tessellation.
 	size_type numberOfTetrahedra() const { return _dt->nb_cells(); }
@@ -128,13 +128,13 @@ public:
 	/// Returns the number of finite cells in the primary image of the simulation cell.
 	size_type numberOfPrimaryTetrahedra() const { return _numPrimaryTetrahedra; }
 
-#if 1	
+#if 1
 	CellIterator begin_cells() const { return boost::make_counting_iterator<size_type>(0); }
 	CellIterator end_cells() const { return boost::make_counting_iterator<size_type>(_dt->nb_cells()); }
 #else
 	CellIterator begin_cells() const { return boost::make_permutation_iterator(boost::make_counting_iterator<size_type>(0), _stableCellOrder.cbegin()); }
 	CellIterator end_cells() const { return boost::make_permutation_iterator(boost::make_counting_iterator<size_type>(0), _stableCellOrder.cend()); }
-#endif	
+#endif
 
 	void setCellIndex(CellHandle cell, qint64 value) {
 		_cellInfo[cell].index = value;

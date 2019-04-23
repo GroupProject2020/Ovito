@@ -25,7 +25,9 @@
 #include <core/viewport/overlays/ViewportOverlay.h>
 #include <core/viewport/overlays/CoordinateTripodOverlay.h>
 #include <core/viewport/overlays/TextLabelOverlay.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/scene/SceneNode.h>
+#include <core/rendering/RenderSettings.h>
 #include <plugins/pyscript/extensions/PythonViewportOverlay.h>
 #include "PythonBinding.h"
 
@@ -43,7 +45,7 @@ void defineViewportSubmodule(py::module m)
 			"Additionally, the :py:attr:`.type` field allows you to switch between perspective and parallel projection modes "
 			"or reset the camera to one of the standard axis-aligned orientations that are also found in the graphical version of OVITO. "
 			"The :py:meth:`.zoom_all` method repositions the camera automatically such that the entire scene becomes fully visible within the view. "
-			"See also the documentation of the `Adjust View <../../viewports.adjust_view_dialog.html>`__ dialog of OVITO to learn more about "
+			"See also the documentation of the :ovitoman:`Adjust View <../../viewports.adjust_view_dialog>` dialog of OVITO to learn more about "
 			"the role of these settings. "
 			"\n\n"
 			"After the viewport's virtual camera has been set up, you can render an image or movie using the "
@@ -84,8 +86,8 @@ void defineViewportSubmodule(py::module m)
 				"The camera direction is maintained by the method.")
 	;
 	expose_mutable_subobject_list(Viewport_py,
-								  std::mem_fn(&Viewport::overlays), 
-								  std::mem_fn(&Viewport::insertOverlay), 
+								  std::mem_fn(&Viewport::overlays),
+								  std::mem_fn(&Viewport::insertOverlay),
 								  std::mem_fn(&Viewport::removeOverlay), "overlays", "ViewportOverlayList",
 								"A list of :py:class:`ViewportOverlay` objects that are attached to this viewport. "
 								"Overlays render graphical content on top of the three-dimensional scene. "
@@ -99,7 +101,7 @@ void defineViewportSubmodule(py::module m)
 								"To attach a new overlay to the viewport, use the ``append()`` method:"
 								"\n\n"
 								".. literalinclude:: ../example_snippets/viewport_add_overlay.py"
-								"\n\n");		
+								"\n\n");
 
 	py::enum_<Viewport::ViewType>(Viewport_py, "Type")
 		.value("Top", Viewport::VIEW_TOP)
@@ -170,7 +172,7 @@ void defineViewportSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/coordinate_tripod_overlay.py"
 			"\n\n")
 		.def_property("alignment", &CoordinateTripodOverlay::alignment, &CoordinateTripodOverlay::setAlignment,
-				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ value as shown in the example above."
+				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#AlignmentFlag>`__ value as shown in the example above."
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignBottom``")
 		.def_property("size", &CoordinateTripodOverlay::tripodSize, &CoordinateTripodOverlay::setTripodSize,
@@ -270,7 +272,7 @@ void defineViewportSubmodule(py::module m)
 			"\n\n"
 			"Text labels can display dynamically computed values. See the :py:attr:`.text` property for an example.")
 		.def_property("alignment", &TextLabelOverlay::alignment, &TextLabelOverlay::setAlignment,
-				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the example above. "
+				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#AlignmentFlag>`__ as shown in the example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignTop``")
 		.def_property("offset_x", &TextLabelOverlay::offsetX, &TextLabelOverlay::setOffsetX,
@@ -333,7 +335,7 @@ void defineViewportSubmodule(py::module m)
 			"The user-defined Python function must accept a single argument (named ``args`` in the example above). "
 			"The system will pass in an instance of the :py:class:`.Arguments` class to the function, which contains "
 			"various state information, including the current animation frame number and the viewport being rendered "
-			"as well as a `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which the "
+			"as well as a `QPainter <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qpainter.html>`__ object, which the "
 			"function should use to issue drawing calls. ")
 		.def_property("function", &PythonViewportOverlay::scriptFunction, &PythonViewportOverlay::setScriptFunction,
 				"A reference to the Python function to be called every time the viewport is repainted or when an output image is rendered."
@@ -351,7 +353,7 @@ void defineViewportSubmodule(py::module m)
 		"It holds various context information about the frame being rendered and provides utility methods for projecting points from 3d to 2d space. ")
 		.def_property_readonly("viewport", &ViewportOverlayArguments::viewport,
 			"The :py:class:`~ovito.vis.Viewport` being rendered.")
-		.def_property_readonly("is_perspective", [](const ViewportOverlayArguments& args) { return args.projParams().isPerspective; }, 
+		.def_property_readonly("is_perspective", [](const ViewportOverlayArguments& args) { return args.projParams().isPerspective; },
 			"Flag indicating whether the viewport uses a perspective projection or parallel projection.")
 		.def_property_readonly("fov", [](const ViewportOverlayArguments& args) { return args.projParams().fieldOfView; },
 			"The field of view of the viewport’s camera. For perspective projections, this is the frustum angle in the vertical direction "
@@ -360,10 +362,10 @@ void defineViewportSubmodule(py::module m)
 			"The affine camera transformation matrix. This 3x4 matrix transforms points/vectors from world space to camera space.")
 		.def_property_readonly("proj_tm", [](const ViewportOverlayArguments& args) { return args.projParams().projectionMatrix; },
 			"The projection matrix. This 4x4 matrix transforms points from camera space to screen space.")
-		.def_property_readonly("frame", &ViewportOverlayArguments::frame, 
+		.def_property_readonly("frame", &ViewportOverlayArguments::frame,
 			"The animation frame number being rendered (0-based).")
-		.def_property_readonly("painter", &ViewportOverlayArguments::pypainter, 
-			"The `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which provides painting methods "
+		.def_property_readonly("painter", &ViewportOverlayArguments::pypainter,
+			"The `QPainter <https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qpainter.html>`__ object, which provides painting methods "
 			"for drawing on top of the image canvas. ")
 		.def_property_readonly("size", [](const ViewportOverlayArguments& args) {
 				return py::make_tuple(args.renderSettings()->outputImageWidth(), args.renderSettings()->outputImageHeight());
@@ -399,8 +401,8 @@ void defineViewportSubmodule(py::module m)
 			":param r: The world-space size or distance to be converted to screen-space\n"
 			":return: The computed screen-space size measured in pixels.\n",
 			py::arg("world_xyz"), py::arg("r"))
-		.def_property_readonly("scene", [](ViewportOverlayArguments& args) { 
-				return ovito_class_initialization_helper::getCurrentDataset(); 
+		.def_property_readonly("scene", [](ViewportOverlayArguments& args) {
+				return ovito_class_initialization_helper::getCurrentDataset();
 			}, py::return_value_policy::reference,
 			"The current three-dimensional :py:class:`~ovito.Scene` being rendered, including all visible data pipelines. ")
 	;

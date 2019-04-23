@@ -30,7 +30,7 @@
   <xi:include href="Chapter_Usage.docbook"/>
 
   <xi:include href="Chapter_Howtos.docbook"/>
- 
+
   <xi:include href="Chapter_Reference.docbook"/>
 
   <xi:include href="development/Chapter_Development.docbook"/>

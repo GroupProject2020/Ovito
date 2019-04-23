@@ -25,23 +25,23 @@
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/PromiseWatcher.h>
+#include <core/utilities/concurrent/TaskWatcher.h>
 #include <core/utilities/concurrent/Future.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(ModifierApplication);
-DEFINE_REFERENCE_FIELD(ModifierApplication, modifier);	
+DEFINE_REFERENCE_FIELD(ModifierApplication, modifier);
 DEFINE_REFERENCE_FIELD(ModifierApplication, input);
 SET_PROPERTY_FIELD_LABEL(ModifierApplication, modifier, "Modifier");
 SET_PROPERTY_FIELD_LABEL(ModifierApplication, input, "Input");
 SET_PROPERTY_FIELD_CHANGE_EVENT(ModifierApplication, input, ReferenceEvent::PipelineChanged);
 
 /******************************************************************************
-* Returns the global class registry, which allows looking up the 
+* Returns the global class registry, which allows looking up the
 * ModifierApplication subclass for a Modifier subclass.
 ******************************************************************************/
-ModifierApplication::Registry& ModifierApplication::registry() 
+ModifierApplication::Registry& ModifierApplication::registry()
 {
 	static Registry singleton;
 	return singleton;
@@ -61,7 +61,7 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 {
 	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
 		if(!modifier()->isEnabled()) {
-			// Ignore modifier's status if it is currently disabled. 
+			// Ignore modifier's status if it is currently disabled.
 			setStatus(PipelineStatus(PipelineStatus::Success, tr("Modifier is currently disabled.")));
 		}
 		else {
@@ -83,7 +83,7 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 	}
 	else if(event.type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
 		// Inform modifier that the input state has changed.
-		if(modifier()) 
+		if(modifier())
 			modifier()->notifyDependents(ReferenceEvent::ModifierInputChanged);
 	}
 	return CachingPipelineObject::referenceEvent(source, event);
@@ -199,7 +199,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, 
 
 			// Post-process the modifier results before returning them to the caller.
 			//
-			//  - Turn any exception that was thrown during modifier evaluation into a 
+			//  - Turn any exception that was thrown during modifier evaluation into a
 			//    valid pipeline state with an error code.
 			//
 			//  - Restrict the validity interval of the returned state to the validity interval of the modifier.
@@ -298,7 +298,7 @@ PipelineFlowState ModifierApplication::evaluatePreliminary()
 ******************************************************************************/
 int ModifierApplication::animationTimeToSourceFrame(TimePoint time) const
 {
-	if(input()) 
+	if(input())
 		return input()->animationTimeToSourceFrame(time);
 	return CachingPipelineObject::animationTimeToSourceFrame(time);
 }
@@ -314,7 +314,7 @@ TimePoint ModifierApplication::sourceFrameToAnimationTime(int frame) const
 }
 
 /******************************************************************************
-* Traverses the pipeline from this modifier application up to the source and 
+* Traverses the pipeline from this modifier application up to the source and
 * returns the source object that generates the input data for the pipeline.
 ******************************************************************************/
 PipelineObject* ModifierApplication::pipelineSource() const

@@ -50,14 +50,14 @@ MarchingCubes::MarchingCubes(SurfaceMeshData& outputMesh, int size_x, int size_y
 /******************************************************************************
 * Main method that constructs the isosurface mesh.
 ******************************************************************************/
-bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise)
+bool MarchingCubes::generateIsosurface(FloatType isolevel, Task& task)
 {
-    promise.setProgressMaximum(_size_z * 2);
-    promise.setProgressValue(0);
-    computeIntersectionPoints(isolevel, promise);
-    if(promise.isCanceled()) return false;
+    task.setProgressMaximum(_size_z * 2);
+    task.setProgressValue(0);
+    computeIntersectionPoints(isolevel, task);
+    if(task.isCanceled()) return false;
 
-    for(int k = 0; k < _size_z && !promise.isCanceled(); k++, promise.incrementProgressValue()) {
+    for(int k = 0; k < _size_z && !task.isCanceled(); k++, task.incrementProgressValue()) {
         for(int j = 0; j < _size_y; j++) {
             for(int i = 0; i < _size_x; i++) {
                 _lut_entry = 0;
@@ -70,17 +70,17 @@ bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise
             }
         }
     }
-    return !promise.isCanceled();
+    return !task.isCanceled();
 }
 
 /******************************************************************************
 * Compute the intersection points with the isosurface along the cube edges.
 ******************************************************************************/
-void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& promise)
+void MarchingCubes::computeIntersectionPoints(FloatType isolevel, Task& task)
 {
     if(_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2])
         _outputMesh.setSpaceFillingRegion(1);
-    for(int k = 0; k < _size_z && !promise.isCanceled(); k++, promise.incrementProgressValue()) {
+    for(int k = 0; k < _size_z && !task.isCanceled(); k++, task.incrementProgressValue()) {
         for(int j = 0; j < _size_y; j++) {
             for(int i = 0; i < _size_x; i++) {
                 FloatType cube[8];

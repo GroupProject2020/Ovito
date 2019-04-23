@@ -35,7 +35,7 @@ PYBIND11_MODULE(GridPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
-	
+
 	py::options options;
 	options.disable_function_signatures();
 
@@ -72,7 +72,7 @@ PYBIND11_MODULE(GridPython, m)
 	;
 	createDataPropertyAccessors(VoxelGrid_py, "title", &VoxelGrid::title, &VoxelGrid::setTitle,
 		"The name of the voxel grid as shown in the user interface. ");
-	createDataSubobjectAccessors(VoxelGrid_py, "domain", &VoxelGrid::domain, &VoxelGrid::setDomain, 
+	createDataSubobjectAccessors(VoxelGrid_py, "domain", &VoxelGrid::domain, &VoxelGrid::setDomain,
 		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
 		"grid is embedded in. Note that this cell generally is indepenent of and may be different from the :py:attr:`~ovito.data.DataCollection.cell` "
 		"found in the :py:class:`~ovito.data.DataCollection`. ");
@@ -80,7 +80,7 @@ PYBIND11_MODULE(GridPython, m)
 	ovito_class<CreateIsosurfaceModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Generates an isosurface from a field defined on a structured data grid (voxel data). "
-			"See also the corresponding `user manual page <../../particles.modifiers.create_isosurface.html>`__ for this modifier. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.create_isosurface>` for this modifier. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -90,7 +90,7 @@ PYBIND11_MODULE(GridPython, m)
 		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(CreateIsosurfaceModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(CreateIsosurfaceModifier::subject)),
 				"Specifies the voxel grid this modifier should operate on. "
 				"\n\n"
-				":Default: ``'voxels:'``\n")	
+				":Default: ``'voxels:'``\n")
 		.def_property("isolevel", &CreateIsosurfaceModifier::isolevel, &CreateIsosurfaceModifier::setIsolevel,
 				"The value at which to create the isosurface."
 				"\n\n"
@@ -108,8 +108,8 @@ PYBIND11_MODULE(GridPython, m)
 			"\n\n"
 			"This modifier applies a reduction operation to a property of all the particles located within a spatial bin. "
 			"The output of the modifier is a one-, two- or three-dimensional grid of bin values. "
-			"See also the corresponding `user manual page <../../particles.modifiers.bin_and_reduce.html>`__ for this modifier. ")
-		.def_property("property", &SpatialBinningModifier::sourceProperty, [](SpatialBinningModifier& mod, py::object val) {					
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.bin_and_reduce>` for this modifier. ")
+		.def_property("property", &SpatialBinningModifier::sourceProperty, [](SpatialBinningModifier& mod, py::object val) {
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
 				},
 				"The name of the input particle property to which the reduction operation should be applied. "

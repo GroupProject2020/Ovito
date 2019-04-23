@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -47,7 +47,7 @@ DEFINE_PROPERTY_FIELD(ColorLegendOverlay, title);
 DEFINE_PROPERTY_FIELD(ColorLegendOverlay, label1);
 DEFINE_PROPERTY_FIELD(ColorLegendOverlay, label2);
 DEFINE_PROPERTY_FIELD(ColorLegendOverlay, valueFormatString);
-DEFINE_REFERENCE_FIELD(ColorLegendOverlay, modifier);	
+DEFINE_REFERENCE_FIELD(ColorLegendOverlay, modifier);
 SET_PROPERTY_FIELD_LABEL(ColorLegendOverlay, alignment, "Position");
 SET_PROPERTY_FIELD_LABEL(ColorLegendOverlay, orientation, "Orientation");
 SET_PROPERTY_FIELD_LABEL(ColorLegendOverlay, legendSize, "Size factor");
@@ -72,19 +72,19 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ColorLegendOverlay, fontSize, FloatParamete
 * Constructor.
 ******************************************************************************/
 ColorLegendOverlay::ColorLegendOverlay(DataSet* dataset) : ViewportOverlay(dataset),
-	_alignment(Qt::AlignHCenter | Qt::AlignBottom), 
+	_alignment(Qt::AlignHCenter | Qt::AlignBottom),
 	_orientation(Qt::Horizontal),
-	_legendSize(0.3), 
-	_offsetX(0), 
+	_legendSize(0.3),
+	_offsetX(0),
 	_offsetY(0),
-	_fontSize(0.1), 
-	_valueFormatString("%g"), 
+	_fontSize(0.1),
+	_valueFormatString("%g"),
 	_aspectRatio(8.0),
 	_textColor(0,0,0),
 	_outlineColor(1,1,1),
 	_outlineEnabled(false)
 {
-	if(!Application::instance()->scriptMode()) {
+	if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		// Find a ColorCodingModifiers in the scene that we can connect to.
 		dataset->sceneRoot()->visitObjectNodes([this](PipelineSceneNode* node) {
 			PipelineObject* obj = node->dataProvider();

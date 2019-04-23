@@ -116,7 +116,7 @@ public:
 	/// \return \c false when the operation has been canceled by the user;
 	///         \c true on success.
 	/// \throw Exception on error.
-	bool prepare(const PropertyStorage& posProperty, const SimulationCell& cellData, const PropertyStorage* selectionProperty, PromiseState* promise);
+	bool prepare(const PropertyStorage& posProperty, const SimulationCell& cellData, const PropertyStorage* selectionProperty, Task* promise);
 
 	/// Returns the coordinates of the i-th input particle.
 	const Point3& particlePos(size_t index) const {

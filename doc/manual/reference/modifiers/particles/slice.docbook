@@ -41,15 +41,15 @@
         </tgroup>
       </informaltable>
     </informalfigure>
-      
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/slice_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
-    This modifier either deletes or selects all elements on one side of an infinite cutting plane. 
+
+    This modifier either deletes or selects all elements on one side of an infinite cutting plane.
     Alternatively, the modifier can cut out a slab of a given thickness from the structure (see pictures).
   </para>
-  
+
   <simplesect>
     <title>Parameters</title>
 
@@ -59,7 +59,7 @@
         <listitem>
           <para>
           The (signed) distance of the cutting plane from the origin
-          of the simulation coordinate system, measured parallel to the cutting plane 
+          of the simulation coordinate system, measured parallel to the cutting plane
           normal.</para>
         </listitem>
       </varlistentry>
@@ -68,7 +68,7 @@
         <term>Normal (X,Y,Z)</term>
         <listitem>
           <para>Components of the cutting plane normal vector. This vector does not
-          have to be a unit vector. Note that you can click on the blue label 
+          have to be a unit vector. Note that you can click on the blue label
           next to each input field to reset the normal vector to point
           along the corresponding coordinate axis.</para>
         </listitem>
@@ -78,7 +78,7 @@
         <term>Slab width</term>
         <listitem>
           <para>
-          Specifies the width of the slab to cut out from the input structure. 
+          Specifies the width of the slab to cut out from the input structure.
           If this value is zero, which it is by default, everything on one side of the
           cutting plane is deleted. If the <emphasis>slab width</emphasis>
           parameter is set to a positive value, a slab of the given thickness is cut out.</para>
@@ -89,8 +89,8 @@
         <term>Reverse orientation</term>
         <listitem>
           <para>Effectively flips the cutting plane's orientation. If the <emphasis>slab width</emphasis>
-          parameter is zero, activating this option will remove all elements on the opposite side 
-          of the plane. Otherwise this option will let the modifier cut away a slab of 
+          parameter is zero, activating this option will remove all elements on the opposite side
+          of the plane. Otherwise this option will let the modifier cut away a slab of
           the given thickness from the input structure.</para>
         </listitem>
       </varlistentry>
@@ -117,7 +117,7 @@
     <para>
       The following buttons in the panel let you automatically position and align the cutting plane:
       <itemizedlist>
-        <listitem><para><guibutton>Move plane to simulation box center</guibutton> positions the plane in the 
+        <listitem><para><guibutton>Move plane to simulation box center</guibutton> positions the plane in the
           center of the simulation cell. The current plane orientation is kept.</para></listitem>
 
         <listitem><para><guibutton>Align view direction to plane normal</guibutton> rotates the viewing
@@ -130,9 +130,9 @@
         in the viewports. The cutting plane will be repositioned such that it goes
         through all three points.</para></listitem>
       </itemizedlist>
-    </para>        
+    </para>
   </simplesect>
-  
+
   <simplesect>
     <title>Animation</title>
     <para>
@@ -145,8 +145,8 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.SliceModifier"><classname>SliceModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.SliceModifier"><classname>SliceModifier</classname> (Python API)</pydoc-link>
     </para>
-  </simplesect>  
-  
+  </simplesect>
+
 </section>

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -31,7 +31,7 @@
 
 struct Cones {
   /*! inherit from "Geometry" class: */
-  Geometry   super; 
+  Geometry   super;
 
   /*! data array that contains the cone data (possibly but not
       necessarily including the color, which could be in color);
@@ -42,8 +42,8 @@ struct Cones {
   int        offset_axis;
   int        offset_radius;
   int        offset_materialID;
-  int        offset_colorID; 
-  
+  int        offset_colorID;
+
   float      radius;
   float      epsilon;
 
@@ -52,8 +52,8 @@ struct Cones {
   uint8     *color;
   int        color_stride;
   int        color_offset;
-  int        color_format; 
-  
+  int        color_format;
+
   vec2f     *texcoord;
   bool       huge_mesh;
 };
@@ -93,6 +93,14 @@ static void Cones_postIntersect(uniform Geometry *uniform geometry,
   uniform Cones *uniform self = (uniform Cones *uniform)geometry;
 
   dg.Ng = dg.Ns = ray.Ng;
+
+  uint8 * conePtr = self->data + self->stride*((int64)ray.primID);
+  float radius =
+    (self->offset_radius >= 0) ? *((float *)(conePtr + self->offset_radius)) : self->radius;
+
+  // make epsilon large enough to not get lost when computing
+  // |CO| = |center-ray.org| ~ radius for 2ndary rays
+  dg.epsilon = radius * (1e4f * ulpEpsilon);
 
   if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;
@@ -176,7 +184,7 @@ void Cones_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args, 
   uniform float angle = atan(radius / height);
   uniform float cos_angle = cos(angle);
   uniform float sin_angle = sin(angle);
-  uniform float cosSqr = cos_angle * cos_angle;
+  uniform float cosSqr = sqr(cos_angle);
   float AdD = dot(axis, ray->dir) / height;
   vec3f E = ray->org - center;
   float AdE = dot(axis, E) / height;
@@ -187,13 +195,15 @@ void Cones_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args, 
   float c0 = AdE*AdE - cosSqr*EdE;
   // Solve the quadratic. Keep only those X for which dot(A,X-V) >= 0.
   bool hit = false;
-  if(abs(c2) >= 1e-9) {
-    float discr = c1*c1 - c0*c2;
-    if(discr < 0.f) {
+
+  const float epsilon = 1e-9f;
+  if(abs(c2) >= epsilon) {
+    float discr = sqr(c1) - c0*c2;
+    if(discr < -epsilon) {
       // Q(t) = 0 has no real-valued roots.  The line does not
       // intersect the double-sided cone.
     }
-    else if(discr > 1e-9) {
+    else if(discr > epsilon) {
       // Q(t) = 0 has two distinct real-valued roots.  However, one or
       // both of them might intersect the portion of the double-sided
       // cone "behind" the vertex.  We are interested only in those
@@ -202,14 +212,14 @@ void Cones_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args, 
       float t = (-c1 - root) / c2;
       E = ray->org + t * ray->dir - center;
       float ddot = dot(E, axis);
-      if(ddot > 0.f && ddot < height*height && t > ray->t0 && t < ray->t) {
+      if(ddot > 0.f && ddot < sqr(height) && t > ray->t0 && t < ray->t) {
         ray->t = t;
         hit = true;
       }
       t = (-c1 + root) / c2;
       vec3f E2 = ray->org + t * ray->dir - center;
       ddot = dot(E2, axis);
-      if(ddot > 0.f && ddot < height*height && t > ray->t0 && t < ray->t) {
+      if(ddot > 0.f && ddot < sqr(height) && t > ray->t0 && t < ray->t) {
         ray->t = t;
         E = E2;
         hit = true;
@@ -227,7 +237,7 @@ void Cones_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args, 
       }
     }
   }
-  else if(abs(c1) >= self->epsilon) {
+  else if(abs(c1) >= epsilon) {
     // c2 = 0, c1 != 0 (D is a direction vector on the cone boundary)
     float t = - (0.5f*c0/c1);
     if(t > ray->t0 && t < ray->t) {
@@ -238,7 +248,7 @@ void Cones_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args, 
       }
     }
   }
-  else if(abs(c0) >= self->epsilon) {
+  else if(abs(c0) >= epsilon) {
       // c2 = c1 = 0, c0 != 0
   }
   else if(DdE > ray->t0 && DdE < ray->t) {
@@ -311,7 +321,7 @@ export void ConesGeometry_set(void  *uniform _self
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
-  
+
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numCones;

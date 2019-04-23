@@ -101,7 +101,7 @@ void SurfaceMeshData::transferTo(SurfaceMesh* sm) const
 /******************************************************************************
 * Fairs a closed triangle mesh.
 ******************************************************************************/
-bool SurfaceMeshData::smoothMesh(int numIterations, PromiseState& promise, FloatType k_PB, FloatType lambda)
+bool SurfaceMeshData::smoothMesh(int numIterations, Task& task, FloatType k_PB, FloatType lambda)
 {
     OVITO_ASSERT(isVertexPropertyMutable(SurfaceMeshVertices::PositionProperty));
 
@@ -146,16 +146,16 @@ bool SurfaceMeshData::smoothMesh(int numIterations, PromiseState& promise, Float
     };
 
 	FloatType mu = FloatType(1) / (k_PB - FloatType(1)/lambda);
-	promise.setProgressMaximum(numIterations);
+	task.setProgressMaximum(numIterations);
 
 	for(int iteration = 0; iteration < numIterations; iteration++) {
-		if(!promise.setProgressValue(iteration))
+		if(!task.setProgressValue(iteration))
 			return false;
 		smoothMeshIteration(lambda);
 		smoothMeshIteration(mu);
 	}
 
-	return !promise.isCanceled();
+	return !task.isCanceled();
 }
 
 /******************************************************************************

@@ -1,5 +1,5 @@
 **************************************************************************
-Compiler: 
+Compiler:
     Microsoft Visual Studio 2015
 
 spellcheck: off
@@ -28,7 +28,7 @@ nmake install
 **************************************************************************
 Qt
 **************************************************************************
-Install the following components (Qt 5.9.4) in C:\Qt\ : 
+Install the following components (Qt 5.9.4) in C:\Qt\ :
    msvc2015 32-bit
    msvc2015 64-bit
 
@@ -113,7 +113,7 @@ cmake -G "NMake Makefiles" ^
    -DZLIB_LIBRARY=%cd:\=/%/../zlib_install/lib/zlib.lib ^
    ../../netcdf-4.4.1
 nmake install
-   
+
 **************************************************************************
 QScintilla2
 **************************************************************************
@@ -174,6 +174,37 @@ export INCLUDE="$INCLUDE;C:/Users/stuko/ovito/64bit/zlib_install/include"
 make install
 
 **************************************************************************
+Download and build Intel Embree
+Also download TBB lib and ISPC compiler
+**************************************************************************
+cd embree-3.5.2
+mkdir build
+cd build
+cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe -DCMAKE_INSTALL_PREFIX=../../embree_install ..
+# This is to work around a bug in the MSVC 2015 compiler which leads to a stack overflow during compilation:
+# See https://github.com/embree/embree/issues/157
+cmake -DCMAKE_CXX_FLAGS=-d2SSAOptimizer- .
+cmake --build . --config Release --target install
+
+**************************************************************************
+Download and build OSPRay
+**************************************************************************
+cd ospray-1.8.4
+mkdir build
+cd build
+cmake -G "Visual Studio 14 2015 Win64" ^
+   -DCMAKE_BUILD_TYPE=Release ^
+   -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe ^
+   -DCMAKE_INSTALL_PREFIX=../../ospray_install ^
+   -Dembree_DIR=C:\Users\stuko\ovito\64bit\embree_install ^
+   -DTBB_ROOT=../../embree-3.5.2/tbb ^
+   -DBUILD_SHARED_LIBS=ON ^
+   -DCMAKE_CXX_STANDARD=14 ^
+   -DOSPRAY_ENABLE_TUTORIALS=OFF ^
+   ..
+cmake --build . --config Release --target install
+
+**************************************************************************
 OpenVR
 **************************************************************************
 git clone https://github.com/ValveSoftware/openvr.git
@@ -183,7 +214,7 @@ Create an app package signing certificate:
 **************************************************************************
 MakeCert /n "CN=ovito.org, O=ovito.org, L=Darmstadt, C=Germany" /r /h 0 /eku "1.3.6.1.5.5.7.3.3,1.3.6.1.4.1.311.10.3.13" /e 12/31/2017 /sv ovito.pvk ovito.cer
 Pvk2Pfx /pvk ovito.pvk  /spc ovito.cer /pfx ovito.pfx
-# Run as administrator: 
+# Run as administrator:
 Certutil -addStore TrustedPeople ovito.cer
 
 **************************************************************************
@@ -219,6 +250,12 @@ cmake -G "NMake Makefiles" ^
    -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libssh_install/include ^
    -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
    -DOPENSSL_LIBRARY_DLL=%cd:\=/%/../openssl_install/bin/libeay32.dll ^
+   -DOVITO_BUILD_PLUGIN_OSPRAY=ON ^
+   -Dospray_DIR=%cd:\=/%/../ospray_install/lib/cmake/ospray-1.8.4 ^
+   -Dembree_DIR=%cd:\=/%/../embree_install ^
+   -DTBB_ROOT=%cd:\=/%/../embree-3.5.2/tbb ^
+   -DTBB_DIR=%cd:\=/%/../embree-3.5.2/tbb/cmake ^
+   -DISPC_EXECUTABLE=%cd:\=/%/../ispc-1.10.0-win32\bin\ispc.exe ^
    ../../source
 
 
@@ -253,4 +290,3 @@ cmake -G "NMake Makefiles" ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
    -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
    ../../source
-   

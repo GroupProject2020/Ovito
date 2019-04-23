@@ -30,8 +30,8 @@
   <simplesect>
     <title>Interior and exterior region</title>
     <para>
-			As surface meshes are closed orientable manifolds, one can define an <emphasis>interior</emphasis> and an <emphasis>exterior</emphasis> region of 
-      space that are separated by the surface manifold. For example, if the surface mesh was constructed by the <link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link> modifier 
+			As surface meshes are closed orientable manifolds, one can define an <emphasis>interior</emphasis> and an <emphasis>exterior</emphasis> region of
+      space that are separated by the surface manifold. For example, if the surface mesh was constructed by the <link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link> modifier
       from a set of particles, then the region enclosed by the surface represents the "solid" region and the outside region is the one containing no particles.
     </para>
     <para>
@@ -46,14 +46,14 @@
 			A surface mesh can be exported from OVITO in the form of a conventional triangle mesh.
 			For this, a non-periodic version is produced by truncating triangles at the domain boundaries and generating "cap polygons" to fill the holes that
 			occur at the intersection of the interior region with the domain boundaries. To export the mesh, use OVITO's <link linkend="usage.export">file export function</link>
-			and select the <emphasis>VTK</emphasis> output format.  
+			and select the <emphasis>VTK</emphasis> output format.
     </para>
   </simplesect>
 
   <simplesect>
     <title>See also</title>
     <para>
-        <link xlink:href="python/modules/ovito_data.html#ovito.data.SurfaceMesh"><classname>SurfaceMesh</classname> (Python API)</link>
+        <pydoc-link href="modules/ovito_data" anchor="ovito.data.SurfaceMesh"><classname>SurfaceMesh</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
 

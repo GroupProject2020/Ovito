@@ -30,7 +30,7 @@ namespace Ovito { namespace VoroTop {
 /******************************************************************************
 * Loads the filter definition from the given input stream.
 ******************************************************************************/
-bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseState& operation)
+bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, Task& operation)
 {
 	// Parse comment lines starting with '#':
 	_filterDescription.clear();
@@ -56,19 +56,19 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 		if(sscanf(line, "* %i%n", &typeId, &stringLength) != 1)
 			throw Exception(QString("Invalid structure type definition in line %1 of VoroTop filter definition file").arg(stream.lineNumber()));
 		if(typeId != _structureTypeLabels.size())
-			throw Exception(QString("Invalid structure type definition in line %1 of VoroTop filter definition file: Type IDs must start at 1 and form a consecutive sequence.").arg(stream.lineNumber()));		
+			throw Exception(QString("Invalid structure type definition in line %1 of VoroTop filter definition file: Type IDs must start at 1 and form a consecutive sequence.").arg(stream.lineNumber()));
 		QStringList columns = QString::fromUtf8(line + stringLength).trimmed().split(QChar('\t'), QString::SkipEmptyParts);
 		if(columns.empty())
-			throw Exception(QString("Invalid structure type definition in line %1 of VoroTop filter definition file: Type label is missing.").arg(stream.lineNumber()));		
+			throw Exception(QString("Invalid structure type definition in line %1 of VoroTop filter definition file: Type label is missing.").arg(stream.lineNumber()));
 		_structureTypeLabels.push_back(columns[0]);
 		_structureTypeDescriptions.push_back(columns.size() >= 2 ? columns[1] : QString());
-		
+
 		line = stream.readLineTrimLeft();
 		if(operation.isCanceled()) return false;
 	}
 	if(_structureTypeLabels.size() <= 1)
 		throw Exception(QString("Invalid filter definition file"));
-	
+
 	if(readHeaderOnly)
 		return !operation.isCanceled();
 
@@ -76,14 +76,14 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 
 	// Parse Weinberg vector list.
 	for(;;) {
-		
+
 		// Parse structure type the current Weinberg code will be mapped to.
 		int typeId;
 		int stringLength;
 		if(sscanf(line, "%i (%n", &typeId, &stringLength) != 1 || typeId <= 0 || typeId >= _structureTypeLabels.size())
-			throw Exception(QString("Invalid Weinberg vector in line %1 of VoroTop filter definition file").arg(stream.lineNumber()));		
+			throw Exception(QString("Invalid Weinberg vector in line %1 of VoroTop filter definition file").arg(stream.lineNumber()));
         line += stringLength;
-        
+
 		// Parse Weinberg code sequence.
 		WeinbergVector wvector;
 		for(;;) {
@@ -92,16 +92,16 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 				++s;
 			int label;
 			if(*s == '\0' || !parseInt(line, s, label))
-				throw Exception(QString("Invalid Weinberg vector in line %1 of VoroTop filter definition file").arg(stream.lineNumber()));		
+				throw Exception(QString("Invalid Weinberg vector in line %1 of VoroTop filter definition file").arg(stream.lineNumber()));
 			wvector.push_back(label);
             if(label > maximumVertices) maximumVertices = label;
-            
+
 			if(*s == ')') break;
 			line = s + 1;
 		}
         int edges = (wvector.size()-1)/2;
         if(edges > maximumEdges) maximumEdges = edges;
-        
+
 		_entries.emplace(std::move(wvector), typeId);
 		if(stream.eof()) break;
 

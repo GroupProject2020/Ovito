@@ -16,21 +16,21 @@
     </imageobject></mediaobject></screenshot></informalfigure>
     This <link linkend="viewport_overlays">viewport overlay</link> displays a user-defined text string
     in the rendered image. The text can contain placeholders to be replaced with the values
-    of <link linkend="usage.global_attributes">global attributes</link> computed by OVITO's data pipeline. 
-    This makes it possible to display dynamic information such as the current simulation timestep, number of atoms, 
-    or analysis results in a rendered image or movie. 
+    of <link linkend="usage.global_attributes">global attributes</link> computed by OVITO's data pipeline.
+    This makes it possible to display dynamic information such as the current simulation timestep, number of atoms,
+    or analysis results in a rendered image or movie.
   </para>
-  
+
   <para>
     The lower panel displays the list of available attributes which can be incorporated into the label's text
-    and which will be replaced with their current computed values. 
+    and which will be replaced with their current computed values.
   </para>
 
   <para>
     Note that it is possible to define new attributes that are computed on the basis of other attributes by
     inserting a <link linkend="particles.modifiers.python_script">Python script modifier</link> into the data pipeline.
     Consider for example the <code>CommonNeighborAnalysis.counts.BCC</code> attribute, which is output by the
-    <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier 
+    <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier
     to report the number of BCC atoms found. If, instead of the absolute number of BCC atoms, we want to print the
     fraction of BCC atoms, we have to divide by the total number of atoms in the system. To this end we can
     define a new attribute named <emphasis>bcc_fraction</emphasis> by inserting a <link linkend="particles.modifiers.python_script">Python script modifier</link>:
@@ -46,8 +46,8 @@
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.TextLabelOverlay"><classname>TextLabelOverlay</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.TextLabelOverlay"><classname>TextLabelOverlay</classname> (Python API)</pydoc-link>
     </para>
    </simplesect>
-    
+
 </section>

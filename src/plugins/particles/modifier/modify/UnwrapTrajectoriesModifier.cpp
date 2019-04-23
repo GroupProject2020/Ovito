@@ -47,7 +47,7 @@ bool UnwrapTrajectoriesModifier::OOMetaClass::isApplicableTo(const DataCollectio
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> UnwrapTrajectoriesModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) 
+Future<PipelineFlowState> UnwrapTrajectoriesModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
 	if(!output.isEmpty())
@@ -61,11 +61,11 @@ Future<PipelineFlowState> UnwrapTrajectoriesModifier::evaluate(TimePoint time, M
 void UnwrapTrajectoriesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(state.isEmpty()) return;
-	
+
 	// The pipeline system may call evaluatePreliminary() with an outdated trajectory frame, which doesn't match the current
 	// animation time. This would lead to artifacts, because particles might get unwrapped even though they haven't crossed
 	// a periodic cell boundary yet. To avoid this from happening, we try to determine the true animation time to which the
-	// current input data collection belongs. 
+	// current input data collection belongs.
 	int sourceFrame = state.data()->sourceFrame();
 	if(sourceFrame != -1) {
 		time = modApp->sourceFrameToAnimationTime(sourceFrame);
@@ -86,7 +86,7 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 
 	// Check if periodic cell boundary crossing have been precomputed or not.
 	if(time > myModApp->unwrappedUpToTime()) {
-		if(!Application::instance()->scriptMode())
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 			state.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Please press 'Update' to unwrap the particle trajectories now.")));
 		else
 			throwException(tr("Particle crossings of periodic cell boundaries have not been determined yet. Cannot unwrap trajectories. Did you forget to call UnwrapTrajectoriesModifier.update()?"));
@@ -172,14 +172,14 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 		TimeInterval interval = dataset()->animationSettings()->animationInterval();
 		operation.setProgressMaximum(dataset()->animationSettings()->lastFrame() - dataset()->animationSettings()->firstFrame() + 1);
 		std::unordered_map<qlonglong,Point3> previousPositions;
-		UnwrapTrajectoriesModifierApplication::UnwrapData unwrapRecords; 
+		UnwrapTrajectoriesModifierApplication::UnwrapData unwrapRecords;
 		for(TimePoint time = interval.start(); time <= interval.end(); time += dataset()->animationSettings()->ticksPerFrame()) {
 			operation.setProgressText(tr("Unwrapping particle trajectories (frame %1 of %2)").arg(operation.progressValue()+1).arg(operation.progressMaximum()));
 
 			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(time);
 			if(!operation.waitForFuture(stateFuture))
 				return false;
-		
+
 			const PipelineFlowState& state = stateFuture.result();
 			const SimulationCellObject* simCellObj = state.getObject<SimulationCellObject>();
 			if(!simCellObj)
@@ -198,8 +198,8 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 			qlonglong index = 0;
 			for(const Point3& p : posProperty->constPoint3Range()) {
 				Point3 rp = cell.absoluteToReduced(p);
-				// Try to insert new position of particle into map. 
-				// If an old position already exists, insertion will fail and we can 
+				// Try to insert new position of particle into map.
+				// If an old position already exists, insertion will fail and we can
 				// test if the particle has crossed a periodic cell boundary.
 				auto result = previousPositions.insert(std::make_pair(identifierProperty ? identifierProperty->getInt64(index) : index, rp));
 				if(!result.second) {

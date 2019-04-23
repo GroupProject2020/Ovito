@@ -23,7 +23,7 @@
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Task.h>
 #include "StructureAnalysis.h"
 #include "DislocationAnalysisModifier.h"
 
@@ -448,7 +448,7 @@ void StructureAnalysis::initializeListOfStructures()
 /******************************************************************************
 * Identifies the atomic structures.
 ******************************************************************************/
-bool StructureAnalysis::identifyStructures(PromiseState& promise)
+bool StructureAnalysis::identifyStructures(Task& promise)
 {
 	// Prepare the neighbor list.
 	int maxNeighborListSize = std::min((int)_neighborLists->componentCount() + 1, (int)MAX_NEIGHBORS);
@@ -756,7 +756,7 @@ void StructureAnalysis::determineLocalStructure(NearestNeighborFinder& neighList
 /******************************************************************************
 * Combines adjacent atoms to clusters.
 ******************************************************************************/
-bool StructureAnalysis::buildClusters(PromiseState& promise)
+bool StructureAnalysis::buildClusters(Task& promise)
 {
 	promise.setProgressValue(0);
 	promise.setProgressMaximum(positions()->size());
@@ -926,7 +926,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 /******************************************************************************
 * Determines the transition matrices between clusters.
 ******************************************************************************/
-bool StructureAnalysis::connectClusters(PromiseState& promise)
+bool StructureAnalysis::connectClusters(Task& promise)
 {
 	promise.setProgressValue(0);
 	promise.setProgressMaximum(positions()->size());
@@ -1031,7 +1031,7 @@ bool StructureAnalysis::connectClusters(PromiseState& promise)
 /******************************************************************************
 * Combines clusters to super clusters.
 ******************************************************************************/
-bool StructureAnalysis::formSuperClusters(PromiseState& promise)
+bool StructureAnalysis::formSuperClusters(Task& promise)
 {
 	size_t oldTransitionCount = clusterGraph()->clusterTransitions().size();
 

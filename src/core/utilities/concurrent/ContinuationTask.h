@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include "PromiseState.h"
+#include "Task.h"
 #include "FutureDetail.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
@@ -32,19 +32,19 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 * This shared state is returned by the Future::then() method.
 ******************************************************************************/
 template<typename tuple_type>
-class DirectContinuationPromiseState : public PromiseStateWithResultStorage<PromiseState, tuple_type>
+class ContinuationTask : public TaskWithResultStorage<Task, tuple_type>
 {
 public:
 
 	/// Constructor.
-	DirectContinuationPromiseState(PromiseStateCountedPtr creatorState) : 
-		PromiseStateWithResultStorage<PromiseState, tuple_type>(PromiseState::no_result_init_t()),
+	ContinuationTask(TaskDependency creatorState) :
+		TaskWithResultStorage<Task, tuple_type>(typename TaskWithResultStorage<Task, tuple_type>::no_result_init_t()),
 		_creatorState(std::move(creatorState)) {}
 
 	/// Cancels this promise.
 	virtual void cancel() noexcept override {
 		if(!this->isCanceled()) {
-			PromiseStateWithResultStorage<PromiseState, tuple_type>::cancel();
+			TaskWithResultStorage<Task, tuple_type>::cancel();
 			this->setStarted();
 			this->setFinished();
 		}
@@ -54,11 +54,11 @@ public:
 	virtual void setFinished() override {
 		// Our reference to the creator state is no longer needed.
 		_creatorState.reset();
-		PromiseStateWithResultStorage<PromiseState, tuple_type>::setFinished();
+		TaskWithResultStorage<Task, tuple_type>::setFinished();
 	}
 
 	/// Returns the promise that created this promise as a continuation.
-	const PromiseStatePtr& creatorState() const { return _creatorState.get(); }
+	const TaskPtr& creatorState() const { return _creatorState.get(); }
 
 	template<typename FC, typename Args>
 	auto fulfillWith(FC&& cont, Args&& params) noexcept
@@ -110,7 +110,7 @@ protected:
 	}
 
 	/// The shared state that created this shared state as a continuation.
-	PromiseStateCountedPtr _creatorState;
+	TaskDependency _creatorState;
 
 	template<typename... R2> friend class Future;
 };

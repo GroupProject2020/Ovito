@@ -12,18 +12,18 @@
 
   <para>
   This modifier classifies the local structural environment of particles
-  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method, which allows identification of the local 
-  crystalline structure of simple condensed phases.  
+  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method, which allows identification of the local
+  crystalline structure of simple condensed phases.
   This structure identification method has been described in <blockquote><para><literallayout><link xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">P. M. Larsen et al.
 Robust Structural Identification via Polyhedral Template Matching
 Modelling Simul. Mater. Sci. Eng. 24, 055007 (2016)
 doi:10.1088/0965-0393/24/5/055007
 </link></literallayout></para></blockquote>Please cite this paper when you use this structure identification algorithm in your work. A preprint is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.</para>
   <para>
-  The PTM approach promises greater reliability than e.g. <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis (CNA)</link> in the 
-  presence of strong thermal fluctuations and strains. Furthermore, it provides a direct calculation of the local (per-atom) crystal orientation, elastic deformation, 
+  The PTM approach promises greater reliability than e.g. <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis (CNA)</link> in the
+  presence of strong thermal fluctuations and strains. Furthermore, it provides a direct calculation of the local (per-atom) crystal orientation, elastic deformation,
   strain and chemical ordering type.
-  </para> 
+  </para>
   <para>
       The modifier identifies local crystalline order by matching the local atomic neighborhood to the templates of the structural types determined by the PTM algorithm.  The templates use a mixture of nearest neighbors, and neighbors of neighbors: <informalfigure>
       <informaltable frame="none" colsep="0" rowsep="0">
@@ -95,39 +95,14 @@ doi:10.1088/0965-0393/24/5/055007
   <para>
   The modifier sets the <literal>Structure Type</literal> property for each particle, which is encoded as an integer value:
   <itemizedlist>
-  
-    <listitem>
-      <para>0 = Other, unknown coordination structure</para>
-    </listitem>
-  
-    <listitem>
-      <para>1 = FCC, face-centered cubic</para>
-    </listitem>
-
-    <listitem>
-      <para>2 = HCP, hexagonal close-packed</para>
-    </listitem>
-
-    <listitem>
-      <para>3 = BCC, body-centered cubic</para>
-    </listitem>
-
-    <listitem>
-      <para>4 = ICO, icosahedral coordination</para>
-    </listitem>
-
-    <listitem>
-      <para>5 = SC, simple cubic</para>
-    </listitem>
-
-    <listitem>
-      <para>6 = Cubic diamond</para>
-    </listitem>
-
-    <listitem>
-      <para>7 = Hexagonal diamond</para>
-    </listitem>
-
+    <listitem>0 = Other, unknown coordination structure</listitem>
+    <listitem>1 = FCC, face-centered cubic</listitem>
+    <listitem>2 = HCP, hexagonal close-packed</listitem>
+    <listitem>3 = BCC, body-centered cubic</listitem>
+    <listitem>4 = ICO, icosahedral coordination</listitem>
+    <listitem>5 = SC, simple cubic</listitem>
+    <listitem>6 = Cubic diamond</listitem>
+    <listitem>7 = Hexagonal diamond</listitem>
   </itemizedlist>
   </para>
     <para>
@@ -143,21 +118,21 @@ doi:10.1088/0965-0393/24/5/055007
     <title>Root-Mean-Square Deviation (RMSD)</title>
     <para>
       For each input particle, the PTM tries to determine a mapping of the local neighborhood to each active candidate structure.
-      If such a mapping exists, a RMSD value is calculated, which is a measure of the spatial deviation from the ideal structure template (the quality of the match). 
+      If such a mapping exists, a RMSD value is calculated, which is a measure of the spatial deviation from the ideal structure template (the quality of the match).
       The structural type with the lowest RMSD value is finally assigned to the particle.
       A histogram of the RMSD values for all structures and all particles is shown in the side panel.
     </para>
-    <para> 
+    <para>
       The modifier allows to set a global RMSD cutoff, which limits the assignment of structural types to a range of RMSD values. Particles whose RMSD
       exceeds the threshold are assigned the <emphasis>Other</emphasis> structure type.
       By adjusting the RMSD cutoff, the level of robustness can be adjusted.
       A higher RMSD cutoff will lead to more identifications (and fewer 'defect' atoms), though possibly at the expense of false positives.
-      A lower RMSD cutoff will result in fewer structural identifications (and more 'defect' atoms and greater sensitivity to perturbations of the lattice), 
+      A lower RMSD cutoff will result in fewer structural identifications (and more 'defect' atoms and greater sensitivity to perturbations of the lattice),
       though possibly at the expense of false negatives. The role of the RMSD cutoff is discussed in section 5.1 of the PTM paper.
-    </para>  
+    </para>
     <para>
       A reasonable value for the RMSD cutoff parameter is 0.1, which works well for identifying defects in crystalline solids.
-      Note that, for the sake of reproducibility, the chosen RMSD cutoff value should typically be reported in a publication if you use 
+      Note that, for the sake of reproducibility, the chosen RMSD cutoff value should typically be reported in a publication if you use
       the PTM method to gain quantitative results (e.g. measure crystal defect densities).
     </para>
   </simplesect>
@@ -165,13 +140,13 @@ doi:10.1088/0965-0393/24/5/055007
   <simplesect>
     <title>Interatomic distances</title>
     <para>
-      The internal scale factor computed by the PTM method (see the paper) is the amount by which the atom coordinates are scaled in order to minimize the RMSD between the atom and template coordinates, 
+      The internal scale factor computed by the PTM method (see the paper) is the amount by which the atom coordinates are scaled in order to minimize the RMSD between the atom and template coordinates,
       after translation and rotation. It is proportional to the reciprocal local interatomic distance (including hydrostatic strain components).
     </para>
     <para>
       The PTM modifier provides an option to output the local interatomic distance (or nearest neighbor distance) as a new particle property, which is computed from the internal scale factor for those atoms
-      that match one of the known structure types. 
-      Note that you can compute a local lattice constant (including hydrostatic strain) from the interatomic distance by dividing it by the 
+      that match one of the known structure types.
+      Note that you can compute a local lattice constant (including hydrostatic strain) from the interatomic distance by dividing it by the
       factor <inlineequation><mathphrase>sqrt(1/2)</mathphrase></inlineequation> (for FCC, HCP), <inlineequation><mathphrase>sqrt(3/4)</mathphrase></inlineequation> (for BCC), or <inlineequation><mathphrase>sqrt(3/16)</mathphrase></inlineequation> (for cubic diamond and hexagonal diamond) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
     </para>
   </simplesect>
@@ -180,18 +155,18 @@ doi:10.1088/0965-0393/24/5/055007
     <title>Local lattice orientations</title>
     <para>
      The PTM modifier can calculate the local lattice orientation for atoms that match one of the structural types. The computed orientation is stored
-     as a quaternion in the <literal>Orientation</literal> particle property. 
-     You can switch the <link linkend="display_objects.particles">particle display shape</link> to <emphasis>Cube/Box</emphasis> to visualize the computed 
-     per-particle orientations or apply <link xlink:href="python/introduction/examples.html#example-visualize-local-lattice-orientation">this custom Python modifier</link> to color particles according to their local lattice orientation.
-     Lattice orientations are calculated such that they lie in the fundamental zone of the symmetry group for each structural type. 
+     as a quaternion in the <literal>Orientation</literal> particle property.
+     You can switch the <link linkend="display_objects.particles">particle display shape</link> to <emphasis>Cube/Box</emphasis> to visualize the computed
+     per-particle orientations or apply <pydoc-link href="introduction/examples" anchor="example-visualize-local-lattice-orientation">this custom Python modifier</pydoc-link> to color particles according to their local lattice orientation.
+     Lattice orientations are calculated such that they lie in the fundamental zone of the symmetry group for each structural type.
      This means that two atoms with very similar orientations can have large misorientations if they lie close to the boundaries of the fundamental zone.
      For atoms that do not match any of the known structure types, no local lattice orientation can be computed. They are assigned the
-     invalid quaternion (0,0,0,0). 
+     invalid quaternion (0,0,0,0).
     </para>
 
 
     <para>
-      The orientations are calculated relative to the following reference templates. In the table, the neighbor positions of each reference configuration 
+      The orientations are calculated relative to the following reference templates. In the table, the neighbor positions of each reference configuration
       are given in Cartesian coordinates with the central particle located at the origin.
       <informaltable frame="all" colsep="1" rowsep="0">
         <tgroup cols="22">
@@ -240,22 +215,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">1</entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>2</subscript></entry>
 <entry>-k<subscript>2</subscript></entry>
-<entry>-k<subscript>2</subscript></entry>	
+<entry>-k<subscript>2</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>3</subscript></entry>
-<entry>k<subscript>4</subscript></entry>	
+<entry>k<subscript>4</subscript></entry>
 <entry>0</entry>
 <entry>0</entry>
-<entry>-k<subscript>5</subscript></entry>	
+<entry>-k<subscript>5</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
-<entry>k<subscript>6</subscript></entry>	
+<entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
@@ -264,22 +239,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">2</entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>
-<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript>/3</entry>
 <entry>-4k<subscript>1</subscript>/3</entry>
-<entry>-k<subscript>1</subscript>/3</entry>	
+<entry>-k<subscript>1</subscript>/3</entry>
 <entry>k<subscript>2</subscript></entry>
 <entry>k<subscript>2</subscript></entry>
-<entry>k<subscript>2</subscript></entry>	
+<entry>k<subscript>2</subscript></entry>
 <entry>0</entry>
 <entry>-k<subscript>3</subscript></entry>
-<entry>-k<subscript>4</subscript></entry>	
+<entry>-k<subscript>4</subscript></entry>
 <entry>0</entry>
 <entry>0</entry>
-<entry>k<subscript>5</subscript></entry>	
+<entry>k<subscript>5</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
-<entry>-k<subscript>6</subscript></entry>	
+<entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
@@ -288,22 +263,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">3</entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>2</subscript></entry>
 <entry>-k<subscript>2</subscript></entry>
-<entry>-k<subscript>2</subscript></entry>	
+<entry>-k<subscript>2</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>3</subscript></entry>
-<entry>-k<subscript>4</subscript></entry>	
+<entry>-k<subscript>4</subscript></entry>
 <entry>0</entry>
 <entry>-k<subscript>5</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
-<entry>k<subscript>6</subscript></entry>	
+<entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
@@ -312,22 +287,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">4</entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript>/3</entry>
 <entry>-k<subscript>1</subscript>/3</entry>
-<entry>-4k<subscript>1</subscript>/3</entry>	
+<entry>-4k<subscript>1</subscript>/3</entry>
 <entry>-k<subscript>2</subscript></entry>
 <entry>k<subscript>2</subscript></entry>
-<entry>k<subscript>2</subscript></entry>	
+<entry>k<subscript>2</subscript></entry>
 <entry>0</entry>
 <entry>-k<subscript>3</subscript></entry>
-<entry>k<subscript>4</subscript></entry>	
+<entry>k<subscript>4</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>5</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
-<entry>-k<subscript>6</subscript></entry>	
+<entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
@@ -336,22 +311,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">5</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>2</subscript></entry>
 <entry>k<subscript>2</subscript></entry>
-<entry>-k<subscript>2</subscript></entry>	
+<entry>-k<subscript>2</subscript></entry>
 <entry>-k<subscript>3</subscript></entry>
 <entry>-k<subscript>4</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-k<subscript>5</subscript></entry>
 <entry>0</entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>0</entry>
-<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>8k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
@@ -360,22 +335,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">6</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
 <entry>-4k<subscript>1</subscript>/3</entry>
 <entry>-k<subscript>1</subscript>/3</entry>
-<entry>-k<subscript>1</subscript>/3</entry>	
+<entry>-k<subscript>1</subscript>/3</entry>
 <entry>k<subscript>2</subscript></entry>
 <entry>-k<subscript>2</subscript></entry>
-<entry>k<subscript>2</subscript></entry>	
+<entry>k<subscript>2</subscript></entry>
 <entry>k<subscript>3</subscript></entry>
 <entry>k<subscript>4</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>5</subscript></entry>
 <entry>0</entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>8k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
@@ -384,22 +359,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">7</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-k<subscript>2</subscript></entry>
 <entry>-k<subscript>2</subscript></entry>
-<entry>k<subscript>2</subscript></entry>	
+<entry>k<subscript>2</subscript></entry>
 <entry>k<subscript>3</subscript></entry>
 <entry>-k<subscript>4</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
 <entry>0</entry>
 <entry>2k<subscript>6</subscript></entry>
-<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>8k<subscript>6</subscript>/3</entry>
@@ -408,22 +383,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">8</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
 <entry>k<subscript>2</subscript></entry>
 <entry>k<subscript>2</subscript></entry>
-<entry>-k<subscript>2</subscript></entry>	
+<entry>-k<subscript>2</subscript></entry>
 <entry>-k<subscript>3</subscript></entry>
 <entry>k<subscript>4</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
@@ -432,22 +407,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">9</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>0</entry>
-<entry>-2k<subscript>2</subscript></entry>	
+<entry>-2k<subscript>2</subscript></entry>
 <entry>-k<subscript>4</subscript></entry>
 <entry>0</entry>
-<entry>-k<subscript>3</subscript></entry>	
+<entry>-k<subscript>3</subscript></entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>0</entry>
-<entry>-2k<subscript>6</subscript></entry>	
+<entry>-2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>-0</entry>
@@ -456,22 +431,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">10</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>
-<entry>0</entry>	
 <entry>0</entry>
 <entry>0</entry>
-<entry>2k<subscript>2</subscript></entry>	
+<entry>0</entry>
+<entry>2k<subscript>2</subscript></entry>
 <entry>k<subscript>4</subscript></entry>
 <entry>0</entry>
-<entry>k<subscript>3</subscript></entry>	
+<entry>k<subscript>3</subscript></entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
 <entry>0</entry>
 <entry>-2k<subscript>6</subscript></entry>
-<entry>-2k<subscript>6</subscript></entry>	
+<entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
@@ -480,22 +455,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">11</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>-2k<subscript>2</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>k<subscript>4</subscript></entry>
 <entry>0</entry>
-<entry>-k<subscript>3</subscript></entry>	
+<entry>-k<subscript>3</subscript></entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
 <entry>0</entry>
 <entry>-2k<subscript>6</subscript></entry>
-<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
@@ -504,22 +479,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">12</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>
-<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>2k<subscript>2</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-k<subscript>4</subscript></entry>
 <entry>0</entry>
-<entry>k<subscript>3</subscript></entry>	
+<entry>k<subscript>3</subscript></entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
@@ -528,22 +503,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">13</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
+<entry></entry>
 <entry>-2k<subscript>2</subscript></entry>
 <entry>0</entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
+<entry></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>0</entry>
-<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
@@ -552,22 +527,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">14</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
+<entry></entry>
 <entry>2k<subscript>2</subscript></entry>
 <entry>0</entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
+<entry></entry>
 <entry>0</entry>
 <entry>2k<subscript>6</subscript></entry>
-<entry>-2k<subscript>6</subscript></entry>	
+<entry>-2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
@@ -576,22 +551,22 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">15</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>
+<entry></entry>
+<entry></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>0</entry>
-<entry>-2k<subscript>6</subscript></entry>	
+<entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
@@ -600,31 +575,31 @@ doi:10.1088/0965-0393/24/5/055007
 <entry align="center">16</entry>
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
 <entry></entry>
 <entry></entry>
-<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>
+<entry></entry>
+<entry></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
-<entry>0</entry>	
+<entry>0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>2k<subscript>6</subscript></entry>
 </row>
         <row>
           <entry namest="index" nameend="DHEXz" align="left">
-            <inlineequation><mathphrase>k<subscript>1</subscript> = sqrt(2) / 2</mathphrase></inlineequation>, 
+            <inlineequation><mathphrase>k<subscript>1</subscript> = sqrt(2) / 2</mathphrase></inlineequation>,
             <inlineequation><mathphrase>k<subscript>2</subscript> = 14 / (8 sqrt(3) + 12)</mathphrase></inlineequation>,
-            <inlineequation><mathphrase>k<subscript>3</subscript> = sqrt(2/(5 + sqrt(5)))</mathphrase></inlineequation>, 
+            <inlineequation><mathphrase>k<subscript>3</subscript> = sqrt(2/(5 + sqrt(5)))</mathphrase></inlineequation>,
             <inlineequation><mathphrase>k<subscript>4</subscript> = sqrt(1/10 (5 + sqrt(5)))</mathphrase></inlineequation>,
             <inlineequation><mathphrase>k<subscript>5</subscript> = 1</mathphrase></inlineequation>,
             <inlineequation><mathphrase>k<subscript>6</subscript> = 4/(6 sqrt(2) + sqrt(3))</mathphrase></inlineequation>
@@ -642,27 +617,27 @@ doi:10.1088/0965-0393/24/5/055007
   <simplesect>
     <title>Elastic deformation gradients</title>
     <para>
-      The local elastic deformation gradient is calculated as the affine transformation of the ideal template which minimizes the sum of squared distances 
-      from the actual atomic coordinates. 
+      The local elastic deformation gradient is calculated as the affine transformation of the ideal template which minimizes the sum of squared distances
+      from the actual atomic coordinates.
     </para>
   </simplesect>
 
   <simplesect>
     <title>Ordering types</title>
     <para>
-      The chemical types of atoms are generally ignored by the PTM when identifying the <emphasis>structural</emphasis> phases (e.g. FCC, BCC, etc.). However, the algorithm can additionally      
+      The chemical types of atoms are generally ignored by the PTM when identifying the <emphasis>structural</emphasis> phases (e.g. FCC, BCC, etc.). However, the algorithm can additionally
       identify the local chemical ordering type by taking into account the species of atoms (given by the values of the <literal>Particle Type</literal> property, which must be defined).
-      The binary ordering types identified by the current version of the PTM algorithm are A2 and B2 for BCC; 
+      The binary ordering types identified by the current version of the PTM algorithm are A2 and B2 for BCC;
       A1, L1<subscript>0</subscript> and L1<subscript>2</subscript> for FCC; zinblende for cubic diamond; and wurtzite for hexagonal diamond structures.
     </para>
     <para>
       The local ordering type is output as an additional particle property named <literal>Ordering Type</literal> with the following values:
     <itemizedlist>
-  
+
     <listitem>
       <para>0 = Other, unknown or no ordering</para>
     </listitem>
-  
+
     <listitem>
       <para>1 = Pure (all neighbors like central atom)</para>
     </listitem>
@@ -686,7 +661,7 @@ doi:10.1088/0965-0393/24/5/055007
     <listitem>
       <para>6 = zincblende / wurtzite</para>
     </listitem>
-    
+
   </itemizedlist>
     The algorithm determines the ordering type at a lattice atom by comparing the types of its neighbors to the type of the central atom. See the paper for details.
     You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression selection</link> modifier to select atoms of a
@@ -695,32 +670,32 @@ doi:10.1088/0965-0393/24/5/055007
   </simplesect>
 
   <simplesect>
-  <title>Notes</title>  
+  <title>Notes</title>
   <para>
-    In addition to the PTM, OVITO provides alternative structure identification tools 
+    In addition to the PTM, OVITO provides alternative structure identification tools
     like the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier, the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier, or the <link linkend="particles.modifiers.bond_angle_analysis">Ackland-Jones Analysis</link> modifier.
   </para>
 
   <para>
-    Note that this modifier requires access to the complete set of input particles to perform the analysis. It should therefore be placed at the 
+    Note that this modifier requires access to the complete set of input particles to perform the analysis. It should therefore be placed at the
     beginning of the processing pipeline, preceding any modifiers that delete particles.
   </para>
-  
+
   <para>
     The <emphasis>Use only selected particles</emphasis> option restricts the analysis to the
-    currently selected particles. If this option is checked, unselected particles will be ignored 
+    currently selected particles. If this option is checked, unselected particles will be ignored
     (as if they did not exist) and will be assigned the structure type "Other".
     This option can be useful if you want to identify defects in a crystal structure that is
     not directly supported by the PTM algorithm, but which possesses a known sublattice.
   </para>
   </simplesect>
-  
+
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.PolyhedralTemplateMatchingModifier"><classname>PolyhedralTemplateMatchingModifier</classname> (Python API)</link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.PolyhedralTemplateMatchingModifier"><classname>PolyhedralTemplateMatchingModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
-  
+
 </section>
 
