@@ -235,21 +235,29 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		if(slip_facets_dim != -1) {
 			int slipped_edges_var;
 			int slip_vectors_var;
+			int slip_facet_normals_var;
 			int slip_facet_edge_counts_var;
 			int slip_facet_vertices_var;
 			NCERR(nc_inq_varid(root_ncid, "slipped_edges", &slipped_edges_var));
 			NCERR(nc_inq_varid(root_ncid, "slip_vectors", &slip_vectors_var));
+			if(nc_inq_varid(root_ncid, "slip_facet_normals", &slip_facet_normals_var) != NC_NOERR)
+				slip_facet_normals_var = -1;
 			NCERR(nc_inq_varid(root_ncid, "slip_facet_edge_counts", &slip_facet_edge_counts_var));
 			NCERR(nc_inq_varid(root_ncid, "slip_facet_vertices", &slip_facet_vertices_var));
 			size_t numSlipFacets, numSlipFacetVertices;
 			NCERR(nc_inq_dimlen(root_ncid, slip_facets_dim, &numSlipFacets));
 			NCERR(nc_inq_dimlen(root_ncid, slip_facet_vertices_dim, &numSlipFacetVertices));
 			std::vector<Vector_3<float>> slipVectors(numSlipFacets);
+			std::vector<Vector_3<float>> slipFacetNormals;
 			std::vector<std::array<qlonglong,2>> slippedEdges(numSlipFacets);
 			std::vector<int> slipFacetEdgeCounts(numSlipFacets);
 			std::vector<qlonglong> slipFacetVertices(numSlipFacetVertices);
 			if(numSlipFacets) {
 				NCERR(nc_get_var_float(root_ncid, slip_vectors_var, slipVectors.front().data()));
+				if(slip_facet_normals_var != -1) {
+					slipFacetNormals.resize(numSlipFacets);
+					NCERR(nc_get_var_float(root_ncid, slip_facet_normals_var, slipFacetNormals.front().data()));
+				}
 				NCERR(nc_get_var_longlong(root_ncid, slipped_edges_var, slippedEdges.front().data()));
 				NCERR(nc_get_var_int(root_ncid, slip_facet_edge_counts_var, slipFacetEdgeCounts.data()));
 			}
@@ -259,6 +267,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 
 			// Create slip surface facets (two mesh faces per slip facet).
 			auto slipVector = slipVectors.cbegin();
+			auto slipFacetNormal = slipFacetNormals.cbegin();
 			auto slipFacetEdgeCount = slipFacetEdgeCounts.cbegin();
 			auto slipFacetVertex = slipFacetVertices.cbegin();
 			slipSurfaceMap.resize(microstructure.faceCount());
@@ -266,7 +275,8 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 			for(const auto& slippedEdge : slippedEdges) {
 
 				// Create first mesh face.
-				MicrostructureData::face_index face = microstructure.createFace({}, crystalRegion, MicrostructureData::SLIP_FACET, Vector3(*slipVector));
+				MicrostructureData::face_index face = microstructure.createFace({}, crystalRegion, MicrostructureData::SLIP_FACET,
+					Vector3(*slipVector), slipFacetNormals.empty() ? Vector3::Zero() : Vector3(*slipFacetNormal));
 				MicrostructureData::vertex_index node0 = vertexMap[*slipFacetVertex++];
 				MicrostructureData::vertex_index node1 = node0;
 				MicrostructureData::vertex_index node2;
@@ -277,7 +287,8 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				microstructure.createEdge(node1, node0, face);
 
 				// Create the opposite mesh face.
-				MicrostructureData::face_index oppositeFace = microstructure.createFace({}, crystalRegion, MicrostructureData::SLIP_FACET, -Vector3(*slipVector));
+				MicrostructureData::face_index oppositeFace = microstructure.createFace({}, crystalRegion, MicrostructureData::SLIP_FACET,
+					-Vector3(*slipVector), slipFacetNormals.empty() ? Vector3::Zero() : -Vector3(*slipFacetNormal));
 				MicrostructureData::edge_index edge = microstructure.firstFaceEdge(face);
 				do {
 					microstructure.createEdge(microstructure.vertex2(edge), microstructure.vertex1(edge), oppositeFace);
@@ -291,6 +302,8 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 
 				++slipVector;
 				++slipFacetEdgeCount;
+				if(!slipFacetNormals.empty())
+					++slipFacetNormal;
 			}
 			OVITO_ASSERT(slipFacetVertex == slipFacetVertices.cend());
 			OVITO_ASSERT(slipSurfaceMap.size() == microstructure.faceCount());

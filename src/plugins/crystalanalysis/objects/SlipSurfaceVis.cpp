@@ -42,6 +42,9 @@ SlipSurfaceVis::SlipSurfaceVis(DataSet* dataset) : SurfaceMeshVis(dataset)
 {
     // Slip surfaces consist of pairs of opposite faces. Rendere them as one-sided triangles.
     setCullFaces(true);
+
+    // Do not interpolate facet normals by default.
+    setSmoothShading(false);
 }
 
 /******************************************************************************
@@ -137,6 +140,10 @@ QString SlipSurfacePickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
                         if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
                             QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVectorProperty->getVector3(facetIndex), phase);
                             str = tr("Slip vector: %1").arg(formattedBurgersVector);
+                            if(const PropertyObject* crystallographicNormalProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::CrystallographicNormalProperty)) {
+                                QString formattedNormalVector = DislocationVis::formatBurgersVector(crystallographicNormalProperty->getVector3(facetIndex), phase);
+                                str += tr(" | Crystallographic normal: %1").arg(formattedNormalVector);
+                            }
                             str += tr(" | Crystal region: %1").arg(region);
                             str += tr(" | Crystal structure: %1").arg(phase->name());
                         }

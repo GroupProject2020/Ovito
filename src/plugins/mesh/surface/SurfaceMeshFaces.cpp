@@ -34,7 +34,7 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 	int dataType;
 	size_t componentCount;
 	size_t stride;
-	
+
 	switch(type) {
 	case RegionProperty:
 	case FaceTypeProperty:
@@ -49,6 +49,7 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 		OVITO_ASSERT(stride == sizeof(Color));
 		break;
 	case BurgersVectorProperty:
+	case CrystallographicNormalProperty:
 		dataType = PropertyStorage::Float;
 		componentCount = 3;
 		stride = componentCount * sizeof(FloatType);
@@ -63,7 +64,7 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 
 	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
 
-	PropertyPtr property = std::make_shared<PropertyStorage>(faceCount, dataType, componentCount, stride, 
+	PropertyPtr property = std::make_shared<PropertyStorage>(faceCount, dataType, componentCount, stride,
 								propertyName, false, type, componentNames);
 
 	if(initializeMemory) {
@@ -71,7 +72,7 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 		std::memset(property->data(), 0, property->size() * property->stride());
 	}
 
-	return property;	
+	return property;
 }
 
 /******************************************************************************
@@ -88,11 +89,12 @@ void SurfaceMeshFaces::OOMetaClass::initialize()
 	const QStringList emptyList;
 	const QStringList xyzList = QStringList() << "X" << "Y" << "Z";
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
-	
+
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Face colors"));
 	registerStandardProperty(FaceTypeProperty, tr("Type"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(RegionProperty, tr("Region"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(BurgersVectorProperty, tr("Burgers vector"), PropertyStorage::Float, xyzList, tr("Burgers vectors"));
+	registerStandardProperty(CrystallographicNormalProperty, tr("Crystallographic normal"), PropertyStorage::Float, xyzList);
 }
 
 }	// End of namespace

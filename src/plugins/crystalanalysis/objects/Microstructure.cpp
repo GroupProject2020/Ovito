@@ -33,6 +33,7 @@ MicrostructureData::MicrostructureData(const SimulationCell& cell) : SurfaceMesh
 {
     createFaceProperty(SurfaceMeshFaces::BurgersVectorProperty);
     createFaceProperty(SurfaceMeshFaces::FaceTypeProperty);
+    createFaceProperty(SurfaceMeshFaces::CrystallographicNormalProperty);
     createRegionProperty(SurfaceMeshRegions::PhaseProperty);
     OVITO_ASSERT(burgersVectors());
     OVITO_ASSERT(faceTypes());
@@ -46,6 +47,7 @@ MicrostructureData::MicrostructureData(const SurfaceMesh* mo) : SurfaceMeshData(
 {
     OVITO_ASSERT(faceTypes());
     OVITO_ASSERT(burgersVectors());
+    OVITO_ASSERT(crystallographicNormals());
 }
 
 /******************************************************************************
@@ -53,8 +55,8 @@ MicrostructureData::MicrostructureData(const SurfaceMesh* mo) : SurfaceMeshData(
 ******************************************************************************/
 MicrostructureData::edge_index MicrostructureData::createDislocationSegment(vertex_index vertex1, vertex_index vertex2, const Vector3& burgersVector, region_index region)
 {
-    face_index face1 = createFace({vertex1, vertex2}, region, DISLOCATION,  burgersVector);
-    face_index face2 = createFace({vertex2, vertex1}, region, DISLOCATION, -burgersVector);
+    face_index face1 = createFace({vertex1, vertex2}, region, DISLOCATION,  burgersVector, Vector3::Zero());
+    face_index face2 = createFace({vertex2, vertex1}, region, DISLOCATION, -burgersVector, Vector3::Zero());
     // Note: We are intentionally linking only one pair of opposite half-edges here.
     // The other two face edges remain without an opposite edge partner
     // to mark them as as virtual dislocation segments, which exist only to close the face boundaries.

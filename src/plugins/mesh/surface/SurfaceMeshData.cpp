@@ -49,6 +49,7 @@ SurfaceMeshData::SurfaceMeshData(const SurfaceMesh* sm) :
     _cell(sm->domain()->data()),
     _spaceFillingRegion(sm->spaceFillingRegion())
 {
+	OVITO_ASSERT(_topology);
 	for(const PropertyObject* property : sm->vertices()->properties()) {
 	    addVertexProperty(const_pointer_cast<PropertyStorage>(property->storage()));
 	}

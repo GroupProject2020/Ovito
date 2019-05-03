@@ -63,6 +63,18 @@ public:
 		burgersVectors()[face] = b;
 	}
 
+	/// Returns the crystallographic normal vector of a mesh face.
+	const Vector3& crystallographicNormal(face_index face) const {
+		OVITO_ASSERT(face >= 0 && face < faceCount());
+		return crystallographicNormals()[face];
+	}
+
+	/// Assigns a crystallographic normal vector to a mesh face.
+	void setCrystallographicNormal(face_index face, const Vector3& b) {
+		OVITO_ASSERT(face >= 0 && face < faceCount());
+		crystallographicNormals()[face] = b;
+	}
+
 	/// Returns whether the given mesh face represents a dislocation line.
 	bool isDislocationFace(face_index face) const {
 		OVITO_ASSERT(face >= 0 && face < faceCount());
@@ -103,10 +115,11 @@ public:
 
 	/// Creates a new face without any edges.
 	/// Returns the index of the new face.
-	face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion, MicrostructureFaceType faceType, const Vector3& burgersVector) {
+	face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion, MicrostructureFaceType faceType, const Vector3& burgersVector, const Vector3& slipFacetNormal) {
 		face_index fidx = SurfaceMeshData::createFace(std::move(vertices), faceRegion);
 		faceTypes()[fidx] = faceType;
 		burgersVectors()[fidx] = burgersVector;
+		crystallographicNormals()[fidx] = slipFacetNormal;
 		return fidx;
 	}
 };

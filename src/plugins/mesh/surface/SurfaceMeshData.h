@@ -423,6 +423,9 @@ protected:
         case SurfaceMeshFaces::BurgersVectorProperty:
             _burgersVectors = property->dataVector3();
             break;
+        case SurfaceMeshFaces::CrystallographicNormalProperty:
+            _crystallographicNormals = property->dataVector3();
+            break;
         case SurfaceMeshFaces::FaceTypeProperty:
             _faceTypes = property->dataInt();
             break;
@@ -497,6 +500,9 @@ protected:
     /// Returns the cached raw pointer to the per-face Burgers vectors.
     Vector3* burgersVectors() const { OVITO_ASSERT(_burgersVectors != nullptr); return _burgersVectors; }
 
+    /// Returns the cached raw pointer to the per-face crystallographic normal vectors.
+    Vector3* crystallographicNormals() const { OVITO_ASSERT(_crystallographicNormals != nullptr); return _crystallographicNormals; }
+
     /// Returns the cached raw pointer to the per-face type values.
     int* faceTypes() const { OVITO_ASSERT(_faceTypes != nullptr); return _faceTypes; }
 
@@ -511,6 +517,7 @@ private:
     Point3* _vertexCoords = nullptr;	        ///< Pointer to the per-vertex mesh coordinates.
     int* _faceRegions = nullptr;	            ///< Pointer to the per-face region information.
 	Vector3* _burgersVectors = nullptr;	        ///< Pointer to the per-face Burgers vector information.
+	Vector3* _crystallographicNormals = nullptr;///< Pointer to the per-face crystallographic normal information.
 	int* _faceTypes = nullptr;			        ///< Pointer to the per-face type information.
 	int* _regionPhases = nullptr;			    ///< Pointer to the per-region phase information.
 };

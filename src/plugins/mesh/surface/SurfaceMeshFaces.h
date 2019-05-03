@@ -28,18 +28,18 @@
 namespace Ovito { namespace Mesh {
 
 /**
- * \brief Stores all face-related properties of a SurfaceMesh. 
+ * \brief Stores all face-related properties of a SurfaceMesh.
  */
 class OVITO_MESH_EXPORT SurfaceMeshFaces : public PropertyContainer
 {
 	/// Define a new property metaclass for this container type.
-	class SurfaceMeshFacesClass : public PropertyContainerClass 
+	class SurfaceMeshFacesClass : public PropertyContainerClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
-		
+
 		/// \brief Create a storage object for standard face properties.
 		virtual PropertyPtr createStandardStorage(size_t faceCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
 
@@ -52,7 +52,7 @@ class OVITO_MESH_EXPORT SurfaceMeshFaces : public PropertyContainer
 	Q_OBJECT
 	OVITO_CLASS_META(SurfaceMeshFaces, SurfaceMeshFacesClass);
 	Q_CLASSINFO("DisplayName", "Mesh Faces");
-	
+
 public:
 
 	/// \brief The list of standard face properties.
@@ -62,6 +62,7 @@ public:
 		FaceTypeProperty = PropertyStorage::GenericTypeProperty,
 		RegionProperty = PropertyStorage::FirstSpecificProperty,
 		BurgersVectorProperty,
+		CrystallographicNormalProperty,
 	};
 
 	/// \brief Constructor.

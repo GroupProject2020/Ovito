@@ -102,6 +102,7 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 	else if(const Microstructure* microstructureObj = dynamic_object_cast<Microstructure>(periodicDomainObj)) {
 		// Extract the dislocation segments from the microstructure object.
 		std::deque<Point3> line(2);
+		microstructureObj->verifyMeshIntegrity();
 		MicrostructureData mdata(microstructureObj);
 		// Since every dislocation line is represented by a pair two directed lines in the data structure,
 		// make sure we render only every other dislocation line (the "even" ones).
@@ -604,6 +605,8 @@ QString DislocationVis::formatBurgersVector(const Vector3& b, const Microstructu
 {
 	if(structure) {
 		if(structure->crystalSymmetryClass() == MicrostructurePhase::CrystalSymmetryClass::CubicSymmetry) {
+			if(b.isZero())
+				return QStringLiteral("[0 0 0]");
 			FloatType smallestCompnt = FLOATTYPE_MAX;
 			for(int i = 0; i < 3; i++) {
 				FloatType c = std::abs(b[i]);
@@ -632,6 +635,8 @@ QString DislocationVis::formatBurgersVector(const Vector3& b, const Microstructu
 			}
 		}
 		else if(structure->crystalSymmetryClass() == MicrostructurePhase::CrystalSymmetryClass::HexagonalSymmetry) {
+			if(b.isZero())
+				return QStringLiteral("[0 0 0 0]");
 			// Determine vector components U, V, and W, with b = U*a1 + V*a2 + W*c.
 			FloatType U = sqrt(2.0)*b.x() - sqrt(2.0/3.0)*b.y();
 			FloatType V = sqrt(2.0)*b.x() + sqrt(2.0/3.0)*b.y();
@@ -670,6 +675,9 @@ QString DislocationVis::formatBurgersVector(const Vector3& b, const Microstructu
 					.arg(QLocale::c().toString(uvwt.w(), 'f'), 7);
 		}
 	}
+
+	if(b.isZero())
+		return QStringLiteral("0 0 0");
 
 	return QString("%1 %2 %3")
 			.arg(QLocale::c().toString(b.x(), 'f'), 7)
