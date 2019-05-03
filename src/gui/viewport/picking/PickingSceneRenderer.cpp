@@ -52,8 +52,7 @@ void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParame
 	_oldSurface = _oldContext ? _oldContext->surface() : nullptr;
 
 	// Make GL context current.
-	if(!context->makeCurrent(vpWindow->window()->windowHandle()))
-		throwException(tr("Failed to make OpenGL context current."));
+	vpWindow->makeCurrent();
 
 	// Create OpenGL framebuffer.
 	QSize size = vpWindow->viewportWindowDeviceSize();
@@ -150,8 +149,9 @@ void PickingSceneRenderer::endFrame(bool renderSuccessful)
 	ViewportSceneRenderer::endFrame(renderSuccessful);
 
 	// Reactivate old GL context.
-	if(_oldSurface && _oldContext)
+	if(_oldSurface && _oldContext) {
 		_oldContext->makeCurrent(_oldSurface);
+	}
 	else {
 		QOpenGLContext* context = QOpenGLContext::currentContext();
 		if(context) context->doneCurrent();

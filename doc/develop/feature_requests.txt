@@ -85,6 +85,10 @@ Unresolved OpenGL problems:
     Ovito 2.9.0 Windows, OpenGL Version: 3.1, Intel(R) HD Graphics 2000 (3.1.0 - Build 9.17.10.4459),
     Geometry shaders supported: no, Using deprecated functions: yes, Using point sprites: no, Using geometry shaders: no, Context sharing enabled: yes
 
+- Crash when opening simulation file (02/05/19, reinhardt.pinzon@utp.ac.pa): 
+    Ovito 2.9.0 Windows 64 bit, OpenGL Version: 3.1, Intel(R) HD Graphics (3.1.0 - Build 9.17.10.2875),
+    Geometry shaders supported: no, Using deprecated functions: yes, Using point sprites: no, Using geometry shaders: no, Context sharing enabled: yes
+
 - Main window turns black
     Ovito 2.8.1, Windows 64-bit, Intel(R) HD Graphics Family, 3.0.0 - Build 8.15.10.2342
 
