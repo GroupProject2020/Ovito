@@ -45,16 +45,15 @@ public:
 	/// Constructor creating an empty SurfaceMesh object.
 	Q_INVOKABLE SurfaceMesh(DataSet* dataset, const QString& title = QString());
 
-	/// Returns the title of this object.
+	/// Returns the display title of this object.
 	virtual QString objectTitle() const override {
 		if(!title().isEmpty()) return title();
 		else if(!identifier().isEmpty()) return identifier();
 		else return tr("Surface mesh");
 	}
 
-	/// Checks if the surface mesh is valid and all vertex and face properties
-	/// are consistent with the topology of the mesh. If this is not the case,
-	/// the method throws an exception.
+	/// Makes sure that the data structures of the surface mesh are valid and all vertex and face properties
+	/// are consistent with the topology of the mesh. If this is not the case, the method throws an exception. 
 	void verifyMeshIntegrity() const;
 
 	/// Returns the topology data after making sure it is not shared with any other owners.
@@ -84,8 +83,8 @@ public:
 	    return makeMutable(regions());
 	}
 
-	/// Determines which spatial region contains the given point in space.
-	/// Returns -1 if the point is exactly on a region boundary.
+	/// Determines which spatial region contains the given location in space.
+	/// Returns -1 if the point is exactly on the boundary between two regions.
 	int locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON) const;
 
 private:

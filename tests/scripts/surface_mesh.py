@@ -5,7 +5,8 @@ import numpy as np
 import sys
 import os
 
-if "ovito.plugins.CrystalAnalysis" not in sys.modules: 
+if "ovito.plugins.CrystalAnalysisPython" not in sys.modules: 
+    print("Skipping this test, because CrystalAnalysis module is not present")
     sys.exit()
 
 pipeline = import_file("../files/CFG/lammps_dumpi-42-1100-510000.cfg")

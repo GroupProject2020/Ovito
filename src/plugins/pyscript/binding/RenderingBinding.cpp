@@ -27,6 +27,7 @@
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/FrameBuffer.h>
 #include <core/dataset/data/DataVis.h>
+#include <core/dataset/data/TransformingDataVis.h>
 #include <opengl_renderer/StandardSceneRenderer.h>
 #include "PythonBinding.h"
 
@@ -185,6 +186,8 @@ void defineRenderingSubmodule(py::module m)
 				"\n\n"
 				":Default: ``''``\n")
 	;
+
+	ovito_abstract_class<TransformingDataVis, DataVis>{m};
 
 	py::enum_<ParticlePrimitive::ShadingMode>(m, "ParticleShadingMode")
 		.value("Normal", ParticlePrimitive::NormalShading)

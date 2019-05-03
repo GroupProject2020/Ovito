@@ -11,6 +11,56 @@ from ..plugins.PyScript import (DataObject, CloneHelper, DataCollection,
                                 AttributeDataObject, Modifier, StaticSource, PipelineStatus,
                                 PythonScriptModifier)
 
+
+# Helper class used to implement the DataCollection.attributes field.
+class _AttributesView(collections.MutableMapping):
+
+    def __init__(self, data_collection):
+        """ Constructor that stores away a back-pointer to the owning DataCollection instance. """
+        self._collection = data_collection
+
+    def __len__(self):
+        count = 0
+        for obj in self._collection.objects:
+            if isinstance(obj, AttributeDataObject):
+                count += 1
+        return count
+
+    def __getitem__(self, key):
+        for obj in self._collection.objects:
+            if isinstance(obj, AttributeDataObject) and obj.identifier == key:
+                return obj.value
+        raise KeyError("Attribute '%s' does not exist in data collection." % str(key))
+
+    def __setitem__(self, key, value):
+        for obj in self._collection.objects:
+            if isinstance(obj, AttributeDataObject) and obj.identifier == key:
+                if not value is None:
+                    self._collection.make_mutable(obj).value = value
+                else:
+                    del self._collection.objects[obj]
+                return
+        if not value is None:
+            attr =  AttributeDataObject(identifier = key, value = value)
+            self._collection.objects.append(attr)
+
+    def __delitem__(self, key):
+        """ Removes a global attribute from the data collection. """
+        for obj in self._collection.objects:
+            if isinstance(obj, AttributeDataObject) and obj.identifier == key:
+                del self._collection.objects[obj]
+                return
+        raise KeyError("Attribute '%s' does not exist in data collection." % str(key))
+
+    def __iter__(self):
+        """ Returns an iterator over the names of all global attributes. """
+        for obj in self._collection.objects:
+            if isinstance(obj, AttributeDataObject):
+                yield obj.identifier
+
+    def __repr__(self):
+        return repr(dict(self))
+
 # Implementation of the DataCollection.attributes field.
 def _DataCollection_attributes(self):
     """
@@ -52,56 +102,6 @@ def _DataCollection_attributes(self):
         :lines: 6-
 
     """
-
-    # Helper class used to implement the DataCollection.attributes field.
-    class _AttributesView(collections.MutableMapping):
-
-        def __init__(self, data_collection):
-            """ Constructor that stores away a back-pointer to the owning DataCollection instance. """
-            self._collection = data_collection
-
-        def __len__(self):
-            count = 0
-            for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject):
-                    count += 1
-            return count
-
-        def __getitem__(self, key):
-            for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject) and obj.identifier == key:
-                    return obj.value
-            raise KeyError("Attribute '%s' does not exist in data collection." % str(key))
-
-        def __setitem__(self, key, value):
-            for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject) and obj.identifier == key:
-                    if not value is None:
-                        self._collection.make_mutable(obj).value = value
-                    else:
-                        del self._collection.objects[obj]
-                    return
-            if not value is None:
-                attr =  AttributeDataObject(identifier = key, value = value)
-                self._collection.objects.append(attr)
-
-        def __delitem__(self, key):
-            """ Removes a global attribute from the data collection. """
-            for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject) and obj.identifier == key:
-                    del self._collection.objects[obj]
-                    return
-            raise KeyError("Attribute '%s' does not exist in data collection." % str(key))
-
-        def __iter__(self):
-            """ Returns an iterator over the names of all global attributes. """
-            for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject):
-                    yield obj.identifier
-
-        def __repr__(self):
-            return repr(dict(self))
-
     return _AttributesView(self)
 DataCollection.attributes = property(_DataCollection_attributes)
 

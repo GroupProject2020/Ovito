@@ -3,7 +3,8 @@ from ovito.modifiers import ConstructSurfaceModifier
 import numpy as np
 import sys
 
-if "ovito.plugins.CrystalAnalysis" not in sys.modules: 
+if "ovito.plugins.CrystalAnalysisPython" not in sys.modules: 
+    print("Skipping this test, because CrystalAnalysis module is not present")
     sys.exit()
 
 pipeline = import_file("../files/CFG/lammps_dumpi-42-1100-510000.cfg")
@@ -31,13 +32,18 @@ print("  surface_transparency: {}".format(modifier.vis.surface_transparency))
 
 data = pipeline.compute()
 
-print("Output:")
+print("Outputs:")
 print("  solid_volume= {}".format(data.attributes['ConstructSurfaceMesh.solid_volume']))
 print("  surface_area= {}".format(data.attributes['ConstructSurfaceMesh.surface_area']))
 
 surface_mesh = data.surface
 assert(surface_mesh is data.surfaces['surface'])
 
-assert(surface_mesh.locate_point((0,0,0)) == 1)
-assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == 0)
-assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) == -1)
+print(surface_mesh.locate_point((0,0,0))) # Exterior
+print(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1)) # On boundary
+print(surface_mesh.locate_point((80.0, -47.2837, 26.944))) # Interior
+
+
+assert(surface_mesh.locate_point((0,0,0)) == 1) # Exterior point
+assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == 0) # On boundary
+assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) == -1) # Interior point

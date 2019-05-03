@@ -74,18 +74,6 @@ void AtomicStrainModifierEditor::createUI(const RolloutInsertionParameters& roll
 	BooleanParameterUI* useMinimumImageConventionUI = new BooleanParameterUI(this, PROPERTY_FIELD(ReferenceConfigurationModifier::useMinimumImageConvention));
 	layout->addWidget(useMinimumImageConventionUI->checkBox());
 
-#if 0
-	QCheckBox* calculateShearStrainsBox = new QCheckBox(tr("Output von Mises shear strains"));
-	calculateShearStrainsBox->setEnabled(false);
-	calculateShearStrainsBox->setChecked(true);
-	layout->addWidget(calculateShearStrainsBox);
-
-	QCheckBox* calculateVolumetricStrainsBox = new QCheckBox(tr("Output volumetric strains"));
-	calculateVolumetricStrainsBox->setEnabled(false);
-	calculateVolumetricStrainsBox->setChecked(true);
-	layout->addWidget(calculateVolumetricStrainsBox);
-#endif	
-
 	BooleanParameterUI* calculateDeformationGradientsUI = new BooleanParameterUI(this, PROPERTY_FIELD(AtomicStrainModifier::calculateDeformationGradients));
 	layout->addWidget(calculateDeformationGradientsUI->checkBox());
 

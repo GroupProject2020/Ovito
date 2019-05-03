@@ -297,10 +297,11 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 			closestRegion = _faceRegions[adjacentFace(edge)];
 		}
 	}
+	OVITO_ASSERT(closestRegion >= 0);
 
 	FloatType dot = closestNormal.dot(closestVector);
 	if(dot >= epsilon) return closestRegion;
-	if(dot <= -epsilon) return 0;
+	if(dot <= -epsilon) return spaceFillingRegion();
 	return -1;
 }
 

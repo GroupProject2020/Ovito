@@ -82,6 +82,9 @@ void SurfaceMesh::verifyMeshIntegrity() const
 
 	if(!regions())
 		throwException(tr("Surface mesh has no region properties container attached."));
+
+	if(spaceFillingRegion() < 0)
+		throwException(tr("Space filling region ID set for surface mesh must not be negative."));
 }
 
 /******************************************************************************
@@ -104,6 +107,7 @@ const HalfEdgeMeshPtr& SurfaceMesh::modifiableTopology()
 ******************************************************************************/
 int SurfaceMesh::locatePoint(const Point3& location, FloatType epsilon) const
 {
+	verifyMeshIntegrity();
 	return SurfaceMeshData(this).locatePoint(location, epsilon);
 }
 

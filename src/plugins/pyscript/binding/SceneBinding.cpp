@@ -252,33 +252,6 @@ void defineSceneSubmodule(py::module m)
 #endif
 			)
 
-#if 0
-		// The following methods are required for the DataCollection.attributes property.
-		.def_property_readonly("attribute_names", [](PipelineFlowState& obj) -> QStringList {
-				return obj.attributes().keys();
-			})
-		.def("get_attribute", [](PipelineFlowState& obj, const QString& attrName) -> py::object {
-				auto item = obj.attributes().find(attrName);
-				if(item == obj.attributes().end())
-					return py::none();
-				else
-					return py::cast(item.value());
-			})
-		.def("set_attribute", [](PipelineFlowState& obj, const QString& attrName, py::object value) {
-				if(value.is_none()) {
-					obj.attributes().remove(attrName);
-				}
-				else {
-					if(PyLong_Check(value.ptr()))
-						obj.attributes().insert(attrName, QVariant::fromValue(PyLong_AsLong(value.ptr())));
-					else if(PyFloat_Check(value.ptr()))
-						obj.attributes().insert(attrName, QVariant::fromValue(PyFloat_AsDouble(value.ptr())));
-					else
-						obj.attributes().insert(attrName, QVariant::fromValue(castToQString(value.cast<py::str>())));
-				}
-			})
-#endif
-
 		// Needed for the implementation of DataCollection.apply(): Copies the data objects over from another DataCollection.
 		.def("_assign_objects", [](DataCollection& self, const DataCollection& other) {
 			self.setObjects(other.objects());

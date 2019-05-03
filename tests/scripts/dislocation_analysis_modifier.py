@@ -3,7 +3,9 @@ from ovito.modifiers import *
 import numpy as np
 
 import sys
-if "ovito.plugins.CrystalAnalysis" not in sys.modules: sys.exit()
+if "ovito.plugins.CrystalAnalysisPython" not in sys.modules: 
+    print("Skipping this test, because CrystalAnalysis module is not present")
+    sys.exit()
 
 node = import_file("../files/LAMMPS/frank_read.dump.gz")
 

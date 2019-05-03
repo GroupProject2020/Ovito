@@ -3,7 +3,9 @@ from ovito.data import *
 from ovito.modifiers import *
 
 import sys
-if "ovito.plugins.CrystalAnalysis" not in sys.modules: sys.exit()
+if "ovito.plugins.CrystalAnalysisPython" not in sys.modules: 
+    print("Skipping this test, because CrystalAnalysis module is not present")
+    sys.exit()
 
 import numpy
 

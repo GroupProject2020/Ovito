@@ -21,7 +21,6 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/modifier/ConstructSurfaceModifier.h>
-#if 0
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/crystalanalysis/modifier/elasticstrain/ElasticStrainModifier.h>
@@ -29,12 +28,9 @@
 #include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/BurgersVectorFamily.h>
-#include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
-#include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
 #include <plugins/crystalanalysis/exporter/CAExporter.h>
 #include <plugins/crystalanalysis/exporter/VTKDislocationsExporter.h>
-#endif
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/particles/scripting/PythonBinding.h>
 #include <core/app/PluginManager.h>
@@ -105,7 +101,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 		.def_property("vis", &ConstructSurfaceModifier::surfaceMeshVis, &ConstructSurfaceModifier::setSurfaceMeshVis,
 				"The :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the computed surface.\n")
 	;
-#if 0
+
 	auto DislocationAnalysisModifier_py = ovito_class<DislocationAnalysisModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This analysis modifier extracts all dislocations in a crystal and converts them to continuous line segments. "
@@ -293,7 +289,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 	ovito_class<VTKDislocationsExporter, FileExporter>{m}
 	;
 
-	auto DislocationVis_py = ovito_class<DislocationVis, DataVis>(m,
+	auto DislocationVis_py = ovito_class<DislocationVis, TransformingDataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`. "
 			"An instance of this class is attached to every :py:class:`~ovito.data.DislocationNetwork` data object. ",
@@ -432,7 +428,6 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 		.def_readonly("atom_count", &Cluster::atomCount)
 		.def_readonly("orientation", &Cluster::orientation)
 	;
-#endif
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CrystalAnalysisPython);

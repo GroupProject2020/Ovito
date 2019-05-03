@@ -208,10 +208,9 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 		}
 	}
 	else {
-
 		// Make sure the number of elements didn't change when no IDs are defined.
 		if(myModApp->property()->size() != outputProperty->size())
-			throwException(tr("Number of input element has changed. Cannot restore saved property values. There were %1 elements when the snapshot was created. Now there are %2.").arg(myModApp->property()->size()).arg(outputProperty->size()));
+			throwException(tr("Number of input elements has changed. Cannot restore saved property values. There were %1 elements when the snapshot was created. Now there are %2.").arg(myModApp->property()->size()).arg(outputProperty->size()));
 
 		if(outputProperty->type() == myModApp->property()->type()
 				&& outputProperty->name() == myModApp->property()->name()
