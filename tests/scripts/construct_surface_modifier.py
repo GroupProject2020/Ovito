@@ -3,7 +3,7 @@ from ovito.modifiers import ConstructSurfaceModifier
 import numpy as np
 import sys
 
-if "ovito.plugins.CrystalAnalysisPython" not in sys.modules: 
+if "ovito.plugins.CrystalAnalysisPython" not in sys.modules:
     print("Skipping this test, because CrystalAnalysis module is not present")
     sys.exit()
 
@@ -39,11 +39,6 @@ print("  surface_area= {}".format(data.attributes['ConstructSurfaceMesh.surface_
 surface_mesh = data.surface
 assert(surface_mesh is data.surfaces['surface'])
 
-print(surface_mesh.locate_point((0,0,0))) # Exterior
-print(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1)) # On boundary
-print(surface_mesh.locate_point((80.0, -47.2837, 26.944))) # Interior
-
-
-assert(surface_mesh.locate_point((0,0,0)) == 1) # Exterior point
-assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == 0) # On boundary
-assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) == -1) # Interior point
+assert(surface_mesh.locate_point((0,0,0)) == 0) # Exterior point
+assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == -1) # On boundary
+assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) == 1) # Interior point

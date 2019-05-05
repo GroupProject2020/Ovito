@@ -67,22 +67,22 @@ public:
     /// Returns the number of half-edges in the mesh.
     size_type edgeCount() const { return topology()->edgeCount(); }
 
-    /// Returns the number of volumetric regions defined for the mesh.
-    size_type regionCount() const { return !_regionProperties.empty() ? _regionProperties.front()->size() : 0; }
+    /// Returns the number of spatial regions defined for the mesh.
+    size_type regionCount() const { return _regionCount; }
 
-    /// Returns the index of the space-filling volumetric region.
+    /// Returns the index of the space-filling spatial region.
     region_index spaceFillingRegion() const { return _spaceFillingRegion; }
 
-    /// Sets the the space-filling volumetric region.
+    /// Sets the index of the space-filling spatial region.
     void setSpaceFillingRegion(region_index region) { _spaceFillingRegion = region; }
 
-    /// Returns the volumetric region which the given face belongs to.
+    /// Returns the spatial region which the given face belongs to.
     region_index faceRegion(face_index face) const { OVITO_ASSERT(face >= 0 && face < faceCount()); return faceRegions()[face]; }
 
     /// Sets the cluster a dislocation/slip face is embedded in.
     void setFaceRegion(face_index face, region_index region) { OVITO_ASSERT(face >= 0 && face < faceCount()); faceRegions()[face] = region; }
 
-    /// Returns the volumetric region which the given mesh edge belongs to.
+    /// Returns the spatial region which the given mesh edge belongs to.
     region_index edgeRegion(edge_index edge) const { return faceRegion(adjacentFace(edge)); }
 
     /// Returns the first edge from a vertex' list of outgoing half-edges.
@@ -209,14 +209,14 @@ public:
 
     /// Creates a new face, and optionally also the half-edges surrounding it.
     /// Returns the index of the new face.
-    face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion = 0) {
+    face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion = 1) {
         return createFace(vertices.begin(), vertices.end(), faceRegion);
     }
 
     /// Creates a new face, and optionally also the half-edges surrounding it.
     /// Returns the index of the new face.
     template<typename VertexIterator>
-    face_index createFace(VertexIterator begin, VertexIterator end, region_index faceRegion = 0) {
+    face_index createFace(VertexIterator begin, VertexIterator end, region_index faceRegion = 1) {
         OVITO_ASSERT(isTopologyMutable());
         OVITO_ASSERT(areFacePropertiesMutable());
         face_index fidx = (begin == end) ? topology()->createFace() : topology()->createFaceAndEdges(begin, end);
@@ -254,16 +254,15 @@ public:
         return topology()->createEdge(vertex1, vertex2, face);
     }
 
-    /// Creates a new region.
+    /// Defines a new spatial region.
     region_index createRegion(int phase = 0) {
         OVITO_ASSERT(areRegionPropertiesMutable());
-        vertex_index ridx = regionCount();
+        vertex_index ridx = _regionCount++;
         for(const auto& prop : _regionProperties) {
             if(prop->grow(1))
                 updateRegionPropertyPointers(prop);
         }
         if(_regionPhases) {
-            OVITO_ASSERT(ridx + 1 == regionCount());
             _regionPhases[ridx] = phase;
         }
         return ridx;
@@ -347,7 +346,7 @@ public:
         return {};
     }
 
-    /// Returns one of the standard region properties (or null if the property is not defined).
+    /// Returns one of the standard spatial region properties (or null if the property is not defined).
     PropertyPtr regionProperty(SurfaceMeshRegions::Type ptype) const {
         for(const auto& property : _regionProperties)
             if(property->type() == ptype)
@@ -377,7 +376,7 @@ public:
         return prop;
     }
 
-    /// Adds a new standard region property to the mesh.
+    /// Adds a new standard property to the spatial regions of the mesh.
     PropertyPtr createRegionProperty(SurfaceMeshRegions::Type ptype) {
         // Check if already exists.
         PropertyPtr prop = regionProperty(ptype);
@@ -432,12 +431,12 @@ protected:
         }
     }
 
-    /// Adds a mesh region property array to the list of region properties.
+    /// Adds a property array to the list of region properties.
     void addRegionProperty(PropertyPtr property) {
         OVITO_ASSERT(property);
         OVITO_ASSERT(std::find(_regionProperties.cbegin(), _regionProperties.cend(), property) == _regionProperties.cend());
         OVITO_ASSERT(property->type() == SurfaceMeshRegions::UserProperty || std::none_of(_regionProperties.cbegin(), _regionProperties.cend(), [t = property->type()](const PropertyPtr& p) { return p->type() == t; }));
-        OVITO_ASSERT(_regionProperties.empty() || property->size() == regionCount());
+        OVITO_ASSERT(property->size() == regionCount());
         updateRegionPropertyPointers(property);
         _regionProperties.push_back(std::move(property));
     }
@@ -483,7 +482,7 @@ protected:
         return false;
     }
 
-    /// Returns whether the given property of the mesh regions may be safely modified without unwanted side effects.
+    /// Returns whether the given property of the spatial regions may be safely modified without unwanted side effects.
     bool isRegionPropertyMutable(SurfaceMeshRegions::Type ptype) const {
         for(const auto& property : _regionProperties)
             if(property->type() == ptype)
@@ -513,7 +512,8 @@ private:
     std::vector<PropertyPtr> _vertexProperties;	///< List of all property arrays associated with the vertices of the mesh.
     std::vector<PropertyPtr> _faceProperties;	///< List of all property arrays associated with the faces of the mesh.
     std::vector<PropertyPtr> _regionProperties;	///< List of all property arrays associated with the volumetric domains of the mesh.
-    int _spaceFillingRegion = 0;	///< The index of the space-filling volumetric region.
+    size_type _regionCount = 0;             ///< The number of sptial regions that have been defined.
+    region_index _spaceFillingRegion = 0;	///< The index of the space-filling spatial region.
     Point3* _vertexCoords = nullptr;	        ///< Pointer to the per-vertex mesh coordinates.
     int* _faceRegions = nullptr;	            ///< Pointer to the per-face region information.
 	Vector3* _burgersVectors = nullptr;	        ///< Pointer to the per-face Burgers vector information.

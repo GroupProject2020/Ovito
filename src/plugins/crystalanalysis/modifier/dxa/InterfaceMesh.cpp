@@ -61,6 +61,8 @@ ForwardIterator most_common(ForwardIterator first, ForwardIterator last)
 ******************************************************************************/
 bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, Task& promise)
 {
+	OVITO_ASSERT(!crystalClusters); // This option is currently not supported.
+
 	promise.beginProgressSubSteps(2);
 
 	setSpaceFillingRegion(1);
@@ -110,6 +112,11 @@ bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const Property
 
 	// Threshold for filtering out elements at the surface.
 	double alpha = 5.0 * maximumNeighborDistance;
+
+	// Create the good and the bad region.
+	createRegion();
+	createRegion();
+	OVITO_ASSERT(regionCount() == 2);
 
 	ManifoldConstructionHelper<> manifoldConstructor(tessellation(), *this, alpha, *structureAnalysis().positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, promise, prepareMeshFace))

@@ -98,7 +98,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	if(mod->createSelection() == false) {
 
 		// Delete the selected particles.
-		size_t numDeleted = outputParticles->deleteParticles(mask);
+		size_t numDeleted = outputParticles->deleteElements(mask);
 		statusMessage += tr("\n%n particles deleted", 0, numDeleted);
 		statusMessage += tr("\n%n particles remaining", 0, outputParticles->elementCount());
 	}

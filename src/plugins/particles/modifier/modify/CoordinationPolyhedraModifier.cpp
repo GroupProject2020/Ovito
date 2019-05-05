@@ -93,6 +93,11 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 {
 	task()->setProgressText(tr("Generating coordination polyhedra"));
 
+	// Create the outer and the inner spatial region.
+	mesh().createRegion();
+	mesh().createRegion();
+	OVITO_ASSERT(mesh().regionCount() == 2);
+
 	// Determine number of selected particles.
 	size_t npoly = std::count_if(_selection->constDataInt(), _selection->constDataInt() + _selection->size(), [](int s) { return s != 0; });
 	task()->setProgressMaximum(npoly);

@@ -97,7 +97,7 @@ PYBIND11_MODULE(MeshPython, m)
 			"and select ``vtk/trimesh`` as output format: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/surface_mesh_export.py\n"
-			"   :lines: 4-\n"
+			"   :lines: 7-\n"
 			"\n\n"
 			"**Cutting planes**"
 			"\n\n"
@@ -116,22 +116,28 @@ PYBIND11_MODULE(MeshPython, m)
 		.def("locate_point", &SurfaceMesh::locatePoint,
 			"locate_point(pos, eps=1e-6)"
 			"\n\n"
-			"Determines the spatial region the given location in 3-D space is located in. "
+			"Determines the index of the spatial region that contains the given location in 3-D space. "
+			"Note that region index 0 is typically reserved for the empty/outer region, which doesn't contain any atoms or particles. "
+			"Regions starting at index 1 are the filled/solid regions. "
+			"\n\n"
+			"The parameter *eps* is used as a precision thedholds to detect cases where the query point is positioned exactly on the surface itself, i.e. on the boundary "
+			"between two spatial regions. Such a condition is indicates by the special return value -1. You can set *eps* to 0.0 to disable "
+			"the point-on-boundary test. Then the method will never yield -1 as a result. "
 			"\n\n"
 			":param pos: The (x,y,z) coordinates of the query point\n"
 			":param eps: Numerical precision threshold for point-on-boundary test\n"
-			":return: The ID of the spatial region containing *pos*, or -1 if *pos* is exactly on the dividing surface between two regions\n",
+			":return: The ID of the spatial region containing *pos*; or -1 if *pos* is exactly on the dividing surface between two regions\n",
 			py::arg("pos"), py::arg("eps") = 1e-6)
 
-#if 0
 		.def("get_vertices", [](const SurfaceMesh& meshObj) {
-				const auto& mesh = *meshObj.storage();
-				py::array_t<FloatType> array({ (size_t)mesh.vertices().size(), (size_t)3 });
+				meshObj.verifyMeshIntegrity();
+				size_t vcount = meshObj.vertices()->elementCount();
+				ConstPropertyPtr positions = meshObj.vertices()->expectProperty(SurfaceMeshVertices::PositionProperty)->storage();
+				py::array_t<FloatType> array({ vcount, (size_t)3 });
 				auto r = array.mutable_unchecked();
-				for(size_t i = 0; i < mesh.vertices().size(); i++) {
-					OVITO_ASSERT(mesh.vertices()[i]->index() == i);
+				for(size_t i = 0; i < vcount; i++) {
 					for(size_t j = 0; j < 3; j++)
-						r(i,j) = mesh.vertices()[i]->pos()[j];
+						r(i,j) = positions->getFloatComponent(i, j);
 				}
 				return array;
 			},
@@ -139,34 +145,38 @@ PYBIND11_MODULE(MeshPython, m)
 			"Note that the returned Numpy array is a copy of the internal data stored by the :py:class:`!SurfaceMesh`. ")
 
 		.def("get_faces", [](const SurfaceMesh& meshObj) {
-				const auto& mesh = *meshObj.storage();
-				py::array_t<size_t> array({ (size_t)mesh.faces().size(), (size_t)3 });
+				meshObj.verifyMeshIntegrity();
+				HalfEdgeMeshPtr topology = meshObj.topology();
+				size_t fcount = topology->faceCount();
+				py::array_t<HalfEdgeMesh::vertex_index> array({ fcount, (size_t)3 });
 				auto r = array.mutable_unchecked();
-				for(size_t i = 0; i < mesh.faces().size(); i++) {
-					auto face = mesh.faces()[i];
-					OVITO_ASSERT(face->edgeCount() == 3);
-					OVITO_ASSERT(face->index() == i);
-					r(i,0) = face->edges()->vertex1()->index();
-					r(i,1) = face->edges()->vertex2()->index();
-					r(i,2) = face->edges()->nextFaceEdge()->vertex2()->index();
+				for(size_t i = 0; i < fcount; i++) {
+					if(topology->countFaceEdges(i) != 3)
+						meshObj.throwException("Mesh contains at least one face that is not a triangle.");
+					r(i,0) = topology->firstFaceVertex(i);
+					r(i,1) = topology->secondFaceVertex(i);
+					r(i,2) = topology->thirdFaceVertex(i);
 				}
 				return array;
 			},
 			"Returns a *M* x 3 array with the vertex indices of the *M* triangles in the mesh. "
 			"Note that the returned Numpy array is a copy of the internal data stored by the :py:class:`!SurfaceMesh`. "
-			"Also keep in mind that a triangle face can cross domain boundaries if PBCs are used. ")
+			"Also keep in mind that triangle faces can cross the domain boundaries if the periodic boundary conditions are used. ")
 
 		.def("get_face_adjacency", [](const SurfaceMesh& meshObj) {
-				const auto& mesh = *meshObj.storage();
-				py::array_t<size_t> array({ (size_t)mesh.faces().size(), (size_t)3 });
+				meshObj.verifyMeshIntegrity();
+				HalfEdgeMeshPtr topology = meshObj.topology();
+				size_t fcount = topology->faceCount();
+				py::array_t<HalfEdgeMesh::face_index> array({ fcount, (size_t)3 });
 				auto r = array.mutable_unchecked();
-				for(size_t i = 0; i < mesh.faces().size(); i++) {
-					auto face = mesh.faces()[i];
-					OVITO_ASSERT(face->edgeCount() == 3);
-					auto edge = face->edges();
-					for(size_t j = 0; j < 3; j++, edge = edge->nextFaceEdge()) {
-						OVITO_ASSERT(edge->oppositeEdge() && edge->oppositeEdge()->face());
-						r(i,j) = edge->oppositeEdge()->face()->index();
+				for(size_t i = 0; i < fcount; i++) {
+					if(topology->countFaceEdges(i) != 3)
+						meshObj.throwException("Mesh contains at least one face that is not a triangle.");
+					auto edge = topology->firstFaceEdge(i);
+					for(size_t j = 0; j < 3; j++, edge = topology->nextFaceEdge(edge)) {
+						if(!topology->hasOppositeEdge(edge))
+							meshObj.throwException("Mesh is not closed. Some faces do not have an adjacent face.");
+						r(i,j) = topology->adjacentFace(topology->oppositeEdge(edge));
 					}
 				}
 				return array;
@@ -211,28 +221,6 @@ PYBIND11_MODULE(MeshPython, m)
 			"\n\n"
 			"Sets the cutting planes to be applied to this :py:class:`!SurfaceMesh`. "
 			"The array *planes* must follow the same format as the one returned by :py:meth:`.get_cutting_planes`. ")
-
-		// For backward compatibility with Ovito 2.8.2:
-		.def("export_vtk", [](SurfaceMesh& mesh, const QString& filename, SimulationCellObject* simCellObj) {
-				if(!simCellObj)
-					throw Exception("A simulation cell is required to generate non-periodic mesh for export.");
-				TriMesh output;
-				if(!SurfaceMeshVis::buildSurfaceMesh(*mesh.storage(), simCellObj->data(), false, mesh.cuttingPlanes(), output))
-					throw Exception("Failed to generate non-periodic mesh for export. Simulation cell might be too small.");
-				QFile file(filename);
-				CompressedTextWriter writer(file, mesh.dataset());
-				output.saveToVTK(writer);
-			})
-		.def("export_cap_vtk", [](SurfaceMesh& mesh, const QString& filename, SimulationCellObject* simCellObj) {
-				if(!simCellObj)
-					throw Exception("A simulation cell is required to generate cap mesh for export.");
-				TriMesh output;
-				SurfaceMeshVis::buildCapMesh(*mesh.storage(), simCellObj->data(), mesh.isCompletelySolid(), false, mesh.cuttingPlanes(), output);
-				QFile file(filename);
-				CompressedTextWriter writer(file, mesh.dataset());
-				output.saveToVTK(writer);
-			})
-#endif
 	;
 	createDataPropertyAccessors(SurfaceMesh_py, "all_interior", &SurfaceMesh::spaceFillingRegion, &SurfaceMesh::setSpaceFillingRegion,
 		"Indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.");

@@ -162,6 +162,11 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		}
 	};
 
+	// Create the empty and the solid region in the output mesh.
+	_mesh.createRegion();
+	_mesh.createRegion();
+	OVITO_ASSERT(_mesh.regionCount() == 2);
+
 	ManifoldConstructionHelper<> manifoldConstructor(tessellation, _mesh, alpha, *positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), prepareMeshFace))
 		return;

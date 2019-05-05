@@ -69,11 +69,11 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 
 	// Get the trajectory frame.
 	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(time);
-	
+
 	// Wait for the data to become available.
 	return trajStateFuture.then(modApp->executor(), [state = input, modApp](const PipelineFlowState& trajState) mutable {
 		UndoSuspender noUndo(modApp);
-		
+
 		// Make sure the obtained configuration is valid and ready to use.
 		if(trajState.status().type() == PipelineStatus::Error) {
 			if(LoadTrajectoryModifier* trajModifier = dynamic_object_cast<LoadTrajectoryModifier>(modApp->modifier())) {
@@ -160,7 +160,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 					continue; // Types of source property and output property are not compatible.
 			}
 			else {
-				outputProperty = particles->createProperty(property->name(), 
+				outputProperty = particles->createProperty(property->name(),
 					property->dataType(), property->componentCount(),
 					0, true);
 			}
@@ -172,7 +172,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 			const char* src = static_cast<const char*>(property->constData());
 			size_t stride = outputProperty->stride();
 			for(size_t index = 0; index < outputProperty->size(); index++, ++idx, dest += stride) {
-				memcpy(dest, src + stride * (*idx), stride);
+				std::memcpy(dest, src + stride * (*idx), stride);
 			}
 		}
 
@@ -204,7 +204,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 							continue;
 						const Point3& p1 = outputPosProperty->getPoint3(particleIndex1);
 						const Point3& p2 = outputPosProperty->getPoint3(particleIndex2);
-						Vector3 delta = p1 - p2; 
+						Vector3 delta = p1 - p2;
 						for(int dim = 0; dim < 3; dim++) {
 							if(pbc[dim]) {
 								periodicImageProperty->setIntComponent(bondIndex, dim, (int)floor(inverseSimCell.prodrow(delta, dim) + FloatType(0.5)));
@@ -216,10 +216,10 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		}
 
 		// Merge attributes of topology and trajectory datasets.
-		// If there is a naming collision, attributes from the trajectory dataset override those from the topology dataset. 
+		// If there is a naming collision, attributes from the trajectory dataset override those from the topology dataset.
 		for(const DataObject* obj : trajState.data()->objects()) {
 			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
-				const AttributeDataObject* existingAttribute = nullptr; 
+				const AttributeDataObject* existingAttribute = nullptr;
 				for(const DataObject* obj2 : state.data()->objects()) {
 					if(const AttributeDataObject* attribute2 = dynamic_object_cast<AttributeDataObject>(obj2)) {
 						if(attribute2->identifier() == attribute->identifier()) {

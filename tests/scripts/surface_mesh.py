@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import os
 
-if "ovito.plugins.CrystalAnalysisPython" not in sys.modules: 
+if "ovito.plugins.CrystalAnalysisPython" not in sys.modules:
     print("Skipping this test, because CrystalAnalysis module is not present")
     sys.exit()
 
@@ -32,8 +32,3 @@ assert(len(surface_mesh.get_cutting_planes()) == 1)
 export_file(surface_mesh, "_surface_mesh.vtk", "vtk/trimesh")
 os.remove("_surface_mesh.vtk")
 
-# Backward compatibility with Ovito 2.8.2:
-surface_mesh.export_vtk("_surface_mesh.vtk", data.cell)
-surface_mesh.export_cap_vtk("_surfacecap_mesh.vtk", data.cell)
-os.remove("_surface_mesh.vtk")
-os.remove("_surfacecap_mesh.vtk")

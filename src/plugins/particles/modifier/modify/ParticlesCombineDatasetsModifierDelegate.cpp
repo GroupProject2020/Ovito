@@ -67,10 +67,9 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 	// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
 	if(secondaryParticleCount != 0) {
-		particles->makePropertiesMutable();
+		particles->setElementCount(totalParticleCount);
 		for(PropertyObject* prop : particles->properties()) {
-			if(prop->size() != primaryParticleCount) continue;
-			prop->resize(totalParticleCount, true);
+			OVITO_ASSERT(prop->size() == totalParticleCount);
 
 			// Find corresponding property in second dataset.
 			const PropertyObject* secondProp;
@@ -80,13 +79,13 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				secondProp = secondaryParticles->getProperty(prop->name());
 			if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 				OVITO_ASSERT(prop->stride() == secondProp->stride());
-				memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->constData(), prop->stride() * secondaryParticleCount);
+				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->constData(), prop->stride() * secondaryParticleCount);
 			}
 			else if(prop->type() != ParticlesObject::UserProperty) {
 				ConstDataObjectPath containerPath = { secondaryParticles };
 				PropertyPtr temporaryProp = ParticlesObject::OOClass().createStandardStorage(secondaryParticles->elementCount(), prop->type(), true, containerPath);
 				OVITO_ASSERT(temporaryProp->stride() == prop->stride());
-				memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->constData(), prop->stride() * secondaryParticleCount);
+				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->constData(), prop->stride() * secondaryParticleCount);
 			}
 
 			// Combine particle types based on their names.
@@ -154,8 +153,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 		// Shift values of second dataset and reset values of first dataset to zero:
 		if(primaryParticleCount != 0) {
-			memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryParticleCount, clonedProperty->constData(), clonedProperty->stride() * secondaryParticleCount);
-			memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryParticleCount);
+			std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryParticleCount, clonedProperty->constData(), clonedProperty->stride() * secondaryParticleCount);
+			std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryParticleCount);
 		}
 	}
 
@@ -167,18 +166,18 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 	// Merge bonds if present.
 	if(primaryBondTopology || secondaryBondTopology) {
-		
+
 		size_t primaryBondCount = primaryBonds ? primaryBonds->elementCount() : 0;
 		size_t secondaryBondCount = secondaryBonds ? secondaryBonds->elementCount() : 0;
 		size_t totalBondCount = primaryBondCount + secondaryBondCount;
-		
+
 		// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
 		if(secondaryBondCount != 0) {
 			BondsObject* primaryMutableBonds = particles->makeBondsMutable();
 			primaryMutableBonds->makePropertiesMutable();
+			primaryMutableBonds->setElementCount(totalBondCount);
 			for(PropertyObject* prop : primaryMutableBonds->properties()) {
-				if(prop->size() != primaryBondCount) continue;
-				prop->resize(totalBondCount, true);
+				OVITO_ASSERT(prop->size() == totalBondCount);
 
 				// Find corresponding property in second dataset.
 				const PropertyObject* secondProp;
@@ -188,7 +187,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 					secondProp = secondaryBonds->getProperty(prop->name());
 				if(secondProp && secondProp->size() == secondaryBondCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 					OVITO_ASSERT(prop->stride() == secondProp->stride());
-					memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->constData(), prop->stride() * secondaryBondCount);
+					std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->constData(), prop->stride() * secondaryBondCount);
 				}
 
 				// Combine bond types based on their names.
@@ -200,7 +199,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 							if(type1 == nullptr) {
 								OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
 								type2clone->setNumericId(prop->generateUniqueElementTypeId());
-								prop->addElementType(type2clone);															
+								prop->addElementType(type2clone);
 								typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
 							}
 							else if(type1->numericId() != type2->numericId()) {
@@ -255,8 +254,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 				// Shift values of second dataset and reset values of first dataset to zero:
 				if(primaryBondCount != 0) {
-					memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->constData(), clonedProperty->stride() * secondaryBondCount);
-					memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryBondCount);
+					std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->constData(), clonedProperty->stride() * secondaryBondCount);
+					std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryBondCount);
 				}
 			}
 		}

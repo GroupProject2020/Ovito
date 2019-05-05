@@ -42,35 +42,7 @@ BondsObject::BondsObject(DataSet* dataset) : PropertyContainer(dataset)
 }
 
 /******************************************************************************
-* Deletes the bonds for which bits are set in the given bit-mask.
-* Returns the number of deleted bonds.
-******************************************************************************/
-size_t BondsObject::deleteBonds(const boost::dynamic_bitset<>& mask)
-{
-	OVITO_ASSERT(mask.size() == elementCount());
-
-	size_t deleteCount = mask.count();
-	size_t oldBondCount = elementCount();
-	size_t newBondCount = oldBondCount - deleteCount;
-	if(deleteCount == 0)
-		return 0;	// Nothing to delete.
-
-    // Make sure the properties can be safely modified.
-    makePropertiesMutable();
-
-	// Modify bond properties.
-	for(PropertyObject* property : properties()) {
-        OVITO_ASSERT(property->size() == oldBondCount);
-        property->filterResize(mask);
-        OVITO_ASSERT(property->size() == newBondCount);
-	}
-    OVITO_ASSERT(elementCount() == newBondCount);
-
-	return deleteCount;
-}
-
-/******************************************************************************
-* Gives the property class the opportunity to set up a newly created 
+* Gives the property class the opportunity to set up a newly created
 * property object.
 ******************************************************************************/
 void BondsObject::OOMetaClass::prepareNewProperty(PropertyObject* property) const
@@ -85,7 +57,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 	int dataType;
 	size_t componentCount;
 	size_t stride;
-	
+
 	switch(type) {
 	case TypeProperty:
 	case SelectionProperty:
@@ -109,12 +81,12 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 		dataType = PropertyStorage::Int64;
 		componentCount = 2;
 		stride = componentCount * sizeof(qlonglong);
-		break;		
+		break;
 	case PeriodicImageProperty:
 		dataType = PropertyStorage::Int;
 		componentCount = 3;
 		stride = componentCount * sizeof(int);
-		break;		
+		break;
 	default:
 		OVITO_ASSERT_MSG(false, "BondsObject::createStandardStorage", "Invalid standard property type");
 		throw Exception(tr("This is not a valid standard bond property type: %1").arg(type));
@@ -124,7 +96,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 
 	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
 
-	PropertyPtr property = std::make_shared<PropertyStorage>(bondsCount, dataType, componentCount, stride, 
+	PropertyPtr property = std::make_shared<PropertyStorage>(bondsCount, dataType, componentCount, stride,
 								propertyName, false, type, componentNames);
 
 	// Initialize memory if requested.
@@ -145,7 +117,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 		std::memset(property->data(), 0, property->size() * property->stride());
 	}
 
-	return property;	
+	return property;
 }
 
 /******************************************************************************
@@ -157,8 +129,8 @@ void BondsObject::OOMetaClass::initialize()
 
 	// Enable automatic conversion of a BondPropertyReference to a generic PropertyReference and vice versa.
 	QMetaType::registerConverter<BondPropertyReference, PropertyReference>();
-	QMetaType::registerConverter<PropertyReference, BondPropertyReference>();	
-	
+	QMetaType::registerConverter<PropertyReference, BondPropertyReference>();
+
 	setPropertyClassDisplayName(tr("Bonds"));
 	setElementDescriptionName(QStringLiteral("bonds"));
 	setPythonName(QStringLiteral("bonds"));
@@ -167,7 +139,7 @@ void BondsObject::OOMetaClass::initialize()
 	const QStringList abList = QStringList() << "A" << "B";
 	const QStringList xyzList = QStringList() << "X" << "Y" << "Z";
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
-	
+
 	registerStandardProperty(TypeProperty, tr("Bond Type"), PropertyStorage::Int, emptyList, tr("Bond types"));
 	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Bond colors"));
@@ -196,8 +168,8 @@ std::pair<size_t, ConstDataObjectPath> BondsObject::OOMetaClass::elementFromPick
 }
 
 /******************************************************************************
-* Tries to remap an index from one property container to another, considering the 
-* possibility that elements may have been added or removed. 
+* Tries to remap an index from one property container to another, considering the
+* possibility that elements may have been added or removed.
 ******************************************************************************/
 size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& source, size_t elementIndex, const ConstDataObjectPath& dest) const
 {
@@ -211,7 +183,7 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 		if(const PropertyObject* sourceTopology = sourceBonds->getProperty(TopologyProperty)) {
 			if(const PropertyObject* destTopology = destBonds->getProperty(TopologyProperty)) {
 
-				// If unique IDs are available try to use them to look up the bond in the other data collection. 
+				// If unique IDs are available try to use them to look up the bond in the other data collection.
 				if(const PropertyObject* sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
 					if(const PropertyObject* destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
 						size_t index_a = sourceTopology->getInt64Component(elementIndex, 0);
@@ -235,7 +207,7 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 							size_t index2_a = std::find(destIdentifiers->constDataInt64(), destIdentifiers->constDataInt64() + destIdentifiers->size(), id_a) - destIdentifiers->constDataInt64();
 							size_t index2_b = std::find(destIdentifiers->constDataInt64(), destIdentifiers->constDataInt64() + destIdentifiers->size(), id_b) - destIdentifiers->constDataInt64();
 							if(index2_a < destIdentifiers->size() && index2_b < destIdentifiers->size()) {
-								// Go through the whole bonds list to see if there is a bond connecting the particles with 
+								// Go through the whole bonds list to see if there is a bond connecting the particles with
 								// the same IDs.
 								for(auto bond = destTopology->constDataInt64(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
 									if((bond[0] == index2_a && bond[1] == index2_b) || (bond[0] == index2_b && bond[1] == index2_a)) {
@@ -272,7 +244,7 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 							size_t index2_a = std::find(destPos->constDataPoint3(), destPos->constDataPoint3() + destPos->size(), pos_a) - destPos->constDataPoint3();
 							size_t index2_b = std::find(destPos->constDataPoint3(), destPos->constDataPoint3() + destPos->size(), pos_b) - destPos->constDataPoint3();
 							if(index2_a < destPos->size() && index2_b < destPos->size()) {
-								// Go through the whole bonds list to see if there is a bond connecting the particles with 
+								// Go through the whole bonds list to see if there is a bond connecting the particles with
 								// the same positions.
 								for(auto bond = destTopology->constDataInt64(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
 									if((bond[0] == index2_a && bond[1] == index2_b) || (bond[0] == index2_b && bond[1] == index2_a)) {
@@ -292,7 +264,7 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 }
 
 /******************************************************************************
-* Determines which elements are located within the given 
+* Determines which elements are located within the given
 * viewport fence region (=2D polygon).
 ******************************************************************************/
 boost::dynamic_bitset<> BondsObject::OOMetaClass::viewportFenceSelection(const QVector<Point2>& fence, const ConstDataObjectPath& objectPath, PipelineSceneNode* node, const Matrix4& projectionTM) const
@@ -314,7 +286,7 @@ boost::dynamic_bitset<> BondsObject::OOMetaClass::viewportFenceSelection(const Q
 					auto t = topo + startIndex * 2;
 					for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++, t += 2) {
 						int insideCount = 0;
-						for(int i = 0; i < 2; i++) { 
+						for(int i = 0; i < 2; i++) {
 							if(t[i] >= posProperty->size()) continue;
 							const Point3& p = posProperty->getPoint3(t[i]);
 
@@ -348,7 +320,7 @@ boost::dynamic_bitset<> BondsObject::OOMetaClass::viewportFenceSelection(const Q
 					QMutexLocker locker(&mutex);
 					fullSelection |= selection;
 				});
-				
+
 				return fullSelection;
 			}
 		}

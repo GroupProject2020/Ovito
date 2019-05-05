@@ -56,6 +56,7 @@ SurfaceMeshData::SurfaceMeshData(const SurfaceMesh* sm) :
 	for(const PropertyObject* property : sm->faces()->properties()) {
 	    addFaceProperty(const_pointer_cast<PropertyStorage>(property->storage()));
 	}
+	_regionCount = sm->regions()->elementCount();
 	for(const PropertyObject* property : sm->regions()->properties()) {
 	    addRegionProperty(const_pointer_cast<PropertyStorage>(property->storage()));
 	}
@@ -71,32 +72,9 @@ void SurfaceMeshData::transferTo(SurfaceMesh* sm) const
 	sm->setTopology(topology());
     sm->setSpaceFillingRegion(spaceFillingRegion());
 
-	// Helper function that transfers a list of storage objects into the given property container.
-	// Existing properties which are no longer used will be removed from the container.
-	auto transferProperties = [](PropertyContainer* container, const std::vector<PropertyPtr>& properties) {
-		// Insertion phase:
-		for(const auto& property : properties) {
-			OORef<PropertyObject> propertyObj = (property->type() != 0) ? container->getProperty(property->type()) : container->getProperty(property->name());
-			if(propertyObj)
-				propertyObj->setStorage(property);
-			else
-				container->createProperty(property);
-		}
-		// Removal phase:
-		for(int i = container->properties().size() - 1; i >= 0; i--) {
-			PropertyObject* property = container->properties()[i];
-			if(std::find(properties.cbegin(), properties.cend(), property->storage()) == properties.cend())
-				container->removeProperty(property);
-		}
-	};
-
-	transferProperties(sm->makeVerticesMutable(), _vertexProperties);
-	transferProperties(sm->makeFacesMutable(), _faceProperties);
-	transferProperties(sm->makeRegionsMutable(), _regionProperties);
-
-    OVITO_ASSERT(sm->vertices()->properties().size() == _vertexProperties.size());
-    OVITO_ASSERT(sm->faces()->properties().size() == _faceProperties.size());
-    OVITO_ASSERT(sm->regions()->properties().size() == _regionProperties.size());
+	sm->makeVerticesMutable()->setContent(vertexCount(), _vertexProperties);
+	sm->makeFacesMutable()->setContent(faceCount(), _faceProperties);
+	sm->makeRegionsMutable()->setContent(regionCount(), _regionProperties);
 }
 
 /******************************************************************************

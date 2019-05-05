@@ -34,13 +34,13 @@ namespace Ovito { namespace Particles {
 class OVITO_PARTICLES_EXPORT BondsObject : public PropertyContainer
 {
 	/// Define a new property metaclass for bond property containers.
-	class BondsObjectClass : public PropertyContainerClass 
+	class BondsObjectClass : public PropertyContainerClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
-		
+
 		/// \brief Create a storage object for standard bond properties.
 		virtual PropertyPtr createStandardStorage(size_t bondsCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
 
@@ -48,7 +48,7 @@ class OVITO_PARTICLES_EXPORT BondsObject : public PropertyContainer
 		virtual std::pair<size_t, ConstDataObjectPath> elementFromPickResult(const ViewportPickResult& pickResult) const override;
 
 		/// Tries to remap an index from one property container to another, considering the possibility that
-		/// elements may have been added or removed. 
+		/// elements may have been added or removed.
 		virtual size_t remapElementIndex(const ConstDataObjectPath& source, size_t elementIndex, const ConstDataObjectPath& dest) const override;
 
 		/// Determines which elements are located within the given viewport fence region (=2D polygon).
@@ -66,7 +66,7 @@ class OVITO_PARTICLES_EXPORT BondsObject : public PropertyContainer
 	Q_OBJECT
 	OVITO_CLASS_META(BondsObject, BondsObjectClass);
 	Q_CLASSINFO("DisplayName", "Bonds");
-	
+
 public:
 
 	/// \brief The list of standard bond properties.
@@ -89,21 +89,17 @@ public:
 
 	/// Convinience method that returns the bond topology property.
 	const PropertyObject* getTopology() const { return getProperty(TopologyProperty); }
-
-	/// Deletes the bonds for which bits are set in the given bit-mask.
-	/// Returns the number of deleted bonds.
-	size_t deleteBonds(const boost::dynamic_bitset<>& mask);
 };
 
 /**
- * Encapsulates a reference to a bond property. 
+ * Encapsulates a reference to a bond property.
  */
 using BondPropertyReference = TypedPropertyReference<BondsObject>;
 
 /**
  * A helper data structure describing a single bond between two particles.
  */
-struct Bond 
+struct Bond
 {
 	/// The index of the first particle.
 	/// Note that we are using int instead of size_t here to save some memory.

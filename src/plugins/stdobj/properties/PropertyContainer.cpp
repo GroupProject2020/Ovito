@@ -27,12 +27,14 @@ namespace Ovito { namespace StdObj {
 
 IMPLEMENT_OVITO_CLASS(PropertyContainer);
 DEFINE_REFERENCE_FIELD(PropertyContainer, properties);
+DEFINE_PROPERTY_FIELD(PropertyContainer, elementCount);
 SET_PROPERTY_FIELD_LABEL(PropertyContainer, properties, "Properties");
+SET_PROPERTY_FIELD_LABEL(PropertyContainer, elementCount, "Element count");
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyContainer::PropertyContainer(DataSet* dataset) : DataObject(dataset)
+PropertyContainer::PropertyContainer(DataSet* dataset) : DataObject(dataset), _elementCount(0)
 {
 }
 
@@ -46,6 +48,8 @@ const PropertyObject* PropertyContainer::expectProperty(int typeId) const
 	const PropertyObject* property = getProperty(typeId);
 	if(!property)
 		throwException(tr("Required property '%1' does not exist in the input dataset.").arg(getOOMetaClass().standardPropertyName(typeId)));
+	if(property->size() != elementCount())
+		throwException(tr("Property array '%1' has wrong length. It does not match the number of elements in the parent container.").arg(property->name()));
 	return property;
 }
 
@@ -61,6 +65,8 @@ const PropertyObject* PropertyContainer::expectProperty(const QString& propertyN
 		throwException(tr("Property '%1' does not have the required data type in the pipeline dataset.").arg(property->name()));
 	if(property->componentCount() != componentCount)
 		throwException(tr("Property '%1' does not have the required number of components in the pipeline dataset.").arg(property->name()));
+	if(property->size() != elementCount())
+		throwException(tr("Property array '%1' has wrong length. It does not match the number of elements in the parent container.").arg(property->name()));
 	return property;
 }
 
@@ -74,6 +80,56 @@ void PropertyContainer::makePropertiesMutable()
 	for(int i = properties().size() - 1; i >= 0; i--) {
 		makeMutable(properties()[i]);
 	}
+}
+
+/******************************************************************************
+* Sets the current number of data elements stored in the container.
+* The lengths of the property arrays will be adjusted accordingly.
+******************************************************************************/
+void PropertyContainer::setElementCount(size_t count)
+{
+	if(count == elementCount())
+		return;
+
+	// Make sure the property arrays can be safely modified.
+    makePropertiesMutable();
+
+	// Resize the arrays.
+	for(PropertyObject* prop : properties())
+		prop->resize(count, true);
+
+	// Update internal element counter.
+	_elementCount.set(this, PROPERTY_FIELD(elementCount), count);
+}
+
+/******************************************************************************
+* Deletes those data elements for which the bit is set in the given bitmask array.
+* Returns the number of deleted elements.
+******************************************************************************/
+size_t PropertyContainer::deleteElements(const boost::dynamic_bitset<>& mask)
+{
+	OVITO_ASSERT(mask.size() == elementCount());
+
+	size_t deleteCount = mask.count();
+	size_t oldElementCount = elementCount();
+	size_t newElementCount = oldElementCount - deleteCount;
+	if(deleteCount == 0)
+		return 0;	// Nothing to delete.
+
+    // Make sure the property arrays can be safely modified.
+    makePropertiesMutable();
+
+	// Filter the property arrays and reduce their lengths.
+	for(PropertyObject* property : properties()) {
+        OVITO_ASSERT(property->size() == oldElementCount);
+        property->filterResize(mask);
+        OVITO_ASSERT(property->size() == newElementCount);
+	}
+
+	// Update internal element counter.
+	_elementCount.set(this, PROPERTY_FIELD(elementCount), newElementCount);
+
+	return deleteCount;
 }
 
 /******************************************************************************
@@ -165,12 +221,16 @@ PropertyObject* PropertyContainer::createProperty(const PropertyPtr& storage)
 	// Undo recording should never be active during pipeline evaluation.
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
 
+	// Length of first property array determines number of data elements in the container.
+	if(properties().empty() && elementCount() == 0)
+		_elementCount.set(this, PROPERTY_FIELD(elementCount), storage->size());
+
 	// Length of new property array must match the existing number of elements.
-	if(!properties().empty() && storage->size() != properties().front()->size()) {
+	if(storage->size() != elementCount()) {
 #ifdef OVITO_DEBUG
-		qDebug() << "Property array size mismatch. Existing property '" << properties().front()->name() << "' in the container has" << properties().front()->size() << "elements. New property '" << storage->name() << "' to be added has" << storage->size() << "element.";
+		qDebug() << "Property array size mismatch. Container has" << elementCount() << "existing elements. New property" << storage->name() << "to be added has" << storage->size() << "elements.";
 #endif
-		throwException(tr("Cannot add new %1 property '%2': Number of elements does not match.").arg(getOOMetaClass().propertyClassDisplayName()).arg(storage->name()));
+		throwException(tr("Cannot add new %1 property '%2': Array length is not consistent with number of elements in the parent container.").arg(getOOMetaClass().propertyClassDisplayName()).arg(storage->name()));
 	}
 
 	// Check if property already exists in the output.
@@ -194,7 +254,6 @@ PropertyObject* PropertyContainer::createProperty(const PropertyPtr& storage)
 
 	if(existingProperty) {
 		PropertyObject* newProperty = makeMutable(existingProperty);
-		OVITO_ASSERT(storage->size() == newProperty->size());
 		OVITO_ASSERT(storage->stride() == newProperty->stride());
 		newProperty->setStorage(storage);
 		return newProperty;
@@ -206,6 +265,66 @@ PropertyObject* PropertyContainer::createProperty(const PropertyPtr& storage)
 		OVITO_ASSERT(newProperty->size() == elementCount());
 		return newProperty;
 	}
+}
+
+/******************************************************************************
+* Replaces the property arrays in this property container with a new set of
+* properties.
+******************************************************************************/
+void PropertyContainer::setContent(size_t newElementCount, const std::vector<PropertyPtr>& newProperties)
+{
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
+	// Removal phase:
+	for(int i = properties().size() - 1; i >= 0; i--) {
+		PropertyObject* property = properties()[i];
+		if(std::find(newProperties.cbegin(), newProperties.cend(), property->storage()) == newProperties.cend())
+			removeProperty(property);
+	}
+
+	// Update internal element counter.
+	_elementCount.set(this, PROPERTY_FIELD(elementCount), newElementCount);
+
+	// Insertion phase:
+	for(const auto& property : newProperties) {
+		// Lengths of new property arrays must be consistent.
+		if(property->size() != newElementCount) {
+			OVITO_ASSERT(false);
+			throwException(tr("Cannot add new %1 property '%2': Array length does not match number of elements in the parent container.").arg(getOOMetaClass().propertyClassDisplayName()).arg(property->name()));
+		}
+
+		const PropertyObject* propertyObj = (property->type() != 0) ? getProperty(property->type()) : getProperty(property->name());
+		if(propertyObj) {
+			makeMutable(propertyObj)->setStorage(property);
+		}
+		else {
+			OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), property);
+			addProperty(newProperty);
+		}
+	}
+}
+
+
+/******************************************************************************
+* Duplicates all data elements by extensing the property arrays and
+* replicating the existing data N times.
+******************************************************************************/
+void PropertyContainer::replicate(size_t n)
+{
+	OVITO_ASSERT(n >= 1);
+	if(n <= 1) return;
+
+	size_t newCount = elementCount() * n;
+	if(newCount / n != elementCount())
+		throwException(tr("Replicate operation failed: Maximum number of elements exceeded."));
+
+	// Make sure the property arrays can be safely modified.
+    makePropertiesMutable();
+
+	for(PropertyObject* property : properties())
+		property->replicate(n);
+
+	setElementCount(newCount);
 }
 
 }	// End of namespace

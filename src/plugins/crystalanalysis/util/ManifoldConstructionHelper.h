@@ -66,6 +66,10 @@ public:
 	bool construct(CellRegionFunc&& determineCellRegion, Task& promise,
 			PrepareMeshFaceFunc&& prepareMeshFaceFunc = PrepareMeshFaceFunc(), LinkManifoldsFunc&& linkManifoldsFunc = LinkManifoldsFunc())
 	{
+		// Create the empty spatial region in the output mesh.
+		if(_mesh.regionCount() == 0)
+			_mesh.createRegion();
+
 		// Algorithm is divided into several sub-steps.
 		// Assign weights to sub-steps according to estimated runtime.
 		promise.beginProgressSubStepsWithWeights({ 1, 1, 1 });
@@ -117,6 +121,7 @@ private:
 			if(isSolid) {
 				region = determineCellRegion(cell);
 				OVITO_ASSERT(region >= 0);
+				OVITO_ASSERT(region < _mesh.regionCount());
 			}
 			_tessellation.setUserField(cell, region);
 
@@ -132,7 +137,8 @@ private:
 				_tessellation.setCellIndex(cell, -1);
 			}
 		}
-		if(_mesh.spaceFillingRegion() == -1) _mesh.setSpaceFillingRegion(0);
+		if(_mesh.spaceFillingRegion() == -1)
+			_mesh.setSpaceFillingRegion(0);
 
 		return !promise.isCanceled();
 	}
@@ -198,7 +204,7 @@ private:
 				}
 
 				// Create a new triangle facet.
-				HalfEdgeMesh::face_index face = _mesh.createFace(facetVertices.begin(), facetVertices.end());
+				HalfEdgeMesh::face_index face = _mesh.createFace(facetVertices.begin(), facetVertices.end(), solidRegion);
 
 				// Tell client code about the new facet.
 				prepareMeshFaceFunc(face, vertexIndices, vertexHandles, cell);
@@ -218,7 +224,7 @@ private:
 					}
 
 					// Create a new triangle facet.
-					HalfEdgeMesh::face_index oppositeFace = _mesh.createFace(facetVertices.begin(), facetVertices.end());
+					HalfEdgeMesh::face_index oppositeFace = _mesh.createFace(facetVertices.begin(), facetVertices.end(), 0);
 
 					// Tell client code about the new facet.
 					prepareMeshFaceFunc(oppositeFace, reverseVertexIndices, vertexHandles, adjacentCell);

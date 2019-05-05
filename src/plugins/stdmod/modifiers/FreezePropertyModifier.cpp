@@ -204,7 +204,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 			auto mapEntry = idmap.find(*id);
 			if(mapEntry == idmap.end())
 				throwException(tr("Detected new element ID %1, which didn't exist when the snapshot was created. Cannot restore saved property values.").arg(*id));
-			memcpy(dest, src + stride * mapEntry->second, stride);
+			std::memcpy(dest, src + stride * mapEntry->second, stride);
 		}
 	}
 	else {
@@ -223,7 +223,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 			OVITO_ASSERT(outputProperty->dataType() == myModApp->property()->dataType());
 			OVITO_ASSERT(outputProperty->stride() == myModApp->property()->stride());
 			OVITO_ASSERT(outputProperty->size() == myModApp->property()->size());
-			memcpy(outputProperty->data(), myModApp->property()->constData(), outputProperty->stride() * outputProperty->size());
+			std::memcpy(outputProperty->data(), myModApp->property()->constData(), outputProperty->stride() * outputProperty->size());
 		}
 	}
 

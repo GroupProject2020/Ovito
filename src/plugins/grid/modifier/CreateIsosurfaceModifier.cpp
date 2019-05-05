@@ -154,9 +154,14 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	if(property()->dataType() != PropertyStorage::Float)
 		throw Exception(tr("Wrong data type. Can construct isosurface only for floating-point values."));
 	if(property()->size() != _gridShape[0] * _gridShape[1] * _gridShape[2])
-		throw Exception(tr("Input voxel property has wrong array size, which is incompatible with grid dimensions."));
+		throw Exception(tr("Input voxel property has wrong array size, which is incompatible with the grid's dimensions."));
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
+
+	// Create the outer and the inner region.
+	_mesh.createRegion();
+	_mesh.createRegion();
+	OVITO_ASSERT(_mesh.regionCount() == 2);
 
 	MarchingCubes mc(_mesh, _gridShape[0], _gridShape[1], _gridShape[2], fieldData, property()->componentCount(), false);
 	if(!mc.generateIsosurface(_isolevel, *task()))

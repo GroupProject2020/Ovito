@@ -73,15 +73,15 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 				outputParticles->removeProperty(selProperty);
 
 				// Delete the particles.
-				outputParticles->deleteParticles(mask);
+				outputParticles->deleteElements(mask);
 			}
 		}
 	}
 
-	// Do some statistics:
+	// Report some statistics:
 	QString statusMessage = tr("%n input particles", 0, numParticles);
 	statusMessage += tr("\n%n particles deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numParticles, (size_t)1));
-	
+
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }
 
@@ -122,7 +122,7 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, Pi
 				}
 
 				if(numSelected) {
-					// Make sure we can safely modify the particles and the bonds object.
+					// Make sure we can safely modify the particles and the bonds object it contains.
 					ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 					BondsObject* outputBonds = outputParticles->makeBondsMutable();
 
@@ -130,16 +130,16 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, Pi
 					outputBonds->removeProperty(selProperty);
 
 					// Delete the bonds.
-					outputBonds->deleteBonds(mask);
+					outputBonds->deleteElements(mask);
 				}
 			}
 		}
 	}
 
-	// Do some statistics:
+	// Report some statistics:
 	QString statusMessage = tr("%n input bonds", 0, numBonds);
 	statusMessage += tr("\n%n bonds deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numBonds, (size_t)1));
-	
+
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }
 

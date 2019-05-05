@@ -77,47 +77,32 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 
 			// Create a copy of the vertices sub-object.
 			SurfaceMeshVertices* newVertices = newSurface->makeVerticesMutable();
-			newVertices->makePropertiesMutable();
 
-			// Replicate all vertex properties
+			// Extend the property arrays.
 			size_t oldVertexCount = newVertices->elementCount();
 			size_t newVertexCount = oldVertexCount * numCopies;
-			for(PropertyObject* property : newVertices->properties()) {
-				// Translate existing vertex coordinate so that they form the first image at grid position (0,0,0).
-				if(property->type() == SurfaceMeshVertices::PositionProperty && newImages.minc != Point3I::Origin()) {
-					const Vector3 translation = simCell * Vector3(newImages.minc.x(), newImages.minc.y(), newImages.minc.z());
-					for(Point3& p : property->point3Range())
-						p += translation;
-				}
-				// Replicate property data N times.
-				property->replicate(numCopies);
-				// Shift vertex positions by the periodicity vector.
-				if(property->type() == SurfaceMeshVertices::PositionProperty) {
-					Point3* p = property->dataPoint3() + oldVertexCount;
-					for(int imageX = 0; imageX < nPBC[0]; imageX++) {
-						for(int imageY = 0; imageY < nPBC[1]; imageY++) {
-							for(int imageZ = 0; imageZ < nPBC[2]; imageZ++) {
-								if(imageX == 0 && imageY == 0 && imageZ == 0) continue;
-								const Vector3 imageDelta = simCell * Vector3(imageX, imageY, imageZ);
-								for(size_t i = 0; i < oldVertexCount; i++)
-									*p++ += imageDelta;
-							}
-						}
+			newVertices->replicate(numCopies);
+
+			// Shift vertex positions by the periodicity vector.
+			PropertyObject* positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
+			Point3* p = positionProperty->dataPoint3();
+			for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
+				for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
+					for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
+						const Vector3 imageDelta = simCell * Vector3(imageX, imageY, imageZ);
+						for(size_t i = 0; i < oldVertexCount; i++)
+							*p++ += imageDelta;
 					}
 				}
 			}
 
 			// Create a copy of the faces sub-object.
 			SurfaceMeshFaces* newFaces = newSurface->makeFacesMutable();
-			newFaces->makePropertiesMutable();
 
 			// Replicate all face properties
 			size_t oldFaceCount = newFaces->elementCount();
 			size_t newFaceCount = oldFaceCount * numCopies;
-			for(PropertyObject* property : newFaces->properties()) {
-				// Replicate property data N times.
-				property->replicate(numCopies);
-			}
+			newFaces->replicate(numCopies);
 
 			// Add right number of new vertices to the topology.
 			for(size_t i = oldVertexCount; i < newVertexCount; i++) {

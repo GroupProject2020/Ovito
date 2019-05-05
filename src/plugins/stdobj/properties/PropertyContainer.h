@@ -37,7 +37,7 @@ class OVITO_STDOBJ_EXPORT PropertyContainer : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS_META(PropertyContainer, PropertyContainerClass)
-	
+
 public:
 
 	/// Constructor.
@@ -47,6 +47,9 @@ public:
 	void addProperty(const PropertyObject* property) {
 		OVITO_ASSERT(property);
 		OVITO_ASSERT(properties().contains(const_cast<PropertyObject*>(property)) == false);
+		if(properties().empty())
+			_elementCount.set(this, PROPERTY_FIELD(elementCount), property->size());
+		OVITO_ASSERT(property->size() == elementCount());
 		_properties.push_back(this, PROPERTY_FIELD(properties), const_cast<PropertyObject*>(property));
 	}
 
@@ -58,7 +61,7 @@ public:
 		_properties.remove(this, PROPERTY_FIELD(properties), index);
 	}
 
-	/// Looks up the standard property with given ID.
+	/// Looks up the standard property with the given ID.
 	const PropertyObject* getProperty(int typeId) const {
 		OVITO_ASSERT(typeId != 0);
 		OVITO_ASSERT(getOOMetaClass().isValidStandardPropertyId(typeId));
@@ -69,7 +72,7 @@ public:
 		return nullptr;
 	}
 
-	/// Looks up the user-defined property with given name.
+	/// Looks up the user-defined property with the given name.
 	const PropertyObject* getProperty(const QString& name) const {
 		OVITO_ASSERT(!name.isEmpty());
 		for(const PropertyObject* property : properties()) {
@@ -79,12 +82,12 @@ public:
 		return nullptr;
 	}
 
-	/// Looks up the storage array for the standard property with given ID.
+	/// Looks up the storage array for the standard property with the given ID.
 	ConstPropertyPtr getPropertyStorage(int typeId) const {
 		if(const PropertyObject* property = getProperty(typeId))
 			return property->storage();
 		return nullptr;
-	}	
+	}
 
 	/// Returns the given standard property.
 	/// If it does not exist, an exception is thrown.
@@ -100,31 +103,43 @@ public:
 		return makeMutable(expectProperty(typeId));
 	}
 
-	/// Returns the number of data elements (i.e. the length of the property arrays).
-	size_t elementCount() const {
-		return properties().empty() ? 0 : properties().front()->size();
-	}
-
 	/// Duplicates any property objects that are shared with other containers.
-	/// After this method returns, all property objects are exclusively owned by the container and 
+	/// After this method returns, all property objects are exclusively owned by the container and
 	/// can be safely modified without unwanted side effects.
 	void makePropertiesMutable();
 
-	/// Creates a standard property and adds it to the container. 
+	/// Creates a standard property and adds it to the container.
 	/// In case the property already exists, it is made sure that it's safe to modify it.
 	PropertyObject* createProperty(int typeId, bool initializeMemory = false, const ConstDataObjectPath& containerPath = {}, size_t elementCountHint = 0);
 
-	/// Creates a user-defined property and adds it to the container. 
+	/// Creates a user-defined property and adds it to the container.
 	/// In case the property already exists, it is made sure that it's safe to modify it.
 	PropertyObject* createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory = false, size_t elementCountHint = 0) ;
 
-	/// Creates a property and adds it to the container. 
+	/// Creates a property and adds it to the container.
 	PropertyObject* createProperty(const PropertyPtr& storage);
+
+	/// Sets the current number of data elements stored in the container.
+	/// The lengths of the property arrays will be adjusted accordingly.
+	void setElementCount(size_t count);
+
+	/// Deletes those data elements for which the bit is set in the given bitmask array.
+	/// Returns the number of deleted elements.
+	virtual size_t deleteElements(const boost::dynamic_bitset<>& mask);
+
+	/// Replaces the property arrays in this property container with a new set of properties.
+	void setContent(size_t newElementCount, const std::vector<PropertyPtr>& newProperties);
+
+	/// Duplicates all data elements by extensing the property arrays and replicating the existing data N times.
+	void replicate(size_t n);
 
 private:
 
 	/// Holds the list of properties.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(PropertyObject, properties, setProperties);
+
+	/// Keeps track of the number of elements stored in this property container.
+	DECLARE_PROPERTY_FIELD(size_t, elementCount);
 };
 
 /// Encapsulates a reference to a PropertyContainer in a PipelineFlowState.

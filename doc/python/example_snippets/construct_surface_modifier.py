@@ -1,7 +1,7 @@
 import sys
 if "ovito.modifiers.crystalanalysis" not in sys.modules: sys.exit()
 ############## Code snippet begins here ################
-from ovito.io import import_file
+from ovito.io import import_file, export_file
 from ovito.data import SurfaceMesh, SimulationCell
 from ovito.modifiers import ConstructSurfaceModifier
 
@@ -18,4 +18,4 @@ fraction = data.attributes['ConstructSurfaceMesh.solid_volume'] / data.cell.volu
 print("Solid volume fraction: %f" % fraction)
 
 # Export the surface triangle mesh to a VTK file.
-mesh.export_vtk('output/surface.vtk', data.cell)
+export_file(mesh, "output/surface.vtk", "vtk/trimesh")

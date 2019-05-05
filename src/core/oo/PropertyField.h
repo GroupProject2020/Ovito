@@ -50,12 +50,12 @@ protected:
 
 	/// Puts a record on the undo stack.
 	static void pushUndoRecord(RefMaker* owner, std::unique_ptr<UndoableOperation>&& operation);
-	
+
 protected:
 
 	/// This abstract undo record class keeps a strong reference object whose property has been changed.
 	/// This is needed to keep the owner object alive as long as this undo record is on the undo stack.
-	class OVITO_CORE_EXPORT PropertyFieldOperation : public UndoableOperation 
+	class OVITO_CORE_EXPORT PropertyFieldOperation : public UndoableOperation
 	{
 	public:
 		/// Constructor.
@@ -84,15 +84,15 @@ public:
 
 	// Pick the QVariant data type used to wrap the property type.
 	// If the property type is an enum, then use 'int'.
-	// If the property is 'Color', then use 'QColor'. 
+	// If the property is 'Color', then use 'QColor'.
 	// Otherwise just use the property type.
-	using qvariant_type = std::conditional_t<std::is_enum<property_data_type>::value, int, 
+	using qvariant_type = std::conditional_t<std::is_enum<property_data_type>::value, int,
 		std::conditional_t<std::is_same<property_data_type, Color>::value, QColor, property_data_type>>;
 
 	// For enum types, the QVariant data type must always be set to 'int'.
 	static_assert(!std::is_enum<property_type>::value || std::is_same<qvariant_type, int>::value, "QVariant data type must be 'int' for enum property types.");
 	// For color properties, the QVariant data type must always be set to 'QColor'.
-	static_assert(!std::is_same<property_type, Color>::value || std::is_same<qvariant_type, QColor>::value, "QVariant data type must be 'QColor' for color property types.");		
+	static_assert(!std::is_same<property_type, Color>::value || std::is_same<qvariant_type, QColor>::value, "QVariant data type must be 'QColor' for color property types.");
 
 	/// Forwarding constructor.
 	template<class... Args>
@@ -108,7 +108,7 @@ public:
 		mutableValue() = std::forward<T>(newValue);
 		valueChangedInternal(owner, descriptor);
 	}
-	
+
 	/// Changes the value of the property. Handles undo and sends a notification message.
 	template<typename T = qvariant_type>
 	std::enable_if_t<QMetaTypeId2<T>::Defined>
@@ -127,13 +127,13 @@ public:
 	setQVariant(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const QVariant& newValue) {
 		OVITO_ASSERT_MSG(false, "RuntimePropertyField::setQVariant()", "The data type of the property field does not support conversion to/from QVariant.");
 	}
-	
+
 	/// Returns the internal value stored in this property field as a QVariant.
 	template<typename T = qvariant_type>
 	std::enable_if_t<QMetaTypeId2<T>::Defined, QVariant>
 	getQVariant() const {
-		return QVariant::fromValue<qvariant_type>(static_cast<qvariant_type>(this->get())); 
-	}	
+		return QVariant::fromValue<qvariant_type>(static_cast<qvariant_type>(this->get()));
+	}
 
 	/// Returns the internal value stored in this property field as a QVariant.
 	template<typename T = qvariant_type>
@@ -142,7 +142,7 @@ public:
 		OVITO_ASSERT_MSG(false, "RuntimePropertyField::getQVariant()", "The data type of the property field does not support conversion to/from QVariant.");
 		return {};
 	}
-	
+
 	/// Returns the internal value stored in this property field.
 	inline const property_type& get() const { return _value; }
 
@@ -151,8 +151,8 @@ public:
 	inline property_type& mutableValue() { return _value; }
 
 	/// Cast the property field to the property value.
-	inline operator const property_type&() const { return get(); }	
-		
+	inline operator const property_type&() const { return get(); }
+
 private:
 
 	/// Internal helper function that generates notification events.
@@ -163,24 +163,24 @@ private:
 			generateTargetChangedEvent(owner, descriptor, static_cast<ReferenceEvent::Type>(descriptor.extraChangeEventType()));
 	}
 
-	/// Helper function that tests if the new value is equal to the current value of the property field. 
+	/// Helper function that tests if the new value is equal to the current value of the property field.
 	template<typename T = property_type>
 	static inline std::enable_if_t<boost::has_equal_to<const T&>::value, bool>
 	isEqualToCurrentValue(const T& oldValue, const T& newValue) { return oldValue == newValue; }
 
-	/// Helper function that tests if the new value is equal to the current value of the property field. 
+	/// Helper function that tests if the new value is equal to the current value of the property field.
 	template<typename T = property_type>
 	static inline std::enable_if_t<!boost::has_equal_to<const T&>::value, bool>
 	isEqualToCurrentValue(const T& oldValue, const T& newValue) { return false; }
-	
+
 	/// This undo class records a change to the property value.
-	class PropertyChangeOperation : public PropertyFieldOperation 
+	class PropertyChangeOperation : public PropertyFieldOperation
 	{
 	public:
 
 		/// Constructor.
 		/// Makes a copy of the current property value.
-		PropertyChangeOperation(RefMaker* owner, RuntimePropertyField& field, const PropertyFieldDescriptor& descriptor) : 
+		PropertyChangeOperation(RefMaker* owner, RuntimePropertyField& field, const PropertyFieldDescriptor& descriptor) :
 			PropertyFieldOperation(owner, descriptor), _field(field), _oldValue(field.get()) {}
 
 		/// Restores the old property value.
@@ -225,6 +225,18 @@ public:
 		stream >> this->mutableValue();
 	}
 };
+
+// Template specialization for size_t property fields.
+template<>
+inline void PropertyField<size_t>::saveToStream(SaveStream& stream) const {
+	stream.writeSizeT(this->get());
+}
+
+// Template specialization for size_t property fields.
+template<>
+inline void PropertyField<size_t>::loadFromStream(LoadStream& stream) {
+	stream.readSizeT(this->mutableValue());
+}
 
 /**
  * \brief Manages a pointer to a RefTarget derived class held by a RefMaker derived class.
@@ -285,16 +297,16 @@ class ReferenceField : public SingleReferenceFieldBase
 {
 public:
 	using target_type = RefTargetType;
-	
-#ifdef OVITO_DEBUG	
+
+#ifdef OVITO_DEBUG
 	/// Destructor that releases all referenced objects.
 	~ReferenceField() {
 		if(_pointer)
 			qDebug() << "Reference field value:" << _pointer;
 		OVITO_ASSERT_MSG(!_pointer, "~ReferenceField()", "Owner object of reference field has not been deleted correctly. The reference field was not empty when the class destructor was called.");
 	}
-#endif	
-	
+#endif
+
 	/// Read access to the RefTarget derived pointer.
 	operator RefTargetType*() const { return reinterpret_cast<RefTargetType*>(_pointer); }
 
@@ -368,7 +380,7 @@ public:
 	void clear(RefMaker* owner, const PropertyFieldDescriptor& descriptor);
 
 	/// Removes the element at index position i.
-	void remove(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i);	
+	void remove(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i);
 
 	/// Replaces a reference in the vector.
 	/// This method removes the reference at index i and inserts the new reference at the same index.
@@ -414,7 +426,7 @@ protected:
 		int insertionIndex() const { return _index; }
 
 		virtual QString displayName() const override;
-		
+
 	private:
 		/// The target that has been added into the vector reference field.
 	    OORef<RefTarget> _target;
@@ -440,7 +452,7 @@ protected:
 		}
 
 		virtual QString displayName() const override;
-		
+
 	private:
 		/// The target that has been removed from the vector reference field.
 	    OORef<RefTarget> _target;
@@ -462,7 +474,7 @@ class VectorReferenceField : public VectorReferenceFieldBase
 {
 public:
 	using target_type = RefTargetType;
-	
+
 	typedef QVector<RefTargetType*> RefTargetVector;
 	typedef QVector<const RefTargetType*> ConstRefTargetVector;
 	typedef typename RefTargetVector::ConstIterator ConstIterator;
@@ -473,13 +485,13 @@ public:
 	typedef typename RefTargetVector::size_type size_type;
 	typedef typename RefTargetVector::value_type value_type;
 
-#ifdef OVITO_DEBUG	
+#ifdef OVITO_DEBUG
 	/// Destructor that releases all referenced objects.
 	~VectorReferenceField() {
 		OVITO_ASSERT_MSG(pointers.empty(), "~VectorReferenceField()", "Owner object of vector reference field has not been deleted correctly. The reference field was not empty when the class destructor was called.");
 	}
-#endif	
-		
+#endif
+
 	/// Returns the stored references as a QVector.
 	operator const RefTargetVector&() const { return targets(); }
 
@@ -499,7 +511,7 @@ public:
 	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i, const RefTargetType* object) {
 		setInternal(owner, descriptor, i, object);
 	}
-	
+
 	/// Returns an STL-style iterator pointing to the first item in the vector.
 	const_iterator begin() const { return targets().begin(); }
 

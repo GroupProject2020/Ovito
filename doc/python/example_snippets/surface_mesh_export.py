@@ -1,6 +1,9 @@
 import sys
-if "ovito.modifiers.crystalanalysis" not in sys.modules: sys.exit()
+if "ovito.modifiers.crystalanalysis" not in sys.modules:
+    print("Skipping this test, because CrystalAnalysis module is not present")
+    sys.exit()
 
+# >>>>>>>>>>>>>>>>> Snippet starts here >>>>>>>>>>>>>>>>>>>>>>>
 from ovito.io import import_file, export_file
 from ovito.data import SurfaceMesh
 from ovito.modifiers import ConstructSurfaceModifier

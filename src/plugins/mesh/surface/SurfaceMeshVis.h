@@ -27,6 +27,7 @@
 #include <plugins/mesh/surface/SurfaceMeshData.h>
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/dataset/animation/controller/Controller.h>
+#include <core/rendering/SceneRenderer.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/concurrent/AsynchronousTask.h>
 

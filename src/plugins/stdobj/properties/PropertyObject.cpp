@@ -25,7 +25,7 @@
 
 namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(PropertyObject);	
+IMPLEMENT_OVITO_CLASS(PropertyObject);
 DEFINE_PROPERTY_FIELD(PropertyObject, storage);
 DEFINE_REFERENCE_FIELD(PropertyObject, elementTypes);
 DEFINE_PROPERTY_FIELD(PropertyObject, title);
@@ -33,7 +33,7 @@ SET_PROPERTY_FIELD_LABEL(PropertyObject, elementTypes, "Element types");
 SET_PROPERTY_FIELD_LABEL(PropertyObject, title, "Title");
 SET_PROPERTY_FIELD_CHANGE_EVENT(PropertyObject, title, ReferenceEvent::TitleChanged);
 
-/// Holds a shared, empty instance of the PropertyStorage class, 
+/// Holds a shared, empty instance of the PropertyStorage class,
 /// which is used in places where a default storage is needed.
 /// This singleton instance is never modified.
 static const PropertyPtr defaultStorage = std::make_shared<PropertyStorage>();
@@ -46,10 +46,10 @@ PropertyObject::PropertyObject(DataSet* dataset, const PropertyPtr& storage) : D
 }
 
 /******************************************************************************
-* Returns the data encapsulated by this object after making sure it is not 
+* Returns the data encapsulated by this object after making sure it is not
 * shared with other owners.
 ******************************************************************************/
-const PropertyPtr& PropertyObject::modifiableStorage() 
+const PropertyPtr& PropertyObject::modifiableStorage()
 {
 	// Copy data buffer if there is more than one active reference to the storage.
 	return PropertyStorage::makeMutable(_storage.mutableValue());
@@ -112,7 +112,7 @@ void PropertyObject::loadFromStream(ObjectLoadStream& stream)
 }
 
 /******************************************************************************
-* Extends the data array and replicates the old data N times. 
+* Extends the data array and replicates the old data N times.
 ******************************************************************************/
 void PropertyObject::replicate(size_t n)
 {
@@ -122,20 +122,20 @@ void PropertyObject::replicate(size_t n)
 	resize(oldData->size() * n, false);
 	size_t chunkSize = stride() * oldData->size();
 	for(size_t i = 0; i < n; i++) {
-		memcpy((char*)data() + i * chunkSize, oldData->constData(), chunkSize);
+		std::memcpy((char*)data() + i * chunkSize, oldData->constData(), chunkSize);
 	}
 }
 
 /******************************************************************************
 * Puts the property array into a writable state.
-* In the writable state, the Python binding layer will allow write access 
+* In the writable state, the Python binding layer will allow write access
 * to the property's internal data.
 ******************************************************************************/
 void PropertyObject::makeWritableFromPython()
 {
 	if(!isSafeToModify())
 		throwException(tr("Modifying the values of this property is not allowed, because it is currently shared by more than one property container or data collection. Please explicitly request a mutable version of the property by using the '_' notation."));
-	_isWritableFromPython++; 
+	_isWritableFromPython++;
 }
 
 }	// End of namespace

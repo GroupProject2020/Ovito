@@ -34,12 +34,12 @@ namespace Ovito { namespace Particles {
 class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 {
 	/// Define a new property metaclass for particle containers.
-	class ParticlesObjectClass : public PropertyContainerClass 
+	class ParticlesObjectClass : public PropertyContainerClass
 	{
 	public:
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
-		
+
 		/// \brief Create a storage object for standard particle properties.
 		virtual PropertyPtr createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
 
@@ -47,7 +47,7 @@ class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 		virtual std::pair<size_t, ConstDataObjectPath> elementFromPickResult(const ViewportPickResult& pickResult) const override;
 
 		/// Tries to remap an index from one property container to another, considering the possibility that
-		/// elements may have been added or removed. 
+		/// elements may have been added or removed.
 		virtual size_t remapElementIndex(const ConstDataObjectPath& source, size_t elementIndex, const ConstDataObjectPath& dest) const override;
 
 		/// Determines which elements are located within the given viewport fence region (=2D polygon).
@@ -65,7 +65,7 @@ class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 	Q_OBJECT
 	OVITO_CLASS_META(ParticlesObject, ParticlesObjectClass);
 	Q_CLASSINFO("DisplayName", "Particles");
-	
+
 public:
 
 	/// \brief The list of standard particle properties.
@@ -121,10 +121,10 @@ public:
 
 	/// Deletes the particles for which bits are set in the given bit-mask.
 	/// Returns the number of deleted particles.
-	size_t deleteParticles(const boost::dynamic_bitset<>& mask);
+	virtual size_t deleteElements(const boost::dynamic_bitset<>& mask) override;
 
 	/// Duplicates the BondsObject if it is shared with other particle objects.
-	/// After this method returns, the BondsObject is exclusively owned by the ParticlesObject and 
+	/// After this method returns, the BondsObject is exclusively owned by the ParticlesObject and
 	/// can be safely modified without expected side effects.
 	BondsObject* makeBondsMutable();
 
@@ -154,7 +154,7 @@ private:
 
 
 /**
- * Encapsulates a reference to a particle property. 
+ * Encapsulates a reference to a particle property.
  */
 using ParticlePropertyReference = TypedPropertyReference<ParticlesObject>;
 

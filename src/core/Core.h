@@ -32,6 +32,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstddef>
+#include <cstring>
 #include <type_traits>
 #include <stack>
 #include <array>
