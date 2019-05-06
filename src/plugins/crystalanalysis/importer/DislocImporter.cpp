@@ -31,6 +31,7 @@
 
 #include <3rdparty/netcdf_integration/NetCDFIntegration.h>
 #include <netcdf.h>
+#include <boost/functional/hash.hpp>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
