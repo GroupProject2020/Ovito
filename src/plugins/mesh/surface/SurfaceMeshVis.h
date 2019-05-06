@@ -25,6 +25,8 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/mesh/surface/SurfaceMeshData.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/RenderableSurfaceMesh.h>
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/rendering/SceneRenderer.h>
@@ -151,7 +153,7 @@ protected:
 	/// The default implementation returns null, because standard surface meshes do not support picking of
 	/// mesh faces or vertices. Sub-classes can override this method to implement object-specific picking
 	/// strategies.
-	virtual OORef<ObjectPickInfo> createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const { return {}; }
+	virtual OORef<ObjectPickInfo> createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const;
 
 private:
 
@@ -178,6 +180,55 @@ private:
 
 	/// Controls the transparency of the surface cap mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, capTransparencyController, setCapTransparencyController);
+};
+
+
+/**
+ * \brief This data structure is attached to the surface mesh by the SurfaceMeshVis when rendering
+ * it in the viewports. It facilitates the picking of surface facets with the mouse.
+ */
+class OVITO_MESH_EXPORT SurfaceMeshPickInfo : public ObjectPickInfo
+{
+	Q_OBJECT
+	OVITO_CLASS(SurfaceMeshPickInfo)
+
+public:
+
+	/// Constructor.
+	SurfaceMeshPickInfo(const SurfaceMeshVis* visElement, const SurfaceMesh* surfaceMesh, const RenderableSurfaceMesh* renderableMesh) :
+		_visElement(visElement), _surfaceMesh(surfaceMesh), _renderableMesh(renderableMesh) {}
+
+	/// The data object containing the surface mesh.
+	const SurfaceMesh* surfaceMesh() const { return _surfaceMesh; }
+
+	/// The renderable version of the surface mesh.
+	const RenderableSurfaceMesh* renderableMesh() const { OVITO_ASSERT(_renderableMesh); return _renderableMesh; }
+
+	/// Returns the vis element that rendered the surface mesh.
+	const SurfaceMeshVis* visElement() const { return _visElement; }
+
+	/// \brief Given an sub-object ID returned by the Viewport::pick() method, looks up the
+	/// corresponding surface face.
+	int slipFacetIndexFromSubObjectID(quint32 subobjID) const {
+		if(subobjID < renderableMesh()->originalFaceMap().size())
+			return renderableMesh()->originalFaceMap()[subobjID];
+		else
+			return -1;
+	}
+
+	/// Returns a human-readable string describing the picked object, which will be displayed in the status bar by OVITO.
+	virtual QString infoString(PipelineSceneNode* objectNode, quint32 subobjectId) override;
+
+private:
+
+	/// The data object holding the original surface mesh.
+	OORef<SurfaceMesh> _surfaceMesh;
+
+	/// The renderable version of the surface mesh.
+	OORef<RenderableSurfaceMesh> _renderableMesh;
+
+	/// The vis element that rendered the surface mesh.
+	OORef<SurfaceMeshVis> _visElement;
 };
 
 }	// End of namespace

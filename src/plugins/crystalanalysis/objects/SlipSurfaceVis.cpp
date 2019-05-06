@@ -129,7 +129,7 @@ QString SlipSurfacePickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 {
     QString str;
 
-    int facetIndex = slipFacetIndexFromSubObjectID(subobjectId);
+    auto facetIndex = slipFacetIndexFromSubObjectID(subobjectId);
     if(const PropertyObject* regionProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::RegionProperty)) {
         if(facetIndex >= 0 && facetIndex < regionProperty->size()) {
             if(const PropertyObject* burgersVectorProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::BurgersVectorProperty)) {

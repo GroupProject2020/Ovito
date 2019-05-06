@@ -55,6 +55,8 @@ SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, cullFaces, "Cull faces");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, surfaceTransparencyController, PercentParameterUnit, 0, 1);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, capTransparencyController, PercentParameterUnit, 0, 1);
 
+IMPLEMENT_OVITO_CLASS(SurfaceMeshPickInfo);
+
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
@@ -213,6 +215,92 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 	else
 		visCache.capPrimitive.reset();
 	renderer->endPickObject();
+}
+
+/******************************************************************************
+* Create the viewport picking record for the surface mesh object.
+******************************************************************************/
+OORef<ObjectPickInfo> SurfaceMeshVis::createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const
+{
+    return new SurfaceMeshPickInfo(this, mesh, renderableMesh);
+}
+
+/******************************************************************************
+* Returns a human-readable string describing the picked object,
+* which will be displayed in the status bar by OVITO.
+******************************************************************************/
+QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjectId)
+{
+    QString str = surfaceMesh()->objectTitle();
+
+	// List all the properties of the face.
+    auto facetIndex = slipFacetIndexFromSubObjectID(subobjectId);
+	if(surfaceMesh()->faces() && facetIndex >= 0 && facetIndex < surfaceMesh()->faces()->elementCount()) {
+		for(const PropertyObject* property : surfaceMesh()->faces()->properties()) {
+	        if(facetIndex >= property->size()) continue;
+//			if(property->type() == SurfaceMeshFaces::SelectionProperty) continue;
+			if(property->type() == SurfaceMeshFaces::ColorProperty) continue;
+			if(property->type() == SurfaceMeshFaces::RegionProperty) continue;
+			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
+			if(!str.isEmpty()) str += QStringLiteral(" | ");
+			str += property->name();
+			str += QStringLiteral(" ");
+			for(size_t component = 0; component < property->componentCount(); component++) {
+				if(component != 0) str += QStringLiteral(", ");
+				if(property->dataType() == PropertyStorage::Int) {
+					str += QString::number(property->getIntComponent(facetIndex, component));
+					if(property->elementTypes().empty() == false) {
+						if(const ElementType* ptype = property->elementType(property->getIntComponent(facetIndex, component))) {
+							if(!ptype->name().isEmpty())
+								str += QString(" (%1)").arg(ptype->name());
+						}
+					}
+				}
+				else if(property->dataType() == PropertyStorage::Int64) {
+					str += QString::number(property->getInt64Component(facetIndex, component));
+				}
+				else if(property->dataType() == PropertyStorage::Float) {
+					str += QString::number(property->getFloatComponent(facetIndex, component));
+				}
+			}
+		}
+
+		// Additionally, list all properties of the region to which the face belongs.
+		if(const PropertyObject* regionProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::RegionProperty)) {
+			if(facetIndex < regionProperty->size() && surfaceMesh()->regions()) {
+				int regionIndex = regionProperty->getInt(facetIndex);
+				if(!str.isEmpty()) str += QStringLiteral(" | ");
+				str += QStringLiteral("Region: %1").arg(regionIndex);
+				for(const PropertyObject* property : surfaceMesh()->regions()->properties()) {
+					if(regionIndex < 0 || regionIndex >= property->size()) continue;
+					if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
+					str += QStringLiteral(" | ");
+					str += property->name();
+					str += QStringLiteral(" ");
+					for(size_t component = 0; component < property->componentCount(); component++) {
+						if(component != 0) str += QStringLiteral(", ");
+						if(property->dataType() == PropertyStorage::Int) {
+							str += QString::number(property->getIntComponent(regionIndex, component));
+							if(property->elementTypes().empty() == false) {
+								if(const ElementType* ptype = property->elementType(property->getIntComponent(regionIndex, component))) {
+									if(!ptype->name().isEmpty())
+										str += QString(" (%1)").arg(ptype->name());
+								}
+							}
+						}
+						else if(property->dataType() == PropertyStorage::Int64) {
+							str += QString::number(property->getInt64Component(regionIndex, component));
+						}
+						else if(property->dataType() == PropertyStorage::Float) {
+							str += QString::number(property->getFloatComponent(regionIndex, component));
+						}
+					}
+				}
+			}
+		}
+    }
+
+    return str;
 }
 
 /******************************************************************************
