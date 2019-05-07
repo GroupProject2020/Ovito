@@ -406,8 +406,8 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 								loadedData->addAttribute(QStringLiteral("SourceFrame"), frame, this);
 								loadedData->addAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded), this);
 
-								// When loading the current frame, make the new data collection the data collection of this
-								// FileSource so that it appears in the pipeline editor.
+								// When loading the current frame, make the new data collection the current data collection of this
+								// FileSource, which appears in the pipeline editor.
 								if(interval.contains(dataset()->animationSettings()->time())) {
 									setDataCollection(loadedData);
 									setStoredFrameIndex(frame);
@@ -654,7 +654,7 @@ OORef<RefTarget> FileSource::clone(bool deepCopy, CloneHelper& cloneHelper) cons
 	// Let the base class create an instance of this class.
 	OORef<FileSource> clone = static_object_cast<FileSource>(CachingPipelineObject::clone(deepCopy, cloneHelper));
 
-	// There should always be only one FileSource controlling the animation interval length.
+	// There should always be only one FileSource in the scene controlling the animation interval length.
 	clone->setAdjustAnimationIntervalEnabled(false);
 
 	return clone;

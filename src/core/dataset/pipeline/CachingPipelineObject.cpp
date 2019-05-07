@@ -43,7 +43,7 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 	// Reduce the cache validity to the interval to be kept.
 	_pipelineCache.invalidate(false, keepInterval);
 
-	// Abort any pipeline evaluation currently in progress unless it 
+	// Abort any pipeline evaluation currently in progress unless it
 	// falls inside the time interval that should be kept.
 	if(!keepInterval.contains(_inProgressEvalTime)) {
 		_inProgressEvalFuture.reset();
@@ -57,7 +57,10 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time, bool breakOnError)
 {
 	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineCache.contains(time))
+	//
+	// Workaround for bug #150: Force FileSource to reload the frame data after the current
+	// animation frame has changed, even if it the data is available in the cache.
+	if(_pipelineCache.contains(time, time == dataset()->animationSettings()->time()))
 		return _pipelineCache.getAt(time);
 
 	// Check if there is already an evaluation in progress whose shared future we can return to the caller.

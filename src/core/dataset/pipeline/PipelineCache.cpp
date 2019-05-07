@@ -30,9 +30,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 * Determines whether the cache contains a cached pipeline state for the
 * given animation time.
 ******************************************************************************/
-bool PipelineCache::contains(TimePoint time) const
+bool PipelineCache::contains(TimePoint time, bool onlyCurrentAnimTime) const
 {
-	return _mostRecentState.stateValidity().contains(time) || _currentAnimState.stateValidity().contains(time);
+	if(onlyCurrentAnimTime)
+		return _currentAnimState.stateValidity().contains(time);
+	else
+		return _mostRecentState.stateValidity().contains(time) || _currentAnimState.stateValidity().contains(time);
 }
 
 /******************************************************************************
