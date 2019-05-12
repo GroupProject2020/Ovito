@@ -35,9 +35,7 @@ SurfaceMeshData::SurfaceMeshData(const SimulationCell& cell) :
 	_cell(cell)
 {
     createVertexProperty(SurfaceMeshVertices::PositionProperty);
-    createFaceProperty(SurfaceMeshFaces::RegionProperty);
     OVITO_ASSERT(_vertexCoords != nullptr);
-    OVITO_ASSERT(_faceRegions != nullptr);
 }
 
 /******************************************************************************
@@ -61,7 +59,6 @@ SurfaceMeshData::SurfaceMeshData(const SurfaceMesh* sm) :
 	    addRegionProperty(const_pointer_cast<PropertyStorage>(property->storage()));
 	}
     OVITO_ASSERT(_vertexCoords != nullptr);
-    OVITO_ASSERT(_faceRegions != nullptr);
 }
 
 /******************************************************************************
@@ -206,6 +203,7 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 			if(_faceRegions) {
 				closestRegion = _faceRegions[adjacentFace(edge)];
 			}
+			else closestRegion = 1;
 		}
 	}
 
@@ -247,6 +245,7 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 				if(_faceRegions) {
 					closestRegion = _faceRegions[face];
 				}
+				else closestRegion = 1;
 			}
 		}
 	}
@@ -274,6 +273,7 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 		if(_faceRegions) {
 			closestRegion = _faceRegions[adjacentFace(edge)];
 		}
+		else closestRegion = 1;
 	}
 	OVITO_ASSERT(closestRegion >= 0);
 

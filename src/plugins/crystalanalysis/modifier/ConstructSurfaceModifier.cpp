@@ -162,12 +162,11 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		}
 	};
 
-	// Create the empty and the solid region in the output mesh.
+	// Create the empty region in the output mesh.
 	_mesh.createRegion();
-	_mesh.createRegion();
-	OVITO_ASSERT(_mesh.regionCount() == 2);
+	OVITO_ASSERT(_mesh.regionCount() == 1);
 
-	ManifoldConstructionHelper<> manifoldConstructor(tessellation, _mesh, alpha, *positions());
+	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, _mesh, alpha, *positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), prepareMeshFace))
 		return;
 
@@ -180,12 +179,18 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	if(!_mesh.smoothMesh(_smoothingLevel, *task()))
 		return;
 
-	// Compute total surface area by summing up the triangle face areas.
+	// Create the 'Surface area' region property.
+	PropertyPtr surfaceAreaProperty = _mesh.createRegionProperty(SurfaceMeshRegions::SurfaceAreaProperty, true);
+
+	// Compute surface area (total and per-region) by summing up the triangle face areas.
 	for(HalfEdgeMesh::edge_index edge : _mesh.firstFaceEdges()) {
 		if(task()->isCanceled()) return;
-		Vector3 e1 = mesh().edgeVector(edge);
-		Vector3 e2 = mesh().edgeVector(mesh().nextFaceEdge(edge));
-		addSurfaceArea(e1.cross(e2).length() / 2);
+		const Vector3& e1 = mesh().edgeVector(edge);
+		const Vector3& e2 = mesh().edgeVector(mesh().nextFaceEdge(edge));
+		FloatType area = e1.cross(e2).length() / 2;
+		addSurfaceArea(area);
+		SurfaceMeshData::region_index region = mesh().faceRegion(mesh().adjacentFace(edge));
+		surfaceAreaProperty->setFloat(region, surfaceAreaProperty->getFloat(region) + area);
 	}
 
 	task()->endProgressSubSteps();
@@ -212,7 +217,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint tim
 	state.addAttribute(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()), modApp);
 	state.addAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()), modApp);
 
-	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nTotal cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
+	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nSimulation cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
 			.arg(surfaceArea()).arg(solidVolume()).arg(totalVolume())
 			.arg(solidVolume() / totalVolume()).arg(surfaceArea() / solidVolume()).arg(surfaceArea() / totalVolume())));
 }

@@ -158,11 +158,6 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
 
-	// Create the outer and the inner region.
-	_mesh.createRegion();
-	_mesh.createRegion();
-	OVITO_ASSERT(_mesh.regionCount() == 2);
-
 	MarchingCubes mc(_mesh, _gridShape[0], _gridShape[1], _gridShape[2], fieldData, property()->componentCount(), false);
 	if(!mc.generateIsosurface(_isolevel, *task()))
 		return;

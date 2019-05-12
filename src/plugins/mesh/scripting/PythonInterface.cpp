@@ -84,7 +84,7 @@ PYBIND11_MODULE(MeshPython, m)
 			"It can be that there is no interior region and the exterior region is infinite and fills all space. In this case the surface mesh is degenerate and "
 			"comprises no triangles. The opposite extreme is also possible in periodic domains: The interior region extends over the entire domain "
 			"and there is no outside region. Again, the surface mesh will consist of zero triangles in this case. "
-			"To discriminate between the two situations, the :py:class:`!SurfaceMesh` class provides the :py:attr:`.all_interior` flag, which is "
+			"To discriminate between the two situations, the :py:class:`!SurfaceMesh` class provides the :py:attr:`.space_filling_region` field, which is "
 			"set when the interior region fills the entire periodic domain. "
 			"\n\n"
 			"The :py:meth:`locate_point` method can be used to test whether some point in space belongs to the interior or the exterior region. "
@@ -222,12 +222,18 @@ PYBIND11_MODULE(MeshPython, m)
 			"Sets the cutting planes to be applied to this :py:class:`!SurfaceMesh`. "
 			"The array *planes* must follow the same format as the one returned by :py:meth:`.get_cutting_planes`. ")
 	;
-	createDataPropertyAccessors(SurfaceMesh_py, "all_interior", &SurfaceMesh::spaceFillingRegion, &SurfaceMesh::setSpaceFillingRegion,
-		"Indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.");
+	createDataPropertyAccessors(SurfaceMesh_py, "space_filling_region", &SurfaceMesh::spaceFillingRegion, &SurfaceMesh::setSpaceFillingRegion,
+		"Indicates the index of the spatial region that fills the entire domain in case the surface is degenerate, i.e. the mesh has zero faces.");
 	createDataSubobjectAccessors(SurfaceMesh_py, "domain", &PeriodicDomainDataObject::domain, &PeriodicDomainDataObject::setDomain,
 		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
 		"surface mesh is embedded in. Note that this cell generally is indepenent of and may be different from the :py:attr:`~ovito.data.DataCollection.cell` "
 		"found in the :py:class:`~ovito.data.DataCollection`. ");
+	createDataSubobjectAccessors(SurfaceMesh_py, "vertices", &SurfaceMesh::vertices, &SurfaceMesh::setVertices,
+		"The :py:class:`PropertyContainer` storing the vertex properties of the mesh, including the vertex coordinates. ");
+	createDataSubobjectAccessors(SurfaceMesh_py, "faces", &SurfaceMesh::faces, &SurfaceMesh::setFaces,
+		"The :py:class:`PropertyContainer` storing the properties of the faces of the mesh. ");
+	createDataSubobjectAccessors(SurfaceMesh_py, "regions", &SurfaceMesh::regions, &SurfaceMesh::setRegions,
+		"The :py:class:`PropertyContainer` storing the properties of the spatial regions of the mesh. ");
 
 	ovito_class<SurfaceMeshVis, TransformingDataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"

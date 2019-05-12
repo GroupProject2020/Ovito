@@ -61,6 +61,7 @@ public:
 		ColorProperty = PropertyStorage::GenericColorProperty,
 		PhaseProperty = PropertyStorage::FirstSpecificProperty,
 		VolumeProperty,
+		SurfaceAreaProperty,
 		LatticeCorrespondenceProperty
 	};
 

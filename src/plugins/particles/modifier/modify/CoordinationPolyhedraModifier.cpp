@@ -68,6 +68,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 	const PropertyObject* selectionProperty = particles->getProperty(ParticlesObject::SelectionProperty);
 	const PropertyObject* topologyProperty = particles->expectBondsTopology();
 	const PropertyObject* bondPeriodicImagesProperty = particles->bonds()->getProperty(BondsObject::PeriodicImageProperty);
@@ -81,6 +82,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 			posProperty->storage(),
 			selectionProperty->storage(),
 			typeProperty ? typeProperty->storage() : nullptr,
+			identifierProperty ? identifierProperty->storage() : nullptr,
 			topologyProperty->storage(),
 			bondPeriodicImagesProperty ? bondPeriodicImagesProperty->storage() : nullptr,
 			simCell->data());
@@ -93,10 +95,12 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 {
 	task()->setProgressText(tr("Generating coordination polyhedra"));
 
-	// Create the outer and the inner spatial region.
+	// Create the exterior spatial region.
 	mesh().createRegion();
-	mesh().createRegion();
-	OVITO_ASSERT(mesh().regionCount() == 2);
+	OVITO_ASSERT(mesh().regionCount() == 1);
+
+	// Create the "Region" face property.
+	mesh().createFaceProperty(SurfaceMeshFaces::RegionProperty);
 
 	// Determine number of selected particles.
 	size_t npoly = std::count_if(_selection->constDataInt(), _selection->constDataInt() + _selection->size(), [](int s) { return s != 0; });
@@ -120,6 +124,9 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 			}
 		}
 
+		// Also include the central particle in the vertex list.
+		bondVectors.push_back(p1);
+
 		// Construct the polyhedron (i.e. convex hull) from the bond vectors.
 		constructConvexHull(bondVectors);
 		bondVectors.clear();
@@ -127,6 +134,19 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 		if(!task()->incrementProgressValue())
 			return;
 	}
+
+	// Create the "Center particle" region property, which indicates the ID of the particle that is at the center of each coordination polyhedron.
+	PropertyPtr centerProperty = std::make_shared<PropertyStorage>(mesh().regionCount(), PropertyStorage::Int64, 1, 0, QStringLiteral("Center particle"), false);
+	auto centerParticle = centerProperty->dataInt64();
+	*centerParticle++ = 0;
+	for(size_t i = 0; i < _positions->size(); i++) {
+		if(_selection->getInt(i) == 0) continue;
+		if(_particleIdentifiers)
+			*centerParticle++ = _particleIdentifiers->getInt64(i);
+		else
+			*centerParticle++ = i;
+	}
+	mesh().addRegionProperty(std::move(centerProperty));
 }
 
 /******************************************************************************
@@ -135,6 +155,9 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 ******************************************************************************/
 void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(std::vector<Point3>& vecs)
 {
+	// Create a new spatial region for the polyhedron in the output mesh.
+	SurfaceMeshData::region_index region = mesh().createRegion();
+
 	if(vecs.size() < 4) return;	// Convex hull requires at least 4 input points.
 
 	// Keep track of how many faces and vertices we started with.
@@ -177,10 +200,10 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 	for(size_t i = 0; i < 4; i++) {
         tetverts[i] = mesh().createVertex(vecs[tetrahedraCorners[i]]);
 	}
-	mesh().createFace({tetverts[0], tetverts[1], tetverts[3]});
-	mesh().createFace({tetverts[2], tetverts[0], tetverts[3]});
-	mesh().createFace({tetverts[0], tetverts[2], tetverts[1]});
-	mesh().createFace({tetverts[1], tetverts[2], tetverts[3]});
+	mesh().createFace({tetverts[0], tetverts[1], tetverts[3]}, region);
+	mesh().createFace({tetverts[2], tetverts[0], tetverts[3]}, region);
+	mesh().createFace({tetverts[0], tetverts[2], tetverts[1]}, region);
+	mesh().createFace({tetverts[1], tetverts[2], tetverts[3]}, region);
 	// Connect opposite half-edges to link the four faces together.
 	for(size_t i = 0; i < 4; i++)
 		mesh().topology()->connectOppositeHalfedges(tetverts[i]);
@@ -258,7 +281,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 		HalfEdgeMesh::face_index firstFace = HalfEdgeMesh::InvalidIndex;
 		HalfEdgeMesh::face_index newFace;
 		do {
-			newFace = mesh().createFace({ mesh().vertex2(borderEdge), mesh().vertex1(borderEdge), vertex });
+			newFace = mesh().createFace({ mesh().vertex2(borderEdge), mesh().vertex1(borderEdge), vertex }, region);
 			mesh().linkOppositeEdges(mesh().firstFaceEdge(newFace), borderEdge);
 			if(borderEdge == firstBorderEdge)
 				firstFace = newFace;

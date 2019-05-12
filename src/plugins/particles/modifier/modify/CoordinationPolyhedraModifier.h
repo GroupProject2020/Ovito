@@ -73,11 +73,12 @@ private:
 
 		/// Constructor.
 		ComputePolyhedraEngine(ConstPropertyPtr positions,
-				ConstPropertyPtr selection, ConstPropertyPtr particleTypes,
+				ConstPropertyPtr selection, ConstPropertyPtr particleTypes, ConstPropertyPtr particleIdentifiers,
 				ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages, const SimulationCell& simCell) :
 			_positions(std::move(positions)),
 			_selection(std::move(selection)),
 			_particleTypes(std::move(particleTypes)),
+			_particleIdentifiers(std::move(particleIdentifiers)),
 			_bondTopology(std::move(bondTopology)),
 			_bondPeriodicImages(std::move(bondPeriodicImages)),
 			_mesh(simCell) {}
@@ -87,6 +88,7 @@ private:
 			_positions.reset();
 			_selection.reset();
 			_particleTypes.reset();
+			_particleIdentifiers.reset();
 			_bondTopology.reset();
 			_bondPeriodicImages.reset();
 			ComputeEngine::cleanup();
@@ -117,6 +119,7 @@ private:
 		ConstPropertyPtr _positions;
 		ConstPropertyPtr _selection;
 		ConstPropertyPtr _particleTypes;
+		ConstPropertyPtr _particleIdentifiers;
 		ConstPropertyPtr _bondTopology;
 		ConstPropertyPtr _bondPeriodicImages;
 

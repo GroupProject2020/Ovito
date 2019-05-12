@@ -31,6 +31,7 @@ IMPLEMENT_OVITO_CLASS(Microstructure);
 ******************************************************************************/
 MicrostructureData::MicrostructureData(const SimulationCell& cell) : SurfaceMeshData(cell)
 {
+    createFaceProperty(SurfaceMeshFaces::RegionProperty);
     createFaceProperty(SurfaceMeshFaces::BurgersVectorProperty);
     createFaceProperty(SurfaceMeshFaces::FaceTypeProperty);
     createFaceProperty(SurfaceMeshFaces::CrystallographicNormalProperty);
@@ -45,6 +46,7 @@ MicrostructureData::MicrostructureData(const SimulationCell& cell) : SurfaceMesh
 ******************************************************************************/
 MicrostructureData::MicrostructureData(const SurfaceMesh* mo) : SurfaceMeshData(mo)
 {
+    OVITO_ASSERT(faceRegions());
     OVITO_ASSERT(faceTypes());
     OVITO_ASSERT(burgersVectors());
     OVITO_ASSERT(crystallographicNormals());

@@ -210,10 +210,13 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 		visCache.surfacePrimitive->setCullFaces(cullFaces());
 		visCache.surfacePrimitive->render(renderer);
 	}
-	if(showCap())
-		visCache.capPrimitive->render(renderer);
-	else
+	if(showCap()) {
+		if(!renderer->isPicking() || cap_alpha >= 1)
+			visCache.capPrimitive->render(renderer);
+	}
+	else {
 		visCache.capPrimitive.reset();
+	}
 	renderer->endPickObject();
 }
 
@@ -270,7 +273,7 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 			if(facetIndex < regionProperty->size() && surfaceMesh()->regions()) {
 				int regionIndex = regionProperty->getInt(facetIndex);
 				if(!str.isEmpty()) str += QStringLiteral(" | ");
-				str += QStringLiteral("Region: %1").arg(regionIndex);
+				str += QStringLiteral("Region %1").arg(regionIndex);
 				for(const PropertyObject* property : surfaceMesh()->regions()->properties()) {
 					if(regionIndex < 0 || regionIndex >= property->size()) continue;
 					if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;

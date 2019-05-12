@@ -48,6 +48,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 		stride = sizeof(int);
 		break;
 	case VolumeProperty:
+	case SurfaceAreaProperty:
 		dataType = PropertyStorage::Float;
 		componentCount = 1;
 		stride = sizeof(FloatType);
@@ -95,6 +96,7 @@ void SurfaceMeshRegions::OOMetaClass::initialize()
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Region colors"));
 	registerStandardProperty(PhaseProperty, tr("Phase"), PropertyStorage::Int, emptyList, tr("Phases"));
 	registerStandardProperty(VolumeProperty, tr("Volume"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(SurfaceAreaProperty, tr("Surface area"), PropertyStorage::Float, emptyList);
 	registerStandardProperty(LatticeCorrespondenceProperty, tr("Lattice Correspondence"), PropertyStorage::Float, tensorList);
 }
 
