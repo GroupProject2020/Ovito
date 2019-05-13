@@ -72,11 +72,18 @@ void defineViewportSubmodule(py::module m)
 		.def_property("fov", &Viewport::fieldOfView, &Viewport::setFieldOfView,
 				"The field of view of the viewport's camera. "
 				"For perspective projections this is the camera's angle in the vertical direction (in radians). For orthogonal projections this is the visible range in the vertical direction (in world units).")
-		.def_property("cameraTransformation", &Viewport::cameraTransformation, &Viewport::setCameraTransformation)
+		.def_property("camera_tm", &Viewport::cameraTransformation, &Viewport::setCameraTransformation)
 		.def_property("camera_dir", &Viewport::cameraDirection, &Viewport::setCameraDirection,
 				"The viewing direction vector of the viewport's camera.")
 		.def_property("camera_pos", &Viewport::cameraPosition, &Viewport::setCameraPosition,
 				"The position of the viewport's camera in the three-dimensional scene.")
+		.def_property("camera_up", &Viewport::cameraUpDirection, &Viewport::setCameraUpDirection,
+				"Direction vector specifying which coordinate axis will point upward in rendered images. "
+				"Set this parameter to a non-zero vector in order to rotate the camera around the viewing direction and "
+				"align the vertical direction in rendered images with a different simulation coordinate axis. "
+				"If set to ``(0,0,0)``, then the upward axis is determined by the current user settings set in OVITO's application settings dialog (z-axis by default). "
+				"\n\n"
+				":Default: (0,0,0)\n")
 		.def_property_readonly("viewMatrix", [](Viewport& vp) -> const AffineTransformation& { return vp.projectionParams().viewMatrix; })
 		.def_property_readonly("inverseViewMatrix", [](Viewport& vp) -> const AffineTransformation& { return vp.projectionParams().inverseViewMatrix; })
 		.def_property_readonly("projectionMatrix", [](Viewport& vp) -> const Matrix4& { return vp.projectionParams().projectionMatrix; })

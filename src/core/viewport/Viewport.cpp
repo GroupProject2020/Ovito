@@ -46,6 +46,7 @@ DEFINE_PROPERTY_FIELD(Viewport, viewType);
 DEFINE_PROPERTY_FIELD(Viewport, gridMatrix);
 DEFINE_PROPERTY_FIELD(Viewport, fieldOfView);
 DEFINE_PROPERTY_FIELD(Viewport, cameraTransformation);
+DEFINE_PROPERTY_FIELD(Viewport, cameraUpDirection);
 DEFINE_PROPERTY_FIELD(Viewport, renderPreviewMode);
 DEFINE_PROPERTY_FIELD(Viewport, isGridVisible);
 DEFINE_PROPERTY_FIELD(Viewport, stereoscopicMode);
@@ -63,6 +64,7 @@ Viewport::Viewport(DataSet* dataset) : RefTarget(dataset),
 		_renderPreviewMode(false),
 		_isRendering(false),
 		_cameraTransformation(AffineTransformation::Identity()),
+		_cameraUpDirection(Vector3::Zero()),
 		_gridMatrix(AffineTransformation::Identity()),
 		_isGridVisible(false),
 		_stereoscopicMode(false),
@@ -183,10 +185,13 @@ bool Viewport::isPerspectiveProjection() const
 void Viewport::setCameraDirection(const Vector3& newDir)
 {
 	if(newDir != Vector3::Zero()) {
-		Vector3 upVector = ViewportSettings::getSettings().upVector();
-		if(!ViewportSettings::getSettings().restrictVerticalRotation()) {
-			if(upVector.dot(cameraTransformation().column(1)) < 0)
-				upVector = -upVector;
+		Vector3 upVector = cameraUpDirection();
+		if(upVector.isZero()) {
+			upVector = ViewportSettings::getSettings().upVector();
+			if(!ViewportSettings::getSettings().restrictVerticalRotation()) {
+				if(upVector.dot(cameraTransformation().column(1)) < 0)
+					upVector = -upVector;
+			}
 		}
 		setCameraTransformation(AffineTransformation::lookAlong(cameraPosition(), newDir, upVector).inverse());
 	}
@@ -411,6 +416,10 @@ void Viewport::propertyChanged(const PropertyFieldDescriptor& field)
 	RefTarget::propertyChanged(field);
 	if(field == PROPERTY_FIELD(viewType)) {
 		updateViewportTitle();
+	}
+	else if(field == PROPERTY_FIELD(cameraUpDirection) && !isBeingLoaded()) {
+		// Update view matrix when the up-vector has been changed.
+		setCameraDirection(cameraDirection());
 	}
 	updateViewport();
 }

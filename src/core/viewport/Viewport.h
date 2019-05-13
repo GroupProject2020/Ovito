@@ -318,6 +318,10 @@ private:
 	/// The orientation of the camera.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(AffineTransformation, cameraTransformation, setCameraTransformation, PROPERTY_FIELD_NO_UNDO);
 
+	/// Selectes the upward pointing direction of the virtual camera.
+	/// If nonzero, this viewport parameter overrides the global user settings.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Vector3, cameraUpDirection, setCameraUpDirection, PROPERTY_FIELD_NO_UNDO);
+
 	/// Indicates whether the rendering frame is shown.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, renderPreviewMode, setRenderPreviewMode, PROPERTY_FIELD_NO_UNDO);
 
@@ -353,5 +357,3 @@ Q_DECLARE_METATYPE(Ovito::Viewport::ViewType);
 Q_DECLARE_TYPEINFO(Ovito::Viewport::ViewType, Q_PRIMITIVE_TYPE);
 
 #include <core/rendering/SceneRenderer.h>
-
-

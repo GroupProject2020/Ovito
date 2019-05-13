@@ -3,6 +3,7 @@ from ovito.vis import *
 import ovito
 from PyQt5 import QtCore
 from PyQt5 import QtGui
+import numpy as np
 
 # Import a data file.
 pipeline = import_file("../files/CFG/shear.void.120.cfg")
@@ -20,6 +21,15 @@ print(vp.fov)
 print(vp.type)
 vp.zoom_all()
 
+vp.camera_pos = (0, 0, 450)
+vp.camera_dir = (0, 0, -50)
+vp.camera_up = (1,0,0)
+print(vp.camera_tm)
+assert(np.allclose(vp.camera_up, vp.camera_tm[:,1]))
+vp.camera_up = (0,1,0)
+print(vp.camera_tm)
+assert(np.allclose(vp.camera_up, vp.camera_tm[:,1]))
+
 overlay = TextLabelOverlay(
     text = 'Some text',
     alignment = QtCore.Qt.AlignHCenter ^ QtCore.Qt.AlignBottom,
@@ -27,6 +37,7 @@ overlay = TextLabelOverlay(
     font_size = 0.03,
     text_color = (0,0,0))
 
+vp.zoom_all()
 vp.overlays.append(overlay)
 vp.render(settings)
 img = vp.render_image(renderer=settings.renderer, size=settings.size)
