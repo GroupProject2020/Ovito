@@ -53,6 +53,10 @@ PYBIND11_MODULE(MeshPython, m)
 		.def_property("transparency", &TriMeshVis::transparency, &TriMeshVis::setTransparency)
 	;
 
+	ovito_class<SurfaceMeshVertices, PropertyContainer>{m};
+	ovito_class<SurfaceMeshFaces, PropertyContainer>{m};
+	ovito_class<SurfaceMeshRegions, PropertyContainer>{m};
+
 	auto SurfaceMesh_py = ovito_class<SurfaceMesh, PeriodicDomainDataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"

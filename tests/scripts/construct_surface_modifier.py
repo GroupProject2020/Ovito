@@ -23,6 +23,9 @@ modifier.radius = 3.8
 print("  smoothing_level: {}".format(modifier.smoothing_level))
 modifier.smoothing_level = 0
 
+print("  select_surface_particles: {}".format(modifier.select_surface_particles))
+modifier.select_surface_particles = True
+
 print("  cap_color: {}".format(modifier.vis.cap_color))
 print("  cap_transparency: {}".format(modifier.vis.cap_transparency))
 print("  show_cap: {}".format(modifier.vis.show_cap))
@@ -39,6 +42,16 @@ print("  surface_area= {}".format(data.attributes['ConstructSurfaceMesh.surface_
 surface_mesh = data.surface
 assert(surface_mesh is data.surfaces['surface'])
 
+assert(surface_mesh.regions.count == 3)
 assert(surface_mesh.locate_point((0,0,0)) == 0) # Exterior point
 assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == -1) # On boundary
-assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) == 1) # Interior point
+assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) >= 1) # Interior point
+
+# Sum of all region volumes should be equal to the total solid volume reported by the modifier.
+assert(np.allclose(np.sum(surface_mesh.regions['Volume']), data.attributes['ConstructSurfaceMesh.solid_volume']))
+
+# For this particular input, sum of all region surface areas should be equal to the total surface area reported by the modifier.
+assert(np.allclose(np.sum(surface_mesh.regions['Surface area']), data.attributes['ConstructSurfaceMesh.surface_area']))
+
+# Check if the modifier has selected the surface atoms.
+assert(np.count_nonzero(data.particles.selection) > 0)
