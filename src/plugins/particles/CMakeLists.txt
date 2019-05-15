@@ -42,6 +42,7 @@ SET(SourceFiles
 	modifier/analysis/ackland_jones/AcklandJonesModifier.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifier.cpp
 	modifier/analysis/coordination/CoordinationAnalysisModifier.cpp
+	modifier/analysis/chill_plus/ChillPlusModifier.cpp
 	modifier/analysis/displacements/CalculateDisplacementsModifier.cpp
 	modifier/analysis/centrosymmetry/CentroSymmetryModifier.cpp
 	modifier/analysis/strain/AtomicStrainModifier.cpp

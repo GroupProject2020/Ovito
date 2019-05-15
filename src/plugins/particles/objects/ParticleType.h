@@ -58,7 +58,11 @@ public:
 		HEX_DIAMOND_SECOND_NEIGH,	//< Second neighbor of a hexagonal diamond atom
 		SC,							//< Simple cubic structure
 		GRAPHENE,						//< Graphene structure
-
+		HEXAGONAL_ICE,
+		CUBIC_ICE,
+		INTERFACIAL_ICE,
+		HYDRATE,
+		INTERFACIAL_HYDRATE,
 		NUMBER_OF_PREDEFINED_STRUCTURE_TYPES
 	};
 
