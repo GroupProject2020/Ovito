@@ -155,5 +155,3 @@ private:
 
 Q_DECLARE_METATYPE(Ovito::Particles::ParticlesVis::ParticleShape);
 Q_DECLARE_TYPEINFO(Ovito::Particles::ParticlesVis::ParticleShape, Q_PRIMITIVE_TYPE);
-
-

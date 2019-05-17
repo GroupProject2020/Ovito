@@ -365,11 +365,25 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	const PropertyObject* transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
 	const PropertyObject* shapeProperty = particles->getProperty(ParticlesObject::AsphericalShapeProperty);
 	const PropertyObject* orientationProperty = particles->getProperty(ParticlesObject::OrientationProperty);
-	if(particleShape() != Sphere && particleShape() != Box && particleShape() != Cylinder && particleShape() != Spherocylinder) {
+
+	// Check if any of the particle types have a mesh geometry assigned.
+	std::vector<int> userShapeParticleTypes;
+	if(typeProperty) {
+		for(const ElementType* etype : typeProperty->elementTypes()) {
+			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(etype)) {
+				if(ptype->shapeMesh() && ptype->shapeMesh()->mesh().faceCount() != 0) {
+					userShapeParticleTypes.push_back(ptype->numericId());
+				}
+			}
+		}
+	}
+	qDebug() << "ParticlesVis::render: hasUserParticleShapes=" << userShapeParticleTypes.size();
+
+	if(particleShape() != Sphere && particleShape() != Box && particleShape() != Cylinder && particleShape() != Spherocylinder && userShapeParticleTypes.empty()) {
 		shapeProperty = nullptr;
 		orientationProperty = nullptr;
 	}
-	if(particleShape() == Sphere && shapeProperty == nullptr)
+	if(particleShape() == Sphere && shapeProperty == nullptr && userShapeParticleTypes.empty())
 		orientationProperty = nullptr;
 
 	// Make sure we don't exceed our internal limits.
@@ -378,8 +392,15 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 		return;
 	}
 
-	// Get number of particles.
+	// Get total number of particles.
 	int particleCount = positionProperty ? (int)positionProperty->size() : 0;
+
+	// Determine which particles need be rendered using the built-in primitives and
+	// which are rendered using shape meshes.
+
+	if(!userShapeParticleTypes.empty()) {
+		
+	}
 
 	if(particleShape() != Cylinder && particleShape() != Spherocylinder) {
 
@@ -535,7 +556,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				}
 			}
 		}
-			
+
 		if(renderer->isPicking()) {
 			OORef<ParticlePickInfo> pickInfo(new ParticlePickInfo(this, flowState, particleCount));
 			renderer->beginPickObject(contextNode, pickInfo);
@@ -891,7 +912,6 @@ size_t ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 QString ParticlePickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjectId)
 {
 	size_t particleIndex = particleIndexFromSubObjectID(subobjectId);
-	if(particleIndex == std::numeric_limits<size_t>::max()) return QString();
 	return particleInfoString(pipelineState(), particleIndex);
 }
 

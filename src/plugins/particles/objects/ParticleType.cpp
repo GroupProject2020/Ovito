@@ -27,7 +27,9 @@ namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleType);	
 DEFINE_PROPERTY_FIELD(ParticleType, radius);
+DEFINE_REFERENCE_FIELD(ParticleType, shapeMesh);
 SET_PROPERTY_FIELD_LABEL(ParticleType, radius, "Radius");
+SET_PROPERTY_FIELD_LABEL(ParticleType, shapeMesh, "Shape");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticleType, radius, WorldParameterUnit, 0);
 
 /******************************************************************************
@@ -35,6 +37,18 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticleType, radius, WorldParameterUnit, 0
 ******************************************************************************/
 ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset), _radius(0)
 {
+	TriMeshObject* meshObj = new TriMeshObject(dataset);
+	meshObj->mesh().setVertexCount(4);
+	meshObj->mesh().vertex(0) = Point3(0,0,1);
+	meshObj->mesh().vertex(1) = Point3(1,0,-1);
+	meshObj->mesh().vertex(2) = Point3(0,0.5,-1);
+	meshObj->mesh().vertex(3) = Point3(0,0.5,-1);
+	meshObj->mesh().setFaceCount(4);
+	meshObj->mesh().face(0).setVertices(0,1,2);
+	meshObj->mesh().face(1).setVertices(0,1,3);
+	meshObj->mesh().face(2).setVertices(0,2,3);
+	meshObj->mesh().face(3).setVertices(1,2,3);
+	setShapeMesh(meshObj);
 }
 
 // Define default names, colors, and radii for some predefined particle types.

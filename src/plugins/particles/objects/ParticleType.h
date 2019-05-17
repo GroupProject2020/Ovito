@@ -25,6 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/properties/ElementType.h>
+#include <plugins/mesh/tri/TriMeshObject.h>
 
 namespace Ovito { namespace Particles {
 
@@ -108,8 +109,13 @@ public:
 
 private:
 
-	/// Stores the radius of the particle type.
+	/// The default display radius to be used for particles of this type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, radius, setRadius);
+
+	/// An optional user-defined shape used for rendering particles of this type.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD(TriMeshObject, shapeMesh, setShapeMesh);
+
+private:
 
 	/// Data structure that holds the name, color, and radius of a particle type.
 	typedef std::tuple<QString,Color,FloatType> PredefinedTypeInfo;
