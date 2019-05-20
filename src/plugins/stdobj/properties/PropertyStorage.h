@@ -699,6 +699,10 @@ public:
 	/// the corresponding bits in the bit array are set.
 	void filterResize(const boost::dynamic_bitset<>& mask);
 
+	/// Creates a copy of the array, not containing those elements for which
+	/// the corresponding bits in the given bit array were set.
+	std::shared_ptr<PropertyStorage> filterCopy(const boost::dynamic_bitset<>& mask) const;
+
 	/// Copies the contents from the given source into this storage using a mapping.
 	void mappedCopy(const PropertyStorage& source, const std::vector<size_t>& mapping);
 

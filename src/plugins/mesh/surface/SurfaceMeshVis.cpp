@@ -42,6 +42,7 @@ DEFINE_PROPERTY_FIELD(SurfaceMeshVis, showCap);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, smoothShading);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, reverseOrientation);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, cullFaces);
+DEFINE_PROPERTY_FIELD(SurfaceMeshVis, highlightEdges);
 DEFINE_REFERENCE_FIELD(SurfaceMeshVis, surfaceTransparencyController);
 DEFINE_REFERENCE_FIELD(SurfaceMeshVis, capTransparencyController);
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, surfaceColor, "Surface color");
@@ -52,6 +53,7 @@ SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, surfaceTransparencyController, "Surface
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, capTransparencyController, "Cap transparency");
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, reverseOrientation, "Inside out");
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, cullFaces, "Cull faces");
+SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, highlightEdges, "Highlight edges");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, surfaceTransparencyController, PercentParameterUnit, 0, 1);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, capTransparencyController, PercentParameterUnit, 0, 1);
 
@@ -66,7 +68,8 @@ SurfaceMeshVis::SurfaceMeshVis(DataSet* dataset) : TransformingDataVis(dataset),
 	_showCap(true),
 	_smoothShading(true),
 	_reverseOrientation(false),
-	_cullFaces(false)
+	_cullFaces(false),
+	_highlightEdges(false)
 {
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
 	setCapTransparencyController(ControllerManager::createFloatController(dataset));
@@ -162,7 +165,8 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 		CompatibleRendererGroup,	// The scene renderer
 		VersionedDataObjectRef,		// Mesh object
 		ColorA,						// Surface color
-		ColorA						// Cap color
+		ColorA,						// Cap color
+		bool						// Edge highlighting
 	>;
 
     // The values stored in the vis cache.
@@ -177,7 +181,7 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
     if(!renderableMesh) return;
 
 	// Lookup the rendering primitive in the vis cache.
-    auto& visCache = dataset()->visCache().get<CacheValue>(SurfaceCacheKey(renderer, objectStack.back(), color_surface, color_cap));
+    auto& visCache = dataset()->visCache().get<CacheValue>(SurfaceCacheKey(renderer, objectStack.back(), color_surface, color_cap, highlightEdges()));
 
 	// Check if we already have a valid rendering primitive that is up to date.
 	if(!visCache.surfacePrimitive || !visCache.surfacePrimitive->isValid(renderer)) {
@@ -187,7 +191,7 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 			c.a() = surface_alpha;
 		}
 		visCache.surfacePrimitive->setMaterialColors(std::move(materialColors));
-		visCache.surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
+		visCache.surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface, highlightEdges());
 
         // Get the original surface mesh.
         const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(renderableMesh->sourceDataObject().get());

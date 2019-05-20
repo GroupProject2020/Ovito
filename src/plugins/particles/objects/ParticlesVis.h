@@ -38,7 +38,7 @@ class OVITO_PARTICLES_EXPORT ParticlesVis : public DataVis
 	Q_OBJECT
 	OVITO_CLASS(ParticlesVis)
 	Q_CLASSINFO("DisplayName", "Particles");
-	
+
 public:
 
 	/// The shapes supported by the particle vis element.
@@ -122,8 +122,8 @@ class OVITO_PARTICLES_EXPORT ParticlePickInfo : public ObjectPickInfo
 public:
 
 	/// Constructor.
-	ParticlePickInfo(ParticlesVis* visElement, const PipelineFlowState& pipelineState, int particleCount) :
-		_visElement(visElement), _pipelineState(pipelineState), _particleCount(particleCount) {}
+	ParticlePickInfo(ParticlesVis* visElement, const PipelineFlowState& pipelineState, std::vector<size_t> subobjectToParticleMapping = {}) :
+		_visElement(visElement), _pipelineState(pipelineState), _subobjectToParticleMapping(std::move(subobjectToParticleMapping)) {}
 
 	/// The pipeline flow state containing the particle properties.
 	const PipelineFlowState& pipelineState() const { return _pipelineState; }
@@ -146,8 +146,8 @@ private:
 	/// The vis element that rendered the particles.
 	OORef<ParticlesVis> _visElement;
 
-	/// The number of rendered particles;
-	qlonglong _particleCount;
+	/// Stores the index of the particle that is associated with a rendering primitive sub-object ID.
+	std::vector<size_t> _subobjectToParticleMapping;
 };
 
 }	// End of namespace

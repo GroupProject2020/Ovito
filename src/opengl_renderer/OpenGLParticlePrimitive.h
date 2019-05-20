@@ -91,6 +91,11 @@ public:
 	/// \brief Changes the display shape of particles.
 	virtual bool setParticleShape(ParticleShape shape) override { return (shape == particleShape()); }
 
+	/// \brief Specifies an optional list of indices into the particles buffer which should be rendered.
+	virtual void setIndexedRenderingList(std::vector<int> indicesToRender) {
+
+	}
+
 protected:
 
 	/// Creates the texture used for billboard rendering of particles.

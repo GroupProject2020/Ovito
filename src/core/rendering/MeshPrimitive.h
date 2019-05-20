@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT MeshPrimitive : public PrimitiveBase
 public:
 
 	/// Sets the mesh to be stored in this buffer object.
-	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor) = 0;
+	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor, bool emphasizeEdges = false) = 0;
 
 	/// \brief Returns the number of triangle faces stored in the buffer.
 	virtual int faceCount() = 0;
@@ -54,6 +54,9 @@ public:
 		_materialColors = std::move(colors);
 	}
 
+	/// Activates rendering of multiple instances of the mesh.
+	virtual void setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) = 0;
+
 private:
 
 	/// Controls the culling of triangles not facing the viewer.
@@ -65,5 +68,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

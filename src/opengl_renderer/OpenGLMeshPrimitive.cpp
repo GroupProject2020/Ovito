@@ -36,12 +36,13 @@ OpenGLMeshPrimitive::OpenGLMeshPrimitive(OpenGLSceneRenderer* renderer) :
 	// Initialize OpenGL shader.
 	_shader = renderer->loadShaderProgram("mesh", ":/openglrenderer/glsl/mesh/mesh.vs", ":/openglrenderer/glsl/mesh/mesh.fs");
 	_pickingShader = renderer->loadShaderProgram("mesh.picking", ":/openglrenderer/glsl/mesh/picking/mesh.vs", ":/openglrenderer/glsl/mesh/picking/mesh.fs");
+	_lineShader = renderer->loadShaderProgram("wireframe_line", ":/openglrenderer/glsl/lines/line.vs", ":/openglrenderer/glsl/lines/line.fs");
 }
 
 /******************************************************************************
 * Sets the mesh to be stored in this buffer object.
 ******************************************************************************/
-void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
+void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, bool emphasizeEdges)
 {
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 
@@ -63,6 +64,9 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 			}
 		}
 	}
+
+	// Discard any previous polygon edges.
+	_edgeLinesBuffer.destroy();
 
 	if(mesh.faceCount() == 0)
 		return;
@@ -194,6 +198,31 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 		}
 	}
 	else _triangleCoordinates.clear();
+
+	// Create buffer for rendering polygon edges.
+	if(emphasizeEdges) {
+		// Count how many polygon edge are in the mesh.
+		int numVisibleEdges = 0;
+		for(const TriMeshFace& face : mesh.faces()) {
+			for(size_t e = 0; e < 3; e++)
+				if(face.edgeVisible(e)) numVisibleEdges++;
+		}
+		// Allocate storage buffer for line elements.
+		_edgeLinesBuffer.create(QOpenGLBuffer::StaticDraw, numVisibleEdges, 2);
+		Point_3<float>* lineVertices = _edgeLinesBuffer.map(QOpenGLBuffer::ReadWrite);
+
+		// Generate line elements.
+		for(const TriMeshFace& face : mesh.faces()) {
+			for(size_t e = 0; e < 3; e++) {
+				if(face.edgeVisible(e)) {
+					*lineVertices++ = Point_3<float>(mesh.vertex(face.vertex(e)));
+					*lineVertices++ = Point_3<float>(mesh.vertex(face.vertex((e+1)%3)));
+				}
+			}
+		}
+
+		_edgeLinesBuffer.unmap();
+	}
 }
 
 /******************************************************************************
@@ -261,6 +290,11 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		vpRenderer->activateVertexIDs(_pickingShader, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement());
 	}
 
+	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
+		vpRenderer->glEnable(GL_POLYGON_OFFSET_FILL);
+		vpRenderer->glPolygonOffset(1.0f, 1.0f);
+	}
+
 	if(!renderer->isPicking() && _hasAlpha && !_triangleCoordinates.empty()) {
 		OVITO_ASSERT(_triangleCoordinates.size() == faceCount());
 		OVITO_ASSERT(_vertexBuffer.verticesPerElement() == 3);
@@ -311,6 +345,29 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		vpRenderer->glDisable(GL_CULL_FACE);
 		vpRenderer->glCullFace(GL_BACK);
 	}
+
+	// Render wireframe edges.
+	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
+		vpRenderer->glDisable(GL_POLYGON_OFFSET_FILL);
+		if(!_lineShader->bind())
+			vpRenderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
+		_lineShader->setUniformValue("modelview_projection_matrix",
+				(QMatrix4x4)(vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM()));
+		ColorA wireframeColor(0.1f, 0.1f, 0.1f, 1.0f);
+		if(vpRenderer->glformat().majorVersion() >= 3) {
+			OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+		}
+		else if(vpRenderer->oldGLFunctions()) {
+			// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
+			OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+		}
+		_edgeLinesBuffer.bindPositions(vpRenderer, _lineShader);
+		OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
+		_edgeLinesBuffer.detachPositions(vpRenderer, _lineShader);
+		_lineShader->release();
+	}
+
+	OVITO_REPORT_OPENGL_ERRORS();
 }
 
 OVITO_END_INLINE_NAMESPACE

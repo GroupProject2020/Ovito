@@ -63,6 +63,9 @@ void SurfaceMeshVisEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	BooleanParameterUI* smoothShadingUI = new BooleanParameterUI(this, PROPERTY_FIELD(SurfaceMeshVis::smoothShading));
 	sublayout->addWidget(smoothShadingUI->checkBox(), 2, 0, 1, 2);
 
+	BooleanParameterUI* highlightEdgesUI = new BooleanParameterUI(this, PROPERTY_FIELD(SurfaceMeshVis::highlightEdges));
+	sublayout->addWidget(highlightEdgesUI->checkBox(), 3, 0, 1, 2);
+
 	BooleanGroupBoxParameterUI* capGroupUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(SurfaceMeshVis::showCap));
 	capGroupUI->groupBox()->setTitle(tr("Cap polygons"));
 	sublayout = new QGridLayout(capGroupUI->childContainer());

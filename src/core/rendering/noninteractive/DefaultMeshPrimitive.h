@@ -39,10 +39,11 @@ public:
 	using MeshPrimitive::MeshPrimitive;
 
 	/// Sets the mesh to be stored in this buffer object.
-	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor) override {
+	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor, bool emphasizeEdges) override {
 		// Create a shallow copy of the mesh and store it in this buffer object.
 		_mesh = mesh;
 		_meshColor = meshColor;
+		_emphasizeEdges = emphasizeEdges;
 	}
 
 	/// \brief Returns the number of triangle faces stored in the buffer.
@@ -60,6 +61,15 @@ public:
 	/// Returns the rendering color to be used if the mesh doesn't have per-vertex colors.
 	const ColorA& meshColor() const { return _meshColor; }
 
+	/// Returns whether the polygonal edges should be rendered using a wireframe model.
+	bool emphasizeEdges() const { return _emphasizeEdges; }
+
+	/// Activates rendering of multiple instances of the mesh.
+	virtual void setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) override {
+		_perInstanceTMs = std::move(perInstanceTMs);
+		_perInstanceColors = std::move(perInstanceColors);
+	}
+
 private:
 
 	/// The mesh storing the geometry.
@@ -67,9 +77,16 @@ private:
 
 	/// The rendering color to be used if the mesh doesn't have per-vertex colors.
 	ColorA _meshColor;
+
+	/// Controls the rendering of edge wireframe.
+	bool _emphasizeEdges = false;
+
+	/// The list of transformation matrices when rendering multiple instances of the mesh.
+	std::vector<AffineTransformation> _perInstanceTMs;
+
+	/// The list of colors when rendering multiple instances of the mesh.
+	std::vector<ColorA> _perInstanceColors;
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

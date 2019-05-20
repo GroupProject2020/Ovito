@@ -272,6 +272,10 @@ PYBIND11_MODULE(MeshPython, m)
 				"Enables smooth shading of the triangulated surface mesh."
 				"\n\n"
 				":Default: ``True``\n")
+		.def_property("highlight_edges", &SurfaceMeshVis::highlightEdges, &SurfaceMeshVis::setHighlightEdges,
+				"Activates the highlighted rendering of the polygonal edges of the mesh."
+				"\n\n"
+				":Default: ``False``\n")
 		.def_property("reverse_orientation", &SurfaceMeshVis::reverseOrientation, &SurfaceMeshVis::setReverseOrientation,
 				"Flips the orientation of the surface. This affects the generation of cap polygons."
 				"\n\n"

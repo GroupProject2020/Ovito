@@ -40,7 +40,7 @@ public:
 	OpenGLMeshPrimitive(OpenGLSceneRenderer* renderer);
 
 	/// Sets the mesh to be stored in this buffer object.
-	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor) override;
+	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor, bool emphasizeEdges) override;
 
 	/// \brief Returns the number of triangle faces stored in the buffer.
 	virtual int faceCount() override { return _vertexBuffer.elementCount(); }
@@ -50,6 +50,12 @@ public:
 
 	/// \brief Renders the geometry.
 	virtual void render(SceneRenderer* renderer) override;
+
+	/// Activates rendering of multiple instances of the mesh.
+	virtual void setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) override {
+		_perInstanceTMs = std::move(perInstanceTMs);
+		_perInstanceColors = std::move(perInstanceColors);
+	}
 
 private:
 
@@ -72,15 +78,25 @@ private:
 	/// The OpenGL shader program used to render the triangles in picking mode.
 	QOpenGLShaderProgram* _pickingShader;
 
+	/// The OpenGL shader program used to render the wireframe edges.
+	QOpenGLShaderProgram* _lineShader;
+
 	/// Are we rendering a semi-transparent mesh?
 	bool _hasAlpha;
 
 	/// This is required to render translucent triangles in the correct order from back to front.
 	std::vector<Point3> _triangleCoordinates;
+
+	/// The internal OpenGL vertex buffer that stores the vertex data for rendering polygon edges.
+	OpenGLBuffer<Point_3<float>> _edgeLinesBuffer;
+
+	/// The list of transformation matrices when rendering multiple instances of the mesh.
+	std::vector<AffineTransformation> _perInstanceTMs;
+
+	/// The list of colors when rendering multiple instances of the mesh.
+	std::vector<ColorA> _perInstanceColors;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

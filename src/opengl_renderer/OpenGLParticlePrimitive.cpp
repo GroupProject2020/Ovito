@@ -560,7 +560,7 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 
 	// Account for possible scaling in the model-view TM.
 	float radius_scalingfactor = (float)pow(renderer->modelViewTM().determinant(), FloatType(1.0/3.0));
-	shader->setUniformValue("radius_scalingfactor", radius_scalingfactor);	
+	shader->setUniformValue("radius_scalingfactor", radius_scalingfactor);
 	param *= radius_scalingfactor;
 
 	shader->setUniformValue("basePointSize", param);
@@ -601,7 +601,7 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 			primitiveIndices.oglBuffer().release();
 		}
 		else {
-			// By default, render particles in arbitrary order.
+			// Fully opaque particles can be rendered in unsorted storage order.
 			OVITO_CHECK_OPENGL(renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
 		}
 
@@ -749,7 +749,7 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 				primitiveIndices.oglBuffer().release();
 			}
 			else {
-				// By default, render particles in arbitrary order.
+				// Fully opaque particles can be rendered in unsorted storage order.
 				OVITO_CHECK_OPENGL(renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
 			}
 		}
@@ -881,7 +881,7 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 				primitiveIndices.oglBuffer().release();
 			}
 			else {
-				// By default, render particles in arbitrary order.
+				// Fully opaque particles can be rendered in unsorted storage order.
 				OVITO_CHECK_OPENGL(renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
 			}
 		}
@@ -902,7 +902,7 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 				primitiveIndices.oglBuffer().release();
 			}
 			else {
-				// By default, render particles in arbitrary order.
+				// Fully opaque particles can be rendered in unsorted storage order.
 				OVITO_CHECK_OPENGL(renderer->glDrawArrays(GL_TRIANGLES, 0, chunkSize * verticesPerElement));
 			}
 		}

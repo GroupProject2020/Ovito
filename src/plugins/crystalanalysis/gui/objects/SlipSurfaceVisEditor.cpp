@@ -57,6 +57,9 @@ void SlipSurfaceVisEditor::createUI(const RolloutInsertionParameters& rolloutPar
 
 	BooleanParameterUI* smoothShadingUI = new BooleanParameterUI(this, PROPERTY_FIELD(SlipSurfaceVis::smoothShading));
 	sublayout->addWidget(smoothShadingUI->checkBox(), 1, 0, 1, 2);
+
+	BooleanParameterUI* highlightEdgesUI = new BooleanParameterUI(this, PROPERTY_FIELD(SlipSurfaceVis::highlightEdges));
+	sublayout->addWidget(highlightEdgesUI->checkBox(), 2, 0, 1, 2);
 }
 
 }	// End of namespace

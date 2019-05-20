@@ -175,6 +175,9 @@ private:
 	/// Controls whether mesh faces facing away from the viewer are not rendered.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, cullFaces, setCullFaces);
 
+	/// Controls whether the polygonal edges of the mesh should be highlighted.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, highlightEdges, setHighlightEdges);
+
 	/// Controls the transparency of the surface mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);
 
