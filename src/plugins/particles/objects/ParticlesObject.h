@@ -138,13 +138,13 @@ public:
 	void addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties = {}, const BondType* bondType = nullptr);
 
 	/// Returns a vector with the input particle colors.
-	std::vector<Color> inputParticleColors() const;
+	std::vector<ColorA> inputParticleColors() const;
 
 	/// Returns a vector with the input particle radii.
 	std::vector<FloatType> inputParticleRadii() const;
 
 	/// Returns a vector with the input bond colors.
-	std::vector<Color> inputBondColors(bool ignoreExistingColorProperty = false) const;
+	std::vector<ColorA> inputBondColors(bool ignoreExistingColorProperty = false) const;
 
 private:
 

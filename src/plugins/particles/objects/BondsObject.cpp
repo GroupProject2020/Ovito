@@ -104,9 +104,9 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 		// Certain standard properties need to be initialized with default values determined by the attached visual elements.
 		if(type == ColorProperty) {
 			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath[containerPath.size()-2])) {
-				const std::vector<Color>& colors = particles->inputBondColors();
+				const std::vector<ColorA>& colors = particles->inputBondColors();
 				OVITO_ASSERT(colors.size() == property->size());
-				std::copy(colors.cbegin(), colors.cend(), property->dataColor());
+				std::transform(colors.cbegin(), colors.cend(), property->dataColor(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 				initializeMemory = false;
 			}
 		}

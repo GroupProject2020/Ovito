@@ -108,27 +108,87 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 	if(!includeParticleRadius)
 		return bbox;
 
-	// Extend box to account for radii/shape of particles.
-	FloatType maxAtomRadius = 0;
+	// Check if any of the particle types have a user-defined mesh geometry assigned.
+	std::vector<std::pair<int,FloatType>> userShapeParticleTypes;
 	if(typeProperty) {
-		for(const auto& it : ParticleType::typeRadiusMap(typeProperty)) {
-			maxAtomRadius = std::max(maxAtomRadius, (it.second != 0) ? it.second : defaultParticleRadius());
+		for(const ElementType* etype : typeProperty->elementTypes()) {
+			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(etype)) {
+				if(ptype->shapeMesh() && ptype->shapeMesh()->mesh().faceCount() != 0) {
+					// Compute the maximum extent of the user-defined shape mesh.
+					const Box3& bbox = ptype->shapeMesh()->mesh().boundingBox();
+					FloatType extent = std::max((bbox.minc - Point3::Origin()).length(), (bbox.maxc - Point3::Origin()).length());
+					userShapeParticleTypes.emplace_back(ptype->numericId(), extent);
+				}
+			}
 		}
 	}
-	if(maxAtomRadius == 0)
-		maxAtomRadius = defaultParticleRadius();
-	if(shapeProperty) {
-		for(const Vector3& s : shapeProperty->constVector3Range())
-			maxAtomRadius = std::max(maxAtomRadius, std::max(s.x(), std::max(s.y(), s.z())));
-		if(particleShape() == Spherocylinder)
-			maxAtomRadius *= 2;
+	
+	// Extend box to account for radii/shape of particles.
+	FloatType maxAtomRadius = 0;
+
+	if(userShapeParticleTypes.empty()) {
+		// Standard case - no user-defined particle shapes assigned:
+		if(typeProperty) {
+			for(const auto& it : ParticleType::typeRadiusMap(typeProperty)) {
+				maxAtomRadius = std::max(maxAtomRadius, (it.second != 0) ? it.second : defaultParticleRadius());
+			}
+		}
+		if(maxAtomRadius == 0)
+			maxAtomRadius = defaultParticleRadius();
+		if(shapeProperty) {
+			for(const Vector3& s : shapeProperty->constVector3Range())
+				maxAtomRadius = std::max(maxAtomRadius, std::max(s.x(), std::max(s.y(), s.z())));
+			if(particleShape() == Spherocylinder)
+				maxAtomRadius *= 2;
+		}
+		if(radiusProperty && radiusProperty->size() > 0) {
+			auto minmax = std::minmax_element(radiusProperty->constDataFloat(), radiusProperty->constDataFloat() + radiusProperty->size());
+			if(*minmax.first <= 0)
+				maxAtomRadius = std::max(maxAtomRadius, *minmax.second);
+			else
+				maxAtomRadius = *minmax.second;
+		}
 	}
-	if(radiusProperty && radiusProperty->size() > 0) {
-		auto minmax = std::minmax_element(radiusProperty->constDataFloat(), radiusProperty->constDataFloat() + radiusProperty->size());
-		if(*minmax.first <= 0)
-			maxAtomRadius = std::max(maxAtomRadius, *minmax.second);
-		else
-			maxAtomRadius = *minmax.second;
+	else {
+		// Non-standard case - at least one user-defined particle shape assigned:
+		std::map<int,FloatType> typeRadiusMap = ParticleType::typeRadiusMap(typeProperty);
+		if(radiusProperty && radiusProperty->size() == typeProperty->size()) {
+			const FloatType* r = radiusProperty->constDataFloat();
+			for(int t : typeProperty->constIntRange()) {
+				// Determine effective radius of the current particle.
+				FloatType radius = *r++;
+				if(radius <= 0) radius = typeRadiusMap[t];
+				if(radius <= 0) radius = defaultParticleRadius();
+				// Effective radius is multiplied with the extent of the user-defined shape mesh.
+				bool foundMeshExtent = false;
+				for(const auto& entry : userShapeParticleTypes) {
+					if(entry.first == t) {
+						maxAtomRadius = std::max(maxAtomRadius, radius * entry.second);
+						foundMeshExtent = true;
+						break;
+					}
+				}
+				// If this particle type has no user-defined shape assigned, simply use radius.
+				if(!foundMeshExtent)
+					maxAtomRadius = std::max(maxAtomRadius, radius);
+			}
+		}
+		else {
+			for(const auto& it : typeRadiusMap) {
+				FloatType typeRadius = (it.second != 0) ? it.second : defaultParticleRadius();
+				bool foundMeshExtent = false;
+				for(const auto& entry : userShapeParticleTypes) {
+					if(entry.first == it.first) {
+						maxAtomRadius = std::max(maxAtomRadius, typeRadius * entry.second);
+						foundMeshExtent = true;
+						break;
+					}
+				}
+				// If this particle type has no user-defined shape assigned, simply use radius.
+				if(!foundMeshExtent)
+					maxAtomRadius = std::max(maxAtomRadius, typeRadius);
+			}
+		}
 	}
 
 	// Extend the bounding box by the largest particle radius.
@@ -138,13 +198,14 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 /******************************************************************************
 * Determines the display particle colors.
 ******************************************************************************/
-void ParticlesVis::particleColors(std::vector<Color>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty) const
+void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty, const PropertyObject* transparencyProperty) const
 {
 	OVITO_ASSERT(colorProperty == nullptr || colorProperty->type() == ParticlesObject::ColorProperty);
 	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
 	OVITO_ASSERT(selectionProperty == nullptr || selectionProperty->type() == ParticlesObject::SelectionProperty);
+	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == ParticlesObject::TransparencyProperty);
 
-	Color defaultColor = defaultParticleColor();
+	ColorA defaultColor = defaultParticleColor();
 	if(colorProperty && colorProperty->size() == output.size()) {
 		// Take particle colors directly from the color property.
 		std::copy(colorProperty->constDataColor(), colorProperty->constDataColor() + output.size(), output.begin());
@@ -153,11 +214,11 @@ void ParticlesVis::particleColors(std::vector<Color>& output, const PropertyObje
 		// Assign colors based on particle types.
 		// Generate a lookup map for particle type colors.
 		const std::map<int,Color> colorMap = typeProperty->typeColorMap();
-		std::array<Color,16> colorArray;
+		std::array<ColorA,16> colorArray;
 		// Check if all type IDs are within a small, non-negative range.
 		// If yes, we can use an array lookup strategy. Otherwise we have to use a dictionary lookup strategy, which is slower.
 		if(std::all_of(colorMap.begin(), colorMap.end(),
-				[&colorArray](const std::map<int,Color>::value_type& i) { return i.first >= 0 && i.first < (int)colorArray.size(); })) {
+				[&colorArray](const std::map<int,ColorA>::value_type& i) { return i.first >= 0 && i.first < (int)colorArray.size(); })) {
 			colorArray.fill(defaultColor);
 			for(const auto& entry : colorMap)
 				colorArray[entry.first] = entry.second;
@@ -186,6 +247,14 @@ void ParticlesVis::particleColors(std::vector<Color>& output, const PropertyObje
 		// Assign a uniform color to all particles.
 		std::fill(output.begin(), output.end(), defaultColor);
 	}
+
+	// Set color alpha values based on transparency particle property.
+	if(transparencyProperty && transparencyProperty->size() == output.size()) {
+		const FloatType* t = transparencyProperty->constDataFloat();
+		for(ColorA& c : output) {
+			c.a() = qBound(FloatType(0), FloatType(1) - (*t++), FloatType(1));
+		}
+	}	
 
 	// Highlight selected particles.
 	if(selectionProperty && selectionProperty->size() == output.size()) {
@@ -481,6 +550,93 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			selectionProperty,
 			transparencyProperty));
 
+		// The type of lookup key used for caching the mesh rendering primitives:
+		using ShapeMeshCacheKey = std::tuple<
+			CompatibleRendererGroup,	// The scene renderer
+			QPointer<PipelineSceneNode>,// The scene node
+			VersionedDataObjectRef		// Particle type property + revision number
+		>;
+		// The data structure stored in the vis cache.
+		struct ShapeMeshCacheValue {
+			std::vector<std::shared_ptr<MeshPrimitive>> shapeMeshPrimitives;
+			std::vector<OORef<ObjectPickInfo>> pickInfos;
+		};
+		// Look up the rendering primitive in the vis cache.
+		ShapeMeshCacheValue* meshVisCache = nullptr;
+		if(!userShapeParticleTypes.empty()) {
+			meshVisCache = &dataset()->visCache().get<ShapeMeshCacheValue>(ShapeMeshCacheKey(
+				renderer,
+				const_cast<PipelineSceneNode*>(contextNode),
+				typeProperty));
+
+			// Check if we already have a valid rendering primitive that is up to date.
+			if(meshVisCache->shapeMeshPrimitives.empty() || !meshVisCache->shapeMeshPrimitives.front()->isValid(renderer)) {
+				// Create the mesh rendering primitives.
+				meshVisCache->shapeMeshPrimitives.clear();
+				for(int t : userShapeParticleTypes) {
+					const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(t));
+					OVITO_ASSERT(ptype->shapeMesh());
+					meshVisCache->shapeMeshPrimitives.push_back(renderer->createMeshPrimitive());
+					meshVisCache->shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(0,0,0,0));
+				}
+			}
+
+			// The type of lookup key used for caching the particle colors and orientations:
+			using ParticleInfoCacheKey = std::tuple<
+				std::shared_ptr<MeshPrimitive>,	// The rendering primitive
+				FloatType,						// Default particle radius
+				VersionedDataObjectRef,		// Position property + revision number
+				VersionedDataObjectRef,		// Orientation property + revision number
+				VersionedDataObjectRef,		// Color property + revision number
+				VersionedDataObjectRef,		// Selection property + revision number
+				VersionedDataObjectRef,		// Transparency property + revision number
+				VersionedDataObjectRef		// Radius property + revision number
+			>;
+			bool& particleInfoUpToDate = dataset()->visCache().get<bool>(ParticleInfoCacheKey(
+				meshVisCache->shapeMeshPrimitives.front(),
+				defaultParticleRadius(),
+				positionProperty,
+				orientationProperty,
+				colorProperty,
+				selectionProperty,
+				transparencyProperty,
+				radiusProperty));
+
+			// Update the cached per-particle information if necessary.
+			if(!particleInfoUpToDate) {
+				particleInfoUpToDate = true;
+
+				// For each particle type with a user-defined shape, we build a list of transformation matrices and colors
+				// of all particles to render.
+				std::vector<std::vector<AffineTransformation>> shapeParticleTMs(meshVisCache->shapeMeshPrimitives.size());
+				std::vector<std::vector<ColorA>> shapeParticleColors(meshVisCache->shapeMeshPrimitives.size());
+				std::vector<std::vector<size_t>> shapeParticleIndices(meshVisCache->shapeMeshPrimitives.size());
+				std::vector<ColorA> colors(particleCount);
+				particleColors(colors, colorProperty, typeProperty, selectionProperty, transparencyProperty);
+				std::vector<FloatType> radii(particleCount);
+				particleRadii(radii, radiusProperty, typeProperty);
+				for(size_t i = 0; i < particleCount; i++) {
+					auto iter = std::find(userShapeParticleTypes.begin(), userShapeParticleTypes.end(), typeProperty->getInt(i));
+					if(iter == userShapeParticleTypes.end()) continue;
+					if(radii[i] <= 0) continue;
+					size_t typeIndex = iter - userShapeParticleTypes.begin();
+					AffineTransformation tm = AffineTransformation::scaling(radii[i]);
+					if(positionArray)
+						tm.translation() = positionArray->getPoint3(i) - Point3::Origin();
+					shapeParticleTMs[typeIndex].push_back(tm);
+					shapeParticleColors[typeIndex].push_back(colors[i]);
+					shapeParticleIndices[typeIndex].push_back(i);
+				}
+
+				// Store the per-particle data in the mesh rendering primitives.
+				meshVisCache->pickInfos.clear();
+				for(size_t i = 0; i < meshVisCache->shapeMeshPrimitives.size(); i++) {
+					meshVisCache->shapeMeshPrimitives[i]->setInstancedRendering(std::move(shapeParticleTMs[i]), std::move(shapeParticleColors[i]));
+					meshVisCache->pickInfos.emplace_back(new ParticlePickInfo(this, flowState, std::move(shapeParticleIndices[i])));
+				}
+			}
+		}
+
 		// Determine which particles must be rendered using the built-in rendering primitives and
 		// which are rendered using more general triangle meshes.
 		boost::dynamic_bitset<> hiddenParticlesMask;
@@ -502,83 +658,6 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 						visibleParticleIndices.push_back(index);
 					}
 					index++;
-				}
-
-				// The type of lookup key used for caching the rendering primitive:
-				using ShapeMeshCacheKey = std::tuple<
-					CompatibleRendererGroup,	// The scene renderer
-					QPointer<PipelineSceneNode>,// The scene node
-					VersionedDataObjectRef		// Particle type property + revision number
-				>;
-				// The data structure stored in the vis cache.
-				struct ShapeMeshCacheValue {
-					std::vector<std::shared_ptr<MeshPrimitive>> shapeMeshPrimitives;
-					OORef<ObjectPickInfo> pickInfo;
-				};
-				// Look up the rendering primitive in the vis cache.
-				auto& meshVisCache = dataset()->visCache().get<ShapeMeshCacheValue>(ShapeMeshCacheKey(
-					renderer,
-					const_cast<PipelineSceneNode*>(contextNode),
-					typeProperty));
-
-				// Check if we already have a valid rendering primitive that is up to date.
-				if(meshVisCache.shapeMeshPrimitives.empty() || !meshVisCache.shapeMeshPrimitives.front()->isValid(renderer)) {
-					// Create the mesh rendering primitives.
-					meshVisCache.shapeMeshPrimitives.clear();
-					for(int t : userShapeParticleTypes) {
-						const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(t));
-						OVITO_ASSERT(ptype->shapeMesh());
-						meshVisCache.shapeMeshPrimitives.push_back(renderer->createMeshPrimitive());
-						meshVisCache.shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(1,1,1,1));
-					}
-				}
-
-				// The type of lookup key used for caching the particle colors and orientations:
-				using ParticleInfoCacheKey = std::tuple<
-					std::shared_ptr<MeshPrimitive>,	// The rendering primitive
-					FloatType,						// Default particle radius
-					VersionedDataObjectRef,		// Position property + revision number
-					VersionedDataObjectRef,		// Orientation property + revision number
-					VersionedDataObjectRef,		// Color property + revision number
-					VersionedDataObjectRef,		// Selection property + revision number
-					VersionedDataObjectRef,		// Transparency property + revision number
-					VersionedDataObjectRef		// Radius property + revision number
-				>;
-				bool& particleInfoUpToDate = dataset()->visCache().get<bool>(ParticleInfoCacheKey(
-					meshVisCache.shapeMeshPrimitives.front(),
-					defaultParticleRadius(),
-					positionProperty,
-					orientationProperty,
-					colorProperty,
-					selectionProperty,
-					transparencyProperty,
-					radiusProperty));
-
-				// Update the cached per-particle information if necessary.
-				if(!particleInfoUpToDate) {
-					particleInfoUpToDate = true;
-
-					// For each particle type with a user-defined shape, we build a list of transformation matrices and colors
-					// of all particles to render.
-					std::vector<std::vector<AffineTransformation>> particleTMs(meshVisCache.shapeMeshPrimitives.size());
-					std::vector<std::vector<ColorA>> particleColors(meshVisCache.shapeMeshPrimitives.size());
-					for(size_t i = 0; i < particleCount; i++) {
-						auto iter = std::find(userShapeParticleTypes.begin(), userShapeParticleTypes.end(), typeProperty->getInt(i));
-						if(iter == userShapeParticleTypes.end()) continue;
-						size_t typeIndex = iter - userShapeParticleTypes.begin();
-						AffineTransformation tm;
-						if(positionArray)
-							tm = AffineTransformation::translation(positionArray->getPoint3(i) - Point3::Origin());
-						else
-							tm.setIdentity();
-						particleTMs[typeIndex].push_back(tm);
-						particleColors[typeIndex].push_back(ColorA(1,1,1,1));
-					}
-
-					// Store the per-particle data in the mesh rendering primitives.
-					for(size_t i = 0; i < meshVisCache.shapeMeshPrimitives.size(); i++) {
-						meshVisCache.shapeMeshPrimitives[i]->setInstancedRendering(std::move(particleTMs[i]), std::move(particleColors[i]));
-					}
 				}
 			}
 			if(visibleStandardParticles == 0) {
@@ -648,18 +727,19 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					// Allocate value buffer.
 					std::vector<FloatType> particleRadii(visibleStandardParticles, defaultParticleRadius());
 					// Fill radius array.
-					const int* t = typeProperty->constDataInt();
+					auto c = particleRadii.begin();
 					size_t index = 0;
-					for(auto c = particleRadii.begin(); c != particleRadii.end(); ++t, ++index) {
+					for(int t : typeProperty->constIntRange()) {
 						if(hiddenParticlesMask.empty() || !hiddenParticlesMask.test(index)) {
-							auto it = radiusMap.find(*t);
+							auto it = radiusMap.find(t);
 							// Set particle radius only if the type's radius is non-zero.
 							if(it != radiusMap.end() && it->second != 0)
 								*c = it->second;
 							++c;
 						}
+						index++;
 					}
-					OVITO_ASSERT(t == typeProperty->constDataInt() + particleCount);
+					OVITO_ASSERT(c == particleRadii.end());
 					visCache.particlePrimitive->setParticleRadii(particleRadii.data());
 				}
 				else {
@@ -686,38 +766,16 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				visCache.particlePrimitive->setParticleColors(colorArray->constDataColor());
 			}
 			else {
-				std::vector<Color> colors(particleCount);
-				particleColors(colors, colorProperty, typeProperty, selectionProperty);
-				if(!transparencyProperty) {
-					// Filter the property array to include only the visible particles.
-					if(visibleStandardParticles != particleCount) {
-						auto c = colors.begin();
-						for(size_t i = 0; i < particleCount; i++)
-							if(!hiddenParticlesMask.test(i))
-								*c++ = colors[i];
-					}
-					visCache.particlePrimitive->setParticleColors(colors.data());
+				std::vector<ColorA> colors(particleCount);
+				particleColors(colors, colorProperty, typeProperty, selectionProperty, transparencyProperty);
+				// Filter the color array to include only the visible particles.
+				if(visibleStandardParticles != particleCount) {
+					auto c = colors.begin();
+					for(size_t i = 0; i < particleCount; i++)
+						if(!hiddenParticlesMask.test(i))
+							*c++ = colors[i];
 				}
-				else {
-					// Add alpha channel based on transparency particle property.
-					std::vector<ColorA> colorsWithAlpha(particleCount);
-					const FloatType* t = transparencyProperty->constDataFloat();
-					auto c_in = colors.cbegin();
-					for(auto c_out = colorsWithAlpha.begin(); c_out != colorsWithAlpha.end(); ++c_out, ++c_in, ++t) {
-						c_out->r() = c_in->r();
-						c_out->g() = c_in->g();
-						c_out->b() = c_in->b();
-						c_out->a() = qBound(FloatType(0), FloatType(1) - (*t), FloatType(1));
-					}
-					// Filter the property array to include only the visible particles.
-					if(visibleStandardParticles != particleCount) {
-						auto c = colorsWithAlpha.begin();
-						for(size_t i = 0; i < particleCount; i++)
-							if(!hiddenParticlesMask.test(i))
-								*c++ = colorsWithAlpha[i];
-					}
-					visCache.particlePrimitive->setParticleColors(colorsWithAlpha.data());
-				}
+				visCache.particlePrimitive->setParticleColors(colors.data());
 			}
 		}
 
@@ -728,6 +786,17 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 
 		if(renderer->isPicking())
 			renderer->endPickObject();
+
+		if(meshVisCache) {
+			auto pickInfo = meshVisCache->pickInfos.cbegin();
+			for(const auto& primitive : meshVisCache->shapeMeshPrimitives) {
+				if(renderer->isPicking())
+					renderer->beginPickObject(contextNode, *pickInfo++);
+				primitive->render(renderer);
+				if(renderer->isPicking())
+					renderer->endPickObject();
+			}
+		}
 	}
 	else {
 		// Rendering cylindrical and spherocylindrical particles.
@@ -788,12 +857,12 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			visCache.cylinderPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
 
 			// Determine cylinder colors.
-			std::vector<Color> colors(particleCount);
+			std::vector<ColorA> colors(particleCount);
 			particleColors(colors, colorProperty, typeProperty, selectionProperty);
 
 			std::vector<Point3> sphereCapPositions;
 			std::vector<FloatType> sphereRadii;
-			std::vector<Color> sphereColors;
+			std::vector<ColorA> sphereColors;
 			if(visCache.spheresPrimitive) {
 				sphereCapPositions.resize(particleCount * 2);
 				sphereRadii.resize(particleCount * 2);
@@ -825,7 +894,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					sphereRadii[index*2] = sphereRadii[index*2+1] = radius;
 					sphereColors[index*2] = sphereColors[index*2+1] = colors[index];
 				}
-				visCache.cylinderPrimitive->setElement(index, p, dir, (ColorA)colors[index], radius);
+				visCache.cylinderPrimitive->setElement(index, p, dir, colors[index], radius);
 			}
 			visCache.cylinderPrimitive->endSetElements();
 

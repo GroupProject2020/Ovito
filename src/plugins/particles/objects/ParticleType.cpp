@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/dataset/io/FileSource.h>
 #include <core/utilities/units/UnitsManager.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "ParticleType.h"
 
 namespace Ovito { namespace Particles {
@@ -37,23 +39,40 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticleType, radius, WorldParameterUnit, 0
 ******************************************************************************/
 ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset), _radius(0)
 {
-#if 1
-	static int counter = 0;
-	if(counter++ == 0) {
-		TriMeshObject* meshObj = new TriMeshObject(dataset);
-		meshObj->mesh().setVertexCount(4);
-		meshObj->mesh().vertex(0) = Point3(0,0,1);
-		meshObj->mesh().vertex(1) = Point3(1,0,-1);
-		meshObj->mesh().vertex(2) = Point3(0,0.5,-1);
-		meshObj->mesh().vertex(3) = Point3(0,0.5,-1);
-		meshObj->mesh().setFaceCount(4);
-		meshObj->mesh().face(0).setVertices(0,1,2);
-		meshObj->mesh().face(1).setVertices(0,1,3);
-		meshObj->mesh().face(2).setVertices(0,2,3);
-		meshObj->mesh().face(3).setVertices(1,2,3);
-		setShapeMesh(meshObj);
-	}
-#endif
+}
+
+/******************************************************************************
+ * Loads a user-defined display shape from a geometry file and assigns it to this particle type.
+ ******************************************************************************/
+bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& operation)
+{
+    operation.setProgressText(tr("Loading mesh geometry file %1").arg(filepath));
+
+	// Temporarily disable undo recording while loading the geometry data.
+	UndoSuspender noUndo(this);
+	
+	// Inspect input file to detect its format.
+	OORef<FileSourceImporter> importer = dynamic_object_cast<FileSourceImporter>(FileImporter::autodetectFileFormat(dataset(), filepath, filepath));
+	if(!importer)
+		throwException(tr("Could not detect the format of the geometry file. The format might not be supported."));
+
+	// Create a temporary FileSource for loading the geometry data from the file.
+	OORef<FileSource> fileSource = new FileSource(dataset());
+	fileSource->setSource({ QUrl::fromLocalFile(filepath) }, importer, false);
+	SharedFuture<PipelineFlowState> stateFuture = fileSource->evaluate(0);
+	if(!operation.waitForFuture(stateFuture))
+		return false;
+
+	// Check if the FileSource has provided some useful data.
+	const PipelineFlowState& state = stateFuture.result();
+	if(state.isEmpty() || state.status().type() == PipelineStatus::Error)
+		throwException(tr("The loaded geometry file does not provide any valid mesh data."));
+
+	// Turn on undo recording again. The final shape assignment should be recorded on the undo stack.
+	noUndo.reset();
+	setShapeMesh(state.expectObject<TriMeshObject>());
+		
+    return !operation.isCanceled();
 }
 
 // Define default names, colors, and radii for some predefined particle types.

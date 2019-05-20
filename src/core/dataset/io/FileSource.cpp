@@ -626,6 +626,7 @@ SharedFuture<PipelineFlowState> FileSource::evaluate(TimePoint time, bool breakO
 	if(_updateCacheWithDataCollection) {
 		_updateCacheWithDataCollection = false;
 		if(pipelineCache().contains(time)) {
+			UndoSuspender noUndo(this);
 			const PipelineFlowState& oldCachedState = pipelineCache().getAt(time);
 			pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
 		}
@@ -640,6 +641,7 @@ PipelineFlowState FileSource::evaluatePreliminary()
 {
 	if(_updateCacheWithDataCollection) {
 		_updateCacheWithDataCollection = false;
+		UndoSuspender noUndo(this);
 		const PipelineFlowState& oldCachedState = pipelineCache().getStaleContents();
 		pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
 	}

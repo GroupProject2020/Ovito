@@ -290,13 +290,13 @@ std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, const Propert
 	}
 	else if(useParticleColors() && particleVis != nullptr) {
 		// Derive bond colors from particle colors.
-		std::vector<Color> particleColors(particleCount);
+		std::vector<ColorA> particleColors(particleCount);
 		particleVis->particleColors(particleColors, particleColorProperty, particleTypeProperty, nullptr);
 		auto bond = topologyProperty->constDataInt64();
 		for(auto bc = output.begin(); bc != output.end(); bond += 2) {
 			if(bond[0] < particleCount && bond[1] < particleCount) {
-				*bc++ = (ColorA)particleColors[bond[0]];
-				*bc++ = (ColorA)particleColors[bond[1]];
+				*bc++ = particleColors[bond[0]];
+				*bc++ = particleColors[bond[1]];
 			}
 			else {
 				*bc++ = defaultColor;

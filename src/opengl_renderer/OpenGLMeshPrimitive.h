@@ -52,10 +52,7 @@ public:
 	virtual void render(SceneRenderer* renderer) override;
 
 	/// Activates rendering of multiple instances of the mesh.
-	virtual void setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) override {
-		_perInstanceTMs = std::move(perInstanceTMs);
-		_perInstanceColors = std::move(perInstanceColors);
-	}
+	virtual void setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) override;
 
 private:
 
@@ -95,6 +92,9 @@ private:
 
 	/// The list of colors when rendering multiple instances of the mesh.
 	std::vector<ColorA> _perInstanceColors;
+
+	/// Activates the rendering of multiple instances of the same mesh.
+	bool _useInstancedRendering = false;	
 };
 
 OVITO_END_INLINE_NAMESPACE

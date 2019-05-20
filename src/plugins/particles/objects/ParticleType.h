@@ -78,6 +78,9 @@ public:
 		return m;
 	}
 
+	/// Loads a user-defined display shape from a geometry file and assigns it to this particle type.
+	bool loadShapeMesh(const QString& filepath, AsyncOperation&& operation);
+
 	//////////////////////////////////// Default settings ////////////////////////////////
 
 	/// Returns the name string of a predefined particle type.
@@ -113,7 +116,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, radius, setRadius);
 
 	/// An optional user-defined shape used for rendering particles of this type.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(TriMeshObject, shapeMesh, setShapeMesh);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TriMeshObject, shapeMesh, setShapeMesh, PROPERTY_FIELD_NO_SUB_ANIM);
 
 private:
 

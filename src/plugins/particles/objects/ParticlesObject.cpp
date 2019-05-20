@@ -239,9 +239,9 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		// Initialize property values of new bonds.
 		for(PropertyObject* bondPropertyObject : bonds->properties()) {
 			if(bondPropertyObject->type() == BondsObject::ColorProperty) {
-				const std::vector<Color>& colors = inputBondColors(true);
+				const std::vector<ColorA>& colors = inputBondColors(true);
 				OVITO_ASSERT(colors.size() == bondPropertyObject->size());
-				std::copy(colors.cbegin() + originalBondCount, colors.cend(), bondPropertyObject->dataColor() + originalBondCount);
+				std::transform(colors.cbegin() + originalBondCount, colors.cend(), bondPropertyObject->dataColor() + originalBondCount, [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 			}
 		}
 
@@ -273,9 +273,9 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 /******************************************************************************
 * Returns a vector with the input particle colors.
 ******************************************************************************/
-std::vector<Color> ParticlesObject::inputParticleColors() const
+std::vector<ColorA> ParticlesObject::inputParticleColors() const
 {
-	std::vector<Color> colors(elementCount());
+	std::vector<ColorA> colors(elementCount());
 
 	// Obtain the particle vis element.
 	if(ParticlesVis* particleVis = visElement<ParticlesVis>()) {
@@ -283,19 +283,21 @@ std::vector<Color> ParticlesObject::inputParticleColors() const
 		// Query particle colors from vis element.
 		particleVis->particleColors(colors,
 				getProperty(ParticlesObject::ColorProperty),
-				getProperty(ParticlesObject::TypeProperty));
+				getProperty(ParticlesObject::TypeProperty),
+				nullptr,
+				getProperty(ParticlesObject::TransparencyProperty));
 
 		return colors;
 	}
 
-	std::fill(colors.begin(), colors.end(), Color(1,1,1));
+	std::fill(colors.begin(), colors.end(), ColorA(1,1,1,1));
 	return colors;
 }
 
 /******************************************************************************
 * Returns a vector with the input bond colors.
 ******************************************************************************/
-std::vector<Color> ParticlesObject::inputBondColors(bool ignoreExistingColorProperty) const
+std::vector<ColorA> ParticlesObject::inputBondColors(bool ignoreExistingColorProperty) const
 {
 	// Obtain the bonds vis element.
     if(bonds()) {
@@ -318,15 +320,15 @@ std::vector<Color> ParticlesObject::inputBondColors(bool ignoreExistingColorProp
 			OVITO_ASSERT(bonds()->elementCount() * 2 == halfBondColors.size());
 
 			// Map half-bond colors to full bond colors.
-			std::vector<Color> colors(bonds()->elementCount());
+			std::vector<ColorA> colors(bonds()->elementCount());
 			auto ci = halfBondColors.cbegin();
-			for(Color& co : colors) {
-				co = Color(ci->r(), ci->g(), ci->b());
+			for(ColorA& co : colors) {
+				co = ColorA(ci->r(), ci->g(), ci->b(), 1);
 				ci += 2;
 			}
 			return colors;
 		}
-    	return std::vector<Color>(bonds()->elementCount(), Color(1,1,1));
+    	return std::vector<ColorA>(bonds()->elementCount(), ColorA(1,1,1,1));
     }
 	return {};
 }
@@ -499,9 +501,9 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 		// Certain standard properties need to be initialized with default values determined by the attached visual elements.
 		if(type == ColorProperty) {
 			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath.back())) {
-				const std::vector<Color>& colors = particles->inputParticleColors();
+				const std::vector<ColorA>& colors = particles->inputParticleColors();
 				OVITO_ASSERT(colors.size() == property->size());
-				std::copy(colors.cbegin(), colors.cend(), property->dataColor());
+				std::transform(colors.cbegin(), colors.cend(), property->dataColor(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 				initializeMemory = false;
 			}
 		}

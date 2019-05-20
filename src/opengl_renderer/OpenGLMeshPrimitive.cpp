@@ -226,6 +226,18 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 }
 
 /******************************************************************************
+* Activates rendering of multiple instances of the mesh.
+******************************************************************************/
+void OpenGLMeshPrimitive::setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) 
+{
+	OVITO_ASSERT(_perInstanceTMs.size() == _perInstanceColors.size());
+	_hasAlpha = std::any_of(perInstanceColors.begin(), perInstanceColors.end(), [](const ColorA& c) { return c.a() != FloatType(1); });
+	_perInstanceTMs = std::move(perInstanceTMs);
+	_perInstanceColors = std::move(perInstanceColors);
+	_useInstancedRendering = true;
+}
+
+/******************************************************************************
 * Returns true if the geometry buffer is filled and can be rendered with the given renderer.
 ******************************************************************************/
 bool OpenGLMeshPrimitive::isValid(SceneRenderer* renderer)
@@ -243,7 +255,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 	OVITO_ASSERT(_contextGroup == QOpenGLContextGroup::currentContextGroup());
 	OpenGLSceneRenderer* vpRenderer = dynamic_object_cast<OpenGLSceneRenderer>(renderer);
 
-	if(faceCount() <= 0 || !vpRenderer)
+	if(faceCount() <= 0 || !vpRenderer || (_useInstancedRendering && _perInstanceTMs.empty()))
 		return;
 
 	// If object is translucent, don't render it during the first rendering pass.
@@ -272,22 +284,14 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 	if(!shader->bind())
 		renderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
 
-	shader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM()));
-
 	_vertexBuffer.bindPositions(vpRenderer, shader, offsetof(ColoredVertexWithNormal, pos));
 	if(!renderer->isPicking()) {
-		shader->setUniformValue("normal_matrix", (QMatrix3x3)(vpRenderer->modelViewTM().linear().inverse().transposed()));
 		if(_hasAlpha) {
 			vpRenderer->glEnable(GL_BLEND);
 			vpRenderer->glBlendEquation(GL_FUNC_ADD);
 			vpRenderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_COLOR, GL_ONE);
 		}
-		_vertexBuffer.bindColors(vpRenderer, shader, 4, offsetof(ColoredVertexWithNormal, color));
 		_vertexBuffer.bindNormals(vpRenderer, shader, offsetof(ColoredVertexWithNormal, normal));
-	}
-	else {
-		_pickingShader->setUniformValue("pickingBaseID", (GLint)vpRenderer->registerSubObjectIDs(faceCount()));
-		vpRenderer->activateVertexIDs(_pickingShader, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement());
 	}
 
 	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
@@ -295,36 +299,72 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		vpRenderer->glPolygonOffset(1.0f, 1.0f);
 	}
 
-	if(!renderer->isPicking() && _hasAlpha && !_triangleCoordinates.empty()) {
-		OVITO_ASSERT(_triangleCoordinates.size() == faceCount());
-		OVITO_ASSERT(_vertexBuffer.verticesPerElement() == 3);
-		// Render faces in back-to-front order to avoid artifacts at overlapping translucent faces.
-		std::vector<GLuint> indices(faceCount());
-		std::iota(indices.begin(), indices.end(), 0);
-		// First compute distance of each face from the camera along viewing direction (=camera z-axis).
-		std::vector<FloatType> distances(faceCount());
-		Vector3 direction = vpRenderer->modelViewTM().inverse().column(2);
-		std::transform(_triangleCoordinates.begin(), _triangleCoordinates.end(), distances.begin(), [direction](const Point3& p) {
-			return direction.dot(p - Point3::Origin());
-		});
-		// Now sort face indices with respect to distance (back-to-front order).
-		std::sort(indices.begin(), indices.end(), [&distances](GLuint a, GLuint b) {
-			return distances[a] < distances[b];
-		});
-		// Create OpenGL index buffer which can be used with glDrawElements.
-		OpenGLBuffer<GLuint> primitiveIndices(QOpenGLBuffer::IndexBuffer);
-		primitiveIndices.create(QOpenGLBuffer::StaticDraw, 3 * faceCount());
-		GLuint* p = primitiveIndices.map(QOpenGLBuffer::WriteOnly);
-		for(size_t i = 0; i < indices.size(); i++, p += 3)
-			std::iota(p, p + 3, indices[i]*3);
-		primitiveIndices.unmap();
-		primitiveIndices.oglBuffer().bind();
-		OVITO_CHECK_OPENGL(vpRenderer->glDrawElements(GL_TRIANGLES, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement(), GL_UNSIGNED_INT, nullptr));
-		primitiveIndices.oglBuffer().release();
-	}
-	else {
-		// Render faces in arbitrary order.
-		OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_TRIANGLES, 0, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement()));
+	size_t numInstances = !_useInstancedRendering ? 1 : _perInstanceTMs.size();
+	for(size_t instance = 0; instance < numInstances; instance++) {
+		
+		AffineTransformation mv_matrix;
+		if(_useInstancedRendering)
+			mv_matrix = vpRenderer->modelViewTM() * _perInstanceTMs[instance];
+		else 
+			mv_matrix = vpRenderer->modelViewTM();
+		shader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(vpRenderer->projParams().projectionMatrix * mv_matrix));
+		if(!renderer->isPicking()) {
+			shader->setUniformValue("normal_matrix", (QMatrix3x3)(mv_matrix.linear().inverse().transposed()));
+			if(!_useInstancedRendering) {
+				_vertexBuffer.bindColors(vpRenderer, shader, 4, offsetof(ColoredVertexWithNormal, color));
+			}
+			else {
+				const ColorA& color = _perInstanceColors[instance];
+				if(vpRenderer->glformat().majorVersion() >= 3) {
+					OVITO_CHECK_OPENGL(shader->setAttributeValue("color", color.r(), color.g(), color.b(), color.a()));
+				}
+				else if(vpRenderer->oldGLFunctions()) {
+					// Older OpenGL implementations cannot take colors through a custom shader attribute.
+					OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(color.r(), color.g(), color.b(), color.a()));
+				}
+			}
+		}
+		else {
+			if(!_useInstancedRendering) {
+				_pickingShader->setUniformValue("pickingBaseID", (GLint)vpRenderer->registerSubObjectIDs(faceCount()));
+				vpRenderer->activateVertexIDs(_pickingShader, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement());
+			}
+			else {
+				
+			}
+		}
+
+		if(!renderer->isPicking() && _hasAlpha && !_triangleCoordinates.empty()) {
+			OVITO_ASSERT(_triangleCoordinates.size() == faceCount());
+			OVITO_ASSERT(_vertexBuffer.verticesPerElement() == 3);
+			// Render faces in back-to-front order to avoid artifacts at overlapping translucent faces.
+			std::vector<GLuint> indices(faceCount());
+			std::iota(indices.begin(), indices.end(), 0);
+			// First compute distance of each face from the camera along viewing direction (=camera z-axis).
+			std::vector<FloatType> distances(faceCount());
+			Vector3 direction = mv_matrix.inverse().column(2);
+			std::transform(_triangleCoordinates.begin(), _triangleCoordinates.end(), distances.begin(), [direction](const Point3& p) {
+				return direction.dot(p - Point3::Origin());
+			});
+			// Now sort face indices with respect to distance (back-to-front order).
+			std::sort(indices.begin(), indices.end(), [&distances](GLuint a, GLuint b) {
+				return distances[a] < distances[b];
+			});
+			// Create OpenGL index buffer which can be used with glDrawElements.
+			OpenGLBuffer<GLuint> primitiveIndices(QOpenGLBuffer::IndexBuffer);
+			primitiveIndices.create(QOpenGLBuffer::StaticDraw, 3 * faceCount());
+			GLuint* p = primitiveIndices.map(QOpenGLBuffer::WriteOnly);
+			for(size_t i = 0; i < indices.size(); i++, p += 3)
+				std::iota(p, p + 3, indices[i]*3);
+			primitiveIndices.unmap();
+			primitiveIndices.oglBuffer().bind();
+			OVITO_CHECK_OPENGL(vpRenderer->glDrawElements(GL_TRIANGLES, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement(), GL_UNSIGNED_INT, nullptr));
+			primitiveIndices.oglBuffer().release();
+		}
+		else {
+			// Render faces in arbitrary order.
+			OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_TRIANGLES, 0, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement()));
+		}
 	}
 
 	_vertexBuffer.detachPositions(vpRenderer, shader);

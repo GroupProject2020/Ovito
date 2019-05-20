@@ -76,7 +76,7 @@ public:
 	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, const ParticlesObject* particles) const;
 
 	/// Determines the display particle colors.
-	void particleColors(std::vector<Color>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty = nullptr) const;
+	void particleColors(std::vector<ColorA>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty = nullptr, const PropertyObject* transparencyProperty = nullptr) const;
 
 	/// Determines the display particle radii.
 	void particleRadii(std::vector<FloatType>& output, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const;
