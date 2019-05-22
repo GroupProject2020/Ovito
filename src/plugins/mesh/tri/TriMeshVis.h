@@ -37,7 +37,7 @@ class OVITO_MESH_EXPORT TriMeshVis : public DataVis
 	Q_OBJECT
 	OVITO_CLASS(TriMeshVis)
 	Q_CLASSINFO("DisplayName", "Triangle mesh");
-	
+
 public:
 
 	/// \brief Constructor.
@@ -62,6 +62,9 @@ private:
 
 	/// Controls the transparency of the mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, transparencyController, setTransparencyController);
+
+	/// Controls whether the polygonal edges of the mesh should be highlighted.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, highlightEdges, setHighlightEdges);
 };
 
 }	// End of namespace

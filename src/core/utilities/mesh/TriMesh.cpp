@@ -404,6 +404,66 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 	this->swap(clippedMesh);
 }
 
+/******************************************************************************
+* Determines the visibility of face edges depending on the angle between the normals of adjacent faces.
+******************************************************************************/
+void TriMesh::determineEdgeVisibility(FloatType thresholdAngle)
+{
+	FloatType dotThreshold = std::cos(thresholdAngle);
+
+	// Build map of face edges and their adjacent faces.
+	std::map<std::pair<int,int>,int> edgeMap;
+	int faceIndex = 0;
+	for(TriMeshFace& face : faces()) {
+		for(size_t e = 0; e < 3; e++) {
+			int v1 = face.vertex(e);
+			int v2 = face.vertex((e+1)%3);
+			if(v2 > v1)
+				edgeMap.emplace(std::make_pair(v1,v2), faceIndex);
+		}
+		face.setEdgeVisibility(true, true, true);
+		faceIndex++;
+	}
+
+	// Helper function that computes the normal of a triangle face.
+	auto computeFaceNormal = [this](const TriMeshFace& face) {
+		const Point3& p0 = vertex(face.vertex(0));
+		Vector3 d1 = vertex(face.vertex(1)) - p0;
+		Vector3 d2 = vertex(face.vertex(2)) - p0;
+		return d2.cross(d1).safelyNormalized();
+	};
+
+	// Visit all face edges again.
+	for(TriMeshFace& face : faces()) {
+		for(size_t e = 0; e < 3; e++) {
+			int v1 = face.vertex(e);
+			int v2 = face.vertex((e+1)%3);
+			if(v2 < v1) {
+				// Look up the adjacent face for the current edge.
+				auto iter = edgeMap.find(std::make_pair(v2,v1));
+				if(iter != edgeMap.end()) {
+					TriMeshFace& adjacentFace = this->face(iter->second);
+					// Always retain edges between two faces with different colors or not belonging to the same smoothing group.
+					if(adjacentFace.materialIndex() != face.materialIndex())
+						continue;
+					Vector3 normal1 = computeFaceNormal(face);
+					// Look up the opposite edge.
+					for(size_t e2 = 0; e2 < 3; e2++) {
+						if(adjacentFace.vertex(e2) == v2 && adjacentFace.vertex((e2+1)%3) == v1) {
+							Vector3 normal2 = computeFaceNormal(adjacentFace);
+							if(normal1.dot(normal2) > dotThreshold) {
+								face.setEdgeHidden(e);
+								adjacentFace.setEdgeHidden(e2);
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

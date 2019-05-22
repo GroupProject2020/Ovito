@@ -148,6 +148,7 @@ FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& f
 			}
 		}
 	}
+	frameData->mesh().determineEdgeVisibility();
 	frameData->mesh().invalidateFaces();
 
 	if(!isPolyData) {
@@ -199,7 +200,7 @@ FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& f
 }
 
 /******************************************************************************
-* Reads from the input stream and throws an exception if the given keyword 
+* Reads from the input stream and throws an exception if the given keyword
 * is not present.
 ******************************************************************************/
 void VTKFileImporter::FrameLoader::expectKeyword(CompressedTextReader& stream, const char* keyword)

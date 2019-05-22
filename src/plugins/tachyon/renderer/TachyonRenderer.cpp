@@ -90,16 +90,16 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(TachyonRenderer, ambientOcclusionSamples, Int
 * Default constructor.
 ******************************************************************************/
 TachyonRenderer::TachyonRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(dataset),
-	_antialiasingEnabled(true), 
-	_directLightSourceEnabled(true), 
+	_antialiasingEnabled(true),
+	_directLightSourceEnabled(true),
 	_shadowsEnabled(true),
-	_antialiasingSamples(12), 
-	_ambientOcclusionEnabled(true), 
+	_antialiasingSamples(12),
+	_ambientOcclusionEnabled(true),
 	_ambientOcclusionSamples(12),
-	_defaultLightSourceIntensity(FloatType(0.9)), 
-	_ambientOcclusionBrightness(FloatType(0.8)), 
+	_defaultLightSourceIntensity(FloatType(0.9)),
+	_ambientOcclusionBrightness(FloatType(0.8)),
 	_depthOfFieldEnabled(false),
-	_dofFocalLength(40), 
+	_dofFocalLength(40),
 	_dofAperture(FloatType(1e-2))
 {
 }
@@ -229,7 +229,7 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 
 	scenedef* scene = (scenedef*)_rtscene;
 
-	// Use only the number of parallel rendering threads allowed by the user. 
+	// Use only the number of parallel rendering threads allowed by the user.
 	scene->numthreads = Application::instance()->idealThreadCount();
 
 	// If certain key aspects of the scene parameters have been changed
@@ -295,9 +295,9 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 			operation.incrementProgressValue((xstop - xstart) * (ystop - ystart));
 			if(operation.isCanceled())
 				break;
-			
+
 			xstart += tileWidth;
-			
+
 			// Auto-adjust tile size to maintain constant update interval of about 50 ms.
 			// We furthermore limit the maximum tile width to 100px and the minimum width to 1px.
 			int elapsedTime = renderTime.restart();
@@ -561,117 +561,126 @@ void TachyonRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		return;
 	std::vector<ColoredVertexWithNormal> renderVertices(renderVertexCount);
 
-	const AffineTransformationT<float> tm = (AffineTransformationT<float>)modelTM();
-	const Matrix_3<float> normalTM = tm.linear().inverse().transposed();
-	quint32 allMask = 0;
-
-	// Compute face normals.
-	std::vector<Vector_3<float>> faceNormals(mesh.faceCount());
-	auto faceNormal = faceNormals.begin();
-	for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
-		const Point3& p0 = mesh.vertex(face->vertex(0));
-		Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
-		Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
-		*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
-		if(*faceNormal != Vector_3<float>::Zero()) {
-			//faceNormal->normalize();
-			allMask |= face->smoothingGroups();
-		}
-	}
-
-	// Initialize render vertices.
-	std::vector<ColoredVertexWithNormal>::iterator rv = renderVertices.begin();
-	faceNormal = faceNormals.begin();
-	ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
-	for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
-
-		// Initialize render vertices for this face.
-		for(size_t v = 0; v < 3; v++, rv++) {
-			if(face->smoothingGroups())
-				rv->normal = Vector_3<float>::Zero();
-			else
-				rv->normal = *faceNormal;
-			rv->pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
-
-			if(mesh.hasVertexColors())
-				rv->color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
-			else if(mesh.hasFaceColors())
-				rv->color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
-			else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
-				rv->color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
-			else
-				rv->color = defaultVertexColor;
-		}
-	}
-
-	if(allMask) {
-		std::vector<Vector_3<float>> groupVertexNormals(mesh.vertexCount());
-		for(int group = 0; group < OVITO_MAX_NUM_SMOOTHING_GROUPS; group++) {
-			quint32 groupMask = quint32(1) << group;
-            if((allMask & groupMask) == 0) continue;
-
-			// Reset work arrays.
-            std::fill(groupVertexNormals.begin(), groupVertexNormals.end(), Vector_3<float>::Zero());
-
-			// Compute vertex normals at original vertices for current smoothing group.
-            faceNormal = faceNormals.begin();
-			for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
-				// Skip faces which do not belong to the current smoothing group.
-				if((face->smoothingGroups() & groupMask) == 0) continue;
-
-				// Add face's normal to vertex normals.
-				for(size_t fv = 0; fv < 3; fv++)
-					groupVertexNormals[face->vertex(fv)] += *faceNormal;
-			}
-
-			// Transfer vertex normals from original vertices to render vertices.
-			rv = renderVertices.begin();
-			for(const auto& face : mesh.faces()) {
-				if(face.smoothingGroups() & groupMask) {
-					for(size_t fv = 0; fv < 3; fv++, ++rv)
-						rv->normal += groupVertexNormals[face.vertex(fv)];
-				}
-				else rv += 3;
-			}
-		}
-	}
-
 	// Precompute some camera-related information that is needed for face culling.
 	Point_3<float> cameraPos = Point_3<float>::Origin() + (Vector_3<float>)projParams().inverseViewMatrix.translation();
 	Vector3 projectionSpaceDirection = projParams().inverseProjectionMatrix * Point3(0,0,1) - projParams().inverseProjectionMatrix * Point3(0,0,-1);
 	Vector_3<float> cameraDirection = (Vector_3<float>)(projParams().inverseViewMatrix * projectionSpaceDirection);
 
-	// Pass transformed triangles to Tachyon renderer.
-	faceNormal = faceNormals.begin();
-	void* tex = getTachyonTexture(1.0f, 1.0f, 1.0f, defaultVertexColor.a());
-	for(auto rv = renderVertices.begin(); rv != renderVertices.end(); ++faceNormal) {
-		auto rv0 = rv++;
-		auto rv1 = rv++;
-		auto rv2 = rv++;
+	// Repeat the following multiple times if instanced rendering is requested.
+	size_t numInstances = meshBuffer.useInstancedRendering() ? meshBuffer.perInstanceTMs().size() : 1;
+	for(size_t instanceIndex = 0; instanceIndex < numInstances; instanceIndex++) {
 
-		// Perform culling of triangles not facing the viewer.
-		if(meshBuffer.cullFaces()) {
-			if(projParams().isPerspective) {
-				if(faceNormal->dot(rv0->pos - cameraPos) <= 0) continue;
-			}
-			else {
-				if(faceNormal->dot(cameraDirection) <= 0) continue;
+		AffineTransformationT<float> tm = (AffineTransformationT<float>)modelTM();
+		if(meshBuffer.useInstancedRendering())
+			tm = tm * (AffineTransformationT<float>)meshBuffer.perInstanceTMs()[instanceIndex];
+		const Matrix_3<float> normalTM = tm.linear().inverse().transposed();
+		quint32 allMask = 0;
+
+		// Compute face normals.
+		std::vector<Vector_3<float>> faceNormals(mesh.faceCount());
+		auto faceNormal = faceNormals.begin();
+		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
+			const Point3& p0 = mesh.vertex(face->vertex(0));
+			Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
+			Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
+			*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
+			if(*faceNormal != Vector_3<float>::Zero()) {
+				//faceNormal->normalize();
+				allMask |= face->smoothingGroups();
 			}
 		}
 
-		if(mesh.hasVertexColors() || mesh.hasFaceColors() || meshBuffer.materialColors().empty() == false)
-			tex = getTachyonTexture(1.0f, 1.0f, 1.0f, defaultVertexColor.a());
+		// Initialize render vertices.
+		std::vector<ColoredVertexWithNormal>::iterator rv = renderVertices.begin();
+		faceNormal = faceNormals.begin();
+		ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
+		if(meshBuffer.useInstancedRendering())
+			defaultVertexColor = ColorAT<float>(meshBuffer.perInstanceColors()[instanceIndex]);
+		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
 
-		rt_vcstri(_rtscene, tex,
-				tvec(rv0->pos),
-				tvec(rv1->pos),
-				tvec(rv2->pos),
-				tvec(rv0->normal),
-				tvec(rv1->normal),
-				tvec(rv2->normal),
-				rt_color(rv0->color.r(), rv0->color.g(), rv0->color.b()),
-				rt_color(rv1->color.r(), rv1->color.g(), rv1->color.b()),
-				rt_color(rv2->color.r(), rv2->color.g(), rv2->color.b()));
+			// Initialize render vertices for this face.
+			for(size_t v = 0; v < 3; v++, rv++) {
+				if(face->smoothingGroups())
+					rv->normal = Vector_3<float>::Zero();
+				else
+					rv->normal = *faceNormal;
+				rv->pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
+
+				if(mesh.hasVertexColors())
+					rv->color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
+				else if(mesh.hasFaceColors())
+					rv->color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
+				else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
+					rv->color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
+				else
+					rv->color = defaultVertexColor;
+			}
+		}
+
+		if(allMask) {
+			std::vector<Vector_3<float>> groupVertexNormals(mesh.vertexCount());
+			for(int group = 0; group < OVITO_MAX_NUM_SMOOTHING_GROUPS; group++) {
+				quint32 groupMask = quint32(1) << group;
+				if((allMask & groupMask) == 0) continue;
+
+				// Reset work arrays.
+				std::fill(groupVertexNormals.begin(), groupVertexNormals.end(), Vector_3<float>::Zero());
+
+				// Compute vertex normals at original vertices for current smoothing group.
+				faceNormal = faceNormals.begin();
+				for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
+					// Skip faces which do not belong to the current smoothing group.
+					if((face->smoothingGroups() & groupMask) == 0) continue;
+
+					// Add face's normal to vertex normals.
+					for(size_t fv = 0; fv < 3; fv++)
+						groupVertexNormals[face->vertex(fv)] += *faceNormal;
+				}
+
+				// Transfer vertex normals from original vertices to render vertices.
+				rv = renderVertices.begin();
+				for(const auto& face : mesh.faces()) {
+					if(face.smoothingGroups() & groupMask) {
+						for(size_t fv = 0; fv < 3; fv++, ++rv)
+							rv->normal += groupVertexNormals[face.vertex(fv)];
+					}
+					else rv += 3;
+				}
+			}
+		}
+
+		// Pass transformed triangles to Tachyon renderer.
+		faceNormal = faceNormals.begin();
+		void* tex = getTachyonTexture(1.0f, 1.0f, 1.0f, defaultVertexColor.a());
+		for(auto rv = renderVertices.begin(); rv != renderVertices.end(); ++faceNormal) {
+			auto rv0 = rv++;
+			auto rv1 = rv++;
+			auto rv2 = rv++;
+
+			// Perform culling of triangles not facing the viewer.
+			if(meshBuffer.cullFaces()) {
+				if(projParams().isPerspective) {
+					if(faceNormal->dot(rv0->pos - cameraPos) <= 0) continue;
+				}
+				else {
+					if(faceNormal->dot(cameraDirection) <= 0) continue;
+				}
+			}
+
+			if(mesh.hasVertexColors() || mesh.hasFaceColors() || meshBuffer.materialColors().empty() == false)
+				tex = getTachyonTexture(1.0f, 1.0f, 1.0f, defaultVertexColor.a());
+
+			rt_vcstri(_rtscene, tex,
+					tvec(rv0->pos),
+					tvec(rv1->pos),
+					tvec(rv2->pos),
+					tvec(rv0->normal),
+					tvec(rv1->normal),
+					tvec(rv2->normal),
+					rt_color(rv0->color.r(), rv0->color.g(), rv0->color.b()),
+					rt_color(rv1->color.r(), rv1->color.g(), rv1->color.b()),
+					rt_color(rv2->color.r(), rv2->color.g(), rv2->color.b()));
+		}
 	}
 }
 

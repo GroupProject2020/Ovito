@@ -127,7 +127,7 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 		if(!_imageFile->open())
 			throwException(tr("Failed to open temporary POV-Ray image file."));
 	}
-	
+
 	_outputStream << "#version 3.5;\n";
 	_outputStream << "#include \"transforms.inc\"\n";
 
@@ -135,7 +135,7 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 		_outputStream << "global_settings {\n";
 		_outputStream << "radiosity {\n";
 		_outputStream << "count " << radiosityRayCount() << "\n";
-		_outputStream << "always_sample on\n";		
+		_outputStream << "always_sample on\n";
 		_outputStream << "recursion_limit " << radiosityRecursionLimit() << "\n";
 		_outputStream << "error_bound " << radiosityErrorBound() << "\n";
 		_outputStream << "}\n";
@@ -186,8 +186,8 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 			if(depthOfFieldEnabled()) {
 				_outputStream << "  aperture " << dofAperture() << "\n";
 				_outputStream << "  focal_point "; write(p0 + dofFocalLength() * direction); _outputStream << "\n";
-				_outputStream << "  blur_samples " << dofSampleCount() << "\n";	
-			}		
+				_outputStream << "  blur_samples " << dofSampleCount() << "\n";
+			}
 		}
 		else {
 			_outputStream << "  orthographic\n";
@@ -206,7 +206,7 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 			_outputStream << "  up "; write(up); _outputStream << "\n";
 			_outputStream << "  sky "; write(up); _outputStream << "\n";
 			_outputStream << "  look_at "; write(-direction); _outputStream << "\n";
-		}	
+		}
 		// Write camera transformation.
 		Rotation rot(projParams().viewMatrix);
 		_outputStream << "  Axis_Rotate_Trans("; write(rot.axis()); _outputStream << ", " << (rot.angle() * FloatType(180) / FLOATTYPE_PI) << ")\n";
@@ -249,7 +249,7 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 	Vector3 screen_y = projParams().inverseViewMatrix.column(1).normalized();
 
 	// Write a light source.
-	_outputStream << "light_source {\n";	
+	_outputStream << "light_source {\n";
 	if(!odsEnabled()) { // Create parallel light for normal cameras.
 		_outputStream << "  <0, 0, 0>\n";
 	}
@@ -321,7 +321,7 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		// Start POV-Ray sub-process.
 		operation.setProgressText(tr("Starting external POV-Ray program."));
-		if(operation.isCanceled()) 
+		if(operation.isCanceled())
 			return false;
 
 		// Specify POV-Ray options:
@@ -362,7 +362,7 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			parameters << QString("+AM%1").arg(samplingMethod());
 		if(antialiasingEnabled() && antialiasDepth())
 			parameters << QString("+R%1").arg(antialiasDepth());
-		parameters << (jitterEnabled() ? "+J" : "-J");		
+		parameters << (jitterEnabled() ? "+J" : "-J");
 
 		QProcess povrayProcess;
 		QString executablePath = povrayExecutable().isEmpty() ? QString("povray") : povrayExecutable();
@@ -379,7 +379,7 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		// Wait until POV-Ray has finished rendering.
 		operation.setProgressText(tr("Waiting for external POV-Ray program..."));
-		if(operation.isCanceled()) 
+		if(operation.isCanceled())
 			return false;
 		while(!povrayProcess.waitForFinished(100)) {
 			operation.setProgressValue(0);
@@ -389,14 +389,14 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		OVITO_ASSERT(povrayProcess.exitStatus() == QProcess::NormalExit);
 		qDebug() << "POV-Ray console output:";
-		std::cout << povrayProcess.readAllStandardError().constData(); 
+		std::cout << povrayProcess.readAllStandardError().constData();
 		qDebug() << "POV-Ray program returned with exit code" << povrayProcess.exitCode();
 		if(povrayProcess.exitCode() != 0)
 			throwException(tr("POV-Ray program returned with error code %1.").arg(povrayProcess.exitCode()));
 
 		// Get rendered image from POV-Ray process.
 		operation.setProgressText(tr("Getting rendered image from POV-Ray."));
-		if(operation.isCanceled()) 
+		if(operation.isCanceled())
 			return false;
 
 		QImage povrayImage;
@@ -442,7 +442,7 @@ void POVRayRenderer::endFrame(bool renderSuccessful)
 	_imageFile.reset();
 	_outputStream.setDevice(nullptr);
 	_exportOperation = nullptr;
-	NonInteractiveSceneRenderer::endFrame(renderSuccessful);	
+	NonInteractiveSceneRenderer::endFrame(renderSuccessful);
 }
 
 /******************************************************************************
@@ -483,7 +483,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			// Rendering spherical particles.
 			for(; p != p_end; ++p, ++c, ++r) {
 				if(c->a() > 0) {
-					_outputStream << "SPRTCLE("; write(tm * (*p)); 
+					_outputStream << "SPRTCLE("; write(tm * (*p));
 					_outputStream << ", " << (*r) << ", "; write(*c);
 					_outputStream << ")\n";
 					if(_exportOperation && _exportOperation->isCanceled()) return;
@@ -494,7 +494,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			// Rendering disc particles.
 			for(; p != p_end; ++p, ++c, ++r) {
 				if(c->a() > 0) {
-					_outputStream << "DPRTCLE("; write(tm * (*p)); 
+					_outputStream << "DPRTCLE("; write(tm * (*p));
 					_outputStream << ", " << (*r) << ", "; write(*c);
 					_outputStream << ")\n";
 					if(_exportOperation && _exportOperation->isCanceled()) return;
@@ -507,7 +507,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			// Rendering cubic particles.
 			for(; p != p_end; ++p, ++c, ++r) {
 				if(c->a() > 0) {
-					_outputStream << "CPRTCLE("; write(tm * (*p)); 
+					_outputStream << "CPRTCLE("; write(tm * (*p));
 					_outputStream << ", " << (*r) << ", "; write(*c);
 					_outputStream << ")\n";
 					if(_exportOperation && _exportOperation->isCanceled()) return;
@@ -518,7 +518,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			// Rendering square particles.
 			for(; p != p_end; ++p, ++c, ++r) {
 				if(c->a() > 0) {
-					_outputStream << "SQPRTCLE("; write(tm * (*p)); 
+					_outputStream << "SQPRTCLE("; write(tm * (*p));
 					_outputStream << ", " << (*r) << ", "; write(*c);
 					_outputStream << ")\n";
 					if(_exportOperation && _exportOperation->isCanceled()) return;
@@ -531,7 +531,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		auto shape = particleBuffer.shapes().begin();
 		auto shape_end = particleBuffer.shapes().end();
 		auto orientation = particleBuffer.orientations().cbegin();
-		auto orientation_end = particleBuffer.orientations().cend();		
+		auto orientation_end = particleBuffer.orientations().cend();
 		for(; p != p_end; ++p, ++c, ++r) {
 			if(c->a() <= 0) continue;
 			AffineTransformation pmatrix = AffineTransformation::Identity();
@@ -571,7 +571,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			}
 			if(_exportOperation && _exportOperation->isCanceled()) return;
 		}
-	}	
+	}
 	else throwException(tr("Particle shape not supported by POV-Ray renderer: %1").arg(particleBuffer.particleShape()));
 }
 
@@ -584,7 +584,7 @@ void POVRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 	if(arrowBuffer.shape() == ArrowPrimitive::CylinderShape) {
 		for(const DefaultArrowPrimitive::ArrowElement& element : arrowBuffer.elements()) {
 			if(element.dir.isZero() || element.width <= 0) continue;
-			_outputStream << "CYL("; write(tm * element.pos); 
+			_outputStream << "CYL("; write(tm * element.pos);
 			_outputStream << ", "; write(tm * element.dir);
 			_outputStream << ", " << element.width << ", "; write(element.color);
 			_outputStream << ")\n";
@@ -622,7 +622,7 @@ void POVRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 				_outputStream << "         texture { pigment { color ";
 				write(element.color);
 				_outputStream << " } }\n";
-				_outputStream << "}\n";				
+				_outputStream << "}\n";
 			}
 			else {
 				FloatType r = arrowHeadRadius * length / arrowHeadLength;
@@ -743,28 +743,36 @@ void POVRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		}
 	}
 
-	_outputStream << "mesh {\n";
+	// Repeat the following multiple times if instanced rendering is requested.
+	size_t numInstances = meshBuffer.useInstancedRendering() ? meshBuffer.perInstanceTMs().size() : 1;
+	for(size_t instanceIndex = 0; instanceIndex < numInstances; instanceIndex++) {
+		_outputStream << "mesh {\n";
 
-	for(auto rv = renderVertices.begin(); rv != renderVertices.end(); ) {
-		_outputStream << "smooth_triangle {\n";
-		write(rv->pos); _outputStream << ", "; write(rv->normal); _outputStream << ",\n";
-		++rv;
-		write(rv->pos); _outputStream << ", "; write(rv->normal); _outputStream << ",\n";
-		++rv;
-		write(rv->pos); _outputStream << ", "; write(rv->normal); _outputStream << " }\n";
-		++rv;
-		if(_exportOperation && _exportOperation->isCanceled()) return;
+		for(auto rv = renderVertices.begin(); rv != renderVertices.end(); ) {
+			_outputStream << "smooth_triangle {\n";
+			write(rv->pos); _outputStream << ", "; write(rv->normal); _outputStream << ",\n";
+			++rv;
+			write(rv->pos); _outputStream << ", "; write(rv->normal); _outputStream << ",\n";
+			++rv;
+			write(rv->pos); _outputStream << ", "; write(rv->normal); _outputStream << " }\n";
+			++rv;
+			if(_exportOperation && _exportOperation->isCanceled()) return;
+		}
+
+		// Write material
+		_outputStream << "material {\n";
+		ColorA color = meshBuffer.useInstancedRendering() ? meshBuffer.perInstanceColors()[instanceIndex] : meshBuffer.meshColor();
+		_outputStream << "  texture { pigment { color "; write(color); _outputStream << " } }\n";
+		_outputStream << "}\n";
+
+		// Write transformation.
+		AffineTransformation tm = modelTM();
+		if(meshBuffer.useInstancedRendering())
+			tm = tm * meshBuffer.perInstanceTMs()[instanceIndex];
+		_outputStream << "matrix "; write(tm); _outputStream << "\n";
+
+		_outputStream << "}\n";
 	}
-
-	// Write material
-	_outputStream << "material {\n";
-	_outputStream << "  texture { pigment { color "; write(meshBuffer.meshColor()); _outputStream << " } }\n";
-	_outputStream << "}\n";
-
-	// Write transformation.
-	_outputStream << "matrix "; write(modelTM()); _outputStream << "\n";
-
-	_outputStream << "}\n";
 }
 
 }	// End of namespace

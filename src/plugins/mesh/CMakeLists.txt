@@ -33,6 +33,7 @@ SET(SourceFiles
 	io/TriMeshFrameData.cpp
 	io/VTKFileImporter.cpp
 	io/VTKTriangleMeshExporter.cpp
+	io/WavefrontOBJImporter.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)

@@ -68,7 +68,7 @@ public:
 	/// Sets the vertex index of one vertex to a new value.
 	///    which - 0, 1 or 2
 	///    newIndex - The new index for the vertex.
-	void setVertex(std::size_t which, int newIndex) {
+	void setVertex(size_t which, int newIndex) {
 		OVITO_ASSERT(which < 3);
 		_vertices[which] = newIndex;
 	}
@@ -76,7 +76,7 @@ public:
 	/// Returns the index into the Mesh vertices array of a face vertex.
 	///    which - 0, 1 or 2
 	/// Returns the index of the requested vertex.
-	int vertex(std::size_t which) const {
+	int vertex(size_t which) const {
 		OVITO_ASSERT(which < 3);
 		return _vertices[which];
 	}
@@ -85,9 +85,9 @@ public:
 
 	/// Sets the visibility of the three face edges.
 	void setEdgeVisibility(bool e1, bool e2, bool e3) {
-		if(e1) _flags |= EDGE1; else _flags &= ~EDGE1;
-		if(e2) _flags |= EDGE2; else _flags &= ~EDGE2;
-		if(e3) _flags |= EDGE3; else _flags &= ~EDGE3;
+		_flags.setFlag(EDGE1, e1);
+		_flags.setFlag(EDGE2, e2);
+		_flags.setFlag(EDGE3, e3);
 	}
 
 	/// Sets the visibility of the three face edges all at once.
@@ -95,11 +95,23 @@ public:
 		_flags = edgeVisibility | (_flags & ~EDGES123);
 	}
 
+	/// Makes one of the edges of the triangle face visible.
+	void setEdgeVisible(size_t which) {
+		OVITO_ASSERT(which < 3);
+		_flags.setFlag(MeshFaceFlag(EDGE1 << which));
+	}
+
+	/// Hides one of the edges of the triangle face.
+	void setEdgeHidden(size_t which) {
+		OVITO_ASSERT(which < 3);
+		_flags.setFlag(MeshFaceFlag(EDGE1 << which), false);
+	}
+
 	/// Returns true if the edge is visible.
 	///    which - The index of the edge (0, 1 or 2)
-	bool edgeVisible(std::size_t which) const {
+	bool edgeVisible(size_t which) const {
 		OVITO_ASSERT(which < 3);
-		return (_flags & (1<<which));
+		return _flags.testFlag(MeshFaceFlag(EDGE1 << which));
 	}
 
 	/************************************ Material *******************************/
@@ -478,6 +490,9 @@ public:
 		faceVertexNormal(faceIndex, vertexIndex) = n;
 	}
 
+	/// Determines the visibility of face edges depending on the angle between the normals of adjacent faces.
+	void determineEdgeVisibility(FloatType thresholdAngle = qDegreesToRadians(20.0));
+
 	/************************************* Ray intersection *************************************/
 
 	/// \brief Performs a ray intersection calculation.
@@ -537,7 +552,7 @@ private:
 	bool _hasNormals;
 
 	/// Array of normals (three per face).
-	QVector<Vector3> _normals;	
+	QVector<Vector3> _normals;
 };
 
 /// Swap function for the TriMesh class, which can be found by argument dependent lookup (ADL).
@@ -548,5 +563,3 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_TYPEINFO(Ovito::TriMeshFace, Q_MOVABLE_TYPE);
-
-

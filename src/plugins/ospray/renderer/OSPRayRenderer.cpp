@@ -908,106 +908,115 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 	std::vector<Point_3<float>> positions(renderVertexCount);
 	std::vector<std::array<int,3>> indices(mesh.faceCount());
 
-	const AffineTransformationT<float> tm = (AffineTransformationT<float>)modelTM();
-	const Matrix_3<float> normalTM = tm.linear().inverse().transposed();
-	quint32 allMask = 0;
+	// Repeat the following multiple times if instanced rendering is requested.
+	size_t numInstances = meshBuffer.useInstancedRendering() ? meshBuffer.perInstanceTMs().size() : 1;
+	for(size_t instanceIndex = 0; instanceIndex < numInstances; instanceIndex++) {
 
-	// Compute face normals.
-	std::vector<Vector_3<float>> faceNormals(mesh.faceCount());
-	auto faceNormal = faceNormals.begin();
-	for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
-		const Point3& p0 = mesh.vertex(face->vertex(0));
-		Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
-		Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
-		*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
-		if(*faceNormal != Vector_3<float>::Zero()) {
-			allMask |= face->smoothingGroups();
-		}
-	}
+		AffineTransformationT<float> tm = (AffineTransformationT<float>)modelTM();
+		if(meshBuffer.useInstancedRendering())
+			tm = tm * (AffineTransformationT<float>)meshBuffer.perInstanceTMs()[instanceIndex];
+		const Matrix_3<float> normalTM = tm.linear().inverse().transposed();
+		quint32 allMask = 0;
 
-	// Initialize render vertices.
-	auto rv_pos = positions.begin();
-	auto rv_normal = normals.begin();
-	auto rv_color = colors.begin();
-	auto rv_indices = indices.begin();
-	faceNormal = faceNormals.begin();
-	ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
-	int vindex = 0;
-	for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal, ++rv_indices) {
-
-		// Initialize render vertices for this face.
-		for(size_t v = 0; v < 3; v++, ++rv_pos, ++rv_normal, ++rv_color) {
-			(*rv_indices)[v] = vindex++;
-			if(face->smoothingGroups())
-				*rv_normal = Vector_3<float>::Zero();
-			else
-				*rv_normal = *faceNormal;
-			*rv_pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
-
-			if(mesh.hasVertexColors())
-				*rv_color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
-			else if(mesh.hasFaceColors())
-				*rv_color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
-			else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
-				*rv_color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
-			else
-				*rv_color = defaultVertexColor;
-		}
-	}
-
-	if(allMask) {
-		std::vector<Vector_3<float>> groupVertexNormals(mesh.vertexCount());
-		for(int group = 0; group < OVITO_MAX_NUM_SMOOTHING_GROUPS; group++) {
-			quint32 groupMask = quint32(1) << group;
-            if((allMask & groupMask) == 0) continue;
-
-			// Reset work arrays.
-            std::fill(groupVertexNormals.begin(), groupVertexNormals.end(), Vector_3<float>::Zero());
-
-			// Compute vertex normals at original vertices for current smoothing group.
-            faceNormal = faceNormals.begin();
-			for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
-				// Skip faces which do not belong to the current smoothing group.
-				if((face->smoothingGroups() & groupMask) == 0) continue;
-
-				// Add face's normal to vertex normals.
-				for(size_t fv = 0; fv < 3; fv++)
-					groupVertexNormals[face->vertex(fv)] += *faceNormal;
+		// Compute face normals.
+		std::vector<Vector_3<float>> faceNormals(mesh.faceCount());
+		auto faceNormal = faceNormals.begin();
+		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
+			const Point3& p0 = mesh.vertex(face->vertex(0));
+			Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
+			Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
+			*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
+			if(*faceNormal != Vector_3<float>::Zero()) {
+				allMask |= face->smoothingGroups();
 			}
+		}
 
-			// Transfer vertex normals from original vertices to render vertices.
-			rv_normal = normals.begin();
-			for(const auto& face : mesh.faces()) {
-				if(face.smoothingGroups() & groupMask) {
-					for(size_t fv = 0; fv < 3; fv++, ++rv_normal)
-						*rv_normal += groupVertexNormals[face.vertex(fv)];
+		// Initialize render vertices.
+		auto rv_pos = positions.begin();
+		auto rv_normal = normals.begin();
+		auto rv_color = colors.begin();
+		auto rv_indices = indices.begin();
+		faceNormal = faceNormals.begin();
+		ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
+		if(meshBuffer.useInstancedRendering())
+			defaultVertexColor = ColorAT<float>(meshBuffer.perInstanceColors()[instanceIndex]);
+		int vindex = 0;
+		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal, ++rv_indices) {
+
+			// Initialize render vertices for this face.
+			for(size_t v = 0; v < 3; v++, ++rv_pos, ++rv_normal, ++rv_color) {
+				(*rv_indices)[v] = vindex++;
+				if(face->smoothingGroups())
+					*rv_normal = Vector_3<float>::Zero();
+				else
+					*rv_normal = *faceNormal;
+				*rv_pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
+
+				if(mesh.hasVertexColors())
+					*rv_color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
+				else if(mesh.hasFaceColors())
+					*rv_color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
+				else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
+					*rv_color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
+				else
+					*rv_color = defaultVertexColor;
+			}
+		}
+
+		if(allMask) {
+			std::vector<Vector_3<float>> groupVertexNormals(mesh.vertexCount());
+			for(int group = 0; group < OVITO_MAX_NUM_SMOOTHING_GROUPS; group++) {
+				quint32 groupMask = quint32(1) << group;
+				if((allMask & groupMask) == 0) continue;
+
+				// Reset work arrays.
+				std::fill(groupVertexNormals.begin(), groupVertexNormals.end(), Vector_3<float>::Zero());
+
+				// Compute vertex normals at original vertices for current smoothing group.
+				faceNormal = faceNormals.begin();
+				for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
+					// Skip faces which do not belong to the current smoothing group.
+					if((face->smoothingGroups() & groupMask) == 0) continue;
+
+					// Add face's normal to vertex normals.
+					for(size_t fv = 0; fv < 3; fv++)
+						groupVertexNormals[face->vertex(fv)] += *faceNormal;
 				}
-				else rv_normal += 3;
+
+				// Transfer vertex normals from original vertices to render vertices.
+				rv_normal = normals.begin();
+				for(const auto& face : mesh.faces()) {
+					if(face.smoothingGroups() & groupMask) {
+						for(size_t fv = 0; fv < 3; fv++, ++rv_normal)
+							*rv_normal += groupVertexNormals[face.vertex(fv)];
+					}
+					else rv_normal += 3;
+				}
 			}
 		}
+
+		OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");
+
+		OSPReferenceWrapper<ospray::cpp::Data> data(positions.size(), OSP_FLOAT3, positions.data());
+		data.commit();
+		triangles.set("vertex", data);
+
+		data = ospray::cpp::Data(colors.size(), OSP_FLOAT4, colors.data());
+		data.commit();
+		triangles.set("vertex.color", data);
+
+		data = ospray::cpp::Data(normals.size(), OSP_FLOAT3, normals.data());
+		data.commit();
+		triangles.set("vertex.normal", data);
+
+		data = ospray::cpp::Data(mesh.faceCount(), OSP_INT3, indices.data());
+		data.commit();
+		triangles.set("index", data);
+
+		triangles.setMaterial(*_ospMaterial);
+		triangles.commit();
+		_ospWorld->addGeometry(triangles);
 	}
-
-	OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");
-
-	OSPReferenceWrapper<ospray::cpp::Data> data(positions.size(), OSP_FLOAT3, positions.data());
-	data.commit();
-	triangles.set("vertex", data);
-
-	data = ospray::cpp::Data(colors.size(), OSP_FLOAT4, colors.data());
-	data.commit();
-	triangles.set("vertex.color", data);
-
-	data = ospray::cpp::Data(normals.size(), OSP_FLOAT3, normals.data());
-	data.commit();
-	triangles.set("vertex.normal", data);
-
-	data = ospray::cpp::Data(mesh.faceCount(), OSP_INT3, indices.data());
-	data.commit();
-	triangles.set("index", data);
-
-	triangles.setMaterial(*_ospMaterial);
-	triangles.commit();
-	_ospWorld->addGeometry(triangles);
 }
 
 }	// End of namespace

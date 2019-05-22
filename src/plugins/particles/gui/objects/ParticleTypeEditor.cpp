@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -42,98 +42,55 @@ SET_OVITO_OBJECT_EDITOR(ParticleType, ParticleTypeEditor);
 void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Atom Type"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Particle Type"), rolloutParams);
 
     // Create the rollout contents.
-	QGridLayout* layout1 = new QGridLayout(rollout);
+	QVBoxLayout* layout1 = new QVBoxLayout(rollout);
 	layout1->setContentsMargins(4,4,4,4);
-#ifndef Q_OS_MACX
-	layout1->setSpacing(0);
-#endif
-	layout1->setColumnStretch(1, 1);
-	
-	// Text box for the name of particle type.
+
+	QGroupBox* nameBox = new QGroupBox(tr("Particle type"), rollout);
+	QGridLayout* gridLayout = new QGridLayout(nameBox);
+	gridLayout->setContentsMargins(4,4,4,4);
+	gridLayout->setColumnStretch(1, 1);
+	layout1->addWidget(nameBox);
+
+	// Name.
 	StringParameterUI* namePUI = new StringParameterUI(this, PROPERTY_FIELD(ParticleType::name));
-	layout1->addWidget(new QLabel(tr("Name:")), 0, 0);
-	layout1->addWidget(namePUI->textBox(), 0, 1);
-	
-	// Display color parameter.
-	ColorParameterUI* colorPUI = new ColorParameterUI(this, PROPERTY_FIELD(ParticleType::color));
-	layout1->addWidget(colorPUI->label(), 1, 0);
-	layout1->addWidget(colorPUI->colorPicker(), 1, 1);
-   
-	// Display radius parameter.
-	FloatParameterUI* radiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(ParticleType::radius));
-	layout1->addWidget(radiusPUI->label(), 2, 0);
-	layout1->addLayout(radiusPUI->createFieldLayout(), 2, 1);
+	gridLayout->addWidget(new QLabel(tr("Name:")), 0, 0);
+	gridLayout->addWidget(namePUI->textBox(), 0, 1);
 
 	// Numeric ID.
-	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(ParticleType::numericId));
-	idPUI->setEnabled(false);
-	layout1->addWidget(new QLabel(tr("Numeric ID:")), 3, 0);
-	layout1->addWidget(idPUI->textBox(), 3, 1);
-
-	// User-defined shape.
-	layout1->addWidget(new QLabel(tr("Shape:")), 4, 0);
-	QHBoxLayout* sublayout = new QHBoxLayout();
-	sublayout->setContentsMargins(0,0,0,0);
-	sublayout->setSpacing(4);
-	QPushButton* loadShapeBtn = new QPushButton(tr("Load..."));
-	loadShapeBtn->setToolTip(tr("Select a mesh geometry file to use as particle shape."));
-	loadShapeBtn->setEnabled(false);
-	sublayout->addWidget(loadShapeBtn);
-	QPushButton* resetShapeBtn = new QPushButton(tr("Reset"));
-	resetShapeBtn->setToolTip(tr("Resets the particle shape back to the default one."));
-	resetShapeBtn->setEnabled(false);
-	sublayout->addWidget(resetShapeBtn);
-	layout1->addLayout(sublayout, 4, 1);
-
-	// Update the shape buttons whenever the particle type is being modified.
-	connect(this, &PropertiesEditor::contentsChanged, this, [=](RefTarget* editObject) {
-		if(ParticleType* ptype = static_object_cast<ParticleType>(editObject)) {
-			loadShapeBtn->setEnabled(true);
-			resetShapeBtn->setEnabled(ptype->shapeMesh() != nullptr);
-		}
-		else {
-			loadShapeBtn->setEnabled(false);
-			resetShapeBtn->setEnabled(false);
-		}
+	gridLayout->addWidget(new QLabel(tr("Numeric ID:")), 1, 0);
+	QLabel* numericIdLabel = new QLabel();
+	gridLayout->addWidget(numericIdLabel, 1, 1);
+	connect(this, &PropertiesEditor::contentsReplaced, [numericIdLabel](RefTarget* newEditObject) {
+		if(ElementType* ptype = static_object_cast<ElementType>(newEditObject))
+			numericIdLabel->setText(QString::number(ptype->numericId()));
+		else
+			numericIdLabel->setText({});
 	});
 
-	// Implement shape load button.
-	connect(loadShapeBtn, &QPushButton::clicked, this, [this]() {
-		if(OORef<ParticleType> ptype = static_object_cast<ParticleType>(editObject())) {
+	QGroupBox* appearanceBox = new QGroupBox(tr("Appearance"), rollout);
+	gridLayout = new QGridLayout(appearanceBox);
+	gridLayout->setContentsMargins(4,4,4,4);
+	gridLayout->setColumnStretch(1, 1);
+	layout1->addWidget(appearanceBox);
 
-			undoableTransaction(tr("Set particle shape"), [&]() {
-				HistoryFileDialog fileDialog(QStringLiteral("particle_shape_mesh"), container(), tr("Pick geometry file"),
-					QString(), tr("VTK Mesh Files (*.vtk)"));
-				fileDialog.setFileMode(QFileDialog::ExistingFile);
+	// Display color parameter.
+	ColorParameterUI* colorPUI = new ColorParameterUI(this, PROPERTY_FIELD(ParticleType::color));
+	gridLayout->addWidget(colorPUI->label(), 0, 0);
+	gridLayout->addWidget(colorPUI->colorPicker(), 0, 1);
 
-				if(fileDialog.exec()) {
-					QStringList selectedFiles = fileDialog.selectedFiles();
-					if(!selectedFiles.empty()) {
-						ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
-						ptype->loadShapeMesh(selectedFiles.front(), progressDialog.taskManager());
-					}
-				}
-			});
-		}
-	});
+	// Display radius parameter.
+	FloatParameterUI* radiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(ParticleType::radius));
+	gridLayout->addWidget(radiusPUI->label(), 1, 0);
+	gridLayout->addLayout(radiusPUI->createFieldLayout(), 1, 1);
 
-	// Implement shape reset button.
-	connect(resetShapeBtn, &QPushButton::clicked, this, [this]() {
-		if(ParticleType* ptype = static_object_cast<ParticleType>(editObject())) {
-			undoableTransaction(tr("Reset particle shape"), [&]() {
-				ptype->setShapeMesh(nullptr);
-			});
-		}
-	});
-
-	// "Set as default" button
-	QPushButton* setAsDefaultBtn = new QPushButton(tr("Set as default"));
-	setAsDefaultBtn->setToolTip(tr("Set current color and radius as defaults for this particle type."));
+	// "Save as defaults" button
+	QPushButton* setAsDefaultBtn = new QPushButton(tr("Save as defaults"));
+	setAsDefaultBtn->setToolTip(tr("Saves the current color and radius values as defaults for this particle type."));
 	setAsDefaultBtn->setEnabled(false);
-	layout1->addWidget(setAsDefaultBtn, 5, 0, 1, 2, Qt::AlignRight);
+	gridLayout->addWidget(setAsDefaultBtn, 2, 0, 1, 2, Qt::AlignRight);
 	connect(setAsDefaultBtn, &QPushButton::clicked, this, [this]() {
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
 		if(!ptype) return;
@@ -152,6 +109,74 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->numericId())));
 			else
 				lineEdit->setPlaceholderText({});
+		}
+	});
+
+	QGroupBox* userShapeBox = new QGroupBox(tr("User-defined particle shape"), rollout);
+	gridLayout = new QGridLayout(userShapeBox);
+	gridLayout->setContentsMargins(4,4,4,4);
+	gridLayout->setSpacing(2);
+	layout1->addWidget(userShapeBox);
+
+	// User-defined shape.
+	QPushButton* loadShapeBtn = new QPushButton(tr("Load geometry..."));
+	loadShapeBtn->setToolTip(tr("Select a mesh geometry file to use as particle shape."));
+	loadShapeBtn->setEnabled(false);
+	gridLayout->addWidget(loadShapeBtn, 0, 0);
+	QPushButton* resetShapeBtn = new QPushButton(tr("Remove"));
+	resetShapeBtn->setToolTip(tr("Resets the particle shape back to the default one."));
+	resetShapeBtn->setEnabled(false);
+	gridLayout->addWidget(resetShapeBtn, 0, 1);
+	QLabel* userShapeLabel = new QLabel();
+	gridLayout->addWidget(userShapeLabel, 1, 0, 1, 2);
+
+	// Update the shape buttons whenever the particle type is being modified.
+	connect(this, &PropertiesEditor::contentsChanged, this, [=](RefTarget* editObject) {
+		if(ParticleType* ptype = static_object_cast<ParticleType>(editObject)) {
+			loadShapeBtn->setEnabled(true);
+			resetShapeBtn->setEnabled(ptype->shapeMesh() != nullptr);
+			if(ptype->shapeMesh())
+				userShapeLabel->setText(tr("Assigned mesh: %1 faces/%2 vertices").arg(ptype->shapeMesh()->mesh().faceCount()).arg(ptype->shapeMesh()->mesh().vertexCount()));
+			else
+				userShapeLabel->setText(tr("No user-defined shape assigned"));
+		}
+		else {
+			loadShapeBtn->setEnabled(false);
+			resetShapeBtn->setEnabled(false);
+			userShapeLabel->setText({});
+		}
+	});
+
+	// Implement shape load button.
+	connect(loadShapeBtn, &QPushButton::clicked, this, [this]() {
+		if(OORef<ParticleType> ptype = static_object_cast<ParticleType>(editObject())) {
+
+			undoableTransaction(tr("Set particle shape"), [&]() {
+				QStringList selectedFiles;
+				// Put code in a block: Need to release dialog before loading the input file.
+				{
+					HistoryFileDialog fileDialog(QStringLiteral("particle_shape_mesh"), container(), tr("Pick geometry file"),
+						QString(), tr("Mesh Files (*.vtk *.obj)"));
+					fileDialog.setFileMode(QFileDialog::ExistingFile);
+
+					if(!fileDialog.exec())
+						return;
+					selectedFiles = fileDialog.selectedFiles();
+				}
+				if(!selectedFiles.empty()) {
+					ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
+					ptype->loadShapeMesh(selectedFiles.front(), progressDialog.taskManager());
+				}
+			});
+		}
+	});
+
+	// Implement shape reset button.
+	connect(resetShapeBtn, &QPushButton::clicked, this, [this]() {
+		if(ParticleType* ptype = static_object_cast<ParticleType>(editObject())) {
+			undoableTransaction(tr("Reset particle shape"), [&]() {
+				ptype->setShapeMesh(nullptr);
+			});
 		}
 	});
 }

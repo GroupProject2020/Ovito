@@ -72,6 +72,15 @@ public:
 		_useInstancedRendering = true;
 	}
 
+	/// Indicates whether rendering of multiple instances of the same mesh is activated.
+	bool useInstancedRendering() const { return _useInstancedRendering; }
+
+	/// Returns the list of transformation matrices when rendering multiple instances of the mesh is enabled.
+	const std::vector<AffineTransformation>& perInstanceTMs() const { return _perInstanceTMs; }
+
+	/// Returns the list of colors when rendering multiple instances of the mesh is enabled.
+	const std::vector<ColorA>& perInstanceColors() const { return _perInstanceColors; }
+
 private:
 
 	/// The mesh storing the geometry.

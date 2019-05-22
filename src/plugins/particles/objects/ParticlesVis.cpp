@@ -122,7 +122,7 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 			}
 		}
 	}
-	
+
 	// Extend box to account for radii/shape of particles.
 	FloatType maxAtomRadius = 0;
 
@@ -254,7 +254,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 		for(ColorA& c : output) {
 			c.a() = qBound(FloatType(0), FloatType(1) - (*t++), FloatType(1));
 		}
-	}	
+	}
 
 	// Highlight selected particles.
 	if(selectionProperty && selectionProperty->size() == output.size()) {
@@ -577,7 +577,8 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(t));
 					OVITO_ASSERT(ptype->shapeMesh());
 					meshVisCache->shapeMeshPrimitives.push_back(renderer->createMeshPrimitive());
-					meshVisCache->shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(0,0,0,0));
+					meshVisCache->shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(0,0,0,0), true);
+					meshVisCache->shapeMeshPrimitives.back()->setCullFaces(true);
 				}
 			}
 
@@ -623,6 +624,16 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					AffineTransformation tm = AffineTransformation::scaling(radii[i]);
 					if(positionArray)
 						tm.translation() = positionArray->getPoint3(i) - Point3::Origin();
+					if(orientationArray) {
+						Quaternion quat = orientationArray->getQuaternion(i);
+						// Normalize quaternion.
+						FloatType c = sqrt(quat.dot(quat));
+						if(c <= FLOATTYPE_EPSILON)
+							quat.setIdentity();
+						else
+							quat /= c;
+						tm = tm * Matrix3::rotation(quat);
+					}
 					shapeParticleTMs[typeIndex].push_back(tm);
 					shapeParticleColors[typeIndex].push_back(colors[i]);
 					shapeParticleIndices[typeIndex].push_back(i);
@@ -710,7 +721,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				if(visibleStandardParticles != particleCount)
 					positiveRadiusArray = radiusArray->filterCopy(hiddenParticlesMask);
 				else
-					positiveRadiusArray = std::make_shared<PropertyStorage>(*positiveRadiusArray);
+					positiveRadiusArray = std::make_shared<PropertyStorage>(*radiusArray);
 				// Replace null entries in the per-particle radius array with the default radius.
 				FloatType defaultRadius = defaultParticleRadius();
 				for(FloatType& r : positiveRadiusArray->floatRange())
@@ -969,6 +980,14 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 		}
 		if(!posProperty || particleIndex >= posProperty->size())
 			return;
+
+		// Check if the particle must be rendered using a custom shape.
+		if(typeProperty && particleIndex < typeProperty->size()) {
+			if(ParticleType* ptype = dynamic_object_cast<ParticleType>(typeProperty->elementType(typeProperty->getInt(particleIndex)))) {
+				if(ptype->shapeMesh())
+					return;	// Note: Highlighting of particles with user-defined shapes is not implemented yet.
+			}
+		}
 
 		// Determine position of selected particle.
 		Point3 pos = posProperty->getPoint3(particleIndex);

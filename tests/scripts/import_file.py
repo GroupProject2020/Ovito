@@ -62,6 +62,7 @@ assert(node.source.num_frames == 5)
 import_file(test_data_dir + "VTK/mesh_test.vtk")
 import_file(test_data_dir + "VTK/ThomsonTet_Gr1_rotmatNonRand_unstructGrid.vtk")
 import_file(test_data_dir + "VTK/box_a.vtk")
+import_file(test_data_dir + "OBJ/B.obj")
 node = import_file(test_data_dir + "LAMMPS/multi_sequence_*.dump")
 assert(ovito.scene.anim.last_frame == 10)
 node = import_file([test_data_dir + "LAMMPS/multi_sequence_1.dump", test_data_dir + "LAMMPS/multi_sequence_2.dump", test_data_dir + "LAMMPS/multi_sequence_3.dump"])
@@ -72,11 +73,11 @@ node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_dat
 assert(ovito.scene.anim.last_frame == 3)
 node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"], multiple_frames = True)
 assert(ovito.scene.anim.last_frame == 11)
-node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
+node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 ids = node.compute().particles['Particle Identifier']
 assert(not np.all(ids[:-1] <= ids[1:]))
-node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
+node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"],
                             sort_particles = True)
 ids = node.compute().particles['Particle Identifier']
@@ -84,7 +85,7 @@ assert(np.all(ids[:-1] <= ids[1:]))
 try:
     # This should generate an error:
     print("Note: The following error message is intentional.")
-    node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",  
+    node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                                 columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "ExtraProperty"])
     assert False
 except RuntimeError:
@@ -95,9 +96,9 @@ assert(ovito.scene.anim.last_frame == 10)
 node = import_file(test_data_dir + "LAMMPS/animation1.dump", multiple_frames = True)
 assert(ovito.scene.anim.last_frame == 10)
 
-node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
+node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", None, "Position.X", "Position.Y", "Position.Z"])
-node.source.load(test_data_dir + "LAMMPS/shear.void.dump.bin", 
+node.source.load(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 
 import_file(test_data_dir + "LAMMPS/binary_dump.x86_64.bin", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])

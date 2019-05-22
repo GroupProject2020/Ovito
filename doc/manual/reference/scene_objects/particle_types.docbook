@@ -30,10 +30,10 @@
   </para>
   <para>
     For particle types named after chemical elements, OVITO automatically assigns a default color and a default display radius
-    according to an internal preset table. This table of presets can be edited in the <link linkend="application_settings.particles">application settings dialog</link>.
-    Additionally, you can use the <guibutton>Set as default</guibutton> button to update the stored preset for the
+    according to an internal presets table. This table of presets can be edited in the <link linkend="application_settings.particles">application settings dialog</link>.
+    Additionally, you can use the <guibutton>Save as defaults</guibutton> button to update the stored preset for the
     selected particle type to the current color and radius values. This even works for the generic particle types
-    named "Type 1", "Type 2", etc., which are used by OVITO if no chemical names are available in the input file.
+    named "Type 1", "Type 2", etc., which are used by OVITO if no chemical names are available from the input file.
   </para>
   <para>
     Note that the "Particle types" entry shown in the screenshot will be missing if the input file contains no particle type

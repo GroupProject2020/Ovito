@@ -33,15 +33,18 @@ namespace Ovito { namespace Mesh {
 IMPLEMENT_OVITO_CLASS(TriMeshVis);
 DEFINE_PROPERTY_FIELD(TriMeshVis, color);
 DEFINE_REFERENCE_FIELD(TriMeshVis, transparencyController);
+DEFINE_PROPERTY_FIELD(TriMeshVis, highlightEdges);
 SET_PROPERTY_FIELD_LABEL(TriMeshVis, color, "Display color");
 SET_PROPERTY_FIELD_LABEL(TriMeshVis, transparencyController, "Transparency");
+SET_PROPERTY_FIELD_LABEL(TriMeshVis, highlightEdges, "Highlight edges");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(TriMeshVis, transparencyController, PercentParameterUnit, 0, 1);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 TriMeshVis::TriMeshVis(DataSet* dataset) : DataVis(dataset),
-	_color(0.85, 0.85, 1)
+	_color(0.85, 0.85, 1),
+	_highlightEdges(false)
 {
 	setTransparencyController(ControllerManager::createFloatController(dataset));
 }
@@ -69,7 +72,8 @@ void TriMeshVis::render(TimePoint time, const std::vector<const DataObject*>& ob
 		using CacheKey = std::tuple<
 			CompatibleRendererGroup,	// The scene renderer
 			VersionedDataObjectRef,		// Mesh object
-			ColorA						// Display color
+			ColorA,						// Display color
+			bool						// Edge highlighting
 		>;
 
 		FloatType transp = 0;
@@ -78,13 +82,13 @@ void TriMeshVis::render(TimePoint time, const std::vector<const DataObject*>& ob
 		ColorA color_mesh(color(), FloatType(1) - transp);
 
 		// Lookup the rendering primitive in the vis cache.
-		auto& meshPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CacheKey(renderer, objectStack.back(), color_mesh));
+		auto& meshPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CacheKey(renderer, objectStack.back(), color_mesh, highlightEdges()));
 
 		// Check if we already have a valid rendering primitive that is up to date.
 		if(!meshPrimitive || !meshPrimitive->isValid(renderer)) {
 			meshPrimitive = renderer->createMeshPrimitive();
 			if(const TriMeshObject* triMeshObj = dynamic_object_cast<TriMeshObject>(objectStack.back()))
-				meshPrimitive->setMesh(triMeshObj->mesh(), color_mesh);
+				meshPrimitive->setMesh(triMeshObj->mesh(), color_mesh, highlightEdges());
 			else
 				meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,1));
 		}

@@ -22,6 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/properties/ColorParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/BooleanParameterUI.h>
 #include <plugins/mesh/tri/TriMeshVis.h>
 #include "TriMeshVisEditor.h"
 
@@ -51,6 +52,9 @@ void TriMeshVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	FloatParameterUI* transparencyUI = new FloatParameterUI(this, PROPERTY_FIELD(TriMeshVis::transparencyController));
 	layout->addWidget(new QLabel(tr("Transparency:")), 1, 0);
 	layout->addLayout(transparencyUI->createFieldLayout(), 1, 1);
+
+	BooleanParameterUI* highlightEdgesUI = new BooleanParameterUI(this, PROPERTY_FIELD(TriMeshVis::highlightEdges));
+	layout->addWidget(highlightEdgesUI->checkBox(), 2, 0, 1, 2);
 }
 
 OVITO_END_INLINE_NAMESPACE

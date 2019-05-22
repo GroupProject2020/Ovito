@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2013) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -21,12 +21,13 @@
 
 uniform mat4 modelview_projection_matrix;
 uniform int pickingBaseID;
+uniform int vertexIdDivisor;
 
 #if __VERSION__ >= 130
 
 	// The input data:
 	in vec3 position;
-	
+
 	// Output passed to fragment shader.
 	flat out vec4 vertex_color_fs;
 
@@ -41,22 +42,22 @@ void main()
 {
 	// Compute color from object ID.
 #if __VERSION__ >= 130
-	int objectID = pickingBaseID + gl_VertexID / 3;
+	int objectID = pickingBaseID + gl_VertexID / vertexIdDivisor;
 	vertex_color_fs = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
-		float((objectID >> 24) & 0xFF) / 255.0);		
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
+		float((objectID >> 24) & 0xFF) / 255.0);
 
 	gl_Position = modelview_projection_matrix * vec4(position, 1.0);
 #else
-	float objectID = pickingBaseID + floor(vertexID / 3);
+	float objectID = pickingBaseID + floor(vertexID / vertexIdDivisor);
 	gl_FrontColor = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
-		floor(mod(objectID / 256.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 65536.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);	
-		
+		floor(mod(objectID / 256.0, 256.0)) / 255.0,
+		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
+		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
+
 	gl_Position = modelview_projection_matrix * gl_Vertex;
 #endif
 }

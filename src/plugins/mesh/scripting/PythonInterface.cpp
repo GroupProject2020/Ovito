@@ -22,6 +22,7 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/io/VTKFileImporter.h>
 #include <plugins/mesh/io/VTKTriangleMeshExporter.h>
+#include <plugins/mesh/io/WavefrontOBJImporter.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <plugins/mesh/tri/TriMeshVis.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
@@ -51,6 +52,10 @@ PYBIND11_MODULE(MeshPython, m)
 		"TriMeshVis")
 		.def_property("color", &TriMeshVis::color, &TriMeshVis::setColor)
 		.def_property("transparency", &TriMeshVis::transparency, &TriMeshVis::setTransparency)
+		.def_property("highlight_edges", &TriMeshVis::highlightEdges, &TriMeshVis::setHighlightEdges,
+				"Activates the highlighted rendering of the polygonal edges of the mesh."
+				"\n\n"
+				":Default: ``False``\n")
 	;
 
 	ovito_class<SurfaceMeshVertices, PropertyContainer>{m};
@@ -289,6 +294,9 @@ PYBIND11_MODULE(MeshPython, m)
 	;
 
 	ovito_class<VTKTriangleMeshExporter, FileExporter>{m}
+	;
+
+	ovito_class<WavefrontOBJImporter, FileSourceImporter>{m}
 	;
 }
 

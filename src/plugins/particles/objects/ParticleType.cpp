@@ -50,7 +50,7 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 
 	// Temporarily disable undo recording while loading the geometry data.
 	UndoSuspender noUndo(this);
-	
+
 	// Inspect input file to detect its format.
 	OORef<FileSourceImporter> importer = dynamic_object_cast<FileSourceImporter>(FileImporter::autodetectFileFormat(dataset(), filepath, filepath));
 	if(!importer)
@@ -71,7 +71,10 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 	// Turn on undo recording again. The final shape assignment should be recorded on the undo stack.
 	noUndo.reset();
 	setShapeMesh(state.expectObject<TriMeshObject>());
-		
+
+	// Show sharp edges of the mesh.
+	shapeMesh()->mesh().determineEdgeVisibility();
+
     return !operation.isCanceled();
 }
 

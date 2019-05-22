@@ -85,6 +85,7 @@
 #include <QMutex>
 #include <QTemporaryFile>
 #include <QElapsedTimer>
+#include <QtMath>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
 #  error "OVITO requires Qt 5.4 or newer."
