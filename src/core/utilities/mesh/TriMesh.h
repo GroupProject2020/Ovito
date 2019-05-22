@@ -493,6 +493,9 @@ public:
 	/// Determines the visibility of face edges depending on the angle between the normals of adjacent faces.
 	void determineEdgeVisibility(FloatType thresholdAngle = qDegreesToRadians(20.0));
 
+	/// Identifies duplicate vertices and merges them into a single vertex shared by multiple faces.
+	void removeDuplicateVertices(FloatType epsilon);
+
 	/************************************* Ray intersection *************************************/
 
 	/// \brief Performs a ray intersection calculation.

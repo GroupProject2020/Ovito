@@ -464,6 +464,51 @@ void TriMesh::determineEdgeVisibility(FloatType thresholdAngle)
 	}
 }
 
+/******************************************************************************
+* Identifies duplicate vertices and merges them into a single vertex shared
+* by multiple faces.
+******************************************************************************/
+void TriMesh::removeDuplicateVertices(FloatType epsilon)
+{
+	std::vector<int> remapping(vertexCount(), -1);
+
+	int vcount = vertexCount();
+	auto p1 = vertices().cbegin();
+	for(int v1 = 0; v1 < vcount; v1++, ++p1) {
+		if(remapping[v1] != -1) continue;
+		auto p2 = p1 + 1;
+		for(int v2 = v1 + 1; v2 < vcount; v2++, ++p2) {
+			if(p1->equals(*p2, epsilon)) {
+				remapping[v2] = v1;
+			}
+		}
+	}
+
+	int newIndex = 0;
+	auto pold = vertices().begin();
+	auto pnew = vertices().begin();
+	for(int& rm : remapping) {
+		if(rm == -1) {
+			*pnew++ = *pold++;
+			rm = newIndex++;
+		}
+		else {
+			rm = remapping[rm];
+			++pold;
+		}
+	}
+
+	for(TriMeshFace& face : faces()) {
+		for(size_t v = 0; v < 3; v++) {
+			face.setVertex(v, remapping[face.vertex(v)]);
+		}
+	}
+
+	setVertexCount(newIndex);
+	invalidateVertices();
+	invalidateFaces();
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

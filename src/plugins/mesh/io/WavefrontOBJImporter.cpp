@@ -41,21 +41,21 @@ bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 		const char* line = stream.readLineTrimLeft(512);
 		if(line[0] == '\0')  // Skip empty lines.
 			continue;
-		if(stream.lineStartsWith("#")) // Skip comment lines.
+		if(stream.lineStartsWith("#", true)) // Skip comment lines.
 			continue;
 
 		// Accept only lines starting with one of the following tokens.
-		if(!stream.lineStartsWithToken("v") &&
-			!stream.lineStartsWithToken("vn") &&
-			!stream.lineStartsWithToken("vt") &&
-			!stream.lineStartsWithToken("vp") &&
-			!stream.lineStartsWithToken("l") &&
-			!stream.lineStartsWithToken("f") &&
-			!stream.lineStartsWithToken("s") &&
-			!stream.lineStartsWithToken("mtllib") &&
-			!stream.lineStartsWithToken("usemtl") &&
-			!stream.lineStartsWithToken("o") &&
-			!stream.lineStartsWithToken("g"))
+		if(!stream.lineStartsWithToken("v", true) &&
+			!stream.lineStartsWithToken("vn", true) &&
+			!stream.lineStartsWithToken("vt", true) &&
+			!stream.lineStartsWithToken("vp", true) &&
+			!stream.lineStartsWithToken("l", true) &&
+			!stream.lineStartsWithToken("f", true) &&
+			!stream.lineStartsWithToken("s", true) &&
+			!stream.lineStartsWithToken("mtllib", true) &&
+			!stream.lineStartsWithToken("usemtl", true) &&
+			!stream.lineStartsWithToken("o", true) &&
+			!stream.lineStartsWithToken("g", true))
 			return false;
 	}
 
@@ -70,12 +70,13 @@ FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QFi
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading OBJ file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressMaximum(stream.underlyingSize());
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
 		stream.seek(frame().byteOffset, frame().lineNumber);
 
-	// Create output data.
+	// Create output data structure.
 	auto frameData = std::make_shared<TriMeshFrameData>();
 	TriMesh& mesh = frameData->mesh();
 
@@ -92,14 +93,14 @@ FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QFi
 		if(line[0] == '\0') continue;
 		if(line[0] == '#') continue;
 
-		if(stream.lineStartsWithToken("v")) {
+		if(stream.lineStartsWithToken("v", true)) {
 			// Parse vertex definition.
 			Point3 xyz;
 			if(sscanf(line, "v " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &xyz.x(), &xyz.y(), &xyz.z()) != 3)
 				throw Exception(tr("Invalid vertex specification in line %1 of OBJ file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			mesh.addVertex(xyz);
 		}
-		else if(stream.lineStartsWithToken("f")) {
+		else if(stream.lineStartsWithToken("f", true)) {
 			// Parse polygon definition.
 			int nVertices = 0;
 			int vindices[3];
@@ -168,14 +169,14 @@ FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QFi
 			if(nVertices >= 3)
 				mesh.faces().back().setEdgeVisible(2);
 		}
-		else if(stream.lineStartsWithToken("vn")) {
+		else if(stream.lineStartsWithToken("vn", true)) {
 			// Parse vertex normal.
 			Vector3 xyz;
 			if(sscanf(line, "vn " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &xyz.x(), &xyz.y(), &xyz.z()) != 3)
 				throw Exception(tr("Invalid vertex normal in line %1 of OBJ file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			vertexNormals.push_back(xyz);
 		}
-		else if(stream.lineStartsWithToken("s")) {
+		else if(stream.lineStartsWithToken("s", true)) {
 			if(stream.lineStartsWith("s off"))
 				smoothingGroup = 0;
 			else {
@@ -183,20 +184,23 @@ FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QFi
 					throw Exception(tr("Invalid smoothing group specification in line %1 of OBJ file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			}
 		}
-		else if(stream.lineStartsWithToken("mtllib"))
+		else if(stream.lineStartsWithToken("mtllib", true))
 			continue;
-		else if(stream.lineStartsWithToken("usemtl"))
+		else if(stream.lineStartsWithToken("usemtl", true))
 			continue;
-		else if(stream.lineStartsWithToken("vt"))
+		else if(stream.lineStartsWithToken("vt", true))
 			continue;
-		else if(stream.lineStartsWithToken("vp"))
+		else if(stream.lineStartsWithToken("vp", true))
 			continue;
-		else if(stream.lineStartsWithToken("o"))
+		else if(stream.lineStartsWithToken("o", true))
 			continue;
-		else if(stream.lineStartsWithToken("g"))
+		else if(stream.lineStartsWithToken("g", true))
 			continue;
 		else
 			throw Exception(tr("Invalid or unsupported OBJ file format. Encountered unknown token in line %1.").arg(stream.lineNumber()));
+
+		if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
+			return {};
 	}
 	mesh.invalidateVertices();
 	mesh.invalidateFaces();

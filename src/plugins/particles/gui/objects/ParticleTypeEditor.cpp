@@ -156,7 +156,7 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 				// Put code in a block: Need to release dialog before loading the input file.
 				{
 					HistoryFileDialog fileDialog(QStringLiteral("particle_shape_mesh"), container(), tr("Pick geometry file"),
-						QString(), tr("Mesh Files (*.vtk *.obj)"));
+						QString(), tr("Mesh Files (*.obj *.stl *.vtk)"));
 					fileDialog.setFileMode(QFileDialog::ExistingFile);
 
 					if(!fileDialog.exec())

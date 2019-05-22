@@ -23,6 +23,7 @@
 #include <plugins/mesh/io/VTKFileImporter.h>
 #include <plugins/mesh/io/VTKTriangleMeshExporter.h>
 #include <plugins/mesh/io/WavefrontOBJImporter.h>
+#include <plugins/mesh/io/STLImporter.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <plugins/mesh/tri/TriMeshVis.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
@@ -297,6 +298,9 @@ PYBIND11_MODULE(MeshPython, m)
 	;
 
 	ovito_class<WavefrontOBJImporter, FileSourceImporter>{m}
+	;
+
+	ovito_class<STLImporter, FileSourceImporter>{m}
 	;
 }
 

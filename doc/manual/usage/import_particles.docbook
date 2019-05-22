@@ -258,6 +258,16 @@
               <entry><para>Format used by the <emphasis>Visualization Toolkit</emphasis> (VTK). This text-based format is documented <link xlink:href="http://www.vtk.org/VTK/img/file-formats.pdf">here</link>. Note that OVITO supports only triangular cells.</para></entry>
               <entry>triangle&#xA0;mesh</entry>
             </row>
+            <row>
+              <entry>OBJ</entry>
+              <entry><para>Common text-based format for storing triangle mesh geometry (see <link xlink:href="https://en.wikipedia.org/wiki/Wavefront_.obj_file">here</link>).</para></entry>
+              <entry>triangle&#xA0;mesh</entry>
+            </row>
+            <row>
+              <entry>STL</entry>
+              <entry><para>Another popular format for storing triangle mesh geometry (see <link xlink:href="https://en.wikipedia.org/wiki/STL_(file_format)">here</link>). Note that OVITO supports only STL files in ASCII format.</para></entry>
+              <entry>triangle&#xA0;mesh</entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
