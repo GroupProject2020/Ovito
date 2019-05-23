@@ -1,5 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+//  Copyright (2019) Alexander Stukowski
 //  Copyright (2019) Henrik Andersen Sveinsson
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -33,14 +34,15 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(ChillPlusModifier);
-//DEFINE_PROPERTY_FIELD(ChillPlusModifier, cutoff);
-//SET_PROPERTY_FIELD_LABEL(ChillPlusModifier, cutoff, "Cutoff radius");
-//SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ChillPlusModifier, cutoff, WorldParameterUnit, 0);
+DEFINE_PROPERTY_FIELD(ChillPlusModifier, cutoff);
+SET_PROPERTY_FIELD_LABEL(ChillPlusModifier, cutoff, "Cutoff radius");
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ChillPlusModifier, cutoff, WorldParameterUnit, 0);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-ChillPlusModifier::ChillPlusModifier(DataSet* dataset) : StructureIdentificationModifier(dataset)
+ChillPlusModifier::ChillPlusModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
+    _cutoff(3.5)
 {
     createStructureType(CUBIC_ICE, ParticleType::PredefinedStructureType::CUBIC_ICE);
 	createStructureType(HEXAGONAL_ICE, ParticleType::PredefinedStructureType::HEXAGONAL_ICE);
@@ -74,7 +76,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ChillPlusModifier::createEngine(T
 		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ChillPlusEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+	return std::make_shared<ChillPlusEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
 }
 
 /******************************************************************************
@@ -86,7 +88,7 @@ void ChillPlusModifier::ChillPlusEngine::perform()
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(cutoff(), *positions(), cell(), nullptr, task().get()))
+	if(!neighborListBuilder.prepare(cutoff(), *positions(), cell(), selection().get(), task().get()))
 		return;
 
 	// Create output storage.

@@ -1,5 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+//  Copyright (2019) Alexander Stukowski
 //  Copyright (2019) Henrik Andersen Sveinsson
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -33,7 +34,7 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
- * \brief This modifier computes the ice-like structure of a particle
+ * \brief This modifier computes crystalline water phases like in (Nguyen & Molinero, J. Phys. Chem. B 2015, 119, 9369-9376)
  */
 class OVITO_PARTICLES_EXPORT ChillPlusModifier : public StructureIdentificationModifier
 {
@@ -67,6 +68,7 @@ protected:
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
+    DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Computes the modifier's results.
 	class ChillPlusEngine : public StructureIdentificationEngine
@@ -74,7 +76,10 @@ private:
 	public:
 
 		/// Constructor.
-		using StructureIdentificationEngine::StructureIdentificationEngine;
+		//using StructureIdentificationEngine::StructureIdentificationEngine;
+		ChillPlusEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, FloatType cutoff) :
+		StructureIdentificationEngine(fingerprint, positions, simCell, typesToIdentify, selection),
+		_cutoff(cutoff) {}
 
 		/// Computes the modifier's results.
         std::complex<float> compute_q_lm(CutoffNeighborFinder& neighFinder, size_t particleIndex, int, int);
@@ -88,9 +93,11 @@ private:
         StructureType determineStructure(CutoffNeighborFinder& neighFinder, size_t particleIndex, const QVector<bool>& typesToIdentify);
 
     private: 
-        const FloatType _cutoff = 3.5;
+        const FloatType _cutoff;
         boost::numeric::ublas::matrix<std::complex<float>> q_values;
         std::pair<float, float> polar_asimuthal(Vector3 delta);
+        
+    
   
 	};
 };

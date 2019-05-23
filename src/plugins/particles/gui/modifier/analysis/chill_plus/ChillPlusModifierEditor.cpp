@@ -1,6 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  Copyright (2019) Alexander Stukowski
+//  Copyright (2019) Henrik Andersen Sveinsson
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +23,7 @@
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/gui/modifier/analysis/StructureListParameterUI.h>
 #include <plugins/particles/modifier/analysis/chill_plus/ChillPlusModifier.h>
+#include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include "ChillPlusModifierEditor.h"
 
@@ -46,6 +48,13 @@ void ChillPlusModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	// Use only selected particles.
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::onlySelectedParticles));
 	layout1->addWidget(onlySelectedParticlesUI->checkBox());
+
+    QGridLayout* gridlayout = new QGridLayout();
+    // cutoff
+    FloatParameterUI* cutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(ChillPlusModifier::cutoff));
+    gridlayout->addWidget(cutoffRadiusPUI->label(), 0, 0);
+	gridlayout->addLayout(cutoffRadiusPUI->createFieldLayout(), 0, 1);
+    layout1->addLayout(gridlayout);
 
 	// Color by type
 	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));

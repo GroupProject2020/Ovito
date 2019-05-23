@@ -1,6 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  Copyright (2019) Alexander Stukowski
+//  Copyright (2019) Henrik Andersen Sveinsson
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
