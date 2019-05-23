@@ -85,9 +85,15 @@ public:
 
 	/// Sets the visibility of the three face edges.
 	void setEdgeVisibility(bool e1, bool e2, bool e3) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 		_flags.setFlag(EDGE1, e1);
 		_flags.setFlag(EDGE2, e2);
 		_flags.setFlag(EDGE3, e3);
+#else
+		if(e1) _flags |= EDGE1; else _flags &= ~EDGE1;
+		if(e2) _flags |= EDGE2; else _flags &= ~EDGE2;
+		if(e3) _flags |= EDGE3; else _flags &= ~EDGE3;
+#endif
 	}
 
 	/// Sets the visibility of the three face edges all at once.
@@ -98,13 +104,21 @@ public:
 	/// Makes one of the edges of the triangle face visible.
 	void setEdgeVisible(size_t which) {
 		OVITO_ASSERT(which < 3);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 		_flags.setFlag(MeshFaceFlag(EDGE1 << which));
+#else
+		_flags |= (EDGE1 << which);
+#endif
 	}
 
 	/// Hides one of the edges of the triangle face.
 	void setEdgeHidden(size_t which) {
 		OVITO_ASSERT(which < 3);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 		_flags.setFlag(MeshFaceFlag(EDGE1 << which), false);
+#else
+		_flags &= ~(EDGE1 << which);
+#endif
 	}
 
 	/// Returns true if the edge is visible.
