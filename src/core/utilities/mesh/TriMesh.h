@@ -107,7 +107,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 		_flags.setFlag(MeshFaceFlag(EDGE1 << which));
 #else
-		_flags |= (EDGE1 << which);
+		_flags |= MeshFaceFlags(EDGE1 << which);
 #endif
 	}
 
@@ -117,7 +117,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
 		_flags.setFlag(MeshFaceFlag(EDGE1 << which), false);
 #else
-		_flags &= ~(EDGE1 << which);
+		_flags &= ~MeshFaceFlags(EDGE1 << which);
 #endif
 	}
 
