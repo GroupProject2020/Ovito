@@ -36,6 +36,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
+#include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/app/PluginManager.h>
@@ -314,9 +315,59 @@ PYBIND11_MODULE(ParticlesPython, m)
 			"\n\n"
 			"Represents a particle type or atom type. :py:class:`!ParticleType` instances are typically part of a typed :py:class:`Property`, "
 			"but this class is also used in other contexts, for example to define the list of structural types identified by the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier`. ")
+		.def("load_shape", [](ParticleType& ptype, const QString& filepath) {
+				ensureDataObjectIsMutable(ptype);
+				if(!ptype.loadShapeMesh(filepath, ScriptEngine::currentTask()->createSubTask()))
+					ptype.throwException(ParticleType::tr("Loading of the user-defined shape has been canceled by the user."));
+			}, py::arg("filepath"),
+				"load_shape(filepath)"
+				"\n\n"
+				"Assigns a user-defined shape to the particle type. Particles of this type will subsequently be rendered "
+				"using the polyhedral mesh loaded from the given file. The method will automatically detect the format of the geometry file "
+				"and supports standard file formats such as OBJ, STL and VTK that contain triangle meshes, "
+				"see the table found :ovitoman:`here <../../usage.import#usage.import.formats>`. "
+				"\n\n"
+				"The shape loaded from the geometry file will be scaled with the :py:attr:`.radius` value set for this particle type "
+				"or the per-particle value stored in the ``Radius`` :ref:`particle property <particle-types-list>` if present. "
+				"The shape of each particle will be rendered such that its origin is located at the coordinates of the particle. "
+				"\n\n"
+				"The following example script demonstrates how to load a user-defined shape for the first particle type (index 0) loaded from "
+				"a LAMMPS dump file, which can be accessed through the :py:attr:`Property.types <ovito.data.Property.types>` list "
+				"of the ``Particle Type`` :ref:`particle property <particle-types-list>`. "
+				"\n\n"
+				".. literalinclude:: ../example_snippets/particle_type_load_shape.py\n"
+				"  :lines: 4-\n"
+				"\n\n")
 	;
 	createDataPropertyAccessors(ParticleType_py, "radius", &ParticleType::radius, &ParticleType::setRadius,
-			"The display radius to use for particles of this type.");
+			"This property controls the display size of the particles of this type. "
+			"\n\n"
+			"When set to zero, particles of this type will be rendered using the standard size specified "
+			"by the :py:attr:`ParticlesVis.radius <ovito.vis.ParticlesVis.radius>` parameter. "
+			"Furthermore, precedence is given to any per-particle sizes assigned to the ``Radius`` :ref:`particle property <particle-types-list>` if that property "
+			"has been defined. "
+			"\n\n"
+			":Default: ``0.0``\n"
+			"\n\n"
+			"The following example script demonstrates how to set the display radii of two particle types loaded from "
+			"a simulation file, which can be accessed through the :py:attr:`Property.types <ovito.data.Property.types>` list "
+			"of the ``Particle Type`` :ref:`particle property <particle-types-list>`. "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/particle_type_radius.py\n"
+			"  :lines: 4-\n"
+			"\n\n");
+	createDataPropertyAccessors(ParticleType_py, "highlight_edges", &ParticleType::highlightShapeEdges, &ParticleType::setHighlightShapeEdges,
+			"Activates the highlighting of the polygonal edges of the user-defined particle shape during rendering. "
+			"This option only has an effect if a user-defined shape has been assigned to the particle type using the :py:meth:`.load_shape` method. "
+			"\n\n"
+			":Default: ``False``\n");
+	createDataPropertyAccessors(ParticleType_py, "backface_culling", &ParticleType::shapeBackfaceCullingEnabled, &ParticleType::setShapeBackfaceCullingEnabled,
+			"Activates back-face culling for the user-defined particle shape mesh "
+			"to speed up rendering. If turned on, polygonal sides of the shape mesh facing away from the viewer will not be rendered. "
+			"You can turn this option off if the particle's shape is not closed and two-sided rendering is required. "
+			"This option only has an effect if a user-defined shape has been assigned to the particle type using the :py:meth:`.load_shape` method. "
+			"\n\n"
+			":Default: ``True``\n");
 
 	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"
@@ -331,9 +382,9 @@ PYBIND11_MODULE(ParticlesPython, m)
 		.def_property("radius", &ParticlesVis::defaultParticleRadius, &ParticlesVis::setDefaultParticleRadius,
 				"The standard display radius of particles. "
 				"This value is only used if no per-particle or per-type radii have been set. "
-				"A per-type radius can be set via :py:attr:`ovito.data.ParticleType.radius`. "
+				"A per-type radius can be set via :py:attr:`ParticleType.radius <ovito.data.ParticleType.radius>`. "
 				"An individual display radius can be assigned to each particle by setting the ``Radius`` "
-				"particle property, e.g. using the :py:class:`~ovito.modifiers.ComputePropertyModifier`. "
+				":ref:`particle property <particle-types-list>`, e.g. using the :py:class:`~ovito.modifiers.ComputePropertyModifier`. "
 				"\n\n"
 				":Default: 1.2\n")
 		.def_property_readonly("default_color", &ParticlesVis::defaultParticleColor)

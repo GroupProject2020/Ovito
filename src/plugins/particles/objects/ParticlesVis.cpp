@@ -577,8 +577,8 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(t));
 					OVITO_ASSERT(ptype->shapeMesh());
 					meshVisCache->shapeMeshPrimitives.push_back(renderer->createMeshPrimitive());
-					meshVisCache->shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(0,0,0,0), true);
-					meshVisCache->shapeMeshPrimitives.back()->setCullFaces(true);
+					meshVisCache->shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(0,0,0,0), ptype->highlightShapeEdges());
+					meshVisCache->shapeMeshPrimitives.back()->setCullFaces(ptype->shapeBackfaceCullingEnabled());
 				}
 			}
 

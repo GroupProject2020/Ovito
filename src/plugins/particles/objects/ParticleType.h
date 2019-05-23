@@ -118,6 +118,12 @@ private:
 	/// An optional user-defined shape used for rendering particles of this type.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TriMeshObject, shapeMesh, setShapeMesh, PROPERTY_FIELD_NO_SUB_ANIM);
 
+	/// Activates the highlighting of the polygonal edges of the user-defined shape assigned to this particle type.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, highlightShapeEdges, setHighlightShapeEdges);
+
+	/// Activates the culling of back-facing faces of the user-defined shape assigned to this particle type.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, shapeBackfaceCullingEnabled, setShapeBackfaceCullingEnabled);
+
 private:
 
 	/// Data structure that holds the name, color, and radius of a particle type.

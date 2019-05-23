@@ -26,6 +26,7 @@
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
+#include <gui/properties/BooleanParameterUI.h>
 #include <gui/dialogs/HistoryFileDialog.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
 #include <gui/mainwin/MainWindow.h>
@@ -119,16 +120,20 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	layout1->addWidget(userShapeBox);
 
 	// User-defined shape.
-	QPushButton* loadShapeBtn = new QPushButton(tr("Load geometry..."));
+	QLabel* userShapeLabel = new QLabel();
+	gridLayout->addWidget(userShapeLabel, 0, 0, 1, 2);
+	QPushButton* loadShapeBtn = new QPushButton(tr("Load shape..."));
 	loadShapeBtn->setToolTip(tr("Select a mesh geometry file to use as particle shape."));
 	loadShapeBtn->setEnabled(false);
-	gridLayout->addWidget(loadShapeBtn, 0, 0);
+	gridLayout->addWidget(loadShapeBtn, 1, 0);
 	QPushButton* resetShapeBtn = new QPushButton(tr("Remove"));
-	resetShapeBtn->setToolTip(tr("Resets the particle shape back to the default one."));
+	resetShapeBtn->setToolTip(tr("Reset the particle shape back to the built-in one."));
 	resetShapeBtn->setEnabled(false);
-	gridLayout->addWidget(resetShapeBtn, 0, 1);
-	QLabel* userShapeLabel = new QLabel();
-	gridLayout->addWidget(userShapeLabel, 1, 0, 1, 2);
+	gridLayout->addWidget(resetShapeBtn, 1, 1);
+	BooleanParameterUI* highlightEdgesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleType::highlightShapeEdges));
+	gridLayout->addWidget(highlightEdgesUI->checkBox(), 2, 0, 1, 1);
+	BooleanParameterUI* shapeBackfaceCullingUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleType::shapeBackfaceCullingEnabled));
+	gridLayout->addWidget(shapeBackfaceCullingUI->checkBox(), 2, 1, 1, 1);
 
 	// Update the shape buttons whenever the particle type is being modified.
 	connect(this, &PropertiesEditor::contentsChanged, this, [=](RefTarget* editObject) {
@@ -139,6 +144,8 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 				userShapeLabel->setText(tr("Assigned mesh: %1 faces/%2 vertices").arg(ptype->shapeMesh()->mesh().faceCount()).arg(ptype->shapeMesh()->mesh().vertexCount()));
 			else
 				userShapeLabel->setText(tr("No user-defined shape assigned"));
+			highlightEdgesUI->setEnabled(ptype->shapeMesh() != nullptr);
+			shapeBackfaceCullingUI->setEnabled(ptype->shapeMesh() != nullptr);
 		}
 		else {
 			loadShapeBtn->setEnabled(false);
