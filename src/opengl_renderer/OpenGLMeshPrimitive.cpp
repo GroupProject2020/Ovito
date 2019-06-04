@@ -267,6 +267,38 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 
 	vpRenderer->rebindVAO();
 
+	// Render wireframe edges.
+	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
+		if(!_lineShader->bind())
+			vpRenderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
+		ColorA wireframeColor(0.1f, 0.1f, 0.1f, 1.0f);
+		if(vpRenderer->glformat().majorVersion() >= 3) {
+			OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+		}
+		else if(vpRenderer->oldGLFunctions()) {
+			// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
+			OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+		}
+		_edgeLinesBuffer.bindPositions(vpRenderer, _lineShader);
+		Matrix4 mvp_matrix = vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM();
+		if(!_useInstancedRendering) {
+			_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)mvp_matrix);
+			OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
+		}
+		else {
+			for(const AffineTransformation& instanceTM : _perInstanceTMs) {
+				_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(mvp_matrix * instanceTM));
+				OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
+			}
+		}
+		_edgeLinesBuffer.detachPositions(vpRenderer, _lineShader);
+		_lineShader->release();
+		vpRenderer->glEnable(GL_POLYGON_OFFSET_FILL);
+		vpRenderer->glPolygonOffset(1.0f, 1.0f);
+	}
+
+	OVITO_REPORT_OPENGL_ERRORS();
+
 	if(cullFaces()) {
 		vpRenderer->glEnable(GL_CULL_FACE);
 		vpRenderer->glCullFace(GL_BACK);
@@ -295,11 +327,6 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 	}
 	else {
 		vpRenderer->activateVertexIDs(_pickingShader, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement());
-	}
-
-	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
-		vpRenderer->glEnable(GL_POLYGON_OFFSET_FILL);
-		vpRenderer->glPolygonOffset(1.0f, 1.0f);
 	}
 
 	size_t numInstances = !_useInstancedRendering ? 1 : _perInstanceTMs.size();
@@ -371,6 +398,10 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		}
 	}
 
+	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
+		vpRenderer->glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
 	_vertexBuffer.detachPositions(vpRenderer, shader);
 	if(!renderer->isPicking()) {
 		if(!_useInstancedRendering)
@@ -391,36 +422,6 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		vpRenderer->glCullFace(GL_BACK);
 	}
 
-	// Render wireframe edges.
-	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
-		vpRenderer->glDisable(GL_POLYGON_OFFSET_FILL);
-		if(!_lineShader->bind())
-			vpRenderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
-		ColorA wireframeColor(0.1f, 0.1f, 0.1f, 1.0f);
-		if(vpRenderer->glformat().majorVersion() >= 3) {
-			OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
-		}
-		else if(vpRenderer->oldGLFunctions()) {
-			// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
-			OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
-		}
-		_edgeLinesBuffer.bindPositions(vpRenderer, _lineShader);
-		Matrix4 mvp_matrix = vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM();
-		if(!_useInstancedRendering) {
-			_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)mvp_matrix);
-			OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
-		}
-		else {
-			for(const AffineTransformation& instanceTM : _perInstanceTMs) {
-				_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(mvp_matrix * instanceTM));
-				OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
-			}
-		}
-		_edgeLinesBuffer.detachPositions(vpRenderer, _lineShader);
-		_lineShader->release();
-	}
-
-	OVITO_REPORT_OPENGL_ERRORS();
 }
 
 OVITO_END_INLINE_NAMESPACE

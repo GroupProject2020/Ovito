@@ -7,11 +7,11 @@ sudo port install cmake docbook-xml doxygen libxslt boost yasm povray
 sudo port install -s fftw-3 libssh
 
 **************************************************************************
-Install Qt libraries, version 5.9.7
+Install Qt libraries, version 5.12.3
 **************************************************************************
 
 # This is a workaround to let VS Code Intellisense find the Qt headers:
-cd $HOME/Qt/5.9.7/clang_64/
+cd $HOME/Qt/5.12.3/clang_64/
 mkdir headers
 cd headers
 ln -s $PWD/../lib/QtCore.framework/Versions/5/Headers/ QtCore
@@ -37,7 +37,7 @@ python3 configure.py \
   --no-designer-plugin \
   --no-qml-plugin \
   --assume-shared \
-  --qmake $HOME/Qt/5.9.7/clang_64/bin/qmake \
+  --qmake $HOME/Qt/5.12.3/clang_64/bin/qmake \
   --sip=/Library/Frameworks/Python.framework/Versions/3.7/bin/sip \
   --concatenate \
   --enable QtCore \
@@ -63,7 +63,7 @@ Edit "site.py" of the Python interpreter and set
 Download and build QScintilla2
 **************************************************************************
 cd QScintilla_gpl-2.10.8/Qt4Qt5/
-$HOME/Qt/5.9.7/clang_64/bin/qmake qscintilla.pro && \
+$HOME/Qt/5.12.3/clang_64/bin/qmake qscintilla.pro && \
 make -j4 && \
 install_name_tool -id $PWD/libqscintilla2_qt5.13.2.1.dylib libqscintilla2_qt5.13.2.1.dylib
 
@@ -185,7 +185,7 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
       -DOVITO_DOUBLE_PRECISION_FP=ON \
       -DCMAKE_INSTALL_PREFIX=../release_install \
-      -DCMAKE_PREFIX_PATH=$HOME/Qt/5.9.7/clang_64/ \
+      -DCMAKE_PREFIX_PATH=$HOME/Qt/5.12.3/clang_64/ \
       -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.7/bin/python3 \
       -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m \
       -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib \
