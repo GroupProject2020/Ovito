@@ -59,6 +59,10 @@
               <entry>Decomposes a particle system into clusters of particles.</entry>
             </row>
             <row>
+              <entry><link linkend="particles.modifiers.chill_plus">Chill+ structure identification</link></entry>
+              <entry>Determines wheter water molecules are in hexagonal ice, cubic ice, hydrate or other structure. 
+            </row>
+            <row>
               <entry><link linkend="particles.modifiers.coordination_analysis">Coordination&#xA0;analysis</link></entry>
               <entry>Determines the number of neighbors of each particle and computes the radial distribution function for the system.</entry>
             </row>
@@ -250,6 +254,8 @@
   <xi:include href="particles/atomic_strain.docbook"/>
 
   <xi:include href="particles/bin_and_reduce.docbook"/>
+
+  <xi:include href="particles/chill_plus.docbook"/>
   
   <xi:include href="particles/bond_angle_analysis.docbook"/>
 
