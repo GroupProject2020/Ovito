@@ -38,6 +38,7 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 		modifier/modify/UnwrapTrajectoriesModifierEditor.cpp
 		modifier/analysis/StructureListParameterUI.cpp
 		modifier/analysis/ackland_jones/AcklandJonesModifierEditor.cpp
+		modifier/analysis/chill_plus/ChillPlusModifierEditor.cpp
 		modifier/analysis/cna/CommonNeighborAnalysisModifierEditor.cpp
 		modifier/analysis/coordination/CoordinationAnalysisModifierEditor.cpp
 		modifier/analysis/displacements/CalculateDisplacementsModifierEditor.cpp

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="particles.modifiers.chill_plus"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Chill+</title>
+
+  <para>
+  This modifier classifies the local structure of particles
+  using the <emphasis>Chill+</emphasis> algorithm, which allows identification of hexagonal ice, cubic ice and gas hydrates.
+  This structure identification method has been described in <blockquote><para><literallayout><link xlink:href="https://doi.org/10.1021/jp510289t">Andrew H. Nguyen and Valeria Molinero
+Identification of Clathrate Hydrates, Hexagonal Ice, Cubic Ice, and Liquid Water in Simulations: the CHILL+ Algorithm
+The Journal of Physical Chemistry B 2015 119 (29), 9369-9376 
+doi: 10.1021/jp510289t 
+</link></literallayout></para></blockquote>Please cite this paper when you use this structure identification algorithm in your work.</para>
+
+  <para>
+      This algorithm classifies particles based on their local environment. Solid water phases usually have 4-coordinated water molecules, so sonsidering two neighboring water molecules (O–O distance less than 3.5 Å), we may define a cluster of 8 molecules by these two molecules and their neighbors. If one look at these molecules along the axis of the bond between them, they can be characterized by wheter all the six particles spreading out from this bond ar visible (staggered bond), or whether the neighbors of the closes molecule blocks the view of the neigbors of the farthest molecule (eclipsed bond). It does so by taking the correlation of the local ten-Wolde bond order parameter q<subscript>3m</subscript> between the pair of atoms. Precisely, the structure is determined by whether the correlation is between 0.25 and -0.35 (eclipsed) or less than -0.8 (staggered). An atom in bulk has four bonds that are either eclipsed or staggered, and the structure is determined based on how many it has of each, by the criteria below. 
+  <itemizedlist>
+    <listitem>Hexagonal ice: 4 bonds, of which 1 eclipsed and 3 staggered.</listitem>
+    <listitem>Cubic ice: 4 bonds, of which 4 staggered.</listitem>
+    <listitem>Interfacial ice: 4 bonds of which 2 or 3 staggered. (Hexagonal takes preference if 3 staggered and 1 eclipsed)</listitem>
+    <listitem>Gas hydrate: 4 bonds of which 4 eclipsed.</listitem>
+    <listitem>Interfacial gas hydrate: 4 bonds of which 3 eclipsed.</listitem>
+  </itemizedlist>    
+  The rest is classified as "other". 
+  </para>
+
+  <para>
+  The modifier sets the <literal>Structure Type</literal> property for each particle, which is encoded as an integer value:
+  <itemizedlist>
+    <listitem>0 = Other, unknown coordination structure</listitem>
+    <listitem>1 = HEXAGONAL_ICE, Hexagonal ice</listitem>
+    <listitem>2 = CUBIC_ICE, Cubic ice</listitem>
+    <listitem>3 = INTERFACIAL_ICE, Interfacial ice</listitem>
+    <listitem>4 = HYDRATE, Gas hydrate</listitem>
+    <listitem>5 = INTERFACIAL_HYDRATE, Interfacial gas hydrate</listitem>
+  </itemizedlist>
+  </para>
+
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
+
+  <simplesect>
+  <title>Notes</title>
+  <para>
+    Hexagonal ice may also be identified using the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier.
+  </para>
+
+  <para>
+    Note that this modifier requires to work on the oxygen atoms only (or water molecules in coarse grained simulations). This can be done either by deleting all other particles, or by selection the oxygen atoms and use the <emphasis>Use only selected particles</emphasis> option. 
+  </para>
+  </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.ChillPlusModifier"><classname>ChillPlusModifier</classname> (Python API)</pydoc-link>
+    </para>
+  </simplesect>
+
+</section>
+
