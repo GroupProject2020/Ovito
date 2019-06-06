@@ -38,23 +38,24 @@ SET_OVITO_OBJECT_EDITOR(ChillPlusModifier, ChillPlusModifierEditor);
 void ChillPlusModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Chill+ analysis"), rolloutParams, "particles.modifiers.chill_plus_analysis.html");
+	QWidget* rollout = createRollout(tr("Chill+"), rolloutParams, "particles.modifiers.chill_plus.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout1 = new QVBoxLayout(rollout);
 	layout1->setContentsMargins(4,4,4,4);
 	layout1->setSpacing(4);
 
-	// Use only selected particles.
-	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::onlySelectedParticles));
-	layout1->addWidget(onlySelectedParticlesUI->checkBox());
-
     QGridLayout* gridlayout = new QGridLayout();
-    // cutoff
+
+    // Cutoff
     FloatParameterUI* cutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(ChillPlusModifier::cutoff));
     gridlayout->addWidget(cutoffRadiusPUI->label(), 0, 0);
 	gridlayout->addLayout(cutoffRadiusPUI->createFieldLayout(), 0, 1);
     layout1->addLayout(gridlayout);
+
+	// Use only selected particles.
+	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::onlySelectedParticles));
+	layout1->addWidget(onlySelectedParticlesUI->checkBox());
 
 	// Color by type
 	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));

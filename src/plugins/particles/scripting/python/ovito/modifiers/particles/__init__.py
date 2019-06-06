@@ -11,7 +11,8 @@ from ovito.plugins.ParticlesPython import (
         CommonNeighborAnalysisModifier, AcklandJonesModifier, CreateBondsModifier, CentroSymmetryModifier, ClusterAnalysisModifier,
         CoordinationAnalysisModifier, CalculateDisplacementsModifier, AtomicStrainModifier, WignerSeitzAnalysisModifier,
         VoronoiAnalysisModifier, IdentifyDiamondModifier, LoadTrajectoryModifier, PolyhedralTemplateMatchingModifier,
-        CoordinationPolyhedraModifier, InterpolateTrajectoryModifier, GenerateTrajectoryLinesModifier, UnwrapTrajectoriesModifier)
+        CoordinationPolyhedraModifier, InterpolateTrajectoryModifier, GenerateTrajectoryLinesModifier, UnwrapTrajectoriesModifier,
+        ChillPlusModifier)
 
 # Load submodules.
 from .compute_property_modifier import ComputePropertyModifier
@@ -38,28 +39,30 @@ ovito.modifiers.CoordinationPolyhedraModifier = CoordinationPolyhedraModifier
 ovito.modifiers.InterpolateTrajectoryModifier = InterpolateTrajectoryModifier
 ovito.modifiers.GenerateTrajectoryLinesModifier = GenerateTrajectoryLinesModifier
 ovito.modifiers.UnwrapTrajectoriesModifier = UnwrapTrajectoriesModifier
+ovito.modifiers.ChillPlusModifier = ChillPlusModifier
 ovito.modifiers.__all__ += [
-            'AmbientOcclusionModifier', 
+            'AmbientOcclusionModifier',
             'WrapPeriodicImagesModifier',
             'ExpandSelectionModifier',
-            'StructureIdentificationModifier', 
-            'CommonNeighborAnalysisModifier', 
+            'StructureIdentificationModifier',
+            'CommonNeighborAnalysisModifier',
             'AcklandJonesModifier',
-            'CreateBondsModifier', 
-            'CentroSymmetryModifier', 
-            'ClusterAnalysisModifier', 
+            'CreateBondsModifier',
+            'CentroSymmetryModifier',
+            'ClusterAnalysisModifier',
             'CoordinationAnalysisModifier',
-            'CalculateDisplacementsModifier', 
+            'CalculateDisplacementsModifier',
             'AtomicStrainModifier',
-            'WignerSeitzAnalysisModifier', 
-            'VoronoiAnalysisModifier', 
-            'IdentifyDiamondModifier', 
+            'WignerSeitzAnalysisModifier',
+            'VoronoiAnalysisModifier',
+            'IdentifyDiamondModifier',
             'LoadTrajectoryModifier',
             'PolyhedralTemplateMatchingModifier',
-            'CoordinationPolyhedraModifier', 
-            'InterpolateTrajectoryModifier', 
+            'CoordinationPolyhedraModifier',
+            'InterpolateTrajectoryModifier',
             'GenerateTrajectoryLinesModifier',
-            'UnwrapTrajectoriesModifier']
+            'UnwrapTrajectoriesModifier',
+            'ChillPlusModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 ovito.modifiers.CoordinationNumberModifier = CoordinationAnalysisModifier

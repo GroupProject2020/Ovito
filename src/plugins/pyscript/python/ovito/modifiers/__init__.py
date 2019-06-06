@@ -23,6 +23,7 @@ Python class name                              User interface name
 :py:class:`AtomicStrainModifier`               :guilabel:`Atomic strain`
 :py:class:`CalculateDisplacementsModifier`     :guilabel:`Displacement vectors`
 :py:class:`CentroSymmetryModifier`             :guilabel:`Centrosymmetry parameter`
+:py:class:`ChillPlusModifier`                  :guilabel:`Chill+`
 :py:class:`ClearSelectionModifier`             :guilabel:`Clear selection`
 :py:class:`ClusterAnalysisModifier`            :guilabel:`Cluster analysis`
 :py:class:`ColorCodingModifier`                :guilabel:`Color coding`

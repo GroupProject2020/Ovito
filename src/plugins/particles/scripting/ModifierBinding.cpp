@@ -44,6 +44,7 @@
 #include <plugins/particles/modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.h>
 #include <plugins/particles/modifier/analysis/voronoi/VoronoiAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/diamond/IdentifyDiamondModifier.h>
+#include <plugins/particles/modifier/analysis/chill_plus/ChillPlusModifier.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
@@ -342,6 +343,52 @@ void defineModifiersSubmodule(py::module m)
 		.value("HEX_DIAMOND", IdentifyDiamondModifier::HEX_DIAMOND)
 		.value("HEX_DIAMOND_FIRST_NEIGHBOR", IdentifyDiamondModifier::HEX_DIAMOND_FIRST_NEIGH)
 		.value("HEX_DIAMOND_SECOND_NEIGHBOR", IdentifyDiamondModifier::HEX_DIAMOND_SECOND_NEIGH)
+	;
+
+	auto ChillPlusModifier_py = ovito_class<ChillPlusModifier, StructureIdentificationModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
+			"Runs the CHILL+ algorithm to identify various structural arrangements of water molecules. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.chill_plus>` for this modifier. "
+			"\n\n"
+			"The modifier stores its results as integer values in the ``\"Structure Type\"`` particle property. "
+			"The following constants are defined: "
+			"\n\n"
+			"   * ``ChillPlusModifier.Type.OTHER`` (0)\n"
+			"   * ``ChillPlusModifier.Type.HEXAGONAL_ICE`` (1)\n"
+			"   * ``ChillPlusModifier.Type.CUBIC_ICE`` (2)\n"
+			"   * ``ChillPlusModifier.Type.INTERFACIAL_ICE`` (3)\n"
+			"   * ``ChillPlusModifier.Type.HYDRATE`` (4)\n"
+			"   * ``ChillPlusModifier.Type.INTERFACIAL_HYDRATE`` (5)\n"
+			"\n")
+		.def_property("cutoff", &ChillPlusModifier::cutoff, &ChillPlusModifier::setCutoff,
+				"The cutoff range for bonds between water molecules. "
+				"\n\n"
+				":Default: 3.5\n")
+		.def_property("only_selected", &ChillPlusModifier::onlySelectedParticles, &ChillPlusModifier::setOnlySelectedParticles,
+				"Lets the modifier perform the analysis only on currently selected particles. Particles that are not selected will be treated as if they did not exist."
+				"\n\n"
+				":Default: ``False``\n")
+		.def_property("color_by_type", &ChillPlusModifier::colorByType, &ChillPlusModifier::setColorByType,
+				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
+				"\n\n"
+				":Default: ``True``\n")
+	;
+	expose_subobject_list(ChillPlusModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "ChillPlusModifierStructureTypeList",
+		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each supported structure type. "
+		"The display color of a structure type can be changed as follows:: "
+		"\n\n"
+		"   modifier = ChillPlusModifier()\n"
+		"   # Give all hexagonal ice particles a blue color:\n"
+		"   modifier.structures[ChillPlusModifier.Type.HEXAGONAL_ICE].color = (0.0, 0.0, 1.0)\n"
+		"\n\n.\n");
+
+	py::enum_<ChillPlusModifier::StructureType>(ChillPlusModifier_py, "Type")
+		.value("OTHER", ChillPlusModifier::OTHER)
+		.value("HEXAGONAL_ICE", ChillPlusModifier::HEXAGONAL_ICE)
+		.value("CUBIC_ICE", ChillPlusModifier::CUBIC_ICE)
+		.value("INTERFACIAL_ICE", ChillPlusModifier::INTERFACIAL_ICE)
+		.value("HYDRATE", ChillPlusModifier::HYDRATE)
+		.value("INTERFACIAL_HYDRATE", ChillPlusModifier::INTERFACIAL_HYDRATE)
 	;
 
 	auto CreateBondsModifier_py = ovito_class<CreateBondsModifier, AsynchronousModifier>(m,

@@ -10,10 +10,10 @@
   <title>Modifiers</title>
 
   <para>
-  
+
   Modifiers are the basic building blocks that you use to create <link
-  linkend="usage.modification_pipeline">data pipelines</link> in OVITO. 
-  Each type of modifier fulfills a specific function and often they are 
+  linkend="usage.modification_pipeline">data pipelines</link> in OVITO.
+  Each type of modifier fulfills a specific function and often they are
   combined in sequences to accomplish certain data analysis and visualization
   tasks.
 
@@ -29,8 +29,8 @@
           </thead>
 
           <tbody>
-          
-		<!-- ANALYSIS -->          
+
+		<!-- ANALYSIS -->
             <row>
               <entry namest="name" nameend="descr" align="center" role="subth">Analysis</entry>
             </row>
@@ -49,7 +49,7 @@
             <row>
               <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation&#xA0;analysis&#xA0;(DXA)</link></entry>
               <entry>Identifies dislocation defects in a crystal.</entry>
-            </row>          
+            </row>
             <row>
               <entry><link linkend="particles.modifiers.displacement_vectors">Displacement&#xA0;vectors</link></entry>
               <entry>Calculates the displacements of particles based on an initial and a deformed configuration.</entry>
@@ -57,10 +57,6 @@
             <row>
               <entry><link linkend="particles.modifiers.cluster_analysis">Cluster&#xA0;analysis</link></entry>
               <entry>Decomposes a particle system into clusters of particles.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.chill_plus">Chill+ structure identification</link></entry>
-              <entry>Determines wheter water molecules are in hexagonal ice, cubic ice, hydrate or other structure. 
             </row>
             <row>
               <entry><link linkend="particles.modifiers.coordination_analysis">Coordination&#xA0;analysis</link></entry>
@@ -186,17 +182,21 @@
               <entry>Selects all elements of a given type.</entry>
             </row>
 
-		<!-- STRUCTURE IDENTIFICATION -->          
+		<!-- STRUCTURE IDENTIFICATION -->
             <row>
-              <entry namest="name" nameend="descr" align="center" role="subth">Analysis</entry>
+              <entry namest="name" nameend="descr" align="center" role="subth">Structure identification</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.bond_angle_analysis">Ackland-Jones&#xA0;analysis</link></entry>
-              <entry>Identification of common crystal structures based on the bond-angle analysis method of Ackland and Jones.</entry>
-            </row>          
+              <entry>Identifies common crystal structures by an analysis of the bond-angle distribution.</entry>
+            </row>
             <row>
               <entry><link linkend="particles.modifiers.centrosymmetry">Centrosymmetry&#xA0;parameter</link></entry>
               <entry>Calculates the centrosymmetry parameter for every particle.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.chill_plus">Chill+</link></entry>
+              <entry>Identifies hexagonal ice, cubic ice, hydrate and other arrangements of water molecules.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.common_neighbor_analysis">Common&#xA0;neighbor&#xA0;analysis</link></entry>
@@ -222,7 +222,7 @@
             <row>
               <entry><link linkend="particles.modifiers.construct_surface_mesh">Construct&#xA0;surface&#xA0;mesh</link></entry>
               <entry>Constructs a triangle mesh representing the surface of a solid.</entry>
-            </row>          
+            </row>
             <row>
               <entry><link linkend="particles.modifiers.create_bonds">Create&#xA0;bonds</link></entry>
               <entry>Creates bonds between particles.</entry>
@@ -256,7 +256,7 @@
   <xi:include href="particles/bin_and_reduce.docbook"/>
 
   <xi:include href="particles/chill_plus.docbook"/>
-  
+
   <xi:include href="particles/bond_angle_analysis.docbook"/>
 
   <xi:include href="particles/centrosymmetry.docbook"/>
@@ -264,7 +264,7 @@
   <xi:include href="particles/clear_selection.docbook"/>
 
   <xi:include href="particles/cluster_analysis.docbook"/>
-  
+
   <xi:include href="particles/color_coding.docbook"/>
 
   <xi:include href="particles/combine_particle_sets.docbook"/>
@@ -302,7 +302,7 @@
   <xi:include href="particles/generate_trajectory_lines.docbook"/>
 
   <xi:include href="particles/histogram.docbook"/>
-  
+
   <xi:include href="particles/identify_diamond.docbook"/>
 
   <xi:include href="particles/interpolate_trajectory.docbook"/>
@@ -334,5 +334,5 @@
   <xi:include href="particles/wigner_seitz_analysis.docbook"/>
 
   <xi:include href="particles/wrap_at_periodic_boundaries.docbook"/>
-  
+
 </section>
