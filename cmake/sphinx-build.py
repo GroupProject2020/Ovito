@@ -2,5 +2,10 @@
 import sys
 
 if __name__ == '__main__':
-    from sphinx.cmd.build import main
+
+    try:
+        from sphinx.cmd.build import main
+    except ImportError: # Fallback for older Sphinx versions:
+        from sphinx import main
+
     sys.exit(main())
