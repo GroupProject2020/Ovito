@@ -98,8 +98,8 @@ public:
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const PropertyPtr& modifiableStorage();
 
-	/// Extends the data array and replicates the old data N times.
-	void replicate(size_t n);
+	/// Extends the data array and replicates the existing data N times.
+	void replicate(size_t n, bool replicateValues = true);
 
 	/// Reduces the size of the storage array, removing elements for which
 	/// the corresponding bits in the bit array are set.

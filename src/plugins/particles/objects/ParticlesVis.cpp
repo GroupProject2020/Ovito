@@ -59,6 +59,7 @@ Box3 ParticlesVis::boundingBox(TimePoint time, const std::vector<const DataObjec
 {
 	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack.back());
 	if(!particles) return {};
+	particles->verifyIntegrity();
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
 	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
@@ -426,6 +427,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	// Get input data.
 	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack.back());
 	if(!particles) return;
+	particles->verifyIntegrity();
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
 	const PropertyObject* colorProperty = particles->getProperty(ParticlesObject::ColorProperty);

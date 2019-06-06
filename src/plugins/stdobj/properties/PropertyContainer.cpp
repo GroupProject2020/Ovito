@@ -309,7 +309,7 @@ void PropertyContainer::setContent(size_t newElementCount, const std::vector<Pro
 * Duplicates all data elements by extensing the property arrays and
 * replicating the existing data N times.
 ******************************************************************************/
-void PropertyContainer::replicate(size_t n)
+void PropertyContainer::replicate(size_t n, bool replicatePropertyValues)
 {
 	OVITO_ASSERT(n >= 1);
 	if(n <= 1) return;
@@ -322,9 +322,23 @@ void PropertyContainer::replicate(size_t n)
     makePropertiesMutable();
 
 	for(PropertyObject* property : properties())
-		property->replicate(n);
+		property->replicate(n, replicatePropertyValues);
 
 	setElementCount(newCount);
+}
+
+/******************************************************************************
+* Makes sure that all property arrays in this container have a consistent length.
+* If this is not the case, the method throws an exception.
+******************************************************************************/
+void PropertyContainer::verifyIntegrity() const
+{
+	size_t c = elementCount();
+	for(const PropertyObject* property : properties()) {
+		if(property->size() != c) {
+			throwException(tr("Property array '%1' has wrong length. It does not match the number of elements in the parent %2 container.").arg(property->name()).arg(getOOMetaClass().propertyClassDisplayName()));
+		}
+	}
 }
 
 }	// End of namespace

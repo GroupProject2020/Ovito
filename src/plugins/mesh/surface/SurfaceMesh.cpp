@@ -85,6 +85,10 @@ void SurfaceMesh::verifyMeshIntegrity() const
 
 	if(spaceFillingRegion() < 0)
 		throwException(tr("Space filling region ID set for surface mesh must not be negative."));
+
+	vertices()->verifyIntegrity();
+	faces()->verifyIntegrity();
+	regions()->verifyIntegrity();
 }
 
 /******************************************************************************

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2013) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -122,12 +122,12 @@ bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
 				if(!operation.waitForFuture(pipelineStateFuture))
 					return false;
 
-				// After the rendering process has been temporarily interrupted above, rendering is resumed now. 
+				// After the rendering process has been temporarily interrupted above, rendering is resumed now.
 				// Give the renderer the opportunity to restore any state that must be active (e.g. the active OpenGL context).
 				resumeRendering();
 			}
-			const PipelineFlowState& state = pipelineStateFuture.isValid() ? 
-												pipelineStateFuture.result() : 
+			const PipelineFlowState& state = pipelineStateFuture.isValid() ?
+												pipelineStateFuture.result() :
 												pipeline->evaluatePipelinePreliminary(true);
 
 			// Invoke all vis elements of all data objects in the pipeline state.
@@ -169,8 +169,13 @@ void SceneRenderer::renderDataObject(const DataObject* dataObj, const PipelineSc
 				objectStack.push_back(dataObj);
 				isOnStack = true;
 			}
-			// Let the vis element do the rendering.
-			vis->render(time(), objectStack, state, this, pipeline);
+			try {
+				// Let the vis element do the rendering.
+				vis->render(time(), objectStack, state, this, pipeline);
+			}
+			catch(const Exception& ex) {
+				ex.logError();
+			}
 		}
 	}
 

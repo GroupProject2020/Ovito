@@ -130,8 +130,12 @@ public:
 	/// Replaces the property arrays in this property container with a new set of properties.
 	void setContent(size_t newElementCount, const std::vector<PropertyPtr>& newProperties);
 
-	/// Duplicates all data elements by extensing the property arrays and replicating the existing data N times.
-	void replicate(size_t n);
+	/// Duplicates all data elements by extending the property arrays and replicating the existing data N times.
+	void replicate(size_t n, bool replicatePropertyValues = true);
+
+	/// Makes sure that all property arrays in this container have a consistent length.
+	/// If this is not the case, the method throws an exception.
+	void verifyIntegrity() const;
 
 private:
 

@@ -114,15 +114,22 @@ void PropertyObject::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Extends the data array and replicates the old data N times.
 ******************************************************************************/
-void PropertyObject::replicate(size_t n)
+void PropertyObject::replicate(size_t n, bool replicateValues)
 {
 	OVITO_ASSERT(n >= 1);
 	if(n <= 1) return;
 	ConstPropertyPtr oldData = storage();
 	resize(oldData->size() * n, false);
-	size_t chunkSize = stride() * oldData->size();
-	for(size_t i = 0; i < n; i++) {
-		std::memcpy((char*)data() + i * chunkSize, oldData->constData(), chunkSize);
+	if(replicateValues) {
+		// Replicate data values N times.
+		size_t chunkSize = stride() * oldData->size();
+		for(size_t i = 0; i < n; i++) {
+			std::memcpy((char*)data() + i * chunkSize, oldData->constData(), chunkSize);
+		}
+	}
+	else {
+		// Copy just one replica of the data from the old memory buffer to the new one.
+		std::memcpy((char*)data(), oldData->constData(), stride() * oldData->size());
 	}
 }
 

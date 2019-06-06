@@ -46,7 +46,7 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 	const ParticlesObject* inputParticles = state.getObject<ParticlesObject>();
-	
+
 	std::array<int,3> nPBC;
 	nPBC[0] = std::max(mod->numImagesX(),1);
 	nPBC[1] = std::max(mod->numImagesY(),1);
@@ -63,14 +63,14 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 	const AffineTransformation& simCell = state.expectObject<SimulationCellObject>()->cellMatrix();
 
-	// Ensure that the particles can be modified. 
+	// Ensure that the particles can be modified.
 	ParticlesObject* outputParticles = state.makeMutable(inputParticles);
-	outputParticles->makePropertiesMutable();
+	outputParticles->replicate(numCopies);
 
 	// Replicate particle property values.
 	Box3I newImages = mod->replicaRange();
 	for(PropertyObject* property : outputParticles->properties()) {
-		property->replicate(numCopies);
+		OVITO_ASSERT(property->size() == newParticleCount);
 
 		// Shift particle positions by the periodicity vector.
 		if(property->type() == ParticlesObject::PositionProperty) {
@@ -116,17 +116,18 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 			// Replicate bond property values.
 			outputParticles->makeBondsMutable();
 			outputParticles->bonds()->makePropertiesMutable();
+			outputParticles->bonds()->replicate(numCopies);
 			for(PropertyObject* property : outputParticles->bonds()->properties()) {
-				ConstPropertyPtr oldData = property->storage();
-				property->resize(newBondCount, false);
+				OVITO_ASSERT(property->size() == newBondCount);
 
 				size_t destinationIndex = 0;
 				Point3I image;
-				for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
-					for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
-						for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
-							if(property->type() == BondsObject::TopologyProperty) {
-								// Special handling for the topology property.
+
+				// Special handling for the topology property.
+				if(property->type() == BondsObject::TopologyProperty) {
+					for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
+						for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
+							for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
 								for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
 									Point3I newImage;
 									for(size_t dim = 0; dim < 3; dim++) {
@@ -142,15 +143,21 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 									size_t imageIndex2 =   ((newImage.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
 														+ ((newImage.y()-newImages.minc.y()) * nPBC[2])
 														+  (newImage.z()-newImages.minc.z());
-									property->setInt64Component(destinationIndex, 0, oldData->getInt64Component(bindex, 0) + imageIndex1 * oldParticleCount);
-									property->setInt64Component(destinationIndex, 1, oldData->getInt64Component(bindex, 1) + imageIndex2 * oldParticleCount);
+									property->setInt64Component(destinationIndex, 0, property->getInt64Component(destinationIndex, 0) + imageIndex1 * oldParticleCount);
+									property->setInt64Component(destinationIndex, 1, property->getInt64Component(destinationIndex, 1) + imageIndex2 * oldParticleCount);
 									OVITO_ASSERT(property->getInt64Component(destinationIndex, 0) < newParticleCount);
 									OVITO_ASSERT(property->getInt64Component(destinationIndex, 1) < newParticleCount);
 								}
 							}
-							else if(property->type() == BondsObject::PeriodicImageProperty) {
-								OVITO_ASSERT(oldPeriodicImages);
-								// Special handling for the PBC shift vector property.
+						}
+					}
+				}
+				else if(property->type() == BondsObject::PeriodicImageProperty) {
+					// Special handling for the PBC shift vector property.
+					OVITO_ASSERT(oldPeriodicImages);
+					for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
+						for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
+							for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
 								for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
 									Vector3I newShift;
 									for(size_t dim = 0; dim < 3; dim++) {
@@ -161,12 +168,6 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 									}
 									property->setVector3I(destinationIndex, newShift);
 								}
-							}
-							else {
-								// Simply duplicate data for other properties.
-								memcpy((char*)property->data() + (destinationIndex * property->stride()),
-										oldData->constData(), property->stride() * oldBondCount);
-								destinationIndex += oldBondCount;
 							}
 						}
 					}
