@@ -35,7 +35,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class OVITO_PARTICLES_EXPORT UnwrapTrajectoriesModifier : public Modifier
 {
 	/// Give this modifier class its own metaclass.
-	class UnwrapTrajectoriesModifierClass : public ModifierClass 
+	class UnwrapTrajectoriesModifierClass : public ModifierClass
 	{
 	public:
 
@@ -86,7 +86,10 @@ public:
 	/// Data structure holding the precomputed information that is needed to unwrap the particle trajectories.
 	/// For each crossing of a particle through a periodic cell boundary, the map contains one entry specifying
 	/// the particle's unique ID, the time of the crossing, the spatial dimension and the direction (positive or negative).
-	using UnwrapData = std::unordered_multimap<qlonglong, std::tuple<TimePoint, qint8, qint16>>; 
+	using UnwrapData = std::unordered_multimap<qlonglong, std::tuple<TimePoint, qint8, qint16>>;
+
+	/// Data structure holding the precomputed information that is needed to undo flipping of sheared simulation cells in LAMMPS.
+	using UnflipData = std::vector<std::pair<TimePoint, std::array<int,3>>>;
 
 	/// Constructor.
 	Q_INVOKABLE UnwrapTrajectoriesModifierApplication(DataSet* dataset) : ModifierApplication(dataset), _unwrappedUpToTime(TimeNegativeInfinity()) {}
@@ -101,11 +104,14 @@ protected:
 
 private:
 
-	/// Indicates the animation time up to which trajectories have been unwrapped already. 
+	/// Indicates the animation time up to which trajectories have been unwrapped already.
 	DECLARE_RUNTIME_PROPERTY_FIELD(TimePoint, unwrappedUpToTime, setUnwrappedUpToTime);
 
 	/// The list of particle crossings through periodic cell boundaries.
 	DECLARE_RUNTIME_PROPERTY_FIELD(UnwrapData, unwrapRecords, setUnwrapRecords);
+
+	/// The list of detected cell flips.
+	DECLARE_RUNTIME_PROPERTY_FIELD(UnflipData, unflipRecords, setUnflipRecords);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -34,6 +34,7 @@ IMPLEMENT_OVITO_CLASS(UnwrapTrajectoriesModifier);
 IMPLEMENT_OVITO_CLASS(UnwrapTrajectoriesModifierApplication);
 DEFINE_PROPERTY_FIELD(UnwrapTrajectoriesModifierApplication, unwrappedUpToTime);
 DEFINE_PROPERTY_FIELD(UnwrapTrajectoriesModifierApplication, unwrapRecords);
+DEFINE_PROPERTY_FIELD(UnwrapTrajectoriesModifierApplication, unflipRecords);
 SET_MODIFIER_APPLICATION_TYPE(UnwrapTrajectoriesModifier, UnwrapTrajectoriesModifierApplication);
 
 /******************************************************************************
@@ -91,6 +92,22 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 		else
 			throwException(tr("Particle crossings of periodic cell boundaries have not been determined yet. Cannot unwrap trajectories. Did you forget to call UnwrapTrajectoriesModifier.update()?"));
 		return;
+	}
+
+	// Reverse any cell shear flips made by LAMMPS.
+	const UnwrapTrajectoriesModifierApplication::UnflipData& unflipRecords = myModApp->unflipRecords();
+	if(!unflipRecords.empty() && time >= unflipRecords.front().first) {
+		auto iter = unflipRecords.rbegin();
+		while(iter->first > time) {
+			++iter;
+			OVITO_ASSERT(iter != unflipRecords.rend());
+		}
+		const std::array<int,3>& flipState = iter->second;
+		SimulationCellObject* simCellObj = state.expectMutableObject<SimulationCellObject>();
+		AffineTransformation cell = simCellObj->cellMatrix();
+		cell.column(2) += cell.column(0) * flipState[1] + cell.column(1) * flipState[2];
+		cell.column(1) += cell.column(0) * flipState[0];
+		simCellObj->setCellMatrix(cell);
 	}
 
 	const UnwrapTrajectoriesModifierApplication::UnwrapData& unwrapRecords = myModApp->unwrapRecords();
@@ -172,7 +189,10 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 		TimeInterval interval = dataset()->animationSettings()->animationInterval();
 		operation.setProgressMaximum(dataset()->animationSettings()->lastFrame() - dataset()->animationSettings()->firstFrame() + 1);
 		std::unordered_map<qlonglong,Point3> previousPositions;
+		SimulationCell previousCell;
 		UnwrapTrajectoriesModifierApplication::UnwrapData unwrapRecords;
+		UnwrapTrajectoriesModifierApplication::UnflipData unflipRecords;
+		std::array<int,3> currentFlipState{{0,0,0}};
 		for(TimePoint time = interval.start(); time <= interval.end(); time += dataset()->animationSettings()->ticksPerFrame()) {
 			operation.setProgressText(tr("Unwrapping particle trajectories (frame %1 of %2)").arg(operation.progressValue()+1).arg(operation.progressMaximum()));
 
@@ -184,7 +204,7 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 			const SimulationCellObject* simCellObj = state.getObject<SimulationCellObject>();
 			if(!simCellObj)
 				throwException(tr("Input data contains no simulation cell information at frame %1.").arg(dataset()->animationSettings()->timeToFrame(time)));
-			const SimulationCell cell = simCellObj->data();
+			SimulationCell cell = simCellObj->data();
 			if(!cell.pbcFlags()[0] && !cell.pbcFlags()[1] && !cell.pbcFlags()[2])
 				throwException(tr("No periodic boundary conditions set for the simulation cell."));
 			const ParticlesObject* particles = state.getObject<ParticlesObject>();
@@ -195,6 +215,45 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 			if(identifierProperty && identifierProperty->size() != posProperty->size())
 				identifierProperty = nullptr;
 
+			// Special handling of cell flips in LAMMPS, which occur whenever a tilt factor exceeds +/-50%.
+			if(cell.matrix()(1,0) == 0 && cell.matrix()(2,0) == 0 && cell.matrix()(2,1) == 0 && cell.matrix()(0,0) > 0 && cell.matrix()(1,1) > 0) {
+				if(previousCell.matrix() != AffineTransformation::Zero()) {
+					std::array<int,3> flipState = currentFlipState;
+					// Detect discontinuities in the three tilt factors of the cell.
+					if(cell.pbcFlags()[0]) {
+						FloatType xy1 = previousCell.matrix()(0,1) / previousCell.matrix()(0,0);
+						FloatType xy2 = cell.matrix()(0,1) / cell.matrix()(0,0);
+						if(int flip_xy = (int)std::round(xy2 - xy1))
+							flipState[0] -= flip_xy;
+						if(!cell.is2D()) {
+							FloatType xz1 = previousCell.matrix()(0,2) / previousCell.matrix()(0,0);
+							FloatType xz2 = cell.matrix()(0,2) / cell.matrix()(0,0);
+							if(int flip_xz = (int)std::round(xz2 - xz1))
+								flipState[1] -= flip_xz;
+						}
+					}
+					if(cell.pbcFlags()[1] && !cell.is2D()) {
+						FloatType yz1 = previousCell.matrix()(1,2) / previousCell.matrix()(1,1);
+						FloatType yz2 = cell.matrix()(1,2) / cell.matrix()(1,1);
+						if(int flip_yz = (int)std::round(yz2 - yz1))
+							flipState[2] -= flip_yz;
+					}
+					// Emit a timeline record whever a flipping occurred.
+					if(flipState != currentFlipState)
+						unflipRecords.emplace_back(time, flipState);
+					currentFlipState = flipState;
+				}
+				previousCell = cell;
+				// Unflip current simulation cell.
+				if(currentFlipState != std::array<int,3>{{0,0,0}}) {
+					AffineTransformation newCellMatrix = cell.matrix();
+					newCellMatrix(0,1) += cell.matrix()(0,0) * currentFlipState[0];
+					newCellMatrix(0,2) += cell.matrix()(0,0) * currentFlipState[1];
+					newCellMatrix(1,2) += cell.matrix()(1,1) * currentFlipState[2];
+					cell.setMatrix(newCellMatrix);
+				}
+			}
+
 			qlonglong index = 0;
 			for(const Point3& p : posProperty->constPoint3Range()) {
 				Point3 rp = cell.absoluteToReduced(p);
@@ -203,9 +262,10 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 				// test if the particle has crossed a periodic cell boundary.
 				auto result = previousPositions.insert(std::make_pair(identifierProperty ? identifierProperty->getInt64(index) : index, rp));
 				if(!result.second) {
+					Vector3 delta = result.first->second - rp;
 					for(size_t dim = 0; dim < 3; dim++) {
 						if(cell.pbcFlags()[dim]) {
-							int shift = (int)std::round(result.first->second[dim] - rp[dim]);
+							int shift = (int)std::round(delta[dim]);
 							if(shift != 0) {
 								// Create a new record when particle has crossed a periodic cell boundary.
 								unwrapRecords.emplace(result.first->first, std::make_tuple(time, (qint8)dim, (qint16)shift));
@@ -222,6 +282,7 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 				return false;
 		}
 		myModApp->setUnwrapRecords(std::move(unwrapRecords));
+		myModApp->setUnflipRecords(std::move(unflipRecords));
 		myModApp->setUnwrappedUpToTime(interval.end());
 	}
 	return true;
@@ -236,10 +297,17 @@ void UnwrapTrajectoriesModifierApplication::saveToStream(ObjectSaveStream& strea
 	stream.beginChunk(0x02);
 	stream << unwrappedUpToTime();
 	stream.endChunk();
-	stream.beginChunk(0x01);
+	stream.beginChunk(0x02);
 	stream.writeSizeT(unwrapRecords().size());
 	for(const auto& item : unwrapRecords()) {
 		OVITO_STATIC_ASSERT((std::is_same<qlonglong, qint64>::value));
+		stream << item.first;
+		stream << std::get<0>(item.second);
+		stream << std::get<1>(item.second);
+		stream << std::get<2>(item.second);
+	}
+	stream.writeSizeT(unflipRecords().size());
+	for(const auto& item : unflipRecords()) {
 		stream << item.first;
 		stream << std::get<0>(item.second);
 		stream << std::get<1>(item.second);
@@ -257,7 +325,7 @@ void UnwrapTrajectoriesModifierApplication::loadFromStream(ObjectLoadStream& str
 	stream.expectChunk(0x02);
 	stream >> _unwrappedUpToTime.mutableValue();
 	stream.closeChunk();
-	stream.expectChunk(0x01);
+	int version = stream.expectChunkRange(0x01, 1);
 	size_t numItems;
 	stream.readSizeT(numItems);
 	for(size_t i = 0; i < numItems; i++) {
@@ -267,6 +335,14 @@ void UnwrapTrajectoriesModifierApplication::loadFromStream(ObjectLoadStream& str
 		std::tuple_element_t<2, UnwrapData::mapped_type> direction;
 		stream >> particleId >> time >> dim >> direction;
 		_unwrapRecords.mutableValue().emplace(particleId, std::make_tuple(time, dim, direction));
+	}
+	if(version >= 1) {
+		stream.readSizeT(numItems);
+		for(size_t i = 0; i < numItems; i++) {
+			UnflipData::value_type item;
+			stream >> item.first >> item.second[0] >> item.second[1] >> item.second[2];
+			_unflipRecords.mutableValue().push_back(item);
+		}
 	}
 	stream.closeChunk();
 }

@@ -75,7 +75,7 @@
 		<entry>Required to build the <link linkend="rendering.ospray_renderer">OSPRay renderer</link> plugin. </entry></row>
 	</tbody></tgroup>
 	</informaltable>
-    The sources of the following third-party libraries are included with the OVITO distribution
+    The sources of the following third-party libraries are included in the OVITO source distribution
 	and will be automatically built and used if not present on the local system:
 	<informaltable>
     <tgroup cols="2"><thead><row><entry>Library</entry><entry>Notes</entry></row></thead>
@@ -86,7 +86,7 @@
 		<entry>A math expression parser library.</entry></row>
 		<row><entry><link xlink:href="http://sourceforge.net/projects/qwt/">Qwt</link></entry>
 		<entry>For plotting and data visualization.</entry></row>
-		<row><entry><link xlink:href="http://jedi.ks.uiuc.edu/~johns/raytracer/">Tachyon</link></entry>
+		<row><entry><link xlink:href="https://en.wikipedia.org/wiki/Tachyon_(software)">Tachyon</link></entry>
 		<entry>Required to build the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link> plugin.</entry></row>
 		<row><entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link></entry>
 		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier.</entry></row>

@@ -23,7 +23,7 @@
       <listitem><para><link xlink:href="https://www.python.org">Python</link> (PSF license)</para></listitem>
       <listitem><para><link xlink:href="http://alice.loria.fr/index.php/software/4-library/75-geogram.html">Geogram library</link> by Bruno Levy, INRIA - ALICE
       (<link linkend="appendix.license.geogram">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://jedi.ks.uiuc.edu/~johns/raytracer/">Tachyon Parallel / Multiprocessor Ray Tracing System</link>
+      <listitem><para><link xlink:href="https://en.wikipedia.org/wiki/Tachyon_(software)">Tachyon Parallel / Multiprocessor Ray Tracing System</link>
       by John E. Stone (<link linkend="appendix.license.tachyon">license</link>).</para></listitem>
       <listitem><para><link xlink:href="http://beltoforion.de/article.php?a=muparser">muParser</link>
       by Ingo Berg (<link linkend="appendix.license.muparser">license</link>).</para></listitem>
