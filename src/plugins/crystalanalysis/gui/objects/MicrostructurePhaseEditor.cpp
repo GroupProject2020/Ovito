@@ -62,12 +62,38 @@ void MicrostructurePhaseEditor::createUI(const RolloutInsertionParameters& rollo
 					if(index.column() == 0)
 						return (QColor)static_object_cast<BurgersVectorFamily>(target)->color();
 				}
+				else if(role == Qt::CheckStateRole) {
+					if(index.column() == 0)
+						return static_object_cast<BurgersVectorFamily>(target)->enabled() ? Qt::Checked : Qt::Unchecked;
+				}
 			}
-			return QVariant();
+			return {};
+		}
+
+		/// Sets the role data for the item at index to value.
+		virtual bool setItemData(RefTarget* target, const QModelIndex& index, const QVariant& value, int role) override {
+			if(index.column() == 0 && role == Qt::CheckStateRole) {
+				if(ElementType* stype = static_object_cast<ElementType>(objectAtIndex(index.row()))) {
+					bool enabled = (value.toInt() == Qt::Checked);
+					undoableTransaction(tr("Enable/disable type"), [stype, enabled]() {
+						stype->setEnabled(enabled);
+					});
+					return true;
+				}
+			}
+			return RefTargetListParameterUI::setItemData(target, index, value, role);
+		}
+
+		/// Returns the model/view item flags for the given entry.
+		virtual Qt::ItemFlags getItemFlags(RefTarget* target, const QModelIndex& index) override {
+			if(index.column() == 0)
+				return RefTargetListParameterUI::getItemFlags(target, index) | Qt::ItemIsUserCheckable;
+			else
+				return RefTargetListParameterUI::getItemFlags(target, index);
 		}
 
 		/// Returns the number of columns for the table view.
-		virtual int tableColumnCount() override { return 3; }
+		virtual int tableColumnCount() override { return 2; }
 
 		/// Returns the header data under the given role for the given RefTarget.
 		/// This method is part of the data model used by the list widget and can be overridden

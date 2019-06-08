@@ -44,7 +44,7 @@ void BurgersVectorFamilyEditor::createUI(const RolloutInsertionParameters& rollo
 	layout1->setSpacing(4);
 	layout1->setColumnStretch(1, 1);
 
-	// Text box for the name of atom type.
+	// Text box for the name of type.
 	StringParameterUI* namePUI = new StringParameterUI(this, PROPERTY_FIELD(BurgersVectorFamily::name));
 	layout1->addWidget(new QLabel(tr("Name:")), 0, 0);
 	layout1->addWidget(namePUI->textBox(), 0, 1);

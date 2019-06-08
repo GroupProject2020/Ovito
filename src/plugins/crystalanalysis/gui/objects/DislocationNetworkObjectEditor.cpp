@@ -64,7 +64,7 @@ void DislocationNetworkObjectEditor::createUI(const RolloutInsertionParameters& 
 						return (QColor)static_object_cast<MicrostructurePhase>(target)->color();
 				}
 			}
-			return QVariant();
+			return {};
 		}
 
 		/// Returns the number of columns for the table view.

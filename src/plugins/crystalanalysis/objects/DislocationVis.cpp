@@ -90,9 +90,24 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 
 	if(const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(periodicDomainObj)) {
 		// Convert the dislocations object.
-		int16_t segmentIndex = 0;
+		int segmentIndex = 0;
 		for(const DislocationSegment* segment : dislocationsObj->segments()) {
 			const ClusterVector& b = segment->burgersVector;
+			// Determine the Burgers vector family the dislocation segment belongs to.
+			if(const MicrostructurePhase* phase = dislocationsObj->structureById(b.cluster()->structure)) {
+				const BurgersVectorFamily* family = phase->defaultBurgersVectorFamily();
+				for(const BurgersVectorFamily* f : phase->burgersVectorFamilies()) {
+					if(f->isMember(b.localVec(), phase)) {
+						family = f;
+						break;
+					}
+				}
+				// Don't render dislocation segment if the Burgers vector family has been disabled.
+				if(family && !family->enabled()) {
+					segmentIndex++;
+					continue;
+				}
+			}
 			clipDislocationLine(segment->line, cellData, periodicDomainObj->cuttingPlanes(), [segmentIndex, &outputSegments, &b](const Point3& p1, const Point3& p2, bool isInitialSegment) {
 				outputSegments.push_back({ { p1, p2 }, b.localVec(), b.cluster()->id, segmentIndex });
 			});
