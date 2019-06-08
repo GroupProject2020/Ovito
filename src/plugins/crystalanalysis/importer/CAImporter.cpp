@@ -582,7 +582,7 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 			for(int j = pattern->burgersVectorFamilies().size() - 1; j >= _patterns[i].burgersVectorFamilies.size(); j--)
 				pattern->removeBurgersVectorFamily(j);
 			// Make sure there is a default family.
-			if(pattern->burgersVectorFamilies().empty()) {
+			if(pattern->burgersVectorFamilies().empty())
 				pattern->addBurgersVectorFamily(new BurgersVectorFamily(pattern->dataset()));
 		}
 		// Remove excess patterns from the catalog.
