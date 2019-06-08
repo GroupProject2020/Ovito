@@ -566,8 +566,8 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 			// Update Burgers vector families.
 			for(int j = 0; j < _patterns[i].burgersVectorFamilies.size(); j++) {
 				OORef<BurgersVectorFamily> family;
-				if(pattern->burgersVectorFamilies().size() > j+1) {
-					family = pattern->burgersVectorFamilies()[j+1];
+				if(j < pattern->burgersVectorFamilies().size()) {
+					family = pattern->burgersVectorFamilies()[j];
 				}
 				else {
 					family.reset(new BurgersVectorFamily(pattern->dataset()));
@@ -579,8 +579,11 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 				family->setBurgersVector(_patterns[i].burgersVectorFamilies[j].burgersVector);
 			}
 			// Remove excess families.
-			for(int j = pattern->burgersVectorFamilies().size() - 1; j > _patterns[i].burgersVectorFamilies.size(); j--)
+			for(int j = pattern->burgersVectorFamilies().size() - 1; j >= _patterns[i].burgersVectorFamilies.size(); j--)
 				pattern->removeBurgersVectorFamily(j);
+			// Make sure there is a default family.
+			if(pattern->burgersVectorFamilies().empty()) {
+				pattern->addBurgersVectorFamily(new BurgersVectorFamily(pattern->dataset()));
 		}
 		// Remove excess patterns from the catalog.
 		for(int i = dislocationNetwork->crystalStructures().size() - 1; i > _patterns.size(); i--)
