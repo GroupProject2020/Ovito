@@ -177,6 +177,7 @@ void TachyonRendererEditor::createUI(const RolloutInsertionParameters& rolloutPa
 
 	// Focal length picking mode.
 	ViewportInputMode* pickFocalLengthMode = new PickFocalLengthInputMode(this);
+	connect(this, &QObject::destroyed, pickFocalLengthMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* modeAction = new ViewportModeAction(mainWindow(), tr("Pick in viewport"), this, pickFocalLengthMode);
 	layout->addWidget(modeAction->createPushButton(), 0, 2);
 

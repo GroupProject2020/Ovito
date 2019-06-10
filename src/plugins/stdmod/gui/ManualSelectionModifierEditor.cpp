@@ -94,7 +94,7 @@ public:
 
 		// Switch back to default mouse cursor.
 		setCursor(QCursor());
-	}	
+	}
 
 	ManualSelectionModifierEditor* _editor;
 };
@@ -227,10 +227,12 @@ void ManualSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 	layout->addWidget(mouseSelectionGroup);
 
 	PickElementMode* pickElementMode = new PickElementMode(this);
+	connect(this, &QObject::destroyed, pickElementMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow(), tr("Pick"), this, pickElementMode);
 	sublayout->addWidget(pickModeAction->createPushButton());
 
 	FenceSelectionMode* fenceMode = new FenceSelectionMode(this);
+	connect(this, &QObject::destroyed, fenceMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* fenceModeAction = new ViewportModeAction(mainWindow(), tr("Fence selection"), this, fenceMode);
 	sublayout->addWidget(fenceModeAction->createPushButton());
 

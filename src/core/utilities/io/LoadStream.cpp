@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -37,8 +37,8 @@ LoadStream::LoadStream(QDataStream& source) : _is(source)
 	OVITO_ASSERT_MSG(!_is.device()->isSequential(), "LoadStream constructor", "LoadStream class requires a seekable input stream.");
     if(_is.device()->isSequential())
 		throw Exception("LoadStream class requires a seekable input stream.");
-    
-	// Read file header. 
+
+	// Read file header.
 
 	_isOpen = true;
 
@@ -47,7 +47,7 @@ LoadStream::LoadStream(QDataStream& source) : _is(source)
 	*this >> magic1 >> magic2;
 	*this >> _fileFormat;
 	*this >> _fpPrecision;
-	
+
 	_isOpen = false;
 
 	if(magic1 != 0x0FACC5AB || magic2 != 0x0AFCCA5A)
@@ -77,7 +77,7 @@ LoadStream::LoadStream(QDataStream& source) : _is(source)
 	// OVITO 3.x cannot read state files written by OVITO 2.x:
 	if(_fileFormat < 30001)
 		throw Exception(tr("This file has been written by %1 %2 and %3 %4.x cannot read it anymore. Please use the old program version to open the file.")
-			.arg(_applicationName).arg(_applicationVersionString).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));	
+			.arg(_applicationName).arg(_applicationVersionString).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));
 }
 
 /******************************************************************************
@@ -115,9 +115,9 @@ void LoadStream::read(void* buffer, size_t numBytes)
 * Opens the next chunk in the stream.
 ******************************************************************************/
 quint32 LoadStream::openChunk()
-{    	
+{
 	quint32 chunkId;
-	quint32 chunkSize; 
+	quint32 chunkSize;
 	*this >> chunkId >> chunkSize;
 	_chunks.emplace_back(chunkId, (qint64)chunkSize + filePosition());
 	return chunkId;
@@ -181,10 +181,10 @@ void LoadStream::closeChunk()
 
 /******************************************************************************
 * Reads a pointer to an object of type T from the input stream.
-* This method will patch the address immediately if it is available, 
-* otherwise it will happen later when it is known. 
+* This method will patch the address immediately if it is available,
+* otherwise it will happen later when it is known.
 ******************************************************************************/
-quint64 LoadStream::readPointer(void** patchPointer) 
+quint64 LoadStream::readPointer(void** patchPointer)
 {
 	quint64 id;
 	*this >> id;
@@ -203,7 +203,7 @@ quint64 LoadStream::readPointer(void** patchPointer)
 * This method will backpatch all registered pointers with the given ID.
 ******************************************************************************/
 void LoadStream::resolvePointer(quint64 id, void* pointer)
-{	
+{
 	OVITO_ASSERT(id != 0);
 	OVITO_ASSERT(id >= _resolvedPointers.size() || !_resolvedPointers[id]);
 	if(id >= _pointerMap.size()) {
@@ -243,7 +243,7 @@ void LoadStream::checkErrorCondition()
 * Reads a reference to an OvitoObject derived class type from the input stream.
 ******************************************************************************/
 LoadStream& operator>>(LoadStream& stream, OvitoClassPtr& clazz)
-{	
+{
 	clazz = OvitoClass::deserializeRTTI(stream);
 	return stream;
 }

@@ -111,7 +111,7 @@ private:
 
 	/// Indicates whether a preliminary point is available.
 	bool _hasPreliminaryPoint = false;
-	
+
 	/// The properties editor of the SliceModifier.
 	SliceModifierEditor* _editor;
 };

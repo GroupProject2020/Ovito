@@ -32,8 +32,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO
 IMPLEMENT_OVITO_CLASS(ParticleInspectionApplet);
 
 /******************************************************************************
-* Lets the applet create the UI widget that is to be placed into the data 
-* inspector panel. 
+* Lets the applet create the UI widget that is to be placed into the data
+* inspector panel.
 ******************************************************************************/
 QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 {
@@ -45,7 +45,8 @@ QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 	layout->setSpacing(0);
 
 	_pickingMode = new PickingMode(this);
-	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);	
+	connect(this, &QObject::destroyed, _pickingMode, &ViewportInputMode::removeMode);
+	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);
 	pickModeAction->setIcon(QIcon(":/particles/icons/select_mode.svg"));
 
 	_measuringModeAction = new QAction(QIcon(":/particles/icons/measure_distances.svg"), tr("Show distances and angles"), this);
@@ -64,7 +65,7 @@ QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 	QWidget* pickModeButton = toolbar->widgetForAction(pickModeAction);
 	connect(_pickingMode, &ViewportInputMode::statusChanged, pickModeButton, [pickModeButton,this](bool active) {
 		if(active) {
-			QToolTip::showText(pickModeButton->mapToGlobal(pickModeButton->rect().bottomRight()), 
+			QToolTip::showText(pickModeButton->mapToGlobal(pickModeButton->rect().bottomRight()),
 #ifndef Q_OS_MACX
 				tr("Pick a particle in the viewports. Hold down the CONTROL key to select multiple particles."),
 #else
@@ -83,7 +84,7 @@ QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 
 	_distanceTable = new QTableWidget(0, 3);
 	_distanceTable->hide();
-	_distanceTable->setHorizontalHeaderLabels(QStringList() << tr("Pair A-B") << tr("Distance") << tr("Vector")); 
+	_distanceTable->setHorizontalHeaderLabels(QStringList() << tr("Pair A-B") << tr("Distance") << tr("Vector"));
 	_distanceTable->horizontalHeader()->setStretchLastSection(true);
 	_distanceTable->verticalHeader()->hide();
 	_distanceTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -91,7 +92,7 @@ QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 
 	_angleTable = new QTableWidget(0, 2);
 	_angleTable->hide();
-	_angleTable->setHorizontalHeaderLabels(QStringList() << tr("Triplet A-B-C") << tr("Angle")); 
+	_angleTable->setHorizontalHeaderLabels(QStringList() << tr("Triplet A-B-C") << tr("Angle"));
 	_angleTable->horizontalHeader()->setStretchLastSection(true);
 	_angleTable->verticalHeader()->hide();
 	_angleTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -118,7 +119,7 @@ void ParticleInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 	// Clear selection when a different scene node has been selected.
 	if(sceneNode != currentSceneNode())
 		_pickingMode->resetSelection();
-		
+
 	PropertyInspectionApplet::updateDisplay(state, sceneNode);
 
 	if(_measuringModeAction->isChecked()) {
@@ -211,7 +212,7 @@ void ParticleInspectionApplet::updateAngleTable()
 ******************************************************************************/
 void ParticleInspectionApplet::deactivate(MainWindow* mainWindow)
 {
-	mainWindow->viewportInputManager()->removeInputMode(_pickingMode);
+	_pickingMode->removeMode();
 }
 
 /******************************************************************************
@@ -307,7 +308,7 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Viewpo
 						*outVertex++ = posProperty->getPoint3(particleIndex);
 				}
 			}
-			if(outVertex == vertices.end()) 
+			if(outVertex == vertices.end())
 				break;
 		}
 

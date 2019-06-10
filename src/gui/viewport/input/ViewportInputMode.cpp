@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -34,7 +34,15 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 ViewportInputMode::~ViewportInputMode()
 {
-	// Remove input mode from stack if it gets destroyed.
+	// Mode must not be in use when it gets destroyed.
+	OVITO_ASSERT(!_manager || std::find(_manager->stack().begin(), _manager->stack().end(), this) == _manager->stack().end());
+}
+
+/******************************************************************************
+* Removes this input mode from the mode stack of the ViewportInputManager.
+******************************************************************************/
+void ViewportInputMode::removeMode()
+{
 	if(_manager)
 		_manager->removeInputMode(this);
 }

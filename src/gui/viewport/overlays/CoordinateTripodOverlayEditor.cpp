@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2014) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -69,6 +69,7 @@ void CoordinateTripodOverlayEditor::createUI(const RolloutInsertionParameters& r
 	layout->addLayout(offsetYPUI->createFieldLayout(), 2, 1);
 
 	ViewportInputMode* moveOverlayMode = new MoveOverlayInputMode(this);
+	connect(this, &QObject::destroyed, moveOverlayMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* moveOverlayAction = new ViewportModeAction(mainWindow(), tr("Move using mouse"), this, moveOverlayMode);
 	layout->addWidget(moveOverlayAction->createPushButton(), 3, 1);
 

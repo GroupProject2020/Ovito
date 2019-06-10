@@ -53,6 +53,7 @@ QWidget* DislocationInspectionApplet::createWidget(MainWindow* mainWindow)
 	layout->setSpacing(0);
 
 	_pickingMode = new PickingMode(this);
+	connect(this, &QObject::destroyed, _pickingMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);
 	pickModeAction->setIcon(QIcon(":/particles/icons/select_mode.svg"));
 
@@ -113,7 +114,7 @@ void DislocationInspectionApplet::updateDisplay(const PipelineFlowState& state, 
 ******************************************************************************/
 void DislocationInspectionApplet::deactivate(MainWindow* mainWindow)
 {
-	mainWindow->viewportInputManager()->removeInputMode(_pickingMode);
+	_pickingMode->removeMode();
 }
 
 /******************************************************************************

@@ -119,7 +119,7 @@ void POVRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	IntegerParameterUI* qualityLevelUI = new IntegerParameterUI(this, PROPERTY_FIELD(POVRayRenderer::qualityLevel));
 	layout->addWidget(qualityLevelUI->label(), 0, 0);
 	layout->addLayout(qualityLevelUI->createFieldLayout(), 0, 1);
-	
+
 	// Antialiasing
 	BooleanGroupBoxParameterUI* enableAntialiasingUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(POVRayRenderer::antialiasingEnabled));
 	QGroupBox* aaGroupBox = enableAntialiasingUI->groupBox();
@@ -191,6 +191,7 @@ void POVRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 
 	// Focal length picking mode.
 	ViewportInputMode* pickFocalLengthMode = new PickFocalLengthInputMode(this);
+	connect(this, &QObject::destroyed, pickFocalLengthMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* modeAction = new ViewportModeAction(mainWindow(), tr("Pick in viewport"), this, pickFocalLengthMode);
 	layout->addWidget(modeAction->createPushButton(), 0, 2);
 
@@ -230,7 +231,7 @@ void POVRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 
 	// POV-Ray executable path
 	layout->addWidget(new QLabel(tr("POV-Ray executable:")), 0, 0, 1, 2);
-	
+
 	StringParameterUI* povrayExecutablePUI = new StringParameterUI(this, PROPERTY_FIELD(POVRayRenderer::povrayExecutable));
 	layout->addWidget(new QLabel(tr("POV-Ray executable:")), 0, 0);
 	static_cast<QLineEdit*>(povrayExecutablePUI->textBox())->setPlaceholderText(QStringLiteral("povray"));
@@ -239,7 +240,7 @@ void POVRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	connect(selectExecutablePathButton, &QPushButton::clicked, this, [this]{
 		try {
 			POVRayRenderer* renderer = static_object_cast<POVRayRenderer>(editObject());
-			if(!renderer) return;			
+			if(!renderer) return;
 			QString path = QFileDialog::getOpenFileName(container(), tr("Select POV-Ray Executable"), renderer->povrayExecutable());
 			if(!path.isEmpty()) {
 				UndoableTransaction::handleExceptions(renderer->dataset()->undoStack(), tr("Set executable path"), [renderer, &path]() {
@@ -250,7 +251,7 @@ void POVRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 		}
 		catch(const Exception& ex) {
 			ex.reportError();
-		}			
+		}
 	});
 	layout->addWidget(selectExecutablePathButton, 1, 1);
 

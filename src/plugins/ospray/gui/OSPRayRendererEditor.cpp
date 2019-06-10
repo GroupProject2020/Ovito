@@ -120,7 +120,7 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	IntegerParameterUI* refinementIterationsUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::refinementIterations));
 	layout->addWidget(refinementIterationsUI->label(), 0, 0);
 	layout->addLayout(refinementIterationsUI->createFieldLayout(), 0, 1);
-	
+
 	IntegerParameterUI* aaSamplesUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::samplesPerPixel));
 	layout->addWidget(aaSamplesUI->label(), 1, 0);
 	layout->addLayout(aaSamplesUI->createFieldLayout(), 1, 1);
@@ -128,7 +128,7 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	IntegerParameterUI* maxRayRecursionUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::maxRayRecursion));
 	layout->addWidget(maxRayRecursionUI->label(), 2, 0);
 	layout->addLayout(maxRayRecursionUI->createFieldLayout(), 2, 1);
-	
+
 	BooleanGroupBoxParameterUI* enableDirectLightUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::directLightSourceEnabled));
 	QGroupBox* directLightsGroupBox = enableDirectLightUI->groupBox();
 	mainLayout->addWidget(directLightsGroupBox);
@@ -148,7 +148,7 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	FloatParameterUI* defaultLightSourceAngularDiameterUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::defaultLightSourceAngularDiameter));
 	layout->addWidget(defaultLightSourceAngularDiameterUI->label(), 1, 0);
 	layout->addLayout(defaultLightSourceAngularDiameterUI->createFieldLayout(), 1, 1);
-	
+
 	BooleanGroupBoxParameterUI* enableAmbientLightUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientLightEnabled));
 	QGroupBox* ambientLightsGroupBox = enableAmbientLightUI->groupBox();
 	mainLayout->addWidget(ambientLightsGroupBox);
@@ -157,7 +157,7 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 	layout->setColumnStretch(1, 1);
-	
+
 	// Ambient brightness.
 	FloatParameterUI* ambientBrightnessUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientBrightness));
 	ambientBrightnessUI->label()->setText(tr("Brightness:"));
@@ -198,6 +198,7 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 
 	// Focal length picking mode.
 	ViewportInputMode* pickFocalLengthMode = new PickFocalLengthInputMode(this);
+	connect(this, &QObject::destroyed, pickFocalLengthMode, &ViewportInputMode::removeMode);
 	ViewportModeAction* modeAction = new ViewportModeAction(mainWindow(), tr("Pick in viewport"), this, pickFocalLengthMode);
 	layout->addWidget(modeAction->createPushButton(), 0, 2);
 
@@ -210,7 +211,7 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	QPushButton* switchBackendButton = new QPushButton(tr("Switch OSPRay backend..."));
 	connect(switchBackendButton, &QPushButton::clicked, this, &OSPRayRendererEditor::onSwitchBackend);
 	mainLayout->addWidget(switchBackendButton);
-	
+
 	// Open a sub-editor for the backend.
 	new SubObjectParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::backend), rolloutParams.after(rollout));
 }
@@ -227,7 +228,7 @@ void OSPRayRendererEditor::onSwitchBackend()
 	QVector<OvitoClassPtr> backendClasses = PluginManager::instance().listClasses(OSPRayBackend::OOClass());
 	int current = -1;
 	int index = 0;
-	QStringList items;	
+	QStringList items;
 	for(const OvitoClassPtr& clazz : backendClasses) {
 		items << clazz->displayName();
 		if(renderer->backend() && &renderer->backend()->getOOClass() == clazz)
@@ -237,7 +238,7 @@ void OSPRayRendererEditor::onSwitchBackend()
 
 	// Let user choose a new backend.
 	bool ok;
-	QString item = QInputDialog::getItem(container(), tr("Switch OSPRay backend"), 
+	QString item = QInputDialog::getItem(container(), tr("Switch OSPRay backend"),
 		tr("Select an OSPRay rendering backend."), items, current, false, &ok);
 	if(!ok) return;
 
@@ -250,7 +251,7 @@ void OSPRayRendererEditor::onSwitchBackend()
 				renderer->setBackend(backend);
 			});
 		}
-	}	
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

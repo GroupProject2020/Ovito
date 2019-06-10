@@ -31,8 +31,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO
 IMPLEMENT_OVITO_CLASS(BondInspectionApplet);
 
 /******************************************************************************
-* Lets the applet create the UI widget that is to be placed into the data 
-* inspector panel. 
+* Lets the applet create the UI widget that is to be placed into the data
+* inspector panel.
 ******************************************************************************/
 QWidget* BondInspectionApplet::createWidget(MainWindow* mainWindow)
 {
@@ -44,7 +44,8 @@ QWidget* BondInspectionApplet::createWidget(MainWindow* mainWindow)
 	layout->setSpacing(0);
 
 	_pickingMode = new PickingMode(this);
-	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);	
+	connect(this, &QObject::destroyed, _pickingMode, &ViewportInputMode::removeMode);
+	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);
 	pickModeAction->setIcon(QIcon(":/particles/icons/select_mode.svg"));
 
 	QToolBar* toolbar = new QToolBar();
@@ -63,7 +64,7 @@ QWidget* BondInspectionApplet::createWidget(MainWindow* mainWindow)
 	QWidget* pickModeButton = toolbar->widgetForAction(pickModeAction);
 	connect(_pickingMode, &ViewportInputMode::statusChanged, pickModeButton, [pickModeButton,this](bool active) {
 		if(active) {
-			QToolTip::showText(pickModeButton->mapToGlobal(pickModeButton->rect().bottomRight()), 
+			QToolTip::showText(pickModeButton->mapToGlobal(pickModeButton->rect().bottomRight()),
 #ifndef Q_OS_MACX
 				tr("Pick a bond in the viewports. Hold down the CONTROL key to select multiple bonds."),
 #else
@@ -88,7 +89,7 @@ void BondInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipelin
 	// Clear selection when a different scene node has been selected.
 	if(sceneNode != currentSceneNode())
 		_pickingMode->resetSelection();
-		
+
 	PropertyInspectionApplet::updateDisplay(state, sceneNode);
 }
 
@@ -97,7 +98,7 @@ void BondInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipelin
 ******************************************************************************/
 void BondInspectionApplet::deactivate(MainWindow* mainWindow)
 {
-	mainWindow->viewportInputManager()->removeInputMode(_pickingMode);
+	_pickingMode->removeMode();
 }
 
 /******************************************************************************

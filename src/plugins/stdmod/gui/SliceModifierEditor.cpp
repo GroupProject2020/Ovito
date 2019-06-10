@@ -116,6 +116,7 @@ void SliceModifierEditor::createUI(const RolloutInsertionParameters& rolloutPara
 	layout->addWidget(alignPlaneToViewBtn);
 
 	_pickPlanePointsInputMode = new PickPlanePointsInputMode(this);
+	connect(this, &QObject::destroyed, _pickPlanePointsInputMode, &ViewportInputMode::removeMode);
 	_pickPlanePointsInputModeAction = new ViewportModeAction(mainWindow(), tr("Pick three points"), this, _pickPlanePointsInputMode);
 	layout->addWidget(_pickPlanePointsInputModeAction->createPushButton());
 
@@ -128,7 +129,7 @@ void SliceModifierEditor::createUI(const RolloutInsertionParameters& rolloutPara
 
 	// Create a second rollout.
 	rollout = createRollout(tr("Operate on"), rolloutParams.after(rollout), "particles.modifiers.slice.html");
-	
+
 	// Create the rollout contents.
 	layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
@@ -296,7 +297,7 @@ void PickPlanePointsInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent
 		_hasPreliminaryPoint = true;
 		requestViewportUpdate();
 	}
-	else { 
+	else {
 		if(_hasPreliminaryPoint)
 			requestViewportUpdate();
 		_hasPreliminaryPoint = false;
@@ -432,7 +433,7 @@ void PickPlanePointsInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRender
 	}
 	else {
 		for(int i = 0; i < npoints; i++)
-			renderer->addToLocalBoundingBox(_pickedPoints[i]);			
+			renderer->addToLocalBoundingBox(_pickedPoints[i]);
 	}
 }
 

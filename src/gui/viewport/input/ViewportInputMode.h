@@ -128,6 +128,11 @@ public:
 	/// \brief Redraws all viewports.
 	void requestViewportUpdate();
 
+public Q_SLOTS:
+
+	/// Removes this input mode from the mode stack of the ViewportInputManager.
+	void removeMode();
+
 Q_SIGNALS:
 
 	/// \brief This signal is emitted when the input mode has become the active mode or is no longer the active mode.
