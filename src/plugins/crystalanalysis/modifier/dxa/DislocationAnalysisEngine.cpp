@@ -340,21 +340,19 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 	PropertyPtr dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : dislocationLengths)
 		dislocationLengthsProperty->setFloat(entry.first->numericId(), entry.second);
-	DataSeriesObject* lengthSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-lengths"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"));
-	PropertyObject* yProperty = lengthSeriesObj->createProperty(dislocationLengthsProperty);
+	PropertyPtr dislocationTypeIds = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation type"), false, DataSeriesObject::XProperty);
+	std::iota(dislocationTypeIds->dataInt(), dislocationTypeIds->dataInt() + dislocationTypeIds->size(), 0);
+	DataSeriesObject* lengthSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-lengths"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"), dislocationLengthsProperty, dislocationTypeIds);
+	PropertyObject* xProperty = lengthSeriesObj->expectMutableProperty(DataSeriesObject::XProperty);
 	for(const auto& entry : dislocationLengths)
-		yProperty->addElementType(entry.first);
-	lengthSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));
+		xProperty->addElementType(entry.first);
 
 	// Output a data series object with the dislocation segment counts.
 	PropertyPtr dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation count"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : segmentCounts)
 		dislocationCountsProperty->setInt(entry.first->numericId(), entry.second);
-	DataSeriesObject* countSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"));
-	yProperty = countSeriesObj->createProperty(dislocationCountsProperty);
-	for(const auto& entry : segmentCounts)
-		yProperty->addElementType(entry.first);
-	countSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));
+	DataSeriesObject* countSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"), dislocationCountsProperty);
+	countSeriesObj->insertProperty(0, xProperty);
 
 	// Output particle properties.
 	if(atomClusters()) {

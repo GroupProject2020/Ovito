@@ -8,7 +8,8 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Trajectory lines</title>
+  <title>Trajectory lines (visual element)</title>
+  <titleabbrev>Trajectory lines</titleabbrev>
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
@@ -16,8 +17,20 @@
     </imageobject></mediaobject></screenshot></informalfigure>
 
     This <link linkend="display_objects">visual element</link> renders a set of continuous lines to visualize the
-    trajectories of motion of particles. Typically, this element is created by the
+    trajectories of motion of particles. The element is typically created by the program as a result of applying the
     <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier.
+  </para>
+
+  <para>
+     The <emphasis>Wrap trajectory lines</emphasis> option folds trajectory lines that leave the periodic simulation
+     cell back into the cell. Note that this option will yield correct results only if the simulation cell geometry
+     doesn't change with time.
+  </para>
+
+  <para>
+     The <emphasis>Show up to current time only</emphasis> option restricts rendering of trajectories lines to
+     those parts that have been traversed by particles at the current animation time. Thus, the trajectory lines will
+     get gradually drawn while playing the animation, just as in the example on <link linkend="particles.modifiers.generate_trajectory_lines">this page</link>.
   </para>
 
    <simplesect>

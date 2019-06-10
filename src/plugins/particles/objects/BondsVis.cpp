@@ -33,7 +33,7 @@
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_OVITO_CLASS(BondsVis);	
+IMPLEMENT_OVITO_CLASS(BondsVis);
 IMPLEMENT_OVITO_CLASS(BondPickInfo);
 DEFINE_PROPERTY_FIELD(BondsVis, bondWidth);
 DEFINE_PROPERTY_FIELD(BondsVis, bondColor);
@@ -51,8 +51,8 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(BondsVis, bondWidth, WorldParameterUnit, 0)
 * Constructor.
 ******************************************************************************/
 BondsVis::BondsVis(DataSet* dataset) : DataVis(dataset),
-	_bondWidth(0.4), 
-	_bondColor(0.6, 0.6, 0.6), 
+	_bondWidth(0.4),
+	_bondColor(0.6, 0.6, 0.6),
 	_useParticleColors(true),
 	_shadingMode(ArrowPrimitive::NormalShading),
 	_renderingQuality(ArrowPrimitive::HighQuality)
@@ -68,6 +68,8 @@ Box3 BondsVis::boundingBox(TimePoint time, const std::vector<const DataObject*>&
 	const BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack.back());
 	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
 	if(!bonds || !particles) return {};
+	particles->verifyIntegrity();
+	bonds->verifyIntegrity();
 	const PropertyObject* bondTopologyProperty = bonds->getProperty(BondsObject::TopologyProperty);
 	const PropertyObject* bondPeriodicImageProperty = bonds->getProperty(BondsObject::PeriodicImageProperty);
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
@@ -135,11 +137,13 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
-	
+
 	if(objectStack.size() < 2) return;
 	const BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack.back());
 	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
 	if(!bonds || !particles) return;
+	particles->verifyIntegrity();
+	bonds->verifyIntegrity();
 	const PropertyObject* bondTopologyProperty = bonds->getProperty(BondsObject::TopologyProperty);
 	const PropertyObject* bondPeriodicImageProperty = bonds->getProperty(BondsObject::PeriodicImageProperty);
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
@@ -192,12 +196,12 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 			bondSelectionProperty,
 			transparencyProperty,
 			simulationCell,
-			bondWidth(), 
-			bondColor(), 
+			bondWidth(),
+			bondColor(),
 			useParticleColors()));
 
 	// Check if we already have a valid rendering primitive that is up to date.
-	if(!arrowPrimitive 
+	if(!arrowPrimitive
 			|| !arrowPrimitive->isValid(renderer)
 			|| !arrowPrimitive->setShadingMode(shadingMode())
 			|| !arrowPrimitive->setRenderingQuality(renderingQuality())) {
@@ -265,7 +269,7 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 
 /******************************************************************************
 * Determines the display colors of half-bonds.
-* Returns an array with two colors per full bond, because the two half-bonds 
+* Returns an array with two colors per full bond, because the two half-bonds
 * may have different colors.
 ******************************************************************************/
 std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, const PropertyObject* topologyProperty,
@@ -277,7 +281,7 @@ std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, const Propert
 	OVITO_ASSERT(bondTypeProperty == nullptr || bondTypeProperty->type() == BondsObject::TypeProperty);
 	OVITO_ASSERT(bondSelectionProperty == nullptr || bondSelectionProperty->type() == BondsObject::SelectionProperty);
 	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == BondsObject::TransparencyProperty);
-	
+
 	std::vector<ColorA> output(topologyProperty->size() * 2);
 	ColorA defaultColor = (ColorA)bondColor();
 	if(bondColorProperty && bondColorProperty->size() * 2 == output.size()) {
@@ -352,7 +356,7 @@ std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, const Propert
 		}
 	}
 
-	// Apply transparency values. 
+	// Apply transparency values.
 	if(transparencyProperty && transparencyProperty->size() * 2 == output.size()) {
 		auto c = output.begin();
 		for(FloatType t : transparencyProperty->constFloatRange()) {

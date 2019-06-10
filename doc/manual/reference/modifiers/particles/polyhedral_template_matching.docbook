@@ -154,19 +154,18 @@ doi:10.1088/0965-0393/24/5/055007
   <simplesect>
     <title>Local lattice orientations</title>
     <para>
-     The PTM modifier can calculate the local lattice orientation for atoms that match one of the structural types. The computed orientation is stored
-     as a quaternion in the <literal>Orientation</literal> particle property.
-     You can switch the <link linkend="display_objects.particles">particle display shape</link> to <emphasis>Cube/Box</emphasis> to visualize the computed
-     per-particle orientations or apply <pydoc-link href="introduction/examples" anchor="example-visualize-local-lattice-orientation">this custom Python modifier</pydoc-link> to color particles according to their local lattice orientation.
+     The PTM modifier provides the option to calculate a local lattice orientation for atoms that match one of the structural types. The computed orientations are
+     encoded as <link xlink:href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">quaternions</link> and stored in the <literal>Orientation</literal>
+     particle property.
+     To visualize the computed local lattice orientations, you can switch the <link linkend="display_objects.particles">particle display shape</link> to <emphasis>Cube/Box</emphasis>
+     or apply this <pydoc-link href="introduction/examples" anchor="example-visualize-local-lattice-orientation">Python modifier script</pydoc-link> mapping the orientation information to a particle color.
      Lattice orientations are calculated such that they lie in the fundamental zone of the symmetry group for each structural type.
      This means that two atoms with very similar orientations can have large misorientations if they lie close to the boundaries of the fundamental zone.
-     For atoms that do not match any of the known structure types, no local lattice orientation can be computed. They are assigned the
-     invalid quaternion (0,0,0,0).
+     For atoms not matching any of the known structure types, no local lattice orientation can be computed. These atoms are assigned the invalid quaternion vector (0,0,0,0).
     </para>
 
-
     <para>
-      The orientations are calculated relative to the following reference templates. In the table, the neighbor positions of each reference configuration
+      Orientations are calculated relative to the following reference templates. In the table, the neighbor positions of each reference configuration
       are given in Cartesian coordinates with the central particle located at the origin.
       <informaltable frame="all" colsep="1" rowsep="0">
         <tgroup cols="22">
@@ -617,8 +616,10 @@ doi:10.1088/0965-0393/24/5/055007
   <simplesect>
     <title>Elastic deformation gradients</title>
     <para>
-      The local elastic deformation gradient is calculated as the affine transformation of the ideal template which minimizes the sum of squared distances
-      from the actual atomic coordinates.
+      The modifier also provides the option to compute a local elastic deformation gradient for each particle, which is calculated as the
+      affine transformation of the ideal template which minimizes the sum of squared deviations from the actual neighbor vectors.
+      The local elastic deformation gradient tensors are output as 3x3 matrices in the <emphasis>Elastic Deformation Gradient</emphasis>
+      particle property.
     </para>
   </simplesect>
 

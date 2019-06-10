@@ -43,7 +43,7 @@ void DataSeriesObject::OOMetaClass::initialize()
 
 	// Enable automatic conversion of a DataSeriesPropertyReference to a generic PropertyReference and vice versa.
 	QMetaType::registerConverter<DataSeriesPropertyReference, PropertyReference>();
-	QMetaType::registerConverter<PropertyReference, DataSeriesPropertyReference>();		
+	QMetaType::registerConverter<PropertyReference, DataSeriesPropertyReference>();
 
 	setPropertyClassDisplayName(tr("Data series"));
 	setElementDescriptionName(QStringLiteral("points"));
@@ -79,20 +79,25 @@ PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementC
 	const QString& propertyName = standardPropertyName(type);
 
 	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
-	
-	return std::make_shared<PropertyStorage>(elementCount, dataType, componentCount, stride, 
+
+	return std::make_shared<PropertyStorage>(elementCount, dataType, componentCount, stride,
 								propertyName, initializeMemory, type, componentNames);
 }
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QString& title, const PropertyPtr& y) : PropertyContainer(dataset),
+DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QString& title, const PropertyPtr& y, const PropertyPtr& x) : PropertyContainer(dataset),
 	_title(title),
 	_intervalStart(0),
 	_intervalEnd(0),
 	_plotMode(plotMode)
 {
+	OVITO_ASSERT(!x || !y || x->size() == y->size());
+	if(x) {
+		OVITO_ASSERT(x->type() == XProperty);
+		createProperty(x);
+	}
 	if(y) {
 		OVITO_ASSERT(y->type() == YProperty);
 		createProperty(y);
@@ -109,7 +114,7 @@ QString DataSeriesObject::objectTitle() const
 
 /******************************************************************************
 * Returns the data array containing the x-coordinates of the data points.
-* If no explicit x-coordinate data is available, the array is dynamically generated 
+* If no explicit x-coordinate data is available, the array is dynamically generated
 * from the x-axis interval set for this data series.
 ******************************************************************************/
 ConstPropertyPtr DataSeriesObject::getXStorage() const

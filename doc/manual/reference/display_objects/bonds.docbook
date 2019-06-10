@@ -8,7 +8,8 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Bonds</title>
+  <title>Bonds (visual element)</title>
+  <titleabbrev>Bonds</titleabbrev>
 
   <para>
 

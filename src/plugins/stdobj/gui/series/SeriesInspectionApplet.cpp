@@ -51,11 +51,22 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 	QHBoxLayout* rightLayout = new QHBoxLayout(rightContainer);
 	rightLayout->setContentsMargins(0,0,0,0);
 	rightLayout->setSpacing(0);
+
 	QToolBar* toolbar = new QToolBar();
 	toolbar->setOrientation(Qt::Vertical);
 	toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
 	toolbar->setIconSize(QSize(22,22));
 	toolbar->setStyleSheet("QToolBar { padding: 0px; margin: 0px; border: 0px none black; spacing: 0px; }");
+
+	QActionGroup* plotTypeActionGroup = new QActionGroup(this);
+	QAction* switchToPlotAction = plotTypeActionGroup->addAction(QIcon(":/gui/mainwin/inspector/show_chart.svg"), tr("Chart view"));
+	QAction* switchToTableAction = plotTypeActionGroup->addAction(QIcon(":/gui/mainwin/inspector/table_chart.svg"), tr("Data table view"));
+	toolbar->addAction(switchToPlotAction);
+	toolbar->addAction(switchToTableAction);
+	switchToPlotAction->setCheckable(true);
+	switchToTableAction->setCheckable(true);
+	switchToPlotAction->setChecked(true);
+	toolbar->addSeparator();
 
 	_exportSeriesToFileAction = new QAction(QIcon(":/gui/actions/file/file_save_as.bw.svg"), tr("Export data to file"), this);
 	connect(_exportSeriesToFileAction, &QAction::triggered, this, &SeriesInspectionApplet::exportDataToFile);
@@ -64,6 +75,9 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 	QStackedWidget* stackedWidget = new QStackedWidget();
 	rightLayout->addWidget(stackedWidget, 1);
 	rightLayout->addWidget(toolbar, 0);
+
+	connect(switchToPlotAction, &QAction::triggered, stackedWidget, [stackedWidget]() { stackedWidget->setCurrentIndex(0); });
+	connect(switchToTableAction, &QAction::triggered, stackedWidget, [stackedWidget]() { stackedWidget->setCurrentIndex(1); });
 
 	_plotWidget = new DataSeriesPlotWidget();
 	stackedWidget->addWidget(_plotWidget);
@@ -100,7 +114,7 @@ void SeriesInspectionApplet::exportDataToFile()
 #ifndef Q_OS_WIN
 	QString filterString = QStringLiteral("%1 (%2)").arg(DataSeriesExporter::OOClass().fileFilterDescription(), DataSeriesExporter::OOClass().fileFilter());
 #else
-		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
+	// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
 	QString filterString = QStringLiteral("%1 (*)").arg(DataSeriesExporter::OOClass().fileFilterDescription());
 #endif
 	dialog.setNameFilter(filterString);

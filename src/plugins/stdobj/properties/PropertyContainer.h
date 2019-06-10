@@ -53,6 +53,16 @@ public:
 		_properties.push_back(this, PROPERTY_FIELD(properties), const_cast<PropertyObject*>(property));
 	}
 
+	/// Inserts a new property into the list of properties.
+	void insertProperty(int index, const PropertyObject* property) {
+		OVITO_ASSERT(property);
+		OVITO_ASSERT(properties().contains(const_cast<PropertyObject*>(property)) == false);
+		if(properties().empty())
+			_elementCount.set(this, PROPERTY_FIELD(elementCount), property->size());
+		OVITO_ASSERT(property->size() == elementCount());
+		_properties.insert(this, PROPERTY_FIELD(properties), index, const_cast<PropertyObject*>(property));
+	}
+
 	/// Removes a property from this container.
 	void removeProperty(const PropertyObject* property) {
 		OVITO_ASSERT(property);

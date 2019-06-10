@@ -8,7 +8,8 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Vectors</title>
+  <title>Vectors (visual element)</title>
+  <titleabbrev>Vectors</titleabbrev>
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>

@@ -8,25 +8,24 @@
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Reference</title>
-  
+
   <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
-  
+
   <xi:include href="reference/scene_objects/scene_objects.docbook"/>
   <xi:include href="reference/modifiers/modifiers.docbook"/>
   <xi:include href="reference/display_objects/display_objects.docbook"/>
   <section xml:id="viewports">
     <title>Viewports</title>
-    
+
       <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
 
   	  <xi:include href="reference/viewports/adjust_view_dialog.docbook"/>
   	  <xi:include href="reference/viewports/overlays/viewport_overlays.docbook"/>
   	  <xi:include href="reference/viewports/input_modes.docbook"/>
   </section>
-  
-  <xi:include href="reference/app_settings/application_settings.docbook"/>
-  <xi:include href="reference/animation/animation_settings_dialog.docbook"/>
-  <xi:include href="reference/data_inspector/data_inspector.docbook"/>
+
   <xi:include href="reference/rendering/rendering.docbook"/>
+  <xi:include href="reference/data_inspector/data_inspector.docbook"/>
+  <xi:include href="reference/app_settings/application_settings.docbook"/>
 
 </chapter>

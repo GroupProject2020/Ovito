@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -50,8 +50,8 @@ DataSeriesPlotWidget::DataSeriesPlotWidget(QWidget* parent) : QwtPlot(parent)
 /******************************************************************************
 * Sets the data series object to be plotted.
 ******************************************************************************/
-void DataSeriesPlotWidget::setSeries(const DataSeriesObject* series) 
-{ 
+void DataSeriesPlotWidget::setSeries(const DataSeriesObject* series)
+{
 	if(series != _series) {
 		_series = series;
 		updateDataPlot();
@@ -59,19 +59,19 @@ void DataSeriesPlotWidget::setSeries(const DataSeriesObject* series)
 }
 
 /******************************************************************************
-* Regenerates the plot. 
-* This function is called whenever a new data series has been loaded into 
+* Regenerates the plot.
+* This function is called whenever a new data series has been loaded into
 * widget or if the current series data changes.
 ******************************************************************************/
 void DataSeriesPlotWidget::updateDataPlot()
 {
 	static const Qt::GlobalColor curveColors[] = {
 		Qt::black, Qt::red, Qt::blue, Qt::green,
-		Qt::cyan, Qt::magenta, Qt::gray, Qt::darkRed, 
+		Qt::cyan, Qt::magenta, Qt::gray, Qt::darkRed,
 		Qt::darkGreen, Qt::darkBlue, Qt::darkCyan, Qt::darkMagenta,
 		Qt::darkYellow, Qt::darkGray
 	};
-	
+
 	setAxisTitle(QwtPlot::xBottom, QString{});
 	setAxisTitle(QwtPlot::yLeft, QString{});
 	setAxisMaxMinor(QwtPlot::xBottom, 5);
@@ -83,10 +83,12 @@ void DataSeriesPlotWidget::updateDataPlot()
 	const PropertyObject* y = series() ? series()->getY() : nullptr;
 	const PropertyObject* x = series() ? series()->getX() : nullptr;
 	if(y) {
-		if(y->size() <= (size_t)std::numeric_limits<int>::max())
-			plotMode = series()->plotMode();
-		else
+		if(y->size() > (size_t)std::numeric_limits<int>::max())
 			qWarning() << "Number of plot data points exceeds limit:" << y->size() << ">" << std::numeric_limits<int>::max();
+		else if(x && x->size() != y->size())
+			qWarning() << "Detected inconsistent lengths of X and Y data arrays in data plot series:" << series()->objectTitle();
+		else
+			plotMode = series()->plotMode();
 	}
 
 	// Release plot items if plot mode has changed.
@@ -151,7 +153,7 @@ void DataSeriesPlotWidget::updateDataPlot()
 				_spectroCurves[cmpnt]->setTitle(y->componentNames()[cmpnt]);
 			else
 				_spectroCurves[cmpnt]->setTitle(tr("Component %1").arg(cmpnt+1));
-		}		
+		}
 
 		QVector<QwtPoint3D> coords(y->size());
 		for(size_t cmpnt = 0; cmpnt < seriesCount; cmpnt++) {
@@ -253,14 +255,16 @@ void DataSeriesPlotWidget::updateDataPlot()
 		QVector<double> ycoords;
 		QStringList labels;
 		for(int i = 0; i < y->size(); i++) {
-			if(ElementType* type = y->elementType(i)) {
+			ElementType* type = y->elementType(i);
+			if(!type && x) type = x->elementType(i);
+			if(type) {
 				if(y->dataType() == PropertyStorage::Int)
 					ycoords.push_back(y->getInt(i));
 				else if(y->dataType() == PropertyStorage::Int64)
 					ycoords.push_back(y->getInt64(i));
 				else if(y->dataType() == PropertyStorage::Float)
 					ycoords.push_back(y->getFloat(i));
-				else 
+				else
 					continue;
 				labels.push_back(type->name());
 			}

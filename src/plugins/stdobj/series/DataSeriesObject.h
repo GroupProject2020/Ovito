@@ -27,14 +27,14 @@
 #include <plugins/stdobj/properties/PropertyReference.h>
 
 namespace Ovito { namespace StdObj {
-	
+
 /**
  * \brief Data object that holds a series of data values for 2d plots.
  */
 class OVITO_STDOBJ_EXPORT DataSeriesObject : public PropertyContainer
 {
 	/// Define a new property metaclass for data series property containers.
-	class DataSeriesObjectClass : public PropertyContainerClass 
+	class DataSeriesObjectClass : public PropertyContainerClass
 	{
 	public:
 
@@ -53,14 +53,12 @@ class OVITO_STDOBJ_EXPORT DataSeriesObject : public PropertyContainer
 	Q_OBJECT
 	OVITO_CLASS_META(DataSeriesObject, DataSeriesObjectClass);
 	Q_CLASSINFO("DisplayName", "Data series");
-	
+
 public:
 
 	/// \brief The list of standard data series properties.
 	enum Type {
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
-//		SelectionProperty = PropertyStorage::GenericSelectionProperty,
-//		ColorProperty = PropertyStorage::GenericColorProperty,
 		XProperty = PropertyStorage::FirstSpecificProperty,
 		YProperty
 	};
@@ -75,7 +73,7 @@ public:
 	Q_ENUMS(PlotMode);
 
 	/// Constructor.
-	Q_INVOKABLE DataSeriesObject(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), const PropertyPtr& y = nullptr);
+	Q_INVOKABLE DataSeriesObject(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), const PropertyPtr& y = nullptr, const PropertyPtr& x = nullptr);
 
 	/// Returns the property object containing the y-coordinates of the data points.
 	const PropertyObject* getY() const { return getProperty(Type::YProperty); }
@@ -87,7 +85,7 @@ public:
 	ConstPropertyPtr getYStorage() const { return getPropertyStorage(Type::YProperty); }
 
 	/// Returns the data array containing the x-coordinates of the data points.
-	/// If no explicit x-coordinate data is available, the array is dynamically generated 
+	/// If no explicit x-coordinate data is available, the array is dynamically generated
 	/// from the x-axis interval set for this data series.
 	ConstPropertyPtr getXStorage() const;
 
@@ -118,7 +116,7 @@ private:
 };
 
 /**
- * Encapsulates a reference to a data series property. 
+ * Encapsulates a reference to a data series property.
  */
 using DataSeriesPropertyReference = TypedPropertyReference<DataSeriesObject>;
 

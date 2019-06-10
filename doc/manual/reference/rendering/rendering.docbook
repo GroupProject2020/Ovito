@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="rendering" 
+         xml:id="rendering"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -15,20 +15,20 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="45" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
+
     <link linkend="usage.rendering">Rendering</link> is the process of producing a high-quality output image and movie
-    of the current dataset for publication and other purposes. 
-    The <link linkend="core.render_settings">rendering page</link> of the command panel depicted in the screenshot 
+    of the current dataset for publication and other purposes.
+    The <link linkend="core.render_settings">rendering page</link> of the command panel depicted in the screenshot
     on the right lets you control various settings related to rendering. For example, here you can determine OVITO should
-    render a single image, a series of images, or a video. Furthermore, you can adjust relevant parameters such as the 
+    render a single image, a series of images, or a video. Furthermore, you can adjust relevant parameters such as the
     output resolution and the background color of the rendered pictures.
   </para>
   <para>
     OVITO provides several different rendering engines, which differ in terms of visual quality and rendering time.
     They are listed in the following table. The OpenGL rendering engine is the default choice. It is very fast and produces
-    pictures that provide roughly the same basic visual quality as the realtime viewports of OVITO. The other available 
-    rendering engines provide can produce visually more appealing pictures but also require longer rendering times. 
-  
+    pictures that provide roughly the same basic visual quality as the realtime viewports of OVITO. The other available
+    rendering engines provide can produce visually more appealing pictures but also require longer rendering times.
+
     <informaltable>
         <tgroup cols="2">
           <colspec colname='name'/>
@@ -39,7 +39,7 @@
               <entry>Description</entry>
             </row>
           </thead>
-          <tbody>          
+          <tbody>
             <row>
               <entry><link linkend="rendering.opengl_renderer">OpenGL&#xA0;renderer</link></entry>
               <entry>Hardware-accelerated renderer, which is also used for realtime display in the interactive viewports</entry>
@@ -60,11 +60,12 @@
         </tgroup>
       </informaltable>
    </para>
-   
+
   <xi:include href="render_settings.docbook"/>
+  <xi:include href="../animation/animation_settings_dialog.docbook"/>
   <xi:include href="opengl_renderer.docbook"/>
   <xi:include href="tachyon_renderer.docbook"/>
   <xi:include href="ospray_renderer.docbook"/>
   <xi:include href="povray_renderer.docbook"/>
-  
+
 </section>

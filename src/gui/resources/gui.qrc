@@ -19,12 +19,12 @@
 	<file>actions/edit/mode_move.bw.svg</file>
 	<file>actions/edit/mode_rotate.bw.svg</file>
 	<file>actions/edit/mode_scale.png</file>
-	<file>actions/edit/clone_pipeline.bw.svg</file>	
-	<file>actions/edit/clone_displace_mode_none.svg</file>	
-	<file>actions/edit/clone_displace_mode_x.svg</file>	
-	<file>actions/edit/clone_displace_mode_y.svg</file>	
-	<file>actions/edit/clone_displace_mode_z.svg</file>	
-	
+	<file>actions/edit/clone_pipeline.bw.svg</file>
+	<file>actions/edit/clone_displace_mode_none.svg</file>
+	<file>actions/edit/clone_displace_mode_x.svg</file>
+	<file>actions/edit/clone_displace_mode_y.svg</file>
+	<file>actions/edit/clone_displace_mode_z.svg</file>
+
 	<file>actions/file/file_new.bw.svg</file>
 	<file>actions/file/file_open.bw.svg</file>
 	<file>actions/file/file_quit.bw.svg</file>
@@ -37,11 +37,11 @@
 	<file>actions/file/import_object_reload.bw.svg</file>
 	<file>actions/file/import_object_refresh_animation.bw.svg</file>
 	<file>actions/file/preferences.bw.svg</file>
-	<file>actions/file/user_manual.bw.svg</file>	
-	<file>actions/file/scripting_manual.bw.svg</file>	
-	<file>actions/file/about.bw.svg</file>	
-	<file>actions/file/opengl_info.bw.svg</file>	
-	<file>actions/file/new_window.bw.svg</file>	
+	<file>actions/file/user_manual.bw.svg</file>
+	<file>actions/file/scripting_manual.bw.svg</file>
+	<file>actions/file/about.bw.svg</file>
+	<file>actions/file/opengl_info.bw.svg</file>
+	<file>actions/file/new_window.bw.svg</file>
 
 	<file>actions/viewport/maximize_viewport.bw.svg</file>
 	<file>actions/viewport/mode_orbit.bw.svg</file>
@@ -52,7 +52,7 @@
 	<file>actions/viewport/zoom_scene_extents.bw.svg</file>
 	<file>actions/viewport/zoom_scene_extents_all.png</file>
 	<file>actions/viewport/zoom_selection_extents.png</file>
-	
+
 	<file>actions/animation/animation_settings.bw.svg</file>
 	<file>actions/animation/goto_animation_end.bw.svg</file>
 	<file>actions/animation/goto_animation_start.bw.svg</file>
@@ -64,19 +64,19 @@
 	<file>actions/animation/named_frames.svg</file>
 	<file>actions/animation/add_animation_key.bw.svg</file>
 	<file>actions/animation/delete_animation_key.bw.svg</file>
-	
+
 	<file>cursor/viewport/cursor_orbit.png</file>
 	<file>cursor/viewport/cursor_pan.png</file>
-	<file>cursor/viewport/cursor_zoom.png</file> 
+	<file>cursor/viewport/cursor_zoom.png</file>
 	<file>cursor/viewport/cursor_fov.png</file>
 	<file>cursor/editing/cursor_mode_select.png</file>
 	<file>cursor/editing/cursor_mode_move.png</file>
 	<file>cursor/editing/cursor_mode_rotate.png</file>
 	<file>cursor/editing/cursor_mode_scale.png</file>
-	
+
 	<file>mainwin/command_panel/about_panel.html</file>
 	<file>mainwin/command_panel/about_panel_no_updates.html</file>
-	
+
 	<file>mainwin/command_panel/tab_modify.bw.svg</file>
 	<file>mainwin/command_panel/tab_render.bw.svg</file>
 	<file>mainwin/command_panel/tab_overlays.bw.svg</file>
@@ -91,11 +91,11 @@
 	<file>mainwin/process-stop-16.png</file>
 	<file>mainwin/process-stop-16@2x.png</file>
 	<file>mainwin/process-stop-22.png</file>
-	
+
 	<file>mainwin/settings/vertical_axis_x.png</file>
 	<file>mainwin/settings/vertical_axis_y.png</file>
 	<file>mainwin/settings/vertical_axis_z.png</file>
-	
+
 	<file>actions/modify/modifier_enabled.png</file>
 	<file>actions/modify/modifier_disabled.png</file>
 	<file>actions/modify/modifier_enabled_large.png</file>
@@ -105,19 +105,21 @@
 	<file>actions/modify/modifier_move_down.bw.svg</file>
 	<file>actions/modify/modifier_save_preset.bw.svg</file>
 	<file>actions/modify/make_element_independent.bw.svg</file>
-	
+
 	<file>actions/overlays/delete_overlay.png</file>
 	<file>actions/overlays/overlay_move_up.bw.svg</file>
 	<file>actions/overlays/overlay_move_down.bw.svg</file>
-	
+
 	<file>actions/rendering/render_active_viewport.bw.svg</file>
 
-	<file>framebuffer/save_picture.bw.svg</file>	
+	<file>framebuffer/save_picture.bw.svg</file>
 	<file>framebuffer/copy_picture_to_clipboard.bw.svg</file>
 	<file>framebuffer/auto_crop.bw.svg</file>
 
 	<file>mainwin/inspector/waiting.gif</file>
-	
+	<file>mainwin/inspector/show_chart.svg</file>
+	<file>mainwin/inspector/table_chart.svg</file>
+
 </qresource>
 
 </RCC>

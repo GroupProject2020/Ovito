@@ -71,10 +71,11 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 			.arg(frameNumber).arg(objectRef.dataPath()).arg(getAvailableDataObjectList(state, DataSeriesObject::OOClass())));
 	}
 
-	operation.setProgressText(tr("Writing file %1").arg(filePath));	
+	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
 	ConstPropertyPtr x = series->getXStorage();
 	ConstPropertyPtr y = series->getYStorage();
+	const PropertyObject* xprop = series->getX();
 	const PropertyObject* yprop = series->getY();
 	if(!y || !yprop)
 		throwException(tr("Data series to be exported contains no data points."));
@@ -90,7 +91,7 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 	auto formatColumnName = [](const QString& name) {
 		return name.contains(QChar(' ')) ? (QChar('"') + name + QChar('"')) : name;
 	};
-	textStream() << formatColumnName((!series->getX() || !series->axisLabelX().isEmpty()) ? series->axisLabelX() : series->getX()->name());
+	textStream() << formatColumnName((!xprop || !series->axisLabelX().isEmpty()) ? series->axisLabelX() : xprop->name());
 	if(y->componentNames().size() == y->componentCount()) {
 		for(size_t col = 0; col < col_count; col++) {
 			textStream() << " " << formatColumnName(y->componentNames()[col]);
@@ -102,7 +103,9 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 	textStream() << "\n";
 	for(size_t row = 0; row < row_count; row++) {
 		if(series->plotMode() == DataSeriesObject::BarChart) {
-			if(ElementType* type = yprop->elementType(row)) {
+			ElementType* type = yprop->elementType(row);
+			if(!type && xprop) type = xprop->elementType(row);
+			if(type) {
 				textStream() << formatColumnName(type->name()) << " ";
 			}
 			else continue;

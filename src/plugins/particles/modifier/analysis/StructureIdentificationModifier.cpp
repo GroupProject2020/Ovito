@@ -159,15 +159,25 @@ void StructureIdentificationModifier::StructureIdentificationEngine::emitResults
 		if(t >= 0 && t <= maxTypeId)
 			typeCountsData[t]++;
 	}
+	PropertyPtr typeIds = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int, 1, 0, tr("Structure type"), false, DataSeriesObject::XProperty);
+	std::iota(typeIds->dataInt(), typeIds->dataInt() + typeIds->size(), 0);
 
 	// Output a data series object with the type counts.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts);
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts, std::move(typeIds));
+#if 0
 	PropertyObject* yProperty = seriesObj->expectMutableProperty(DataSeriesObject::YProperty);
 	for(const ElementType* type : modifier->structureTypes()) {
 		if(type->enabled())
 			yProperty->addElementType(type);
 	}
 	seriesObj->setAxisLabelX(tr("Structure type"));
+#else
+	PropertyObject* xProperty = seriesObj->expectMutableProperty(DataSeriesObject::XProperty);
+	for(const ElementType* type : modifier->structureTypes()) {
+		if(type->enabled())
+			xProperty->addElementType(type);
+	}
+#endif
 }
 
 OVITO_END_INLINE_NAMESPACE

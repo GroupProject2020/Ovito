@@ -78,7 +78,7 @@
               <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
             </row>
             <row>
-              <entry>Dislocations</entry>
+              <entry><link linkend="display_objects.dislocations">Dislocations</link></entry>
               <entry>Renders dislocation lines extracted by the
               <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier</entry>
             </row>
@@ -94,11 +94,12 @@
     </para>
   </simplesect>
 
-  <xi:include href="bonds.docbook"/>
   <xi:include href="particles.docbook"/>
+  <xi:include href="bonds.docbook"/>
+  <xi:include href="vectors.docbook"/>
   <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
   <xi:include href="trajectory_lines.docbook"/>
-  <xi:include href="vectors.docbook"/>
+  <xi:include href="dislocations.docbook"/>
 
 </section>

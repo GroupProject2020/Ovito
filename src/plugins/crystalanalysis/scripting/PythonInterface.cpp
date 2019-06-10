@@ -292,7 +292,9 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 	auto DislocationVis_py = ovito_class<DislocationVis, TransformingDataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`. "
-			"An instance of this class is attached to every :py:class:`~ovito.data.DislocationNetwork` data object. ",
+			"An instance of this class is attached to every :py:class:`~ovito.data.DislocationNetwork` data object. "
+			"\n\n"
+			"See also the corresponding :ovitoman:`user manual page <../../display_objects.dislocations>` for more information on this visual element. ",
 			// Python class name:
 			"DislocationVis")
 		.def_property("shading", &DislocationVis::shadingMode, &DislocationVis::setShadingMode,
