@@ -1,6 +1,6 @@
-""" 
+"""
 This module provides functions for interfacing with the ASE (`Atomistic Simulation Environment <https://wiki.fysik.dtu.dk/ase/>`__).
-It contains two high-level functions for converting atomistic data back and forth between 
+It contains two high-level functions for converting atomistic data back and forth between
 OVITO and ASE:
 
     * :py:func:`ovito_to_ase`
@@ -8,12 +8,12 @@ OVITO and ASE:
 
 .. note::
 
-    Using the functions of this module will raise an ``ImportError`` if the ASE package 
+    Using the functions of this module will raise an ``ImportError`` if the ASE package
     is not installed in the current Python interpreter. Note that the built-in
     Python interpreter of OVITO does *not* include the ASE package by default.
     You can install the ASE module by running ``ovitos -m pip install ase``.
-    Alternatively, you can build OVITO from source (as explained in the scripting manual),
-    to use the OVITO modules with the system Python interpreter.
+    Alternatively, you can build OVITO from source in order to
+    use the OVITO module with your :ref:`system's standard Python interpreter <use_ovito_with_system_interpreter>`.
 
 """
 
@@ -25,7 +25,7 @@ __all__ = ['ovito_to_ase', 'ase_to_ovito']
 
 def ovito_to_ase(data_collection):
     """
-    Constructs an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ from the 
+    Constructs an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ from the
     particle data in an OVITO :py:class:`~ovito.data.DataCollection`.
 
     :param: data_collection: The OVITO :py:class:`~ovito.data.DataCollection` to convert.
@@ -36,7 +36,7 @@ def ovito_to_ase(data_collection):
 
     .. literalinclude:: ../example_snippets/ovito_to_ase.py
        :lines: 6-
-             
+
     """
 
     from ase.atoms import Atoms
@@ -46,7 +46,7 @@ def ovito_to_ase(data_collection):
     # Extract basic data: pbc, cell, positions, particle types
     cell_obj = data_collection.cell
     pbc = cell_obj.pbc if cell_obj is not None else None
-    cell = cell_obj[:, :3].T if cell_obj is not None else None    
+    cell = cell_obj[:, :3].T if cell_obj is not None else None
     info = {'cell_origin': cell_obj[:, 3] } if cell_obj is not None else None
     positions = np.array(data_collection.particles.positions)
     if data_collection.particles.particle_types is not None:
@@ -61,7 +61,7 @@ def ovito_to_ase(data_collection):
         symbols = [type_names[id] for id in data_collection.particles.particle_types]
     else:
         symbols = None
-    
+
     # Construct ase.Atoms object
     atoms = Atoms(symbols,
                   positions=positions,
@@ -94,14 +94,14 @@ def ase_to_ovito(atoms):
 
     .. literalinclude:: ../example_snippets/ase_to_ovito.py
        :lines: 6-
-    
+
     """
     data_collection = DataCollection()
 
     # Set the unit cell and origin (if specified in atoms.info)
     cell = SimulationCell()
     cell.pbc = [bool(p) for p in atoms.get_pbc()]
-    with cell: 
+    with cell:
         cell[:, :3] = atoms.get_cell().T
         cell[:, 3]  = atoms.info.get('cell_origin', [0., 0., 0.])
     data_collection.objects.append(cell)

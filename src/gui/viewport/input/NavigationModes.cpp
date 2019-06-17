@@ -220,7 +220,7 @@ void ZoomMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 }
 
 /******************************************************************************
-* Computes a scaling factor that depends on the total size of the scene 
+* Computes a scaling factor that depends on the total size of the scene
 * which is used to control the zoom sensitivity in perspective mode.
 ******************************************************************************/
 FloatType ZoomMode::sceneSizeFactor(Viewport* vp)

@@ -17,21 +17,22 @@
       </imageobject></mediaobject>
     </informalfigure>
 
-    The data inspector gives you an overview of the numerical data loaded from the input file and/or computed within
-    OVITO. The data inspector panel is located below the viewport area in OVITO's main window. Normally, it is
-    in a collapsed state from where it can be opened by clicking anywhere in the tab bar.
-    The panel displays the raw data of the current dataset. For example, it
-    lists all particles and bonds with their property data. Furthermore, it provides tools
-    to pick individual elements in the viewports with the mouse and inspect their properties.
+    The data inspector is a panel located beneath the viewport area, providing an comprehensive view of the data
+    loaded from the input file and/or dynamically computed by the data pipeline. The data inspector panel is initially
+    in a collapsed state, with only the tab bar visible. It can be expanded by clicking anywhere in the tab bar.
+    The panel consists of several pages, each being dynamically shown depending on the kinds of
+    data that are present in the current dataset. For example, there is a page
+    listing all particles and their property data in tabular form.
   </para>
 
   <para>
-    The panel consists of one or more page tabs, which are dynamically shown depending on the contents
-    of the current dataset:
+    The following pages are part of the data inspector and are shown only if the corresponding type
+    of data is present:
     <itemizedlist>
       <listitem><link linkend="data_inspector.particles">Particles</link></listitem>
       <listitem><link linkend="data_inspector.bonds">Bonds</link></listitem>
-      <listitem><link linkend="data_inspector.attributes">Attributes</link></listitem>
+      <listitem><link linkend="data_inspector.attributes">Global attributes</link></listitem>
+      <listitem><link linkend="data_inspector.data_series">Data series</link></listitem>
       <listitem><link linkend="data_inspector.dislocations">Dislocations</link></listitem>
     </itemizedlist>
    </para>
@@ -39,6 +40,7 @@
   <xi:include href="particles.docbook"/>
   <xi:include href="bonds.docbook"/>
   <xi:include href="attributes.docbook"/>
+  <xi:include href="data_series.docbook"/>
   <xi:include href="dislocations.docbook"/>
 
 </section>

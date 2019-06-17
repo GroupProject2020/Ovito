@@ -11,7 +11,7 @@ Introduction:
 
 .. toctree::
    :maxdepth: 1
-   
+
    introduction/running
    introduction/overview
    introduction/file_io
@@ -27,7 +27,7 @@ Python Module Reference:
 -------------------------
 
 .. toctree::
-   
+
    modules/ovito
    modules/ovito_data
    modules/ovito_io

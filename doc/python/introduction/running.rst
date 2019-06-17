@@ -1,40 +1,40 @@
 .. _scripting_running:
 
 ==================================
-Scripting usage
+How to run scripts
 ==================================
 
 OVITO's scripting interface enables you to automate visualization and analysis tasks and to implement your own data manipulation and analysis
 algorithms. The scripting interface consists of a set of Python classes and functions that provide access to the program's
 internal data model, data processing framework and visualization functions. For a new user, it can be somewhat confusing at first that
 the scripting capabilities can be used in multiple ways: On one hand, the graphical OVITO application contains an embedded Python interpreter,
-which lets you execute Python scripts in the context of the running application. Such scripts can operate on the currently
-loaded dataset and allow you to extend the capabilities of the interactive OVITO application.
-On the other hand, it is possible to execute automation scripts from the system terminal without opening the
-interactive OVITO application. This allows you to leverage the analysis and visualization features of the program package
-and integrate them into fully automated post-processing and visualization workflows.
-The following paragraphs provide a brief overview of the different ways to use OVITO's scripting interface:
+which lets you execute Python scripts in the context of the current interactive program session. Such scripts can operate on the currently
+loaded dataset and allow you to extend the capabilities of the graphical OVITO application.
+On the other hand, it is possible to execute automation scripts (batch scripts) from the system terminal without ever opening the
+OVITO application. This allows you to leverage the analysis and visualization capabilities of OVITO
+and build fully automated post-processing and visualization workflows.
+The following paragraphs provide brief overviews of these different ways of using OVITO's scripting interface:
 
 **Batch scripts**
 
-Batch scripts are a way to integrate OVITO's powerful data processing and visualization capabilities into custom
-workflows for post-processing of simulations. Such script are typically run from the system terminal using the :program:`ovitos`
-script interpreter (not :program:`ovito`!), which works similar to a standard Python interpreter and which will be introduced below.
-Batch scripts run non-interactively and outside the graphical user interface, but they can leverage most program features that
+Batch scripts are a way to integrate OVITO's powerful data processing and visualization functions into custom
+workflows for post-processing of simulation data. Such script are typically executed from the system terminal using the :program:`ovitos`
+script interpreter (not :program:`ovito`!), which behaves similar to a standard Python interpreter and which will be introduced below.
+Batch scripts run non-interactively and without the graphical user interface, but they can leverage most program features that
 you already know from the interactive OVITO application, e.g. loading simulation data, setting up data pipelines, rendering pictures and animations,
-accessing computation results and exporting data to output files.
+accessing computation results and exporting result data to an output file.
 
 **Macro scripts**
 
-The *Run Script File* function from the *File* menu of the graphical OVITO program lets you execute a Python script file at any time
-within the graphical user interface. The script will be executed in the context of the active program session and
-may invoke program functions just like a human user of the graphical interface can.
-For example, your script may insert certain modifiers into the current data pipeline or export the data of the current pipeline to an
-output file.
+The *Run Script File* function found in the *File* menu of OVITO lets you execute a Python script file within the running graphical user interface.
+The code statements will be executed in the context of the current program session and may invoke program functions just like a human user can.
+For example, your macro script may insert certain modifiers into the current data pipeline or export the data of the pipeline to an
+output file in a specific way.
 
 This type of script is typically used to perform sequences of program actions that you need frequently.
 Instead of carrying them out by hand, you let the script invoke the actions for you, similar to an *application macro*.
-Note that OVITO furthermore offers the :command:`--script` command line option, which runs a macro script right after application startup.
+Note that OVITO offers the :command:`--script` command line option, which lets you run a macro script right after application startup,
+for example to initialize the program session to a specific default state.
 
 **User-defined modifiers and viewport overlays**
 
@@ -58,10 +58,10 @@ the code of the custom modifier or overlay function is part of the batch script 
 OVITO's Python interpreter
 ----------------------------------
 
-OVITO comes with a script interpreter, which can execute programs written in the Python language.
-The current version of OVITO is compatible with the `Python 3.6 <https://docs.python.org/3.6/>`__ language standard.
-You typically execute batch Python scripts from the terminal of your operating system using the :program:`ovitos` script interpreter that gets installed
-along with OVITO:
+OVITO comes with a script interpreter named :program:`ovitos` that can execute programs written in the standard Python language.
+The current version of this interpreter is compatible with the `Python 3.6 <https://docs.python.org/3.6/>`__ language standard.
+You typically execute batch Python scripts from the terminal of your operating system using the :program:`ovitos` script interpreter, which gets installed
+alongside with OVITO:
 
 .. code-block:: shell-session
 
@@ -69,8 +69,8 @@ along with OVITO:
 
 The :program:`ovitos` program is located in the :file:`bin/` subdirectory of OVITO for Linux, in the
 :file:`Ovito.app/Contents/MacOS/` directory of OVITO for macOS, and in the main application directory
-on Windows systems. It should not be confused with :program:`ovito`, the graphical program with an
-interactive user interface.
+on Windows systems (look for :program:`ovitos.exe`). It should not be confused with :program:`ovito`, the main program
+providing the graphical user interface.
 
 Let's use a text editor to write a simple Python script file named :file:`hello.py`::
 
@@ -85,7 +85,7 @@ We can execute the script file from a Linux terminal as follows:
 	Hello, this is OVITO 3.0.0
 
 The :program:`ovitos` script interpreter is a console program without a graphical user interface.
-This allows running OVITO scripts on remote machines or computing clusters that don't possess a graphics display.
+This enables you to run scripts on remote machines or computing clusters that don't possess a graphics display.
 :program:`ovitos` behaves like a regular Python interpreter. Any command line arguments following the
 script's name are passed to the script via the ``sys.argv`` variable. Furthermore, it is possible to start
 an interactive interpreter session by running :program:`ovitos` without any arguments.
@@ -111,10 +111,10 @@ development phase. Keep in mind that the viewports will only show pipelines that
 Thus, it may be necessary to explicitly call :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`
 to make your imported data visible in this mode.
 
-Number of parallel threads
+Number of CPU cores
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-OVITO uses all available processor cores by default to perform computations. To restrict the program
+OVITO uses all available processor cores by default to perform some computations. To explicitly restrict the program
 to a certain maximum number of parallel threads, use the :command:`--nthreads` command line parameter, e.g. :command:`ovitos --nthreads 1 myscript.py`.
 
 Third-party Python modules
@@ -133,15 +133,17 @@ Installing Python extensions that include native code may fail, however, because
 with the build-time configuration of the embedded interpreter. In this case, it is recommended to build OVITO from source on your local
 system. The graphical program as well as :program:`ovitos` will then make use of your system's standard Python installation.
 This makes all modules that are installed in your system interpreter also accessible within OVITO and :program:`ovitos`.
-Instructions how to build OVITO from source can be found in the `user manual <http://www.ovito.org/manual/development.html>`__.
+Instructions how to build OVITO from the source code can be found in the :ovitoman:`user manual <../../development>`.
+
+.. _use_ovito_with_system_interpreter:
 
 Using the ovito package from other Python interpreters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :py:mod:`ovito` Python package can also be imported by Python scripts running in an external Python interpreter other than :program:`ovitos`.
+The :py:mod:`ovito` Python package can also be imported by Python scripts running in a standard Python interpreter other than :program:`ovitos`.
 However, because the :py:mod:`ovito` module contains native extensions, it must be compiled specifically for the Python interpreter being used with.
-Since there is a chance that the binary extension module shipping with the prebuilt version of OVITO is not compatible
-with your local Python interpreter, it may be necessary to `build OVITO from source <http://www.ovito.org/manual/development.html>`__.
+Since there is a chance that the binary extension module shipping with the prebuilt versions of OVITO is not compatible
+with your local Python interpreter, it may be necessary to :ovitoman:`build OVITO from source <../../development>`.
 In case you have multiple Python versions installed on your system, pay attention that OVITO is being built against the
 version that you will use for running scripts.
 

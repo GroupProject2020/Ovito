@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -37,15 +37,15 @@ ClonePipelineDialog::ClonePipelineDialog(PipelineSceneNode* node, QWidget* paren
 	setWindowTitle(tr("Clone pipeline"));
 
 	initializeGraphicsScene();
-	
+
 	QVBoxLayout* mainLayout = new QVBoxLayout(this);
-	
+
 	_pipelineView = new QGraphicsView(&_pipelineScene, this);
 	_pipelineView->setSceneRect(_pipelineView->sceneRect().marginsAdded(QMarginsF(15,15,15,15)));
 	_pipelineView->setRenderHint(QPainter::Antialiasing);
 	mainLayout->addWidget(_pipelineView, 1);
 
-	QGroupBox* displacementBox = new QGroupBox(tr("Displace cloned pipeline"));
+	QGroupBox* displacementBox = new QGroupBox(tr("Positioning of cloned pipeline"));
 	mainLayout->addWidget(displacementBox);
 	QHBoxLayout* sublayout2 = new QHBoxLayout(displacementBox);
 	QToolBar* displacementToolBar = new QToolBar(displacementBox);
@@ -120,7 +120,7 @@ void ClonePipelineDialog::initializeGraphicsScene()
 	QPen thickBorderPen(Qt::black);
 	thickBorderPen.setWidth(2);
 	QBrush nodeBrush(QColor(200, 200, 255));
-	QBrush modifierBrush(QColor(200, 255, 200));	
+	QBrush modifierBrush(QColor(200, 255, 200));
 	QBrush sourceBrush(QColor(200, 200, 200));
 	QBrush modAppBrush(QColor(255, 255, 200));
 	qreal textBoxWidth = 160;
@@ -136,7 +136,7 @@ void ClonePipelineDialog::initializeGraphicsScene()
 	QGraphicsSimpleTextItem* textItem;
 
 	auto addShadowEffect = [this](QGraphicsItem* item) {
-#if 0   // Shadows diabled to work around Qt bug https://bugreports.qt.io/browse/QTBUG-65035 
+#if 0   // Shadows diabled to work around Qt bug https://bugreports.qt.io/browse/QTBUG-65035
 		QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(this);
 		effect->setOffset(3);
 		effect->setBlurRadius(2);
@@ -148,7 +148,7 @@ void ClonePipelineDialog::initializeGraphicsScene()
 	QGraphicsRectItem* nodeItem1 = _pipelineScene.addRect(-textBoxWidth/2, -textBoxHeight/2, textBoxWidth, textBoxHeight, thickBorderPen, nodeBrush);
 	nodeItem1->setZValue(1);
 	textItem = _pipelineScene.addSimpleText(tr("Original pipeline"));
-	textItem->setParentItem(nodeItem1);	
+	textItem->setParentItem(nodeItem1);
 	textItem->setPos(-textItem->boundingRect().center());
 	nodeItem1->moveBy(textBoxWidth * 0.25, 0);
 	addShadowEffect(nodeItem1);
@@ -208,8 +208,8 @@ void ClonePipelineDialog::initializeGraphicsScene()
 		QString elidedText = fontMetrics.elidedText(labelText, Qt::ElideRight, (int)textBoxWidth);
 		s.objItem1 = _pipelineScene.addRect(-textBoxWidth/2, -textBoxHeight/2, textBoxWidth, textBoxHeight, borderPen, s.modApp ? modifierBrush : sourceBrush);
 		textItem = _pipelineScene.addSimpleText(elidedText);
-		textItem->setParentItem(s.objItem1);	
-		textItem->setPos(-textItem->boundingRect().center());		
+		textItem->setParentItem(s.objItem1);
+		textItem->setPos(-textItem->boundingRect().center());
 		s.objItem1->setPos(objBoxIndent, y);
 		addShadowEffect(s.objItem1);
 		s.objItem2 = _pipelineScene.addRect(-textBoxWidth/2, -textBoxHeight/2, textBoxWidth, textBoxHeight, borderPen, s.modApp ? modifierBrush : sourceBrush);
@@ -384,7 +384,7 @@ void ClonePipelineDialog::onAccept()
 
 		// Do not create any animation keys during cloning.
 		AnimationSuspender animSuspender(_originalNode);
-		
+
 		// Clone the scene node.
 		CloneHelper cloneHelper;
 		OORef<PipelineSceneNode> clonedPipeline = cloneHelper.cloneObject(_originalNode, false);
@@ -412,7 +412,7 @@ void ClonePipelineDialog::onAccept()
 			else if(s->cloneMode() == CloneMode::Skip) {
 				continue;
 			}
-		}		
+		}
 		clonedPipeline->setDataProvider(precedingObj);
 
 		// Give the cloned pipeline the user-defined name.
@@ -424,7 +424,7 @@ void ClonePipelineDialog::onAccept()
 		nodeName = _originalNameEdit->text().trimmed();
 		if(nodeName.isEmpty() == false)
 			_originalNode->setNodeName(nodeName);
-		
+
 		// Translate cloned pipeline.
 		int displacementMode = _displacementDirectionGroup->checkedAction()->data().toInt();
 		if(displacementMode != -1) {
@@ -433,7 +433,7 @@ void ClonePipelineDialog::onAccept()
 			Vector3 translation = Vector3::Zero();
 			translation[displacementMode] = bbox.size(displacementMode) + FloatType(0.2) * bbox.size().length();
 			clonedPipeline->transformationController()->translate(time, translation, AffineTransformation::Identity());
-		}		
+		}
 
 		// Insert cloned pipeline into scene.
 		_originalNode->parentNode()->addChildNode(clonedPipeline);

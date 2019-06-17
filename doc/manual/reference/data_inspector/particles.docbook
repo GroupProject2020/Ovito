@@ -8,17 +8,18 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Particles page</title>
+  <title>Particles (data inspector)</title>
+  <titleabbrev>Particles</titleabbrev>
 
   <para>
     <informalfigure>
       <mediaobject><imageobject>
         <imagedata fileref="images/data_inspector/particles_page.png" format="PNG" scale="85" />
-      </imageobject></mediaobject>  
+      </imageobject></mediaobject>
     </informalfigure>
-     
+
     This page of the <link linkend="data_inspector">data inspector</link> shows all particles and their property values
-    as a data table. The leftmost column shows the index number of particles, which starts at 0 in OVITO. 
+    as a data table. The leftmost column shows the index number of particles, which starts at 0 in OVITO.
     Each following column displays the values of a <link linkend="usage.particle_properties">particle property</link>.
   </para>
   <para>
@@ -26,14 +27,14 @@
     Consider, for example, the table shown in the screenshot: To selectively list only those particles that have a coordination
     number of 11, you could enter the expression <literal>Coordination==11</literal> into the filter field.
     Multiple criteria can be combined using logical AND and OR operators. The expression syntax is the same
-    used by the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier. 
+    used by the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier.
     To reset the filter and show the full list of particles again, use the <guibutton>X</guibutton> button.
   </para>
   <para>
     The crosshair button activates a mouse input mode, which lets you pick individual particles in the viewports.
-    As you select particles in the viewports, the filter expression is automatically updated to show the properties of  
-    the highlighted particles. Hold down the <keycap>Ctrl</keycap> key (<keycap>Command</keycap> key on macOS) to 
-    select multiple particles. Click the crosshair button again or right click in a viewport to deactivate the input mode. 
+    As you select particles in the viewports, the filter expression is automatically updated to show the properties of
+    the highlighted particles. Hold down the <keycap>Ctrl</keycap> key (<keycap>Command</keycap> key on macOS) to
+    select multiple particles. Click the crosshair button again or right click in a viewport to deactivate the input mode.
   </para>
   <para>
     The middle tool button shows a second table displaying the distances between particles.
@@ -42,8 +43,8 @@
     to define a set of 2, 3 or 4 particles for which to compute the inter-particle distances.
     Note that periodic boundary conditions are not taken into account when pair-wise distances are calculated
     using this function. If you are interested in <emphasis>wrapped</emphasis> distances, then you should
-    <link linkend="particles.modifiers.create_bonds">create bonds</link> between the particles and measure the length of these 
+    <link linkend="particles.modifiers.create_bonds">create bonds</link> between the particles and measure the length of these
     bonds instead.
   </para>
-   
+
 </section>

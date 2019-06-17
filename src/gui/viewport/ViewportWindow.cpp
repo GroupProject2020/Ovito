@@ -38,10 +38,10 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 * Constructor.
 ******************************************************************************/
 ViewportWindow::ViewportWindow(Viewport* owner, QWidget* parentWidget) : QOpenGLWidget(parentWidget),
-		_viewport(owner), 
+		_viewport(owner),
 		_updateRequested(false),
 		_mainWindow(MainWindow::fromDataset(owner->dataset())),
-		_renderDebugCounter(0), 
+		_renderDebugCounter(0),
 		_cursorInContextMenuArea(false)
 {
 	setMouseTracking(true);
@@ -269,7 +269,7 @@ void ViewportWindow::renderRenderFrame()
 ******************************************************************************/
 ViewportPickResult ViewportWindow::pick(const QPointF& pos)
 {
-	ViewportPickResult result;	
+	ViewportPickResult result;
 
 	// Cannot perform picking while viewport is not visible or currently rendering or when updates are disabled.
 	if(isVisible() && !viewport()->isRendering() && !viewport()->dataset()->viewportConfig()->isSuspended()) {

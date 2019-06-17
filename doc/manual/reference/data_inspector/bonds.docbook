@@ -8,26 +8,27 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Bonds page</title>
+  <title>Bonds (data inspector)</title>
+  <titleabbrev>Bonds</titleabbrev>
 
   <para>
     <informalfigure>
       <mediaobject><imageobject>
         <imagedata fileref="images/data_inspector/bonds_page.png" format="PNG" scale="85" />
-      </imageobject></mediaobject>  
+      </imageobject></mediaobject>
     </informalfigure>
-     
+
     This page of the <link linkend="data_inspector">data inspector</link> shows all bonds and their property values
     as a data table. The page appears only if the current dataset contains bonds.
   </para>
   <para>
     You can dynamically filter the displayed list of bonds by entering a Boolean expression in the input field at the top of the table.
     Consider, for example, the table shown in the screenshot: Here, the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
-    had been used to compute and assign the <literal>Length</literal> property to each bond (last table column).  
+    had been used to compute and assign the <literal>Length</literal> property to each bond (last table column).
     To selectively list only those bonds that are very long, let's say longer than 1.5 Angstroms,
     we can enter the expression <literal>Length > 1.5</literal> into the filter field.
     Multiple criteria can be combined using logical AND and OR operators. For a detailed description of the expression syntax,
-    see the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier. 
+    see the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier.
     To reset the filter and show the full list of bonds again, use the <guibutton>X</guibutton> button.
   </para>
   <para>
@@ -36,5 +37,5 @@
     the first particle (particle index 0), we could use the following filter expression:
     <programlisting>Topology.A==0 || Topology.B==0</programlisting>
   </para>
-   
+
 </section>

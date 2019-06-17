@@ -1,7 +1,7 @@
 .. _scripting_api_overview:
 
 ==================================
-Introduction
+Overview
 ==================================
 
 The Python programming interface gives you programmatic access to most of OVITO's program features. Using Python scripts, you can
