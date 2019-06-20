@@ -26,7 +26,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_OVITO_CLASS(GSDImporter);	
+IMPLEMENT_OVITO_CLASS(GSDImporter);
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -142,9 +142,10 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	else
 		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
 
-	PropertyStorage* massProperty = readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, frameData);
+	readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, frameData);
 	readOptionalParticleProperty(gsd, "particles/charge", frameNumber, numParticles, ParticlesObject::ChargeProperty, frameData);
-	PropertyStorage* velocityProperty = readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, frameData);
+	readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, frameData);
+	readOptionalParticleProperty(gsd, "particles/image", frameNumber, numParticles, ParticlesObject::PeriodicImageProperty, frameData);
 	PropertyStorage* radiusProperty = readOptionalParticleProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, frameData);
 	if(radiusProperty) {
 		// Convert particle diameter to radius by dividing by 2.
@@ -154,7 +155,9 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	if(orientationProperty) {
 		// Convert quaternion representation from GSD format to internal format.
 		// Left-shift all quaternion components by one: (W,X,Y,Z) -> (X,Y,Z,W).
-		std::for_each(orientationProperty->dataQuaternion(), orientationProperty->dataQuaternion() + orientationProperty->size(), [](Quaternion& q) { std::rotate(q.begin(), q.begin() + 1, q.end()); });
+		std::for_each(orientationProperty->dataQuaternion(), orientationProperty->dataQuaternion() + orientationProperty->size(), [](Quaternion& q) {
+			std::rotate(q.begin(), q.begin() + 1, q.end());
+		});
 	}
 
 	// Parse number of bonds.
@@ -215,7 +218,12 @@ PropertyStorage* GSDImporter::FrameLoader::readOptionalParticleProperty(GSDFile&
 	if(gsd.hasChunk(chunkName, frameNumber)) {
 		PropertyPtr prop = ParticlesObject::OOClass().createStandardStorage(numParticles, propertyType, false);
 		frameData->addParticleProperty(prop);
-		gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numParticles, prop->componentCount());
+		if(prop->dataType() == PropertyStorage::Float)
+			gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numParticles, prop->componentCount());
+		else if(prop->dataType() == PropertyStorage::Int)
+			gsd.readIntArray(chunkName, frameNumber, prop->dataInt(), numParticles, prop->componentCount());
+		else
+			throw Exception(tr("Particle property '%1' cannot be read from GSD file, because it has an unsupported data type.").arg(prop->name()));
 		return prop.get();
 	}
 	else return nullptr;

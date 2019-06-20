@@ -41,11 +41,14 @@ public:
 	};
 
 	/// Default constructor that creates a status object with status StatusType::Success and an empty info text.
-	PipelineStatus() : _type(Success) {}
+	PipelineStatus() = default;
 
 	/// Constructs a status object with the given status and optional text string describing the status.
-	PipelineStatus(StatusType t, const QString& text = QString()) :
+	PipelineStatus(StatusType t, const QString& text = {}) :
 		_type(t), _text(text) {}
+
+	/// Constructs a status object with success status and a text string describing the status.
+	PipelineStatus(const QString& text) : _text(text) {}
 
 	/// Returns the type of status stores in this object.
 	StatusType type() const { return _type; }
@@ -70,7 +73,7 @@ public:
 private:
 
 	/// The status.
-	StatusType _type;
+	StatusType _type = Success;
 
 	/// A human-readable string describing the status.
 	QString _text;

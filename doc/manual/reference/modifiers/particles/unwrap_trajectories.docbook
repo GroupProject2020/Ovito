@@ -49,15 +49,15 @@
   <para>
     The modifier uses the <link xlink:href="https://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention">minimum image principle</link>
     to detect transitions of a particle through a periodic boundary of the simulation cell from one frame to the next, i.e. in an incremental fashion.
-    After unfolding, the continuous trajectories can span distances larger than one cell size.
+    After unfolding, the continuous trajectories can span distances larger than the cell dimensions.
   </para>
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/unwrap_trajectories_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    In the current program version, you must press the <guibutton>Update</guibutton> button of the modifier to manually trigger the
-    analysis of the input particle trajectories. The modifier will step through the entire sequence of input simulation frames
-    and record all crossings through the periodic cell boundaries. Subsequently, it will use this information to unfold the trajectories
+    In the current program version, you must press the <guibutton>Update</guibutton> button of the modifier to manually trigger an
+    analysis of the input particle trajectories. The modifier will step through the entire sequence of simulation frames
+    and detect and record all crossings of the periodic cell boundaries. Subsequently, it will use this information to unfold the trajectories
     and replace particle coordinates with unwrapped versions.
   </para>
 
@@ -65,6 +65,12 @@
     The unwrapping of trajectories is only performed along those directions for which periodic
     boundary conditions (PBC) are enabled for the simulation cell. The PBC flags are read from the
     input simulation file if available and can be manually set in the <link linkend="scene_objects.simulation_cell">Simulation cell</link> panel.
+  </para>
+
+  <para>
+    If the <literal>Periodic Image</literal> particle property is present, which some MD simulation codes store in the trajectory file,
+    then the modifier will directly use this information to unwrap the particle positions. In this case you don't have to use the <guibutton>Update</guibutton> button,
+    because a detection of the particles crossing through the cell boundaries is not necessary.
   </para>
 
   <simplesect>

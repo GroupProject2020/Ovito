@@ -80,6 +80,51 @@ void UnwrapTrajectoriesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 ******************************************************************************/
 void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
+	const ParticlesObject* inputParticles = state.expectObject<ParticlesObject>();
+	inputParticles->verifyIntegrity();
+
+	// If the periodic image flags particle property is present, use it to unwrap particle positions.
+	if(const PropertyObject* particlePeriodicImageProperty = inputParticles->getProperty(ParticlesObject::PeriodicImageProperty)) {
+		// Get current simulation cell.
+		const SimulationCellObject* simCellObj = state.expectObject<SimulationCellObject>();
+		const SimulationCell cell = simCellObj->data();
+
+		// Make a modifiable copy of the particles object.
+		ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
+
+		// Make a modifiable copy of the particle position property.
+		PropertyPtr posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty)->modifiableStorage();
+		const Vector3I* pbcShift = particlePeriodicImageProperty->constDataVector3I();
+		for(Point3& p : posProperty->point3Range()) {
+			p += cell.matrix() * Vector3(*pbcShift++);
+		}
+
+		// Unwrap bonds by adjusting their PBC shift vectors.
+		if(outputParticles->bonds()) {
+			if(ConstPropertyPtr topologyProperty = outputParticles->bonds()->getPropertyStorage(BondsObject::TopologyProperty)) {
+				outputParticles->makeBondsMutable();
+				PropertyObject* periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
+				for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
+					size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
+					size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+					if(particleIndex1 >= particlePeriodicImageProperty->size() || particleIndex2 >= particlePeriodicImageProperty->size())
+						continue;
+					const Vector3I& particleShift1 = particlePeriodicImageProperty->getVector3I(particleIndex1);
+					const Vector3I& particleShift2 = particlePeriodicImageProperty->getVector3I(particleIndex2);
+					periodicImageProperty->dataVector3I()[bondIndex] += particleShift1 - particleShift2;
+				}
+			}
+		}
+
+		// After unwrapping the particles, the PBC image flags are obsolete.
+		// It's time to remove the particle property.
+		outputParticles->removeProperty(particlePeriodicImageProperty);
+
+		state.setStatus(tr("Unwrapping particle positions using stored image information."));
+
+		return;
+	}
+
 	// Obtain the precomputed list of periodic cell crossings from the modifier application that is needed to determine
 	// the unwrapped particle positions.
 	UnwrapTrajectoriesModifierApplication* myModApp = dynamic_object_cast<UnwrapTrajectoriesModifierApplication>(modApp);
@@ -113,6 +158,8 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 	const UnwrapTrajectoriesModifierApplication::UnwrapData& unwrapRecords = myModApp->unwrapRecords();
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Detected %1 periodic cell boundary crossing(s) of particle trajectories.").arg(unwrapRecords.size())));
 	if(unwrapRecords.empty()) return;
+
+	state.setStatus(tr("Unwrapping particle positions based on detected boundary traversals."));
 
 	// Get current simulation cell.
 	const SimulationCellObject* simCellObj = state.expectObject<SimulationCellObject>();
