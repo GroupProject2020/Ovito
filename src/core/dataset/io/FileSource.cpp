@@ -383,6 +383,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Collect results from the loader in the UI thread once it has finished running.
 					return dataset()->container()->taskManager().runTaskAsync(frameLoader)
 						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) {
+							OVITO_ASSERT_MSG(frameData, "FileSource::requestFrameInternal()", "File importer did not return a FrameData object.");
 
 							UndoSuspender noUndo(this);
 

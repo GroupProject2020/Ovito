@@ -22,6 +22,7 @@
 SET(SourceFiles
 	importer/CAImporter.cpp
 	importer/DislocImporter.cpp
+	importer/ParaDiSImporter.cpp
 	exporter/CAExporter.cpp
 	exporter/VTKDislocationsExporter.cpp
 	objects/BurgersVectorFamily.cpp

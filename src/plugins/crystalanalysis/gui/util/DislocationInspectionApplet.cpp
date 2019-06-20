@@ -21,6 +21,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/viewport/ViewportWindow.h>
@@ -38,7 +39,7 @@ IMPLEMENT_OVITO_CLASS(DislocationInspectionApplet);
 ******************************************************************************/
 bool DislocationInspectionApplet::appliesTo(const DataCollection& data)
 {
-	return data.containsObject<DislocationNetworkObject>();
+	return data.containsObject<DislocationNetworkObject>()/* || data.containsObject<Microstructure>()*/;
 }
 
 /******************************************************************************
@@ -118,19 +119,70 @@ void DislocationInspectionApplet::deactivate(MainWindow* mainWindow)
 }
 
 /******************************************************************************
+* Returns the data stored under the given 'role' for the item referred to by the 'index'.
+******************************************************************************/
+QVariant DislocationInspectionApplet::DislocationTableModel::data(const QModelIndex& index, int role) const
+{
+	if(role == Qt::DisplayRole) {
+		if(_dislocationObj) {
+			DislocationSegment* segment = _dislocationObj->segments()[index.row()];
+			switch(index.column()) {
+			case 0: return _dislocationObj->segments()[index.row()]->id;
+			case 1: return DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), _dislocationObj->structureById(segment->burgersVector.cluster()->structure));
+			case 2: { Vector3 b = segment->burgersVector.toSpatialVector();
+					return QStringLiteral("%1 %2 %3")
+								.arg(QLocale::c().toString(b.x(), 'f', 4), 7)
+								.arg(QLocale::c().toString(b.y(), 'f', 4), 7)
+								.arg(QLocale::c().toString(b.z(), 'f', 4), 7); }
+			case 3: return QLocale::c().toString(segment->calculateLength());
+			case 4: return segment->burgersVector.cluster()->id;
+			case 5: return _dislocationObj->structureById(segment->burgersVector.cluster()->structure)->name();
+			case 6: { Point3 headLocation = segment->backwardNode().position();
+						if(_dislocationObj->domain()) headLocation = _dislocationObj->domain()->data().wrapPoint(headLocation);
+						return QStringLiteral("%1 %2 %3")
+							.arg(QLocale::c().toString(headLocation.x(), 'f', 4), 7)
+							.arg(QLocale::c().toString(headLocation.y(), 'f', 4), 7)
+							.arg(QLocale::c().toString(headLocation.z(), 'f', 4), 7); }
+			case 7: { Point3 tailLocation = segment->forwardNode().position();
+						if(_dislocationObj->domain()) tailLocation = _dislocationObj->domain()->data().wrapPoint(tailLocation);
+						return QStringLiteral("%1 %2 %3")
+							.arg(QLocale::c().toString(tailLocation.x(), 'f', 4), 7)
+							.arg(QLocale::c().toString(tailLocation.y(), 'f', 4), 7)
+							.arg(QLocale::c().toString(tailLocation.z(), 'f', 4), 7); }
+			}
+		}
+	}
+	else if(role == Qt::DecorationRole && index.column() == 1) {
+		if(_dislocationObj) {
+			DislocationSegment* segment = _dislocationObj->segments()[index.row()];
+			MicrostructurePhase* crystalStructure = _dislocationObj->structureById(segment->burgersVector.cluster()->structure);
+			BurgersVectorFamily* family = crystalStructure->defaultBurgersVectorFamily();
+			for(BurgersVectorFamily* f : crystalStructure->burgersVectorFamilies()) {
+				if(f->isMember(segment->burgersVector.localVec(), crystalStructure)) {
+					family = f;
+					break;
+				}
+			}
+			if(family) return (QColor)family->color();
+		}
+	}
+	return {};
+}
+
+/******************************************************************************
 * Handles the mouse up events for a Viewport.
 ******************************************************************************/
 void DislocationInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
-		int pickedSegment = pickDislocationSegment(vpwin, event->pos());
-		if(pickedSegment != -1) {
+		int pickedDislocationIndex = pickDislocation(vpwin, event->pos());
+		if(pickedDislocationIndex != -1) {
 			if(!event->modifiers().testFlag(Qt::ControlModifier)) {
-				_applet->_tableView->selectRow(pickedSegment);
-				_applet->_tableView->scrollTo(_applet->_tableView->model()->index(pickedSegment, 0));
+				_applet->_tableView->selectRow(pickedDislocationIndex);
+				_applet->_tableView->scrollTo(_applet->_tableView->model()->index(pickedDislocationIndex, 0));
 			}
 			else {
-				_applet->_tableView->selectionModel()->select(_applet->_tableView->model()->index(pickedSegment, 0),
+				_applet->_tableView->selectionModel()->select(_applet->_tableView->model()->index(pickedDislocationIndex, 0),
 					QItemSelectionModel::Toggle | QItemSelectionModel::Rows);
 			}
 		}
@@ -139,9 +191,9 @@ void DislocationInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow*
 }
 
 /******************************************************************************
-* Determines the dislocation segment under the mouse cursor.
+* Determines the dislocation under the mouse cursor.
 ******************************************************************************/
-int DislocationInspectionApplet::PickingMode::pickDislocationSegment(ViewportWindow* vpwin, const QPoint& pos) const
+int DislocationInspectionApplet::PickingMode::pickDislocation(ViewportWindow* vpwin, const QPoint& pos) const
 {
 	ViewportPickResult vpPickResult = vpwin->pick(pos);
 
@@ -150,10 +202,7 @@ int DislocationInspectionApplet::PickingMode::pickDislocationSegment(ViewportWin
 		// Check if that was a dislocation.
 		DislocationPickInfo* pickInfo = dynamic_object_cast<DislocationPickInfo>(vpPickResult.pickInfo());
 		if(pickInfo && vpPickResult.pipelineNode() == _applet->_sceneNode) {
-			int segmentIndex = pickInfo->segmentIndexFromSubObjectID(vpPickResult.subobjectId());
-			if(segmentIndex >= 0 && segmentIndex < pickInfo->dislocationObj()->segments().size()) {
-				return segmentIndex;
-			}
+			return pickInfo->segmentIndexFromSubObjectID(vpPickResult.subobjectId());
 		}
 	}
 
@@ -166,7 +215,7 @@ int DislocationInspectionApplet::PickingMode::pickDislocationSegment(ViewportWin
 void DislocationInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 {
 	// Change mouse cursor while hovering over a dislocation.
-	if(pickDislocationSegment(vpwin, event->pos()) != -1)
+	if(pickDislocation(vpwin, event->pos()) != -1)
 		setCursor(SelectionMode::selectionCursor());
 	else
 		setCursor(QCursor());

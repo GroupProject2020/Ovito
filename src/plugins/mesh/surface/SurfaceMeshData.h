@@ -163,6 +163,12 @@ public:
         return vertexCoords()[vertex];
     }
 
+    /// Sets the position of the i-th mesh vertex.
+    void setVertexPosition(vertex_index vertex, const Point3& coords) {
+        OVITO_ASSERT(vertex >= 0 && vertex < vertexCount());
+        vertexCoords()[vertex] = coords;
+    }
+
     /// Creates a new vertex at the given coordinates.
     vertex_index createVertex(const Point3& pos) {
         OVITO_ASSERT(isTopologyMutable());

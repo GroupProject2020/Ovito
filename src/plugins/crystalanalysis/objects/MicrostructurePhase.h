@@ -75,7 +75,7 @@ public:
 
 	/// Returns the default Burgers vector family, which is assigned to dislocation segments that
 	/// don't belong to any family.
-	BurgersVectorFamily* defaultBurgersVectorFamily() const { return burgersVectorFamilies().front(); }
+	BurgersVectorFamily* defaultBurgersVectorFamily() const { return !burgersVectorFamilies().empty() ? burgersVectorFamilies().front() : nullptr; }
 
 	/// Returns the display color to be used for a given Burgers vector.
 	static Color getBurgersVectorColor(const QString& latticeName, const Vector3& b);

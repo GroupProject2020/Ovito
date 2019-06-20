@@ -73,7 +73,10 @@ private:
 
 		/// Returns the number of rows.
 		virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-			return parent.isValid() ? 0 : (_dislocationObj ? _dislocationObj->segments().size() : 0);
+			if(parent.isValid()) return 0;
+			if(_dislocationObj) return _dislocationObj->segments().size();
+			if(_microstructure && _microstructure->topology()) return _microstructure->topology()->faceCount();
+			return 0;
 		}
 
 		/// Returns the number of columns.
@@ -82,48 +85,7 @@ private:
 		}
 
 		/// Returns the data stored under the given 'role' for the item referred to by the 'index'.
-		virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
-			if(role == Qt::DisplayRole) {
-				DislocationSegment* segment = _dislocationObj->segments()[index.row()];
-				switch(index.column()) {
-				case 0: return _dislocationObj->segments()[index.row()]->id;
-				case 1: return DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), _dislocationObj->structureById(segment->burgersVector.cluster()->structure));
-				case 2: { Vector3 b = segment->burgersVector.toSpatialVector();
-						return QStringLiteral("%1 %2 %3")
-									.arg(QLocale::c().toString(b.x(), 'f', 4), 7)
-									.arg(QLocale::c().toString(b.y(), 'f', 4), 7)
-									.arg(QLocale::c().toString(b.z(), 'f', 4), 7); }
-				case 3: return QLocale::c().toString(segment->calculateLength());
-				case 4: return segment->burgersVector.cluster()->id;
-				case 5: return _dislocationObj->structureById(segment->burgersVector.cluster()->structure)->name();
-				case 6: { Point3 headLocation = segment->backwardNode().position();
-							if(_dislocationObj->domain()) headLocation = _dislocationObj->domain()->data().wrapPoint(headLocation);
-							return QStringLiteral("%1 %2 %3")
-								.arg(QLocale::c().toString(headLocation.x(), 'f', 4), 7)
-								.arg(QLocale::c().toString(headLocation.y(), 'f', 4), 7)
-								.arg(QLocale::c().toString(headLocation.z(), 'f', 4), 7); }
-				case 7: { Point3 tailLocation = segment->forwardNode().position();
-							if(_dislocationObj->domain()) tailLocation = _dislocationObj->domain()->data().wrapPoint(tailLocation);
-							return QStringLiteral("%1 %2 %3")
-								.arg(QLocale::c().toString(tailLocation.x(), 'f', 4), 7)
-								.arg(QLocale::c().toString(tailLocation.y(), 'f', 4), 7)
-								.arg(QLocale::c().toString(tailLocation.z(), 'f', 4), 7); }
-				}
-			}
-			else if(role == Qt::DecorationRole && index.column() == 1) {
-				DislocationSegment* segment = _dislocationObj->segments()[index.row()];
-				MicrostructurePhase* crystalStructure = _dislocationObj->structureById(segment->burgersVector.cluster()->structure);
-				BurgersVectorFamily* family = crystalStructure->defaultBurgersVectorFamily();
-				for(BurgersVectorFamily* f : crystalStructure->burgersVectorFamilies()) {
-					if(f->isMember(segment->burgersVector.localVec(), crystalStructure)) {
-						family = f;
-						break;
-					}
-				}
-				if(family) return (QColor)family->color();
-			}
-			return {};
-		}
+		virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
 		/// Returns the data for the given role and section in the header with the specified orientation.
 		virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override {
@@ -147,9 +109,11 @@ private:
 			beginResetModel();
 			if(!state.isEmpty()) {
 				_dislocationObj = state.getObject<DislocationNetworkObject>();
+				_microstructure = state.getObject<Microstructure>();
 			}
 			else {
 				_dislocationObj.reset();
+				_microstructure.reset();
 			}
 			endResetModel();
 		}
@@ -157,6 +121,7 @@ private:
 	private:
 
 		OORef<DislocationNetworkObject> _dislocationObj;
+		OORef<Microstructure> _microstructure;
 	};
 
 
@@ -194,8 +159,8 @@ private:
 		/// The owner object.
 		DislocationInspectionApplet* _applet;
 
-		/// Determines the dislocation segment under the mouse cursor.
-		int pickDislocationSegment(ViewportWindow* vpwin, const QPoint& pos) const;
+		/// Determines the dislocation under the mouse cursor.
+		int pickDislocation(ViewportWindow* vpwin, const QPoint& pos) const;
 	};
 
 private:

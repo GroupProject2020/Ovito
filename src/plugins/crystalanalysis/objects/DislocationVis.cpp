@@ -79,9 +79,9 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 	if(!periodicDomainObj)
 		return std::move(flowState);
 
-	// Get the simulation cell.
+	// Get the simulation cell (must be 3D).
 	const SimulationCellObject* cellObject = periodicDomainObj->domain();
-	if(!cellObject)
+	if(!cellObject || cellObject->is2D())
 		return std::move(flowState);
 
 	// Generate the list of clipped line segments.
@@ -340,6 +340,9 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 					if(correspondenceProperty) {
 						normalizedBurgersVector = correspondenceProperty->getMatrix3(lineSegment.region) * lineSegment.burgersVector;
 						normalizedBurgersVector.normalizeSafely();
+					}
+					else {
+						normalizedBurgersVector = lineSegment.burgersVector.safelyNormalized();
 					}
 				}
 				if(phase) {
@@ -731,8 +734,7 @@ QString DislocationPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 		const PropertyObject* burgersVectorProperty = microstructureObj()->faces()->getProperty(SurfaceMeshFaces::BurgersVectorProperty);
 		const PropertyObject* faceRegionProperty = microstructureObj()->faces()->getProperty(SurfaceMeshFaces::RegionProperty);
 		const PropertyObject* phaseProperty = microstructureObj()->regions()->getProperty(SurfaceMeshRegions::PhaseProperty);
-		const PropertyObject* correspondenceProperty = microstructureObj()->regions()->getProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
-		if(burgersVectorProperty && faceRegionProperty && phaseProperty && correspondenceProperty && segmentIndex >= 0 && segmentIndex < burgersVectorProperty->size()) {
+		if(burgersVectorProperty && faceRegionProperty && phaseProperty && segmentIndex >= 0 && segmentIndex < burgersVectorProperty->size()) {
 			const MicrostructurePhase* phase = nullptr;
 			int region = faceRegionProperty->getInt(segmentIndex);
 			if(region >= 0 && region < phaseProperty->size()) {
@@ -741,11 +743,14 @@ QString DislocationPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 					const Vector3& burgersVector = burgersVectorProperty->getVector3(segmentIndex);
 					QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVector, phase);
 					str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
-					Vector3 transformedVector = correspondenceProperty->getMatrix3(region) * burgersVector;
-					str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
-							.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
-							.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
-							.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
+					const PropertyObject* correspondenceProperty = microstructureObj()->regions()->getProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
+					if(correspondenceProperty) {
+						Vector3 transformedVector = correspondenceProperty->getMatrix3(region) * burgersVector;
+						str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
+								.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
+								.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
+								.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
+					}
 					str += tr(" | Crystal region: %1").arg(region);
 					str += tr(" | Dislocation segment: %1").arg(segmentIndex);
 					str += tr(" | Crystal structure: %1").arg(phase->name());

@@ -29,6 +29,8 @@
 #include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/BurgersVectorFamily.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
+#include <plugins/crystalanalysis/importer/DislocImporter.h>
+#include <plugins/crystalanalysis/importer/ParaDiSImporter.h>
 #include <plugins/crystalanalysis/exporter/CAExporter.h>
 #include <plugins/crystalanalysis/exporter/VTKDislocationsExporter.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
@@ -279,7 +281,13 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 				":Default: sqrt(8/3)\n")
 	;
 
-	ovito_class<CAImporter, FileSourceImporter>{m}
+	ovito_class<CAImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<DislocImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<ParaDiSImporter, ParticleImporter>{m}
 	;
 
 	ovito_class<CAExporter, FileExporter>{m}
