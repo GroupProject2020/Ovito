@@ -79,16 +79,20 @@ FileSourceImporter::FrameDataPtr ParaDiSImporter::FrameLoader::loadFile(QFile& f
         if(keyValuePair.first == "minCoordinates") {
             QVariantList valueList = keyValuePair.second.value<QVariantList>();
             if(valueList.size() != 3)
-                throw Exception(tr("Invalid 'minCoordinates' parameter value in line %1 of ParaDiS file").arg(stream.lineNumber()));
+                throw Exception(tr("Invalid 'minCoordinates' parameter value in line %1 of ParaDiS file.").arg(stream.lineNumber()));
             for(int i = 0; i < 3; i++)
                 minCoordinates[i] = valueList[i].value<FloatType>();
         }
         else if(keyValuePair.first == "maxCoordinates") {
             QVariantList valueList = keyValuePair.second.value<QVariantList>();
             if(valueList.size() != 3)
-                throw Exception(tr("Invalid 'maxCoordinates' parameter value in line %1 of ParaDiS file").arg(stream.lineNumber()));
+                throw Exception(tr("Invalid 'maxCoordinates' parameter value in line %1 of ParaDiS file.").arg(stream.lineNumber()));
             for(int i = 0; i < 3; i++)
                 maxCoordinates[i] = valueList[i].value<FloatType>();
+        }
+        else if(keyValuePair.first == "numFileSegments") {
+            if(keyValuePair.second.toInt() != 1)
+                throw Exception(tr("Invalid 'numFileSegments' parameter value in line %1 of ParaDiS file: %2. OVITO supports only single-segment ParaDiS files.").arg(stream.lineNumber()).arg(keyValuePair.second.toString()));
         }
 	}
 

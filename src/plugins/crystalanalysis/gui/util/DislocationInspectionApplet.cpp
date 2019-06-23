@@ -39,7 +39,7 @@ IMPLEMENT_OVITO_CLASS(DislocationInspectionApplet);
 ******************************************************************************/
 bool DislocationInspectionApplet::appliesTo(const DataCollection& data)
 {
-	return data.containsObject<DislocationNetworkObject>()/* || data.containsObject<Microstructure>()*/;
+	return data.containsObject<DislocationNetworkObject>() || data.containsObject<Microstructure>();
 }
 
 /******************************************************************************
@@ -149,6 +149,35 @@ QVariant DislocationInspectionApplet::DislocationTableModel::data(const QModelIn
 							.arg(QLocale::c().toString(tailLocation.x(), 'f', 4), 7)
 							.arg(QLocale::c().toString(tailLocation.y(), 'f', 4), 7)
 							.arg(QLocale::c().toString(tailLocation.z(), 'f', 4), 7); }
+			}
+		}
+		else if(_microstructure) {
+			const PropertyObject* burgersVectorProperty = _microstructure->faces()->getProperty(SurfaceMeshFaces::BurgersVectorProperty);
+			const PropertyObject* faceRegionProperty = _microstructure->faces()->getProperty(SurfaceMeshFaces::RegionProperty);
+			const PropertyObject* phaseProperty = _microstructure->regions()->getProperty(SurfaceMeshRegions::PhaseProperty);
+			if(burgersVectorProperty && faceRegionProperty && phaseProperty && index.row() < burgersVectorProperty->size()) {
+				const MicrostructurePhase* phase = nullptr;
+				int region = faceRegionProperty->getInt(index.row());
+				if(region >= 0 && region < phaseProperty->size()) {
+					int phaseId = phaseProperty->getInt(region);
+					if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
+						switch(index.column()) {
+						case 0: return index.row();
+						case 1: return DislocationVis::formatBurgersVector(burgersVectorProperty->getVector3(index.row()), phase);
+						case 2:
+							if(const PropertyObject* correspondenceProperty = _microstructure->regions()->getProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty)) {
+								Vector3 transformedVector = correspondenceProperty->getMatrix3(region) * burgersVectorProperty->getVector3(index.row());
+								return QStringLiteral("%1 %2 %3")
+										.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
+										.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
+										.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
+							}
+							break;
+						case 4: return region;
+						case 5: return phase->name();
+						}
+					}
+				}
 			}
 		}
 	}

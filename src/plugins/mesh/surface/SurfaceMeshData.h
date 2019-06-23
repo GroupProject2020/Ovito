@@ -520,6 +520,9 @@ protected:
     /// Returns the cached raw pointer to the per-face Burgers vectors.
     Vector3* burgersVectors() const { OVITO_ASSERT(_burgersVectors != nullptr); return _burgersVectors; }
 
+    /// Returns the cached raw pointer to the per-region phase information.
+    int* regionPhases() const { OVITO_ASSERT(_regionPhases != nullptr); return _regionPhases; }
+
     /// Returns the cached raw pointer to the per-face crystallographic normal vectors.
     Vector3* crystallographicNormals() const { OVITO_ASSERT(_crystallographicNormals != nullptr); return _crystallographicNormals; }
 

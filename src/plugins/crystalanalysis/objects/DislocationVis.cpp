@@ -118,13 +118,30 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 		// Extract the dislocation segments from the microstructure object.
 		std::deque<Point3> line(2);
 		microstructureObj->verifyMeshIntegrity();
+		const PropertyObject* phaseProperty = microstructureObj->regions()->getProperty(SurfaceMeshRegions::PhaseProperty);
 		MicrostructureData mdata(microstructureObj);
 		// Since every dislocation line is represented by a pair two directed lines in the data structure,
 		// make sure we render only every other dislocation line (the "even" ones).
 		for(MicrostructureData::face_index face = 0; face < mdata.faceCount(); face += 2) {
 			if(mdata.isDislocationFace(face)) {
 				const Vector3& b = mdata.burgersVector(face);
-				int region = mdata.faceRegion(face);
+				MicrostructureData::region_index region = mdata.faceRegion(face);
+
+				// Determine if the display of dislocations of this type is enabled.
+				int phaseId = mdata.regionPhase(region);
+				if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
+					const BurgersVectorFamily* family = phase->defaultBurgersVectorFamily();
+					for(const BurgersVectorFamily* f : phase->burgersVectorFamilies()) {
+						if(f->isMember(b, phase)) {
+							family = f;
+							break;
+						}
+					}
+					if(family && !family->enabled()) {
+						continue;
+					}
+				}
+
 				// Walk along the sequence of segments that make up the continous dislocation line.
 				MicrostructureData::edge_index edge = mdata.firstFaceEdge(face);
 				Point3 p = mdata.vertexPosition(mdata.vertex1(edge));

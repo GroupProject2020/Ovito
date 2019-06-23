@@ -122,6 +122,13 @@ public:
 		crystallographicNormals()[fidx] = slipFacetNormal;
 		return fidx;
 	}
+
+	/// Returns the phase ID of the given region.
+	int regionPhase(region_index region) const {
+		OVITO_ASSERT(regionPhases());
+		OVITO_ASSERT(region >= 0 && region < regionCount());
+		return regionPhases()[region];
+	}
 };
 
 /**
