@@ -278,8 +278,6 @@ void GuiApplication::showErrorMessages()
 		}
 
 		if(window) {
-			msgbox->setParent(window);
-			msgbox->setWindowModality(Qt::WindowModal);
 
 			// Stop animation playback when an error occurred.
 			if(MainWindow* mainWindow = qobject_cast<MainWindow*>(window)) {
@@ -287,6 +285,19 @@ void GuiApplication::showErrorMessages()
 				if(playbackAction->isChecked())
 					playbackAction->trigger();
 			}
+
+			// If there currently is a modal dialog box being shown,
+			// make the error message dialog a child of this dialog to prevent a UI dead-lock.
+			for(QDialog* dialog : window->findChildren<QDialog*>()) {
+				if(dialog->isModal()) {
+					window = dialog;
+					dialog->show();
+					break;
+				}
+			}
+
+			msgbox->setParent(window);
+			msgbox->setWindowModality(Qt::WindowModal);
 		}
 
 		// If the exception is associated with additional message strings,
