@@ -37,7 +37,8 @@ bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 	CompressedTextReader stream(input, sourceLocation.path());
 
 	// Read a couple of lines.
-	for(size_t lineNumber = 0; lineNumber < 18; lineNumber++) {
+	int nverts = 0;
+	for(size_t lineNumber = 0; lineNumber < 18 && !stream.eof() && nverts < 3; lineNumber++) {
 		const char* line = stream.readLineTrimLeft(512);
 		if(line[0] == '\0')  // Skip empty lines.
 			continue;
@@ -57,9 +58,14 @@ bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 			!stream.lineStartsWithToken("o", true) &&
 			!stream.lineStartsWithToken("g", true))
 			return false;
+
+		// Keep reading until at least three vertices have been encountered.
+		// Any valid OBJ file should contain three or more vertices.
+		if(stream.lineStartsWithToken("v", true))
+			nverts++;
 	}
 
-	return true;
+	return nverts >= 3;
 }
 
 /******************************************************************************
