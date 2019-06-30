@@ -62,6 +62,7 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 
 	// Create a temporary FileSource for loading the geometry data from the file.
 	OORef<FileSource> fileSource = new FileSource(dataset());
+	fileSource->setAdjustAnimationIntervalEnabled(false);
 	fileSource->setSource({ QUrl::fromLocalFile(filepath) }, importer, false);
 	SharedFuture<PipelineFlowState> stateFuture = fileSource->evaluate(0);
 	if(!operation.waitForFuture(stateFuture))
@@ -69,7 +70,11 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 
 	// Check if the FileSource has provided some useful data.
 	const PipelineFlowState& state = stateFuture.result();
-	if(state.isEmpty() || state.status().type() == PipelineStatus::Error)
+	if(state.status().type() == PipelineStatus::Error) {
+		operation.cancel();
+		return false;
+	}
+	if(state.isEmpty())
 		throwException(tr("The loaded geometry file does not provide any valid mesh data."));
 
 	// Turn on undo recording again. The final shape assignment should be recorded on the undo stack.
@@ -133,11 +138,11 @@ std::array<ParticleType::PredefinedTypeInfo, ParticleType::NUMBER_OF_PREDEFINED_
 	ParticleType::PredefinedTypeInfo{ QString("Hexagonal diamond (2nd neighbor)"), Color(204.0f/255.0f, 229.0f/255.0f, 81.0f/255.0f), 0 },
 	ParticleType::PredefinedTypeInfo{ QString("Simple cubic"), Color(160.0f/255.0f, 20.0f/255.0f, 254.0f/255.0f), 0 },
 	ParticleType::PredefinedTypeInfo{ QString("Graphene"), Color(160.0f/255.0f, 120.0f/255.0f, 254.0f/255.0f), 0 },	//todo: pick a different colour
-	ParticleType::PredefinedTypeInfo{ QString("Hexagonal ice"), Color(0.0f, 0.9f, 0.9f), 0  },	
-	ParticleType::PredefinedTypeInfo{ QString("Cubic ice"), Color(1.0f, 193.0f/255.0f, 5.0f/255.0f), 0  },	
-	ParticleType::PredefinedTypeInfo{ QString("Interfacial ice"), Color(0.5f, 0.12f, 0.4f), 0 },	
-	ParticleType::PredefinedTypeInfo{ QString("Hydrate"), Color(1.0f, 0.3f, 0.1f), 0  },	
-	ParticleType::PredefinedTypeInfo{ QString("Interfacial hydrate"), Color(0.1f, 1.0f, 0.1f), 0  },	
+	ParticleType::PredefinedTypeInfo{ QString("Hexagonal ice"), Color(0.0f, 0.9f, 0.9f), 0  },
+	ParticleType::PredefinedTypeInfo{ QString("Cubic ice"), Color(1.0f, 193.0f/255.0f, 5.0f/255.0f), 0  },
+	ParticleType::PredefinedTypeInfo{ QString("Interfacial ice"), Color(0.5f, 0.12f, 0.4f), 0 },
+	ParticleType::PredefinedTypeInfo{ QString("Hydrate"), Color(1.0f, 0.3f, 0.1f), 0  },
+	ParticleType::PredefinedTypeInfo{ QString("Interfacial hydrate"), Color(0.1f, 1.0f, 0.1f), 0  },
 }};
 
 /******************************************************************************
