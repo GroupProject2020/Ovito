@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.modifiers import UnwrapTrajectoriesModifier, ComputePropertyModifier
 import numpy as np
 
-pipeline = import_file("../files/gsd/image_flags.gsd")
+pipeline = import_file("../files/GSD/image_flags.gsd")
 pipeline.modifiers.append(ComputePropertyModifier(operate_on = "bonds", output_property = "length1", expressions = ["BondLength"]))
 pipeline.modifiers.append(UnwrapTrajectoriesModifier())
 pipeline.modifiers.append(ComputePropertyModifier(operate_on = "bonds", output_property = "length2", expressions = ["BondLength"]))
