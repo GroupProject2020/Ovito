@@ -48,14 +48,27 @@ bool LAMMPSDataImporterEditor::inspectNewFile(FileImporter* importer, const QUrl
 	if(detectedAtomStyle == LAMMPSDataImporter::AtomStyle_Unknown) {
 
 		QMap<QString, LAMMPSDataImporter::LAMMPSAtomStyle> styleList = {
+				{ QStringLiteral("angle"), LAMMPSDataImporter::AtomStyle_Angle },
 				{ QStringLiteral("atomic"), LAMMPSDataImporter::AtomStyle_Atomic },
+				{ QStringLiteral("body"), LAMMPSDataImporter::AtomStyle_Body },
 				{ QStringLiteral("bond"), LAMMPSDataImporter::AtomStyle_Bond },
 				{ QStringLiteral("charge"), LAMMPSDataImporter::AtomStyle_Charge },
 				{ QStringLiteral("dipole"), LAMMPSDataImporter::AtomStyle_Dipole },
-				{ QStringLiteral("molecular"), LAMMPSDataImporter::AtomStyle_Molecular },
+				{ QStringLiteral("dpd"), LAMMPSDataImporter::AtomStyle_DPD },
+				{ QStringLiteral("edpd"), LAMMPSDataImporter::AtomStyle_EDPD },
+				{ QStringLiteral("mdpd"), LAMMPSDataImporter::AtomStyle_MDPD },
+				{ QStringLiteral("electron"), LAMMPSDataImporter::AtomStyle_Electron },
+				{ QStringLiteral("ellipsoid"), LAMMPSDataImporter::AtomStyle_Ellipsoid },
 				{ QStringLiteral("full"), LAMMPSDataImporter::AtomStyle_Full },
-				{ QStringLiteral("angle"), LAMMPSDataImporter::AtomStyle_Angle },
-				{ QStringLiteral("sphere"), LAMMPSDataImporter::AtomStyle_Sphere }
+				{ QStringLiteral("line"), LAMMPSDataImporter::AtomStyle_Line },
+				{ QStringLiteral("meso"), LAMMPSDataImporter::AtomStyle_Meso },
+				{ QStringLiteral("molecular"), LAMMPSDataImporter::AtomStyle_Molecular },
+				{ QStringLiteral("peri"), LAMMPSDataImporter::AtomStyle_Peri },
+				{ QStringLiteral("smd"), LAMMPSDataImporter::AtomStyle_SMD },
+				{ QStringLiteral("sphere"), LAMMPSDataImporter::AtomStyle_Sphere },
+				{ QStringLiteral("template"), LAMMPSDataImporter::AtomStyle_Template },
+				{ QStringLiteral("tri"), LAMMPSDataImporter::AtomStyle_Tri },
+				{ QStringLiteral("wavepacket"), LAMMPSDataImporter::AtomStyle_Wavepacket }
 		};
 		QStringList itemList = styleList.keys();
 

@@ -28,7 +28,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_OVITO_CLASS(CFGImporter);	
+IMPLEMENT_OVITO_CLASS(CFGImporter);
 
 struct CFGHeader {
 
@@ -231,7 +231,7 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 	for(qlonglong particleIndex = 0; particleIndex < header.numParticles; ) {
 
 		// Update progress indicator.
-		if(!setProgressValueIntermittent(particleIndex)) 
+		if(!setProgressValueIntermittent(particleIndex))
 			return {};
 
 		if(!isFirstLine)

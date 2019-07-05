@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/import/ParticleFrameData.h>
+#include <plugins/particles/import/InputColumnMapping.h>
 #include <core/app/Application.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include <core/utilities/io/FileManager.h>
@@ -31,7 +32,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_OVITO_CLASS(LAMMPSDataImporter);	
+IMPLEMENT_OVITO_CLASS(LAMMPSDataImporter);
 DEFINE_PROPERTY_FIELD(LAMMPSDataImporter, atomStyle);
 SET_PROPERTY_FIELD_LABEL(LAMMPSDataImporter, atomStyle, "LAMMPS atom style");
 
@@ -227,14 +228,11 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	// Create standard particle properties.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
-	Point3* pos = posProperty->dataPoint3();
 	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, true);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-	auto atomType = typeProperty->dataInt();
 	PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, true);
 	frameData->addParticleProperty(identifierProperty);
-	auto atomId = identifierProperty->dataInt64();
 
 	// Create atom types.
 	for(int i = 1; i <= natomtypes; i++)
@@ -255,140 +253,62 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 		stream.readLine();
 
 		if(keyword.startsWith("Atoms")) {
+
 			if(natoms != 0) {
 				stream.readLine();
-				bool withPBCImageFlags;
-				std::tie(_atomStyle, withPBCImageFlags) = detectAtomStyle(stream.line(), keyword, _atomStyle);
-				frameData->setDetectedAtomStyle(_atomStyle);
+				bool withPBCImageFlags = detectAtomStyle(stream.line(), keyword);
+				frameData->setDetectedAtomStyle(_atomStyle, _atomSubStyles);
 				if(_detectAtomStyle) {
-					// We are done at this point if we are only supposed to 
+					// We are done at this point if we are only supposed to
 					// detect the atom style used in the file.
 					return frameData;
 				}
+				if(_atomStyle == AtomStyle_Unknown)
+					throw Exception(tr("Atom style of the LAMMPS data file could not be detected, or the number of file columns is not as expected for the selected atom style."));
 
-				Point3I* pbcImage = nullptr;
-				if(withPBCImageFlags) {
-					PropertyPtr pbcProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PeriodicImageProperty, true);
-					frameData->addParticleProperty(pbcProperty);
-					pbcImage = pbcProperty->dataPoint3I();
+				// Set up mapping of file columns to internal particle properties.
+				// The number and order of file columns in a LAMMPS data file depends
+				// on the atom style detected above.
+				InputColumnMapping columnMapping = createColumnMapping(_atomStyle, withPBCImageFlags);
+
+				// Append also the data columns of the sub-styles if main atom style is "hybrid".
+				if(_atomStyle == AtomStyle_Hybrid) {
+					for(LAMMPSAtomStyle subStyle : _atomSubStyles) {
+						InputColumnMapping subStyleMapping = createColumnMapping(subStyle, false);
+						for(const InputColumnInfo& column : subStyleMapping) {
+							if(column.isMapped() && (
+									column.property.type() == ParticlesObject::IdentifierProperty ||
+									column.property.type() == ParticlesObject::TypeProperty ||
+									column.property.type() == ParticlesObject::PositionProperty))
+								continue;
+							columnMapping.push_back(column);
+						}
+					}
 				}
 
-				if(_atomStyle == AtomStyle_Atomic || _atomStyle == AtomStyle_Hybrid) {
-					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId) {
+				// Parse data in the Atoms section line by line:
+				InputColumnReader columnParser(columnMapping, *frameData, natoms);
+				try {
+					const int* atomType = typeProperty->constDataInt();
+					const qlonglong* atomId = identifierProperty->constDataInt64();
+					for(size_t i = 0; i < (size_t)natoms; i++, ++atomType, ++atomId) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
-						bool invalidLine;
-						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, &pos->x(), &pos->y(), &pos->z()) != 5);
-						else {
-							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 5+3);
-							++pbcImage;
-						}
-						if(invalidLine)
-							throw Exception(tr("Invalid data in Atoms section of LAMMPS data file at line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+						columnParser.readParticle(i, stream.line());
 						if(*atomType < 1 || *atomType > natomtypes)
 							throw Exception(tr("Atom type out of range in Atoms section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
 						atomIdMap.insert(std::make_pair(*atomId, i));
 					}
 				}
-				else if(_atomStyle == AtomStyle_Charge || _atomStyle == AtomStyle_Dipole) {
-					PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::ChargeProperty, true);
-					frameData->addParticleProperty(chargeProperty);
-					FloatType* charge = chargeProperty->dataFloat();
-					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
-						if(!setProgressValueIntermittent(i)) return {};
-						if(i != 0) stream.readLine();
-						bool invalidLine;
-						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, charge, &pos->x(), &pos->y(), &pos->z()) != 6);
-						else {
-							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, charge, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 6+3);
-							++pbcImage;
-						}
-						if(invalidLine)
-							throw Exception(tr("Invalid data in Atoms section of LAMMPS data file at line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-						if(*atomType < 1 || *atomType > natomtypes)
-							throw Exception(tr("Atom type out of range in Atoms section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
-						atomIdMap.insert(std::make_pair(*atomId, i));
-					}
+				catch(Exception& ex) {
+					throw ex.prependGeneralMessage(tr("Parsing error in line %1 of LAMMPS data file.").arg(stream.lineNumber()));
 				}
-				else if(_atomStyle == AtomStyle_Angle || _atomStyle == AtomStyle_Bond || _atomStyle == AtomStyle_Molecular) {
-					PropertyPtr moleculeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MoleculeProperty, true);
-					frameData->addParticleProperty(moleculeProperty);
-					auto molecule = moleculeProperty->dataInt64();
-					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
-						if(!setProgressValueIntermittent(i)) return {};
-						if(i != 0) stream.readLine();
-						bool invalidLine;
-						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, molecule, atomType, &pos->x(), &pos->y(), &pos->z()) != 6);
-						else {
-							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, molecule, atomType, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 6+3);
-							++pbcImage;
-						}
-						if(invalidLine)
-							throw Exception(tr("Invalid data in Atoms section of LAMMPS data file at line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-						if(*atomType < 1 || *atomType > natomtypes)
-							throw Exception(tr("Atom type out of range in Atoms section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
-						atomIdMap.insert(std::make_pair(*atomId, i));
-					}
-				}
-				else if(_atomStyle == AtomStyle_Full) {
-					PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::ChargeProperty, true);
-					frameData->addParticleProperty(chargeProperty);
-					FloatType* charge = chargeProperty->dataFloat();
-					PropertyPtr moleculeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MoleculeProperty, true);
-					frameData->addParticleProperty(moleculeProperty);
-					auto molecule = moleculeProperty->dataInt64();
-					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
-						if(!setProgressValueIntermittent(i)) return {};
-						if(i != 0) stream.readLine();
-						bool invalidLine;
-						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, molecule, atomType, charge, &pos->x(), &pos->y(), &pos->z()) != 7);
-						else {
-							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, molecule, atomType, charge, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 7+3);
-							++pbcImage;
-						}
-						if(invalidLine)
-							throw Exception(tr("Invalid data in Atoms section of LAMMPS data file at line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-						if(*atomType < 1 || *atomType > natomtypes)
-							throw Exception(tr("Atom type out of range in Atoms section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
-						atomIdMap.insert(std::make_pair(*atomId, i));
-					}
-				}
-				else if(_atomStyle == AtomStyle_Sphere) {
-					PropertyPtr radiusProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::RadiusProperty, true);
-					frameData->addParticleProperty(radiusProperty);
-					FloatType* radius = radiusProperty->dataFloat();
-					PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, true);
-					frameData->addParticleProperty(massProperty);
-					FloatType* mass = massProperty->dataFloat();
-					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
-						if(!setProgressValueIntermittent(i)) return {};
-						if(i != 0) stream.readLine();
-						bool invalidLine;
-						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, radius, mass, &pos->x(), &pos->y(), &pos->z()) != 7);
-						else {
-							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, radius, mass, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 7+3);
-							++pbcImage;
-						}
-						if(invalidLine)
-							throw Exception(tr("Invalid data in Atoms section of LAMMPS data file at line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-						if(*atomType < 1 || *atomType > natomtypes)
-							throw Exception(tr("Atom type out of range in Atoms section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
-						atomIdMap.insert(std::make_pair(*atomId, i));
-						
-						*radius /= 2; // Convert diameter to radius.
-						if(*radius != 0) *mass *= pow(*radius, 3) * (FLOATTYPE_PI * FloatType(4) / FloatType(3)); // Convert density to mass.
-					}
-				}
-				else if(_atomStyle == AtomStyle_Unknown) {
-					throw Exception(tr("Number of columns in Atoms section of data file (line %1) does not match to selected LAMMPS atom style.").arg(stream.lineNumber()));
-				}
-				else {
-					throw Exception(tr("Selected LAMMPS atom style is not supported by the file parser."));
+
+				// Some LAMMPS data files contain per-particle diameter information.
+				// OVITO only knows the "Radius" particle property, which is means we have to divide by 2.
+				if(PropertyPtr radiusProperty = frameData->findStandardParticleProperty(ParticlesObject::RadiusProperty)) {
+					for(FloatType& r : radiusProperty->floatRange())
+						r /= FloatType(2);
 				}
 			}
 			foundAtomsSection = true;
@@ -544,8 +464,8 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	if(!foundAtomsSection)
 		throw Exception("LAMMPS data file does not contain atomic coordinates.");
 
-	// Assign masses to particles.
-	if(!massTable.empty()) {
+	// Assign masses to particles based on their type.
+	if(!massTable.empty() && !frameData->findStandardParticleProperty(ParticlesObject::MassProperty)) {
 		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, false);
 		frameData->addParticleProperty(massProperty);
 		const int* atomType = typeProperty->constDataInt();
@@ -568,56 +488,347 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 /******************************************************************************
 * Detects or verifies the LAMMPS atom style used by the data file.
 ******************************************************************************/
-std::tuple<LAMMPSDataImporter::LAMMPSAtomStyle,bool> LAMMPSDataImporter::FrameLoader::detectAtomStyle(const char* firstLine, const QByteArray& keywordLine, LAMMPSAtomStyle style)
+bool LAMMPSDataImporter::FrameLoader::detectAtomStyle(const char* firstLine, const QByteArray& keywordLine)
 {
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	// Some data files contain a comment after the 'Atoms' keyword that indicates the atom type.
-	QString atomTypeHint;
+	// Data files may contain a comment string after the 'Atoms' keyword indicating the LAMMPS atom style.
+	QString atomStyleHint;
+	QStringList atomSubStyleHints;
 	int commentStart = keywordLine.indexOf('#');
 	if(commentStart != -1) {
-		QStringList words = QString::fromLatin1(keywordLine.data() + commentStart).split(ws_re, QString::SkipEmptyParts);
-		if(words.size() == 2)
-			atomTypeHint = words[1];
+		QStringList tokens = QString::fromLatin1(keywordLine.data() + commentStart).split(ws_re, QString::SkipEmptyParts);
+		if(tokens.size() >= 2) {
+			atomStyleHint = tokens[1];
+			atomSubStyleHints = tokens.mid(2);
+		}
 	}
 
-	// Count fields in first line of Atoms section.
+	// Count number of columns in first data line of the Atoms section.
 	QString str = QString::fromLatin1(firstLine);
 	commentStart = str.indexOf(QChar('#'));
 	if(commentStart >= 0) str.truncate(commentStart);
 	QStringList tokens = str.split(ws_re, QString::SkipEmptyParts);
 	int count = tokens.size();
 
-	if(style == AtomStyle_Unknown && !atomTypeHint.isEmpty()) {
-		if(atomTypeHint == QStringLiteral("atomic")) style = AtomStyle_Atomic;
-		else if(atomTypeHint == QStringLiteral("full")) style = AtomStyle_Full;
-		else if(atomTypeHint == QStringLiteral("angle")) style = AtomStyle_Angle;
-		else if(atomTypeHint == QStringLiteral("bond")) style = AtomStyle_Bond;
-		else if(atomTypeHint == QStringLiteral("charge")) style = AtomStyle_Charge;
-		else if(atomTypeHint == QStringLiteral("molecular")) style = AtomStyle_Molecular;
-		else if(atomTypeHint == QStringLiteral("sphere")) style = AtomStyle_Sphere;
-	}
-
-	if(style == AtomStyle_Unknown) {
-		if(count == 5) {
-			return std::make_tuple(AtomStyle_Atomic, false);
-		}
-		else if(count == 5+3) {
-			if(!tokens[5].contains(QChar('.')) && !tokens[6].contains(QChar('.')) && !tokens[7].contains(QChar('.'))) {
-				return std::make_tuple(AtomStyle_Atomic, true);
+	if((_atomStyle == AtomStyle_Unknown || _atomStyle == AtomStyle_Hybrid) && !atomStyleHint.isEmpty()) {
+		_atomStyle = parseAtomStyleHint(atomStyleHint);
+		if(_atomStyle == AtomStyle_Hybrid) {
+			if(!atomSubStyleHints.empty()) {
+				_atomSubStyles.clear();
+				for(const QString& subStyleHint : atomSubStyleHints) {
+					_atomSubStyles.push_back(parseAtomStyleHint(subStyleHint));
+					if(_atomSubStyles.back() == AtomStyle_Unknown || _atomSubStyles.back() == AtomStyle_Hybrid) {
+						_atomSubStyles.clear();
+						qWarning() << "This atom sub-style in LAMMPS data file is not supported by OVITO:" << subStyleHint;
+						break;
+					}
+				}
 			}
 		}
 	}
 
-	if(style == AtomStyle_Atomic && (count == 5 || count == 5+3)) return std::make_tuple(style, count == 5+3);
-	if(style == AtomStyle_Hybrid && count >= 5) return std::make_tuple(style, false);
-	if((style == AtomStyle_Angle || style == AtomStyle_Bond || style == AtomStyle_Charge || style == AtomStyle_Molecular) && (count == 6 || count == 6+3)) return std::make_tuple(style, count == 6+3);
-	if((style == AtomStyle_Body || style == AtomStyle_Ellipsoid || style == AtomStyle_Full || style == AtomStyle_Peri || style == AtomStyle_Sphere) && (count == 7 || count == 7+3)) return std::make_tuple(style, count == 7+3);
-	if((style == AtomStyle_Electron || style == AtomStyle_Line || style == AtomStyle_Meso || style == AtomStyle_Template || style == AtomStyle_Tri) && (count == 8 || count == 8+3)) return std::make_tuple(style, count == 8+3);
-	if(style == AtomStyle_Dipole && (count == 9 || count == 9+3)) return std::make_tuple(style, count == 9+3);
-	if(style == AtomStyle_Wavepacket && (count == 11 || count == 11+3)) return std::make_tuple(style, count == 11+3);
-	return std::make_tuple(AtomStyle_Unknown, false);
+	// If no style hint is given in the data file, and if the number of
+	// columns is 5 (or 5+3 including image flags), assume atom style is "atomic".
+	if(_atomStyle == AtomStyle_Unknown) {
+		if(count == 5) {
+			_atomStyle = AtomStyle_Atomic;
+			return false;
+		}
+		else if(count == 5+3) {
+			if(!tokens[5].contains(QChar('.')) && !tokens[6].contains(QChar('.')) && !tokens[7].contains(QChar('.'))) {
+				_atomStyle = AtomStyle_Atomic;
+				return true;
+			}
+		}
+	}
+	else if(_atomStyle == AtomStyle_Hybrid) {
+		if(count >= 5)
+			return false;
+	}
+	else {
+		// Check if the number of columns present in the data file matches the expectated count for the selected atom style.
+		InputColumnMapping columnMapping = createColumnMapping(_atomStyle, false);
+		if(columnMapping.size() == count) return false;
+		else if(columnMapping.size()+3 == count) return true;
+	}
+	// Invalid or unexpected column count:
+	_atomStyle = AtomStyle_Unknown;
+	return false;
 }
+
+/******************************************************************************
+* Parses a hint string for the LAMMPS atom style.
+******************************************************************************/
+LAMMPSDataImporter::LAMMPSAtomStyle LAMMPSDataImporter::FrameLoader::parseAtomStyleHint(const QString& atomStyleHint)
+{
+	if(atomStyleHint == QStringLiteral("angle")) return AtomStyle_Angle;
+	else if(atomStyleHint == QStringLiteral("atomic")) return AtomStyle_Atomic;
+	else if(atomStyleHint == QStringLiteral("body")) return AtomStyle_Body;
+	else if(atomStyleHint == QStringLiteral("bond")) return AtomStyle_Bond;
+	else if(atomStyleHint == QStringLiteral("charge")) return AtomStyle_Charge;
+	else if(atomStyleHint == QStringLiteral("dipole")) return AtomStyle_Dipole;
+	else if(atomStyleHint == QStringLiteral("dpd")) return AtomStyle_DPD;
+	else if(atomStyleHint == QStringLiteral("edpd")) return AtomStyle_EDPD;
+	else if(atomStyleHint == QStringLiteral("mdpd")) return AtomStyle_MDPD;
+	else if(atomStyleHint == QStringLiteral("electron")) return AtomStyle_Electron;
+	else if(atomStyleHint == QStringLiteral("ellipsoid")) return AtomStyle_Ellipsoid;
+	else if(atomStyleHint == QStringLiteral("full")) return AtomStyle_Full;
+	else if(atomStyleHint == QStringLiteral("line")) return AtomStyle_Line;
+	else if(atomStyleHint == QStringLiteral("meso")) return AtomStyle_Meso;
+	else if(atomStyleHint == QStringLiteral("molecular")) return AtomStyle_Molecular;
+	else if(atomStyleHint == QStringLiteral("peri")) return AtomStyle_Peri;
+	else if(atomStyleHint == QStringLiteral("smd")) return AtomStyle_SMD;
+	else if(atomStyleHint == QStringLiteral("sphere")) return AtomStyle_Sphere;
+	else if(atomStyleHint == QStringLiteral("template")) return AtomStyle_Template;
+	else if(atomStyleHint == QStringLiteral("tri")) return AtomStyle_Tri;
+	else if(atomStyleHint == QStringLiteral("wavepacket")) return AtomStyle_Wavepacket;
+	else if(atomStyleHint == QStringLiteral("hybrid")) return AtomStyle_Hybrid;
+	return AtomStyle_Unknown;
+}
+
+/******************************************************************************
+* Sets up the mapping of data file columns to internal particle properties based on the selected LAMMPS atom style.
+******************************************************************************/
+InputColumnMapping LAMMPSDataImporter::FrameLoader::createColumnMapping(LAMMPSAtomStyle atomStyle, bool includeImageFlags)
+{
+	InputColumnMapping columnMapping;
+	switch(atomStyle) {
+	case AtomStyle_Angle:
+		columnMapping.resize(6);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Atomic:
+		columnMapping.resize(5);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Body:
+		columnMapping.resize(7);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		// Ignore third column (bodyflag).
+		columnMapping[3].mapStandardColumn(ParticlesObject::MassProperty);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Bond:
+		columnMapping.resize(6);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Charge:
+		columnMapping.resize(6);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::ChargeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Dipole:
+		columnMapping.resize(9);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::ChargeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		columnMapping[6].mapStandardColumn(ParticlesObject::DipoleOrientationProperty, 0);
+		columnMapping[7].mapStandardColumn(ParticlesObject::DipoleOrientationProperty, 1);
+		columnMapping[8].mapStandardColumn(ParticlesObject::DipoleOrientationProperty, 2);
+		break;
+	case AtomStyle_DPD:
+		columnMapping.resize(6);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("theta"), PropertyStorage::Float);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_EDPD:
+		columnMapping.resize(7);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("edpd_temp"), PropertyStorage::Float);
+		columnMapping[3].mapCustomColumn(QStringLiteral("edpd_cv"), PropertyStorage::Float);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_MDPD:
+		columnMapping.resize(6);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("rho"), PropertyStorage::Float);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Electron:
+		columnMapping.resize(8);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::ChargeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::SpinProperty);
+		columnMapping[4].mapCustomColumn(QStringLiteral("eradius"), PropertyStorage::Float);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[7].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Ellipsoid:
+		columnMapping.resize(7);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("ellipsoidflag"), PropertyStorage::Int);
+		columnMapping[3].mapCustomColumn(QStringLiteral("Density"), PropertyStorage::Float);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Full:
+		columnMapping.resize(7);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::ChargeProperty);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Line:
+		columnMapping.resize(8);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[3].mapCustomColumn(QStringLiteral("lineflag"), PropertyStorage::Int);
+		columnMapping[4].mapCustomColumn(QStringLiteral("Density"), PropertyStorage::Float);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[7].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Meso:
+		columnMapping.resize(8);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("rho"), PropertyStorage::Float);
+		columnMapping[3].mapCustomColumn(QStringLiteral("e"), PropertyStorage::Float);
+		columnMapping[4].mapCustomColumn(QStringLiteral("cv"), PropertyStorage::Float);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[7].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Molecular:
+		columnMapping.resize(6);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Peri:
+		columnMapping.resize(7);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("Volume"), PropertyStorage::Float);
+		columnMapping[3].mapCustomColumn(QStringLiteral("Density"), PropertyStorage::Float);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_SMD:
+		columnMapping.resize(10);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("molecule"), PropertyStorage::Float);
+		columnMapping[3].mapCustomColumn(QStringLiteral("Volume"), PropertyStorage::Float);
+		columnMapping[4].mapStandardColumn(ParticlesObject::MassProperty);
+		columnMapping[5].mapCustomColumn(QStringLiteral("kernelradius"), PropertyStorage::Float);
+		columnMapping[6].mapCustomColumn(QStringLiteral("contactradius"), PropertyStorage::Float);
+		columnMapping[7].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[8].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[9].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Sphere:
+		columnMapping.resize(7);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::RadiusProperty);
+		columnMapping[3].mapCustomColumn(QStringLiteral("Density"), PropertyStorage::Float);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Template:
+		columnMapping.resize(8);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapCustomColumn(QStringLiteral("templateindex"), PropertyStorage::Int);
+		columnMapping[3].mapCustomColumn(QStringLiteral("templateatom"), PropertyStorage::Int64);
+		columnMapping[4].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[7].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Tri:
+		columnMapping.resize(8);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::MoleculeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[3].mapCustomColumn(QStringLiteral("triangleflag"), PropertyStorage::Int);
+		columnMapping[4].mapCustomColumn(QStringLiteral("Density"), PropertyStorage::Float);
+		columnMapping[5].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[6].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[7].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Wavepacket:
+		columnMapping.resize(11);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::ChargeProperty);
+		columnMapping[3].mapStandardColumn(ParticlesObject::SpinProperty);
+		columnMapping[4].mapCustomColumn(QStringLiteral("eradius"), PropertyStorage::Float);
+		columnMapping[5].mapCustomColumn(QStringLiteral("etag"), PropertyStorage::Float);
+		columnMapping[6].mapCustomColumn(QStringLiteral("cs_re"), PropertyStorage::Float);
+		columnMapping[7].mapCustomColumn(QStringLiteral("cs_im"), PropertyStorage::Float);
+		columnMapping[8].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[9].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[10].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Hybrid:
+		columnMapping.resize(5);
+		columnMapping[0].mapStandardColumn(ParticlesObject::IdentifierProperty);
+		columnMapping[1].mapStandardColumn(ParticlesObject::TypeProperty);
+		columnMapping[2].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		columnMapping[4].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+		break;
+	case AtomStyle_Unknown:
+		break;
+	}
+	if(includeImageFlags) {
+		columnMapping.push_back({ParticlesObject::PeriodicImageProperty, 0});
+		columnMapping.push_back({ParticlesObject::PeriodicImageProperty, 1});
+		columnMapping.push_back({ParticlesObject::PeriodicImageProperty, 2});
+	}
+	return columnMapping;
+}
+
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

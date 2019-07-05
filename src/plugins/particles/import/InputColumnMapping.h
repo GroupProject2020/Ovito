@@ -41,8 +41,18 @@ class OVITO_PARTICLES_EXPORT InputColumnInfo
 {
 public:
 
-	/// \brief Constructor, which sets the column to an unmapped state.
-	InputColumnInfo() : dataType(QMetaType::Void) {}
+	/// \brief Default constructor mapping the column to no property.
+	InputColumnInfo() = default;
+
+	/// \brief Constructor mapping the column to a standard property.
+	InputColumnInfo(ParticlesObject::Type type, int vectorComponent = 0) {
+		mapStandardColumn(type, vectorComponent);
+	}
+
+	/// \brief Constructor mapping the column to a user-defined property.
+	InputColumnInfo(const QString& propertyName, int dataType, int vectorComponent = 0) {
+		mapCustomColumn(propertyName, dataType, vectorComponent);
+	}
 
 	/// \brief Maps this column to a custom particle property.
 	/// \param propertyName The name of target particle property.
@@ -76,7 +86,7 @@ public:
 
 	/// The data type of the particle property if this column is mapped to a user-defined property.
 	/// This field can be set to QMetaType::Void to indicate that the column should be ignored during file import.
-	int dataType;
+	int dataType = QMetaType::Void;
 
 	/// The name of the column in the input file. This information is
 	/// read from the input file (if available).
