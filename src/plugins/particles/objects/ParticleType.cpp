@@ -32,16 +32,22 @@ DEFINE_PROPERTY_FIELD(ParticleType, radius);
 DEFINE_REFERENCE_FIELD(ParticleType, shapeMesh);
 DEFINE_PROPERTY_FIELD(ParticleType, highlightShapeEdges);
 DEFINE_PROPERTY_FIELD(ParticleType, shapeBackfaceCullingEnabled);
+DEFINE_PROPERTY_FIELD(ParticleType, mass);
 SET_PROPERTY_FIELD_LABEL(ParticleType, radius, "Radius");
 SET_PROPERTY_FIELD_LABEL(ParticleType, shapeMesh, "Shape");
 SET_PROPERTY_FIELD_LABEL(ParticleType, highlightShapeEdges, "Highlight edges");
 SET_PROPERTY_FIELD_LABEL(ParticleType, shapeBackfaceCullingEnabled, "Back-face culling");
+SET_PROPERTY_FIELD_LABEL(ParticleType, mass, "Mass");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticleType, radius, WorldParameterUnit, 0);
 
 /******************************************************************************
 * Constructs a new particle type.
 ******************************************************************************/
-ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset), _radius(0), _highlightShapeEdges(false), _shapeBackfaceCullingEnabled(true)
+ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset),
+	_radius(0),
+	_highlightShapeEdges(false),
+	_shapeBackfaceCullingEnabled(true),
+	_mass(0)
 {
 }
 

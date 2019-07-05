@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,13 +22,14 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticleType.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "LAMMPSDataExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_OVITO_CLASS(LAMMPSDataExporter);	
+IMPLEMENT_OVITO_CLASS(LAMMPSDataExporter);
 DEFINE_PROPERTY_FIELD(LAMMPSDataExporter, atomStyle);
 SET_PROPERTY_FIELD_LABEL(LAMMPSDataExporter, atomStyle, "Atom style");
 
@@ -36,7 +37,7 @@ SET_PROPERTY_FIELD_LABEL(LAMMPSDataExporter, atomStyle, "Atom style");
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
 bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
-{	
+{
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
@@ -44,9 +45,10 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	const PropertyObject* periodicImageProperty = particles->getProperty(ParticlesObject::PeriodicImageProperty);
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 	const PropertyObject* chargeProperty = particles->getProperty(ParticlesObject::ChargeProperty);
-	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);	
+	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
 	const PropertyObject* massProperty = particles->getProperty(ParticlesObject::MassProperty);
 	const PropertyObject* moleculeProperty = particles->getProperty(ParticlesObject::MoleculeProperty);
+	const PropertyObject* dipoleOrientationProperty = particles->getProperty(ParticlesObject::DipoleOrientationProperty);
 	const BondsObject* bonds = particles->bonds();
 	const PropertyObject* bondTopologyProperty = bonds ? bonds->getProperty(BondsObject::TopologyProperty) : nullptr;
 	const PropertyObject* bondTypeProperty = bonds ? bonds->getProperty(BondsObject::TypeProperty) : nullptr;
@@ -122,7 +124,21 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	if(xy != 0 || xz != 0 || yz != 0) {
 		textStream() << xy << ' ' << xz << ' ' << yz << " xy xz yz\n";
 	}
-	textStream() << '\n';
+	textStream() << "\n";
+
+	// Write "Masses" section.
+	if(particleTypeProperty && particleTypeProperty->elementTypes().size() > 0) {
+		textStream() << "Masses\n\n";
+		for(const ElementType* type : particleTypeProperty->elementTypes()) {
+			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(type)) {
+				textStream() << ptype->numericId() << " " << ptype->mass();
+				if(!ptype->name().isEmpty())
+					textStream() << "  # " << ptype->name();
+				textStream() << "\n";
+			}
+		}
+		textStream() << "\n";
+	}
 
 	qlonglong totalProgressCount = posProperty->size();
 	if(velocityProperty) totalProgressCount += posProperty->size();
@@ -131,14 +147,14 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	// Write "Atoms" section.
 	textStream() << "Atoms";
 	switch(atomStyle()) {
-		case LAMMPSDataImporter::AtomStyle_Atomic: textStream() << " # atomic"; break;
-		case LAMMPSDataImporter::AtomStyle_Angle: textStream() << " # angle"; break;
-		case LAMMPSDataImporter::AtomStyle_Bond: textStream() << " # bond"; break;
-		case LAMMPSDataImporter::AtomStyle_Molecular: textStream() << " # molecular"; break;
-		case LAMMPSDataImporter::AtomStyle_Full: textStream() << " # full"; break;
-		case LAMMPSDataImporter::AtomStyle_Charge: textStream() << " # charge"; break;
-		case LAMMPSDataImporter::AtomStyle_Dipole: textStream() << " # dipole"; break;
-		case LAMMPSDataImporter::AtomStyle_Sphere: textStream() << " # sphere"; break;
+		case LAMMPSDataImporter::AtomStyle_Atomic: textStream() << "  # atomic"; break;
+		case LAMMPSDataImporter::AtomStyle_Angle: textStream() << "  # angle"; break;
+		case LAMMPSDataImporter::AtomStyle_Bond: textStream() << "  # bond"; break;
+		case LAMMPSDataImporter::AtomStyle_Molecular: textStream() << "  # molecular"; break;
+		case LAMMPSDataImporter::AtomStyle_Full: textStream() << "  # full"; break;
+		case LAMMPSDataImporter::AtomStyle_Charge: textStream() << "  # charge"; break;
+		case LAMMPSDataImporter::AtomStyle_Dipole: textStream() << "  # dipole"; break;
+		case LAMMPSDataImporter::AtomStyle_Sphere: textStream() << "  # sphere"; break;
 		default: break; // Do nothing
 	}
 	textStream() << "\n\n";
@@ -179,6 +195,12 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 		else {
 			for(size_t k = 0; k < 3; k++)
 				textStream() << ' ' << transformation.prodrow(pos, k);
+		}
+		if(atomStyle() == LAMMPSDataImporter::AtomStyle_Dipole) {
+			// mux muy muz
+			textStream() << ' ' << (dipoleOrientationProperty ? dipoleOrientationProperty->getFloatComponent(i, 0) : 0);
+			textStream() << ' ' << (dipoleOrientationProperty ? dipoleOrientationProperty->getFloatComponent(i, 1) : 0);
+			textStream() << ' ' << (dipoleOrientationProperty ? dipoleOrientationProperty->getFloatComponent(i, 2) : 0);
 		}
 		if(periodicImageProperty) {
 			// pbc images

@@ -46,10 +46,11 @@ public:
 		std::string name8bit;
 		Color color;
 		FloatType radius;
+		FloatType mass;
 	};
 
 	/// Used to store the lists of particle/bond types.
-	class OVITO_PARTICLES_EXPORT TypeList 
+	class OVITO_PARTICLES_EXPORT TypeList
 	{
 	public:
 
@@ -59,16 +60,16 @@ public:
 				if(type.id == id)
 					return;
 			}
-			_types.push_back({ id, QString(), std::string(), Color(0,0,0), 0 });
+			_types.push_back({ id, QString(), std::string(), Color(0,0,0), 0.0, 0.0 });
 		}
 
 		/// Defines a new type with the given id.
-		void addTypeId(int id, const QString& name, const Color& color = Color(0,0,0), FloatType radius = 0) {
+		void addTypeId(int id, const QString& name, const Color& color = Color(0,0,0), FloatType radius = 0, FloatType mass = 0) {
 			for(const auto& type : _types) {
 				if(type.id == id)
 					return;
 			}
-			_types.push_back({ id, name, name.toStdString(), color, radius });
+			_types.push_back({ id, name, name.toStdString(), color, radius, mass });
 		}
 
 		/// Changes the name of an existing type.
@@ -82,6 +83,16 @@ public:
 			}
 		}
 
+		/// Changes the mass of an existing type.
+		void setTypeMass(int id, FloatType mass) {
+			for(auto& type : _types) {
+				if(type.id == id) {
+					type.mass = mass;
+					break;
+				}
+			}
+		}
+
 		/// Defines a new type with the given name.
 		inline int addTypeName(const char* name, const char* name_end = nullptr) {
 			size_t nameLen = (name_end ? (name_end - name) : qstrlen(name));
@@ -90,7 +101,7 @@ public:
 					return type.id;
 			}
 			int id = _types.size() + 1;
-			_types.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), Color(0,0,0), 0.0f });
+			_types.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), Color(0,0,0), 0.0, 0.0 });
 			return id;
 		}
 
@@ -101,19 +112,19 @@ public:
 					return type.id;
 			}
 			int id = _types.size() + 1;
-			_types.push_back({ id, name, name.toStdString(), Color(0,0,0), 0.0f });
+			_types.push_back({ id, name, name.toStdString(), Color(0,0,0), 0.0, 0.0 });
 			return id;
 		}
-		
+
 		/// Defines a new type with the given name, color, and radius.
-		int addTypeName(const char* name, const char* name_end, const Color& color, FloatType radius = 0) {
+		int addTypeName(const char* name, const char* name_end, const Color& color, FloatType radius = 0, FloatType mass = 0) {
 			size_t nameLen = (name_end ? (name_end - name) : qstrlen(name));
 			for(const auto& type : _types) {
 				if(type.name8bit.compare(0, type.name8bit.size(), name, nameLen) == 0)
 					return type.id;
 			}
 			int id = _types.size() + 1;
-			_types.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), color, radius });
+			_types.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), color, radius, mass });
 			return id;
 		}
 
@@ -174,7 +185,7 @@ public:
 				return prop;
 		return {};
 	}
-	
+
 	/// Adds a new particle property.
 	void addParticleProperty(PropertyPtr property) {
 		_particleProperties.push_back(std::move(property));
@@ -194,7 +205,7 @@ public:
 		_typeLists.erase(property.get());
 		_particleProperties.erase(iter);
 	}
-	
+
 	/// Returns the list of types defined for a particle or bond property.
 	TypeList* propertyTypesList(const PropertyPtr& property) {
 		auto typeList = _typeLists.find(property.get());
@@ -208,7 +219,7 @@ public:
 	void setPropertyTypesList(const PropertyPtr& property, std::unique_ptr<TypeList> list) {
 		_typeLists.emplace(property.get(), std::move(list));
 	}
-	
+
 	/// Returns the list of bond properties.
 	const std::vector<PropertyPtr>& bondProperties() const { return _bondProperties; }
 
@@ -241,7 +252,7 @@ public:
 
 	/// Sets the shape of the voxel grid.
 	void setVoxelGridShape(const VoxelGrid::GridDimensions& shape) { _voxelGridShape = shape; }
-	
+
 	/// Returns the list of voxel properties.
 	const std::vector<PropertyPtr>& voxelProperties() const { return _voxelProperties; }
 
@@ -291,7 +302,7 @@ private:
 
 	/// Stores the lists of types for typed properties (both particle and bond properties).
 	std::map<const PropertyStorage*, std::unique_ptr<TypeList>> _typeLists;
-	
+
 	/// The metadata read from the file header.
 	QVariantMap _attributes;
 

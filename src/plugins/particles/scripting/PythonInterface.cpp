@@ -356,6 +356,11 @@ PYBIND11_MODULE(ParticlesPython, m)
 			".. literalinclude:: ../example_snippets/particle_type_radius.py\n"
 			"  :lines: 4-\n"
 			"\n\n");
+	createDataPropertyAccessors(ParticleType_py, "mass", &ParticleType::mass, &ParticleType::setMass,
+			"The mass of this particle type. "
+			"\n\n"
+			":Default: ``0.0``\n"
+			"\n\n");
 	createDataPropertyAccessors(ParticleType_py, "highlight_edges", &ParticleType::highlightShapeEdges, &ParticleType::setHighlightShapeEdges,
 			"Activates the highlighting of the polygonal edges of the user-defined particle shape during rendering. "
 			"This option only has an effect if a user-defined shape has been assigned to the particle type using the :py:meth:`.load_shape` method. "

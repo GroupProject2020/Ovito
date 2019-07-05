@@ -101,7 +101,7 @@ def export_file(data, file, format, **params):
 
             export_file(pipeline, "output.data", "lammps/data", atom_style="bond")
 
-        The following `LAMMPS atom styles <http://lammps.sandia.gov/doc/atom_style.html>`_ are currently supported by OVITO:
+        The following `LAMMPS atom styles <https://lammps.sandia.gov/doc/atom_style.html>`_ are currently supported by OVITO:
         ``angle``, ``atomic``, ``bond``, ``charge``, ``dipole``, ``full``, ``molecular``, ``sphere``.
 
         **VASP (POSCAR) format**

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include "../ParticleExporter.h"
+#include <plugins/particles/export/ParticleExporter.h>
 #include <plugins/particles/import/lammps/LAMMPSDataImporter.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
@@ -42,7 +42,7 @@ class OVITO_PARTICLES_EXPORT LAMMPSDataExporter : public ParticleExporter
 
 		/// Returns the file filter that specifies the extension of files written by this service.
 		virtual QString fileFilter() const override { return QStringLiteral("*"); }
-	
+
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("LAMMPS Data File"); }
 	};
@@ -70,5 +70,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

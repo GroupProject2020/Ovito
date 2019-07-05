@@ -128,6 +128,9 @@ private:
 	/// Activates the culling of back-facing faces of the user-defined shape assigned to this particle type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, shapeBackfaceCullingEnabled, setShapeBackfaceCullingEnabled);
 
+	/// The mass of this particle type (maybe zero if not set).
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, mass, setMass);
+
 private:
 
 	/// Data structure that holds the name, color, and radius of a particle type.

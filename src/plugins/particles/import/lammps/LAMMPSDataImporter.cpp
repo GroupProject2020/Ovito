@@ -357,6 +357,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     			if(sscanf(start, "%i " FLOATTYPE_SCANF_STRING, &atomType, &mass) != 2 || atomType < 1 || atomType > natomtypes)
 					throw Exception(tr("Invalid mass specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 				massTable[atomType] = mass;
+				typeList->setTypeMass(i, mass);
 
 				while(*start && *start != '#') start++;
 				if(*start) {

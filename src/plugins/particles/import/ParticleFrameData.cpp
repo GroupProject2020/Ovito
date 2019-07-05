@@ -367,6 +367,10 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 				else
 					static_object_cast<BondType>(ptype)->setRadius(item.radius);
 			}
+			if(item.mass != 0) {
+				if(!isBondProperty)
+					static_object_cast<ParticleType>(ptype)->setMass(item.mass);
+			}
 		}
 	}
 
