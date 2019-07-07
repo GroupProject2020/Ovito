@@ -44,4 +44,4 @@ PipelineStatus VRCacheModifier::modifyObject(TimePoint time, ModifierApplication
 	return PipelineStatus();
 }
 
-};
+} // End of namespace

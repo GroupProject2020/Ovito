@@ -44,14 +44,14 @@ VRRenderingWidget::VRRenderingWidget(QWidget *parent, DataSet* dataset) : QOpenG
         _settings = new VRSettingsObject(dataset);
         dataset->addGlobalObject(_settings);
         _settings->recenter();
-    }    
+    }
 
     // Initialize VR headset.
     vr::EVRInitError eError = vr::VRInitError_None;
     _hmd = vr::VR_Init(&eError, vr::VRApplication_Scene);
 	if(eError != vr::VRInitError_None)
-        dataset->throwException(tr("Cannot start virtual reality headset. OpenVR initialization error: %1").arg(vr::VR_GetVRInitErrorAsEnglishDescription(eError)));
-    
+        dataset->throwException(tr("Initialization of VR headset failed. The OpenVR/SteamVR interface reported the following problem:\n\n%1").arg(vr::VR_GetVRInitErrorAsEnglishDescription(eError)));
+
     // Get the proper rendering resolution of the hmd.
     _hmd->GetRecommendedRenderTargetSize(&_hmdRenderWidth, &_hmdRenderHeight);
 
@@ -59,7 +59,7 @@ VRRenderingWidget::VRRenderingWidget(QWidget *parent, DataSet* dataset) : QOpenG
     vr::IVRCompositor* compositor = vr::VRCompositor();
 	if(!compositor)
         dataset->throwException(tr("OpenVR Compositor initialization failed."));
-    
+
     // Get dimensions of play area.
     vr::IVRChaperone* chaperone = vr::VRChaperone();
     chaperone->GetPlayAreaRect(&_playAreaRect);
@@ -71,7 +71,7 @@ VRRenderingWidget::VRRenderingWidget(QWidget *parent, DataSet* dataset) : QOpenG
         _playAreaMesh.vertices()[i].z() = _playAreaRect.vCorners[i].v[2];
     }
     _playAreaMesh.faces()[0].setVertices(0,1,2);
-    _playAreaMesh.faces()[1].setVertices(0,2,3);    
+    _playAreaMesh.faces()[1].setVertices(0,2,3);
 }
 
 /******************************************************************************
@@ -102,7 +102,7 @@ void VRRenderingWidget::cleanup()
 * Called when the GL context is initialized.
 ******************************************************************************/
 void VRRenderingWidget::initializeGL()
-{    
+{
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &VRRenderingWidget::cleanup);
     initializeOpenGLFunctions();
 }
@@ -116,7 +116,7 @@ ViewProjectionParameters VRRenderingWidget::projectionParameters(int eye, FloatT
 
     AffineTransformation headToBodyTM = fromOpenVRMatrix(_trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking);
     AffineTransformation eyeToHeadTM = fromOpenVRMatrix(_hmd->GetEyeToHeadTransform(eye ? vr::Eye_Right : vr::Eye_Left));
-    
+
 	ViewProjectionParameters params;
 	params.aspectRatio = aspectRatio;
 	params.validityInterval.setInfinite();
@@ -190,10 +190,10 @@ void VRRenderingWidget::paintGL()
             continue;
         if(!_trackedDevicePose[unTrackedDevice].bPoseIsValid)
             continue;
-        
+
         AffineTransformation controllerTM = fromOpenVRMatrix(_trackedDevicePose[unTrackedDevice].mDeviceToAbsoluteTracking);
         controllerTMs.push_back(controllerTM);
-        
+
         vr::VRControllerState_t state;
         if(_hmd->GetControllerState(unTrackedDevice, &state, sizeof(state))) {
             if(state.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)) {
@@ -221,30 +221,30 @@ void VRRenderingWidget::paintGL()
                             translation -= (FloatType(0.5) * state.rAxis[0].y * elapsedTime * _currentSpeed * settings()->movementSpeed()) * Vector3(dir.x(), dir.y(), 0).normalized();
                         }
                         settings()->setTranslation(translation);
-                    }                    
+                    }
                 }
             }
 
             if(state.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger)) {
                 playAnimation = true;
-            }            
+            }
         }
     }
-    if(!accelerating) 
+    if(!accelerating)
         _currentSpeed = 0;
 
     dataset()->animationSettings()->setAnimationPlayback(playAnimation);
 
     // Compute model transformation.
-    AffineTransformation transformationTM = 
-        AffineTransformation::translation(settings()->translation()) * 
+    AffineTransformation transformationTM =
+        AffineTransformation::translation(settings()->translation()) *
         AffineTransformation::scaling(std::max(settings()->scaleFactor(), FloatType(1e-6))) *
         AffineTransformation::rotationZ(settings()->rotationZ()) *
         AffineTransformation::translation(-settings()->modelCenter());
 
     // Compute viewer position in scene space.
-    AffineTransformation bodyToWorldTM = 
-        ViewportSettings::getSettings().coordinateSystemOrientation() * 
+    AffineTransformation bodyToWorldTM =
+        ViewportSettings::getSettings().coordinateSystemOrientation() *
         transformationTM.inverse() *
         AffineTransformation::rotationX(FLOATTYPE_PI/2) *
         settings()->viewerTM();
@@ -266,13 +266,14 @@ void VRRenderingWidget::paintGL()
             if(!_eyeBuffer->bind())
                 dataset()->throwException(tr("Failed to bind OpenGL framebuffer object for offscreen rendering."));
 
-            Promise<> renderPromise = Promise<>::createSynchronous(nullptr, true);
-                
+            // Async operation object being used when calling rendering functions in the following.
+            AsyncOperation renderOperation(SignalPromise::create(true));
+
             // Set up a preliminary projection without a known bounding box.
             ViewProjectionParameters projParams = projectionParameters(eye, aspectRatio, bodyToWorldTM);
-            
+
             // Request scene bounding box.
-            Box3 boundingBox = _sceneRenderer->computeSceneBoundingBox(time, projParams, nullptr, renderPromise);
+            Box3 boundingBox = _sceneRenderer->computeSceneBoundingBox(time, projParams, nullptr, renderOperation);
 
             // Add ground geometry to bounding box.
             AffineTransformation bodyToFloorTM;
@@ -283,20 +284,20 @@ void VRRenderingWidget::paintGL()
                     bodyToFloorTM = bodyToWorldTM;
                 boundingBox.addBox(_playAreaMesh.boundingBox().transformed(bodyToFloorTM));
             }
-            
+
             // Add controller geometry to bounding box.
             for(const AffineTransformation& controllerTM : controllerTMs)
                 boundingBox.addBox((bodyToWorldTM * controllerTM) * Box3(Point3::Origin(), _controllerSize));
-            
+
             // Set up final projection with the now known bounding box.
             projParams = projectionParameters(eye, aspectRatio, bodyToWorldTM, boundingBox);
 
             // Set up the renderer.
             _sceneRenderer->beginFrame(time, projParams, nullptr);
             _sceneRenderer->setRenderingViewport(0, 0, _renderResolution.width(), _renderResolution.height());
-            
+
             // Call the viewport renderer to render the scene objects.
-            _sceneRenderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderPromise);
+            _sceneRenderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderOperation);
 
             // Render floor rectangle.
             if(settings()->showFloor()) {
@@ -312,7 +313,7 @@ void VRRenderingWidget::paintGL()
             // Render VR controllers.
             for(const AffineTransformation& controllerTM : controllerTMs) {
                 if(!_controllerGeometry || !_controllerGeometry->isValid(_sceneRenderer)) {
-                    _controllerGeometry = _sceneRenderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
+                    _controllerGeometry = _sceneRenderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality, false);
                     _controllerGeometry->startSetElements(1);
                     _controllerGeometry->setElement(0, Point3(0,0,_controllerSize), Vector3(0,0,-_controllerSize), ColorA(1.0f, 0.0f, 0.0f, 1.0f), 0.02f);
                     _controllerGeometry->endSetElements();
@@ -340,7 +341,7 @@ void VRRenderingWidget::paintGL()
 
     // Switch back to the screen framebuffer.
     if(!QOpenGLFramebufferObject::bindDefault())
-        dataset()->throwException(tr("Failed to release OpenGL framebuffer object after offscreen rendering."));    
+        dataset()->throwException(tr("Failed to release OpenGL framebuffer object after offscreen rendering."));
 
     // Mirror right eye on screen.
     FloatType windowAspectRatio = (FloatType)_windowHeight / _windowWidth;
@@ -355,7 +356,7 @@ void VRRenderingWidget::paintGL()
     }
     QOpenGLFramebufferObject::blitFramebuffer(
                     nullptr, QRect(0,0,_windowWidth,_windowHeight),
-                    _eyeBuffer.get(), 
+                    _eyeBuffer.get(),
                     QRect((_renderResolution.width() - blitWidth)/2, (_renderResolution.height() - blitHeight)/2, blitWidth, blitHeight),
                     GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
@@ -369,5 +370,4 @@ void VRRenderingWidget::resizeGL(int w, int h)
     _windowHeight = h;
 }
 
-};
-
+} // End of namespace

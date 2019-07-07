@@ -49,7 +49,7 @@ void ViewportSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParam
 }
 
 /******************************************************************************
-* Puts the GL context into its default initial state before rendering 
+* Puts the GL context into its default initial state before rendering
 * a frame begins.
 ******************************************************************************/
 void ViewportSceneRenderer::initializeGLState()
@@ -71,6 +71,8 @@ void ViewportSceneRenderer::initializeGLState()
 ******************************************************************************/
 void ViewportSceneRenderer::renderInteractiveContent()
 {
+	OVITO_ASSERT(viewport());
+
 	// Render construction grid.
 	if(viewport()->isGridVisible())
 		renderGrid();

@@ -27,7 +27,7 @@
 #include "VRSceneRenderer.h"
 #include "VRSettingsObject.h"
 
-#include <openvr.h>
+#include <OpenVR/openvr.h>
 
 namespace VRPlugin {
 
@@ -39,7 +39,7 @@ class VRRenderingWidget : public QOpenGLWidget, protected QOpenGLFunctions
 
 public:
 
-	/// Constructor.	
+	/// Constructor.
     VRRenderingWidget(QWidget* parent, DataSet* dataset);
 
 	/// Destructor.
@@ -55,7 +55,7 @@ public:
 	QSize minimumSizeHint() const override { return QSize(50, 50); }
     QSize sizeHint() const override { return QSize(500, 500); }
 
-public Q_SLOTS:	
+public Q_SLOTS:
 
 	/// Called when the GL context is destroyed.
 	void cleanup();
@@ -108,7 +108,7 @@ private:
 	/// Floor geometry.
 	std::shared_ptr<MeshPrimitive> _floorMesh;
 
-	/// Controller geometry.	
+	/// Controller geometry.
 	std::shared_ptr<ArrowPrimitive> _controllerGeometry;
 	FloatType _controllerSize = 0.2f;
 

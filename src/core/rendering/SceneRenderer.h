@@ -175,7 +175,7 @@ public:
 	virtual std::shared_ptr<MeshPrimitive> createMeshPrimitive() = 0;
 
 	/// Returns whether this renderer is rendering an interactive viewport.
-	/// \return true if rendering a real-time viewport; false if rendering an output image.
+	/// \return true if rendering a real-time viewport; false if rendering a static image.
 	/// The default implementation returns false.
 	virtual bool isInteractive() const { return false; }
 
@@ -232,8 +232,13 @@ protected:
 	///       visible in the interactive viewports.
 	virtual void renderInteractiveContent() {}
 
-	/// \brief This is called during rendering whenever the rendering process has been temporarily 
-	///        interrupted by an event loop and before rendering is resumed. It gives the renderer 
+	/// Indicates whether the scene renderer is allowed to block execution until long-running
+	/// operations, e.g. data pipeline evaluation, complete. By default, this method returns
+	/// true if isInteractive() returns false and vice versa.
+	virtual bool waitForLongOperationsEnabled() const { return !isInteractive(); }
+
+	/// \brief This is called during rendering whenever the rendering process has been temporarily
+	///        interrupted by an event loop and before rendering is resumed. It gives the renderer
 	///        the opportunity to restore any state that must be active (e.g. used by the OpenGL renderer).
 	virtual void resumeRendering() {}
 
@@ -286,11 +291,11 @@ private:
  * Helper class that is used by vis elements to determine if two scene renderers
  * are compatible and can share resources.
  */
-class CompatibleRendererGroup 
+class CompatibleRendererGroup
 {
 public:
 
-	/// Constructor. 
+	/// Constructor.
 	CompatibleRendererGroup(SceneRenderer* renderer) : _renderer(renderer) {}
 
 	/// Comparison operator.

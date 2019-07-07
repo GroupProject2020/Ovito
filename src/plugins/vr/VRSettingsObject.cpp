@@ -53,7 +53,7 @@ SET_PROPERTY_FIELD_UNITS(VRSettingsObject, modelCenter, WorldParameterUnit);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VRSettingsObject, movementSpeed, FloatParameterUnit, 0);
 
 /******************************************************************************
-* Adjusts the transformation to bring the model into the center of the 
+* Adjusts the transformation to bring the model into the center of the
 * playing area.
 ******************************************************************************/
 void VRSettingsObject::recenter()
@@ -91,5 +91,4 @@ Vector3 VRSettingsObject::apparentModelSize()
         return Vector3::Zero();
 }
 
-
-};
+} // End of namespace

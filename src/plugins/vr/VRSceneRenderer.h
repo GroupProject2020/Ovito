@@ -33,7 +33,7 @@ class VRSceneRenderer : public OpenGLSceneRenderer
 {
 	Q_OBJECT
 	OVITO_CLASS(VRSceneRenderer)
-	
+
 public:
 
 	/// Standard constructor.
@@ -43,8 +43,11 @@ public:
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;
 
 	/// Returns whether this renderer is rendering an interactive viewport.
-	/// \return true if rendering a real-time viewport; false if rendering an output image.
 	virtual bool isInteractive() const override { return false; }
+
+	/// Indicates whether the scene renderer is allowed to block execution until long-running
+	/// operations, e.g. data pipeline evaluation, complete.
+	virtual bool waitForLongOperationsEnabled() const override { return false; }
 
 	/// Returns the final size of the rendered image in pixels.
 	virtual QSize outputSize() const override;

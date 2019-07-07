@@ -67,7 +67,7 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 		// Perform bounding box rendering pass.
 		if(renderScene(operation)) {
 
-			// Take into acocunt additional visual content that is only visible in the interactive viewports.
+			// Include other visual content that is only visible in the interactive viewports.
 			if(isInteractive())
 				renderInteractiveContent();
 		}
@@ -117,7 +117,7 @@ bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
 
 			// Evaluate data pipeline of object node and render the results.
 			SharedFuture<PipelineFlowState> pipelineStateFuture;
-			if(!isInteractive()) {
+			if(waitForLongOperationsEnabled()) {
 				pipelineStateFuture = pipeline->evaluateRenderingPipeline(time());
 				if(!operation.waitForFuture(pipelineStateFuture))
 					return false;
@@ -224,7 +224,7 @@ std::vector<Point3> SceneRenderer::getNodeTrajectory(SceneNode* node)
 ******************************************************************************/
 void SceneRenderer::renderNodeTrajectory(SceneNode* node)
 {
-	if(viewport()->viewNode() == node) return;
+	if(viewport() && viewport()->viewNode() == node) return;
 
 	std::vector<Point3> trajectory = getNodeTrajectory(node);
 	if(!trajectory.empty()) {

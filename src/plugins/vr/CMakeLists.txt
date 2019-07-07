@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -36,8 +36,7 @@ OVITO_STANDARD_PLUGIN(VRPlugin
 )
 
 # Link to OpenVR library.
-TARGET_INCLUDE_DIRECTORIES(VRPlugin PRIVATE ${OpenVR_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(VRPlugin PRIVATE ${OpenVR_LIBRARIES})
+TARGET_LINK_LIBRARIES(VRPlugin PRIVATE OpenVR::OpenVR)
 
 IF(WIN32)
 	# Determine location of OpenVR DLL.

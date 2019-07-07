@@ -85,5 +85,4 @@ void StartVRAction::applicationStarted()
 	}
 }
 
-
-};
+} // End of namespace
