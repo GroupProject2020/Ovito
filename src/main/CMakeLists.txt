@@ -154,11 +154,13 @@ IF(WIN32)
 		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpegd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgifd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/iconengines/qsvgicond.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/iconengines/")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/styles/qwindowsvistastyled.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/styles/")
 	ELSE()
 		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindows.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpeg.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgif.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
 		INSTALL(FILES "${QtBinaryPath}/../plugins/iconengines/qsvgicon.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/iconengines/")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/styles/qwindowsvistastyle.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/styles/")
 	ENDIF()
 
 	# Create a qt.conf file.

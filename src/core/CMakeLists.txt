@@ -272,11 +272,17 @@ IF(WIN32)
 	OVITO_INSTALL_DLL("${LIBSSH_LIBRARY_DIR}/../bin/${LIBSSH_LIBRARY_NAME}.dll")
 
 	# Also install the OpenSSL DLLs needed by libssh.
-	FIND_FILE(OPENSSL_LIBRARY_DLL libeay32.dll DOC "Location of OpenSSL library (libeay32.dll)")
-	IF(NOT OPENSSL_LIBRARY_DLL)
-		MESSAGE(FATAL_ERROR "Please specify the location of the OpenSSL library by setting the OPENSSL_LIBRARY_DLL variable.")
+	SET(OPENSSL_ROOT_DIR "" CACHE PATH "Location of the OpenSSL library installation")
+	IF(NOT OPENSSL_ROOT_DIR)
+		MESSAGE(FATAL_ERROR "Please specify the location of the OpenSSL library by setting the OPENSSL_ROOT_DIR variable.")
 	ENDIF()
-	OVITO_INSTALL_DLL("${OPENSSL_LIBRARY_DLL}")
+	FILE(GLOB openssl_dlls "${OPENSSL_ROOT_DIR}/bin/*.dll")
+	IF(NOT openssl_dlls)
+		MESSAGE(FATAL_ERROR "Couldn't not find any OpenSSL DLLs in \"${OPENSSL_ROOT_DIR}/bin/\". Please check value of OPENSSL_ROOT_DIR path variable.")
+	ENDIF()
+	FOREACH(openssl_dll ${openssl_dlls})
+		OVITO_INSTALL_DLL("${openssl_dll}")
+	ENDFOREACH()
 
 ELSEIF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 

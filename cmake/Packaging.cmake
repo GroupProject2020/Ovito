@@ -60,8 +60,8 @@ ELSEIF(WIN32)
 	SET(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 	SET(CPACK_PACKAGE_EXECUTABLES "ovito" "OVITO (The Open Visualization Tool)")
 	SET(CPACK_NSIS_CREATE_ICONS_EXTRA "
-		File \\\"C:\\\\Program Files (x86)\\\\Microsoft Visual Studio 14.0\\\\VC\\\\redist\\\\1033\\\\vcredist_x64.exe\\\"
-		ReadRegStr $1 HKLM \\\"SOFTWARE\\\\Microsoft\\\\DevDiv\\\\vc\\\\Servicing\\\\14.0\\\\RuntimeMinimum\\\" \\\"Install\\\"
+		File \\\"C:\\\\Program Files (x86)\\\\Microsoft Visual Studio\\\\2019\\\\BuildTools\\\\VC\\\\Redist\\\\MSVC\\\\14.21.27702\\\\vcredist_x64.exe\\\"
+		ReadRegStr $1 HKLM \\\"SOFTWARE\\\\Microsoft\\\\DevDiv\\\\VC\\\\Servicing\\\\14.0\\\\RuntimeMinimum\\\" \\\"Install\\\"
 		StrCmp $1 1 vc_runtime_installed
 			ExecWait '\\\"$INSTDIR\\\\vcredist_x64.exe\\\"  /passive /norestart'
 		vc_runtime_installed:
