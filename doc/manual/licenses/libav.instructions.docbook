@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0" role="NotInToc"
+          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+          xml:id="appendix.license.libav.instructions" xmlns="http://docbook.org/ns/docbook"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Build instructions for Libav</title>
+
+  <para>
+    The OVITO package includes a binary version of the Libav library licensed under the GNU Lesser General Public License (LGPLv2.1).
+    In accordance with the requirements of this license, this page provides instructions on how to rebuild a compatible version of the library from source code.
+  </para>
+
+  <simplesect>
+    <title>Windows</title>
+    <para>
+      OVITO for Windows includes binaries that have been built from the unmodified sources of Libav.
+      The following commands have been used to generate them:
+<programlisting>
+# Compiler: Microsoft Visual C++ 2019 (command line tools) + MSYS2 environment
+# Zlib version: 1.2.11
+./configure \
+   --toolchain=msvc \
+   --disable-programs \
+   --disable-static \
+   --enable-shared \
+   --prefix=../../libav \
+   --extra-cflags=-I$PWD/../zlib/include  \
+   --extra-ldflags=-L$PWD/../zlib/lib \
+   --enable-zlib \
+   --disable-doc \
+   --disable-network \
+   --disable-filters \
+   --disable-decoders \
+   --disable-demuxers \
+   --disable-debug
+make install
+</programlisting>
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Linux</title>
+    <para>
+      OVITO for Linux includes shared libraries that have been built from the unmodified sources of Libav.
+      The following commands have been used to generate them:
+<programlisting>
+# GCC 5.1 compiler on Ubuntu Linux 10.04:
+./configure \
+  --enable-pic \
+  --enable-shared \
+  --disable-static \
+  --disable-doc \
+  --disable-network \
+  --disable-programs \
+  --disable-debug \
+  --disable-filters \
+  --disable-decoders \
+  --disable-demuxers \
+  --prefix=$HOME/progs/libav
+make install
+</programlisting>
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>macOS</title>
+    <para>
+      OVITO for macOS includes shared libraries that have been built from the unmodified sources of Libav 11.12.
+      The following commands have been used to generate them:
+<programlisting>
+# GCC 5.1 compiler on Ubuntu Linux 10.04:
+export MACOSX_DEPLOYMENT_TARGET=10.12
+./configure \
+  --disable-network \
+  --disable-programs \
+  --disable-debug \
+  --disable-doc \
+  --disable-filters \
+  --disable-static \
+  --enable-shared \
+  --prefix=$HOME/progs/libav
+make install
+</programlisting>
+    </para>
+  </simplesect>
+
+</section>

@@ -68,7 +68,7 @@ make -j4 && \
 install_name_tool -id $PWD/libqscintilla2_qt5.13.2.1.dylib libqscintilla2_qt5.13.2.1.dylib
 
 **************************************************************************
-Build static Libav:
+Build Libav:
 **************************************************************************
 cd libav-11.12
 export MACOSX_DEPLOYMENT_TARGET=10.12

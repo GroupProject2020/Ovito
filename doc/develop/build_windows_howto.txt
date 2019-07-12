@@ -1,65 +1,73 @@
 **************************************************************************
 Compiler:
-    Microsoft Visual Studio 2015
+    Microsoft Visual Studio 2019 Build Tools (Command line only)
 
 spellcheck: off
 **************************************************************************
 
 Typical layout for the build directory:
 
-ovito/
-
-  32bit/                (Build directory for 32-bit dependencies)
-     ovito_release/     (Build directory for 32-bit OVITO version)
-  64bit/                (Build directory for 64-bit dependencies)
-     ovito_release/     (Build directory for 64-bit OVITO version)
+ovito/                  (Root directory)
+  deps/                 (All third-party tools and libraries)
   source/               (OVITO's source code)
+  release/              (Build directory)
 
-Source code of third-party libraries is extracted into subdirectories of 'ovito/'.
+In the following, all source code packages of third-party libraries must be
+extracted into subdirectory 'deps/':
 
 **************************************************************************
-zlib (http://www.zlib.net/)
+zlib 1.2.11 (http://www.zlib.net/)
 **************************************************************************
-mkdir zlib_build
-cd zlib_build
-cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX=../zlib_install -DCMAKE_BUILD_TYPE=Release ..\..\zlib-1.2.8
+cd deps
+cd zlib-1.2.11
+mkdir build
+cd build
+cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX=../../zlib -DCMAKE_BUILD_TYPE=Release ..
 nmake install
 
 **************************************************************************
-Qt
+Qt 5.12.4
 **************************************************************************
-Install the following components (Qt 5.9.4) in C:\Qt\ :
-   msvc2015 32-bit
-   msvc2015 64-bit
+Install the following component in C:\Qt\ :
+   msvc2017 64-bit
 
 **************************************************************************
 Python 3.x
 **************************************************************************
 
 ----- Disable user site packages -----
-Edit config file "64bit\Python\Lib\site.py" and set
+Edit config file "deps\Python\Lib\site.py" and set
   ENABLE_USER_SITE = False
 
------ Install Sphinx ---
+----- Install Python modules ---
+cd deps\Python\
 Scripts\pip3 install sphinx
-
------ Install NumPy ---
 Scripts\pip3 install numpy
 Scripts\pip3 install matplotlib
 
------ Install SIP ----
-..\64bit\Python\python.exe configure.py
+**************************************************************************
+SIP 4.19.18
+**************************************************************************
+cd deps
+cd sip-4.19.18
+..\Python\python.exe configure.py
 nmake
 nmake install
+cd ..\Python
+Scripts\pip3 install PyQt5-sip
 
------ Install PyQt5 ----
-..\64bit\python\python.exe configure.py ^
+**************************************************************************
+PyQt5 5.13.0
+**************************************************************************
+cd deps
+cd PyQt5_gpl-5.13.0
+..\Python\python.exe configure.py ^
    --concatenate ^
    --concatenate-split 10 ^
    --confirm-license ^
    --no-designer-plugin ^
    --no-qml-plugin ^
-   --sip=..\64bit\python\sip.exe ^
+   --sip=..\Python\sip.exe ^
    --enable QtCore ^
    --enable QtGui ^
    --enable QtWidgets
@@ -67,38 +75,42 @@ nmake
 nmake install
 
 **************************************************************************
-Boost libraries (release 1.62):
+Boost 1.70
 **************************************************************************
-No installation needed, simply extract archive.
+No installation needed
+Extract archive to \deps\boost_1_70_0\
 
 **************************************************************************
 HDF5
 **************************************************************************
-mkdir hdf5_build
-cd hdf5_build
+cd deps
+cd hdf5-1.10.5
+mkdir build
+cd build
 cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Release ^
-   -DCMAKE_INSTALL_PREFIX=../hdf5_install ^
+   -DCMAKE_INSTALL_PREFIX=../../hdf5 ^
    -DBUILD_SHARED_LIBS=ON ^
    -DHDF5_ENABLE_Z_LIB_SUPPORT=ON ^
    -DHDF5_BUILD_HL_LIB=ON ^
    -DBUILD_TESTING=OFF ^
    -DHDF5_BUILD_EXAMPLES=OFF ^
-   -DZLIB_INCLUDE_DIR=%cd:\=/%/../zlib_install/include ^
-   -DZLIB_LIBRARY=%cd:\=/%/../zlib_install/lib/zlib.lib ^
-   ../../hdf5-1.8.18
-
+   -DZLIB_INCLUDE_DIR=%cd:\=/%/../../zlib/include ^
+   -DZLIB_LIBRARY=%cd:\=/%/../../zlib/lib/zlib.lib ^
+   ..
 nmake install
 
 **************************************************************************
 NetCDF
 **************************************************************************
-mkdir netcdf_build
-cd netcdf_build
-set HDF5_DIR=%cd:\=/%/../hdf5_install/cmake
+cd deps
+cd netcdf-c-4.7.0
+mkdir build
+cd build
+set HDF5_DIR=%cd:\=/%/../../hdf5/cmake
 cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Release ^
-   -DCMAKE_INSTALL_PREFIX=../netcdf_install ^
+   -DCMAKE_INSTALL_PREFIX=../../netcdf ^
    -DENABLE_DAP=OFF ^
    -DENABLE_EXAMPLES=OFF ^
    -DENABLE_TESTS=OFF ^
@@ -106,64 +118,81 @@ cmake -G "NMake Makefiles" ^
    -DBUILD_UTILITIES=OFF ^
    -DENABLE_HDF4=OFF ^
    -DUSE_HDF5=ON ^
-   -DHDF5_INCLUDE_DIR=%cd:\=/%/../hdf5_install/include ^
-   -DHDF5_LIB=%cd:\=/%/../hdf5_install/lib/hdf5.lib ^
-   -DHDF5_HL_LIB=%cd:\=/%/../hdf5_install/lib/hdf5_hl.lib ^
-   -DZLIB_INCLUDE_DIR=%cd:\=/%/../zlib_install/include ^
-   -DZLIB_LIBRARY=%cd:\=/%/../zlib_install/lib/zlib.lib ^
-   ../../netcdf-4.4.1
+   -DHDF5_INCLUDE_DIR=%cd:\=/%/../../hdf5/include ^
+   -DHDF5_LIB=%cd:\=/%/../../hdf5/lib/hdf5.lib ^
+   -DHDF5_HL_LIB=%cd:\=/%/../../hdf5/lib/hdf5_hl.lib ^
+   -DZLIB_INCLUDE_DIR=%cd:\=/%/../../zlib/include ^
+   -DZLIB_LIBRARY=%cd:\=/%/../../zlib/lib/zlib.lib ^
+   ..
 nmake install
 
 **************************************************************************
 QScintilla2
 **************************************************************************
+cd deps
 mkdir qscintilla
 cd qscintilla
-qmake ..\..\QScintilla_gpl-2.10.1\Qt4Qt5\qscintilla.pro
+qmake ..\QScintilla_gpl-2.11.2\Qt4Qt5\qscintilla.pro
 nmake
 
 **************************************************************************
-OpenSSL
+OpenSSL 1.1.0*
 **************************************************************************
 - Download source code
 - Install ActiveState Perl
 - Follow build instructions for Win64 platform.
+cd deps
+set OVITO_DEPS_DIR=%USERPROFILE%\ovito\deps
+cd openssl-1.1.0k
+perl Configure VC-WIN64A ^
+   no-asm ^
+   zlib ^
+   --with-zlib-include=%cd:\=/%/../zlib/include ^
+   --with-zlib-lib=%cd:\=/%/../zlib/lib/zlib.lib ^
+   --prefix=%OVITO_DEPS_DIR%/openssl ^
+   --openssldir=%OVITO_DEPS_DIR%/openssl/SSL
 
 **************************************************************************
-libssh
+libssh 0.9.0
+Note: Update the LGPL instructions in the user manual when changing this.
 **************************************************************************
-cd libssh
-mkdir build64
-cd build64
-cmake ^
+cd deps
+cd libssh-0.9.0
+mkdir build
+cd build
+cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Release ^
-   -DCMAKE_INSTALL_PREFIX=../64bit/libssh_install ^
-   -DZLIB_INCLUDE_DIR=%cd:\=/%/../64bit/zlib_install/include ^
-   -DZLIB_LIBRARY=%cd:\=/%/../64bit/zlib_install/lib/zlib.lib ^
+   -DCMAKE_INSTALL_PREFIX=../../libssh ^
+   -DZLIB_INCLUDE_DIR=%cd:\=/%/../../zlib/include ^
+   -DZLIB_LIBRARY=%cd:\=/%/../../zlib/lib/zlib.lib ^
+   -DOPENSSL_ROOT_DIR=%cd:\=/%/../../openssl ^
    ..
 nmake
+nmake install
 
 **************************************************************************
-libav
+Libav
+Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 - Install MSYS2
-- Execute msys2_shell.bat console from MSVC command prompt.
+cd deps
+git clone git://git.libav.org/libav.git libav_source
+- Execute "c:\msys64\msys2_shell.cmd -msys2 -here -full-path" from MSVC command prompt.
 - Install YASM (MSYS2: "pacman -S yasm")
 - Install make (MSYS2: "pacman -S make")
-git clone git://git.libav.org/libav.git libav
-cd 64bit
-mkdir libav
-cd libav
-export LIB="$LIB;C:/Users/stuko/ovito/64bit/zlib_install/lib"
-export INCLUDE="$INCLUDE;C:/Users/stuko/ovito/64bit/zlib_install/include"
-../../libav/configure \
+export LIB="$LIB;$PWD/zlib/lib"
+export INCLUDE="$INCLUDE;$PWD/zlib/include"
+cd libav_source
+mkdir build
+cd build
+../configure \
    --toolchain=msvc \
    --disable-programs \
    --disable-static \
    --enable-shared \
-   --prefix=../libav_install \
-   --extra-cflags=-I$PWD/../zlib_install/include  \
-   --extra-ldflags=-L$PWD/../zlib_install/lib \
+   --prefix=../../libav \
+   --extra-cflags=-I$PWD/../zlib/include  \
+   --extra-ldflags=-L$PWD/../zlib/lib \
    --enable-zlib \
    --disable-doc \
    --disable-network \
@@ -175,34 +204,51 @@ make install
 
 **************************************************************************
 Download and build Intel Embree
-Also download TBB lib and ISPC compiler
 **************************************************************************
+cd deps
 cd embree-3.5.2
+- Download TBB lib, install in "embree-3.5.2/tbb/"
+- Download ISPC compiler, install in "deps/ispc/"
 mkdir build
 cd build
-cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe -DCMAKE_INSTALL_PREFIX=../../embree_install ..
-# This is to work around a bug in the MSVC 2015 compiler which leads to a stack overflow during compilation:
-# See https://github.com/embree/embree/issues/157
-cmake -DCMAKE_CXX_FLAGS=-d2SSAOptimizer- .
+cmake -G "NMake Makefiles" ^
+   -DCMAKE_BUILD_TYPE=Release ^
+   -DEMBREE_ISPC_EXECUTABLE=%cd:\=/%/../../ispc/bin/ispc.exe ^
+   -DCMAKE_INSTALL_PREFIX=../../embree ^
+   ..
 cmake --build . --config Release --target install
 
 **************************************************************************
 Download and build OSPRay
 **************************************************************************
-cd ospray-1.8.4
+cd deps
+cd ospray-1.8.5
 mkdir build
 cd build
-cmake -G "Visual Studio 14 2015 Win64" ^
+cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Release ^
-   -DEMBREE_ISPC_EXECUTABLE=C:\Users\stuko\ovito\64bit\ispc-1.10.0-win32\bin\ispc.exe ^
-   -DCMAKE_INSTALL_PREFIX=../../ospray_install ^
-   -Dembree_DIR=C:\Users\stuko\ovito\64bit\embree_install ^
+   -DISPC_EXECUTABLE=%cd:\=/%/../../ispc/bin/ispc.exe ^
+   -DCMAKE_INSTALL_PREFIX=../../ospray ^
+   -Dembree_DIR=%cd:\=/%/../../embree ^
    -DTBB_ROOT=../../embree-3.5.2/tbb ^
    -DBUILD_SHARED_LIBS=ON ^
    -DCMAKE_CXX_STANDARD=14 ^
    -DOSPRAY_ENABLE_TUTORIALS=OFF ^
    ..
 cmake --build . --config Release --target install
+
+**************************************************************************
+Xsltproc & libxml2
+**************************************************************************
+https://www.zlatkovic.com/libxml.en.html  (libxslt)
+
+**************************************************************************
+FFTW-3
+**************************************************************************
+http://www.fftw.org/install/windows.html
+cd deps
+cd fftw-3
+lib /def:libfftw3-3.def
 
 **************************************************************************
 OpenVR
@@ -220,44 +266,51 @@ Certutil -addStore TrustedPeople ovito.cer
 **************************************************************************
 OVITO statically linked release version:
 **************************************************************************
-mkdir ovito_static
-cd ovito_static
+mkdir release
+cd release
 cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Release ^
-   -DCMAKE_INSTALL_PREFIX=../ovito_release_install ^
+   -DCMAKE_INSTALL_PREFIX=../release_install ^
    -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^
-   -DZLIB_INCLUDE_DIR=%cd:\=/%/../zlib_install/include ^
-   -DZLIB_LIBRARY=%cd:\=/%/../zlib_install/lib/zlib.lib ^
-   -Dnetcdf_DIR=%cd:\=/%/../netcdf_install/lib/cmake/netCDF ^
-   -DHDF5_DIR=%cd:\=/%/../hdf5_install/cmake ^
-   -DBOOST_INCLUDEDIR=%cd:\=/%/../../boost_1_62_0 ^
-   -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../../QScintilla_gpl-2.10.1\Qt4Qt5 ^
-   -DQSCINTILLA_LIBRARY=%cd:\=/%/../qscintilla/release/qscintilla2_qt5.lib ^
-   -DPYTHON_LIBRARY=%cd:\=/%/../Python/libs/python36.lib ^
-   -DPYTHON_INCLUDE_DIR=%cd:\=/%/../Python/include ^
-   -DPYTHON_EXECUTABLE=%cd:\=/%/../Python/python.exe ^
-   -DXSLT_PROCESSOR=../../libxslt-1.1.26.win32/bin/xsltproc.exe ^
-   -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
-   -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
+   -DZLIB_INCLUDE_DIR=%cd:\=/%/../deps/zlib/include ^
+   -DZLIB_LIBRARY=%cd:\=/%/../deps/zlib/lib/zlib.lib ^
+   -Dnetcdf_DIR=%cd:\=/%/../deps/netcdf/lib/cmake/netCDF ^
+   -DHDF5_DIR=%cd:\=/%/../deps/hdf5/cmake/hdf5 ^
+   -DBOOST_INCLUDEDIR=%cd:\=/%/../deps/boost_1_70_0 ^
+   -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../deps/QScintilla_gpl-2.11.2/Qt4Qt5 ^
+   -DQSCINTILLA_LIBRARY=%cd:\=/%/../deps/qscintilla/release/qscintilla2_qt5.lib ^
+   -DPYTHON_LIBRARY=%cd:\=/%/../deps/Python/libs/python37.lib ^
+   -DPYTHON_INCLUDE_DIR=%cd:\=/%/../deps/Python/include ^
+   -DPYTHON_EXECUTABLE=%cd:\=/%/../deps/Python/python.exe ^
+   -DXSLT_PROCESSOR=../deps/libxslt-1.1.26.win32/bin/xsltproc.exe ^
+   -DLIBAV_INCLUDE_DIR=%cd:\=/%/../deps/libav/include ^
+   -DLIBAV_LIBRARY_DIR=%cd:\=/%/../deps/libav/bin ^
    -DOVITO_BUILD_DOCUMENTATION=ON ^
    -DOVITO_BUILD_MONOLITHIC=ON ^
    -DOVITO_BUILD_PLUGIN_VR=OFF ^
    -DOVITO_DOUBLE_PRECISION_FP=ON ^
-   -DOPENVR_INCLUDE_DIR=%cd:\=/%/../openvr/headers ^
-   -DOPENVR_LIBRARY=%cd:\=/%/../openvr/lib/win64/openvr_api.lib ^
-   -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
-   -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
-   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libssh_install/include ^
-   -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
-   -DOPENSSL_LIBRARY_DLL=%cd:\=/%/../openssl_install/bin/libeay32.dll ^
+   -DOPENVR_INCLUDE_DIR=%cd:\=/%/../deps/openvr/headers ^
+   -DOPENVR_LIBRARY=%cd:\=/%/../deps/openvr/lib/win64/openvr_api.lib ^
+   -DFFTW3_INCLUDE_DIR=%cd:\=/%/../deps/fftw-3 ^
+   -DFFTW3_LIBRARY=%cd:\=/%/../deps/fftw-3/libfftw3-3.lib ^
+   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../deps/libssh/include ^
+   -DLIBSSH_LIBRARY=%cd:\=/%/../deps/libssh/lib/ssh.lib ^
+   -DOPENSSL_ROOT_DIR=%cd:\=/%/../deps/openssl ^
    -DOVITO_BUILD_PLUGIN_OSPRAY=ON ^
-   -Dospray_DIR=%cd:\=/%/../ospray_install/lib/cmake/ospray-1.8.4 ^
-   -Dembree_DIR=%cd:\=/%/../embree_install ^
-   -DTBB_ROOT=%cd:\=/%/../embree-3.5.2/tbb ^
-   -DTBB_DIR=%cd:\=/%/../embree-3.5.2/tbb/cmake ^
-   -DISPC_EXECUTABLE=%cd:\=/%/../ispc-1.10.0-win32\bin\ispc.exe ^
-   ../../source
+   -Dospray_DIR=%cd:\=/%/../deps/ospray/lib/cmake/ospray-1.8.5 ^
+   -Dembree_DIR=%cd:\=/%/../deps/embree ^
+   -DTBB_ROOT=%cd:\=/%/../deps/embree-3.5.2/tbb ^
+   -DTBB_DIR=%cd:\=/%/../deps/embree-3.5.2/tbb/cmake ^
+   -DISPC_EXECUTABLE=%cd:\=/%/../deps/ispc/bin/ispc.exe ^
+   ../source
 
+**************************************************************************
+pack.bat:
+**************************************************************************
+cmake .
+nmake
+cpack
+cpack -G ZIP
 
 **************************************************************************
 Debug version:
@@ -277,16 +330,16 @@ cmake -G "NMake Makefiles" ^
    -DPYTHON_LIBRARY=%cd:\=/%/../Python/libs/python36.lib ^
    -DPYTHON_INCLUDE_DIR=%cd:\=/%/../Python/include ^
    -DPYTHON_EXECUTABLE=%cd:\=/%/../Python/bin/python.exe ^
-   -DXSLT_PROCESSOR=../../libxslt-1.1.26.win32/bin/xsltproc.exe ^
-   -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
-   -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
-   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libssh_install/include ^
-   -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
-   -DOPENSSL_LIBRARY_DLL=%cd:\=/%/../openssl_install/bin/libeay32.dll ^
+   -DXSLT_PROCESSOR=../deps/libxslt-1.1.26.win32/bin/xsltproc.exe ^
+   -DLIBAV_INCLUDE_DIR=%cd:\=/%/../deps/libav/include ^
+   -DLIBAV_LIBRARY_DIR=%cd:\=/%/../deps/libav/bin ^
+   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../deps/libssh/include ^
+   -DLIBSSH_LIBRARY=%cd:\=/%/../deps/libssh/lib/ssh.lib ^
+   -DOPENSSL_ROOT_DIR=%cd:\=/%/../deps/openssl ^
    -DOVITO_BUILD_DOCUMENTATION=OFF ^
    -DOVITO_DOUBLE_PRECISION_FP=ON ^
    -DOVITO_BUILD_MONOLITHIC=ON ^
    -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
-   -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
+   -DFFTW3_LIBRARY=%cd:\=/%/../deps/fftw-3/libfftw3-3.lib ^
    ../../source

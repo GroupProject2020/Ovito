@@ -53,9 +53,9 @@ make test
 sudo make install
 
 **************************************************************************
-Build Qt libraries (version 5.10):
+Build Qt libraries (version 5.10)
+Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
-
 ./configure \
   -opensource \
   -confirm-license \
@@ -192,6 +192,7 @@ Build Boost libraries:
 
 **************************************************************************
 Build libav (release 11):
+Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 cd $HOME/progs/
 sudo apt-get install yasm
@@ -208,7 +209,6 @@ cd libav-11.8
   --disable-decoders \
   --disable-demuxers \
   --prefix=$HOME/progs/libav
-
 make install
 
 **************************************************************************
@@ -307,6 +307,7 @@ cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME
 
 **************************************************************************
 Download and build libssh
+Note: Update LGPL instructions in user manual when changing this.
 **************************************************************************
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
     -DCMAKE_INSTALL_PREFIX=$HOME/progs/libssh_install \

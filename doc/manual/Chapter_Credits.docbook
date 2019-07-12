@@ -7,62 +7,174 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Credits and license</title>
+  <title>Credits and licensing information</title>
 
-  <para>The program has been written by Alexander Stukowski and other contributors and is licensed under the terms of the <link
+  <para>OVITO has been developed by Alexander Stukowski and other contributors and is licensed under the terms of the <link
   linkend="appendix.GPL">GNU General Public License (v3)</link>.</para>
 
-  <para>This manual has been written by Alexander Stukowski and is licensed under the terms of the <link
+  <para>This user manual has been written by Alexander Stukowski and is licensed under the terms of the <link
   linkend="appendix.GFDL">GNU Free Documentation License</link>.</para>
 
-  <para>The following third-party codes and libraries are used as part of OVITO:
-    <itemizedlist>
-      <listitem><para><link xlink:href="https://www.qt.io/developers/">Qt</link> (GNU General Public License v3).</para></listitem>
-      <listitem><para><link xlink:href="https://sourceforge.net/projects/qwt/">Qwt</link> (<link linkend="appendix.license.qwt">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://www.boost.org">Boost</link> library (<link linkend="appendix.license.boost">license</link>)</para></listitem>
-      <listitem><para><link xlink:href="https://www.python.org">Python</link> (PSF license)</para></listitem>
-      <listitem><para><link xlink:href="http://alice.loria.fr/index.php/software/4-library/75-geogram.html">Geogram library</link> by Bruno Levy, INRIA - ALICE
-      (<link linkend="appendix.license.geogram">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://en.wikipedia.org/wiki/Tachyon_(software)">Tachyon Parallel / Multiprocessor Ray Tracing System</link>
-      by John E. Stone (<link linkend="appendix.license.tachyon">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://beltoforion.de/article.php?a=muparser">muParser</link>
-      by Ingo Berg (<link linkend="appendix.license.muparser">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://libssh.org">Libssh</link> library (GNU Lesser General Public License v2.1).</para></listitem>
-      <listitem><para><link xlink:href="https://openssl.org">OpenSSL</link> library (<link linkend="appendix.license.openssl">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://libav.org">Libav</link> library (GNU General Public License v2).</para></listitem>
-      <listitem><para><link xlink:href="https://www.unidata.ucar.edu/software/netcdf/">netCDF</link> library (<link linkend="appendix.license.netcdf">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://support.hdfgroup.org/HDF5/">HDF5</link> library (<link linkend="appendix.license.hdf5">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link> library by Chris Rycroft (<link linkend="appendix.license.voroplusplus">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://www.zlib.net">zlib</link> library</para></listitem>
-      <listitem><para><link xlink:href="https://github.com/pmla/polyhedral-template-matching">Polyhedral Template Matching library</link> by Peter Mahler Larsen
-      (<link linkend="appendix.license.ptm">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://dx.doi.org/10.1002%2Fjcc.21439">QCP rotation calculation method</link> by Pu Liu and Douglas L. Theobald
-      (<link linkend="appendix.license.qcprot">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://gsd.readthedocs.io/">GSD (General Simulation Data)</link> I/O routines
-      (<link linkend="appendix.license.gsd">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://pybind11.readthedocs.io/">pybind11</link> library
-      (<link linkend="appendix.license.pybind11">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://www.riverbankcomputing.com/software/pyqt/">PyQt5</link> library
-      (GNU General Public License v3).</para></listitem>
-      <listitem><para><link xlink:href="https://www.riverbankcomputing.com/static/Docs/QScintilla/">QScintilla2</link> library
-      (GNU General Public License v3).</para></listitem>
-      <listitem><para><link xlink:href="https://www.scintilla.org/">Scintilla</link>
-      (<link linkend="appendix.license.scintilla">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://www.numpy.org/">Numpy</link>
-      (<link linkend="appendix.license.numpy">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="https://matplotlib.org">Matplotlib</link>
-      (<link xlink:href="https://matplotlib.org/users/license.html">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://www.fftw.org/">FFTW</link> (GNU General Public License v2).</para></listitem>
-      <listitem><para><link xlink:href="https://www.ospray.org">OSPRay</link> (Apache 2.0 license).</para></listitem>
-      <listitem><para><link xlink:href="https://embree.github.io">Embree</link> (Apache 2.0 license).</para></listitem>
-      <listitem><para><link xlink:href="https://www.threadingbuildingblocks.org/">Intel Threading Building Blocks</link> (Apache 2.0 license).</para></listitem>
-    </itemizedlist>
+  <para>The following third-party codes are part of OVITO:
+    <informaltable>
+      <tgroup cols="3">
+        <colspec colname='name'/>
+        <colspec colname='lic'/>
+        <colspec colname='lgpl_info'/>
+        <thead>
+          <row>
+            <entry>Library</entry>
+            <entry>License</entry>
+            <entry>Instructions</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry><link xlink:href="https://www.qt.io/developers/">Qt</link></entry>
+            <entry>LGPL v3</entry>
+            <entry><link linkend="appendix.license.qt.instructions">Info</link></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://sourceforge.net/projects/qwt/">Qwt</link></entry>
+            <entry><link linkend="appendix.license.qwt">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.boost.org">Boost</link></entry>
+            <entry><link linkend="appendix.license.boost">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.python.org">Python</link></entry>
+            <entry>PSF license</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="http://alice.loria.fr/index.php/software/4-library/75-geogram.html">Geogram library</link> by Bruno Levy, INRIA - ALICE</entry>
+            <entry><link linkend="appendix.license.geogram">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://en.wikipedia.org/wiki/Tachyon_(software)">Tachyon Parallel / Multiprocessor Ray Tracing System</link> by John E. Stone</entry>
+            <entry><link linkend="appendix.license.tachyon">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="http://beltoforion.de/article.php?a=muparser">muParser</link> by Ingo Berg</entry>
+            <entry><link linkend="appendix.license.muparser">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://libssh.org">Libssh</link></entry>
+            <entry>LGPL v2.1</entry>
+            <entry><link linkend="appendix.license.libssh.instructions">Info</link></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://openssl.org">OpenSSL</link></entry>
+            <entry><link linkend="appendix.license.openssl">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://libav.org">Libav</link></entry>
+            <entry>LGPL v2.1</entry>
+            <entry><link linkend="appendix.license.libav.instructions">Info</link></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.unidata.ucar.edu/software/netcdf/">netCDF</link></entry>
+            <entry><link linkend="appendix.license.netcdf">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://support.hdfgroup.org/HDF5/">HDF5</link></entry>
+            <entry><link linkend="appendix.license.hdf5">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link> by Chris Rycroft</entry>
+            <entry><link linkend="appendix.license.voroplusplus">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.zlib.net">zlib</link></entry>
+            <entry><link xlink:href="https://www.zlib.net/zlib_license.html">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://github.com/pmla/polyhedral-template-matching">Polyhedral Template Matching library</link> by Peter Mahler Larsen</entry>
+            <entry><link linkend="appendix.license.ptm">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://dx.doi.org/10.1002%2Fjcc.21439">QCP rotation calculation method</link> by Pu Liu and Douglas L. Theobald</entry>
+            <entry><link linkend="appendix.license.qcprot">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://gsd.readthedocs.io/">GSD (General Simulation Data)</link> I/O routines</entry>
+            <entry><link linkend="appendix.license.gsd">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://pybind11.readthedocs.io/">pybind11</link></entry>
+            <entry><link linkend="appendix.license.pybind11">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.riverbankcomputing.com/software/pyqt/">PyQt5</link></entry>
+            <entry>GPL v3</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.riverbankcomputing.com/static/Docs/QScintilla/">QScintilla2</link></entry>
+            <entry>GPL v3</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.scintilla.org/">Scintilla</link></entry>
+            <entry><link linkend="appendix.license.scintilla">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.numpy.org/">Numpy</link></entry>
+            <entry><link linkend="appendix.license.numpy">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://matplotlib.org">Matplotlib</link></entry>
+            <entry><link xlink:href="https://matplotlib.org/users/license.html">license</link></entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="http://www.fftw.org/">FFTW</link></entry>
+            <entry>GPL v2</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.ospray.org">OSPRay</link></entry>
+            <entry>Apache 2.0</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://embree.github.io">Embree</link></entry>
+            <entry>Apache 2.0</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://www.threadingbuildingblocks.org/">Intel Threading Building Blocks</link></entry>
+            <entry>Apache 2.0</entry>
+            <entry></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
   </para>
 
 
   <xi:include href="licenses/GPL.docbook"/>
 
   <xi:include href="licenses/FDL.docbook"/>
+
+  <xi:include href="licenses/Qt.instructions.docbook"/>
 
   <xi:include href="licenses/tachyon.docbook"/>
 
@@ -94,5 +206,8 @@
 
   <xi:include href="licenses/openssl.docbook"/>
 
+  <xi:include href="licenses/libssh.instructions.docbook"/>
+
+  <xi:include href="licenses/libav.instructions.docbook"/>
 
 </chapter>

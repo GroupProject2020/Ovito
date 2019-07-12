@@ -48,8 +48,8 @@ VideoEncoder::VideoEncoder(QObject* parent) : QObject(parent), _videoStream(null
 void VideoEncoder::initCodecs()
 {
 	static std::once_flag initFlag;
-	std::call_once(initFlag, []() { 
-		av_register_all(); 
+	std::call_once(initFlag, []() {
+		av_register_all();
 		avcodec_register_all();
 	});
 }
@@ -162,7 +162,11 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 
 	// Some formats want stream headers to be separate.
 	if(_formatContext->oformat->flags & AVFMT_GLOBALHEADER)
+#ifdef AV_CODEC_FLAG_GLOBAL_HEADER
+		_codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+#else
 		_codecContext->flags |= CODEC_FLAG_GLOBAL_HEADER;
+#endif
 
 	::av_dump_format(_formatContext.get(), 0, _formatContext->filename, 1);
 
@@ -310,7 +314,7 @@ void VideoEncoder::writeFrame(const QImage& image)
 
 	if(got_packet_ptr && pkt.size) {
 		pkt.stream_index = _videoStream->index;
-		int errcode = ::av_write_frame(_formatContext.get(), &pkt);		
+		int errcode = ::av_write_frame(_formatContext.get(), &pkt);
 		if(errcode < 0) {
 			::av_free_packet(&pkt);
 			char msgbuf[1024];

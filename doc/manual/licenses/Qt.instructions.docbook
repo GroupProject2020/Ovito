@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0" role="NotInToc"
+          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+          xml:id="appendix.license.qt.instructions" xmlns="http://docbook.org/ns/docbook"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Build instructions for Qt</title>
+
+  <para>
+    The OVITO package includes a binary version of the Qt libraries licensed under the GNU Lesser General Public License (LGPLv3).
+    In accordance with the requirements of this license, this page provides instructions on how to rebuild compatible versions of these binaries from source.
+  </para>
+
+  <simplesect>
+    <title>Windows</title>
+    <para>
+      OVITO for Windows includes the original and unmodified binary DLLs of Qt 5.12.4 distributed by the Qt Company.
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Linux</title>
+    <para>
+      OVITO for Linux includes shared libraries that have been built from the unmodified sources of Qt 5.10 provided by the Qt Company.
+      The binaries have been generated as follows:
+<programlisting>
+# GCC 5.1 compiler on Ubuntu Linux 10.04:
+./configure \
+  -opensource \
+  -confirm-license \
+  -shared \
+  -no-qml-debug \
+  -nomake examples \
+  -ssl \
+  -openssl-linked \
+  -qt-libpng \
+  -qt-libjpeg \
+  -qt-pcre \
+  -qt-xcb \
+  -qt-xkbcommon-x11 \
+  -no-cups \
+  -no-glib \
+  -no-xinput2 \
+  -pch \
+  -no-eglfs \
+  -no-linuxfb \
+  -skip qtconnectivity \
+  -skip qtmultimedia \
+  -skip qt3d \
+  -skip qtcanvas3d \
+  -skip qtcharts \
+  -skip qtxmlpatterns \
+  -skip qtlocation \
+  -skip qtsensors \
+  -skip qtdeclarative \
+  -skip qtdoc \
+  -skip qtquickcontrols \
+  -skip qtquickcontrols2 \
+  -skip qtserialport \
+  -skip qtgraphicaleffects \
+  -skip qttranslations \
+  -skip qtwebchannel \
+  -skip qtactiveqt \
+  -skip qtdatavis3d \
+  -skip qtgamepad \
+  -skip qtscript \
+  -skip qtserialbus \
+  -skip qtvirtualkeyboard \
+  -skip qtwayland \
+  -skip qtwebengine \
+  -skip qtwebsockets \
+  -skip qtwebview \
+  -skip qtwebglplugin \
+  -prefix $HOME/progs/qt5
+make
+make install
+</programlisting>
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Linux</title>
+    <para>
+      OVITO for Linux comes with shared libraries, which have been built from the original sources of Qt 5.10 as follows:
+<programlisting>
+./configure \   # GCC 5.1 compiler on Ubuntu Linux 10.04
+  -opensource \
+  -confirm-license \
+  -shared \
+  -no-qml-debug \
+  -nomake examples \
+  -ssl \
+  -openssl-linked \
+  -qt-libpng \
+  -qt-libjpeg \
+  -qt-pcre \
+  -qt-xcb \
+  -qt-xkbcommon-x11 \
+  -no-cups \
+  -no-glib \
+  -no-xinput2 \
+  -pch \
+  -no-eglfs \
+  -no-linuxfb \
+  -skip qtconnectivity \
+  -skip qtmultimedia \
+  -skip qt3d \
+  -skip qtcanvas3d \
+  -skip qtcharts \
+  -skip qtxmlpatterns \
+  -skip qtlocation \
+  -skip qtsensors \
+  -skip qtdeclarative \
+  -skip qtdoc \
+  -skip qtquickcontrols \
+  -skip qtquickcontrols2 \
+  -skip qtserialport \
+  -skip qtgraphicaleffects \
+  -skip qttranslations \
+  -skip qtwebchannel \
+  -skip qtactiveqt \
+  -skip qtdatavis3d \
+  -skip qtgamepad \
+  -skip qtscript \
+  -skip qtserialbus \
+  -skip qtvirtualkeyboard \
+  -skip qtwayland \
+  -skip qtwebengine \
+  -skip qtwebsockets \
+  -skip qtwebview \
+  -skip qtwebglplugin \
+  -prefix $HOME/progs/qt5
+make
+make install
+</programlisting>
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>macOS</title>
+    <para>
+      OVITO for macOS includes an original and unmodified copy of the Qt 5.12.4 framework distributed by the Qt Company.
+    </para>
+  </simplesect>
+
+</section>
