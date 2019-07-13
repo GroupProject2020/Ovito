@@ -42,6 +42,47 @@ build_linux_python2:
       - make -j3 install
       - ctest --output-on-failure
 
+# This pipeline job generates the redistributable program package for Linux.
+build_linux_package:
+   stage: build
+   tags:
+      - linux_vm
+   script:
+      - mkdir build
+      - cd build
+      - export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
+      - echo $PWD
+      - $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+            -DOVITO_BUILD_DOCUMENTATION=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=../release_install \
+            -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
+            -DOVITO_DOUBLE_PRECISION_FP=ON \
+            -DBOOST_ROOT=$HOME/progs/boost \
+            -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
+            -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
+            -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
+            -DPYTHON_LIBRARY=$HOME/progs/python/lib/libpython3.6m.so.1.0 \
+            -DPYTHON_INCLUDE_DIR=$HOME/progs/python/include/python3.6m \
+            -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
+            -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/ \
+            -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/libqscintilla2.so.12 \
+            -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
+            -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
+            -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
+            -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.8.4 \
+            -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+            -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
+            -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
+            -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
+            -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
+            -DTBB_DIR=$HOME/progs/tbb2018_20170919oss/cmake \
+            -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+            -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh_install/include \
+            -DLIBSSH_LIBRARY=$HOME/progs/libssh_install/lib/libssh.so \
+            ..
+      - make
+
 # build_macos_release:
 #    stage: build
 #    tags:
