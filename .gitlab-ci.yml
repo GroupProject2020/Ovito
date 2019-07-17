@@ -93,36 +93,36 @@ build_macos_package:
    artifacts:
       paths:
          - build/ovito-*.dmg
-    script:
-       - git describe
-       - mkdir build
-       - cd build
-       - cmake
-         -DOVITO_BUILD_DOCUMENTATION=ON
-         -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
-         -DCMAKE_BUILD_TYPE=Release
-         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
-         -DOVITO_DOUBLE_PRECISION_FP=ON
-         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
-         -DCMAKE_INSTALL_PREFIX=../release_install
-         -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/`
-         -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.7/bin/python3
-         -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m
-         -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib
-         -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
-         -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
-         -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5`
-         -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5/libqscintilla2_qt5.dylib`
-         -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
-         -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
-         -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*.*.*`
-         -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*.*.*`
-         -DTBB_ROOT=`echo $HOME/progs/tbb*oss`
-         -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*/ispc`
-         ..
-       - make
-       - ctest --output-on-failure
-       - cpack
+   script:
+      - git describe
+      - mkdir build
+      - cd build
+      - cmake
+      -DOVITO_BUILD_DOCUMENTATION=ON
+      -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
+      -DCMAKE_BUILD_TYPE=Release
+      -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
+      -DOVITO_DOUBLE_PRECISION_FP=ON
+      -DOVITO_BUILD_PLUGIN_OSPRAY=ON
+      -DCMAKE_INSTALL_PREFIX=../release_install
+      -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/`
+      -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.7/bin/python3
+      -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m
+      -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib
+      -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
+      -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
+      -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5`
+      -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5/libqscintilla2_qt5.dylib`
+      -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
+      -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
+      -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*.*.*`
+      -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*.*.*`
+      -DTBB_ROOT=`echo $HOME/progs/tbb*oss`
+      -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*/ispc`
+      ..
+      - make
+      - ctest --output-on-failure
+      - cpack
 
 # This pipeline job generates the redistributable program package for Windows.
 build_windows_package:
