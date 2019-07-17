@@ -134,6 +134,26 @@ build_windows_package:
          - build/ovito-*.zip
          - build/ovito-*.exe
    script:
+      - export PATH="/cygdrive/c/Qt/5.12.4/msvc2017_64/bin:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.21.27702/bin/HostX64/x64:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/MSBuild/Current/bin/Roslyn:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x64:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Windows Kits/10/bin/x64:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/MSBuild/Current/Bin:$PATH"
+      - export PATH="/cygdrive/c/Windows/Microsoft.NET/Framework64/v4.0.30319:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/IDE:$PATH"
+      - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/Common7/Tools:$PATH"
+      - export PATH="/cygdrive/c/Perl64/site/bin:$PATH"
+      - export PATH="/cygdrive/c/Program Files/CMake/bin:$PATH"
+      - export PATH="/cygdrive/c/Program Files/Git LFS:$PATH"
+      - export PATH="/cygdrive/c/Users/stuko/ovito/deps/Python/Scripts:$PATH"
+      - export Platform=x64
+      - export VCINSTALLDIR="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\"
+      - export VCToolsInstallDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\Tools\\MSVC\\14.21.27702\\"
+      - export VCToolsRedistDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\Redist\\MSVC\\14.21.27702\\"
+      - export VCToolsVersion=14.21.27702
+      - cmake --version
+      - nmake -?
       - mkdir build
       - cd build
       - cmake -G "NMake Makefiles"
