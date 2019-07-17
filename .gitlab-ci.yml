@@ -51,34 +51,33 @@ build_linux_package:
       - mkdir build
       - cd build
       - export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
-      - echo $PWD
-      - cmake \
-         -DOVITO_BUILD_DOCUMENTATION=ON \
-         -DCMAKE_BUILD_TYPE=Release \
-         -DCMAKE_INSTALL_PREFIX=../release_install \
-         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
-         -DOVITO_DOUBLE_PRECISION_FP=ON \
-         -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5 \
-         -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
-         -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
-         -DPYTHON_LIBRARY=`echo $HOME/progs/python/lib/libpython*.so.*` \
-         -DPYTHON_INCLUDE_DIR=`echo $HOME/progs/python/include/python*` \
-         -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
-         -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-*`/Qt4Qt5/ \
-         -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.so.*` \
-         -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
-         -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
-         -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-         -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*` \
-         -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
-         -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc` \
-         -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/ \
-         -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so \
-         -DTBB_LIBRARY_MALLOC=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbbmalloc.so \
-         -DTBB_DIR=`echo $HOME/progs/tbb*oss`/cmake \
-         -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
-         -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh/include \
-         -DLIBSSH_LIBRARY=$HOME/progs/libssh/lib/libssh.so \
+      - cmake
+         -DOVITO_BUILD_DOCUMENTATION=ON
+         -DCMAKE_BUILD_TYPE=Release
+         -DCMAKE_INSTALL_PREFIX=../release_install
+         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
+         -DOVITO_DOUBLE_PRECISION_FP=ON
+         -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
+         -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
+         -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3
+         -DPYTHON_LIBRARY=`echo $HOME/progs/python/lib/libpython*.so.*`
+         -DPYTHON_INCLUDE_DIR=`echo $HOME/progs/python/include/python*`
+         -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/
+         -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-*`/Qt4Qt5/
+         -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.so.*`
+         -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
+         -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
+         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
+         -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*`
+         -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*`
+         -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc`
+         -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/
+         -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so
+         -DTBB_LIBRARY_MALLOC=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbbmalloc.so
+         -DTBB_DIR=`echo $HOME/progs/tbb*oss`/cmake
+         -DTBB_ROOT=`echo $HOME/progs/tbb*oss`
+         -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh/include
+         -DLIBSSH_LIBRARY=$HOME/progs/libssh/lib/libssh.so
          ..
       - make
       - cpack
