@@ -95,6 +95,7 @@ build_macos_package:
          - build/ovito-*.dmg
    script:
       - git describe
+      - security unlock-keychain -p "" login.keychain
       - mkdir build
       - cd build
       - cmake
