@@ -1,131 +1,102 @@
 **************************************************************************
-Note: This file contains instructions how to build the statically linked
-version of OVITO on a Ubuntu 10.04 Linux system.
-This procedure is used to create the official distribution on the website.
-
-Building a dynamically linked executable on a local system is simpler
-and is described in OVITO's user manual.
+Steps to build the redistributable program packages for Linux.
 **************************************************************************
 
 **************************************************************************
-Install essential tools and dependencies on Ubuntu 10.04 for
-building the static executable:
+Install essential tools and dependencies on Ubuntu 16.04:
 **************************************************************************
-
 sudo apt-get install \
-   libfreetype6-dev \
-   libfontconfig-dev \
-   libx11-xcb-dev \
-   libpcre3-dev \
-   libxi-dev \
-   libsm-dev \
-   libice-dev \
-   libglu1-mesa-dev \
-   libxrender-dev \
-   xsltproc \
-   docbook-xml \
-   liblapack3gf \
-   ncurses-dev \
-   libreadline-dev \
-   povray \
-   libfftw3-dev
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libx11-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxi-dev \
+    libxrender-dev \
+    libxcb1-dev \
+    libx11-xcb-dev \
+    libxcb-glx0-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libglu1-mesa-dev \
+    xsltproc \
+    docbook-xml \
+    libfftw3-dev \
+    libssl-dev \
+    libboost-system-dev \
+    libboost-thread-dev \
+    yasm \
+    git \
+    libsqlite3-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libbz2-dev \
+    libexpat1-dev \
+    liblzma-dev \
+    libffi-dev \
+    uuid-dev \
+    liblapack3
+
+- Install CMake >=3.11 from www.cmake.org
 
 **************************************************************************
-Install GNU g++ 5 compiler on Ubuntu 10.04
-**************************************************************************
-
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-sudo apt-get install gcc-5 g++-5
-sudo update-alternatives --remove-all gcc
-sudo update-alternatives --remove-all g++
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
-sudo update-alternatives --config gcc
-sudo update-alternatives --config g++
-
-**************************************************************************
-OpenSSL
-*************************************************************************
-./Configure linux-x86_64 --prefix=/usr --openssldir=/usr shared
-make
-make test
-sudo make install
-
-**************************************************************************
-Build Qt libraries (version 5.10)
+Build Qt libraries (version 5.12.4)
 Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 ./configure \
-  -opensource \
-  -confirm-license \
-  -shared \
-  -no-qml-debug \
-  -nomake examples \
-  -ssl \
-  -openssl-linked \
-  -qt-libpng \
-  -qt-libjpeg \
-  -qt-pcre \
-  -qt-xcb \
-  -qt-xkbcommon-x11 \
-  -no-cups \
-  -no-glib \
-  -no-xinput2 \
-  -pch \
-  -no-eglfs \
-  -no-linuxfb \
-  -skip qtconnectivity \
-  -skip qtmultimedia \
-  -skip qt3d \
-  -skip qtcanvas3d \
-  -skip qtcharts \
-  -skip qtxmlpatterns \
-  -skip qtlocation \
-  -skip qtsensors \
-  -skip qtdeclarative \
-  -skip qtdoc \
-  -skip qtquickcontrols \
-  -skip qtquickcontrols2 \
-  -skip qtserialport \
-  -skip qtgraphicaleffects \
-  -skip qttranslations \
-  -skip qtwebchannel \
-  -skip qtactiveqt \
-  -skip qtdatavis3d \
-  -skip qtgamepad \
-  -skip qtscript \
-  -skip qtserialbus \
-  -skip qtvirtualkeyboard \
-  -skip qtwayland \
-  -skip qtwebengine \
-  -skip qtwebsockets \
-  -skip qtwebview \
-  -skip qtwebglplugin \
-  -prefix $HOME/progs/qt5
+    -opensource \
+    -confirm-license \
+    -shared \
+    -nomake examples \
+    -qt-libpng \
+    -qt-libjpeg \
+    -qt-pcre \
+    -qt-xcb \
+    -xkbcommon \
+    -no-cups \
+    -pch \
+    -no-eglfs \
+    -no-linuxfb \
+    -skip qtactiveqt \
+    -skip qtconnectivity \
+    -skip qt3d \
+    -skip qtcanvas3d \
+    -skip qtdatavis3d \
+    -skip qtcharts \
+    -skip qtlocation \
+    -skip qtsensors \
+    -skip qtdeclarative \
+    -skip qtdoc \
+    -skip qtgraphicaleffects \
+    -skip qtmultimedia \
+    -skip qtquickcontrols \
+    -skip qtquickcontrols2 \
+    -skip qtpurchasing \
+    -skip qtremoteobjects \
+    -skip qtsensors \
+    -skip qtserialport \
+    -skip qttranslations \
+    -skip qtwebchannel \
+    -skip qtgamepad \
+    -skip qtscript \
+    -skip qtserialbus \
+    -skip qtvirtualkeyboard \
+    -skip qtwayland \
+    -skip qtwebengine \
+    -skip qtwebsockets \
+    -skip qtwebview \
+    -skip qtwebglplugin \
+    -skip qtxmlpatterns \
+    -prefix $HOME/progs/qt5
 
 make
 make install
 
 **************************************************************************
-QScintilla2
-*************************************************************************
-cd QScintilla_gpl-2.9.3/Qt4Qt5/
-$HOME/progs/qt5/bin/qmake qscintilla.pro
-make
-
+Build Python (version 3.7.x):
 **************************************************************************
-Build sqlite3:
-**************************************************************************
-./configure
-make
-sudo make install
-
-**************************************************************************
-Build Python (version 3.6.x):
-**************************************************************************
-
-Edit Modules/Setup.dist to enable SSL module:
+- Edit Modules/Setup.dist to enable SSL module:
 
 # Socket module helper for socket(2)
 _socket socketmodule.c
@@ -136,13 +107,12 @@ _ssl _ssl.c \
   -L$(SSL)/lib -lssl -lcrypto
 
 ./configure --enable-shared --enable-optimizations --prefix=$HOME/progs/python
-make
-make install
+make && make install
 
 #####################################
 # Disable user site packages:
 
-Edit "$HOME/progs/python/lib/python3.6/site.py" and set: ENABLE_USER_SITE = False
+Edit "$HOME/progs/python/lib/python3.7/site.py" and set: ENABLE_USER_SITE = False
 
 **************************************************************************
 Install Python packages:
@@ -152,13 +122,14 @@ LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install numpy
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install sphinx
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install ipython
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install matplotlib
+LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install PyQt5-sip
 
 **************************************************************************
 Build SIP:
 **************************************************************************
 LD_LIBRARY_PATH=$HOME/progs/python/lib $HOME/progs/python/bin/python3 configure.py
-make
-make install
+LD_LIBRARY_PATH=$HOME/progs/python/lib make
+LD_LIBRARY_PATH=$HOME/progs/python/lib make install
 
 **************************************************************************
 Build PyQt5:
@@ -178,25 +149,22 @@ LD_LIBRARY_PATH=$HOME/progs/python/lib $HOME/progs/python/bin/python3 configure.
    --enable QtNetwork \
    --enable QtOpenGL \
    --enable QtSvg
+LD_LIBRARY_PATH=$HOME/progs/python/lib make
+LD_LIBRARY_PATH=$HOME/progs/python/lib make install
+
+**************************************************************************
+QScintilla2
+*************************************************************************
+cd QScintilla_gpl-2.*.*/Qt4Qt5/
+$HOME/progs/qt5/bin/qmake qscintilla.pro
 make
-make install
 
 **************************************************************************
-Build Boost libraries:
-**************************************************************************
-./bootstrap.sh \
-  --with-libraries=system,thread \
-  --prefix=$HOME/progs/boost
-
-./b2 --user-config=$PWD/user-config.jam release link=shared install
-
-**************************************************************************
-Build libav (release 11):
+Build libav (release 12):
 Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 cd $HOME/progs/
-sudo apt-get install yasm
-cd libav-11.8
+cd libav-12.3
 ./configure \
   --enable-pic \
   --enable-shared \
@@ -214,28 +182,29 @@ make install
 **************************************************************************
 Build HDF5:
 **************************************************************************
-cd $HOME/progs/
-mkdir hdf5_build
-cd hdf5_build
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+cd $HOME/progs/hdf5-1.*.*
+mkdir build
+cd build
+cmake \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=../hdf5 \
+  -DCMAKE_INSTALL_PREFIX=../../hdf5 \
   -DBUILD_SHARED_LIBS=ON \
   -DHDF5_ENABLE_Z_LIB_SUPPORT=ON \
   -DHDF5_BUILD_HL_LIB=ON \
-  ../hdf5-1.8.17
-
+  -DBUILD_TESTING=OFF \
+  -DHDF5_BUILD_EXAMPLES=OFF \
+  ..
 make install
 
 **************************************************************************
 Build NetCDF:
 **************************************************************************
-cd $HOME/progs/
-mkdir netcdf_build
-cd netcdf_build
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+cd $HOME/progs/netcdf-c-*.*
+mkdir build
+cd build
+cmake \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=../netcdf \
+  -DCMAKE_INSTALL_PREFIX=../../netcdf \
   -DENABLE_DAP=OFF \
   -DENABLE_EXAMPLES=OFF \
   -DENABLE_TESTS=OFF \
@@ -243,15 +212,20 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DBUILD_UTILITIES=OFF \
   -DENABLE_HDF4=OFF \
   -DUSE_HDF5=ON \
-  -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
-  -DHDF5_INCLUDE_DIR=$HOME/progs/hdf5/include/ \
-  ../netcdf-4.4.1/
-
+  -DHDF5_DIR=$PWD/../../hdf5/share/cmake/hdf5 \
+  ..
 make install
 
 **************************************************************************
 Download Intel TBB (binary version for Linux)
 **************************************************************************
+- Extract to $HOME/progs/tbb2019_20190605oss/
+
+**************************************************************************
+Download Intel ISPC compiler
+**************************************************************************
+- Old releases: https://sourceforge.net/projects/ispcmirror/files/
+- Tested with release 1.9.2
 
 **************************************************************************
 Download and build Intel Embree
@@ -260,22 +234,15 @@ cd $HOME/progs/
 git clone https://github.com/embree/embree.git
 cd embree
 git checkout v3.5.2
-- Fix compiler errors:
-- Add the followin to the source file common/sys/alloc.cpp:
-  #ifndef MAP_HUGETLB
-  #define MAP_HUGETLB 0x40000
-  #endif
-- Fix errors "sorry, unimplemented: non-trivial designated initializers not supported" (bug in gcc 5.1.1)
-  by removing 'const' qualifiers from lambda captured variables.
 mkdir build
 cd build
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+cmake \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
-      -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
-      -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
-      -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
-      -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
-      -DEMBREE_TBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+      -DEMBREE_ISPC_EXECUTABLE=`echo $HOME/progs/ispc-v*-linux/ispc` \
+      -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/ \
+      -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so \
+      -DTBB_LIBRARY_MALLOC=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbbmalloc.so \
+      -DEMBREE_TBB_ROOT=`echo $HOME/progs/tbb*oss` \
       -DEMBREE_TUTORIALS=OFF \
       ..
 make install
@@ -289,33 +256,101 @@ cd ospray
 git checkout v1.8.4
 mkdir build
 cd build
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+cmake \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
-      -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
-      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
+      -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-v*-linux/ispc` \
+      -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
       -DOSPRAY_APPS_BENCHMARK=OFF \
       -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
       -DOSPRAY_APPS_UTILITIES=OFF \
       -DOSPRAY_ENABLE_TUTORIALS=OFF \
-      -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+      -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
       -DBUILD_SHARED_LIBS=ON \
       ..
 make install
 cp -d $HOME/progs/embree_install/lib/libembree*.so* $HOME/progs/ospray_install/lib/
-cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs/ospray_install/lib/
-cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib/
+cp -d $HOME/progs/tbb*oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs/ospray_install/lib/
+cp -d $HOME/progs/tbb*oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib/
 
 **************************************************************************
 Download and build libssh
 Note: Update LGPL instructions in user manual when changing this.
 **************************************************************************
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
-    -DCMAKE_INSTALL_PREFIX=$HOME/progs/libssh_install \
-    -DCMAKE_BUILD_TYPE=Release \
+cd $HOME/progs/libssh-*.*
+mkdir build
+cd build
+cmake \
+  -DCMAKE_INSTALL_PREFIX=$HOME/progs/libssh \
+  -DCMAKE_BUILD_TYPE=Release \
   -DWITH_SERVER=OFF \
   ..
-make
-make install
+make && make install
+
+**************************************************************************
+Set the following flags in the CMake configuration to
+build Ovito WITHOUT Python support:
+**************************************************************************
+export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
+cmake \
+  -DOVITO_BUILD_DOCUMENTATION=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=../release_install \
+  -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
+  -DOVITO_DOUBLE_PRECISION_FP=ON \
+  -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5 \
+  -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
+  -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh/include \
+  -DLIBSSH_LIBRARY=$HOME/progs/libssh/lib/libssh.so \
+  -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
+  -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
+  -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
+  -DOVITO_BUILD_PLUGIN_PYSCRIPT=OFF \
+  -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
+  -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*` \
+  -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
+  -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc` \
+  -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/ \
+  -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so \
+  -DTBB_LIBRARY_MALLOC=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbbmalloc.so \
+  -DTBB_DIR=`echo $HOME/progs/tbb*oss`/cmake \
+  -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
+  ../source/
+
+**************************************************************************
+Set the following flags in the CMake configuration to build all features:
+**************************************************************************
+export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
+cmake \
+  -DOVITO_BUILD_DOCUMENTATION=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=../release_install \
+  -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
+  -DOVITO_DOUBLE_PRECISION_FP=ON \
+  -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5 \
+  -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
+  -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
+  -DPYTHON_LIBRARY=`echo $HOME/progs/python/lib/libpython*.so.*` \
+  -DPYTHON_INCLUDE_DIR=`echo $HOME/progs/python/include/python*` \
+  -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
+  -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-*`/Qt4Qt5/ \
+  -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.so.*` \
+  -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
+  -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
+  -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
+  -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*` \
+  -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
+  -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc` \
+  -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/ \
+  -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so \
+  -DTBB_LIBRARY_MALLOC=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbbmalloc.so \
+  -DTBB_DIR=`echo $HOME/progs/tbb*oss`/cmake \
+  -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
+  -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh/include \
+  -DLIBSSH_LIBRARY=$HOME/progs/libssh/lib/libssh.so \
+  ../source/
+
+#!/bin/bash
+cmake . && make && cpack && mv *.tar.gz /mnt/temp/
 
 **************************************************************************
 How to rebuild the Docker images for the Gitlab registry:
@@ -326,40 +361,3 @@ ln -s $HOME/prj/ovito/doc/develop/docker/linux_build/Dockerfile .
 docker login registry.gitlab.com
 docker build -t registry.gitlab.com/stuko/ovito/linux_build .
 docker push registry.gitlab.com/stuko/ovito/linux_build
-
-**************************************************************************
-Set the following flags in the CMake configuration to build all features:
-**************************************************************************
-export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
-  -DOVITO_BUILD_DOCUMENTATION=ON \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX=../release_install \
-  -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
-  -DOVITO_DOUBLE_PRECISION_FP=ON \
-  -DBOOST_ROOT=$HOME/progs/boost \
-  -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
-  -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
-  -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
-  -DPYTHON_LIBRARY=$HOME/progs/python/lib/libpython3.6m.so.1.0 \
-  -DPYTHON_INCLUDE_DIR=$HOME/progs/python/include/python3.6m \
-  -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
-  -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/ \
-  -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/libqscintilla2.so.12 \
-  -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
-  -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
-  -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-  -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.8.4 \
-  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
-  -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
-  -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
-  -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
-  -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
-  -DTBB_DIR=$HOME/progs/tbb2018_20170919oss/cmake \
-  -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
-  -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh_install/include \
-  -DLIBSSH_LIBRARY=$HOME/progs/libssh_install/lib/libssh.so \
-  ../source/
-
-#!/bin/bash
-$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake . && make && $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cpack && mv *.tar.gz /mnt/temp/

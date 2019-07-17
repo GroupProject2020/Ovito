@@ -15,9 +15,8 @@
     </imageobject></mediaobject></screenshot></informalfigure>
 
     The <emphasis>Clone pipeline</emphasis> function lets you duplicate the currently selected <link linkend="usage.modification_pipeline">data pipeline</link>
-    in order to visualize multiple datasets side by side, or visualize the same dataset in multiple different ways. The function can be invoked by
-    selecting <menuchoice><guimenu>Edit</guimenu><guimenuitem>Clone pipeline</guimenuitem></menuchoice> from the main menu
-    as indicated in this screenshot.
+    in order to visualize multiple datasets side by side, or visualize the same dataset in several different ways. The function can be invoked by
+    selecting <menuchoice><guimenu>Edit</guimenu><guimenuitem>Clone pipeline</guimenuitem></menuchoice> from the main menu, which is depicted in the screenshot.
   </para>
 
   <para>
@@ -25,8 +24,21 @@
        <imagedata fileref="images/clone_pipeline/clone_pipeline_dialog.png" format="PNG" scale="85" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    The <emphasis>Clone pipeline</emphasis> dialog appears to let you configure the cloning operation first. Pressing the <guibutton>Ok</guibutton>
-    actually clones the current pipeline and closes the dialog.
+    The <emphasis>Clone pipeline</emphasis> dialog is shown to let you configure the cloning operation.
+    Once you close the dialog with the <guibutton>Ok</guibutton> button, the cloning operation is executed according
+    to the settings you made (see below).
+  </para>
+
+  <para>
+    After the pipeline has been cloned, both the new and the old data pipeline will be part of the
+    current visualization scene and you will see two objects in the viewports. One of the pipelines is
+    the <emphasis>currently selected pipeline</emphasis>, whose modifiers are shown in the
+    <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
+    The drop-down listbox at the top of the command panel's
+    modification page indicates which pipeline is the selected one and allows you to switch
+    between all pipelines of the current scene. You can also click on an object in the interactive viewports
+    in order select the data pipeline that is associated with that object. The currently
+    selected object is typically indicated by a white simulation box color.
   </para>
 
   <para>

@@ -334,7 +334,7 @@ void PipelineSceneNode::loadFromStream(ObjectLoadStream& stream)
 ******************************************************************************/
 QString PipelineSceneNode::objectTitle() const
 {
-	// If a name has been assigned to this node, return it as the node's display title.
+	// If a user-defined name has been assigned to this node, return it as the node's display title.
 	if(!nodeName().isEmpty())
 		return nodeName();
 
