@@ -37,7 +37,7 @@ python3 configure.py \
   --no-designer-plugin \
   --no-qml-plugin \
   --assume-shared \
-  --qmake $HOME/Qt/5.12.4/clang_64/bin/qmake \
+  --qmake $HOME/Qt/5.*.*/clang_64/bin/qmake \
   --sip=/Library/Frameworks/Python.framework/Versions/3.7/bin/sip \
   --concatenate \
   --enable QtCore \
@@ -62,10 +62,10 @@ Edit "site.py" of the Python interpreter and set
 **************************************************************************
 Download and build QScintilla2
 **************************************************************************
-cd QScintilla_gpl-2.10.8/Qt4Qt5/
-$HOME/Qt/5.12.3/clang_64/bin/qmake qscintilla.pro && \
-make -j4 && \
-install_name_tool -id $PWD/libqscintilla2_qt5.13.2.1.dylib libqscintilla2_qt5.13.2.1.dylib
+cd QScintilla_gpl-2.*.*/Qt4Qt5/
+$HOME/Qt/5.*.*/clang_64/bin/qmake qscintilla.pro && \
+make && \
+install_name_tool -id $PWD/libqscintilla2_qt5.*.*.*.dylib libqscintilla2_qt5.*.*.*.dylib
 
 **************************************************************************
 Build Libav:
@@ -98,8 +98,8 @@ cmake \
   -DHDF5_BUILD_TOOLS=ON \
   -DHDF5_BUILD_WITH_INSTALL_NAME=ON \
   -DBUILD_TESTING=OFF \
-  ../hdf5-1.10.2
-make -j4 install
+  ../hdf5-1.*.*
+make install
 
 **************************************************************************
 Download and build NetCDF:
@@ -117,9 +117,9 @@ cmake \
   -DENABLE_HDF4=OFF \
   -DUSE_HDF5=ON \
   -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5 \
-  ../netcdf-4.6.1/
-make -j4 install
-cd ../netcdf/lib
+  ../netcdf-c-4.*.* && \
+make install && \
+cd ../netcdf/lib && \
 install_name_tool -id $PWD/libnetcdf.dylib libnetcdf.dylib
 
 **************************************************************************
@@ -139,11 +139,11 @@ mkdir build
 cd build
 cmake -G "Xcode" \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
-      -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-      -DEMBREE_TBB_ROOT=$HOME/progs/tbb2019_20190320oss \
-      -DTBB_INCLUDE_DIR=$HOME/progs/tbb2019_20190320oss/include/ \
-      -DTBB_LIBRARY=$HOME/progs/tbb2019_20190320oss/lib/libtbb.dylib \
-      -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2019_20190320oss/lib/libtbbmalloc.dylib \
+      -DEMBREE_ISPC_EXECUTABLE=`echo $HOME/progs/ispc-*/ispc` \
+      -DEMBREE_TBB_ROOT=`echo $HOME/progs/tbb*oss` \
+      -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/ \
+      -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/libtbb.dylib \
+      -DTBB_LIBRARY_MALLOC=`echo $HOME/progs/tbb*oss`/lib/libtbbmalloc.dylib \
       -DEMBREE_TUTORIALS=OFF \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       ..
@@ -159,15 +159,15 @@ git checkout v1.8.4
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
-      -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
-      -DTBB_ROOT=$HOME/progs/tbb2019_20190320oss \
+      -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*/ispc` \
+      -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
+      -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
       -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_CXX_STANDARD=14 \
       -DOSPRAY_ENABLE_TUTORIALS=OFF \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12 \
       ..
-make -j4 install
+make install
 cd ../../ospray_install/lib
 install_name_tool -id $PWD/libospray.0.dylib libospray.0.dylib
 install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray.0.dylib
@@ -185,19 +185,19 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
       -DOVITO_DOUBLE_PRECISION_FP=ON \
       -DCMAKE_INSTALL_PREFIX=../release_install \
-      -DCMAKE_PREFIX_PATH=$HOME/Qt/5.12.4/clang_64/ \
+      -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/` \
       -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.7/bin/python3 \
       -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m \
       -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib \
       -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
       -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
-      -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.8/Qt4Qt5 \
-      -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.8/Qt4Qt5/libqscintilla2_qt5.dylib \
+      -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5` \
+      -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5/libqscintilla2_qt5.dylib` \
       -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
-      -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
+      -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5 \
       -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-      -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.8.4 \
-      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.5.2 \
-      -DTBB_ROOT=$HOME/progs/tbb2019_20190320oss \
-      -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-      ../..
+      -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*.*.*` \
+      -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*.*.*` \
+      -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
+      -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*/ispc` \
+      ../source
