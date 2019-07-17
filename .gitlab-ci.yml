@@ -47,9 +47,10 @@ build_linux_package:
    stage: build
    tags:
       - linux_vm
+   artifacts:
+      paths:
+         - build/ovito-*.tar.gz
    script:
-      - ls -a
-      - git describe
       - mkdir build
       - cd build
       - export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
@@ -89,7 +90,11 @@ build_macos_package:
     stage: build
     tags:
        - macos_vm
+   artifacts:
+      paths:
+         - build/ovito-*.dmg
     script:
+       - git describe
        - mkdir build
        - cd build
        - cmake
@@ -118,3 +123,54 @@ build_macos_package:
        - make
        - ctest --output-on-failure
        - cpack
+
+# This pipeline job generates the redistributable program package for Windows.
+build_windows_package:
+   stage: build
+   tags:
+      - windows_vm
+   artifacts:
+      paths:
+         - build/ovito-*.zip
+         - build/ovito-*.exe
+   script:
+      - mkdir build
+      - cd build
+      - cmake -G "NMake Makefiles"
+         -DCMAKE_BUILD_TYPE=Release
+         -DCMAKE_INSTALL_PREFIX=../release_install
+         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
+         -DZLIB_INCLUDE_DIR=%cd:\=/%/../deps/zlib/include
+         -DZLIB_LIBRARY=%cd:\=/%/../deps/zlib/lib/zlib.lib
+         -Dnetcdf_DIR=%cd:\=/%/../deps/netcdf/lib/cmake/netCDF
+         -DHDF5_DIR=%cd:\=/%/../deps/hdf5/cmake/hdf5
+         -DBOOST_INCLUDEDIR=%cd:\=/%/../deps/boost_1_70_0
+         -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../deps/QScintilla_gpl-2.11.2/Qt4Qt5
+         -DQSCINTILLA_LIBRARY=%cd:\=/%/../deps/qscintilla/release/qscintilla2_qt5.lib
+         -DPYTHON_LIBRARY=%cd:\=/%/../deps/Python/libs/python37.lib
+         -DPYTHON_INCLUDE_DIR=%cd:\=/%/../deps/Python/include
+         -DPYTHON_EXECUTABLE=%cd:\=/%/../deps/Python/python.exe
+         -DXSLT_PROCESSOR=../deps/libxslt-1.1.26.win32/bin/xsltproc.exe
+         -DLIBAV_INCLUDE_DIR=%cd:\=/%/../deps/libav/include
+         -DLIBAV_LIBRARY_DIR=%cd:\=/%/../deps/libav/bin
+         -DOVITO_BUILD_DOCUMENTATION=ON
+         -DOVITO_BUILD_MONOLITHIC=ON
+         -DOVITO_BUILD_PLUGIN_VR=OFF
+         -DOVITO_DOUBLE_PRECISION_FP=ON
+         -DOPENVR_INCLUDE_DIR=%cd:\=/%/../deps/openvr/headers
+         -DOPENVR_LIBRARY=%cd:\=/%/../deps/openvr/lib/win64/openvr_api.lib
+         -DFFTW3_INCLUDE_DIR=%cd:\=/%/../deps/fftw-3
+         -DFFTW3_LIBRARY=%cd:\=/%/../deps/fftw-3/libfftw3-3.lib
+         -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../deps/libssh/include
+         -DLIBSSH_LIBRARY=%cd:\=/%/../deps/libssh/lib/ssh.lib
+         -DOPENSSL_ROOT_DIR=%cd:\=/%/../deps/openssl
+         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
+         -Dospray_DIR=%cd:\=/%/../deps/ospray/lib/cmake/ospray-1.8.5
+         -Dembree_DIR=%cd:\=/%/../deps/embree
+         -DTBB_ROOT=%cd:\=/%/../deps/embree-3.5.2/tbb
+         -DTBB_DIR=%cd:\=/%/../deps/embree-3.5.2/tbb/cmake
+         -DISPC_EXECUTABLE=%cd:\=/%/../deps/ispc/bin/ispc.exe
+         ..
+      - nmake
+      - cpack
+      - cpack -G ZIP
