@@ -48,6 +48,8 @@ build_linux_package:
    tags:
       - linux_vm
    script:
+      - ls -a
+      - git describe
       - mkdir build
       - cd build
       - export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
@@ -57,6 +59,7 @@ build_linux_package:
          -DCMAKE_INSTALL_PREFIX=../release_install
          -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
          -DOVITO_DOUBLE_PRECISION_FP=ON
+         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
          -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
          -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
          -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3
@@ -67,7 +70,6 @@ build_linux_package:
          -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.so.*`
          -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
          -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
-         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
          -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*`
          -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*`
          -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc`
@@ -82,34 +84,37 @@ build_linux_package:
       - make
       - cpack
 
-# build_macos_release:
-#    stage: build
-#    tags:
-#       - macos
-#    script:
-#       - mkdir build
-#       - cd build
-#       - export MACOSX_DEPLOYMENT_TARGET=10.9
-#       - echo $PWD
-#       - cmake
-#          -DOVITO_BUILD_DOCUMENTATION=ON
-#          -DCMAKE_BUILD_TYPE=Release
-#          -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
-#          -DCMAKE_PREFIX_PATH=$HOME/progs/Qt/5.9.5/clang_64/
-#          -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
-#          -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.6/include/python3.6m
-#          -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.6/lib/libpython3.6.dylib
-#          -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
-#          -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
-#          -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.4/Qt4Qt5
-#          -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.4/Qt4Qt5/libqscintilla2_qt5.dylib
-#          -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
-#          -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
-#          -DOVITO_BUILD_PLUGIN_OSPRAY=ON
-#          -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.6.0
-#          -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0
-#          -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc
-#          -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss
-#          ..
-#       - make -j2
-#       - ctest --output-on-failure
+# This pipeline job generates the redistributable program package for MacOS.
+build_macos_package:
+    stage: build
+    tags:
+       - macos_vm
+    script:
+       - mkdir build
+       - cd build
+       - cmake
+         -DOVITO_BUILD_DOCUMENTATION=ON
+         -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
+         -DCMAKE_BUILD_TYPE=Release
+         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
+         -DOVITO_DOUBLE_PRECISION_FP=ON
+         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
+         -DCMAKE_INSTALL_PREFIX=../release_install
+         -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/`
+         -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.7/bin/python3
+         -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m
+         -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib
+         -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
+         -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
+         -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5`
+         -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-2.*.*/Qt4Qt5/libqscintilla2_qt5.dylib`
+         -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
+         -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
+         -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*.*.*`
+         -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*.*.*`
+         -DTBB_ROOT=`echo $HOME/progs/tbb*oss`
+         -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*/ispc`
+         ..
+       - make
+       - ctest --output-on-failure
+       - cpack

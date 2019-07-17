@@ -111,6 +111,15 @@ OSPRayRenderer::OSPRayRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(d
 }
 
 /******************************************************************************
+* Destructor.
+******************************************************************************/
+OSPRayRenderer::~OSPRayRenderer()
+{
+	// Release OSPRay device.
+	ospShutdown();
+}
+
+/******************************************************************************
 * Prepares the renderer for rendering of the given scene.
 ******************************************************************************/
 bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
@@ -118,7 +127,7 @@ bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 	if(!NonInteractiveSceneRenderer::startRender(dataset, settings))
 		return false;
 
-	// Create OSPRay device.
+	// Create OSPRay device if not created yet.
 	OSPDevice device = ospGetCurrentDevice();
 	if(!device) {
 		device = ospNewDevice();

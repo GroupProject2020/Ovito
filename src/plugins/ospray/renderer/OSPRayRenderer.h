@@ -45,8 +45,8 @@ public:
 	OSPReferenceWrapper(const OSPReferenceWrapper& other) = delete;
 	OSPReferenceWrapper& operator=(const OSPReferenceWrapper& other) = delete;
 	OSPReferenceWrapper& operator=(OSPReferenceWrapper&& other) = default;
-	OSPType& operator=(const OSPType& other) { 
-		this->release(); 
+	OSPType& operator=(const OSPType& other) {
+		this->release();
 		OSPType::operator=(other);
 		return *this;
 	}
@@ -61,11 +61,14 @@ class OVITO_OSPRAYRENDERER_EXPORT OSPRayRenderer : public NonInteractiveSceneRen
 	Q_OBJECT
 	OVITO_CLASS(OSPRayRenderer)
 	Q_CLASSINFO("DisplayName", "OSPRay");
-	
+
 public:
 
 	/// Constructor.
 	Q_INVOKABLE OSPRayRenderer(DataSet* dataset);
+
+	/// Destructor.
+	virtual ~OSPRayRenderer();
 
 	///	Prepares the renderer for rendering of the given scene.
 	/// Throws an exception on error. Returns false when the operation has been aborted by the user.
@@ -101,7 +104,7 @@ private:
 
 	/// Stores OSPRay backend specific parameters.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(OSPRayBackend, backend, setBackend, PROPERTY_FIELD_MEMORIZE);
-		
+
 	/// Controls the number of accumulation rendering passes.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, refinementIterations, setRefinementIterations, PROPERTY_FIELD_MEMORIZE);
 
@@ -110,7 +113,7 @@ private:
 
 	/// Controls maximum ray recursion depth.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, maxRayRecursion, setMaxRayRecursion, PROPERTY_FIELD_MEMORIZE);
-	
+
 	/// Enables direct light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, directLightSourceEnabled, setDirectLightSourceEnabled, PROPERTY_FIELD_MEMORIZE);
 
@@ -119,10 +122,10 @@ private:
 
 	/// Controls the angular diameter of the default direct light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, defaultLightSourceAngularDiameter, setDefaultLightSourceAngularDiameter, PROPERTY_FIELD_MEMORIZE);
-	
+
 	/// Enables ambient light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, ambientLightEnabled, setAmbientLightEnabled, PROPERTY_FIELD_MEMORIZE);
-	
+
 	/// Controls the brightness of the sky light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, ambientBrightness, setAmbientBrightness, PROPERTY_FIELD_MEMORIZE);
 
