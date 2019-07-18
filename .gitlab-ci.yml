@@ -181,7 +181,7 @@ build_windows_package:
          -DPYTHON_LIBRARY=$USERPROFILE/ovito/deps/Python/libs/python37.lib
          -DPYTHON_INCLUDE_DIR=$USERPROFILE/ovito/deps/Python/include
          -DPYTHON_EXECUTABLE=$USERPROFILE/ovito/deps/Python/python.exe
-         -DXSLT_PROCESSOR=../deps/libxslt-1.1.26.win32/bin/xsltproc.exe
+         -DXSLT_PROCESSOR=$USERPROFILE/ovito/deps/libxslt-1.1.26.win32/bin/xsltproc.exe
          -DLIBAV_INCLUDE_DIR=$USERPROFILE/ovito/deps/libav/include
          -DLIBAV_LIBRARY_DIR=$USERPROFILE/ovito/deps/libav/bin
          -DOVITO_BUILD_DOCUMENTATION=ON
@@ -203,5 +203,6 @@ build_windows_package:
          -DISPC_EXECUTABLE=$USERPROFILE/ovito/deps/ispc/bin/ispc.exe
          ..
       - nmake
+      - ctest --output-on-failure
       - cpack
       - cpack -G ZIP
