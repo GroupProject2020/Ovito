@@ -32,6 +32,7 @@ computing neighbor lists or iterating over the bonds of particles.
 
   * :py:class:`CutoffNeighborFinder` (finds all neighboring particles within a cutoff distance)
   * :py:class:`NearestNeighborFinder` (finds *N* nearest neighbor particles)
+  * :py:class:`PTMNeighborFinder` (finds PTM neighbor particles)
   * :py:class:`BondsEnumerator` (used for efficiently iterating over the bonds of individual particles)
 
 """

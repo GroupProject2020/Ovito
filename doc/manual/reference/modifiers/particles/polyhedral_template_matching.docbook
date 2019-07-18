@@ -25,19 +25,17 @@ doi:10.1088/0965-0393/24/5/055007
   strain and chemical ordering type.
   </para>
   <para>
-      The modifier identifies local crystalline order by matching the local atomic neighborhood to the templates of the structural types determined by the PTM algorithm.  The templates use a mixture of nearest neighbors, and neighbors of neighbors: <informalfigure>
-      <informaltable frame="none" colsep="0" rowsep="0">
-        <tgroup cols="7">
+    The modifier identifies local crystalline order by matching the local atomic neighborhood to the templates of the structural types determined by the PTM algorithm.  The templates use a mixture of nearest neighbors, and neighbors of neighbors:
+    <informalfigure pgwide="1" role="inline">
+      <informaltable frame="none" colsep="0" rowsep="0" align="center">
+        <tgroup cols="4">
           <colspec colname="c1" />
           <colspec colname="c2" />
           <colspec colname="c3" />
           <colspec colname="c4" />
-          <colspec colname="c5" />
-          <colspec colname="c6" />
-          <colspec colname="c7" />
           <tbody>
-            <row valign="top">
-              <entry namest="c1" nameend="c7">Central atom (white), nearest neighbors (blue), and neighbors of neighbors (green).</entry>
+            <row valign="top" align="left">
+              <entry namest="c1" nameend="c4">Central atom (white), nearest neighbors (blue), and neighbors of neighbors (green).</entry>
             </row>
             <row valign="top">
               <entry>
@@ -60,6 +58,14 @@ doi:10.1088/0965-0393/24/5/055007
 		        <imagedata fileref="images/modifiers/ptm_schematic_ico.png" format="PNG" />
 		        </imageobject></mediaobject>
               </entry>
+            </row>
+            <row valign="top">
+              <entry>FCC</entry>
+              <entry>HCP</entry>
+              <entry>BCC</entry>
+              <entry>Icosahedral</entry>
+            </row>
+            <row valign="top">
               <entry>
 		        <mediaobject><imageobject>
 		        <imagedata fileref="images/modifiers/ptm_schematic_sc.png" format="PNG" />
@@ -75,21 +81,23 @@ doi:10.1088/0965-0393/24/5/055007
 		        <imagedata fileref="images/modifiers/ptm_schematic_dhex.png" format="PNG" />
 		        </imageobject></mediaobject>
               </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_grp.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
             </row>
             <row valign="top">
-              <entry>FCC</entry>
-              <entry>HCP</entry>
-              <entry>BCC</entry>
-              <entry>Icosahedral</entry>
               <entry>Simple Cubic</entry>
               <entry>Cubic diamond</entry>
               <entry>Hexagonal diamond</entry>
+              <entry>Graphene</entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>
     </informalfigure>
-    Determination of diamond structures is an extension of the published PTM method, though it follows similar principles.
+    Determination of diamond and graphene structures is an extension of the published PTM method, though it follows similar principles.
   </para>
 
   <para>
@@ -103,11 +111,13 @@ doi:10.1088/0965-0393/24/5/055007
     <listitem>5 = SC, simple cubic</listitem>
     <listitem>6 = Cubic diamond</listitem>
     <listitem>7 = Hexagonal diamond</listitem>
+    <listitem>8 = Graphene</listitem>
   </itemizedlist>
   </para>
     <para>
       By default, the modifier will try to identify only the following structure types: FCC, HCP, BCC.
       Using the tick boxes in the list, you can specify the set of structural types the modifier should look for.
+      In general, you will get cleaner results by only selecting relevant structures.
     </para>
 
     <informalfigure><screenshot><mediaobject><imageobject>
@@ -168,7 +178,7 @@ doi:10.1088/0965-0393/24/5/055007
       Orientations are calculated relative to the following reference templates. In the table, the neighbor positions of each reference configuration
       are given in Cartesian coordinates with the central particle located at the origin.
       <informaltable frame="all" colsep="1" rowsep="0">
-        <tgroup cols="22">
+        <tgroup cols="25">
           <colspec colname="index" colsep="1"/>
           <colspec colname="FCCx" colsep="0"/>
           <colspec colname="FCCy" colsep="0" />
@@ -196,7 +206,11 @@ doi:10.1088/0965-0393/24/5/055007
 
           <colspec colname="DHEXx" colsep="0" />
           <colspec colname="DHEXy" colsep="0" />
-          <colspec colname="DHEXz" />
+          <colspec colname="DHEXz" colsep="1" />
+
+          <colspec colname="GRPx" colsep="0" />
+          <colspec colname="GRPy" colsep="0" />
+          <colspec colname="GRPz" />
           <thead>
             <row>
               <entry namest="index" nameend="index">Neighbor</entry>
@@ -207,6 +221,7 @@ doi:10.1088/0965-0393/24/5/055007
               <entry namest="SCx"   nameend="SCz">  Simple cubic</entry>
               <entry namest="DCUBx" nameend="DCUBz">Cubic diamond</entry>
               <entry namest="DHEXx" nameend="DHEXz">Hexagonal diamond</entry>
+              <entry namest="GRPx" nameend="GRPz">Graphene</entry>
             </row>
           </thead>
           <tbody>
@@ -233,6 +248,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
+<entry>0</entry>
+<entry>2k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">2</entry>
@@ -257,6 +275,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>-k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
+<entry>k<subscript>8</subscript></entry>
+<entry>-k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">3</entry>
@@ -281,6 +302,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
+<entry>-k<subscript>8</subscript></entry>
+<entry>-k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">4</entry>
@@ -305,6 +329,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
+<entry>-k<subscript>8</subscript></entry>
+<entry>3k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">5</entry>
@@ -329,6 +356,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>8k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
+<entry>k<subscript>8</subscript></entry>
+<entry>3k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">6</entry>
@@ -353,6 +383,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>8k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
+<entry>2k<subscript>8</subscript></entry>
+<entry>0</entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">7</entry>
@@ -377,6 +410,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>8k<subscript>6</subscript>/3</entry>
+<entry>k<subscript>8</subscript></entry>
+<entry>-3k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">8</entry>
@@ -401,6 +437,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
+<entry>-k<subscript>8</subscript></entry>
+<entry>-3k<subscript>7</subscript></entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">9</entry>
@@ -425,6 +464,9 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>-2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
 <entry>-0</entry>
+<entry>-2k<subscript>8</subscript></entry>
+<entry>0</entry>
+<entry>0</entry>
 </row>
 <row valign="center" align="right">
 <entry align="center">10</entry>
@@ -595,13 +637,19 @@ doi:10.1088/0965-0393/24/5/055007
 <entry>2k<subscript>6</subscript></entry>
 </row>
         <row>
-          <entry namest="index" nameend="DHEXz" align="left">
+          <entry namest="index" nameend="GRPz" align="left">
             <inlineequation><mathphrase>k<subscript>1</subscript> = sqrt(2) / 2</mathphrase></inlineequation>,
             <inlineequation><mathphrase>k<subscript>2</subscript> = 14 / (8 sqrt(3) + 12)</mathphrase></inlineequation>,
             <inlineequation><mathphrase>k<subscript>3</subscript> = sqrt(2/(5 + sqrt(5)))</mathphrase></inlineequation>,
-            <inlineequation><mathphrase>k<subscript>4</subscript> = sqrt(1/10 (5 + sqrt(5)))</mathphrase></inlineequation>,
+            <inlineequation><mathphrase>k<subscript>4</subscript> = sqrt(1/10 (5 + sqrt(5)))</mathphrase></inlineequation>
+          </entry>
+        </row>
+        <row>
+          <entry namest="index" nameend="GRPz" align="left">
             <inlineequation><mathphrase>k<subscript>5</subscript> = 1</mathphrase></inlineequation>,
-            <inlineequation><mathphrase>k<subscript>6</subscript> = 4/(6 sqrt(2) + sqrt(3))</mathphrase></inlineequation>
+            <inlineequation><mathphrase>k<subscript>6</subscript> = 4/(6 sqrt(2) + sqrt(3))</mathphrase></inlineequation>,
+            <inlineequation><mathphrase>k<subscript>7</subscript> = (6 sqrt(3) - 3) / 22</mathphrase></inlineequation>,
+            <inlineequation><mathphrase>k<subscript>8</subscript> = (18 - 3 sqrt(3)) / 22</mathphrase></inlineequation>
           </entry>
         </row>
 

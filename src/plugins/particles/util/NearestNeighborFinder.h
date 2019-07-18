@@ -118,6 +118,11 @@ public:
 	/// \throw Exception on error.
 	bool prepare(const PropertyStorage& posProperty, const SimulationCell& cellData, const PropertyStorage* selectionProperty, Task* promise);
 
+	/// Returns the number of input particles in the system for which the NearestNeighborFinder was created.
+	size_t particleCount() const {
+		return atoms.size();
+	}
+
 	/// Returns the coordinates of the i-th input particle.
 	const Point3& particlePos(size_t index) const {
 		OVITO_ASSERT(index >= 0 && index < atoms.size());

@@ -26,6 +26,9 @@
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include "PTMAlgorithm.h"
+
+#include <boost/optional/optional.hpp>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -43,52 +46,12 @@ class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifier : public Structu
 
 public:
 
-#ifndef Q_CC_MSVC
-	/// The maximum number of neighbor atoms taken into account for the PTM analysis.
-	static constexpr int MAX_NEIGHBORS = 19;
-#else
-	enum { MAX_NEIGHBORS = 19 };
-#endif
-
-	/// The structure types recognized by the PTM library.
-	enum StructureType {
-		OTHER = 0,			//< Unidentified structure
-		FCC,				//< Face-centered cubic
-		HCP,				//< Hexagonal close-packed
-		BCC,				//< Body-centered cubic
-		ICO,				//< Icosahedral structure
-		SC,				//< Simple cubic structure
-		CUBIC_DIAMOND,			//< Cubic diamond structure
-		HEX_DIAMOND,			//< Hexagonal diamond structure
-		GRAPHENE,			//< Hexagonal diamond structure
-
-		NUM_STRUCTURE_TYPES 	//< This just counts the number of defined structure types.
-	};
-	Q_ENUMS(StructureType);
-
-	/// The lattice ordering types recognized by the PTM library.
-	enum OrderingType {
-		ORDERING_NONE = 0,
-		ORDERING_PURE = 1,
-		ORDERING_L10 = 2,
-		ORDERING_L12_A = 3,
-		ORDERING_L12_B = 4,
-		ORDERING_B2 = 5,
-		ORDERING_ZINCBLENDE_WURTZITE = 6,
-		ORDERING_BORON_NITRIDE = 7,
-
-		NUM_ORDERING_TYPES 	//< This just counts the number of defined ordering types.
-	};
-	Q_ENUMS(OrderingType);
-
-public:
-
 	/// Constructor.
 	Q_INVOKABLE PolyhedralTemplateMatchingModifier(DataSet* dataset);
 
 	/// This method indicates whether cached computation results of the modifier should be discarded whenever
 	/// a parameter of the modifier changes.
-	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override {
 		// Avoid a recomputation from scratch if the RMSD cutoff has been changed.
 		if(event.field() == &PROPERTY_FIELD(rmsdCutoff)) return false;
 		return StructureIdentificationModifier::discardResultsOnModifierChange(event);
@@ -98,12 +61,12 @@ protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
+
 	/// Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-	
+
 private:
-	
+
 	/// Analysis engine that performs the PTM.
 	class PTMEngine : public StructureIdentificationEngine
 	{
@@ -112,19 +75,23 @@ private:
 		/// Constructor.
 		PTMEngine(ConstPropertyPtr positions, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
 				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
-				bool outputInteratomicDistance, bool outputOrientation, bool useStandardOrientations, bool outputDeformationGradient, bool outputOrderingTypes) :
+				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient) :
 			StructureIdentificationEngine(std::move(fingerprint), positions, simCell, std::move(typesToIdentify), std::move(selection)),
-			_particleTypes(std::move(particleTypes)),
 			_rmsd(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
 			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
 			_orientations(outputOrientation ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::OrientationProperty, true) : nullptr),
 			_deformationGradients(outputDeformationGradient ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ElasticDeformationGradientProperty, true) : nullptr),
-			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr),
-			_useStandardOrientations(useStandardOrientations) {}
+			_orderingTypes(particleTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr)
+			{
+				_algorithm.emplace();
+				_algorithm->setCalculateDefGradient(outputDeformationGradient);
+				_algorithm->setIdentifyOrdering(particleTypes);
+				_algorithm->setRmsdCutoff(0.0); // Note: We do our own RMSD threshold filtering in postProcessStructureTypes().
+			}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
-			_particleTypes.reset();
+			_algorithm.reset();
 			StructureIdentificationEngine::cleanup();
 		}
 
@@ -139,7 +106,7 @@ private:
 		const PropertyPtr& orientations() const { return _orientations; }
 		const PropertyPtr& deformationGradients() const { return _deformationGradients; }
 		const PropertyPtr& orderingTypes() const { return _orderingTypes; }
-		
+
 		/// Returns the RMSD value range of the histogram.
 		FloatType rmsdHistogramRange() const { return _rmsdHistogramRange; }
 
@@ -147,13 +114,17 @@ private:
 		const PropertyPtr& rmsdHistogram() const { return _rmsdHistogram; }
 
 	protected:
-		
+
 		/// Post-processes the per-particle structure types before they are output to the data pipeline.
 		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) override;
 
 	private:
 
-		ConstPropertyPtr _particleTypes;
+		/// The internal PTM algorithm object.
+		/// Store it in an optional<> so that it can be released early in the cleanup() method.
+		boost::optional<PTMAlgorithm> _algorithm;
+
+		// Modifier outputs:
 		const PropertyPtr _rmsd;
 		const PropertyPtr _interatomicDistances;
 		const PropertyPtr _orientations;
@@ -161,7 +132,6 @@ private:
 		const PropertyPtr _orderingTypes;
 		PropertyPtr _rmsdHistogram;
 		FloatType _rmsdHistogramRange;
-		bool _useStandardOrientations;
 	};
 
 private:
@@ -178,9 +148,6 @@ private:
 	/// Controls the output of local orientations.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputOrientation, setOutputOrientation, PROPERTY_FIELD_MEMORIZE);
 
-	/// Controls the type of reference configuration to use for lattice orientation calculation.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, useStandardOrientations, setUseStandardOrientations, PROPERTY_FIELD_MEMORIZE);
-
 	/// Controls the output of elastic deformation gradients.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputDeformationGradient, setOutputDeformationGradient);
 
@@ -188,7 +155,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputOrderingTypes, setOutputOrderingTypes, PROPERTY_FIELD_MEMORIZE);
 
 	/// Contains the list of ordering types recognized by this analysis modifier.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, orderingTypes, setOrderingTypes);	
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, orderingTypes, setOrderingTypes);
 };
 
 
