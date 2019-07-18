@@ -203,6 +203,6 @@ build_windows_package:
          -DISPC_EXECUTABLE=$USERPROFILE/ovito/deps/ispc/bin/ispc.exe
          ..
       - nmake
-      - ctest --output-on-failure
+      #- ctest --output-on-failure  # Disabled for now, because Windows 10 VM guests don't support OpenGL 2.1+, which is needed for the tests.
       - cpack
       - cpack -G ZIP
