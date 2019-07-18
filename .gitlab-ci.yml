@@ -94,8 +94,8 @@ build_macos_package:
       paths:
          - build/ovito-*.dmg
    script:
+      - security unlock-keychain -p "vmpassword" login.keychain
       - git describe
-      - security unlock-keychain -p "" login.keychain
       - mkdir build
       - cd build
       - cmake
@@ -148,49 +148,59 @@ build_windows_package:
       - export PATH="/cygdrive/c/Program Files/CMake/bin:$PATH"
       - export PATH="/cygdrive/c/Program Files/Git LFS:$PATH"
       - export PATH="/cygdrive/c/Users/stuko/ovito/deps/Python/Scripts:$PATH"
+      - export INCLUDE="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\include;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\um;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\winrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\cppwinrt;C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\include;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\um;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\winrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.17763.0\\cppwinrt"
+      - export LIB="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.17763.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.17763.0\\um\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.17763.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.17763.0\\um\\x64;"
+      - export LIBPATH="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\lib\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\lib\\x86\\store\\references;C:\\Program Files (x86)\\Windows Kits\\10\\UnionMetadata\\10.0.17763.0;C:\\Program Files (x86)\\Windows Kits\\10\\References\\10.0.17763.0;C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319;C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\lib\\x64;C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.21.27702\\lib\\x86\\store\\references;C:\\Program Files (x86)\\Windows Kits\\10\\UnionMetadata\\10.0.17763.0;C:\\Program Files (x86)\\Windows Kits\\10\\References\\10.0.17763.0;C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319;"
       - export Platform=x64
       - export VCINSTALLDIR="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\"
       - export VCToolsInstallDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\Tools\\MSVC\\14.21.27702\\"
       - export VCToolsRedistDir="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\Redist\\MSVC\\14.21.27702\\"
       - export VCToolsVersion=14.21.27702
-      - cmake --version
-      - nmake -?
+      - export VisualStudioVersion=16.0
+      - export VSINSTALLDIR="C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\"
+      - export windir="C:\\WINDOWS"
+      - export WindowsLibPath="C:\\Program Files (x86)\\Windows Kits\\10\\UnionMetadata\\10.0.17763.0;C:\\Program Files (x86)\\Windows Kits\\10\\References\\10.0.17763.0"
+      - export WindowsSdkBinPath="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\"
+      - export WindowsSdkDir="C:\\Program Files (x86)\\Windows Kits\\10\\"
+      - export WindowsSDKLibVersion=10.0.17763.0
+      - export WindowsSdkVerBinPath="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17763.0\\"
+      - export WindowsSDKVersion=10.0.17763.0
       - mkdir build
       - cd build
       - cmake -G "NMake Makefiles"
          -DCMAKE_BUILD_TYPE=Release
          -DCMAKE_INSTALL_PREFIX=../release_install
          -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
-         -DZLIB_INCLUDE_DIR=%cd:\=/%/../deps/zlib/include
-         -DZLIB_LIBRARY=%cd:\=/%/../deps/zlib/lib/zlib.lib
-         -Dnetcdf_DIR=%cd:\=/%/../deps/netcdf/lib/cmake/netCDF
-         -DHDF5_DIR=%cd:\=/%/../deps/hdf5/cmake/hdf5
-         -DBOOST_INCLUDEDIR=%cd:\=/%/../deps/boost_1_70_0
-         -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../deps/QScintilla_gpl-2.11.2/Qt4Qt5
-         -DQSCINTILLA_LIBRARY=%cd:\=/%/../deps/qscintilla/release/qscintilla2_qt5.lib
-         -DPYTHON_LIBRARY=%cd:\=/%/../deps/Python/libs/python37.lib
-         -DPYTHON_INCLUDE_DIR=%cd:\=/%/../deps/Python/include
-         -DPYTHON_EXECUTABLE=%cd:\=/%/../deps/Python/python.exe
+         -DZLIB_INCLUDE_DIR=$USERPROFILE/ovito/deps/zlib/include
+         -DZLIB_LIBRARY=$USERPROFILE/ovito/deps/zlib/lib/zlib.lib
+         -Dnetcdf_DIR=$USERPROFILE/ovito/deps/netcdf/lib/cmake/netCDF
+         -DHDF5_DIR=$USERPROFILE/ovito/deps/hdf5/cmake/hdf5
+         -DBOOST_INCLUDEDIR=$USERPROFILE/ovito/deps/boost_1_70_0
+         -DQSCINTILLA_INCLUDE_DIR=$USERPROFILE/ovito/deps/QScintilla_gpl-2.11.2/Qt4Qt5
+         -DQSCINTILLA_LIBRARY=$USERPROFILE/ovito/deps/qscintilla/release/qscintilla2_qt5.lib
+         -DPYTHON_LIBRARY=$USERPROFILE/ovito/deps/Python/libs/python37.lib
+         -DPYTHON_INCLUDE_DIR=$USERPROFILE/ovito/deps/Python/include
+         -DPYTHON_EXECUTABLE=$USERPROFILE/ovito/deps/Python/python.exe
          -DXSLT_PROCESSOR=../deps/libxslt-1.1.26.win32/bin/xsltproc.exe
-         -DLIBAV_INCLUDE_DIR=%cd:\=/%/../deps/libav/include
-         -DLIBAV_LIBRARY_DIR=%cd:\=/%/../deps/libav/bin
+         -DLIBAV_INCLUDE_DIR=$USERPROFILE/ovito/deps/libav/include
+         -DLIBAV_LIBRARY_DIR=$USERPROFILE/ovito/deps/libav/bin
          -DOVITO_BUILD_DOCUMENTATION=ON
          -DOVITO_BUILD_MONOLITHIC=ON
          -DOVITO_BUILD_PLUGIN_VR=OFF
          -DOVITO_DOUBLE_PRECISION_FP=ON
-         -DOPENVR_INCLUDE_DIR=%cd:\=/%/../deps/openvr/headers
-         -DOPENVR_LIBRARY=%cd:\=/%/../deps/openvr/lib/win64/openvr_api.lib
-         -DFFTW3_INCLUDE_DIR=%cd:\=/%/../deps/fftw-3
-         -DFFTW3_LIBRARY=%cd:\=/%/../deps/fftw-3/libfftw3-3.lib
-         -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../deps/libssh/include
-         -DLIBSSH_LIBRARY=%cd:\=/%/../deps/libssh/lib/ssh.lib
-         -DOPENSSL_ROOT_DIR=%cd:\=/%/../deps/openssl
+         -DOPENVR_INCLUDE_DIR=$USERPROFILE/ovito/deps/openvr/headers
+         -DOPENVR_LIBRARY=$USERPROFILE/ovito/deps/openvr/lib/win64/openvr_api.lib
+         -DFFTW3_INCLUDE_DIR=$USERPROFILE/ovito/deps/fftw-3
+         -DFFTW3_LIBRARY=$USERPROFILE/ovito/deps/fftw-3/libfftw3-3.lib
+         -DLIBSSH_INCLUDE_DIR=$USERPROFILE/ovito/deps/libssh/include
+         -DLIBSSH_LIBRARY=$USERPROFILE/ovito/deps/libssh/lib/ssh.lib
+         -DOPENSSL_ROOT_DIR=$USERPROFILE/ovito/deps/openssl
          -DOVITO_BUILD_PLUGIN_OSPRAY=ON
-         -Dospray_DIR=%cd:\=/%/../deps/ospray/lib/cmake/ospray-1.8.5
-         -Dembree_DIR=%cd:\=/%/../deps/embree
-         -DTBB_ROOT=%cd:\=/%/../deps/embree-3.5.2/tbb
-         -DTBB_DIR=%cd:\=/%/../deps/embree-3.5.2/tbb/cmake
-         -DISPC_EXECUTABLE=%cd:\=/%/../deps/ispc/bin/ispc.exe
+         -Dospray_DIR=$USERPROFILE/ovito/deps/ospray/lib/cmake/ospray-1.8.5
+         -Dembree_DIR=$USERPROFILE/ovito/deps/embree
+         -DTBB_ROOT=$USERPROFILE/ovito/deps/embree-3.5.2/tbb
+         -DTBB_DIR=$USERPROFILE/ovito/deps/embree-3.5.2/tbb/cmake
+         -DISPC_EXECUTABLE=$USERPROFILE/ovito/deps/ispc/bin/ispc.exe
          ..
       - nmake
       - cpack

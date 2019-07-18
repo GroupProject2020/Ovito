@@ -120,8 +120,10 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 			else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {
 				// Parse number of atoms.
 				unsigned long long u;
-				if(sscanf(stream.readLine(), "%llu", &u) != 1 || u > 100'000'000'000ll)
+				if(sscanf(stream.readLine(), "%llu", &u) != 1)
 					throw Exception(tr("LAMMPS dump file parsing error. Invalid number of atoms in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
+				if(u > 100'000'000'000ll)
+					throw Exception(tr("LAMMPS dump file parsing error. Number of atoms in line %1 is too large. The LAMMPS dump file reader doesn't accept files with more than 100 billion atoms.").arg(stream.lineNumber()));
 				numParticles = (size_t)u;
 				break;
 			}
@@ -177,184 +179,200 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 		// Parse next line.
 		stream.readLine();
 
-		if(stream.lineStartsWith("ITEM: TIMESTEP")) {
-			if(sscanf(stream.readLine(), "%i", &timestep) != 1)
-				throw Exception(tr("LAMMPS dump file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(timestep));
-		}
-		else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {
-			// Parse number of atoms.
-			unsigned long long u;
-			if(sscanf(stream.readLine(), "%llu", &u) != 1)
-				throw Exception(tr("LAMMPS dump file parsing error. Invalid number of atoms in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			if(u >= 2147483648ull)
-				throw Exception(tr("LAMMPS dump file parsing error. Number of atoms in line %1 exceeds internal limit of 2^31 atoms:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-
-			numParticles = (size_t)u;
-			setProgressMaximum(u);
-		}
-		else if(stream.lineStartsWith("ITEM: BOX BOUNDS xy xz yz")) {
-
-			// Parse optional boundary condition flags.
-			QStringList tokens = stream.lineString().mid(qstrlen("ITEM: BOX BOUNDS xy xz yz")).split(ws_re, QString::SkipEmptyParts);
-			if(tokens.size() >= 3)
-				frameData->simulationCell().setPbcFlags(tokens[0] == "pp", tokens[1] == "pp", tokens[2] == "pp");
-
-			// Parse triclinic simulation box.
-			FloatType tiltFactors[3];
-			Box3 simBox;
-			for(int k = 0; k < 3; k++) {
-				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &simBox.minc[k], &simBox.maxc[k], &tiltFactors[k]) != 3)
-					throw Exception(tr("Invalid box size in line %1 of LAMMPS dump file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+		do {
+			if(stream.lineStartsWith("ITEM: TIMESTEP")) {
+				if(sscanf(stream.readLine(), "%i", &timestep) != 1)
+					throw Exception(tr("LAMMPS dump file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
+				frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(timestep));
+				break;
 			}
+			else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {
+				// Parse number of atoms.
+				unsigned long long u;
+				if(sscanf(stream.readLine(), "%llu", &u) != 1)
+					throw Exception(tr("LAMMPS dump file parsing error. Invalid number of atoms in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
+				if(u >= 2147483648ull)
+					throw Exception(tr("LAMMPS dump file parsing error. Number of atoms in line %1 exceeds internal limit of 2^31 atoms:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-			// LAMMPS only stores the outer bounding box of the simulation cell in the dump file.
-			// We have to determine the size of the actual triclinic cell.
-			simBox.minc.x() -= std::min(std::min(std::min(tiltFactors[0], tiltFactors[1]), tiltFactors[0]+tiltFactors[1]), (FloatType)0);
-			simBox.maxc.x() -= std::max(std::max(std::max(tiltFactors[0], tiltFactors[1]), tiltFactors[0]+tiltFactors[1]), (FloatType)0);
-			simBox.minc.y() -= std::min(tiltFactors[2], (FloatType)0);
-			simBox.maxc.y() -= std::max(tiltFactors[2], (FloatType)0);
-			frameData->simulationCell().setMatrix(AffineTransformation(
-					Vector3(simBox.sizeX(), 0, 0),
-					Vector3(tiltFactors[0], simBox.sizeY(), 0),
-					Vector3(tiltFactors[1], tiltFactors[2], simBox.sizeZ()),
-					simBox.minc - Point3::Origin()));
-		}
-		else if(stream.lineStartsWith("ITEM: BOX BOUNDS")) {
-			// Parse optional boundary condition flags.
-			QStringList tokens = stream.lineString().mid(qstrlen("ITEM: BOX BOUNDS")).split(ws_re, QString::SkipEmptyParts);
-			if(tokens.size() >= 3)
-				frameData->simulationCell().setPbcFlags(tokens[0] == "pp", tokens[1] == "pp", tokens[2] == "pp");
-
-			// Parse orthogonal simulation box size.
-			Box3 simBox;
-			for(int k = 0; k < 3; k++) {
-				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &simBox.minc[k], &simBox.maxc[k]) != 2)
-					throw Exception(tr("Invalid box size in line %1 of dump file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+				numParticles = (size_t)u;
+				setProgressMaximum(u);
+				break;
 			}
+			else if(stream.lineStartsWith("ITEM: BOX BOUNDS xy xz yz")) {
 
-			frameData->simulationCell().setMatrix(AffineTransformation(
-					Vector3(simBox.sizeX(), 0, 0),
-					Vector3(0, simBox.sizeY(), 0),
-					Vector3(0, 0, simBox.sizeZ()),
-					simBox.minc - Point3::Origin()));
-		}
-		else if(stream.lineStartsWith("ITEM: ATOMS")) {
+				// Parse optional boundary condition flags.
+				QStringList tokens = stream.lineString().mid(qstrlen("ITEM: BOX BOUNDS xy xz yz")).split(ws_re, QString::SkipEmptyParts);
+				if(tokens.size() >= 3)
+					frameData->simulationCell().setPbcFlags(tokens[0] == "pp", tokens[1] == "pp", tokens[2] == "pp");
 
-			// Read the column names list.
-			QStringList tokens = stream.lineString().split(ws_re, QString::SkipEmptyParts);
-			OVITO_ASSERT(tokens[0] == "ITEM:" && tokens[1] == "ATOMS");
-			QStringList fileColumnNames = tokens.mid(2);
+				// Parse triclinic simulation box.
+				FloatType tiltFactors[3];
+				Box3 simBox;
+				for(int k = 0; k < 3; k++) {
+					if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &simBox.minc[k], &simBox.maxc[k], &tiltFactors[k]) != 3)
+						throw Exception(tr("Invalid box size in line %1 of LAMMPS dump file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+				}
 
-			// Stop here if we are only inspecting the file's header.
-			if(_parseFileHeaderOnly) {
-				if(fileColumnNames.isEmpty()) {
-					// If no file columns names are available, count at least the number
-					// of data columns.
-					stream.readLine();
-					int columnCount = stream.lineString().split(ws_re, QString::SkipEmptyParts).size();
-					frameData->detectedColumnMapping().resize(columnCount);
+				// LAMMPS only stores the outer bounding box of the simulation cell in the dump file.
+				// We have to determine the size of the actual triclinic cell.
+				simBox.minc.x() -= std::min(std::min(std::min(tiltFactors[0], tiltFactors[1]), tiltFactors[0]+tiltFactors[1]), (FloatType)0);
+				simBox.maxc.x() -= std::max(std::max(std::max(tiltFactors[0], tiltFactors[1]), tiltFactors[0]+tiltFactors[1]), (FloatType)0);
+				simBox.minc.y() -= std::min(tiltFactors[2], (FloatType)0);
+				simBox.maxc.y() -= std::max(tiltFactors[2], (FloatType)0);
+				frameData->simulationCell().setMatrix(AffineTransformation(
+						Vector3(simBox.sizeX(), 0, 0),
+						Vector3(tiltFactors[0], simBox.sizeY(), 0),
+						Vector3(tiltFactors[1], tiltFactors[2], simBox.sizeZ()),
+						simBox.minc - Point3::Origin()));
+				break;
+			}
+			else if(stream.lineStartsWith("ITEM: BOX BOUNDS")) {
+				// Parse optional boundary condition flags.
+				QStringList tokens = stream.lineString().mid(qstrlen("ITEM: BOX BOUNDS")).split(ws_re, QString::SkipEmptyParts);
+				if(tokens.size() >= 3)
+					frameData->simulationCell().setPbcFlags(tokens[0] == "pp", tokens[1] == "pp", tokens[2] == "pp");
+
+				// Parse orthogonal simulation box size.
+				Box3 simBox;
+				for(int k = 0; k < 3; k++) {
+					if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &simBox.minc[k], &simBox.maxc[k]) != 2)
+						throw Exception(tr("Invalid box size in line %1 of dump file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+				}
+
+				frameData->simulationCell().setMatrix(AffineTransformation(
+						Vector3(simBox.sizeX(), 0, 0),
+						Vector3(0, simBox.sizeY(), 0),
+						Vector3(0, 0, simBox.sizeZ()),
+						simBox.minc - Point3::Origin()));
+				break;
+			}
+			else if(stream.lineStartsWith("ITEM: ATOMS")) {
+
+				// Read the column names list.
+				QStringList tokens = stream.lineString().split(ws_re, QString::SkipEmptyParts);
+				OVITO_ASSERT(tokens[0] == "ITEM:" && tokens[1] == "ATOMS");
+				QStringList fileColumnNames = tokens.mid(2);
+
+				// Stop here if we are only inspecting the file's header.
+				if(_parseFileHeaderOnly) {
+					if(fileColumnNames.isEmpty()) {
+						// If no file columns names are available, count at least the number
+						// of data columns.
+						stream.readLine();
+						int columnCount = stream.lineString().split(ws_re, QString::SkipEmptyParts).size();
+						frameData->detectedColumnMapping().resize(columnCount);
+					}
+					else {
+						frameData->detectedColumnMapping() = generateAutomaticColumnMapping(fileColumnNames);
+					}
+					return frameData;
+				}
+
+				// Set up column-to-property mapping.
+				InputColumnMapping columnMapping;
+				if(_useCustomColumnMapping)
+					columnMapping = _customColumnMapping;
+				else
+					columnMapping = generateAutomaticColumnMapping(fileColumnNames);
+
+				// Parse data columns.
+				InputColumnReader columnParser(columnMapping, *frameData, numParticles);
+
+				// If possible, use memory-mapped file access for best performance.
+				const char* s_start;
+				const char* s_end;
+				std::tie(s_start, s_end) = stream.mmap();
+				auto s = s_start;
+				int lineNumber = stream.lineNumber() + 1;
+				try {
+					for(size_t i = 0; i < numParticles; i++, lineNumber++) {
+						if(!setProgressValueIntermittent(i)) return {};
+						if(!s)
+							columnParser.readParticle(i, stream.readLine());
+						else
+							s = columnParser.readParticle(i, s, s_end);
+					}
+				}
+				catch(Exception& ex) {
+					throw ex.prependGeneralMessage(tr("Parsing error in line %1 of LAMMPS dump file.").arg(lineNumber));
+				}
+				if(s) {
+					stream.munmap();
+					stream.seek(stream.byteOffset() + (s - s_start));
+				}
+
+				// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
+				columnParser.sortParticleTypes();
+
+				// Find out if coordinates are given in reduced format and need to be rescaled to absolute format.
+				bool reducedCoordinates = false;
+				if(!fileColumnNames.empty()) {
+					for(int i = 0; i < (int)columnMapping.size() && i < fileColumnNames.size(); i++) {
+						if(columnMapping[i].property.type() == ParticlesObject::PositionProperty) {
+							reducedCoordinates = (
+									fileColumnNames[i] == "xs" || fileColumnNames[i] == "xsu" ||
+									fileColumnNames[i] == "ys" || fileColumnNames[i] == "ysu" ||
+									fileColumnNames[i] == "zs" || fileColumnNames[i] == "zsu");
+							break;
+						}
+					}
 				}
 				else {
-					frameData->detectedColumnMapping() = generateAutomaticColumnMapping(fileColumnNames);
-				}
-				return frameData;
-			}
-
-			// Set up column-to-property mapping.
-			InputColumnMapping columnMapping;
-			if(_useCustomColumnMapping)
-				columnMapping = _customColumnMapping;
-			else
-				columnMapping = generateAutomaticColumnMapping(fileColumnNames);
-
-			// Parse data columns.
-			InputColumnReader columnParser(columnMapping, *frameData, numParticles);
-
-			// If possible, use memory-mapped file access for best performance.
-			const char* s_start;
-			const char* s_end;
-			std::tie(s_start, s_end) = stream.mmap();
-			auto s = s_start;
-			int lineNumber = stream.lineNumber() + 1;
-			try {
-				for(size_t i = 0; i < numParticles; i++, lineNumber++) {
-					if(!setProgressValueIntermittent(i)) return {};
-					if(!s)
-						columnParser.readParticle(i, stream.readLine());
-					else
-						s = columnParser.readParticle(i, s, s_end);
-				}
-			}
-			catch(Exception& ex) {
-				throw ex.prependGeneralMessage(tr("Parsing error in line %1 of LAMMPS dump file.").arg(lineNumber));
-			}
-			if(s) {
-				stream.munmap();
-				stream.seek(stream.byteOffset() + (s - s_start));
-			}
-
-			// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
-			columnParser.sortParticleTypes();
-
-			// Find out if coordinates are given in reduced format and need to be rescaled to absolute format.
-			bool reducedCoordinates = false;
-			if(!fileColumnNames.empty()) {
-				for(int i = 0; i < (int)columnMapping.size() && i < fileColumnNames.size(); i++) {
-					if(columnMapping[i].property.type() == ParticlesObject::PositionProperty) {
-						reducedCoordinates = (
-								fileColumnNames[i] == "xs" || fileColumnNames[i] == "xsu" ||
-								fileColumnNames[i] == "ys" || fileColumnNames[i] == "ysu" ||
-								fileColumnNames[i] == "zs" || fileColumnNames[i] == "zsu");
-						break;
+					// Check if all atom coordinates are within the [0,1] interval.
+					// If yes, we assume reduced coordinate format.
+					if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
+						Box3 boundingBox;
+						boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
+						if(Box3(Point3(FloatType(-0.02)), Point3(FloatType(1.02))).containsBox(boundingBox))
+							reducedCoordinates = true;
 					}
+				}
+
+				if(reducedCoordinates) {
+					// Convert all atom coordinates from reduced to absolute (Cartesian) format.
+					if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
+						const AffineTransformation simCell = frameData->simulationCell().matrix();
+						Point3* p = posProperty->dataPoint3();
+						Point3* p_end = p + posProperty->size();
+						for(; p != p_end; ++p)
+							*p = simCell * (*p);
+					}
+				}
+
+				// Detect dimensionality of system.
+				frameData->simulationCell().set2D(!columnMapping.hasZCoordinates());
+
+				// Detect if there are more simulation frames following in the file.
+				if(!stream.eof()) {
+					stream.readLine();
+					if(stream.lineStartsWith("ITEM: TIMESTEP"))
+						frameData->signalAdditionalFrames();
+				}
+
+				// Sort particles by ID.
+				if(_sortParticles)
+					frameData->sortParticlesById();
+
+				frameData->setStatus(tr("%1 particles at timestep %2").arg(numParticles).arg(timestep));
+				return frameData; // Done!
+			}
+			else if(stream.lineStartsWith("ITEM:")) {
+				// For the sake of forward compatibility, we ignore unknown ITEM sections.
+				// Skip lines until the next "ITEM:" is reached.
+				while(!stream.eof() && !isCanceled()) {
+					stream.readLine();
+					if(stream.lineStartsWith("ITEM:"))
+						break;
 				}
 			}
 			else {
-				// Check if all atom coordinates are within the [0,1] interval.
-				// If yes, we assume reduced coordinate format.
-				if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
-					Box3 boundingBox;
-					boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
-					if(Box3(Point3(FloatType(-0.02)), Point3(FloatType(1.02))).containsBox(boundingBox))
-						reducedCoordinates = true;
-				}
+				throw Exception(tr("LAMMPS dump file parsing error. Line %1 of file %2 is invalid.").arg(stream.lineNumber()).arg(stream.filename()));
 			}
-
-			if(reducedCoordinates) {
-				// Convert all atom coordinates from reduced to absolute (Cartesian) format.
-				if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
-					const AffineTransformation simCell = frameData->simulationCell().matrix();
-					Point3* p = posProperty->dataPoint3();
-					Point3* p_end = p + posProperty->size();
-					for(; p != p_end; ++p)
-						*p = simCell * (*p);
-				}
-			}
-
-			// Detect dimensionality of system.
-			frameData->simulationCell().set2D(!columnMapping.hasZCoordinates());
-
-			// Detect if there are more simulation frames following in the file.
-			if(!stream.eof()) {
-				stream.readLine();
-				if(stream.lineStartsWith("ITEM: TIMESTEP"))
-					frameData->signalAdditionalFrames();
-			}
-
-			// Sort particles by ID.
-			if(_sortParticles)
-				frameData->sortParticlesById();
-
-			frameData->setStatus(tr("%1 particles at timestep %2").arg(numParticles).arg(timestep));
-			return frameData; // Done!
 		}
-		else {
-			throw Exception(tr("LAMMPS dump file parsing error. Line %1 of file %2 is invalid.").arg(stream.lineNumber()).arg(stream.filename()));
-		}
+		while(!stream.eof());
 	}
 
-	throw Exception(tr("LAMMPS dump file parsing error. Unexpected end of file at line %1.").arg(stream.lineNumber()));
+	throw Exception(tr("LAMMPS dump file parsing error. Unexpected end of file at line %1 or \"ITEM: ATOMS\" section is not present in dump file.").arg(stream.lineNumber()));
 }
 
 /******************************************************************************
