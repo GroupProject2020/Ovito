@@ -300,6 +300,25 @@ handle type_caster<Ovito::ColorA>::cast(const Ovito::ColorA& src, return_value_p
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
+// Automatic Python <--> Quaternion conversion
+///////////////////////////////////////////////////////////////////////////////////////
+bool type_caster<Ovito::Quaternion>::load(handle src, bool)
+{
+	if(!isinstance<sequence>(src)) return false;
+	sequence seq = reinterpret_borrow<sequence>(src);
+	if(seq.size() != value.size())
+		throw value_error("Expected sequence of length 4.");
+	for(size_t i = 0; i < value.size(); i++)
+		value[i] = seq[i].cast<Ovito::Quaternion::value_type>();
+	return true;
+}
+
+handle type_caster<Ovito::Quaternion>::cast(const Ovito::Quaternion& src, return_value_policy /* policy */, handle /* parent */)
+{
+	return pybind11::make_tuple(src[0], src[1], src[2], src[3]).release();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> AffineTransformation conversion
 ///////////////////////////////////////////////////////////////////////////////////////
 bool type_caster<Ovito::AffineTransformation>::load(handle src, bool)

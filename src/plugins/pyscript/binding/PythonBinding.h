@@ -53,7 +53,7 @@ namespace pybind11 { namespace detail {
 		type_caster() noexcept;
         bool load(handle src, bool);
         static handle cast(const QUrl& src, return_value_policy policy, handle parent);
-    };	
+    };
 
 	/// Automatic Python <--> QVariant conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<QVariant> {
@@ -61,7 +61,7 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(QVariant, _("QVariant"));
         bool load(handle src, bool);
         static handle cast(const QVariant& src, return_value_policy policy, handle parent);
-    };	
+    };
 
 	/// Automatic Python <--> QStringList conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<QStringList> {
@@ -77,7 +77,7 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(Ovito::Vector3, _("Vector3"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Vector3& src, return_value_policy policy, handle parent);
-    };	
+    };
 
 	/// Automatic Python <--> Vector3I conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Vector3I> {
@@ -85,7 +85,7 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(Ovito::Vector3I, _("Vector3I"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Vector3I& src, return_value_policy policy, handle parent);
-    };	
+    };
 
 	/// Automatic Python <--> Point3 conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Point3> {
@@ -93,7 +93,7 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(Ovito::Point3, _("Point3"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Point3& src, return_value_policy policy, handle parent);
-    };		
+    };
 
 	/// Automatic Python <--> Point3I conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Point3I> {
@@ -101,7 +101,7 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(Ovito::Point3I, _("Point3I"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Point3I& src, return_value_policy policy, handle parent);
-    };		
+    };
 
 	/// Automatic Python <--> Color conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Color> {
@@ -109,7 +109,7 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(Ovito::Color, _("Color"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Color& src, return_value_policy policy, handle parent);
-    };	
+    };
 
 	/// Automatic Python <--> ColorA conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::ColorA> {
@@ -119,13 +119,21 @@ namespace pybind11 { namespace detail {
         static handle cast(const Ovito::ColorA& src, return_value_policy policy, handle parent);
     };
 
+	/// Automatic Python <--> Quaternion conversion
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Quaternion> {
+    public:
+		PYBIND11_TYPE_CASTER(Ovito::Quaternion, _("Quaternion"));
+        bool load(handle src, bool);
+        static handle cast(const Ovito::Quaternion& src, return_value_policy policy, handle parent);
+    };
+
 	/// Automatic Python <--> AffineTransformation conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::AffineTransformation> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::AffineTransformation, _("AffineTransformation"));
         bool load(handle src, bool);
         static handle cast(const Ovito::AffineTransformation& src, return_value_policy policy, handle parent);
-    };	
+    };
 
 	/// Automatic Python <--> Matrix3 conversion
     template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Matrix3> {
@@ -141,14 +149,14 @@ namespace pybind11 { namespace detail {
 		PYBIND11_TYPE_CASTER(Ovito::Matrix4, _("Matrix4"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Matrix4& src, return_value_policy policy, handle parent);
-    };		
+    };
 
 	// Automatic QSet<int> conversion.
 	template<> struct type_caster<QSet<int>> : set_caster<QSet<int>, int> {};
 
 	// Automatic QSet<QString> conversion.
-	template<> struct type_caster<QSet<QString>> : set_caster<QSet<QString>, QString> {};	
-	
+	template<> struct type_caster<QSet<QString>> : set_caster<QSet<QString>, QString> {};
+
 }} // namespace pybind11::detail
 
 namespace PyScript {
@@ -161,7 +169,7 @@ namespace py = pybind11;
 ///
 /// This helper class makes our internal script modules available by registering their initXXX functions with the Python interpreter.
 /// This is required for static builds where all Ovito plugins are linked into the main executable file.
-/// On Windows this is also needed, because OVITO plugins have an .dll extension and the Python interpreter 
+/// On Windows this is also needed, because OVITO plugins have an .dll extension and the Python interpreter
 /// only looks for modules that have a .pyd extension.
 struct OVITO_PYSCRIPT_EXPORT PythonPluginRegistration
 {
@@ -228,7 +236,7 @@ class ovito_class : public py::class_<OvitoObjectClass, BaseClass, OORef<OvitoOb
 public:
 
 	/// Constructor.
-	ovito_class(py::handle scope, const char* docstring = nullptr, const char* pythonClassName = nullptr) 
+	ovito_class(py::handle scope, const char* docstring = nullptr, const char* pythonClassName = nullptr)
 		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOClass().className(), docstring) {
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
@@ -329,7 +337,7 @@ auto register_subobject_list_wrapper(PythonClass& parentClass, const char* wrapp
 	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;
 	using ElementType = typename VectorType::value_type;
 	using ConstIterType = typename VectorType::const_iterator;
-	
+
 	py::class_<ObjectWrapper> pyWrapperClass(parentClass, wrapperClassName);
 	pyWrapperClass.def("__bool__", [listGetter](const ObjectWrapper& wrapper) {
 				return !listGetter(wrapper.get()).empty();
@@ -344,13 +352,13 @@ auto register_subobject_list_wrapper(PythonClass& parentClass, const char* wrapp
 				const auto& list = listGetter(wrapper.get());
 				if(index < 0) index += list.size();
 				if(index < 0 || index >= list.size()) throw py::index_error();
-				return list[index]; 
+				return list[index];
 			});
 	pyWrapperClass.def("__iter__", [listGetter](const ObjectWrapper& wrapper) {
 				const auto& list = listGetter(wrapper.get());
 				return py::make_iterator<py::return_value_policy::reference_internal, ConstIterType, ConstIterType, ElementType>(
 					list.begin(), list.end());
-			}, 
+			},
 			py::keep_alive<0, 1>());
 	pyWrapperClass.def("__getitem__", [listGetter](const ObjectWrapper& wrapper, py::slice slice) {
 				size_t start, stop, step, slicelength;
@@ -365,7 +373,7 @@ auto register_subobject_list_wrapper(PythonClass& parentClass, const char* wrapp
 					start += step;
 				}
 				return seq;
-        	}, 
+        	},
 			py::arg("s"), "Retrieve list elements using a slice object");
 	pyWrapperClass.def("index", [listGetter](const ObjectWrapper& wrapper, py::object& item) {
 				const auto& list = listGetter(wrapper.get());
@@ -385,12 +393,12 @@ auto register_subobject_list_wrapper(PythonClass& parentClass, const char* wrapp
 }
 
 template<typename PythonClass, typename ListGetterFunction, typename ListInserterFunction, typename ListRemoverFunction>
-auto register_mutable_subobject_list_wrapper(PythonClass& parentClass, const char* wrapperObjectName, ListGetterFunction&& listGetter, ListInserterFunction&& listInserter, ListRemoverFunction&& listRemover) 
+auto register_mutable_subobject_list_wrapper(PythonClass& parentClass, const char* wrapperObjectName, ListGetterFunction&& listGetter, ListInserterFunction&& listInserter, ListRemoverFunction&& listRemover)
 {
 	auto pyWrapperClass = register_subobject_list_wrapper(parentClass, wrapperObjectName, std::forward<ListGetterFunction>(listGetter));
 	using ObjectType = typename PythonClass::type;
 	using ObjectWrapper = typename decltype(pyWrapperClass)::type;
-	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;	
+	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;
 	using ElementType = typename VectorType::value_type;
 
 	pyWrapperClass.def("append", [listGetter,listInserter](ObjectWrapper& wrapper, ElementType element) {
@@ -430,7 +438,7 @@ auto register_mutable_subobject_list_wrapper(PythonClass& parentClass, const cha
 	pyWrapperClass.def("__delitem__", [listGetter,listRemover](ObjectWrapper& wrapper, py::slice slice) {
 				size_t start, stop, step, slicelength;
 				const auto& list = listGetter(wrapper.get());
-				
+
 				if(!slice.compute(list.size(), &start, &stop, &step, &slicelength))
 					throw py::error_already_set();
 
@@ -439,7 +447,7 @@ auto register_mutable_subobject_list_wrapper(PythonClass& parentClass, const cha
 					start += step - 1;
 				}
 			},
-			"Delete list elements using a slice object");			
+			"Delete list elements using a slice object");
 	pyWrapperClass.def("remove", [listGetter,listRemover](ObjectWrapper& wrapper, ElementType element) {
 				if(!element) throw py::value_error("Cannot remove 'None' elements from this collection.");
 				const auto& list = listGetter(wrapper.get());
@@ -447,43 +455,43 @@ auto register_mutable_subobject_list_wrapper(PythonClass& parentClass, const cha
 				if(iter == list.cend()) throw py::value_error("Item does not exist in list");
 				listRemover(wrapper.get(), (int)std::distance(list.cbegin(), iter));
 			});
-	
+
 	return pyWrapperClass;
 }
 
 };	// End of namespace detail
 
 template<class PythonClass, typename ListGetterFunction>
-auto expose_subobject_list(PythonClass& parentClass, ListGetterFunction&& listGetter, const char* pyPropertyName, const char* wrapperObjectName, const char* docstring = nullptr) 
+auto expose_subobject_list(PythonClass& parentClass, ListGetterFunction&& listGetter, const char* pyPropertyName, const char* wrapperObjectName, const char* docstring = nullptr)
 {
 	auto pyWrapperClass = detail::register_subobject_list_wrapper(parentClass, wrapperObjectName, std::forward<ListGetterFunction>(listGetter));
 	using WapperClassType = typename decltype(pyWrapperClass)::type;
-	
+
 	parentClass.def_property_readonly(pyPropertyName, py::cpp_function(
-		[](typename PythonClass::type& parent) { return WapperClassType(parent); }, 
+		[](typename PythonClass::type& parent) { return WapperClassType(parent); },
 		py::keep_alive<0,1>()), docstring);
 
 	return pyWrapperClass;
 }
 
 template<class PythonClass, typename ListGetterFunction, typename ListInserterFunction, typename ListRemoverFunction>
-auto expose_mutable_subobject_list(PythonClass& parentClass, ListGetterFunction&& listGetter, ListInserterFunction&& listInserter, ListRemoverFunction&& listRemover, const char* pyPropertyName, const char* wrapperObjectName, const char* docstring = nullptr) 
+auto expose_mutable_subobject_list(PythonClass& parentClass, ListGetterFunction&& listGetter, ListInserterFunction&& listInserter, ListRemoverFunction&& listRemover, const char* pyPropertyName, const char* wrapperObjectName, const char* docstring = nullptr)
 {
-	auto pyWrapperClass = detail::register_mutable_subobject_list_wrapper(parentClass, wrapperObjectName, 
+	auto pyWrapperClass = detail::register_mutable_subobject_list_wrapper(parentClass, wrapperObjectName,
 			std::forward<ListGetterFunction>(listGetter),
 			std::forward<ListInserterFunction>(listInserter),
 			std::forward<ListRemoverFunction>(listRemover));
 	using WapperClassType = typename decltype(pyWrapperClass)::type;
 	using ObjectType = typename PythonClass::type;
 	using ObjectWrapper = typename decltype(pyWrapperClass)::type;
-	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;	
+	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;
 	using ElementType = typename VectorType::value_type;
-		
+
 	parentClass.def_property(pyPropertyName, py::cpp_function(
 		// getter
-		[](typename PythonClass::type& parent) {	
+		[](typename PythonClass::type& parent) {
 			return WapperClassType(parent);
-		}, py::keep_alive<0,1>()), 
+		}, py::keep_alive<0,1>()),
 		// setter
 		[listGetter,listInserter,listRemover](typename PythonClass::type& parent, py::object& obj) {
 			if(!py::isinstance<py::sequence>(obj))
@@ -505,12 +513,12 @@ auto expose_mutable_subobject_list(PythonClass& parentClass, ListGetterFunction&
 }
 
 template<typename ParentClass, typename VectorClass, const VectorClass& (ParentClass::*getter_func)() const>
-py::cpp_function VectorGetter() 
+py::cpp_function VectorGetter()
 {
 	return py::cpp_function([](py::object& obj) {
 		const VectorClass& v = (obj.cast<ParentClass&>().*getter_func)();
-		py::array_t<typename VectorClass::value_type> array({ v.size() }, 
-				{ sizeof(typename VectorClass::value_type) }, 
+		py::array_t<typename VectorClass::value_type> array({ v.size() },
+				{ sizeof(typename VectorClass::value_type) },
 				v.data(), obj);
 		// Mark array as read-only.
 		reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
@@ -519,12 +527,12 @@ py::cpp_function VectorGetter()
 }
 
 template<typename ParentClass, typename VectorClass, VectorClass (ParentClass::*getter_func)() const>
-py::cpp_function VectorGetter() 
+py::cpp_function VectorGetter()
 {
 	return py::cpp_function([](py::object& obj) {
 		VectorClass v = (obj.cast<ParentClass&>().*getter_func)();
-		py::array_t<typename VectorClass::value_type> array({ v.size() }, 
-				{ sizeof(typename VectorClass::value_type) }, 
+		py::array_t<typename VectorClass::value_type> array({ v.size() },
+				{ sizeof(typename VectorClass::value_type) },
 				v.data());
 		// Mark array as read-only.
 		reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
@@ -533,7 +541,7 @@ py::cpp_function VectorGetter()
 }
 
 template<typename ParentClass, typename VectorClass, void (ParentClass::*setter_func)(const VectorClass&)>
-py::cpp_function VectorSetter() 
+py::cpp_function VectorSetter()
 {
 	return py::cpp_function([](py::object& obj, py::array_t<typename VectorClass::value_type> array) {
 		if(array.ndim() != 1)
@@ -552,12 +560,12 @@ py::cpp_function VectorSetter()
 }
 
 template<typename ParentClass, typename MatrixClass, const MatrixClass& (ParentClass::*getter_func)() const>
-py::cpp_function MatrixGetter() 
+py::cpp_function MatrixGetter()
 {
 	return py::cpp_function([](py::object& obj) {
 		const MatrixClass& tm = (obj.cast<ParentClass&>().*getter_func)();
-		py::array_t<typename MatrixClass::element_type> array({ tm.row_count(), tm.col_count() }, 
-				{ sizeof(typename MatrixClass::element_type), sizeof(typename MatrixClass::column_type) }, 
+		py::array_t<typename MatrixClass::element_type> array({ tm.row_count(), tm.col_count() },
+				{ sizeof(typename MatrixClass::element_type), sizeof(typename MatrixClass::column_type) },
 				tm.elements(), obj);
 		// Mark array as read-only.
 		reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
@@ -570,8 +578,8 @@ py::cpp_function MatrixGetterCopy()
 {
 	return py::cpp_function([](py::object& obj) {
 		const MatrixClass tm = (obj.cast<ParentClass&>().*getter_func)();
-		py::array_t<typename MatrixClass::element_type> array({ tm.row_count(), tm.col_count() }, 
-				{ sizeof(typename MatrixClass::element_type), sizeof(typename MatrixClass::column_type) }, 
+		py::array_t<typename MatrixClass::element_type> array({ tm.row_count(), tm.col_count() },
+				{ sizeof(typename MatrixClass::element_type), sizeof(typename MatrixClass::column_type) },
 				tm.elements());
 		// Mark array as read-only.
 		reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
@@ -580,7 +588,7 @@ py::cpp_function MatrixGetterCopy()
 }
 
 template<typename ParentClass, typename MatrixClass, void (ParentClass::*setter_func)(const MatrixClass&)>
-py::cpp_function MatrixSetter() 
+py::cpp_function MatrixSetter()
 {
 	return py::cpp_function([](py::object& obj, py::array_t<typename MatrixClass::element_type, py::array::f_style | py::array::forcecast> array) {
 		if(array.ndim() != 2)
@@ -600,17 +608,17 @@ py::cpp_function MatrixSetter()
 
 template<class PythonClass, typename DelegateListGetter>
 void modifier_operate_on_list(PythonClass& parentClass, DelegateListGetter&& delegatesGetter, const char* pyPropertyName, const char* docstring = nullptr)
-{	
-	parentClass.def_property(pyPropertyName, 
-		[delegatesGetter](typename PythonClass::type& parent) { 
+{
+	parentClass.def_property(pyPropertyName,
+		[delegatesGetter](typename PythonClass::type& parent) {
 			const auto& list = delegatesGetter(parent);
 			return std::vector<OORef<ModifierDelegate>>(std::begin(list), std::end(list));
-		}, 
-		[delegatesGetter](typename PythonClass::type& parent, py::object obj) { 
+		},
+		[delegatesGetter](typename PythonClass::type& parent, py::object obj) {
 			const auto& list = delegatesGetter(parent);
 			py::object wrapper = py::cast(std::vector<OORef<ModifierDelegate>>(std::begin(list), std::end(list)));
 			wrapper.attr("assign")(std::move(obj));
-		}, 
+		},
 		docstring);
 }
 
@@ -618,7 +626,7 @@ void modifier_operate_on_list(PythonClass& parentClass, DelegateListGetter&& del
 template<typename DelegatingModifierClass>
 py::cpp_function modifierDelegateGetter()
 {
-	return [](const DelegatingModifierClass& mod) { 
+	return [](const DelegatingModifierClass& mod) {
 		return mod.delegate() ? mod.delegate()->getOOMetaClass().pythonDataName() : QString();
 	};
 }
@@ -627,7 +635,7 @@ py::cpp_function modifierDelegateGetter()
 template<typename DelegatingModifierClass>
 py::cpp_function modifierDelegateSetter()
 {
-	return [](DelegatingModifierClass& mod, const QString& typeName) { 
+	return [](DelegatingModifierClass& mod, const QString& typeName) {
 		const OvitoClass& delegateType = DelegatingModifierClass::OOClass().delegateMetaclass();
 		if(mod.delegate() && mod.delegate()->getOOMetaClass().pythonDataName() == typeName)
 			return;
@@ -639,7 +647,7 @@ py::cpp_function modifierDelegateSetter()
 		}
 		// Error: User did not specify a valid type name.
 		// Now build the list of valid names to generate a helpful error message.
-		QStringList delegateTypeNames; 
+		QStringList delegateTypeNames;
 		for(auto clazz : PluginManager::instance().metaclassMembers<typename DelegatingModifierClass::DelegateBaseType>(delegateType)) {
 			delegateTypeNames.push_back(QString("'%1'").arg(clazz->pythonDataName()));
 		}
@@ -662,10 +670,10 @@ void createDataPropertyAccessors(
 	const char* propertyName, 		// The name of the Python property to generate.
 	const PropertyDataType& (PythonClass::type::*getter)() const,	// The C++ getter method for reading the property field value.
 	void (PythonClass::type::*setter)(const PropertyDataType&),		// The C++ setter method for setting the property field value.
-	const Extra&... extra			// Extra parameters forwarded to the Python property definition, e.g. a comment string. 
+	const Extra&... extra			// Extra parameters forwarded to the Python property definition, e.g. a comment string.
 	)
 {
-	clazz.def_property(propertyName, 
+	clazz.def_property(propertyName,
 		getter,
 		[setter](typename PythonClass::type& obj, const PropertyDataType& value) {
 			ensureDataObjectIsMutable(obj);
@@ -678,8 +686,8 @@ void createDataPropertyAccessors(
 
 /// This helper function adds a property to the Python binding of a DataObject-derived class for accessing
 /// a sub-object of the data object. The generated setter method ensures that the parent object
-/// is safe to modify (if not, an exception is raised). Additionally a second property is added to 
-/// the parent object class for access a mutable copy of the sub-object. The name of the second property 
+/// is safe to modify (if not, an exception is raised). Additionally a second property is added to
+/// the parent object class for access a mutable copy of the sub-object. The name of the second property
 /// is generated by appending an underscore to the property base name.
 template<typename PythonClass, typename CppClass, typename DataObjectClass, typename... Extra>
 void createDataSubobjectAccessors(
@@ -687,11 +695,11 @@ void createDataSubobjectAccessors(
 	const char* propertyName, 		// The name of the Python property to generate.
 	DataObjectClass* (CppClass::*getter)() const,		// The C++ getter method for accessing the sub-object.
 	void (CppClass::*setter)(const DataObjectClass*),	// The C++ setter method for replacing the sub-object.
-	const Extra&... extra			// Extra parameters forwarded to the Python property definition, e.g. a comment string. 
+	const Extra&... extra			// Extra parameters forwarded to the Python property definition, e.g. a comment string.
 	)
 {
 	static_assert(std::is_base_of<CppClass, typename PythonClass::type>::value, "Getter/Setter functions must be members of a compatible C++ class.");
-	clazz.def_property(propertyName, 
+	clazz.def_property(propertyName,
 		getter,
 		[setter](typename PythonClass::type& obj, const DataObjectClass* subobj) {
 			ensureDataObjectIsMutable(obj);

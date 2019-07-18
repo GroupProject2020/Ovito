@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -19,7 +19,7 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
+SET(SourceFiles
 	objects/ParticlesVis.cpp
 	objects/ParticleType.cpp
 	objects/ParticlesObject.cpp
@@ -46,11 +46,12 @@ SET(SourceFiles
 	modifier/analysis/displacements/CalculateDisplacementsModifier.cpp
 	modifier/analysis/centrosymmetry/CentroSymmetryModifier.cpp
 	modifier/analysis/strain/AtomicStrainModifier.cpp
-	modifier/analysis/diamond/IdentifyDiamondModifier.cpp	
+	modifier/analysis/diamond/IdentifyDiamondModifier.cpp
 	modifier/analysis/voronoi/VoronoiAnalysisModifier.cpp
 	modifier/analysis/cluster/ClusterAnalysisModifier.cpp
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifier.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
+	modifier/analysis/ptm/PTMAlgorithm.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
 	modifier/properties/GenerateTrajectoryLinesModifier.cpp
@@ -91,7 +92,7 @@ SET(SourceFiles
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)
-	LIST(APPEND SourceFiles 
+	LIST(APPEND SourceFiles
 		modifier/coloring/ParticlesColorCodingModifierDelegate.cpp
 		modifier/coloring/ParticlesAssignColorModifierDelegate.cpp
 		modifier/modify/ParticlesSliceModifierDelegate.cpp
@@ -108,8 +109,8 @@ ENDIF()
 
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(Particles
-	SOURCES 
-		Particles.cpp 
+	SOURCES
+		Particles.cpp
 		${SourceFiles}
 	PLUGIN_DEPENDENCIES Mesh Grid StdObj
 	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching CombinatoriallyOptimalPointRegistration

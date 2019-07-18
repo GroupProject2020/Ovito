@@ -26,6 +26,6 @@ ovito.data.Particles = Particles
 ovito.data.Bonds = Bonds
 ovito.data.TrajectoryLines = TrajectoryLines
 ovito.data.__all__ += ['ParticleType',
-            'BondType', 'BondsEnumerator', 
+            'BondType', 'BondsEnumerator',
             'CutoffNeighborFinder', 'NearestNeighborFinder',
             'Particles', 'Bonds', 'TrajectoryLines']

@@ -981,6 +981,7 @@ void defineModifiersSubmodule(py::module m)
 			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.L12_B`` (4)\n"
 			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.B2`` (5)\n"
 			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.ZINCBLENDE_WURTZITE`` (6)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.BORON_NITRIDE`` (7)\n"
 			" * ``Color`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The modifier assigns a color to each particle based on its identified structure type. "
 			"   See the :py:attr:`structures` list for how to change the display color of a structural type. ")
@@ -1013,12 +1014,6 @@ void defineModifiersSubmodule(py::module m)
 				"See the OVITO user manual for details. "
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("use_standard_orientations", &PolyhedralTemplateMatchingModifier::useStandardOrientations, &PolyhedralTemplateMatchingModifier::setUseStandardOrientations,
-				"Boolean flag that controls whether the modifier should use the standard reference lattice orientations or the PTM template orientations when calculating "
-				"local lattice orientations. This only affects HCP, diamond cubic, and diamond hexagonal structure types. "
-				"See the OVITO user manual for details. "
-				"\n\n"
-				":Default: ``True``\n")
 		.def_property("output_deformation_gradient", &PolyhedralTemplateMatchingModifier::outputDeformationGradient, &PolyhedralTemplateMatchingModifier::setOutputDeformationGradient,
 				"Boolean flag that controls whether the modifier outputs the computed per-particle elastic deformation gradients as a new particle property named ``Elastic Deformation Gradient``."
 				"The elastic deformation gradient describes the local deformation and rigid-body rotation of the crystal with repect to an ideal reference lattice configuration. "
@@ -1038,28 +1033,66 @@ void defineModifiersSubmodule(py::module m)
 		".. literalinclude:: ../example_snippets/polyhedral_template_matching.py\n"
 		"   :lines: 5-\n");
 
-	py::enum_<PolyhedralTemplateMatchingModifier::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
-		.value("OTHER", PolyhedralTemplateMatchingModifier::OTHER)
-		.value("FCC", PolyhedralTemplateMatchingModifier::FCC)
-		.value("HCP", PolyhedralTemplateMatchingModifier::HCP)
-		.value("BCC", PolyhedralTemplateMatchingModifier::BCC)
-		.value("ICO", PolyhedralTemplateMatchingModifier::ICO)
-		.value("SC", PolyhedralTemplateMatchingModifier::SC)
-		.value("CUBIC_DIAMOND", PolyhedralTemplateMatchingModifier::CUBIC_DIAMOND)
-		.value("HEX_DIAMOND", PolyhedralTemplateMatchingModifier::HEX_DIAMOND)
-		.value("GRAPHENE", PolyhedralTemplateMatchingModifier::GRAPHENE)
+	py::enum_<PTMAlgorithm::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
+		.value("OTHER", PTMAlgorithm::OTHER)
+		.value("FCC", PTMAlgorithm::FCC)
+		.value("HCP", PTMAlgorithm::HCP)
+		.value("BCC", PTMAlgorithm::BCC)
+		.value("ICO", PTMAlgorithm::ICO)
+		.value("SC", PTMAlgorithm::SC)
+		.value("CUBIC_DIAMOND", PTMAlgorithm::CUBIC_DIAMOND)
+		.value("HEX_DIAMOND", PTMAlgorithm::HEX_DIAMOND)
+		.value("GRAPHENE", PTMAlgorithm::GRAPHENE)
 	;
 
-	py::enum_<PolyhedralTemplateMatchingModifier::OrderingType>(PolyhedralTemplateMatchingModifier_py, "OrderingType")
-		.value("NONE", PolyhedralTemplateMatchingModifier::ORDERING_NONE)
-		.value("PURE", PolyhedralTemplateMatchingModifier::ORDERING_PURE)
-		.value("L10", PolyhedralTemplateMatchingModifier::ORDERING_L10)
-		.value("L12_A", PolyhedralTemplateMatchingModifier::ORDERING_L12_A)
-		.value("L12_B", PolyhedralTemplateMatchingModifier::ORDERING_L12_B)
-		.value("B2", PolyhedralTemplateMatchingModifier::ORDERING_B2)
-		.value("ZINCBLENDE_WURTZITE", PolyhedralTemplateMatchingModifier::ORDERING_ZINCBLENDE_WURTZITE)
-		.value("BORON_NITRIDE", PolyhedralTemplateMatchingModifier::ORDERING_BORON_NITRIDE)
+	py::enum_<PTMAlgorithm::OrderingType>(PolyhedralTemplateMatchingModifier_py, "OrderingType")
+		.value("NONE", PTMAlgorithm::ORDERING_NONE)
+		.value("PURE", PTMAlgorithm::ORDERING_PURE)
+		.value("L10", PTMAlgorithm::ORDERING_L10)
+		.value("L12_A", PTMAlgorithm::ORDERING_L12_A)
+		.value("L12_B", PTMAlgorithm::ORDERING_L12_B)
+		.value("B2", PTMAlgorithm::ORDERING_B2)
+		.value("ZINCBLENDE_WURTZITE", PTMAlgorithm::ORDERING_ZINCBLENDE_WURTZITE)
+		.value("BORON_NITRIDE", PTMAlgorithm::ORDERING_BORON_NITRIDE)
 	;
+
+#if 0
+	// A helper class that combines both the PTMAlgorithm class and an associated PTMAlgorithm::Kernel instance.
+	// Only a single kernel is created, because Python scripts are always single-threaded.
+	// The constructor function takes a DataCollection as input and will extract the needed information to
+	// initialize the PTMAlgorithm with.
+	class PTMAlgorithmWrapper : public PTMAlgorithm, public PTMAlgorithm::Kernel {
+	public:
+		PTMAlgorithmWrapper(const DataCollection& input, const std::set<PTMAlgorithm::StructureType>& structs) : PTMAlgorithm::Kernel(static_cast<PTMAlgorithm&>(*this)) {
+			const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+			const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+			const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
+			setIdentifyOrdering(particles->getPropertyStorage(ParticlesObject::TypeProperty));
+			for(PTMAlgorithm::StructureType stype : structs)
+				setStructureTypeIdentification(stype, true);
+			if(!isAnyStructureTypeEnabled())
+				throw Exception("No PTM structure template has been enabled for identification.");
+			prepare(*posProperty->storage(), simCell->data());
+			setCalculateDefGradient(true);
+		}
+	};
+	py::class_<PTMAlgorithmWrapper>(PolyhedralTemplateMatchingModifier_py, "Algorithm")
+		.def(py::init<const DataCollection&, const std::set<PTMAlgorithm::StructureType>&>())
+		.def("identify", &PTMAlgorithmWrapper::identifyStructure)
+		.def_property_readonly("structure", &PTMAlgorithmWrapper::structureType)
+		.def_property_readonly("rmsd", &PTMAlgorithmWrapper::rmsd)
+		.def_property_readonly("defgrad", &PTMAlgorithmWrapper::deformationGradient)
+		.def_property_readonly("interatomic_distance", &PTMAlgorithmWrapper::interatomicDistance)
+		.def_property_readonly("ordering", &PTMAlgorithmWrapper::orderingType)
+		.def_property_readonly("orientation", &PTMAlgorithmWrapper::orientation)
+		.def_property_readonly("orientation_mat", [](const PTMAlgorithmWrapper& wrapper) {
+				return Matrix3::rotation(wrapper.orientation());
+			})
+		.def_property_readonly("neighbor_count", &PTMAlgorithmWrapper::numStructureNeighbors)
+		.def("get_neighbor", &PTMAlgorithmWrapper::getNeighborInfo, py::return_value_policy::reference_internal)
+		.def("get_ideal_vector", &PTMAlgorithmWrapper::getIdealNeighborVector)
+	;
+#endif
 
 	ovito_class<CoordinationPolyhedraModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

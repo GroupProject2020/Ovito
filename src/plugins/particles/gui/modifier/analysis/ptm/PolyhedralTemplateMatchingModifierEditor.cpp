@@ -90,23 +90,9 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	sublayout->addWidget(outputOrientationUI->checkBox(), 4, 0, 1, 2);
 	outputOrientationUI->checkBox()->setText(tr("Lattice orientations"));
 
-	// Selection of reference configuration for lattice orientation calculation:
-	IntegerRadioButtonParameterUI* referenceOrientationUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::useStandardOrientations));
-	referenceOrientationUI->setEnabled(false);
-	QRadioButton* standardModeBtn = referenceOrientationUI->addRadioButton(true, tr("Use standard reference orientations"));
-	QRadioButton* templateModeBtn = referenceOrientationUI->addRadioButton(false, tr("Use PTM template orientations"));
-	sublayout->addWidget(standardModeBtn, 5, 1);
-	sublayout->addWidget(templateModeBtn, 6, 1);
-
-	auto updateReferenceOrientationUI = [=]() {
-		referenceOrientationUI->setEnabled(outputOrientationUI->checkBox()->isChecked() || outputDeformationGradientUI->checkBox()->isChecked());
-	};
-	connect(outputOrientationUI->checkBox(), &QCheckBox::toggled, this, updateReferenceOrientationUI);
-	connect(outputDeformationGradientUI->checkBox(), &QCheckBox::toggled, this, updateReferenceOrientationUI);
-
 	// Color by type
 	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
-	sublayout->addWidget(colorByTypeUI->checkBox(), 7, 0, 1, 2);
+	sublayout->addWidget(colorByTypeUI->checkBox(), 5, 0, 1, 2);
 
 	StructureListParameterUI* structureTypesPUI = new StructureListParameterUI(this, true);
 	layout1->addSpacing(10);
