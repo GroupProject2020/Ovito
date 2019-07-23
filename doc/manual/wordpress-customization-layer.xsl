@@ -9,7 +9,7 @@
   <xsl:param name="callout.graphics" select="'0'"/>
   <xsl:param name="callout.unicode" select="'1'"/>
 
-  <xsl:param name="wordpress.dir">..</xsl:param>
+  <xsl:param name="wordpress.dir">../..</xsl:param>
   <xsl:param name="use.extensions" select="0"/>
 
   <xsl:param name="chunk.section.depth" select="3"/>

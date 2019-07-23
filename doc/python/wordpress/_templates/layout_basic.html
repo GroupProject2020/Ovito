@@ -96,7 +96,7 @@
     {%- endif %}
   {%- endfor %}
 {%- endmacro %}
-  require_once('{{ pathto('../../wp-blog-header.php', 1) }}');
+  require_once('{{ pathto('../../../wp-blog-header.php', 1) }}');
   header("HTTP/1.1 200 OK");
   header("Status: 200 All rosy");
   $wp_query->is_404 = false;
