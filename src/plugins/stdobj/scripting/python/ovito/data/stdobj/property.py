@@ -56,14 +56,14 @@ Property.__repr__ = lambda self: self.__class__.__name__ + "('" + self.name + "'
 
 # Implement 'ndim' attribute.
 def _Property_ndim(self):
-    if self.components <= 1: return 1
+    if self.component_count <= 1: return 1
     else: return 2
 Property.ndim = property(_Property_ndim)
 
 # Implement 'shape' attribute.
 def _Property_shape(self):
-    if self.components <= 1: return (len(self), ) 
-    else: return (len(self), self.components)
+    if self.component_count <= 1: return (len(self), ) 
+    else: return (len(self), self.component_count)
 Property.shape = property(_Property_shape)
 
 # Implement 'dtype' attribute.

@@ -385,8 +385,10 @@ PYBIND11_MODULE(StdObjPython, m)
 		.def("make_readonly", &PropertyObject::makeReadOnlyFromPython)
 
 		.def_property_readonly("name", &PropertyObject::name, "The name of the property.")
-		.def_property_readonly("components", &PropertyObject::componentCount,
+		.def_property_readonly("component_count", &PropertyObject::componentCount,
 				"The number of vector components if this is a vector property; or 1 if this is a scalar property.")
+		.def_property_readonly("component_names", &PropertyObject::componentNames,
+				"The list of names of the vector components if this is a vector property. For example, for the ``Position`` particle property this field contains ``['X', 'Y', 'Z']``.")
 
 		// Used by the type_by_name() and type_by_id() methods:
 		.def("_get_type_by_id", static_cast<ElementType* (PropertyObject::*)(int) const>(&PropertyObject::elementType))

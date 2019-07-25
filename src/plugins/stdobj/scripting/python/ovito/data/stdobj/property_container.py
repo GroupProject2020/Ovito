@@ -199,8 +199,8 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
             prop = self.create_user_property(property_name, dtype, components, 0, data is None, len(data) if not data is None else 0)
     else:
         # Make sure the data layout of the existing property is compatible with the requested layout.
-        if components is not None and existing_prop.components != components:
-            raise ValueError("Existing property '{}' has {} vector component(s), but {} component(s) have been requested for the new property.".format(existing_prop.name, existing_prop.components, components))
+        if components is not None and existing_prop.component_count != components:
+            raise ValueError("Existing property '{}' has {} vector component(s), but {} component(s) have been requested for the new property.".format(existing_prop.name, existing_prop.component_count, components))
         if dtype is not None and existing_prop.data_type != dtype:
             raise ValueError("Existing property '{}' has data type '{}', but data type '{}' has been requested for the new property.".format(
                 existing_prop.name, PyQt5.QtCore.QMetaType.typeName(existing_prop.data_type), PyQt5.QtCore.QMetaType.typeName(dtype)))

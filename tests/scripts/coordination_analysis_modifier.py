@@ -39,6 +39,8 @@ print("partial_rdfs:")
 print(partial_rdfs[...])
 
 assert(partial_rdfs.shape == (modifier.number_of_bins, ntypes*(ntypes+1)//2))
+assert(partial_rdfs.component_count == ntypes*(ntypes+1)//2)
+assert(len(partial_rdfs.component_names) == ntypes*(ntypes+1)//2)
 assert(data.series["coordination-rdf"].as_table().shape == (modifier.number_of_bins, 1+ntypes*(ntypes+1)//2))
 
 # Check if partial RDFs correctly sum up to the total RDF.
