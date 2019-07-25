@@ -73,8 +73,8 @@ build_linux_package:
          -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.so.*`
          -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
          -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
-         -Dospray_DIR=`echo $HOME/progs/ospray_install*/lib/cmake/ospray-*`
-         -Dembree_DIR=`echo $HOME/progs/embree_install*/lib/cmake/embree-*`
+         -Dospray_DIR=`echo $HOME/progs/ospray_install/lib*/cmake/ospray-*`
+         -Dembree_DIR=`echo $HOME/progs/embree_install/lib*/cmake/embree-*`
          -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc`
          -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/
          -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so
