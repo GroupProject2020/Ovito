@@ -51,6 +51,8 @@ build_linux_package:
       paths:
          - build/ovito-*.tar.gz
    script:
+      - scl enable devtoolset-7 bash
+      - source /opt/rh/devtoolset-7/enable
       - mkdir build
       - cd build
       - export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
@@ -62,7 +64,7 @@ build_linux_package:
          -DOVITO_DOUBLE_PRECISION_FP=ON
          -DOVITO_BUILD_PLUGIN_OSPRAY=ON
          -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
-         -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
+         -DnetCDF_DIR=`echo $HOME/progs/netcdf/lib*/cmake/netCDF`
          -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3
          -DPYTHON_LIBRARY=`echo $HOME/progs/python/lib/libpython*.so.*`
          -DPYTHON_INCLUDE_DIR=`echo $HOME/progs/python/include/python*`
@@ -71,8 +73,8 @@ build_linux_package:
          -DQSCINTILLA_LIBRARY=`echo $HOME/progs/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.so.*`
          -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
          -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
-         -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*`
-         -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*`
+         -Dospray_DIR=`echo $HOME/progs/ospray_install*/lib/cmake/ospray-*`
+         -Dembree_DIR=`echo $HOME/progs/embree_install*/lib/cmake/embree-*`
          -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc`
          -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/
          -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so
@@ -81,6 +83,7 @@ build_linux_package:
          -DTBB_ROOT=`echo $HOME/progs/tbb*oss`
          -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh/include
          -DLIBSSH_LIBRARY=$HOME/progs/libssh/lib/libssh.so
+         -DBOOST_INCLUDEDIR=$HOME/progs/boost_1_70_0
          ..
       - make
       - cpack

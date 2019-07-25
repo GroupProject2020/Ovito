@@ -2,43 +2,25 @@
 Steps to build the redistributable program packages for Linux.
 **************************************************************************
 
-**************************************************************************
-Install essential tools and dependencies on Ubuntu 16.04:
-**************************************************************************
-sudo apt-get install \
-    libfontconfig1-dev \
-    libfreetype6-dev \
-    libx11-dev \
-    libxext-dev \
-    libxfixes-dev \
-    libxi-dev \
-    libxrender-dev \
-    libxcb1-dev \
-    libx11-xcb-dev \
-    libxcb-glx0-dev \
-    libxkbcommon-dev \
-    libxkbcommon-x11-dev \
-    libglu1-mesa-dev \
-    xsltproc \
-    docbook-xml \
-    libfftw3-dev \
-    libssl-dev \
-    libboost-system-dev \
-    libboost-thread-dev \
-    yasm \
-    git \
-    libsqlite3-dev \
-    libncurses5-dev \
-    libncursesw5-dev \
-    libreadline-dev \
-    libbz2-dev \
-    libexpat1-dev \
-    liblzma-dev \
-    libffi-dev \
-    uuid-dev \
-    liblapack3
-
 - Install CMake >=3.11 from www.cmake.org
+
+- Install 
+yum install lapack
+yum install fftw3-devel
+
+# Install newer GCC compiler toolset (run as "root"):
+yum install centos-release-scl
+yum upgrade
+yum install -y devtoolset-7
+
+# Activate newer GCC compiler toolset:
+scl enable devtoolset-7 bash
+
+**************************************************************************
+Boost 1.70
+**************************************************************************
+No installation needed
+Extract archive to $HOME/progs/boost_1_70_0/
 
 **************************************************************************
 Build Qt libraries (version 5.12.4)
@@ -88,9 +70,19 @@ Note: Update LGPL instructions in the user manual when changing this.
     -skip qtwebview \
     -skip qtwebglplugin \
     -skip qtxmlpatterns \
+    -no-use-gold-linker \
     -prefix $HOME/progs/qt5
 
 make
+make install
+
+**************************************************************************
+OpenSSL (openssl-1.1.1c)
+*************************************************************************
+./Configure linux-x86_64 --prefix=/usr --openssldir=/usr shared
+make
+make test
+su
 make install
 
 **************************************************************************
@@ -106,6 +98,9 @@ _ssl _ssl.c \
   -DUSE_SSL -I$(SSL)/include -I$(SSL)/include/openssl \
   -L$(SSL)/lib -lssl -lcrypto
 
+su
+yum install libffi-devel
+exit
 ./configure --enable-shared --enable-optimizations --prefix=$HOME/progs/python
 make && make install
 
@@ -118,6 +113,7 @@ Edit "$HOME/progs/python/lib/python3.7/site.py" and set: ENABLE_USER_SITE = Fals
 Install Python packages:
 **************************************************************************
 cd $HOME/progs/python/bin
+LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install --upgrade pip
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install numpy
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install sphinx
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install ipython
@@ -158,6 +154,17 @@ QScintilla2
 cd QScintilla_gpl-2.*.*/Qt4Qt5/
 $HOME/progs/qt5/bin/qmake qscintilla.pro
 make
+
+**************************************************************************
+Build yasm:
+**************************************************************************
+git clone git://github.com/yasm/yasm.git
+cd yasm
+./autogen.sh
+./configure
+make
+su
+make install
 
 **************************************************************************
 Build libav (release 12):
@@ -213,6 +220,7 @@ cmake \
   -DENABLE_HDF4=OFF \
   -DUSE_HDF5=ON \
   -DHDF5_DIR=$PWD/../../hdf5/share/cmake/hdf5 \
+  -DCMAKE_C_FLAGS="-DHAVE_STRDUP" \
   ..
 make install
 
@@ -259,7 +267,7 @@ cd build
 cmake \
       -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-v*-linux/ispc` \
-      -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
+      -Dembree_DIR=`echo $HOME/progs/embree_install/lib*/cmake/embree-*` \
       -DOSPRAY_APPS_BENCHMARK=OFF \
       -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
       -DOSPRAY_APPS_UTILITIES=OFF \
@@ -268,9 +276,9 @@ cmake \
       -DBUILD_SHARED_LIBS=ON \
       ..
 make install
-cp -d $HOME/progs/embree_install/lib/libembree*.so* $HOME/progs/ospray_install/lib/
-cp -d $HOME/progs/tbb*oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs/ospray_install/lib/
-cp -d $HOME/progs/tbb*oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib/
+cp -d $HOME/progs/embree_install/lib*/libembree*.so* $HOME/progs/ospray_install/lib*/
+cp -d $HOME/progs/tbb*oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs/ospray_install/lib*/
+cp -d $HOME/progs/tbb*oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib*/
 
 **************************************************************************
 Download and build libssh
@@ -327,7 +335,7 @@ cmake \
   -DOVITO_REDISTRIBUTABLE_PACKAGE=ON \
   -DOVITO_DOUBLE_PRECISION_FP=ON \
   -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5 \
-  -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
+  -DnetCDF_DIR=`echo $HOME/progs/netcdf/lib*/cmake/netCDF` \
   -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
   -DPYTHON_LIBRARY=`echo $HOME/progs/python/lib/libpython*.so.*` \
   -DPYTHON_INCLUDE_DIR=`echo $HOME/progs/python/include/python*` \
@@ -337,8 +345,8 @@ cmake \
   -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
   -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
   -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-  -Dospray_DIR=`echo $HOME/progs/ospray_install/lib/cmake/ospray-*` \
-  -Dembree_DIR=`echo $HOME/progs/embree_install/lib/cmake/embree-*` \
+  -Dospray_DIR=`echo $HOME/progs/ospray_install/lib*/cmake/ospray-*` \
+  -Dembree_DIR=`echo $HOME/progs/embree_install/lib*/cmake/embree-*` \
   -DISPC_EXECUTABLE=`echo $HOME/progs/ispc-*-linux/ispc` \
   -DTBB_INCLUDE_DIR=`echo $HOME/progs/tbb*oss`/include/ \
   -DTBB_LIBRARY=`echo $HOME/progs/tbb*oss`/lib/intel64/gcc4.7/libtbb.so \
@@ -347,6 +355,7 @@ cmake \
   -DTBB_ROOT=`echo $HOME/progs/tbb*oss` \
   -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh/include \
   -DLIBSSH_LIBRARY=$HOME/progs/libssh/lib/libssh.so \
+  -DBOOST_INCLUDEDIR=$HOME/progs/boost_1_70_0 \
   ../source/
 
 #!/bin/bash
