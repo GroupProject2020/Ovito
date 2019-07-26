@@ -47,6 +47,10 @@ build_linux_package:
    stage: build
    tags:
       - linux_vm
+   only:
+      refs:
+         - master
+         - schedules
    artifacts:
       paths:
          - build/ovito-*.tar.gz
@@ -87,12 +91,17 @@ build_linux_package:
          ..
       - make
       - cpack
+      - sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.tar.gz'
 
 # This pipeline job generates the redistributable program package for MacOS.
 build_macos_package:
    stage: build
    tags:
       - macos_vm
+   only:
+      refs:
+         - master
+         - schedules
    artifacts:
       paths:
          - build/ovito-*.dmg
@@ -127,12 +136,17 @@ build_macos_package:
       - make
       - ctest --output-on-failure
       - cpack
+      - sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.dmg'
 
 # This pipeline job generates the redistributable program package for Windows.
 build_windows_package:
    stage: build
    tags:
       - windows_vm
+   only:
+      refs:
+         - master
+         - schedules
    artifacts:
       paths:
          - build/ovito-*.zip
@@ -209,3 +223,5 @@ build_windows_package:
       #- ctest --output-on-failure  # Disabled for now, because Windows 10 VM guests don't support OpenGL 2.1+, which is needed for the tests.
       - cpack
       - cpack -G ZIP
+      - sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.zip'
+      - sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.exe'
