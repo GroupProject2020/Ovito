@@ -124,14 +124,13 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib/ovito")
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 
-	# Update: No longer bundle libstdc++.so.6 with OVITO, because it causes conflicts with the OpenGL driver on
-	# some systems.
-	#FIND_LIBRARY(OVITO_LIBSTDCXX NAMES libstdc++.so.6 PATHS /usr/lib /usr/lib/x86_64-linux-gnu NO_DEFAULT_PATH)
-	#IF(NOT OVITO_LIBSTDCXX)
-	#	MESSAGE(FATAL_ERROR "Please specify the location of the C++ standard library with the OVITO_LIBSTDCXX option.")
-	#ENDIF()
-	#GET_FILENAME_COMPONENT(OVITO_LIBSTDCXX_REAL ${OVITO_LIBSTDCXX} REALPATH)
-	#INSTALL(FILES "${OVITO_LIBSTDCXX}" "${OVITO_LIBSTDCXX_REAL}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
+	# Distribute libxkbcommon.so with Ovito, which is a dependency of the Qt XCB plugin that might not be present on all systems.
+	FIND_LIBRARY(OVITO_XKBCOMMON_DEP NAMES libxkbcommon-x11.so.0 PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /usr/lib64 NO_DEFAULT_PATH)
+	IF(NOT OVITO_XKBCOMMON_DEP)
+		MESSAGE(FATAL_ERROR "Could not find shared library libxkbcommon-x11.so.0 in system path.")
+	ENDIF()
+	OVITO_INSTALL_SHARED_LIB("${OVITO_XKBCOMMON_DEP}" "./lib")
+	UNSET(OVITO_XKBCOMMON_DEP CACHE)
 
 ENDIF()
 
