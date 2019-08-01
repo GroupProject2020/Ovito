@@ -43,7 +43,8 @@ nmake install
       OVITO for Linux includes shared libraries that have been built from the unmodified sources of libssh 0.9.0.
       The following commands have been used to build them:
 <programlisting>
-# GCC 5.1 compiler on Ubuntu Linux 10.04:
+# Build platform: CentOS 6.9
+# Compiler: GCC 7.1 (CentOS devtoolset-7)
 cmake -DCMAKE_BUILD_TYPE=Release -DWITH_SERVER=OFF .
 make install
 </programlisting>

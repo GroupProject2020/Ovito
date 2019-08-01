@@ -47,7 +47,8 @@ make install
       OVITO for Linux includes shared libraries that have been built from the unmodified sources of Libav.
       The following commands have been used to generate them:
 <programlisting>
-# GCC 5.1 compiler on Ubuntu Linux 10.04:
+# Build platform: CentOS 6.9
+# Compiler: GCC 7.1 (CentOS devtoolset-7)
 ./configure \
   --enable-pic \
   --enable-shared \
@@ -71,7 +72,6 @@ make install
       OVITO for macOS includes shared libraries that have been built from the unmodified sources of Libav 11.12.
       The following commands have been used to generate them:
 <programlisting>
-# GCC 5.1 compiler on Ubuntu Linux 10.04:
 export MACOSX_DEPLOYMENT_TARGET=10.12
 ./configure \
   --disable-network \
