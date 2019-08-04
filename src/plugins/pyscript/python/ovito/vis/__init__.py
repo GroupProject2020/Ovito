@@ -203,6 +203,17 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.
     self.dataset.render_scene(settings, self, fb)
 Viewport.render_anim = _Viewport_render_anim
 
+# Implementation of the Viewport.create_widget() method:
+def _Viewport_create_widget(self, parent = None):
+    import PyQt5.QtWidgets
+    import ovito.plugins.PyScriptGui
+    assert(parent is None or isinstance(parent, PyQt5.QtWidgets.QWidget))
+    vpwin_ptr = ovito.plugins.PyScriptGui.ViewportWindow._create(self, 0 if parent is None else sip.unwrapinstance(parent))
+    vpwin = sip.wrapinstance(vpwin_ptr, PyQt5.QtWidgets.QOpenGLWidget)
+    sip.transferback(vpwin)
+    return vpwin
+Viewport.create_widget = _Viewport_create_widget
+
 # Here only for backward compatibility with OVITO 2.9.0:
 def _get_RenderSettings_custom_range(self):
     """

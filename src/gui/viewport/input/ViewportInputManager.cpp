@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
+#include <gui/mainwin/MainWindow.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <gui/mainwin/MainWindow.h>
 #include "ViewportInputManager.h"
 #include "ViewportInputMode.h"
 
@@ -31,8 +31,10 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Initializes the viewport input manager.
 ******************************************************************************/
-ViewportInputManager::ViewportInputManager(MainWindow* mainWindow) : QObject(mainWindow)
+ViewportInputManager::ViewportInputManager(QObject* owner, DataSetContainer& datasetContainer) : QObject(owner),
+	_datasetContainer(datasetContainer)
 {
+	_mainWindow = qobject_cast<MainWindow*>(owner);
 	_zoomMode = new ZoomMode(this);
 	_panMode = new PanMode(this);
 	_orbitMode = new OrbitMode(this);
@@ -46,7 +48,7 @@ ViewportInputManager::ViewportInputManager(MainWindow* mainWindow) : QObject(mai
 	_defaultMode = _selectionMode;
 
 	// Reset the viewport input manager when a new scene has been loaded.
-	connect(&mainWindow->datasetContainer(), &DataSetContainer::dataSetChanged, this, &ViewportInputManager::reset);
+	connect(&_datasetContainer, &DataSetContainer::dataSetChanged, this, &ViewportInputManager::reset);
 }
 
 /******************************************************************************
@@ -167,7 +169,7 @@ void ViewportInputManager::addViewportGizmo(ViewportGizmo* gizmo)
 		_viewportGizmos.push_back(gizmo);
 
 		// Update viewports to show displays overlays.
-		DataSet* dataset = mainWindow()->datasetContainer().currentSet();
+		DataSet* dataset = _datasetContainer.currentSet();
 		if(dataset && dataset->viewportConfig()) {
 			dataset->viewportConfig()->updateViewports();
 		}
@@ -185,7 +187,7 @@ void ViewportInputManager::removeViewportGizmo(ViewportGizmo* gizmo)
 		_viewportGizmos.erase(iter);
 
 		// Update viewports to show displays overlays.
-		DataSet* dataset = mainWindow()->datasetContainer().currentSet();
+		DataSet* dataset = _datasetContainer.currentSet();
 		if(dataset && dataset->viewportConfig()) {
 			dataset->viewportConfig()->updateViewports();
 		}

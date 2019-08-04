@@ -60,7 +60,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	setContextMenuPolicy(Qt::NoContextMenu);
 
 	// Create input manager.
-	_viewportInputManager = new ViewportInputManager(this);
+	_viewportInputManager = new ViewportInputManager(this, datasetContainer());
 
 	// Create actions.
 	_actionManager = new ActionManager(this);
@@ -185,7 +185,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	bottomDockLayout->setSpacing(0);
 	bottomDockLayout->setRowStretch(0, 1);
 	DataInspectorPanel* dataInspector = new DataInspectorPanel(this);
-	bottomDockLayout->addWidget(dataInspector, 0, 0, 1, 5);	
+	bottomDockLayout->addWidget(dataInspector, 0, 0, 1, 5);
 	QTimer::singleShot(0, dataInspector, &DataInspectorPanel::collapse);
 	QFrame* separatorLine = new QFrame();
 	QPalette pal = separatorLine->palette();
@@ -494,7 +494,7 @@ void MainWindow::setWindowFilePath(const QString& filePath)
 }
 
 /******************************************************************************
-* Called by the system when a drag is in progress and the mouse enters this 
+* Called by the system when a drag is in progress and the mouse enters this
 * window.
 ******************************************************************************/
 void MainWindow::dragEnterEvent(QDragEnterEvent* event)

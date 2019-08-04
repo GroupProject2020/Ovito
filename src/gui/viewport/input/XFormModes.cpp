@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2013) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -78,7 +78,8 @@ void SelectionMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
 ******************************************************************************/
 void SelectionMode::deactivated(bool temporary)
 {
-	inputManager()->mainWindow()->statusBar()->clearMessage();
+	if(inputManager()->mainWindow())
+		inputManager()->mainWindow()->statusBar()->clearMessage();
 	_viewport = nullptr;
 	ViewportInputMode::deactivated(temporary);
 }
@@ -93,10 +94,12 @@ void SelectionMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 	setCursor(pickResult.isValid() ? selectionCursor() : QCursor());
 
 	// Display a description of the object under the mouse cursor in the status bar.
-	if(pickResult.isValid() && pickResult.pickInfo())
-		inputManager()->mainWindow()->statusBar()->showMessage(pickResult.pickInfo()->infoString(pickResult.pipelineNode(), pickResult.subobjectId()));
-	else
-		inputManager()->mainWindow()->statusBar()->clearMessage();
+	if(inputManager()->mainWindow()) {
+		if(pickResult.isValid() && pickResult.pickInfo())
+			inputManager()->mainWindow()->statusBar()->showMessage(pickResult.pickInfo()->infoString(pickResult.pipelineNode(), pickResult.subobjectId()));
+		else
+			inputManager()->mainWindow()->statusBar()->clearMessage();
+	}
 
 	ViewportInputMode::mouseMoveEvent(vpwin, event);
 }
@@ -110,7 +113,7 @@ void XFormMode::activated(bool temporaryActivation)
 	ViewportInputMode::activated(temporaryActivation);
 
 	// Listen to selection change events to update the coordinate display.
-	DataSetContainer& datasetContainer = inputManager()->mainWindow()->datasetContainer();
+	DataSetContainer& datasetContainer = inputManager()->datasetContainer();
 	connect(&datasetContainer, &DataSetContainer::selectionChangeComplete, this, &XFormMode::onSelectionChangeComplete);
 	connect(&datasetContainer, &DataSetContainer::timeChanged, this, &XFormMode::onTimeChanged);
 	onSelectionChangeComplete(datasetContainer.currentSet() ? datasetContainer.currentSet()->selection() : nullptr);
@@ -128,8 +131,8 @@ void XFormMode::deactivated(bool temporary)
 		_viewport->dataset()->undoStack().endCompoundOperation(false);
 		_viewport = nullptr;
 	}
-	disconnect(&inputManager()->mainWindow()->datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &XFormMode::onSelectionChangeComplete);
-	disconnect(&inputManager()->mainWindow()->datasetContainer(), &DataSetContainer::timeChanged, this, &XFormMode::onTimeChanged);
+	disconnect(&inputManager()->datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &XFormMode::onSelectionChangeComplete);
+	disconnect(&inputManager()->datasetContainer(), &DataSetContainer::timeChanged, this, &XFormMode::onTimeChanged);
 	_selectedNode.setTarget(nullptr);
 	onSelectionChangeComplete(nullptr);
 	ViewportInputMode::deactivated(temporary);
@@ -140,21 +143,26 @@ void XFormMode::deactivated(bool temporary)
 ******************************************************************************/
 void XFormMode::onSelectionChangeComplete(SelectionSet* selection)
 {
-	CoordinateDisplayWidget* coordDisplay = inputManager()->mainWindow()->coordinateDisplay();
+	CoordinateDisplayWidget* coordDisplay = inputManager()->mainWindow() ? inputManager()->mainWindow()->coordinateDisplay() : nullptr;
+
 	if(selection) {
 		if(selection->nodes().size() == 1) {
 			_selectedNode.setTarget(selection->nodes().front());
-			updateCoordinateDisplay(coordDisplay);
-			coordDisplay->activate(undoDisplayName());
-			connect(coordDisplay, &CoordinateDisplayWidget::valueEntered, this, &XFormMode::onCoordinateValueEntered, Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
-			connect(coordDisplay, &CoordinateDisplayWidget::animatePressed, this, &XFormMode::onAnimateTransformationButton, Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+			if(coordDisplay) {
+				updateCoordinateDisplay(coordDisplay);
+				coordDisplay->activate(undoDisplayName());
+				connect(coordDisplay, &CoordinateDisplayWidget::valueEntered, this, &XFormMode::onCoordinateValueEntered, Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+				connect(coordDisplay, &CoordinateDisplayWidget::animatePressed, this, &XFormMode::onAnimateTransformationButton, Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
+			}
 			return;
 		}
 	}
 	_selectedNode.setTarget(nullptr);
-	disconnect(coordDisplay, &CoordinateDisplayWidget::valueEntered, this, &XFormMode::onCoordinateValueEntered);
-	disconnect(coordDisplay, &CoordinateDisplayWidget::animatePressed, this, &XFormMode::onAnimateTransformationButton);
-	coordDisplay->deactivate();
+	if(coordDisplay) {
+		disconnect(coordDisplay, &CoordinateDisplayWidget::valueEntered, this, &XFormMode::onCoordinateValueEntered);
+		disconnect(coordDisplay, &CoordinateDisplayWidget::animatePressed, this, &XFormMode::onAnimateTransformationButton);
+		coordDisplay->deactivate();
+	}
 }
 
 /******************************************************************************
@@ -163,7 +171,8 @@ void XFormMode::onSelectionChangeComplete(SelectionSet* selection)
 void XFormMode::onSceneNodeEvent(const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TransformationChanged) {
-		updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
+		if(inputManager()->mainWindow())
+			updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
 	}
 }
 
@@ -172,7 +181,8 @@ void XFormMode::onSceneNodeEvent(const ReferenceEvent& event)
 ******************************************************************************/
 void XFormMode::onTimeChanged(TimePoint time)
 {
-	updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
+	if(inputManager()->mainWindow())
+		updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
 }
 
 /******************************************************************************
@@ -237,10 +247,9 @@ void XFormMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 		doXForm();
 
 		// Force immediate viewport repaints.
-		MainWindow::fromDataset(_viewport->dataset())->processViewportUpdates();
+		_viewport->dataset()->viewportConfig()->processViewportUpdates();
 	}
 	else {
-
 		// Change mouse cursor while hovering over an object.
 		setCursor(vpwin->pick(event->localPos()).isValid() ? _xformCursor : QCursor());
 	}

@@ -128,7 +128,7 @@ void NavigationMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 		modifyView(vpwin, _viewport, pos - _startPoint);
 
 		// Force immediate viewport repaint.
-		MainWindow::fromDataset(_viewport->dataset())->processViewportUpdates();
+		_viewport->dataset()->viewportConfig()->processViewportUpdates();
 	}
 }
 

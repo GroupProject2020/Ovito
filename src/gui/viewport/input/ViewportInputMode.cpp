@@ -181,7 +181,7 @@ void ViewportInputMode::focusOutEvent(ViewportWindow* vpwin, QFocusEvent* event)
 void ViewportInputMode::requestViewportUpdate()
 {
 	if(isActive()) {
-		DataSet* dataset = inputManager()->mainWindow()->datasetContainer().currentSet();
+		DataSet* dataset = inputManager()->datasetContainer().currentSet();
 		if(dataset && dataset->viewportConfig()) {
 			dataset->viewportConfig()->updateViewports();
 		}

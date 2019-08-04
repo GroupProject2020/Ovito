@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2016) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -118,7 +118,7 @@ void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* ev
 			}
 
 			// Force immediate viewport repaints.
-			MainWindow::fromDataset(viewport()->dataset())->processViewportUpdates();
+			viewport()->dataset()->viewportConfig()->processViewportUpdates();
 		}
 	}
 	else {

@@ -37,12 +37,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ViewportWindow::ViewportWindow(Viewport* owner, QWidget* parentWidget) : QOpenGLWidget(parentWidget),
+ViewportWindow::ViewportWindow(Viewport* owner, ViewportInputManager* inputManager, QWidget* parentWidget) : QOpenGLWidget(parentWidget),
 		_viewport(owner),
-		_updateRequested(false),
-		_mainWindow(MainWindow::fromDataset(owner->dataset())),
-		_renderDebugCounter(0),
-		_cursorInContextMenuArea(false)
+		_inputManager(inputManager)
 {
 	setMouseTracking(true);
 	setFocusPolicy(Qt::ClickFocus);
@@ -77,6 +74,14 @@ ViewportWindow::~ViewportWindow()
 	// Detach from Viewport class.
 	if(viewport())
 		viewport()->setWindow(nullptr);
+}
+
+/******************************************************************************
+* Returns the input manager handling mouse events of the viewport (if any).
+******************************************************************************/
+ViewportInputManager* ViewportWindow::inputManager() const
+{
+	return _inputManager.data();
 }
 
 /******************************************************************************
@@ -329,14 +334,15 @@ void ViewportWindow::showEvent(QShowEvent* event)
 ******************************************************************************/
 void ViewportWindow::mouseDoubleClickEvent(QMouseEvent* event)
 {
-	ViewportInputMode* mode = _mainWindow->viewportInputManager()->activeMode();
-	if(mode) {
-		try {
-			mode->mouseDoubleClickEvent(this, event);
-		}
-		catch(const Exception& ex) {
-			qWarning() << "Uncaught exception in viewport mouse event handler:";
-			ex.logError();
+	if(_inputManager) {
+		if(ViewportInputMode* mode = _inputManager->activeMode()) {
+			try {
+				mode->mouseDoubleClickEvent(this, event);
+			}
+			catch(const Exception& ex) {
+				qWarning() << "Uncaught exception in viewport mouse event handler:";
+				ex.logError();
+			}
 		}
 	}
 }
@@ -354,14 +360,15 @@ void ViewportWindow::mousePressEvent(QMouseEvent* event)
 		return;
 	}
 
-	ViewportInputMode* mode = _mainWindow->viewportInputManager()->activeMode();
-	if(mode) {
-		try {
-			mode->mousePressEvent(this, event);
-		}
-		catch(const Exception& ex) {
-			qWarning() << "Uncaught exception in viewport mouse event handler:";
-			ex.logError();
+	if(_inputManager) {
+		if(ViewportInputMode* mode = _inputManager->activeMode()) {
+			try {
+				mode->mousePressEvent(this, event);
+			}
+			catch(const Exception& ex) {
+				qWarning() << "Uncaught exception in viewport mouse event handler:";
+				ex.logError();
+			}
 		}
 	}
 }
@@ -371,14 +378,15 @@ void ViewportWindow::mousePressEvent(QMouseEvent* event)
 ******************************************************************************/
 void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
 {
-	ViewportInputMode* mode = _mainWindow->viewportInputManager()->activeMode();
-	if(mode) {
-		try {
-			mode->mouseReleaseEvent(this, event);
-		}
-		catch(const Exception& ex) {
-			qWarning() << "Uncaught exception in viewport mouse event handler:";
-			ex.logError();
+	if(_inputManager) {
+		if(ViewportInputMode* mode = _inputManager->activeMode()) {
+			try {
+				mode->mouseReleaseEvent(this, event);
+			}
+			catch(const Exception& ex) {
+				qWarning() << "Uncaught exception in viewport mouse event handler:";
+				ex.logError();
+			}
 		}
 	}
 }
@@ -397,14 +405,15 @@ void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 		viewport()->updateViewport();
 	}
 
-	ViewportInputMode* mode = _mainWindow->viewportInputManager()->activeMode();
-	if(mode) {
-		try {
-			mode->mouseMoveEvent(this, event);
-		}
-		catch(const Exception& ex) {
-			qWarning() << "Uncaught exception in viewport mouse event handler:";
-			ex.logError();
+	if(_inputManager) {
+		if(ViewportInputMode* mode = _inputManager->activeMode()) {
+			try {
+				mode->mouseMoveEvent(this, event);
+			}
+			catch(const Exception& ex) {
+				qWarning() << "Uncaught exception in viewport mouse event handler:";
+				ex.logError();
+			}
 		}
 	}
 }
@@ -414,14 +423,15 @@ void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 ******************************************************************************/
 void ViewportWindow::wheelEvent(QWheelEvent* event)
 {
-	ViewportInputMode* mode = _mainWindow->viewportInputManager()->activeMode();
-	if(mode) {
-		try {
-			mode->wheelEvent(this, event);
-		}
-		catch(const Exception& ex) {
-			qWarning() << "Uncaught exception in viewport mouse event handler:";
-			ex.logError();
+	if(_inputManager) {
+		if(ViewportInputMode* mode = _inputManager->activeMode()) {
+			try {
+				mode->wheelEvent(this, event);
+			}
+			catch(const Exception& ex) {
+				qWarning() << "Uncaught exception in viewport mouse event handler:";
+				ex.logError();
+			}
 		}
 	}
 }
@@ -435,7 +445,8 @@ void ViewportWindow::leaveEvent(QEvent* event)
 		_cursorInContextMenuArea = false;
 		viewport()->updateViewport();
 	}
-	_mainWindow->statusBar()->clearMessage();
+	if(_inputManager && _inputManager->mainWindow())
+		_inputManager->mainWindow()->statusBar()->clearMessage();
 }
 
 /******************************************************************************
@@ -443,14 +454,15 @@ void ViewportWindow::leaveEvent(QEvent* event)
 ******************************************************************************/
 void ViewportWindow::focusOutEvent(QFocusEvent* event)
 {
-	ViewportInputMode* mode = _mainWindow->viewportInputManager()->activeMode();
-	if(mode) {
-		try {
-			mode->focusOutEvent(this, event);
-		}
-		catch(const Exception& ex) {
-			qWarning() << "Uncaught exception in viewport event handler:";
-			ex.logError();
+	if(_inputManager) {
+		if(ViewportInputMode* mode = _inputManager->activeMode()) {
+			try {
+				mode->focusOutEvent(this, event);
+			}
+			catch(const Exception& ex) {
+				qWarning() << "Uncaught exception in viewport event handler:";
+				ex.logError();
+			}
 		}
 	}
 }
@@ -516,7 +528,8 @@ void ViewportWindow::renderNow()
 					.arg(OVITO_OPENGL_MINIMUM_VERSION_MINOR)
 				);
 			QCoreApplication::removePostedEvents(nullptr, 0);
-			if(_mainWindow) _mainWindow->close();
+			if(QWidget* parentWindow = window())
+				parentWindow->close();
 			ex.reportError(true);
 			QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
 			QCoreApplication::exit();
@@ -553,7 +566,8 @@ void ViewportWindow::renderNow()
 			ex.appendDetailMessage(openGLReport);
 
 			QCoreApplication::removePostedEvents(nullptr, 0);
-			if(_mainWindow) _mainWindow->close();
+			if(QWidget* parentWindow = window())
+				parentWindow->close();
 			ex.reportError(true);
 			QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
 			QCoreApplication::exit();

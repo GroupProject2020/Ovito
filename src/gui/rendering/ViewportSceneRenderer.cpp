@@ -33,7 +33,6 @@
 #include <gui/viewport/input/ViewportGizmo.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/mainwin/ViewportsPanel.h>
-#include <gui/mainwin/MainWindow.h>
 #include "ViewportSceneRenderer.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
@@ -84,14 +83,16 @@ void ViewportSceneRenderer::renderInteractiveContent()
 	renderModifiers(true);
 
 	// Render viewport gizmos.
-	if(MainWindow* mainWindow = MainWindow::fromDataset(renderDataset())) {
-		// First, render 3D content.
-		for(ViewportGizmo* gizmo : mainWindow->viewportInputManager()->viewportGizmos()) {
-			gizmo->renderOverlay3D(viewport(), this);
-		}
-		// Then, render 2D content on top.
-		for(ViewportGizmo* gizmo : mainWindow->viewportInputManager()->viewportGizmos()) {
-			gizmo->renderOverlay2D(viewport(), this);
+	if(ViewportWindow* viewportWindow = static_cast<ViewportWindow*>(viewport()->window())) {
+		if(ViewportInputManager* inputManager = viewportWindow->inputManager()) {
+			// First, render 3D content.
+			for(ViewportGizmo* gizmo : inputManager->viewportGizmos()) {
+				gizmo->renderOverlay3D(viewport(), this);
+			}
+			// Then, render 2D content on top.
+			for(ViewportGizmo* gizmo : inputManager->viewportGizmos()) {
+				gizmo->renderOverlay2D(viewport(), this);
+			}
 		}
 	}
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -39,13 +39,16 @@ class OVITO_GUI_EXPORT ViewportWindow : public QOpenGLWidget, public ViewportWin
 public:
 
 	/// Constructor.
-	ViewportWindow(Viewport* owner, QWidget* parentWidget);
+	ViewportWindow(Viewport* owner, ViewportInputManager* inputManager, QWidget* parentWidget);
 
 	/// Destructor.
 	virtual ~ViewportWindow();
 
 	/// Returns the owning viewport of this window.
 	Viewport* viewport() const { return _viewport; }
+
+	/// Returns the input manager handling mouse events of the viewport (if any).
+	ViewportInputManager* inputManager() const;
 
     /// \brief Puts an update request event for this window on the event loop.
 	virtual void renderLater() override;
@@ -59,11 +62,7 @@ public:
 
 	/// Returns the current size of the viewport window (in device pixels).
 	virtual QSize viewportWindowDeviceSize() override {
-#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
-		return size() * devicePixelRatio();
-#else
 		return size() * devicePixelRatioF();
-#endif
 	}
 
 	/// Returns the current size of the viewport window (in device-independent pixels).
@@ -103,7 +102,7 @@ protected:
 
 	/// Is called whenever the GL context needs to be initialized.
 	virtual void initializeGL() override;
-	
+
 	/// Is called when the mouse cursor leaves the widget.
 	virtual void leaveEvent(QEvent* event) override;
 
@@ -149,7 +148,7 @@ private:
 	Viewport* _viewport;
 
 	/// A flag that indicates that a viewport update has been requested.
-	bool _updateRequested;
+	bool _updateRequested = false;
 
 	/// The zone in the upper left corner of the viewport where
 	/// the context menu can be activated by the user.
@@ -157,13 +156,15 @@ private:
 
 	/// Indicates that the mouse cursor is currently positioned inside the
 	/// viewport area that activates the viewport context menu.
-	bool _cursorInContextMenuArea;
+	bool _cursorInContextMenuArea = false;
 
-	/// The parent window of this viewport window.
-	MainWindow* _mainWindow;
+	/// The input manager handling mouse events of the viewport.
+	QPointer<ViewportInputManager> _inputManager;
 
+#ifdef OVITO_DEBUG
 	/// Counts how often this viewport has been rendered.
-	int _renderDebugCounter;
+	int _renderDebugCounter = 0;
+#endif
 
 	/// The rendering buffer maintained to render the viewport's caption text.
 	std::shared_ptr<TextPrimitive> _captionBuffer;
@@ -191,5 +192,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-
