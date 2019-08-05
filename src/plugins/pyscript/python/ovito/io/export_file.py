@@ -129,17 +129,13 @@ def export_file(data, file, format, **params):
 
     """
 
-    # Determine the animation frame to be exported.
+    # Determine the animation frame(s) to be exported.
     if 'frame' in params:
         frame = int(params['frame'])
-        time = ovito.scene.anim.frame_to_time(frame)
         params['multiple_frames'] = True
         params['start_frame'] = frame
         params['end_frame'] = frame
         del params['frame']
-    else:
-        frame = ovito.scene.anim.current_frame
-        time = ovito.scene.anim.time
 
     # Look up the exporter class for the selected format.
     if not format in export_file._formatTable:
@@ -164,7 +160,7 @@ def export_file(data, file, format, **params):
     if isinstance(data, Pipeline):
         # Evaluate pipeline once to raise an exception if the evaluation fails.
         # That is because the exporter will typically silently ignore error status codes.
-        data.compute(frame)
+        data.compute(exporter.start_frame)
         exporter.pipeline = data
     elif isinstance(data, PipelineObject):
         exporter.pipeline = Pipeline(source = data)
