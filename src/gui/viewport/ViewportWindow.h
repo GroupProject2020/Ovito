@@ -62,7 +62,11 @@ public:
 
 	/// Returns the current size of the viewport window (in device pixels).
 	virtual QSize viewportWindowDeviceSize() override {
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+		return size() * devicePixelRatio();
+#else
 		return size() * devicePixelRatioF();
+#endif
 	}
 
 	/// Returns the current size of the viewport window (in device-independent pixels).
