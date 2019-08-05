@@ -5,6 +5,7 @@ from ovito.vis import Viewport
 from ovito.pipeline import StaticSource, Pipeline
 from ovito.data import DataCollection, SimulationCell, Particles
 from ovito.modifiers import CreateBondsModifier
+import ovito
 
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget
@@ -38,6 +39,10 @@ def create_ovito_pipeline():
 # This script doesn't work when executed with the ovitos interpreter application.
 if 'ovitos' in sys.executable:
     print("Warning: This Python script should not be run using the 'ovitos' interpreter. Please use a normal Python interpreter instead.")
+    sys.exit(0)
+
+# OpenGL graphics not supported when running in an environment without a screen:
+if ovito.headless_mode:
     sys.exit(0)
 
 # Create the global Qt application object:
