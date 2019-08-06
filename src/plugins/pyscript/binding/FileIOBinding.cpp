@@ -70,6 +70,7 @@ void defineIOSubmodule(py::module m)
 		.def_property("end_frame", &FileExporter::endFrame, &FileExporter::setEndFrame)
 		.def_property("every_nth_frame", &FileExporter::everyNthFrame, &FileExporter::setEveryNthFrame)
 		.def_property("precision", &FileExporter::floatOutputPrecision, &FileExporter::setFloatOutputPrecision)
+		.def_property("ignore_pipeline_errors", &FileExporter::ignorePipelineErrors, &FileExporter::setIgnorePipelineErrors)
 
 		// These are required by implementation of export_file():
 		.def_property("pipeline", &FileExporter::nodeToExport, &FileExporter::setNodeToExport)

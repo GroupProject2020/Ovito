@@ -158,9 +158,6 @@ def export_file(data, file, format, **params):
 
     # Pass data to be exported to the exporter:
     if isinstance(data, Pipeline):
-        # Evaluate pipeline once to raise an exception if the evaluation fails.
-        # That is because the exporter will typically silently ignore error status codes.
-        data.compute(exporter.start_frame)
         exporter.pipeline = data
     elif isinstance(data, PipelineObject):
         exporter.pipeline = Pipeline(source = data)

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -33,7 +33,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 /**
  * \brief A meta-class for file exporters (i.e. classes derived from FileExporter).
  */
-class OVITO_CORE_EXPORT FileExporterClass : public RefTarget::OOMetaClass 
+class OVITO_CORE_EXPORT FileExporterClass : public RefTarget::OOMetaClass
 {
 public:
 
@@ -42,18 +42,18 @@ public:
 
 	/// \brief Returns the filename filter that specifies the file extension that can be exported by this service.
 	/// \return A wild-card pattern for the file types that can be produced by the FileExporter class (e.g. \c "*.xyz" or \c "*").
-	virtual QString fileFilter() const { 
+	virtual QString fileFilter() const {
 		OVITO_ASSERT_MSG(false, "FileExporterClass::fileFilter()", "This method should be overridden by a meta-subclass of FileExporterClass.");
-		return {}; 
+		return {};
 	}
-	
+
 	/// \brief Returns the file type description that is displayed in the drop-down box of the export file dialog.
 	/// \return A human-readable string describing the file format written by the FileExporter class.
 	virtual QString fileFilterDescription() const {
 		OVITO_ASSERT_MSG(false, "FileExporterClass::fileFilterDescription()", "This method should be overridden by a meta-subclass of FileExporterClass.");
 		return {};
 	}
-};	
+};
 
 /**
  * \brief Abstract base class for file writers that export data from OVITO to an external file in a specific format.
@@ -70,13 +70,13 @@ public:
 
 	/// \brief Determines whether the given scene node is suitable for exporting with this exporter service.
 	/// By default, all pipeline scene nodes are considered suitable that produce suitable data objects
-	/// of the type(s) specified by the FileExporter::exportableDataObjectClass() method. 
+	/// of the type(s) specified by the FileExporter::exportableDataObjectClass() method.
 	/// Subclasses can refine this behavior as needed.
 	virtual bool isSuitableNode(SceneNode* node) const;
 
 	/// \brief Determines whether the given pipeline output is suitable for exporting with this exporter service.
 	/// By default, all data collections are considered suitable that contain suitable data objects
-	/// of the type(s) specified by the FileExporter::exportableDataObjectClass() method. 
+	/// of the type(s) specified by the FileExporter::exportableDataObjectClass() method.
 	/// Subclasses can refine this behavior as needed.
 	virtual bool isSuitablePipelineOutput(const PipelineFlowState& state) const;
 
@@ -87,7 +87,7 @@ public:
 
 	/// \brief Sets the name of the output file that should be written by this exporter.
 	virtual void setOutputFilename(const QString& filename);
-	
+
 	/// \brief Exports the scene data to the output file(s).
 	/// \return \c true if the output file has been successfully written;
 	///         \c false if the export operation has been canceled by the user.
@@ -152,6 +152,9 @@ private:
 
 	/// The specific data object from the pipeline output to be exported.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(DataObjectReference, dataObjectToExport, setDataObjectToExport);
+
+	/// Whether to ignore pipeline errors or not during export.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, ignorePipelineErrors, setIgnorePipelineErrors);
 };
 
 OVITO_END_INLINE_NAMESPACE

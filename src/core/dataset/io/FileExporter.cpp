@@ -21,6 +21,7 @@
 
 #include <core/Core.h>
 #include <core/app/PluginManager.h>
+#include <core/app/Application.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/utilities/concurrent/Promise.h>
 #include <core/dataset/DataSet.h>
@@ -42,6 +43,7 @@ DEFINE_PROPERTY_FIELD(FileExporter, everyNthFrame);
 DEFINE_PROPERTY_FIELD(FileExporter, floatOutputPrecision);
 DEFINE_REFERENCE_FIELD(FileExporter, nodeToExport);
 DEFINE_PROPERTY_FIELD(FileExporter, dataObjectToExport);
+DEFINE_PROPERTY_FIELD(FileExporter, ignorePipelineErrors);
 SET_PROPERTY_FIELD_LABEL(FileExporter, outputFilename, "Output filename");
 SET_PROPERTY_FIELD_LABEL(FileExporter, exportAnimation, "Export animation");
 SET_PROPERTY_FIELD_LABEL(FileExporter, useWildcardFilename, "Use wildcard filename");
@@ -50,6 +52,7 @@ SET_PROPERTY_FIELD_LABEL(FileExporter, startFrame, "Start frame");
 SET_PROPERTY_FIELD_LABEL(FileExporter, endFrame, "End frame");
 SET_PROPERTY_FIELD_LABEL(FileExporter, everyNthFrame, "Every Nth frame");
 SET_PROPERTY_FIELD_LABEL(FileExporter, floatOutputPrecision, "Output precision");
+SET_PROPERTY_FIELD_LABEL(FileExporter, ignorePipelineErrors, "Ignore pipeline errors");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(FileExporter, floatOutputPrecision, IntegerParameterUnit, 1, std::numeric_limits<FloatType>::max_digits10);
 
 /******************************************************************************
@@ -61,7 +64,8 @@ FileExporter::FileExporter(DataSet* dataset) : RefTarget(dataset),
 	_startFrame(0),
 	_endFrame(-1),
 	_everyNthFrame(1),
-	_floatOutputPrecision(10)
+	_floatOutputPrecision(10),
+	_ignorePipelineErrors(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 {
 	// Use the entire animation interval as default export interval.
 	int lastFrame = dataset->animationSettings()->timeToFrame(dataset->animationSettings()->animationInterval().end());
@@ -164,10 +168,18 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 		throwException(tr("The scene object to be exported is not a data pipeline."));
 
 	// Evaluate pipeline.
-	auto evalFuture = requestRenderState ? pipeline->evaluateRenderingPipeline(time) : pipeline->evaluatePipeline(time);
+	auto evalFuture = requestRenderState ?
+		pipeline->evaluateRenderingPipeline(time, !ignorePipelineErrors()) :
+		pipeline->evaluatePipeline(time, !ignorePipelineErrors());
 	if(!operation.waitForFuture(evalFuture))
 		return {};
 	PipelineFlowState state = evalFuture.result();
+
+	if(!ignorePipelineErrors() && state.status().type() == PipelineStatus::Error)
+		throwException(tr("Export of frame %1 failed, because data pipeline evaluation did not succeed. Status message: %2")
+			.arg(dataset()->animationSettings()->timeToFrame(time))
+			.arg(state.status().text()));
+
 	if(state.isEmpty())
 		throwException(tr("The data collection to be exported is empty."));
 

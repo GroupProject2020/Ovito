@@ -90,8 +90,8 @@ OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const
 
 		const PropertyObject* property = pref.findInContainer(particles);
 		if(property == nullptr && pref.type() != ParticlesObject::IdentifierProperty) {
-			throw Exception(tr("The set of output data columns is invalid (column %1). "
-			                   "The property '%2' does not exist.").arg(i+1).arg(pref.name()));
+			throw Exception(tr("The specified list of output file columns is invalid. "
+			                   "The property '%2', which is needed to write file column %1, does not exist or could not be computed.").arg(i+1).arg(pref.name()));
 		}
 		if(property) {
 			if((int)property->componentCount() <= std::max(0, pref.vectorComponent()))
