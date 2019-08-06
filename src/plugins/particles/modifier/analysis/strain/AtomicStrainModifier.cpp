@@ -242,6 +242,15 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 		Matrix_3<double> R, U;
 		ptm::polar_decomposition_3x3(F.elements(), false, R.elements(), U.elements());
 		if(rotations()) {
+			// If F contains a reflection, R will not be a pure rotation matrix and the
+			// conversion to a quaternion below will fail with an assertion error.
+			// Thus, in the rather unlikely case that F contains a reflection, we simply flip the
+			// R matrix to make it a pure rotation.
+			if(R.determinant() < 0) {
+				for(size_t i = 0; i < 3; i++)
+					for(size_t j = 0; j < 3; j++)
+						R(i,j) = -R(i,j);
+			}
 			rotations()->setQuaternion(particleIndex, (Quaternion)QuaternionT<double>(R));
 		}
 		if(stretchTensors()) {
