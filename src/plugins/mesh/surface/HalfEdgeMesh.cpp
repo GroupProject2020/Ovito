@@ -312,7 +312,7 @@ void HalfEdgeMesh::flipFaces()
 		if(firstFaceEdge == InvalidIndex) continue;
 		edge_index e = firstFaceEdge;
 		do {
-			transferEdgeToVertex(e, vertex1(1), vertex2(e), false);
+			transferEdgeToVertex(e, vertex1(e), vertex2(e), false);
 			e = nextFaceEdge(e);
 		}
 		while(e != firstFaceEdge);
