@@ -11,7 +11,7 @@
 
     <para>
       Binary program packages for Linux, Windows, and macOS
-      can be downloaded from <link xlink:href="http://www.ovito.org/">www.ovito.org</link>.
+      can be downloaded from <link xlink:href="https://www.ovito.org/">www.ovito.org</link>.
     </para>
     
     <para>
@@ -25,12 +25,6 @@
       <para>Extract the downloaded <filename>.tar.gz</filename> archive using the <command>tar</command> command, e.g.: <command>tar xzf ovito-3.0.0-x86_64.tar.gz</command>. 
       This will create a new subdirectory containing the program package. 
       Change into the new directory and start OVITO by running the executable <command>./bin/ovito</command>.
-      </para>
-      <para>
-      On some older Linux distributions launching the executable may fail with an error message like "<literal>ovito: /usr/lib64/libstdc++.so.6: version `CXXABI_1.3.8' not found</literal>"
-      shown in the terminal. In this case, please copy these <link xlink:href="http://ovito.org/download/2.9.0/">libstdc++ library files</link> into the 
-      <filename>lib/ovito/</filename> subdirectory of OVITO. They are required, because the local version of libstdc++ is not compatible 
-      with the OVITO binary.
       </para>
     </simplesect>
 
@@ -48,9 +42,6 @@
       <para>Double-click the <filename>.dmg</filename> disk image file downloaded from the OVITO website to open it, 
       agree to the program license, and drag the <filename>Ovito</filename> application bundle into your <filename>Applications</filename> folder.
       Then start OVITO by double-clicking the application bundle.
-      </para>
-      <para>
-      On some systems, the first attempt to start up OVITO after installation may by unsuccessful. Simply try it a second time.
       </para>
     </simplesect>
 
