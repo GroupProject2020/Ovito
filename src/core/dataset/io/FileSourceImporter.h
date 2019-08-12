@@ -186,7 +186,7 @@ public:
 	virtual bool isReplaceExistingPossible(const QUrl& sourceUrl) override;
 
 	/// \brief Imports the given file into the scene.
-	virtual bool importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences) override;
+	virtual OORef<PipelineSceneNode> importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences) override;
 
 	//////////////////////////// Specific methods ////////////////////////////////
 

@@ -128,32 +128,24 @@ def import_file(location, **params):
         importer.__setattr__(key, params[key])
 
     # Import data.
-    if not importer.import_file(location_list, ImportMode.AddToScene, False):
+    pipeline = importer.import_file(location_list, ImportMode.DontAddToScene, False)
+    if not pipeline:
         raise RuntimeError("Operation has been canceled by the user.")
 
-    # Get the newly created pipeline.
-    pipeline = ovito.scene.selected_pipeline
-    if not isinstance(pipeline, Pipeline):
-        raise RuntimeError("File import failed. Nothing was imported.")
-
     try:
-        # Block execution until file is loaded.
+        # Block until data has been has been loaded from the file.
         state = pipeline.evaluate_pipeline(0)  # Requesting frame 0 here, because full list of frames is not loaded yet at this point.
 
         # Raise exception if error occurs during loading.
         if state.status.type == PipelineStatus.Type.Error:
             raise RuntimeError(state.status.text)
 
-        # Block until full list of animation frames has been obtained.
+        # Block until full list of animation frames is available.
         if isinstance(pipeline.source, FileSource) and not pipeline.source.wait_for_frames_list():
             raise RuntimeError("Operation has been canceled by the user.")
     except:
-        # Delete newly created pipeline in case import fails.
+        # Delete newly created pipeline in case of failure.
         pipeline.delete()
         raise
-
-    # The importer will insert the pipeline into the scene in the GUI by default.
-    # But in the scripting enviroment we immediately undo it.
-    pipeline.remove_from_scene()
 
     return pipeline

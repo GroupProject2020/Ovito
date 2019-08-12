@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2014) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -31,7 +31,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 /**
  * \brief A meta-class for file importers (i.e. classes derived from FileImporter).
  */
-class OVITO_CORE_EXPORT FileImporterClass : public RefTarget::OOMetaClass 
+class OVITO_CORE_EXPORT FileImporterClass : public RefTarget::OOMetaClass
 {
 public:
 
@@ -40,11 +40,11 @@ public:
 
 	/// \brief Returns the file filter that specifies the files that can be imported by this service.
 	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
-	virtual QString fileFilter() const { 
+	virtual QString fileFilter() const {
 		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilter()", "This method should be overridden by a meta-subclass of FileImporterClass.");
-		return {}; 
+		return {};
 	}
-	
+
 	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
 	/// \return A string that describes the file format.
 	virtual QString fileFilterDescription() const {
@@ -58,7 +58,7 @@ public:
 	/// \return \c true if the data can be parsed.
 	//	        \c false if the data has some unknown format.
 	/// \throw Exception when the check has failed.
-	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const { 
+	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const {
 		return false;
 	}
 };
@@ -70,7 +70,7 @@ class OVITO_CORE_EXPORT FileImporter : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS_META(FileImporter, FileImporterClass)
-	
+
 protected:
 
 	/// \brief The constructor.
@@ -83,7 +83,8 @@ public:
 		AddToScene,				///< Add the imported data as a new object to the scene.
 		ReplaceSelected,		///< Replace existing input data with newly imported data if possible. Add to scene otherwise.
 								///  In any case, keep all other objects in the scene as they are.
-		ResetScene				///< Clear the contents of the current scene first before importing the data.
+		ResetScene,				///< Clear the contents of the current scene first before importing the data.
+		DontAddToScene			///< Do not add the imported data to the scene.
 	};
 	Q_ENUMS(ImportMode);
 
@@ -95,10 +96,10 @@ public:
 	/// \param sourceUrls The location of the file(s) to import.
 	/// \param importMode Controls how the imported data is inserted into the scene.
 	/// \param autodetectFileSequences Enables the automatic detection of file sequences.
-	/// \return \c true if the file has been successfully imported.
-	//	        \c false if the operation has been canceled by the user.
+	/// \return \c The new pipeline if the file has been successfully imported.
+	//	        \c nullptr if the operation has been canceled by the user.
 	/// \throw Exception when the import operation has failed.
-	virtual bool importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences) = 0;
+	virtual OORef<PipelineSceneNode> importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences) = 0;
 
 	/// \brief Tries to detect the format of the given file.
 	/// \return The importer class that can handle the given file. If the file format could not be recognized then NULL is returned.
@@ -120,5 +121,3 @@ OVITO_END_INLINE_NAMESPACE
 
 Q_DECLARE_METATYPE(Ovito::FileImporter::ImportMode);
 Q_DECLARE_TYPEINFO(Ovito::FileImporter::ImportMode, Q_PRIMITIVE_TYPE);
-
-

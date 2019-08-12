@@ -56,6 +56,7 @@ void defineIOSubmodule(py::module m)
 		.value("AddToScene", FileImporter::AddToScene)
 		.value("ReplaceSelected", FileImporter::ReplaceSelected)
 		.value("ResetScene", FileImporter::ResetScene)
+		.value("DontAddToScene", FileImporter::DontAddToScene)
 	;
 
 	ovito_abstract_class<FileSourceImporter, FileImporter>{m}
@@ -153,8 +154,8 @@ void defineIOSubmodule(py::module m)
 		.def_property("playback_start_time", &FileSource::playbackStartTime, &FileSource::setPlaybackStartTime)
 
 		.def_property_readonly("data", &FileSource::dataCollection,
-			"This field exposes the internal :py:class:`~ovito.data.DataCollection` of the source object holding "
-			"the master copy of the data loaded from the input file (at frame 0). ")
+			"This field provides access to the internal :py:class:`~ovito.data.DataCollection`, "
+			"i.e. the master copy of the data loaded from the input file (at frame 0). ")
 
 		// For backward compatibility with OVITO 2.9.0:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.

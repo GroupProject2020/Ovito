@@ -69,7 +69,7 @@ void FileSourceImporter::requestFramesUpdate()
 				// If wildcard pattern search has been disabled, replace
 				// wildcard pattern URLs with an actual filename.
 				if(!autoGenerateWildcardPattern()) {
-					if(std::any_of(fileSource->sourceUrls().begin(), fileSource->sourceUrls().end(), [](const QUrl& url) { 
+					if(std::any_of(fileSource->sourceUrls().begin(), fileSource->sourceUrls().end(), [](const QUrl& url) {
 							return isWildcardPattern(url);
 						})) {
 						std::vector<QUrl> urls = fileSource->sourceUrls();
@@ -124,7 +124,7 @@ bool FileSourceImporter::isReplaceExistingPossible(const QUrl& sourceUrl)
 * Return false if the import has been aborted by the user.
 * Throws an exception when the import has failed.
 ******************************************************************************/
-bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences)
+OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences)
 {
 	OORef<FileSource> existingFileSource;
 	PipelineSceneNode* existingPipeline = nullptr;
@@ -148,7 +148,7 @@ bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode imp
 			dataset()->undoStack().clear();
 		dataset()->setFilePath(QString());
 	}
-	else {
+	else if(importMode == AddToScene) {
 		if(dataset()->sceneRoot()->children().empty())
 			importMode = ResetScene;
 	}
@@ -177,11 +177,10 @@ bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode imp
 
 	// Set the input location and importer.
 	if(!fileSource->setSource(std::move(sourceUrls), this, autodetectFileSequences)) {
-		return false;
+		return {};
 	}
 
 	// Create a new object node in the scene for the linked data.
-	RootSceneNode* scene = dataset()->sceneRoot();
 	OORef<PipelineSceneNode> pipeline;
 	if(existingPipeline == nullptr) {
 		{
@@ -196,24 +195,26 @@ bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode imp
 		}
 
 		// Insert pipeline into scene.
-		scene->addChildNode(pipeline);
+		if(importMode != DontAddToScene)
+			dataset()->sceneRoot()->addChildNode(pipeline);
 	}
 	else pipeline = existingPipeline;
 
-	// Select import node.
-	dataset()->selection()->setNode(pipeline);
+	// Select new node.
+	if(importMode != DontAddToScene)
+		dataset()->selection()->setNode(pipeline);
 
-	if(importMode != ReplaceSelected) {
+	if(importMode != ReplaceSelected && importMode != DontAddToScene) {
 		// Adjust viewports to completely show the newly imported object.
 		// This needs to be done after the data has been completely loaded.
 		dataset()->whenSceneReady().finally(dataset()->executor(), [dataset = dataset()]() {
-			if(dataset->viewportConfig()) 
+			if(dataset->viewportConfig())
 				dataset->viewportConfig()->zoomToSelectionExtents();
 		});
 	}
 
 	transaction.commit();
-	return true;
+	return pipeline;
 }
 
 /******************************************************************************
@@ -228,16 +229,16 @@ bool FileSourceImporter::isWildcardPattern(const QUrl& sourceUrl)
 * Scans the given external path(s) (which may be a directory and a wild-card pattern,
 * or a single file containing multiple frames) to find all available animation frames.
 ******************************************************************************/
-Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(const std::vector<QUrl>& sourceUrls) 
+Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(const std::vector<QUrl>& sourceUrls)
 {
 	// No output if there is no input.
-	if(sourceUrls.empty()) 
+	if(sourceUrls.empty())
 		return QVector<Frame>();
-	
+
 	// If there is only a single input path, call sub-routine handling single paths.
 	if(sourceUrls.size() == 1)
 		return discoverFrames(sourceUrls.front());
-	
+
 	// Sequentually invoke single-path routine for each input path and compile results
 	// into one big list that is returned to the caller.
 	auto combinedList = std::make_shared<QVector<Frame>>();
@@ -264,7 +265,7 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 * Scans the given external path (which may be a directory and a wild-card pattern,
 * or a single file containing multiple frames) to find all available animation frames.
 ******************************************************************************/
-Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(const QUrl& sourceUrl) 
+Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(const QUrl& sourceUrl)
 {
 	if(shouldScanFileForFrames(sourceUrl)) {
 
@@ -417,7 +418,7 @@ Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& so
 					}
 					else number.append(c);
 				}
-				if(!number.isEmpty()) 
+				if(!number.isEmpty())
 					newName.append(number.rightJustified(12, '0'));
 				if(!sortedFilenames.contains(newName))
 					sortedFilenames[newName] = oldName;
