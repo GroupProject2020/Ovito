@@ -490,6 +490,7 @@ OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollec
 
 	// Define crystal phase.
 	OVITO_ASSERT(latticeStructure() != 0);
+	OVITO_ASSERT(!microstructureObj->dataset()->undoStack().isRecording());
 	PropertyObject* phaseProperty = microstructureObj->regions()->expectMutableProperty(SurfaceMeshRegions::PhaseProperty);
 	OORef<MicrostructurePhase> phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(latticeStructure()));
 	if(!phase) {

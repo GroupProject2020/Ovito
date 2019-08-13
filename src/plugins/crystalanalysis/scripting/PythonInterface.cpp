@@ -28,6 +28,7 @@
 #include <plugins/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/BurgersVectorFamily.h>
+#include <plugins/crystalanalysis/objects/Microstructure.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
 #include <plugins/crystalanalysis/importer/DislocImporter.h>
 #include <plugins/crystalanalysis/importer/ParaDiSImporter.h>
@@ -438,6 +439,10 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 		.def_readonly("atom_count", &Cluster::atomCount)
 		.def_readonly("orientation", &Cluster::orientation)
 	;
+
+	ovito_class<BurgersVectorFamily, ElementType>{m};
+	ovito_class<MicrostructurePhase, ElementType>{m};
+	ovito_class<Microstructure, SurfaceMesh>{m};
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CrystalAnalysisPython);

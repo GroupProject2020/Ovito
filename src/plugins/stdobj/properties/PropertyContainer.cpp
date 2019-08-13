@@ -278,8 +278,12 @@ void PropertyContainer::setContent(size_t newElementCount, const std::vector<Pro
 	// Removal phase:
 	for(int i = properties().size() - 1; i >= 0; i--) {
 		PropertyObject* property = properties()[i];
-		if(std::find(newProperties.cbegin(), newProperties.cend(), property->storage()) == newProperties.cend())
+		if(std::none_of(newProperties.cbegin(), newProperties.cend(), [property](const auto& newProperty) {
+				return (newProperty->type() == property->type() && newProperty->name() == property->name());
+			}))
+		{
 			removeProperty(property);
+		}
 	}
 
 	// Update internal element counter.
