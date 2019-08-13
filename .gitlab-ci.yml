@@ -223,5 +223,5 @@ build_windows_package:
       #- ctest --output-on-failure  # Disabled for now, because Windows 10 VM guests don't support OpenGL 2.1+, which is needed for the tests.
       - cpack
       - cpack -G ZIP
-      - sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.zip'
-      - sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.exe'
+      - timeout 30s sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.zip'
+      - timeout 30s sshpass -e sftp ovito.org:testing/ <<< $'put ovito-*.exe'
