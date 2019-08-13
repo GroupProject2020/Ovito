@@ -12,8 +12,8 @@
   <para>
     To load a simulation file from your local computer in OVITO, select
     <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> from the menu or use the corresponding button in the toolbar.
-    OVITO detects the format of the file automatically (see <link linkend="usage.import.formats">supported formats</link> below).
-    Compressed text-based files having a <filename>.gz</filename> suffix can be directly read by OVITO.
+    OVITO detects the format of the file automatically (see <link linkend="usage.import.formats">list of supported formats</link>).
+    Compressed text-based files having a <filename>.gz</filename> suffix can directly be read by OVITO.
   </para>
   <para>
     <informalfigure>
@@ -21,37 +21,36 @@
         <imagedata fileref="images/scene_objects/file_wildcard_pattern.png" format="PNG" scale="50" />
         </imageobject></mediaobject></screenshot>
     </informalfigure>
-    The imported data will appear in the viewports as a new visual object in the three-dimensional scene
-    and also as an entry in the "Data source" section of the pipeline editor as indicated in the screenshot on the right.
-    Note that the program maintains a link to the original file on disk from which it obtained the data.
-    Selecting the data source entry in the pipeline editor opens the <link linkend="scene_objects.file_source">"External File" panel</link>,
-    which is also visible in the screenshot.
-    This panel manages the link to the external data file. The tool buttons at the top of the panel let you reload
-    the data from the input file in case it was changed by an external program, or you can pick a different file as data source if desired.
-    As you will see, switching the input file is sometimes useful if you have set up a complex <link linkend="usage.modification_pipeline">data analysis pipeline</link> and want
-    to re-use it on a different input dataset later on.
+    The imported dataset will appear in the viewports as a new object
+    and is also represented by the first item under the "Data source" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>, as highlighted in the screenshot on the right.
+  </para>
+  <para>
+    Select this list item to open the <link linkend="scene_objects.file_source">"External File"</link> panel below the pipeline editor, which is also visible in the screenshot.
+    The tool buttons at the top of the panel allow you to reload
+    the input file in case has been changed outside of OVITO, or to pick a different file as data source of the <link linkend="usage.modification_pipeline">pipeline</link>.
+    Replacing the input dataset can be helpful if you have set up a data analysis pipeline and want
+    to apply it on a different simulation dataset.
   </para>
 
   <simplesect xml:id="usage.import.sequence">
     <title>Simulation sequences</title>
     <para>
-       OVITO can load and animate simulation trajectories that consist of a sequence of frames.
+       OVITO can load trajectories consisting of a series of simulation snapshots.
        The following scenarios are supported by the software:
        <variablelist>
-         <varlistentry><term>Series of files:</term><listitem>
+         <varlistentry><term>A series of files:</term><listitem>
            <para>
-		       When importing a new file, the program automatically tries to detect if it is part of a numbered sequence of files
-           with similar names. To this end, OVITO replaces the last number (if any) in the filename you picked with the wildcard
-           character <literal>*</literal> to generate a search pattern, which is used to look in the same directory for other files belonging to the same sequence.
+		       When you import a simulation file, OVITO tries to detect if it is part of a numbered sequence of files
+           with similar names in the same directory. To this end, the last number (if any) in the filename you picked is replaced with the wildcard
+           character <literal>*</literal> to generate a search pattern, which is subsequently used to look for other files belonging to the same sequence.
 		       For instance, if you imported a file named <filename>anim1c_5000.dump</filename>, OVITO will generate the search pattern
-		       <filename>anim1c_*.dump</filename> to find all matching frames (e.g. <filename>anim1c_0.dump</filename>,
+		       <filename>anim1c_*.dump</filename> to find the other snapshots (e.g. <filename>anim1c_0.dump</filename>,
 		       <filename>anim1c_1000.dump</filename>, <filename>anim1c_2000.dump</filename>, etc). It is possible to
-		       manually adjust this search pattern afterwards in case the generated one is not adequate.
-           The corresponding input field is highlighted in the screenshot.
+		       manually override the generated file pattern in the input field highlighted in the screenshot.
            </para>
          </listitem></varlistentry>
 
-         <varlistentry><term>File containing multiple frames:</term><listitem>
+         <varlistentry><term>One file containing multiple frames:</term><listitem>
            <para>
 		       OVITO automatically detects when the imported file contains more than one frame and loads them as an animation sequence.
            For some file types, e.g. XYZ and LAMMPS dump, this is indicated by the <emphasis>Contains multiple timesteps</emphasis>
@@ -60,14 +59,14 @@
            </para>
          </listitem></varlistentry>
 
-    		 <varlistentry><term>Separate topology and trajectory files:</term><listitem>
+    		 <varlistentry><term>Separate files for topology and trajectories:</term><listitem>
            <para>
             Some MD simulation codes work with separate topology and trajectory files. The topology file contains the static definition of
-            atoms, types, bonds, etc. while the trajectory file stores the motion trajectories and other time-dependent data computed by the simulation code.
-            In such a case, you should open the topology file first (e.g. a LAMMPS <emphasis>data</emphasis> file).
-            Then use the <link linkend="particles.modifiers.load_trajectory">Load trajectory</link> modifier to load the time-dependent atomic positions
-            from the separate trajectory file (e.g. a LAMMPS <emphasis>dump</emphasis> file). This modifier will
-            on the fly merge both pieces of information -the static topology and the trajectory data- into a single time-dependent
+            atoms, bonds, etc. while the trajectory file contains the computed trajectories and other time-dependent data generated by the simulation.
+            In such cases you should open the topology file first (e.g. a LAMMPS <emphasis>data</emphasis> file).
+            Then apply the <link linkend="particles.modifiers.load_trajectory">Load trajectory</link> modifier to load the time-dependent atomic positions
+            from the trajectory file (e.g. a LAMMPS <emphasis>dump</emphasis> file). This modifier will
+            combine both pieces of information -the static topology and the dynamic trajectory data- into a single animatable
             dataset.
            </para>
          </listitem></varlistentry>
@@ -77,81 +76,17 @@
 
     <para>
        OVITO will display a timeline and a time slider at the bottom of main window when a simulation sequence with more than one frame
-       was loaded. Find out more about OVITO's animation functions in the <link linkend="usage.animation">Animation</link> section of this manual.
+       was loaded. Learn more about OVITO's animation functions in <link linkend="usage.animation">this section</link> of the manual.
     </para>
 
   </simplesect>
 
-  <simplesect xml:id="usage.import.remote">
-    <title>Importing files from remote computers</title>
-    <para>
-       OVITO comes with a built-in SSH client for accessing files on remote machines. It can save you from transferring
-       data stored in remote locations, for example on HPC clusters, to your local desktop computer first.
-       To open a simulation file stored on a remote machine, select
-       <menuchoice><guimenu>File</guimenu><guimenuitem>Load Remote File</guimenuitem></menuchoice> from the menu.
-    </para>
-    <para>
-       The current program version doe not let you browse directories on remote machines. That means you have to specify
-       the full path of the remote file as an URL of the form:
-       <screen><command>    sftp://user@hostname/path/filename</command></screen>
-       Where <command>sftp://</command> is the remote file access protocol,
-       <command>user</command> the SSH login name on the remote machine,
-       <command>hostname</command> the name of the remote machine,
-       and <command>/path/filename</command> the full path to the simulation file to import.
-    </para>
-    <para>
-       When OVITO connects to the remote machine, it will ask for the login password or the passphrase for the private key to be used for authentication.
-       Once established, the SSH connection is kept alive until the end of the program session. OVITO makes a temporary copy of the remote file on the local computer before
-       loading the data into memory to speed up subsequent accesses to simulation frames. The local file copies are cached until the end of the program session or
-       until you hit <emphasis>Reload</emphasis> in the <link linkend="scene_objects.file_source">External File</link> panel.
-    </para>
-  </simplesect>
-
-  <simplesect xml:id="usage.import.command_line">
-    <title>Using the command line</title>
-    <para>
-      If you launch OVITO from a terminal, you can directly specify a file to load. This works for local and remote
-      files:
-       <screen>
-    <command>ovito /path/filename</command>
-    <command>ovito sftp://hostname/path/filename</command>
-       </screen>
-    </para>
-  </simplesect>
-
-  <simplesect xml:id="usage.import.multiple_datasets">
-    <title>Visualizing multiple datasets</title>
-    <para>
-      <informalfigure>
-          <screenshot><mediaobject><imageobject>
-          <imagedata fileref="images/usage/importexport/pipeline_selector.png" format="PNG" scale="50" />
-          </imageobject></mediaobject></screenshot>
-      </informalfigure>
-      OVITO allows you to load several datasets and visualize them side by side in one picture.
-      Or you can visualize the same input data in multiple ways, either side by side or superimposed on each other,
-      using several different data pipelines.
-      To do this, either use the <menuchoice><guimenu>Edit</guimenu><guimenuitem><link linkend="clone_pipeline">Clone pipeline</link></guimenuitem></menuchoice> function to duplicate
-      the currently selected pipeline, or
-      simply invoke the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function
-      repeatedly to load multiple datasets into the same scene.
-      When OVITO asks you whether to replace the already loaded dataset, pick the "<emphasis>Add to scene</emphasis>" option.
-      All data pipelines in the current scene are listed in the drop-down box at the top
-      of the command panel (see screenshot). This box selects the pipeline that is currently displayed in the
-      <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> beneath it.
-    </para>
-    <para>
-      Tip: You can reposition objects in the three-dimensional scene using the
-      <emphasis>Move</emphasis> and <emphasis>Rotate</emphasis> tools found in the upper toolbar.
-      This is useful if you want to visualize multiple datasets in juxtaposition.
-    </para>
-  </simplesect>
-
-  <simplesect xml:id="usage.import.formats">
+  <section xml:id="usage.import.formats">
   <title>Supported file formats</title>
   <para>
-  	OVITO provides file readers for a variety of input formats, in particular data formats written by molecular dynamics
-    and other atomistic simulation codes. In addition, it can load, process and visualize other types of data, for example
-    triangle meshes and voxel data grids.
+  	OVITO provides readers for a variety of input file formats, in particular data formats written by molecular dynamics
+    and other atomistic simulation codes. In addition, it can load and visualize other types of data, for example
+    triangle meshes and voxel data (grid fields).
     <informaltable>
         <tgroup cols="3">
           <thead>
@@ -277,6 +212,123 @@
         </tgroup>
       </informaltable>
     </para>
-  </simplesect>
+  </section>
+
+  <section xml:id="usage.import.remote">
+    <title>Loading remote data</title>
+    <para>
+       OVITO comes with a built-in SSH client for accessing files on remote machines. It can save you from having to transfer
+       files stored in remote locations, for example on HPC clusters, to your local desktop computer first.
+       To open a data file stored on a remote machine, select
+       <menuchoice><guimenu>File</guimenu><guimenuitem>Load Remote File</guimenuitem></menuchoice> from the menu.
+    </para>
+    <para>
+       The current program version does not provide a way to browse directories on remote machines. That means you have to directly specify
+       the full path of the remote file as an URL of the form:
+       <screen><command>    sftp://user@hostname/path/filename</command></screen>
+       Where <command>sftp://</command> is the remote file access protocol,
+       <command>user</command> the SSH login name on the remote machine,
+       <command>hostname</command> the name of the remote machine,
+       and <command>/path/filename</command> the full path to the simulation file to import.
+    </para>
+    <para>
+       When OVITO connects to the remote machine, it will ask for the login password or the passphrase for the private key to be used for authentication.
+       Once established, the SSH connection is kept alive during the program session. OVITO makes a temporary copy of the remote file on the local computer before
+       loading the data into memory to speed up subsequent accesses to simulation frames. The local file copies are cached until you close OVITO or
+       until you hit the <emphasis>Reload</emphasis> button in the <link linkend="scene_objects.file_source">External File</link> panel.
+    </para>
+
+    <simplesect xml:id="usage.import.command_line">
+      <title>Using the command line</title>
+      <para>
+        If you launch OVITO from a terminal, you can directly specify a file to load. This works for local and remote
+        files:
+        <screen>
+      <command>ovito /path/filename</command>
+      <command>ovito sftp://hostname/path/filename</command>
+        </screen>
+      </para>
+    </simplesect>
+  </section>
+
+  <section xml:id="usage.import.multiple_datasets">
+    <title>Visualizing multiple datasets</title>
+    <para>
+      <informalfigure>
+        <screenshot><mediaobject><imageobject>
+          <imagedata fileref="images/usage/importexport/datasets_side_by_side.png" format="PNG" scale="50" />
+        </imageobject></mediaobject></screenshot>
+      </informalfigure>
+      OVITO has the capability to manage several objects in the same three-dimensional scene.
+      This enables you to import and visualize several datasets together in a single picture as shown on the right.
+      You can also visualize a dataset in several different ways, either side by side or superimposed on each other,
+      using branched data pipelines, which dynamically duplicate the imported data and process the copies in different ways.
+    </para>
+    <para>
+      The simplest way to visualize multiple datasets in one picture or animation is to invoke the
+      <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function from the menu
+      several times to load all datasets into the same scene.
+      When importing the second dataset, OVITO will ask you whether to replace the already loaded dataset or not.
+      Select the "<emphasis>Add to scene</emphasis>" option here in order to insert it as an additional object into the existing scene.
+    </para>
+    <para>
+      <informalfigure>
+        <screenshot><mediaobject><imageobject>
+          <imagedata fileref="images/usage/importexport/pipeline_selector.png" format="PNG" scale="50" />
+        </imageobject></mediaobject></screenshot>
+      </informalfigure>
+      The <emphasis>pipeline selector</emphasis> box shown in the screenshot lists all objects of the current scene
+      and lets you switch the selection between them. Each dataset has its own data pipeline associated with it. Thus, you can apply different modifiers
+      to the individual datasets. The modifier pipeline of the currently selected dataset is displayed in the
+      <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> beneath the pipeline selector box.
+    </para>
+
+    <simplesect>
+      <title>Positioning datasets in the scene</title>
+      <para>
+        OVITO places imported datasets in a default position relative
+        to the scene's global coordinate system. Thus, when loading the second dataset into the same scene,
+        it will appear superimposed in the same spatial location as the first dataset, which may not be what you want.
+      </para>
+      <para>
+        In order to correct this, you can move the individual objects around in the scene and arrange them as needed
+        for your visualization. In the example picture at the top of this page the second dataset has been translated along the x-axis
+        to place it next to the first dataset. To do this, use the <emphasis>Translate</emphasis> mode, which
+        is found in the top toolbar above the viewports:
+        <informaltable frame="none" colsep="0" rowsep="0">
+          <tgroup cols="2">
+            <tbody>
+              <row valign="top">
+                <entry>
+                  <screenshot><mediaobject><imageobject>
+                    <imagedata fileref="images/usage/importexport/translate_tool.png" format="PNG" scale="50" />
+                  </imageobject></mediaobject></screenshot>
+                </entry>
+                <entry>
+                  <screenshot><mediaobject><imageobject>
+                    <imagedata fileref="images/usage/importexport/translate_tool_numeric_fields.png" format="PNG" scale="50" />
+                  </imageobject></mediaobject></screenshot>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+        While the <emphasis>Translate</emphasis> mode is active, you can move objects around in the viewports
+        using the mouse. Alternatively, you can enter the desired position of the selected object numerically using the
+        input fields displayed in the status bar while the <emphasis>Translate</emphasis> mode is selected.
+      </para>
+    </simplesect>
+
+    <simplesect>
+      <title>Cloning pipelines</title>
+      <para>
+        Instead of importing several data files into OVITO, you can also duplicate a dataset right in OVITO in order
+        to visualize the data in various different ways, for example by applying different sets of modifiers to the replica
+        of the dataset. This is done using the <link linkend="clone_pipeline">Clone pipeline</link> function,
+        which is found in the <guimenu>Edit</guimenu> menu.
+      </para>
+    </simplesect>
+
+  </section>
 
 </section>

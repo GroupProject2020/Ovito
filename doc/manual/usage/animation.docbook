@@ -7,13 +7,12 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Animation system</title>
+  <title>Animating parameters and the camera</title>
 
   <para>
-    As described in the <link linkend="usage.rendering">preceding sections</link> of this manual, OVITO can be used to visualize simulation sequences, 
-    play them back within the program, or produce simulation movies. On top of this basic functionality, the program provides powerful animation capabilities, which 
-    let you animate the virtual camera or other parameters. The following sections explain the 
-    underlying animation system of OVITO in more detail.
+    In addition to simply visualizing a simulation trajectory, OVITO provides powerful animation capabilities,
+    which let you animate the virtual camera, modifiers or visual parameters. The following sections explain OVITO's
+    animation system in more detail.
     <figure>
     	<title>The animation panel of the <link linkend="scene_objects.file_source">External File Source</link>.</title>
         <screenshot><mediaobject><imageobject>
@@ -21,17 +20,17 @@
         </imageobject></mediaobject></screenshot>
     </figure>
   </para>
-  
+
   <simplesect>
     <title>Animation frames vs. simulation frames</title>
     <para>
        After loading a simulation sequence into OVITO, the timeline below the viewport windows indicates
-       the length of the current animation interval. Animation frame numbers start at zero in OVITO. Thus, an animation 
-       starting at frame 0 and ending at frame 100, for example, consists of 101 video frames. 
+       the length of the current animation interval. Animation frame numbers start at zero in OVITO. Thus, an animation
+       starting at frame 0 and ending at frame 100, for example, consists of 101 video frames.
     </para>
     <para>
        It is important to point out that there is a semantic difference between <emphasis>simulation frames</emphasis>
-       (i.e. the simulation snapshots imported into OVITO) and <emphasis>animation frames</emphasis>, which are 
+       (i.e. the simulation snapshots imported into OVITO) and <emphasis>animation frames</emphasis>, which are
        the time units used by OVITO's internal timeline.
        By default there is a one to one mapping between the two, i.e., the number of animation frames in OVITO's timeline is automatically adjusted to match the number of loaded simulation snapshots.
        This default behavior is controlled by the <guilabel>Adjust animation length to time series</guilabel>
@@ -41,9 +40,9 @@
     <para>
        It is possible to decouple the animation length from the length of the loaded simulation sequence by turning
        off this option. Then you will be in control of the animation length, since OVITO no longer
-       adjusts the internal animation length to accommodate all frames of the loaded simulation. 
-       You can manually change the length of the current animation in the 
-       <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>. 
+       adjusts the internal animation length to accommodate all frames of the loaded simulation.
+       You can manually change the length of the current animation in the
+       <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>.
        If you make the animation interval longer than the
        number of imported simulation frames, you will get additional still images at the end of the animation.
     </para>
@@ -63,7 +62,7 @@
        Note that OVITO provides the possibility to load multiple simulation datasets simultaneously into one scene to display them
        next to or on top of each other. Attention must be paid if not all imported simulation sequences
        contain the same numbers of snapshots. To avoid possible conflicts, OVITO activates the <guilabel>Adjust animation length to time series</guilabel>
-       option only for the first simulation sequence that you import, and not for those subsequently added to the same scene. 
+       option only for the first simulation sequence that you import, and not for those subsequently added to the same scene.
        Of course you can modify these settings later on, or disable the
        automatic adjustment for all external file sources in the scene and then specify an animation length
        by hand in the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>.
@@ -72,22 +71,22 @@
        </imageobject></mediaobject></screenshot></informalfigure>
     </para>
   </simplesect>
-  
+
   <simplesect>
     <title>Playback speed</title>
     <para>
-      In addition to the animation length, the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link> 
-      also lets you change the playback speed (frames per second) of the current animation. This number determines the frame rate of 
-      video files produced by OVITO (e.g. AVI or MPEG). It also affects the playback within OVITO, which, however, typically 
-      happens at a lower effective rate because loading the next simulation snapshot from disk takes too long to reach the 
+      In addition to the animation length, the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>
+      also lets you change the playback speed (frames per second) of the current animation. This number determines the frame rate of
+      video files produced by OVITO (e.g. AVI or MPEG). It also affects the playback within OVITO, which, however, typically
+      happens at a lower effective rate because loading the next simulation snapshot from disk takes too long to reach the
       realtime frame rate.
     </para>
   </simplesect>
-  
+
   <simplesect>
     <title>Animation via time-dependent functions</title>
     <para>
-       Simple animation effects can readily be achieved using the <link linkend="particles.modifiers.expression_select">Expression selection</link> 
+       Simple animation effects can readily be achieved using the <link linkend="particles.modifiers.expression_select">Expression selection</link>
        and <link linkend="particles.modifiers.compute_property">Compute property</link> modifiers. These modifiers
        allow you to enter arbitrary mathematical formulas and Boolean expressions to select subsets of
        particles or to manipulate certain particle properties (e.g. position, color, transparency, etc.).
@@ -98,14 +97,14 @@
        time-dependent and OVITO will recompute the results on every animation frame.
     </para>
   </simplesect>
-  
+
   <simplesect xml:id="usage.animation.keyframes">
     <title>Animation via key frames</title>
     <para>
        <informalfigure><screenshot><mediaobject><imageobject>
          <imagedata fileref="images/usage/animation/slice_modifier_animatable_parameter.png" format="PNG" />
        </imageobject></mediaobject></screenshot></informalfigure>
-       OVITO also provides a key-based animation framework. It lets you specify the value of an animatable parameter 
+       OVITO also provides a key-based animation framework. It lets you specify the value of an animatable parameter
        at certain animation times (for example at the beginning and at the end of the animation). In between these
        key frames, the value of the parameter is then determined using smooth interpolation (typically linear).
     </para>
@@ -115,26 +114,26 @@
        </imageobject></mediaobject></screenshot></informalfigure>
        The screenshot on the right shows the parameter panel of the <link linkend="particles.modifiers.slice">Slice</link>
        modifier as an example. Animatable parameters are indicated by an <guibutton>A</guibutton> button next to the input field.
-       This button opens the animation key dialog for that parameter, which allows you to define 
-       new animation keys. Animation keys are time-value pairs. 
+       This button opens the animation key dialog for that parameter, which allows you to define
+       new animation keys. Animation keys are time-value pairs.
     </para>
     <para>
-       In the next screenshot on the right, two animation keys have been defined for the <emphasis>Distance</emphasis> parameter of the slicing plane, 
-       one at frame 0 and the other at frame 50. Thus, the parameter will have a value of 20.0 
-       at the beginning of the animation and reach 80.0 at the second animation key frame. 
+       In the next screenshot on the right, two animation keys have been defined for the <emphasis>Distance</emphasis> parameter of the slicing plane,
+       one at frame 0 and the other at frame 50. Thus, the parameter will have a value of 20.0
+       at the beginning of the animation and reach 80.0 at the second animation key frame.
     </para>
     <para>
        Note that an animatable parameter always has at least one animation key.
-       As long as there is only that single key, it defines the constant value of the parameter. 
+       As long as there is only that single key, it defines the constant value of the parameter.
        Once you add another key OVITO will interpolate between the key values and the
        parameter actually becomes animated.
     </para>
   </simplesect>
-  
+
   <simplesect>
     <title>Auto-key mode</title>
     <para>
-       The animation toolbar at the bottom of the main window contains a button with a key icon, which activates 
+       The animation toolbar at the bottom of the main window contains a button with a key icon, which activates
        the so-called <emphasis>Auto-key mode</emphasis>:
        <screenshot><mediaobject><imageobject>
          <imagedata fileref="images/usage/animation/key_mode_button.png" format="PNG" scale="25" />
@@ -147,13 +146,13 @@
        Each of the two parameter changes results in the creation of a new animation key at the corresponding animation time.
     </para>
     <para>
-       Don't forget to deactivate <emphasis>Auto-key mode</emphasis> after you are done creating the desired 
+       Don't forget to deactivate <emphasis>Auto-key mode</emphasis> after you are done creating the desired
        animation keys. Otherwise you might inadvertently define more keys for other parameters which you don't
-       want to animate. The <emphasis>Auto-key mode</emphasis> provides a convenient alternative for creating 
+       want to animate. The <emphasis>Auto-key mode</emphasis> provides a convenient alternative for creating
        new animation keys, which can be faster than using the animation key dialog introduced in the previous section.
     </para>
   </simplesect>
-  
+
   <simplesect>
     <title>Editing keys using the animation track bar</title>
     <para>
@@ -173,7 +172,7 @@
        will automatically disappear from the track bar.
     </para>
   </simplesect>
-  
+
   <simplesect xml:id="usage.animation.camera">
     <title>Animating the camera</title>
     <para>
@@ -208,7 +207,7 @@
          <imagedata fileref="images/usage/animation/move_and_rotate_tool.png" format="PNG" />
        </imageobject></mediaobject></screenshot>
        While one of these modes is active, you can drag the camera object with the mouse; or use
-       the numeric input fields that appear in the status bar area, which let you enter the position coordinates and 
+       the numeric input fields that appear in the status bar area, which let you enter the position coordinates and
        Euler orientation angles of the selected object:
        <screenshot><mediaobject><imageobject>
          <imagedata fileref="images/usage/animation/numeric_move_tool.png" format="PNG" scale="60" />
@@ -216,10 +215,10 @@
     </para>
     <para>
        Similar to other parameters, the position and the orientation of the camera object can be animated
-       using the keyframing approach. To create animation keys for the camera position or rotation, 
-       you first have to activate the <emphasis>Auto-key mode</emphasis> as described above. 
-       If you now change the camera's position at different animation times, animation keys will automatically be created 
-       and the camera will move on an interpolated path between the keyframe positions. The created animation keys are also shown in 
+       using the keyframing approach. To create animation keys for the camera position or rotation,
+       you first have to activate the <emphasis>Auto-key mode</emphasis> as described above.
+       If you now change the camera's position at different animation times, animation keys will automatically be created
+       and the camera will move on an interpolated path between the keyframe positions. The created animation keys are also shown in
        the <emphasis>track bar</emphasis> while the camera is selected.
     </para>
     <para>
@@ -229,5 +228,5 @@
        is active.
     </para>
   </simplesect>
-  
+
 </section>

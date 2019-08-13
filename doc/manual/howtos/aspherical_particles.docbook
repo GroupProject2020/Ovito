@@ -7,7 +7,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Non-spherical particles</title>
+  <title>Non-spherical particle shapes</title>
 
   <para>
      <figure>
@@ -15,33 +15,33 @@
       <screenshot><mediaobject><imageobject>
             <imagedata fileref="images/howtos/ellipsoid_particles_example1.png" format="png" />
        </imageobject></mediaobject></screenshot>
-    </figure> 
+    </figure>
      <figure>
       <title>Box-shaped particles</title>
       <screenshot><mediaobject><imageobject>
             <imagedata fileref="images/howtos/box_particles_example1.png" format="png" />
        </imageobject></mediaobject></screenshot>
-    </figure> 
+    </figure>
      <figure>
       <title>Spherocylindrical particles</title>
       <screenshot><mediaobject><imageobject>
             <imagedata fileref="images/howtos/spherocylinder_particles_example1.png" format="png" />
        </imageobject></mediaobject></screenshot>
-    </figure> 
+    </figure>
     OVITO can visualize particles with ellipsoid and box shapes as shown in the pictures on the right.
     In addition, particles with cylindrical and spherocylindrical (capsule) shape can be visualized.
   </para>
-  
+
   <para>
     While the size of standard spherical and cubic particles is controlled by the <literal>Radius</literal> particle property,
     the size and shape of non-spherical and non-cubic particles is determined by the <literal>Aspherical Shape</literal> property.
-    For OVITO to display non-spherical particles, this property must be defined and the 
-    desired shape must be selected in the settings of the <link linkend="display_objects.particles">Particles</link> visual element. 
+    For OVITO to display non-spherical particles, this property must be defined and the
+    desired shape must be selected in the settings of the <link linkend="display_objects.particles">Particles</link> visual element.
   </para>
-  
+
   <para>
     The <literal>Aspherical Shape</literal> particle property consists of three components <literal>X</literal>, <literal>Y</literal>, and <literal>Z</literal>
-    which specify the size (radius) of ellipsoidal or box particles along the three principal axes. 
+    which specify the size (radius) of ellipsoidal or box particles along the three principal axes.
     Particles for which all three components of the <literal>Aspherical Shape</literal> property are zero, are rendered
     as standard spheres (or cubes). In this case their size is controlled by the <literal>Radius</literal> property, as if the <literal>Aspherical Shape</literal> property was not defined.
   </para>
@@ -55,7 +55,7 @@
   <para>
     The orientation of aspherical particles is controlled by the <literal>Orientation</literal> particle property,
     which has four components <literal>X</literal>, <literal>Y</literal>, <literal>Z</literal>, <literal>W</literal> that form
-    a quaternion. If the <literal>Orientation</literal> property is not defined, or if the four components do not form a unit quaternion, 
+    a quaternion. If the <literal>Orientation</literal> property is not defined, or if the four components do not form a unit quaternion,
     no rotation is applied to an aspherical particle and it remains aligned with the coordinate axes.
   </para>
 
@@ -74,7 +74,7 @@
     need to be mapped to <literal>Aspherical Shape.X</literal>, <literal>Aspherical Shape.Y</literal>, and <literal>Aspherical Shape.Z</literal>
     in OVITO. Since these properties are output as <literal>c_orient*</literal> and <literal>c_shape*</literal> by the
     dump command above, OVITO cannot set up this mapping automatically. You have to do it manually by using the
-    <guibutton>Edit column mapping</guibutton> button in the file import panel after loading the dump file. 
+    <guibutton>Edit column mapping</guibutton> button in the file import panel after loading the dump file.
   </para>
 
 </section>

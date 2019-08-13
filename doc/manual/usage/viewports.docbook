@@ -7,14 +7,14 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Viewports</title>
+  <title>Viewport windows</title>
 
   <para>
-    Viewports are windows to the three-dimensional scene that you work in.
-    OVITO provides four viewports, laid out in a two by two
-    grid, which simultaneously show the same scene from different angles.
-    The caption in the upper left corner of each viewport and the axis tripod in the lower left corner 
-    indicate the orientation of the virtual camera associated with a viewport.
+    The viewport windows display the three-dimensional scene containing the loaded dataset.
+    OVITO's main window has four viewports, laid out in a two by two grid,
+    all showing the same scene from different perspectives.
+    The label in the upper left corner of each viewport window and the axis tripod in the lower left corner
+    indicate the orientation of the viewport's virtual camera.
   </para>
 
   <simplesect xml:id="usage.viewports.navigation">
@@ -22,43 +22,45 @@
   <para>
     <informalfigure>
       <screenshot><mediaobject><imageobject>
-            <imagedata fileref="images/viewport_control_toolbar/viewport_screenshot.png" format="png" />
+            <imagedata fileref="images/viewport_control_toolbar/viewport_screenshot.png" format="png" scale="50" />
        </imageobject></mediaobject></screenshot>
     </informalfigure>
-    Use the mouse within a viewport to move the virtual camera around:
+    Use the mouse to rotate or move the virtual camera of a viewport:
     <itemizedlist>
-    <listitem><para>
-      Left-click and drag to rotate the camera around the current orbit center, which, by default, is located in the center of the simulation box.
-    </para></listitem>
-    <listitem><para>
-      Right-click and drag to move the camera parallel to the projection plane. You can also use the middle mouse button for this.
-    </para></listitem>
-    <listitem><para>
-      Use the mouse wheel to zoom in and out.
-    </para></listitem>
-    <listitem><para>
-      Double-click on some object visible in the viewport to set a new orbit center. From now on, the camera will rotate around that position, 
-      which is marked by a three-dimensional cross.
-    </para></listitem>
-    <listitem><para>
-      Double-click in an empty region of a viewport to reset the orbit center to the center of the active object (typically the simulation box).
-    </para></listitem>
+      <listitem><para>
+        Left-click and drag to rotate the camera around the current orbit center, which is located in the center of the simulation box by default.
+      </para></listitem>
+      <listitem><para>
+        Right-click and drag to move the camera parallel to the projection plane. You can also use the middle mouse button for this.
+      </para></listitem>
+      <listitem><para>
+        Use the mouse wheel to zoom in or out.
+      </para></listitem>
+      <listitem><para>
+        Double-click on an object to reposition the orbit center. From now on, the camera will rotate around that new location in space,
+        which is marked by a three-dimensional cross.
+      </para></listitem>
+      <listitem><para>
+        Double-click in an empty region of a viewport to reset the orbit center to the center of the active dataset.
+      </para></listitem>
     </itemizedlist>
 
-     By default, the <emphasis>z</emphasis>-axis is considered the "up" (vertical) direction, and OVITO ensures that it always points upward when you rotate or move the camera. 
-     Depending on your simulation setup this might not be the best choice. You can set the <emphasis>x</emphasis> or <emphasis>y</emphasis> axes to be the vertical axis in the 
-     <link linkend="application_settings.viewports">application settings dialog</link>.
+     Note that the <emphasis>z</emphasis>-axis is considered the "up" (vertical) direction by default, and OVITO
+     constrains the camera orientation such that this axis always points upward in the viewports.
+     Depending on the orientation of your dataset, the z-axis may not be the best choice.
+     You can also configure the <emphasis>x</emphasis> or <emphasis>y</emphasis> axes to be the vertical direction in the
+     <link linkend="application_settings.viewports">application settings</link> of OVITO.
   </para>
   </simplesect>
-  
+
   <simplesect xml:id="usage.viewports.toolbar">
-  <title>Viewport toolbar</title>     
+  <title>Viewport toolbar</title>
     <para>
      <informalfigure>
         <screenshot><mediaobject><imageobject>
             <imagedata fileref="images/viewport_control_toolbar/viewport_toolbar.png" format="png" scale="20" />
         </imageobject></mediaobject></screenshot>
-      </informalfigure> 
+      </informalfigure>
       The viewport toolbar is located below the viewports and contains buttons to activate various navigation input modes.
       In addition, you will find two other useful functions here:
     </para>
@@ -73,7 +75,7 @@
       <inlinemediaobject><imageobject>
         <imagedata fileref="images/viewport_control_toolbar/maximize_viewport.bw.svg" format="svg" width="32px" depth="32px" />
       </imageobject></inlinemediaobject>
-      The <emphasis>Maximize Active Viewport</emphasis> button enlarges the active viewport to fill the entire main window. 
+      The <emphasis>Maximize Active Viewport</emphasis> button enlarges the active viewport to fill the entire main window.
       Clicking the button a second time restores the original 2x2 viewport layout.
    </para>
   </simplesect>
@@ -85,28 +87,28 @@
       <screenshot><mediaobject><imageobject>
             <imagedata fileref="images/viewport_control_toolbar/viewport_menu_screenshot.png" format="png" scale="64" />
        </imageobject></mediaobject></screenshot>
-     </informalfigure> 
-     Clicking the caption label in the upper left corner of a viewport, e.g. <emphasis>Perspective</emphasis>, <emphasis>Top</emphasis>, etc.,
+     </informalfigure>
+     Clicking the text label in the upper left corner of a viewport (e.g. <emphasis>Perspective</emphasis>, <emphasis>Top</emphasis>, etc.)
      opens the <emphasis>viewport menu</emphasis> as shown in the screenshot.
    </para>
    <para>
-     Use the <menuchoice><guimenuitem>View Type</guimenuitem></menuchoice> sub-menu to select one of the standard
-     view orientations or switch between parallel (orthogonal) and perspective projection types. The
+     The <menuchoice><guimenuitem>View Type</guimenuitem></menuchoice> menu lets you switch to one of the standard
+     viewing orientations and between parallel (orthogonal) and perspective projection types. The
      <link linkend="viewports.adjust_view_dialog"><menuchoice><guimenuitem>Adjust View</guimenuitem></menuchoice></link> function gives you precise
-     control over the numeric position and orientation of the viewport camera.
+     control over the position and orientation of the viewport's camera using numeric input fields.
    </para>
    <para>
      The <menuchoice><guimenuitem>Preview Mode</guimenuitem></menuchoice> option activates a virtual frame inside the viewport to
-     indicate the area that will be visible in <link linkend="usage.rendering">rendered pictures</link>. The aspect ratio of this frame reflects the 
-     output image size currently set in the <link linkend="core.render_settings">Render settings</link> panel. 
-     With preview mode active, the viewport contents including the background and any <link linkend="viewport_overlays">overlays</link> will 
+     indicate the area that will be visible in <link linkend="usage.rendering">rendered pictures</link>. The aspect ratio of this frame reflects the
+     output image size currently set in the <link linkend="core.render_settings">Render settings</link> panel.
+     With preview mode active, the viewport contents including the background and any <link linkend="viewport_overlays">overlays</link> will
      be rendered like in the final output image.
    </para>
    <para>
      Use the <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function to insert a camera object into the three-dimensional
      scene. This object will be linked to the viewport, and moving the camera object around automatically updates the viewport
-     accordingly. This gives you the possibility to <link linkend="usage.animation.camera">animate the camera</link>.     
+     accordingly. This gives you the possibility to <link linkend="usage.animation.camera">animate the camera</link>.
    </para>
-  </simplesect>     
+  </simplesect>
 
 </section>

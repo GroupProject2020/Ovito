@@ -23,7 +23,6 @@
   <simplesect>
     <title>Linux</title>
     <para>
-    <para>
       OVITO for Linux includes Qt libraries that have been built from the unmodified sources of Qt 5.12.4 distributed by the Qt Company.
       The following commands have been used to generate them:
 <programlisting>
@@ -75,7 +74,8 @@
     -skip qtxmlpatterns \
     -no-use-gold-linker \
     -prefix $HOME/progs/qt5
-make && make install
+make
+make install
 </programlisting>
     </para>
   </simplesect>
