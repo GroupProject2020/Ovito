@@ -96,10 +96,10 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
 		if(!ptype) return;
 
-		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, ptype->name(), ptype->color());
-		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, ptype->name(), ptype->radius());
+		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->color());
+		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->radius());
 
-		mainWindow()->statusBar()->showMessage(tr("Stored current color and radius as defaults for particle type '%1'.").arg(ptype->name()), 4000);
+		mainWindow()->statusBar()->showMessage(tr("Stored current color and radius as defaults for particle type '%1'.").arg(ptype->nameOrNumericId()), 4000);
 	});
 	connect(this, &PropertiesEditor::contentsReplaced, [setAsDefaultBtn,namePUI](RefTarget* newEditObject) {
 		setAsDefaultBtn->setEnabled(newEditObject != nullptr);
