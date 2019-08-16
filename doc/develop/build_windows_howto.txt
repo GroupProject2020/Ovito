@@ -176,14 +176,15 @@ Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 - Install MSYS2
 cd deps
-git clone git://git.libav.org/libav.git libav_source
 - Execute "c:\msys64\msys2_shell.cmd -msys2 -here -full-path" from MSVC command prompt.
 - Install YASM (MSYS2: "pacman -S yasm")
 - Install make (MSYS2: "pacman -S make")
+git clone git://git.libav.org/libav.git libav_source
 export LIB="$LIB;$PWD/zlib/lib"
 export INCLUDE="$INCLUDE;$PWD/zlib/include"
 export PATH="/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.21.27702/bin/HostX64/x64:$PATH"
 cd libav_source
+git checkout v11.12
 mkdir build
 cd build
 ../configure \
@@ -198,8 +199,6 @@ cd build
    --disable-doc \
    --disable-network \
    --disable-filters \
-   --disable-decoders \
-   --disable-demuxers \
    --disable-debug
 make install
 

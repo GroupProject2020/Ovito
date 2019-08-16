@@ -181,8 +181,6 @@ cd libav-11.12
   --disable-programs \
   --disable-debug \
   --disable-filters \
-  --disable-decoders \
-  --disable-demuxers \
   --prefix=$HOME/progs/libav
 make install
 

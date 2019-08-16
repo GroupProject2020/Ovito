@@ -33,8 +33,6 @@
    --disable-doc \
    --disable-network \
    --disable-filters \
-   --disable-decoders \
-   --disable-demuxers \
    --disable-debug
 make install
 </programlisting>
@@ -44,7 +42,7 @@ make install
   <simplesect>
     <title>Linux</title>
     <para>
-      OVITO for Linux includes shared libraries that have been built from the unmodified sources of Libav.
+      OVITO for Linux includes shared libraries that have been built from the unmodified sources of Libav 11.12.
       The following commands have been used to generate them:
 <programlisting>
 # Build platform: CentOS 6.9
@@ -58,8 +56,6 @@ make install
   --disable-programs \
   --disable-debug \
   --disable-filters \
-  --disable-decoders \
-  --disable-demuxers \
   --prefix=$HOME/progs/libav
 make install
 </programlisting>
