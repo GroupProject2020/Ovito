@@ -16,7 +16,7 @@
   <simplesect>
     <title>Windows</title>
     <para>
-      OVITO for Windows includes binaries that have been built from the unmodified sources of Libav.
+      OVITO for Windows includes binaries that have been built from the unmodified sources of Libav 11.12.
       The following commands have been used to generate them:
 <programlisting>
 # Compiler: Microsoft Visual C++ 2019 (command line tools) + MSYS2 environment

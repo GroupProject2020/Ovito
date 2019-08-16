@@ -4,7 +4,7 @@ Steps to build the redistributable program packages for Linux.
 
 - Install CMake >=3.11 from www.cmake.org
 
-- Install 
+- Install
 yum install lapack
 yum install fftw3-devel
 
@@ -167,11 +167,11 @@ su
 make install
 
 **************************************************************************
-Build libav (release 12):
+Build libav (release 11):
 Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 cd $HOME/progs/
-cd libav-12.3
+cd libav-11.12
 ./configure \
   --enable-pic \
   --enable-shared \

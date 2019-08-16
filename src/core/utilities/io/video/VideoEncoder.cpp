@@ -49,8 +49,8 @@ void VideoEncoder::initCodecs()
 {
 	static std::once_flag initFlag;
 	std::call_once(initFlag, []() {
-		av_register_all();
-		avcodec_register_all();
+		::av_register_all();
+		::avcodec_register_all();
 	});
 }
 
@@ -59,8 +59,8 @@ void VideoEncoder::initCodecs()
 ******************************************************************************/
 QString VideoEncoder::errorMessage(int errorCode)
 {
-	char errbuf[256];
-	if(av_strerror(errorCode, errbuf, sizeof(errbuf)) < 0) {
+	char errbuf[512];
+	if(::av_strerror(errorCode, errbuf, sizeof(errbuf)) < 0) {
 		return QString("Unknown Libav error.");
 	}
 	return QString::fromLocal8Bit(errbuf);
@@ -77,7 +77,7 @@ QList<VideoEncoder::Format> VideoEncoder::supportedFormats()
 	initCodecs();
 
 	AVOutputFormat* fmt = nullptr;
-	while((fmt = av_oformat_next(fmt))) {
+	while((fmt = ::av_oformat_next(fmt))) {
 
 		if(fmt->flags & AVFMT_NOFILE || fmt->flags & AVFMT_NEEDNUMBER)
 			continue;
@@ -117,7 +117,7 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	else outputFormat = format->avformat;
 
 	// Allocate the output media context.
-	_formatContext.reset(avformat_alloc_context(), &av_free);
+	_formatContext.reset(::avformat_alloc_context(), &av_free);
 	if(!_formatContext)
 		throw Exception(tr("Failed to allocate output media context."));
 
@@ -152,8 +152,8 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	_codecContext->bit_rate = 0;
 	_codecContext->width = width;
 	_codecContext->height = height;
-	_codecContext->time_base.num = _videoStream->time_base.num = 1;
-	_codecContext->time_base.den = _videoStream->time_base.den = fps;
+	_codecContext->time_base = (AVRational){ 1, fps };
+	_videoStream->time_base = (AVRational){ 1, fps };
 	_codecContext->gop_size = 12;	// Emit one intra frame every twelve frames at most.
 	if(qstrcmp(outputFormat->name, "gif") != 0)
 		_codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -168,35 +168,51 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 		_codecContext->flags |= CODEC_FLAG_GLOBAL_HEADER;
 #endif
 
+#if LIBAVCODEC_VERSION_MAJOR >= 57
+	// Copy the stream parameters to the muxer
+	if((errCode = ::avcodec_parameters_from_context(_videoStream->codecpar, _codecContext.get())) < 0)
+		throw Exception(tr("Could not copy the video stream parameters: %1").arg(errorMessage(errCode)));
+#endif
+
 	::av_dump_format(_formatContext.get(), 0, _formatContext->filename, 1);
 
 	// Open the codec.
 	if((errCode = ::avcodec_open2(_codecContext.get(), nullptr, nullptr)) < 0)
 		throw Exception(tr("Could not open video codec: %1").arg(errorMessage(errCode)));
 
-	// Allocate and init a YUV frame.
+	// Allocate and init a video frame data structure.
 #if LIBAVCODEC_VERSION_MAJOR >= 56
-	_frame.reset(::av_frame_alloc(), &::av_free);
+	_frame.reset(::av_frame_alloc(), [](AVFrame* frame) { ::av_frame_free(&frame); });
 #else
 	_frame.reset(::avcodec_alloc_frame(), &::av_free);
 #endif
 	if(!_frame)
 		throw Exception(tr("Could not allocate video frame."));
 
+#if LIBAVCODEC_VERSION_MAJOR >= 57
+	_frame->format = _codecContext->pix_fmt;
+	_frame->width  = _codecContext->width;
+	_frame->height = _codecContext->height;
+
+	// Allocate the buffers for the frame data.
+	if((errCode = ::av_frame_get_buffer(_frame.get(), 32)) < 0)
+		throw Exception(tr("Could not allocate video frame encoding buffer: %1").arg(errorMessage(errCode)));
+#else
 	// Allocate memory.
-	int size = avpicture_get_size(_codecContext->pix_fmt, _codecContext->width, _codecContext->height);
+	int size = ::avpicture_get_size(_codecContext->pix_fmt, _codecContext->width, _codecContext->height);
 	_pictureBuf = std::make_unique<quint8[]>(size);
 
-	// Setup the planes.
+	// Set up the planes.
 	::avpicture_fill(reinterpret_cast<AVPicture*>(_frame.get()), _pictureBuf.get(), _codecContext->pix_fmt, _codecContext->width, _codecContext->height);
 
 	// Allocate memory for encoded frame.
 	_outputBuf.resize(width * height * 3);
+#endif
 
 	// Open output file (if needed).
 	if(!(outputFormat->flags & AVFMT_NOFILE)) {
-		if(::avio_open(&_formatContext->pb, _formatContext->filename, AVIO_FLAG_WRITE) < 0)
-			throw Exception(tr("Failed to open output video file %1").arg(filename));
+		if((errCode = ::avio_open(&_formatContext->pb, _formatContext->filename, AVIO_FLAG_WRITE)) < 0)
+			throw Exception(tr("Failed to open output video file '%1': %2").arg(filename).arg(errorMessage(errCode)));
 	}
 
 	// Write stream header, if any.
@@ -218,8 +234,37 @@ void VideoEncoder::closeFile()
 	}
 
 	// Write stream trailer.
-	if(_isOpen)
+	if(_isOpen) {
+
+#if LIBAVCODEC_VERSION_MAJOR >= 57
+		// Flush encoder.
+		int errCode;
+		if((errCode = ::avcodec_send_frame(_codecContext.get(), _frame.get())) < 0)
+			qWarning() << "Error while submitting an image frame for video encoding:" << errorMessage(errCode);
+
+		do {
+			AVPacket pkt = {0};
+			::av_init_packet(&pkt);
+
+			errCode = ::avcodec_receive_packet(_codecContext.get(), &pkt);
+			if(errCode < 0 && errCode != AVERROR(EAGAIN) && errCode != AVERROR_EOF) {
+				qWarning() << "Error while encoding video frame:" << errorMessage(errCode);
+				break;
+			}
+
+			if(errCode >= 0) {
+				::av_packet_rescale_ts(&pkt, _codecContext->time_base, _videoStream->time_base);
+				pkt.stream_index = _videoStream->index;
+				// Write the compressed frame to the media file.
+				if((errCode = ::av_interleaved_write_frame(_formatContext.get(), &pkt)) < 0) {
+					qWarning() << "Error while writing encoded video frame:" << errorMessage(errCode);
+				}
+			}
+		}
+		while(errCode >= 0);
+#endif
 		::av_write_trailer(_formatContext.get());
+	}
 
 	// Close codec.
 	if(_codecContext)
@@ -263,7 +308,7 @@ void VideoEncoder::writeFrame(const QImage& image)
 	int videoHeight = _codecContext->height;
 	OVITO_ASSERT(image.width() == videoWidth && image.height() == videoHeight);
 	if(image.width() != videoWidth || image.height() != videoHeight)
-		throw Exception(tr("Frame image has wrong size."));
+		throw Exception(tr("Frame has wrong dimensions."));
 
 	// Make sure bit format of image is correct.
 	QImage finalImage = image.convertToFormat(QImage::Format_RGB32);
@@ -287,7 +332,32 @@ void VideoEncoder::writeFrame(const QImage& image)
 
 	::sws_scale(_imgConvertCtx, srcplanes, srcstride, 0, videoHeight, _frame->data, _frame->linesize);
 
-#if !defined(FF_API_OLD_ENCODE_VIDEO) && LIBAVCODEC_VERSION_MAJOR < 55
+#if LIBAVCODEC_VERSION_MAJOR >= 57
+
+	int errCode;
+	if((errCode = ::avcodec_send_frame(_codecContext.get(), _frame.get())) < 0)
+		throw Exception(tr("Error while submitting an image frame for video encoding: %1").arg(errorMessage(errCode)));
+
+	do {
+		AVPacket pkt = {0};
+		::av_init_packet(&pkt);
+
+		errCode = ::avcodec_receive_packet(_codecContext.get(), &pkt);
+		if(errCode < 0 && errCode != AVERROR(EAGAIN) && errCode != AVERROR_EOF)
+			throw Exception(tr("Error while encoding video frame: %1").arg(errorMessage(errCode)));
+
+		if(errCode >= 0) {
+			::av_packet_rescale_ts(&pkt, _codecContext->time_base, _videoStream->time_base);
+			pkt.stream_index = _videoStream->index;
+			// Write the compressed frame to the media file.
+			if((errCode = ::av_interleaved_write_frame(_formatContext.get(), &pkt)) < 0) {
+				throw Exception(tr("Error while writing encoded video frame: %1").arg(errorMessage(errCode)));
+			}
+		}
+	}
+	while(errCode >= 0);
+
+#elif !defined(FF_API_OLD_ENCODE_VIDEO) && LIBAVCODEC_VERSION_MAJOR < 55
 	int out_size = ::avcodec_encode_video(_codecContext, _outputBuf.data(), _outputBuf.size(), _frame.get());
 	// If zero size, it means the image was buffered.
 	if(out_size > 0) {
@@ -305,23 +375,19 @@ void VideoEncoder::writeFrame(const QImage& image)
 			throw Exception(tr("Error while writing video frame."));
 	}
 #else
-	int got_packet_ptr;
 	AVPacket pkt = {0};
 	::av_init_packet(&pkt);
 
-	if(::avcodec_encode_video2(_codecContext.get(), &pkt, _frame.get(), &got_packet_ptr) < 0)
-		throw Exception(tr("Error while encoding video frame."));
+	int got_packet_ptr;
+	int errCode;
+	if((errCode = ::avcodec_encode_video2(_codecContext.get(), &pkt, _frame.get(), &got_packet_ptr)) < 0)
+		throw Exception(tr("Error while encoding video frame: %1").arg(errorMessage(errCode)));
 
 	if(got_packet_ptr && pkt.size) {
 		pkt.stream_index = _videoStream->index;
-		int errcode = ::av_write_frame(_formatContext.get(), &pkt);
-		if(errcode < 0) {
+		if((errCode = ::av_write_frame(_formatContext.get(), &pkt)) < 0) {
 			::av_free_packet(&pkt);
-			char msgbuf[1024];
-			if(::av_strerror(errcode, msgbuf, sizeof(msgbuf)) == 0)
-				throw Exception(tr("Error while writing video frame: %1").arg(msgbuf));
-			else
-				throw Exception(tr("Error while writing video frame."));
+			throw Exception(tr("Error while writing video frame: %1").arg(errorMessage(errCode)));
 		}
 		::av_free_packet(&pkt);
 	}

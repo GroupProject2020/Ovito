@@ -182,6 +182,7 @@ git clone git://git.libav.org/libav.git libav_source
 - Install make (MSYS2: "pacman -S make")
 export LIB="$LIB;$PWD/zlib/lib"
 export INCLUDE="$INCLUDE;$PWD/zlib/include"
+export PATH="/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.21.27702/bin/HostX64/x64:$PATH"
 cd libav_source
 mkdir build
 cd build

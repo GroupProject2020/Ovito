@@ -79,6 +79,8 @@ export MACOSX_DEPLOYMENT_TARGET=10.12
   --disable-doc \
   --disable-filters \
   --disable-static \
+  --disable-decoders \
+  --disable-demuxers \
   --enable-shared \
   --prefix=$HOME/progs/libav && \
 make install      # Do not use parallel build!
