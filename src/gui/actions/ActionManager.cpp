@@ -61,12 +61,12 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 
 	createCommandAction(ACTION_EDIT_UNDO, tr("Undo"), ":/gui/actions/edit/edit_undo.bw.svg", tr("Reverse a user action."), QKeySequence::Undo);
 	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.bw.svg", tr("Redo the previously undone user action."), QKeySequence::Redo);
-	createCommandAction(ACTION_EDIT_CLEAR_UNDO_STACK, tr("Clear undo stack"), nullptr, tr("Discards all existing undo records."));
-	
-	createCommandAction(ACTION_EDIT_CLONE_PIPELINE, tr("Clone pipeline"), ":/gui/actions/edit/clone_pipeline.bw.svg", tr("Duplicates the current pipeline to show multiple datasets side by side."));
-	createCommandAction(ACTION_EDIT_DELETE, tr("Delete pipeline"), ":/gui/actions/edit/edit_delete.bw.svg", tr("Deletes the selected object from the scene."));
+	createCommandAction(ACTION_EDIT_CLEAR_UNDO_STACK, tr("Clear Undo Stack"), nullptr, tr("Discards all existing undo records."));
 
-	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Application settings..."), ":/gui/actions/file/preferences.bw.svg", QString(), QKeySequence::Preferences);
+	createCommandAction(ACTION_EDIT_CLONE_PIPELINE, tr("Clone Pipeline"), ":/gui/actions/edit/clone_pipeline.bw.svg", tr("Duplicates the current pipeline to show multiple datasets side by side."));
+	createCommandAction(ACTION_EDIT_DELETE, tr("Delete Pipeline"), ":/gui/actions/edit/edit_delete.bw.svg", tr("Deletes the selected object from the scene."));
+
+	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Application Settings..."), ":/gui/actions/file/preferences.bw.svg", QString(), QKeySequence::Preferences);
 
 	createCommandAction(ACTION_RENDER_ACTIVE_VIEWPORT, tr("Render Active Viewport"), ":/gui/actions/rendering/render_active_viewport.bw.svg");
 
@@ -223,7 +223,7 @@ QAction* ActionManager::createCommandAction(const QString& id, const QString& ti
 {
 	QAction* action = new QAction(title, this);
 	action->setObjectName(id);
-	if(!shortcut.isEmpty()) 
+	if(!shortcut.isEmpty())
 		action->setShortcut(shortcut);
 	if(!statusTip.isEmpty())
 		action->setStatusTip(statusTip);
@@ -242,7 +242,7 @@ QAction* ActionManager::createViewportModeAction(const QString& id, ViewportInpu
 {
 	QAction* action = new ViewportModeAction(mainWindow(), title, this, inputHandler);
 	action->setObjectName(id);
-	if(!shortcut.isEmpty()) 
+	if(!shortcut.isEmpty())
 		action->setShortcut(shortcut);
 	action->setStatusTip(statusTip);
 	if(!shortcut.isEmpty())

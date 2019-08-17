@@ -14,9 +14,9 @@
        <imagedata fileref="images/clone_pipeline/clone_pipeline_menu_item.png" format="PNG" scale="45" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    The <emphasis>Clone pipeline</emphasis> function lets you duplicate the currently selected <link linkend="usage.modification_pipeline">data pipeline</link>
+    The <emphasis>Clone Pipeline</emphasis> function lets you duplicate the currently selected <link linkend="usage.modification_pipeline">data pipeline</link>
     in order to visualize multiple datasets side by side, or visualize the same dataset in several different ways. The function can be invoked by
-    selecting <menuchoice><guimenu>Edit</guimenu><guimenuitem>Clone pipeline</guimenuitem></menuchoice> from the main menu, which is depicted in the screenshot.
+    selecting <menuchoice><guimenu>Edit</guimenu><guimenuitem>Clone Pipeline</guimenuitem></menuchoice> from the main menu, which is depicted in the screenshot.
   </para>
 
   <para>
@@ -24,7 +24,7 @@
        <imagedata fileref="images/clone_pipeline/clone_pipeline_dialog.png" format="PNG" scale="85" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    The <emphasis>Clone pipeline</emphasis> dialog is shown to let you configure the cloning operation.
+    The <emphasis>Clone Pipeline</emphasis> dialog is shown to let you configure the cloning operation.
     Once you close the dialog with the <guibutton>Ok</guibutton> button, the cloning operation is executed according
     to the settings you made (see below).
   </para>

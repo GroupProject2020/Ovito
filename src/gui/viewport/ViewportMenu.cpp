@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -47,11 +47,9 @@ ViewportMenu::ViewportMenu(ViewportWindow* vpWindow) : QMenu(vpWindow), _viewpor
 	action = addAction(tr("Show Grid"), this, SLOT(onShowGrid(bool)));
 	action->setCheckable(true);
 	action->setChecked(_viewport->isGridVisible());
-#ifdef OVITO_DEBUG
-	action = addAction(tr("Stereoscopic Mode (anaglyphs)"), this, SLOT(onStereoscopicMode(bool)));
+	action = addAction(tr("Constrain Rotation"), this, SLOT(onConstrainRotation(bool)));
 	action->setCheckable(true);
-	action->setChecked(_viewport->stereoscopicMode());
-#endif
+	action->setChecked(ViewportSettings::getSettings().constrainCameraRotation());
 	addSeparator();
 
 	_viewTypeMenu = addMenu(tr("View Type"));
@@ -161,9 +159,10 @@ void ViewportMenu::onShowGrid(bool checked)
 /******************************************************************************
 * Handles the menu item event.
 ******************************************************************************/
-void ViewportMenu::onStereoscopicMode(bool checked)
+void ViewportMenu::onConstrainRotation(bool checked)
 {
-	_viewport->setStereoscopicMode(checked);
+	ViewportSettings::getSettings().setConstrainCameraRotation(checked);
+	ViewportSettings::getSettings().save();
 }
 
 /******************************************************************************

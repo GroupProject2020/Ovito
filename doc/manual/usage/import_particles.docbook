@@ -324,8 +324,8 @@
       <para>
         Instead of importing several data files into OVITO, you can also duplicate a dataset right in OVITO in order
         to visualize the data in various different ways, for example by applying different sets of modifiers to the replica
-        of the dataset. This is done using the <link linkend="clone_pipeline">Clone pipeline</link> function,
-        which is found in the <guimenu>Edit</guimenu> menu.
+        of the dataset. This is done using the <link linkend="clone_pipeline">Clone Pipeline</link> function,
+        found under the <guimenu>Edit</guimenu> menu.
       </para>
     </simplesect>
 

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+//
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,11 +27,11 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 
 /**
  * \brief The context menu of the viewports.
- */ 
+ */
 class ViewportMenu : public QMenu
 {
 	Q_OBJECT
-	
+
 public:
 
 	/// Initializes the menu.
@@ -44,18 +44,18 @@ private Q_SLOTS:
 
 	void onRenderPreviewMode(bool checked);
 	void onShowGrid(bool checked);
-	void onStereoscopicMode(bool checked);
+	void onConstrainRotation(bool checked);
 	void onShowViewTypeMenu();
 	void onViewType(QAction* action);
 	void onAdjustView();
 	void onViewNode(QAction* action);
 	void onCreateCamera();
-	
+
 private:
-    
+
 	/// The viewport this menu belongs to.
 	Viewport* _viewport;
-	
+
 	/// The window this menu is shown in.
 	ViewportWindow* _vpWindow;
 

@@ -110,7 +110,10 @@ const Color& ViewportSettings::viewportColor(ViewportColor which) const
 void ViewportSettings::setViewportColor(ViewportColor which, const Color& color)
 {
 	OVITO_ASSERT(which >= 0 && which < _viewportColors.size());
-	_viewportColors[which] = color;
+	if(_viewportColors[which] != color) {
+		_viewportColors[which] = color;
+		Q_EMIT settingsChanged(this);
+	}
 }
 
 /******************************************************************************

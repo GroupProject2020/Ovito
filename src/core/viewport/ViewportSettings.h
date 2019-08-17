@@ -89,13 +89,23 @@ public:
 	UpDirection upDirection() const { return _upDirection; }
 
 	/// Sets the "up" direction.
-	void setUpDirection(UpDirection t) { _upDirection = t; }
+	void setUpDirection(UpDirection t) {
+		if(_upDirection != t) {
+			_upDirection = t;
+			Q_EMIT settingsChanged(this);
+		}
+	}
 
 	/// Returns whether the camera rotation is restricted such that the selected axis always points upward.
 	bool constrainCameraRotation() const { return _constrainCameraRotation; }
 
 	/// Sets whether the camera rotation should be restricted such that the selected axis always points upward.
-	void setConstrainCameraRotation(bool active) { _constrainCameraRotation = active; }
+	void setConstrainCameraRotation(bool active) {
+		if(_constrainCameraRotation != active) {
+			_constrainCameraRotation = active;
+			Q_EMIT settingsChanged(this);
+		}
+	}
 
 	/// Returns the font to be used for rendering text in the viewports.
 	const QFont& viewportFont() const { return _viewportFont; }
@@ -106,7 +116,12 @@ public:
 
 	/// Sets the type of viewport that will be initially in the maximized state.
 	/// Or 0 if no viewport is initially maximized.
-	void setDefaultMaximizedViewportType(int viewType) { _defaultMaximizedViewportType = viewType; }
+	void setDefaultMaximizedViewportType(int viewType) {
+		if(_defaultMaximizedViewportType != viewType) {
+			_defaultMaximizedViewportType = viewType;
+			Q_EMIT settingsChanged(this);
+		}
+	}
 
 	/// Loads the settings from the given settings store.
 	void load(QSettings& store);
