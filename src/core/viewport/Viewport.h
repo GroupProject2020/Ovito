@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -341,13 +341,13 @@ private:
 	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, overlays);
 
 	/// This flag is true during the rendering phase.
-	bool _isRendering;
+	bool _isRendering = false;
 
 	/// Describes the current 3D projection used to render the contents of the viewport.
 	ViewProjectionParameters _projParams;
 
 	/// The GUI window associated with this viewport.
-	ViewportWindowInterface* _window;
+	ViewportWindowInterface* _window = nullptr;
 };
 
 OVITO_END_INLINE_NAMESPACE

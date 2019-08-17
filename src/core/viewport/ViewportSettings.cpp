@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,7 +35,7 @@ void ViewportSettings::assign(const ViewportSettings& other)
 {
 	_viewportColors = other._viewportColors;
 	_upDirection = other._upDirection;
-	_restrictVerticalRotation = other._restrictVerticalRotation;
+	_constrainCameraRotation = other._constrainCameraRotation;
 	_viewportFont = other._viewportFont;
 
 	Q_EMIT settingsChanged(this);
@@ -78,8 +78,6 @@ void ViewportSettings::setSettings(const ViewportSettings& settings)
 ViewportSettings::ViewportSettings() :
 	_viewportFont("Helvetica")
 {
-	_upDirection = Z_AXIS;
-	_restrictVerticalRotation = true;
 	restoreDefaultViewportColors();
 }
 
@@ -153,7 +151,7 @@ Matrix3 ViewportSettings::coordinateSystemOrientation() const
 void ViewportSettings::load(QSettings& store)
 {
 	_upDirection = (UpDirection)store.value("UpDirection", QVariant::fromValue((int)_upDirection)).toInt();
-	_restrictVerticalRotation = store.value("RestrictVerticalRotation", QVariant::fromValue(_restrictVerticalRotation)).toBool();
+	_constrainCameraRotation = store.value("ConstrainCameraRotation", QVariant::fromValue(_constrainCameraRotation)).toBool();
 	store.beginGroup("Colors");
 	QMetaEnum colorEnum;
 	for(int i = 0; i < ViewportSettings::staticMetaObject.enumeratorCount(); i++) {
@@ -180,7 +178,7 @@ void ViewportSettings::load(QSettings& store)
 void ViewportSettings::save(QSettings& store) const
 {
 	store.setValue("UpDirection", (int)_upDirection);
-	store.setValue("RestrictVerticalRotation", _restrictVerticalRotation);
+	store.setValue("ConstrainCameraRotation", _constrainCameraRotation);
 	store.remove("Colors");
 	store.beginGroup("Colors");
 	QMetaEnum colorEnum;

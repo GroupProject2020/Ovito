@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,7 +35,7 @@ class OVITO_GUI_EXPORT ViewportSettingsPage : public ApplicationSettingsDialogPa
 {
 	Q_OBJECT
 	OVITO_CLASS(ViewportSettingsPage)
-	
+
 public:
 
 	/// Default constructor.
@@ -48,7 +48,7 @@ public:
 	/// \param settingsDialog The settings dialog box.
 	virtual bool saveValues(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) override;
 
-	/// \brief Returns an integer value that is used to sort the dialog pages in ascending order. 
+	/// \brief Returns an integer value that is used to sort the dialog pages in ascending order.
 	virtual int pageSortingKey() const override { return 2; }
 
 private:
@@ -57,12 +57,10 @@ private:
 	ViewportSettings _settings;
 
 	QButtonGroup* _upDirectionGroup;
-	QCheckBox* _restrictVerticalRotationBox;
+	QCheckBox* _constrainCameraRotationBox;
 	QButtonGroup* _colorScheme;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

@@ -10,7 +10,7 @@
   <title>Viewport windows</title>
 
   <para>
-    The viewport windows display the three-dimensional scene containing the loaded dataset.
+    The viewport windows show the three-dimensional scene containing the loaded dataset.
     OVITO's main window has four viewports, laid out in a two by two grid,
     all showing the same scene from different perspectives.
     The label in the upper left corner of each viewport window and the axis tripod in the lower left corner
@@ -45,11 +45,9 @@
       </para></listitem>
     </itemizedlist>
 
-     Note that the <emphasis>z</emphasis>-axis is considered the "up" (vertical) direction by default, and OVITO
-     constrains the camera orientation such that this axis always points upward in the viewports.
-     Depending on the orientation of your dataset, the z-axis may not be the best choice.
-     You can also configure the <emphasis>x</emphasis> or <emphasis>y</emphasis> axes to be the vertical direction in the
-     <link linkend="application_settings.viewports">application settings</link> of OVITO.
+     Note that the <emphasis>z</emphasis>-axis is considered the "up" (vertical) direction, and OVITO
+     constrains the camera orientation such that this axis is always pointing upward in the viewports by default.
+     You can change this behavior in the <link linkend="application_settings.viewports">application settings</link> of OVITO.
   </para>
   </simplesect>
 

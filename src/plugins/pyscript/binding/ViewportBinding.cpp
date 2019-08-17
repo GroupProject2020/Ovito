@@ -81,7 +81,8 @@ void defineViewportSubmodule(py::module m)
 				"Direction vector specifying which coordinate axis will point upward in rendered images. "
 				"Set this parameter to a non-zero vector in order to rotate the camera around the viewing direction and "
 				"align the vertical direction in rendered images with a different simulation coordinate axis. "
-				"If set to ``(0,0,0)``, then the upward axis is determined by the current user settings set in OVITO's application settings dialog (z-axis by default). "
+				"If set to ``(0,0,0)``, then the upward axis is determined by the current user settings set in OVITO's "
+				":ovitoman:`application settings dialog <../../application_settings.viewports>` (z-axis by default). "
 				"\n\n"
 				":Default: (0,0,0)\n")
 		.def_property_readonly("viewMatrix", [](Viewport& vp) -> const AffineTransformation& { return vp.projectionParams().viewMatrix; })

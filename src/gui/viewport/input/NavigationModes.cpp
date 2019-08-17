@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -308,52 +308,72 @@ void OrbitMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 	if(vp->viewType() < Viewport::VIEW_ORTHO)
 		vp->setViewType(Viewport::VIEW_ORTHO, true);
 
-	Matrix3 coordSys = ViewportSettings::getSettings().coordinateSystemOrientation();
-	Vector3 v = _oldViewMatrix * coordSys.column(2);
-
-	FloatType theta, phi;
-	if(v.x() == 0 && v.y() == 0)
-		theta = FLOATTYPE_PI;
-	else
-		theta = atan2(v.x(), v.y());
-	phi = atan2(sqrt(v.x() * v.x() + v.y() * v.y()), v.z());
-
-	FloatType speed = FloatType(4) / vp->windowSize().height();
+	FloatType speed = FloatType(5.0) / vp->windowSize().height();
 	FloatType deltaTheta = speed * delta.x();
 	FloatType deltaPhi = -speed * delta.y();
-
-	if(ViewportSettings::getSettings().restrictVerticalRotation()) {
-		if(phi + deltaPhi < FLOATTYPE_EPSILON)
-			deltaPhi = -phi + FLOATTYPE_EPSILON;
-		else if(phi + deltaPhi > FLOATTYPE_PI - FLOATTYPE_EPSILON)
-			deltaPhi = FLOATTYPE_PI - FLOATTYPE_EPSILON - phi;
-	}
 
 	Vector3 t1 = _currentOrbitCenter - Point3::Origin();
 	Vector3 t2 = (_oldViewMatrix * _currentOrbitCenter) - Point3::Origin();
 
-	if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
-		AffineTransformation newTM =
-				AffineTransformation::translation(t1) *
-				AffineTransformation::rotation(Rotation(ViewportSettings::getSettings().upVector(), -deltaTheta)) *
-				AffineTransformation::translation(-t1) * _oldInverseViewMatrix *
-				AffineTransformation::translation(t2) *
-				AffineTransformation::rotationX(deltaPhi) *
-				AffineTransformation::translation(-t2);
-		newTM.orthonormalize();
-		vp->setCameraTransformation(newTM);
+	if(ViewportSettings::getSettings().constrainCameraRotation()) {
+		const Matrix3& coordSys = ViewportSettings::getSettings().coordinateSystemOrientation();
+		Vector3 v = _oldViewMatrix * coordSys.column(2);
+
+		FloatType theta, phi;
+		if(v.x() == 0 && v.y() == 0)
+			theta = FLOATTYPE_PI;
+		else
+			theta = atan2(v.x(), v.y());
+		phi = atan2(sqrt(v.x() * v.x() + v.y() * v.y()), v.z());
+
+		// Restrict rotation to keep the major axis pointing upward (prevent camera from becoming upside down).
+		if(phi + deltaPhi < FLOATTYPE_EPSILON)
+			deltaPhi = -phi + FLOATTYPE_EPSILON;
+		else if(phi + deltaPhi > FLOATTYPE_PI - FLOATTYPE_EPSILON)
+			deltaPhi = FLOATTYPE_PI - FLOATTYPE_EPSILON - phi;
+
+		if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
+			AffineTransformation newTM =
+					AffineTransformation::translation(t1) *
+					AffineTransformation::rotation(Rotation(ViewportSettings::getSettings().upVector(), -deltaTheta)) *
+					AffineTransformation::translation(-t1) * _oldInverseViewMatrix *
+					AffineTransformation::translation(t2) *
+					AffineTransformation::rotationX(deltaPhi) *
+					AffineTransformation::translation(-t2);
+			newTM.orthonormalize();
+			vp->setCameraTransformation(newTM);
+		}
+		else {
+			Controller* ctrl = vp->viewNode()->transformationController();
+			TimePoint time = vp->dataset()->animationSettings()->time();
+			Rotation rotX(Vector3(1,0,0), deltaPhi, false);
+			ctrl->rotate(time, rotX, _oldInverseViewMatrix);
+			Rotation rotZ(ViewportSettings::getSettings().upVector(), -deltaTheta);
+			ctrl->rotate(time, rotZ, AffineTransformation::Identity());
+			Vector3 shiftVector = _oldInverseViewMatrix.translation() - (_currentOrbitCenter - Point3::Origin());
+			Vector3 translationZ = (Matrix3::rotation(rotZ) * shiftVector) - shiftVector;
+			Vector3 translationX = Matrix3::rotation(rotZ) * _oldInverseViewMatrix * ((Matrix3::rotation(rotX) * t2) - t2);
+			ctrl->translate(time, translationZ - translationX, AffineTransformation::Identity());
+		}
 	}
 	else {
-		Controller* ctrl = vp->viewNode()->transformationController();
-		TimePoint time = vp->dataset()->animationSettings()->time();
-		Rotation rotX(Vector3(1,0,0), deltaPhi, false);
-		ctrl->rotate(time, rotX, _oldInverseViewMatrix);
-		Rotation rotZ(ViewportSettings::getSettings().upVector(), -deltaTheta);
-		ctrl->rotate(time, rotZ, AffineTransformation::Identity());
-		Vector3 shiftVector = _oldInverseViewMatrix.translation() - (_currentOrbitCenter - Point3::Origin());
-		Vector3 translationZ = (Matrix3::rotation(rotZ) * shiftVector) - shiftVector;
-		Vector3 translationX = Matrix3::rotation(rotZ) * _oldInverseViewMatrix * ((Matrix3::rotation(rotX) * t2) - t2);
-		ctrl->translate(time, translationZ - translationX, AffineTransformation::Identity());
+		if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
+			AffineTransformation newTM = _oldInverseViewMatrix *
+					AffineTransformation::translation(t2) *
+					AffineTransformation::rotationY(-deltaTheta) *
+					AffineTransformation::rotationX(deltaPhi) *
+					AffineTransformation::translation(-t2);
+			newTM.orthonormalize();
+			vp->setCameraTransformation(newTM);
+		}
+		else {
+			Controller* ctrl = vp->viewNode()->transformationController();
+			TimePoint time = vp->dataset()->animationSettings()->time();
+			Rotation rot = Rotation(Vector3(0,1,0), -deltaTheta, false) * Rotation(Vector3(1,0,0), deltaPhi, false);
+			ctrl->rotate(time, rot, _oldInverseViewMatrix);
+			Vector3 translation = t2 - (Matrix3::rotation(rot) * t2);
+			ctrl->translate(time, translation, _oldInverseViewMatrix);
+		}
 	}
 }
 

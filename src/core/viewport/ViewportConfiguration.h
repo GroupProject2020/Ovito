@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT ViewportConfiguration : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(ViewportConfiguration)
-	
+
 public:
 
 	enum OrbitCenterMode {
@@ -57,7 +57,7 @@ public:
 	/// \brief Immediately repaints all viewports that have been scheduled for an update using updateViewports().
 	/// \sa updateViewports()
 	void processViewportUpdates();
-	
+
 	/// \brief A call to this method suspends redrawing of the viewports.
 	///
 	/// To resume redrawing of viewports call resumeViewportUpdates().
@@ -168,10 +168,10 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Point3, userOrbitCenter, setUserOrbitCenter, PROPERTY_FIELD_NO_UNDO);
 
 	/// This counter is for suspending the viewport updates.
-	int _viewportSuspendCount;
+	int _viewportSuspendCount = 0;
 
 	/// Indicates that the viewports have been invalidated while updates were suspended.
-	bool _viewportsNeedUpdate;
+	bool _viewportsNeedUpdate = false;
 };
 
 

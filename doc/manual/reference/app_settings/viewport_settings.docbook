@@ -13,9 +13,9 @@
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
       <imagedata fileref="images/app_settings/viewport_settings.png" format="PNG" scale="80" />
-    </imageobject></mediaobject></screenshot></informalfigure>     
-    This page of the <link linkend="application_settings">application settings dialog</link> 
-    contains options related to the interactive viewports of the OVITO. 
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This page of the <link linkend="application_settings">application settings dialog</link>
+    contains options related to the interactive viewports of the OVITO.
   </para>
 
   <simplesect>
@@ -25,23 +25,22 @@
         <varlistentry>
           <term>Coordinate system orientation</term>
           <listitem>
-            <para>OVITO restricts the camera rotation in the viewports such that one of the Cartesian coordinate axes 
-            always remains vertical. This selects which of the three axes that is. Default: Z-axis. 
+            <para>OVITO can restrict the viewport camera rotation such that the selected Cartesian coordinate axis
+            always points upward. Default: z-axis.
             </para>
           </listitem>
         </varlistentry>
         <varlistentry>
-          <term>Restrict camera to keep major axis pointing upward</term>
+          <term>Restrict camera rotation to keep major axis pointing upward</term>
           <listitem>
-            <para>This option restricts the camera rotation to a 180° range such that the vertical axis always points upward,
-            i.e., it prevents the camera from turning upside down.
+            <para>This option constrains the camera's orientation to prevent the camera from turning upside down.
             </para>
           </listitem>
         </varlistentry>
       </variablelist>
     </para>
   </simplesect>
-    
+
   <simplesect>
     <title>Color scheme</title>
     <para>

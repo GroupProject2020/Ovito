@@ -62,13 +62,11 @@ Viewport::Viewport(DataSet* dataset) : RefTarget(dataset),
 		_viewType(VIEW_NONE),
 		_fieldOfView(100),
 		_renderPreviewMode(false),
-		_isRendering(false),
 		_cameraTransformation(AffineTransformation::Identity()),
 		_cameraUpDirection(Vector3::Zero()),
 		_gridMatrix(AffineTransformation::Identity()),
 		_isGridVisible(false),
-		_stereoscopicMode(false),
-		_window(nullptr)
+		_stereoscopicMode(false)
 {
 	connect(&ViewportSettings::getSettings(), &ViewportSettings::settingsChanged, this, &Viewport::viewportSettingsChanged);
 }
@@ -188,10 +186,6 @@ void Viewport::setCameraDirection(const Vector3& newDir)
 		Vector3 upVector = cameraUpDirection();
 		if(upVector.isZero()) {
 			upVector = ViewportSettings::getSettings().upVector();
-			if(!ViewportSettings::getSettings().restrictVerticalRotation()) {
-				if(upVector.dot(cameraTransformation().column(1)) < 0)
-					upVector = -upVector;
-			}
 		}
 		setCameraTransformation(AffineTransformation::lookAlong(cameraPosition(), newDir, upVector).inverse());
 	}
@@ -429,8 +423,9 @@ void Viewport::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 void Viewport::viewportSettingsChanged(ViewportSettings* newSettings)
 {
-	// Update camera TM if up axis has changed.
-	setCameraDirection(cameraDirection());
+	// Update camera TM if "up" axis has changed to make it point upward.
+	if(ViewportSettings::getSettings().constrainCameraRotation())
+		setCameraDirection(cameraDirection());
 
 	// Redraw viewport.
 	updateViewport();

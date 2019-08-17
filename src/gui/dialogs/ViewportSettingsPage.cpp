@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -68,9 +68,9 @@ void ViewportSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* s
 	_upDirectionGroup->button(_settings.upDirection())->setChecked(true);
 	layout2->setColumnStretch(3, 1);
 
-	_restrictVerticalRotationBox = new QCheckBox(tr("Restrict camera to keep major axis pointing upward"));
-	_restrictVerticalRotationBox->setChecked(_settings.restrictVerticalRotation());
-	layout2->addWidget(_restrictVerticalRotationBox, 2, 0, 1, 3);
+	_constrainCameraRotationBox = new QCheckBox(tr("Restrict camera rotation to keep major axis pointing upward"));
+	_constrainCameraRotationBox->setChecked(_settings.constrainCameraRotation());
+	layout2->addWidget(_constrainCameraRotationBox, 2, 0, 1, 3);
 
 	QGroupBox* colorsGroupBox = new QGroupBox(tr("Color scheme"), page);
 	layout1->addWidget(colorsGroupBox, 1, 0);
@@ -98,7 +98,7 @@ bool ViewportSettingsPage::saveValues(ApplicationSettingsDialog* settingsDialog,
 {
 	// Update settings.
 	_settings.setUpDirection((ViewportSettings::UpDirection)_upDirectionGroup->checkedId());
-	_settings.setRestrictVerticalRotation(_restrictVerticalRotationBox->isChecked());
+	_settings.setConstrainCameraRotation(_constrainCameraRotationBox->isChecked());
 	if(_colorScheme->checkedId() == 1) {
 		// Light color scheme.
 		_settings.setViewportColor(ViewportSettings::COLOR_VIEWPORT_BKG, Color(1.0f, 1.0f, 1.0f));

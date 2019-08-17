@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -40,7 +40,7 @@ DEFINE_PROPERTY_FIELD(ViewportConfiguration, userOrbitCenter);
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ViewportSuspender::ViewportSuspender(RefMaker* object) : ViewportSuspender(object->dataset()->viewportConfig()) 
+ViewportSuspender::ViewportSuspender(RefMaker* object) : ViewportSuspender(object->dataset()->viewportConfig())
 {
 }
 
@@ -48,7 +48,8 @@ ViewportSuspender::ViewportSuspender(RefMaker* object) : ViewportSuspender(objec
 * Constructor.
 ******************************************************************************/
 ViewportConfiguration::ViewportConfiguration(DataSet* dataset) : RefTarget(dataset),
-	_orbitCenterMode(ORBIT_SELECTION_CENTER), _userOrbitCenter(Point3::Origin()), _viewportSuspendCount(0)
+	_orbitCenterMode(ORBIT_SELECTION_CENTER),
+	_userOrbitCenter(Point3::Origin())
 {
 	// Repaint viewports when the camera orbit center changed.
 	connect(this, &ViewportConfiguration::cameraOrbitCenterChanged, this, &ViewportConfiguration::updateViewports);

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -91,11 +91,11 @@ public:
 	/// Sets the "up" direction.
 	void setUpDirection(UpDirection t) { _upDirection = t; }
 
-	/// Returns whether to restrict the vertical rotation such that the up axis never points downward.
-	bool restrictVerticalRotation() const { return _restrictVerticalRotation; }
+	/// Returns whether the camera rotation is restricted such that the selected axis always points upward.
+	bool constrainCameraRotation() const { return _constrainCameraRotation; }
 
-	/// Sets whether to restrict the vertical rotation such that the up axis never points downward.
-	void setRestrictVerticalRotation(bool active) { _restrictVerticalRotation = active; }
+	/// Sets whether the camera rotation should be restricted such that the selected axis always points upward.
+	void setConstrainCameraRotation(bool active) { _constrainCameraRotation = active; }
 
 	/// Returns the font to be used for rendering text in the viewports.
 	const QFont& viewportFont() const { return _viewportFont; }
@@ -126,10 +126,10 @@ private:
 	std::array<Color, NUMBER_OF_COLORS> _viewportColors;
 
 	/// The selected rotation axis type for orbit mode.
-	UpDirection _upDirection;
+	UpDirection _upDirection = Z_AXIS;
 
-	/// Restricts the vertical rotation such that the up axis never points downward.
-	bool _restrictVerticalRotation;
+	/// Restricts the camera rotation such that the selected axis always points upward.
+	bool _constrainCameraRotation = true;
 
 	/// The font used for rendering text in the viewports.
 	QFont _viewportFont;
@@ -144,5 +144,3 @@ Q_DECLARE_METATYPE(Ovito::ViewportSettings::ViewportColor);
 Q_DECLARE_METATYPE(Ovito::ViewportSettings::UpDirection);
 Q_DECLARE_TYPEINFO(Ovito::ViewportSettings::ViewportColor, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(Ovito::ViewportSettings::UpDirection, Q_PRIMITIVE_TYPE);
-
-
