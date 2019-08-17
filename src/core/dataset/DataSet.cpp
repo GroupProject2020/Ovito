@@ -114,7 +114,23 @@ OORef<ViewportConfiguration> DataSet::createDefaultViewportConfiguration()
 		defaultViewportConfig->addViewport(perspectiveView);
 
 		defaultViewportConfig->setActiveViewport(perspectiveView);
-		defaultViewportConfig->setMaximizedViewport(nullptr);
+
+		Viewport::ViewType maximizedViewportType = static_cast<Viewport::ViewType>(ViewportSettings::getSettings().defaultMaximizedViewportType());
+		if(maximizedViewportType != Viewport::VIEW_NONE) {
+			for(Viewport* vp : defaultViewportConfig->viewports()) {
+				if(vp->viewType() == maximizedViewportType) {
+					defaultViewportConfig->setActiveViewport(vp);
+					defaultViewportConfig->setMaximizedViewport(vp);
+					break;
+				}
+			}
+			if(!defaultViewportConfig->maximizedViewport()) {
+				defaultViewportConfig->setMaximizedViewport(defaultViewportConfig->activeViewport());
+				if(maximizedViewportType > Viewport::VIEW_NONE && maximizedViewportType <= Viewport::VIEW_PERSPECTIVE)
+					defaultViewportConfig->maximizedViewport()->setViewType(maximizedViewportType);
+			}
+		}
+		else defaultViewportConfig->setMaximizedViewport(nullptr);
 	}
 
 	return defaultViewportConfig;

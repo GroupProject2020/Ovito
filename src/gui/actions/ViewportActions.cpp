@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2013) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -32,10 +32,16 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 void ActionManager::on_ViewportMaximize_triggered()
 {
 	ViewportConfiguration* vpconf = _dataset->viewportConfig();
-	if(vpconf->maximizedViewport())
+	if(vpconf->maximizedViewport()) {
 		vpconf->setMaximizedViewport(nullptr);
-	else if(vpconf->activeViewport())
+	}
+	else if(vpconf->activeViewport()) {
 		vpconf->setMaximizedViewport(vpconf->activeViewport());
+	}
+	// Remember which viewport was maximized across program sessions.
+	// The same viewport will be maximized next time OVITO is started.
+	ViewportSettings::getSettings().setDefaultMaximizedViewportType(vpconf->maximizedViewport() ? vpconf->maximizedViewport()->viewType() : Viewport::VIEW_NONE);
+	ViewportSettings::getSettings().save();
 }
 
 /******************************************************************************

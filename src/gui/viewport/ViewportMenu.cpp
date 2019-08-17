@@ -172,6 +172,13 @@ void ViewportMenu::onStereoscopicMode(bool checked)
 void ViewportMenu::onViewType(QAction* action)
 {
 	_viewport->setViewType((Viewport::ViewType)action->data().toInt());
+
+	// Remember which viewport was maximized across program sessions.
+	// The same viewport will be maximized next time OVITO is started.
+	if(_viewport->dataset()->viewportConfig()->maximizedViewport() == _viewport) {
+		ViewportSettings::getSettings().setDefaultMaximizedViewportType(_viewport->viewType());
+		ViewportSettings::getSettings().save();
+	}
 }
 
 /******************************************************************************
@@ -210,10 +217,10 @@ void ViewportMenu::onCreateCamera()
 		OORef<PipelineSceneNode> cameraNode;
 		{
 			UndoSuspender noUndo(_viewport->dataset()->undoStack());
-			
+
 			QVector<OvitoClassPtr> cameraTypes = PluginManager::instance().listClasses(AbstractCameraObject::OOClass());
 			if(cameraTypes.empty())
-				_viewport->throwException(tr("OVITO has been built without support for camera objects."));		
+				_viewport->throwException(tr("OVITO has been built without support for camera objects."));
 			OORef<AbstractCameraObject> cameraObj = static_object_cast<AbstractCameraObject>(cameraTypes.front()->createInstance(_viewport->dataset()));
 
 			cameraObj->setPerspectiveCamera(_viewport->isPerspectiveProjection());

@@ -37,6 +37,7 @@ void ViewportSettings::assign(const ViewportSettings& other)
 	_upDirection = other._upDirection;
 	_constrainCameraRotation = other._constrainCameraRotation;
 	_viewportFont = other._viewportFont;
+	_defaultMaximizedViewportType = other._defaultMaximizedViewportType;
 
 	Q_EMIT settingsChanged(this);
 }
@@ -65,11 +66,7 @@ ViewportSettings& ViewportSettings::getSettings()
 void ViewportSettings::setSettings(const ViewportSettings& settings)
 {
 	_currentViewportSettings->assign(settings);
-
-	QSettings settingsStore;
-	settingsStore.beginGroup("core/viewport/");
-	_currentViewportSettings->save(settingsStore);
-	settingsStore.endGroup();
+	_currentViewportSettings->save();
 }
 
 /******************************************************************************
@@ -152,6 +149,7 @@ void ViewportSettings::load(QSettings& store)
 {
 	_upDirection = (UpDirection)store.value("UpDirection", QVariant::fromValue((int)_upDirection)).toInt();
 	_constrainCameraRotation = store.value("ConstrainCameraRotation", QVariant::fromValue(_constrainCameraRotation)).toBool();
+	_defaultMaximizedViewportType = store.value("DefaultMaximizedViewportType", QVariant::fromValue(_defaultMaximizedViewportType)).toInt();
 	store.beginGroup("Colors");
 	QMetaEnum colorEnum;
 	for(int i = 0; i < ViewportSettings::staticMetaObject.enumeratorCount(); i++) {
@@ -173,12 +171,24 @@ void ViewportSettings::load(QSettings& store)
 }
 
 /******************************************************************************
+* Saves the settings to the default application settings store.
+******************************************************************************/
+void ViewportSettings::save() const
+{
+	QSettings settingsStore;
+	settingsStore.beginGroup("core/viewport/");
+	save(settingsStore);
+	settingsStore.endGroup();
+}
+
+/******************************************************************************
 * Saves the settings to the given settings store.
 ******************************************************************************/
 void ViewportSettings::save(QSettings& store) const
 {
 	store.setValue("UpDirection", (int)_upDirection);
 	store.setValue("ConstrainCameraRotation", _constrainCameraRotation);
+	store.setValue("DefaultMaximizedViewportType", _defaultMaximizedViewportType);
 	store.remove("Colors");
 	store.beginGroup("Colors");
 	QMetaEnum colorEnum;

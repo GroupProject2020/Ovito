@@ -100,11 +100,22 @@ public:
 	/// Returns the font to be used for rendering text in the viewports.
 	const QFont& viewportFont() const { return _viewportFont; }
 
+	/// Returns the type of viewport that should initially be in the maximized state.
+	/// Or 0 if no viewport is initially maximized.
+	int defaultMaximizedViewportType() const { return _defaultMaximizedViewportType; }
+
+	/// Sets the type of viewport that will be initially in the maximized state.
+	/// Or 0 if no viewport is initially maximized.
+	void setDefaultMaximizedViewportType(int viewType) { _defaultMaximizedViewportType = viewType; }
+
 	/// Loads the settings from the given settings store.
 	void load(QSettings& store);
 
 	/// Saves the settings to the given settings store.
 	void save(QSettings& store) const;
+
+	/// Saves the settings to the default application settings store.
+	void save() const;
 
 	/// Assignment.
 	void assign(const ViewportSettings& other);
@@ -133,6 +144,10 @@ private:
 
 	/// The font used for rendering text in the viewports.
 	QFont _viewportFont;
+
+	/// The type of viewport that is initially in the maximized state.
+	/// Or -1 if no viewport is initially maximized.
+	int _defaultMaximizedViewportType = 0;
 
 	Q_OBJECT
 };
