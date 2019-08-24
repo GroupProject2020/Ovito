@@ -35,7 +35,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_OVITO_CLASS(XYZImporter);	
+IMPLEMENT_OVITO_CLASS(XYZImporter);
 DEFINE_PROPERTY_FIELD(XYZImporter, autoRescaleCoordinates);
 SET_PROPERTY_FIELD_LABEL(XYZImporter, autoRescaleCoordinates, "Detect reduced coordinates");
 
@@ -172,7 +172,7 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	if(column <= columnMapping.size()) columnMapping.resize(column+1);
 	columnMapping[column].columnName = name;
 	QString loweredName = name.toLower();
-	if(loweredName == "type" || loweredName == "element" || loweredName == "atom_types" ||loweredName == "species") 
+	if(loweredName == "type" || loweredName == "element" || loweredName == "atom_types" ||loweredName == "species")
 		columnMapping[column].mapStandardColumn(ParticlesObject::TypeProperty);
 	else if(loweredName == "pos") columnMapping[column].mapStandardColumn(ParticlesObject::PositionProperty, vec);
 	else if(loweredName == "selection") columnMapping[column].mapStandardColumn(ParticlesObject::SelectionProperty, vec);
@@ -265,7 +265,7 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	}
 	if(numParticlesLong > (unsigned long long)std::numeric_limits<int>::max())
 		throw Exception(tr("Too many particles in XYZ file. This program version can read XYZ file with up to %1 particles only.").arg(std::numeric_limits<int>::max()));
-		
+
 	setProgressMaximum(numParticlesLong);
 	QString fileExcerpt = stream.lineString();
 
@@ -491,7 +491,29 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 		frameData->detectedColumnMapping().resize(lineString.split(ws_re, QString::SkipEmptyParts).size());
 		frameData->detectedColumnMapping().setFileExcerpt(fileExcerpt);
 
+		// If there is no preset column mapping, and if the XYZ file has exactly 4 columns, assume
+		// it is a standard XYZ file containing the chemical type and the x,y,z positions.
+		if(frameData->detectedColumnMapping().size() == 4) {
+			if(std::none_of(frameData->detectedColumnMapping().begin(), frameData->detectedColumnMapping().end(),
+					[](const InputColumnInfo& col) { return col.isMapped(); })) {
+				frameData->detectedColumnMapping()[0].mapStandardColumn(ParticlesObject::TypeProperty);
+				frameData->detectedColumnMapping()[1].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+				frameData->detectedColumnMapping()[2].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+				frameData->detectedColumnMapping()[3].mapStandardColumn(ParticlesObject::PositionProperty, 2);
+			}
+		}
+
 		return frameData;
+	}
+
+	// In script mode, assume standard set of XYZ columns unless the user has specified otherwise or
+	// the file constains column metadata.
+	if(_columnMapping.empty()) {
+		_columnMapping.resize(4);
+		_columnMapping[0].mapStandardColumn(ParticlesObject::TypeProperty);
+		_columnMapping[1].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+		_columnMapping[2].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+		_columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 2);
 	}
 
 	// Parse data columns.
@@ -546,7 +568,7 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 
 	// Detect if there are more simulation frames following in the file.
 	if(!stream.eof())
-		frameData->signalAdditionalFrames();	
+		frameData->signalAdditionalFrames();
 
 	// Sort particles by ID.
 	if(_sortParticles)
@@ -556,7 +578,7 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 		frameData->setStatus(tr("%1 particles").arg(numParticlesLong));
 	else
 		frameData->setStatus(tr("%1 particles\n%2").arg(numParticlesLong).arg(commentLine));
-	
+
 	return frameData;
 }
 

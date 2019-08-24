@@ -96,6 +96,8 @@ InputColumnMappingDialog::InputColumnMappingDialog(const InputColumnMapping& map
 
 	// Dialog buttons:
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
+	buttonBox->button(QDialogButtonBox::Ok)->setDefault(true);
+	buttonBox->button(QDialogButtonBox::Ok)->setFocus();
 	connect(buttonBox->addButton(tr("Load preset..."), QDialogButtonBox::ActionRole), &QPushButton::clicked, this, &InputColumnMappingDialog::onLoadPreset);
 	connect(buttonBox->addButton(tr("Save preset..."), QDialogButtonBox::ActionRole), &QPushButton::clicked, this, &InputColumnMappingDialog::onSavePreset);
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &InputColumnMappingDialog::onOk);

@@ -64,10 +64,12 @@ void InputColumnMapping::loadFromStream(LoadStream& stream)
 			col.dataType = PropertyStorage::Float;
 		int vectorComponent;
 		stream >> vectorComponent;
-		if(propertyType == ParticlesObject::UserProperty)
-			col.property = ParticlePropertyReference(propertyName, vectorComponent);
-		else
-			col.property = ParticlePropertyReference(propertyType, vectorComponent);
+		if(col.dataType != QMetaType::Void) {
+			if(propertyType == ParticlesObject::UserProperty)
+				col.property = ParticlePropertyReference(propertyName, vectorComponent);
+			else
+				col.property = ParticlePropertyReference(propertyType, vectorComponent);
+		}
 	}
 	stream.closeChunk();
 }
@@ -141,7 +143,7 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 					// Create standard property.
 					property = ParticlesObject::OOClass().createStandardStorage(particleCount, pref.type(), true);
 					destination.addParticleProperty(property);
-					
+
 					// Also create a particle type list if it is a typed property.
 					if(pref.type() == ParticlesObject::TypeProperty || pref.type() == ParticlesObject::StructureTypeProperty)
 						rec.typeList = destination.propertyTypesList(property);
