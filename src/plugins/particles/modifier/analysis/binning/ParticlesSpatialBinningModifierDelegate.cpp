@@ -37,11 +37,11 @@ ParticlesSpatialBinningModifierDelegate::ParticlesSpatialBinningModifierDelegate
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the 
+* Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
 std::shared_ptr<SpatialBinningModifierDelegate::SpatialBinningEngine> ParticlesSpatialBinningModifierDelegate::createEngine(
-				TimePoint time, 
+				TimePoint time,
 				const PipelineFlowState& input,
                 const SimulationCell& cell,
 				int binningDirection,
@@ -60,12 +60,12 @@ std::shared_ptr<SpatialBinningModifierDelegate::SpatialBinningEngine> ParticlesS
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputeEngine>(
-			input.stateValidity(), 
+			input.stateValidity(),
             cell,
             binningDirection,
-			std::move(sourceProperty), 
+			std::move(sourceProperty),
             sourceComponent,
-			std::move(selectionProperty), 
+			std::move(selectionProperty),
 			posProperty->storage(),
             std::move(binData),
             binCount,
@@ -84,7 +84,7 @@ void ParticlesSpatialBinningModifierDelegate::ComputeEngine::perform()
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(positions()->size());
 
-	if(sourceProperty()->size() == 0) 
+	if(sourceProperty()->size() == 0)
         return;
 
     std::vector<size_t> numberOfParticlesPerBin(binData()->size(), 0);
@@ -99,23 +99,24 @@ void ParticlesSpatialBinningModifierDelegate::ComputeEngine::perform()
             else binPos[dim] = 0;
         }
         size_t binIndex = (size_t)binPos[2] * (size_t)binCount(0)*(size_t)binCount(1) + (size_t)binPos[1] * (size_t)binCount(0) + (size_t)binPos[0];
+        FloatType& binValue = binData()->dataFloat()[binIndex];
         if(reductionOperation() == SpatialBinningModifier::RED_MEAN || reductionOperation() == SpatialBinningModifier::RED_SUM || reductionOperation() == SpatialBinningModifier::RED_SUM_VOL) {
-            binData()->setFloat(binIndex, binData()->getFloat(binIndex) + value);
-        } 
+            binValue += value;
+        }
         else {
             if(numberOfParticlesPerBin[binIndex] == 0) {
-                binData()->setFloat(binIndex, value);
+                binValue = value;
             }
             else {
                 if(reductionOperation() == SpatialBinningModifier::RED_MAX) {
-                    binData()->setFloat(binIndex, std::max(binData()->getFloat(binIndex), value));
+                    binValue = std::max(binValue, value);
                 }
                 else if(reductionOperation() == SpatialBinningModifier::RED_MIN) {
-                    binData()->setFloat(binIndex, std::min(binData()->getFloat(binIndex), value));
+                    binValue = std::min(binValue, value);
                 }
             }
         }
-        numberOfParticlesPerBin[binIndex]++;        
+        numberOfParticlesPerBin[binIndex]++;
     };
 
     const Point3* pos = positions()->constDataPoint3();
@@ -147,7 +148,7 @@ void ParticlesSpatialBinningModifierDelegate::ComputeEngine::perform()
         }
     }
     else {
-        throw Exception(tr("The input property '%1' has a data type that is not supported by the modifier.").arg(sourceProperty()->name()));            
+        throw Exception(tr("The input property '%1' has a data type that is not supported by the modifier.").arg(sourceProperty()->name()));
     }
 
     if(reductionOperation() == SpatialBinningModifier::RED_MEAN) {

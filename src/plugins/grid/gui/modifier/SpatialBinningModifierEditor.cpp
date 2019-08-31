@@ -167,7 +167,7 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->addWidget(axesBox);
     BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialBinningModifier::fixPropertyAxisRange));
     axesSublayout->addWidget(rangeUI->checkBox());
-        
+
     QHBoxLayout* hlayout = new QHBoxLayout();
     axesSublayout->addLayout(hlayout);
     FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialBinningModifier::propertyAxisRangeStart));
@@ -191,7 +191,7 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	// Update data plot whenever the modifier has calculated new results.
 	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotLater(this);
-	});    
+	});
 }
 
 /******************************************************************************
@@ -264,6 +264,7 @@ void SpatialBinningModifierEditor::plotData()
                     _plotWidget2d->setAxisScale(QwtPlot::xBottom, 0, grid->domain()->cellVector1().length());
                     _plotWidget2d->setAxisScale(QwtPlot::yLeft, 0, grid->domain()->cellVector2().length());
                     _plotWidget2d->axisWidget(QwtPlot::yRight)->setColorMap(zInterval.normalized(), new ColorMap());
+                    _plotRaster->setColorMap(new ColorMap());
                     _plotWidget2d->setAxisScale(QwtPlot::yRight, zInterval.minValue(), zInterval.maxValue());
                     _plotWidget2d->setAxisTitle(QwtPlot::yRight, property->name());
                     _plotWidget2d->setAxisTitle(QwtPlot::xBottom, tr("Position along axis 1"));
@@ -308,7 +309,7 @@ void SpatialBinningModifierEditor::onSaveData()
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
-	    tr("Save Data"), QString(), 
+	    tr("Save Data"), QString(),
         tr("Text files (*.txt);;All files (*)"));
 	if(fileName.isEmpty())
 		return;
