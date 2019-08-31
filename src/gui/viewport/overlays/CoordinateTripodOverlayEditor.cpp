@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,6 +28,7 @@
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/Vector3ParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
+#include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/viewport/overlays/MoveOverlayInputMode.h>
 #include <core/viewport/overlays/CoordinateTripodOverlay.h>
@@ -91,6 +92,14 @@ void CoordinateTripodOverlayEditor::createUI(const RolloutInsertionParameters& r
 	FontParameterUI* labelFontPUI = new FontParameterUI(this, PROPERTY_FIELD(CoordinateTripodOverlay::font));
 	layout->addWidget(labelFontPUI->label(), 8, 0);
 	layout->addWidget(labelFontPUI->fontPicker(), 8, 1);
+
+	IntegerRadioButtonParameterUI* tripodStyleUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CoordinateTripodOverlay::tripodStyle));
+	layout->addWidget(new QLabel(tr("Style:")), 9, 0);
+	QHBoxLayout* hlayout = new QHBoxLayout();
+	hlayout->setContentsMargins(0,0,0,0);
+	hlayout->addWidget(tripodStyleUI->addRadioButton(CoordinateTripodOverlay::FlatArrows, tr("Flat")));
+	hlayout->addWidget(tripodStyleUI->addRadioButton(CoordinateTripodOverlay::SolidArrows, tr("Solid")));
+	layout->addLayout(hlayout, 9, 1);
 
 	// Create a second rollout.
 	rollout = createRollout(tr("Coordinate axes"), rolloutParams);

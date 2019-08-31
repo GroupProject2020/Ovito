@@ -70,6 +70,14 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 			// Include other visual content that is only visible in the interactive viewports.
 			if(isInteractive())
 				renderInteractiveContent();
+
+			// Include three-dimensional content from viewport overlys in the bounding box.
+			if(vp && (!isInteractive() || vp->renderPreviewMode())) {
+				for(ViewportOverlay* overlay : vp->overlays()) {
+					if(overlay->isEnabled())
+						overlay->render3D(vp, time, this, operation);
+				}
+			}
 		}
 
 		_isBoundingBoxPass = false;
