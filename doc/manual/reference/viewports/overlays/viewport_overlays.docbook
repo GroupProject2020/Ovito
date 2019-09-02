@@ -12,7 +12,7 @@
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/viewport_overlays/viewport_overlay_command_panel.png" format="PNG" />
+       <imagedata fileref="images/viewport_overlays/viewport_overlay_command_panel.png" format="PNG" scale="60" />
     </imageobject></mediaobject></screenshot></informalfigure>
   Viewport overlays render two-dimensional graphics or text on top of the three-dimensional scene.
   OVITO provides different overlay types (see table below), which you can add to a viewport.

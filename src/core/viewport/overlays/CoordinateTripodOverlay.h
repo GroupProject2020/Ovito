@@ -39,6 +39,15 @@ class OVITO_CORE_EXPORT CoordinateTripodOverlay : public ViewportOverlay
 
 public:
 
+	/// The supported rendering styles for the axis tripod.
+	enum TripodStyle {
+		FlatArrows,
+		SolidArrows
+	};
+	Q_ENUMS(TripodStyle);
+
+public:
+
 	/// \brief Constructor.
 	Q_INVOKABLE CoordinateTripodOverlay(DataSet* dataset);
 
@@ -64,6 +73,15 @@ private:
 
 	/// This method paints the overlay contents onto the given canvas.
 	void renderImplementation(QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings);
+
+	/// Paints a single arrow in flat style.
+	FloatType paintFlatArrow(QPainter& painter, const Vector2& dir2d, FloatType arrowSize, FloatType lineWidth, FloatType tripodSize, QPointF origin);
+
+	/// Paints a single arrow in solid style.
+	FloatType paintSolidArrow(QPainter& painter, const Vector2& dir2d, const Vector3& dir3d, FloatType arrowSize, FloatType lineWidth, FloatType tripodSize, QPointF origin);
+
+	/// Paints the tripod's joint in solid style.
+	void paintSolidJoint(QPainter& painter, QPointF origin, const AffineTransformation& viewTM, FloatType lineWidth);
 
 	/// The corner of the viewport where the tripod is shown in.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, alignment, setAlignment, PROPERTY_FIELD_MEMORIZE);
@@ -133,10 +151,14 @@ private:
 
 	/// The display color of the fourth axis.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, axis4Color, setAxis4Color, PROPERTY_FIELD_MEMORIZE);
+
+	/// The rendering style of the tripod.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(TripodStyle, tripodStyle, setTripodStyle, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
-
+Q_DECLARE_METATYPE(Ovito::CoordinateTripodOverlay::TripodStyle);
+Q_DECLARE_TYPEINFO(Ovito::CoordinateTripodOverlay::TripodStyle, Q_PRIMITIVE_TYPE);

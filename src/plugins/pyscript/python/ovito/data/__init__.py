@@ -12,7 +12,7 @@ computing neighbor lists or iterating over the bonds of particles.
   * :py:class:`Bonds` (specialized property container for bonds)
   * :py:class:`VoxelGrid` (specialized property container for 2d and 3d data grids)
   * :py:class:`DataSeries` (specialized property container for 2d data point series)
-  
+
 **Data objects:**
 
   * :py:class:`Property` (a property value array used in :py:class:`PropertyContainer` classes)
@@ -32,7 +32,6 @@ computing neighbor lists or iterating over the bonds of particles.
 
   * :py:class:`CutoffNeighborFinder` (finds all neighboring particles within a cutoff distance)
   * :py:class:`NearestNeighborFinder` (finds *N* nearest neighbor particles)
-  * :py:class:`PTMNeighborFinder` (finds PTM neighbor particles)
   * :py:class:`BondsEnumerator` (used for efficiently iterating over the bonds of individual particles)
 
 """

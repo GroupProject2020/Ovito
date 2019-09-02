@@ -34,10 +34,10 @@
     to report the number of BCC atoms found. If, instead of the absolute number of BCC atoms, we want to print the
     fraction of BCC atoms, we have to divide by the total number of atoms in the system. To this end we can
     define a new attribute named <emphasis>bcc_fraction</emphasis> by inserting a <link linkend="particles.modifiers.python_script">Python script modifier</link>:
-    <programlisting>def modify(frame, input, output):
-    n_bcc = input.attributes['CommonNeighborAnalysis.counts.BCC']
-    n_total = input.number_of_particles
-    output.attributes['bcc_fraction'] = n_bcc / n_total</programlisting>
+    <programlisting>def modify(frame, data):
+    n_bcc = data.attributes['CommonNeighborAnalysis.counts.BCC']
+    n_total = data.particles.count
+    data.attributes['bcc_fraction'] = n_bcc / n_total</programlisting>
   </para>
   <para>
     This new attribute will subsequently become available in the Text Label overlay as a dynamic variable.
