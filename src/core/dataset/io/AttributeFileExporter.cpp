@@ -86,12 +86,14 @@ void AttributeFileExporter::loadUserDefaults()
 }
 
 /******************************************************************************
-* Evaluates the pipeline of the PipelineSceneNode to be exported and returns 
+* Evaluates the pipeline of the PipelineSceneNode to be exported and returns
 * the attributes list.
 ******************************************************************************/
 bool AttributeFileExporter::getAttributesMap(TimePoint time, QVariantMap& attributes, AsyncOperation& operation)
 {
 	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	if(operation.isCanceled())
+		return false;
 
 	// Build list of attributes.
 	attributes = state.data()->buildAttributesMap();
@@ -111,7 +113,7 @@ bool AttributeFileExporter::exportFrame(int frameNumber, TimePoint time, const Q
 	if(!getAttributesMap(time, attrMap, operation))
 		return false;
 
-	// Write the values of all attributes marked for export to the output file. 
+	// Write the values of all attributes marked for export to the output file.
 	for(const QString& attrName : attributesToExport()) {
 		if(!attrMap.contains(attrName))
 			throwException(tr("The global attribute '%1' to be exported is not available at animation frame %2.").arg(attrName).arg(frameNumber));

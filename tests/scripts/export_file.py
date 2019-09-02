@@ -35,7 +35,7 @@ for i in range(ovito.scene.anim.last_frame + 1):
     export_file(node1, "_export_file_test.%i.dump" % i, "lammps/dump", columns = ["Position.X", "Position.Y", "Position.Z"], frame = i)
     os.remove("_export_file_test.%i.dump" % i)
 
-# Test VTK surface mesh export 
+# Test VTK surface mesh export
 node1.modifiers.append(SelectTypeModifier(types = {1}))
 node1.modifiers.append(CoordinationPolyhedraModifier())
 export_file(node1, "_export_file_test.vtk", "vtk/trimesh", key = "coord-polyhedra")
@@ -65,6 +65,11 @@ export_file(node1, "_export_file_test.txt", "txt/series", key = "coordination-rd
 os.remove("_export_file_test.txt")
 
 # Alternative method:
-series = node1.compute().series['coordination-rdf'] 
+series = node1.compute().series['coordination-rdf']
 export_file(series, "_export_file_test.txt", "txt/series")
 os.remove("_export_file_test.txt")
+
+# Test VTK voxel grid export.
+pipeline = import_file(test_data_dir + "CUBE/grid20.cube.gz")
+export_file(pipeline, "_export_file_test.vtk", "vtk/grid")
+os.remove("_export_file_test.vtk")

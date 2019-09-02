@@ -35,10 +35,10 @@ namespace Ovito { namespace Grid {
 class OVITO_GRID_EXPORT VoxelGrid : public PropertyContainer
 {
 	/// Define a new property metaclass for voxel property containers.
-	class VoxelGridClass : public PropertyContainerClass 
+	class VoxelGridClass : public PropertyContainerClass
 	{
 	public:
-	
+
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
 
@@ -60,17 +60,21 @@ public:
 	Q_INVOKABLE VoxelGrid(DataSet* dataset, const QString& title = QString());
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() const override { 
+	virtual QString objectTitle() const override {
 		if(!title().isEmpty()) return title();
 		else if(!identifier().isEmpty()) return identifier();
 		else return PropertyContainer::objectTitle();
 	}
 
-	/// Returns the spatial domain this voxel grid is embedded in after making sure it 
+	/// Returns the spatial domain this voxel grid is embedded in after making sure it
 	/// can safely be modified.
 	SimulationCellObject* mutableDomain() {
 		return makeMutable(domain());
-	}	
+	}
+
+	/// Makes sure that all property arrays in this container have a consistent length.
+	/// If this is not the case, the method throws an exception.
+	void verifyIntegrity() const;
 
 protected:
 
@@ -79,7 +83,7 @@ protected:
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
-		
+
 private:
 
 	/// The title of the grid, which is shown in the user interface.
@@ -93,7 +97,7 @@ private:
 };
 
 /**
- * Encapsulates a reference to a voxel grid property. 
+ * Encapsulates a reference to a voxel grid property.
  */
 using VoxelPropertyReference = TypedPropertyReference<VoxelGrid>;
 

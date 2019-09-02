@@ -29,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
-IMPLEMENT_OVITO_CLASS(ParticleExporter);	
+IMPLEMENT_OVITO_CLASS(ParticleExporter);
 
 /******************************************************************************
 * Constructs a new instance of the class.
@@ -45,23 +45,19 @@ ParticleExporter::ParticleExporter(DataSet* dataset) : FileExporter(dataset)
 PipelineFlowState ParticleExporter::getParticleData(TimePoint time, AsyncOperation& operation) const
 {
 	PipelineFlowState state = getPipelineDataToBeExported(time, operation);
+	if(operation.isCanceled())
+		return {};
 
 	const ParticlesObject* particles = state.getObject<ParticlesObject>();
 	if(!particles || !particles->getProperty(ParticlesObject::PositionProperty))
 		throwException(tr("The selected data collection does not contain any particles that can be exported."));
-	
+
 	// Verify data, make sure array length is consistent for all particle properties.
-	for(const PropertyObject* p : particles->properties()) {
-		if(p->size() != particles->elementCount())
-			throwException(tr("Data produced by pipeline is invalid. The array size is not the same for all particle properties."));
-	}
+	particles->verifyIntegrity();
 
 	// Verify data, make sure array length is consistent for all bond properties.
 	if(particles->bonds()) {
-		for(const PropertyObject* p : particles->bonds()->properties()) {
-			if(p->size() != particles->bonds()->elementCount())
-				throwException(tr("Data produced by pipeline is invalid. The array size of some bond properties is not consistent with the number of bonds."));
-		}
+		particles->bonds()->verifyIntegrity();
 	}
 
 	return state;
@@ -104,6 +100,8 @@ bool ParticleExporter::exportFrame(int frameNumber, TimePoint time, const QStrin
 {
 	// Retreive the particle data to be exported.
 	const PipelineFlowState& state = getParticleData(time, operation);
+	if(operation.isCanceled() || state.isEmpty())
+		return false;
 
 	// Set progress display.
 	operation.setProgressText(tr("Writing file %1").arg(filePath));

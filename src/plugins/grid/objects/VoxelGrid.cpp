@@ -41,7 +41,7 @@ void VoxelGrid::OOMetaClass::initialize()
 
 	// Enable automatic conversion of a VoxelPropertyReference to a generic PropertyReference and vice versa.
 	QMetaType::registerConverter<VoxelPropertyReference, PropertyReference>();
-	QMetaType::registerConverter<PropertyReference, VoxelPropertyReference>();		
+	QMetaType::registerConverter<PropertyReference, VoxelPropertyReference>();
 
 	setPropertyClassDisplayName(tr("Voxel grid"));
 	setElementDescriptionName(QStringLiteral("voxels"));
@@ -87,6 +87,20 @@ void VoxelGrid::loadFromStream(ObjectLoadStream& stream)
 		stream.readSizeT(d);
 
 	stream.closeChunk();
+}
+
+/******************************************************************************
+* Makes sure that all property arrays in this container have a consistent length.
+* If this is not the case, the method throws an exception.
+******************************************************************************/
+void VoxelGrid::verifyIntegrity() const
+{
+	PropertyContainer::verifyIntegrity();
+
+	size_t expectedElementCount = shape()[0] * shape()[1] * shape()[2];
+	if(elementCount() != expectedElementCount) {
+		throwException(tr("Property arrays in voxel grid object have wrong length. Array length %1 does not match the number of grid elements %2.").arg(elementCount()).arg(expectedElementCount));
+	}
 }
 
 }	// End of namespace

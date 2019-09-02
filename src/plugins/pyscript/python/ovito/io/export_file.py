@@ -51,6 +51,7 @@ def export_file(data, file, format, **params):
             * ``"netcdf/amber"`` -- Binary format for MD data following the `AMBER format convention <http://ambermd.org/netcdf/nctraj.pdf>`__
             * ``"vtk/trimesh"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.SurfaceMesh` objects
             * ``"vtk/disloc"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.DislocationNetwork` objects
+            * ``"vtk/grid"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.VoxelGrid` objects
             * ``"ca"`` -- :ovitoman:`Text-based format for storing dislocation lines <../../particles.modifiers.dislocation_analysis#particles.modifiers.dislocation_analysis.fileformat>`
             * ``"povray"`` -- POV-Ray scene format
 

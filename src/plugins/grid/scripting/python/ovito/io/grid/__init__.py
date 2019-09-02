@@ -2,5 +2,8 @@
 import ovito.io.stdobj
 import ovito.io.mesh
 
-# Load the native code module.
-import ovito.plugins.GridPython
+# Load the native code module
+from ovito.plugins.GridPython import VTKVoxelGridExporter
+
+# Register export formats.
+ovito.io.export_file._formatTable["vtk/grid"] = VTKVoxelGridExporter

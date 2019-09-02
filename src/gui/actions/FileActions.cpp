@@ -309,6 +309,9 @@ void ActionManager::on_FileExport_triggered()
 		Exception(tr("This function is disabled, because no file exporter plugins have been installed."), _dataset).reportError();
 		return;
 	}
+	std::sort(exporterTypes.begin(), exporterTypes.end(), [](const FileExporterClass* a, const FileExporterClass* b) {
+		return a->fileFilterDescription() < b->fileFilterDescription();
+	});
 	for(const FileExporterClass* exporterClass : exporterTypes) {
 #ifndef Q_OS_WIN
 		filterStrings << QStringLiteral("%1 (%2)").arg(exporterClass->fileFilterDescription(), exporterClass->fileFilter());

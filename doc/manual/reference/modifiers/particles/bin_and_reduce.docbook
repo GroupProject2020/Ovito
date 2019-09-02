@@ -29,11 +29,28 @@
     cell edges.
   </para>
 
-  <para>
-    When mapping the particle values to a three-dimensional grid using this modifier, you can subsequently
-    employ the <link linkend="particles.modifiers.create_isosurface">Create isosurface</link> modifier to
-    render iso-level surfaces for the computed grid field.
-  </para>
+  <simplesect>
+    <title>Data output options</title>
+
+    <para>
+      When mapping the particle values to a one-dimensional bin grid using this modifier, you can subsequently
+      access the computed data series in the <link linkend="data_inspector.data_series">data inspector panel</link>.
+      From here you can export the bin values to a text file.
+    </para>
+
+    <para>
+      When mapping the particle values to a three-dimensional grid using this modifier, you can subsequently
+      employ the <link linkend="particles.modifiers.create_isosurface">Create isosurface</link> modifier to
+      render iso-level surfaces of the computed field.
+    </para>
+
+    <para>
+      When creating two- or three-dimensional grids, you can also
+      export the computed grid data to a text file using OVITO's <link linkend="usage.export">file export</link> function.
+      Pick the <emphasis>"VTK Voxel Grid"</emphasis> format as the output format.
+    </para>
+
+  </simplesect>
 
   <simplesect>
     <title>Parameters</title>

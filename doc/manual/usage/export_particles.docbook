@@ -90,12 +90,12 @@
             <row>
               <entry>Table&#xA0;of&#xA0;values</entry>
               <entry><para>A simple tabular text file with scalar quantities computed by OVITO's data pipeline.</para></entry>
-              <entry>global&#xA0;values</entry>
+              <entry>global&#xA0;attributes</entry>
             </row>
             <row>
               <entry>VTK</entry>
-              <entry><para>Text-based format used by the ParaView software.</para></entry>
-              <entry>dislocations, surface&#xA0;meshes</entry>
+              <entry><para>Generic text-based data format used by the ParaView software.</para></entry>
+              <entry>surface&#xA0;meshes, grid&#xA0;data, dislocations</entry>
             </row>
             <row>
               <entry>POV-Ray&#xA0;scene</entry>

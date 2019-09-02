@@ -62,6 +62,8 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 {
 	// Evaluate pipeline.
 	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	if(operation.isCanceled())
+		return false;
 
 	// Look up the DataSeries to be exported in the pipeline state.
 	DataObjectReference objectRef(&DataSeriesObject::OOClass(), dataObjectToExport().dataPath());

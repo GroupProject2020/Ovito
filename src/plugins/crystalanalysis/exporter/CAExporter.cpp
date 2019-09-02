@@ -70,6 +70,8 @@ bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& fil
 {
 	// Evaluate data pipeline.
 	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	if(operation.isCanceled())
+		return false;
 
 	// Set progress display.
 	operation.setProgressText(tr("Writing file %1").arg(filePath));

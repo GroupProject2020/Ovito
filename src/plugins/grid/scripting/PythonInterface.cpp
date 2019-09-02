@@ -23,6 +23,7 @@
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/grid/modifier/CreateIsosurfaceModifier.h>
 #include <plugins/grid/modifier/SpatialBinningModifier.h>
+#include <plugins/grid/io/VTKVoxelGridExporter.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>
@@ -183,6 +184,9 @@ PYBIND11_MODULE(GridPython, m)
 		.value("XZ", SpatialBinningModifier::CELL_VECTORS_1_3)
 		.value("YZ", SpatialBinningModifier::CELL_VECTORS_2_3)
 		.value("XYZ", SpatialBinningModifier::CELL_VECTORS_1_2_3)
+	;
+
+	ovito_class<VTKVoxelGridExporter, FileExporter>{m}
 	;
 }
 

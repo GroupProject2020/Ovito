@@ -65,6 +65,8 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	// Note: We are requesting the rendering state from the pipeline,
 	// because we are interested in renderable triangle meshes.
 	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation, true);
+	if(operation.isCanceled())
+		return false;
 
 	// Look up the RenderableSurfaceMesh to be exported in the pipeline state.
 	DataObjectReference objectRef(&RenderableSurfaceMesh::OOClass(), dataObjectToExport().dataPath());
@@ -74,7 +76,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 			.arg(frameNumber).arg(objectRef.dataPath()).arg(getAvailableDataObjectList(state, RenderableSurfaceMesh::OOClass())));
 	}
 
-	operation.setProgressText(tr("Writing file %1").arg(filePath));	
+	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
 	const TriMesh& surfaceMesh = meshObj->surfaceMesh();
 	const TriMesh& capPolygonsMesh = meshObj->capPolygonsMesh();
@@ -127,7 +129,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 			textStream() << c.r() << " " << c.g() << " " << c.b() << "\n";
 		}
 		for(size_t i = 0; i < capPolygonsMesh.faceCount(); i++)
-			textStream() << "1 1 1\n";			
+			textStream() << "1 1 1\n";
 	}
 
 	textStream() << "\nPOINT_DATA " << (surfaceMesh.vertexCount() + capPolygonsMesh.vertexCount()) << "\n";
@@ -137,7 +139,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 		textStream() << "0\n";
 	for(size_t i = 0; i < capPolygonsMesh.vertexCount(); i++)
 		textStream() << "1\n";
-		
+
 	return !operation.isCanceled();
 }
 

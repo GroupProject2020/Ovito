@@ -308,7 +308,6 @@ void PropertyContainer::setContent(size_t newElementCount, const std::vector<Pro
 	}
 }
 
-
 /******************************************************************************
 * Duplicates all data elements by extensing the property arrays and
 * replicating the existing data N times.

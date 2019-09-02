@@ -120,8 +120,8 @@
             <row>
               <entry>POSCAR / XDATCAR / CHGCAR</entry>
               <entry><para>File formats used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="http://www.vasp.at/">VASP</link>.
-                    OVITO can read and visualize charge density data from CHGCAR files.</para></entry>
-              <entry>particles, voxel&#xA0;grid</entry>
+                    OVITO can read and visualize charge density fields from CHGCAR files.</para></entry>
+              <entry>particles, grid&#xA0;data</entry>
             </row>
             <row>
               <entry>IMD</entry>
@@ -171,12 +171,12 @@
             <row>
               <entry>XSF</entry>
               <entry><para>File format used by the <link xlink:href="http://www.xcrysden.org/doc/XSF.html">XCrySDen</link> program.</para></entry>
-              <entry>particles, voxel&#xA0;grid</entry>
+              <entry>particles, grid&#xA0;data</entry>
             </row>
             <row>
               <entry>Cube</entry>
               <entry><para>File format used by the <emphasis>Gaussian</emphasis> simulation package. Specifications of the format can be found <link xlink:href="https://h5cube-spec.readthedocs.io/en/latest/cubeformat.html">here</link> and <link xlink:href="http://paulbourke.net/dataformats/cube/">here</link>.</para></entry>
-              <entry>particles, voxel&#xA0;grid</entry>
+              <entry>particles, grid&#xA0;data</entry>
             </row>
             <row>
               <entry>GALAMOST</entry>

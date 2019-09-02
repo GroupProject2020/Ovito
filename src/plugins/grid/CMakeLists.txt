@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -19,15 +19,16 @@
 #
 ###############################################################################
 
-SET(SourceFiles 
+SET(SourceFiles
 	objects/VoxelGrid.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
 	modifier/SpatialBinningModifier.cpp
+	io/VTKVoxelGridExporter.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)
-	LIST(APPEND SourceFiles 
+	LIST(APPEND SourceFiles
 		modifier/VoxelGridReplicateModifierDelegate.cpp
 		modifier/VoxelGridAffineTransformationModifierDelegate.cpp
 	)
@@ -35,8 +36,8 @@ ENDIF()
 
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(Grid
-	SOURCES 
-		Grid.cpp 
+	SOURCES
+		Grid.cpp
 		${SourceFiles}
 	PLUGIN_DEPENDENCIES Mesh StdObj
 	OPTIONAL_PLUGIN_DEPENDENCIES StdMod
