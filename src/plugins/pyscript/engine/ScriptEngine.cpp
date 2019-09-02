@@ -130,6 +130,21 @@ void ScriptEngine::initializeEmbeddedInterpreter(RefTarget* contextObj)
 
 		// Prepend current directory to sys.path.
 		PyList_Insert(sys_path.ptr(), 0, py::str().ptr());
+
+#if defined(Q_OS_WIN)
+		// Workaround for error "unable to find Qt5Core.dll on PATH" on Windows:
+		// Prepend OVITO executable directory to PATH environment variable (os.environ['PATH'])
+		// so that the PyQt5 module will find the location of the Qt5 DLLs.
+		py::module os_module = py::module::import("os");
+		py::object os_path = os_module.attr("environ");
+		if(os_path.contains("PATH")) {
+			os_path["PATH"] = py::str("{};{}").format(QDir::toNativeSeparators(prefixDir.absolutePath()), os_path["PATH"]);
+		}
+		else {
+			os_path["PATH"] = QDir::toNativeSeparators(prefixDir.absolutePath());
+		}
+		py::print(os_module.attr("environ")["PATH"]);
+#endif
 	}
 	catch(Exception& ex) {
 		if(!ex.context()) ex.setContext(contextObj);
