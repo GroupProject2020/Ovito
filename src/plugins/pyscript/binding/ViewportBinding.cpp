@@ -171,9 +171,9 @@ void defineViewportSubmodule(py::module m)
 				":Default: ``False``")
 	;
 
-	ovito_class<CoordinateTripodOverlay, ViewportOverlay>(m,
+	auto CoordinateTripodOverlay_py = ovito_class<CoordinateTripodOverlay, ViewportOverlay>(m,
 			":Base class: :py:class:`ovito.vis.ViewportOverlay`\n\n"
-			"Displays a coordinate tripod in the rendered image of a viewport. "
+			"Displays a coordinate tripod in rendered images. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
 			"\n\n"
@@ -267,7 +267,18 @@ void defineViewportSubmodule(py::module m)
 				"RGB display color of the fourth axis."
 				"\n\n"
 				":Default: ``(1.0, 0.0, 1.0)``\n")
+		.def_property("style", &CoordinateTripodOverlay::tripodStyle, &CoordinateTripodOverlay::setTripodStyle,
+				"Selects the visual style of the coordinate axis tripod.\n"
+				"Supported values are:"
+				"\n\n"
+				"   * ``CoordinateTripodOverlay.Style.Flat`` (default) \n"
+				"   * ``CoordinateTripodOverlay.Style.Solid``\n"
+				"\n")
+	;
 
+	py::enum_<CoordinateTripodOverlay::TripodStyle>(CoordinateTripodOverlay_py, "Style")
+		.value("Flat", CoordinateTripodOverlay::TripodStyle::FlatArrows)
+		.value("Solid", CoordinateTripodOverlay::TripodStyle::SolidArrows)
 	;
 
 	ovito_class<TextLabelOverlay, ViewportOverlay>(m,

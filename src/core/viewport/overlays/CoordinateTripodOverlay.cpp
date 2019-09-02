@@ -62,8 +62,8 @@ SET_PROPERTY_FIELD_LABEL(CoordinateTripodOverlay, offsetY, "Offset Y");
 SET_PROPERTY_FIELD_LABEL(CoordinateTripodOverlay, tripodStyle, "Style");
 SET_PROPERTY_FIELD_UNITS(CoordinateTripodOverlay, offsetX, PercentParameterUnit);
 SET_PROPERTY_FIELD_UNITS(CoordinateTripodOverlay, offsetY, PercentParameterUnit);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinateTripodOverlay, tripodSize, FloatParameterUnit, 0);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinateTripodOverlay, lineWidth, FloatParameterUnit, 0);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinateTripodOverlay, tripodSize, FloatParameterUnit, 1e-4);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinateTripodOverlay, lineWidth, FloatParameterUnit, 1e-4);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinateTripodOverlay, fontSize, FloatParameterUnit, 0);
 
 /******************************************************************************
@@ -152,7 +152,7 @@ void CoordinateTripodOverlay::renderImplementation(QPainter& painter, const View
 	for(int axis : orderedAxes) {
 
 		if(tripodStyle() == SolidArrows && lastZ < 0 && axisDirs[axis].z() >= 0) {
-			paintSolidJoint(painter, origin, lineWidth);
+			paintSolidJoint(painter, origin, projParams.viewMatrix, lineWidth);
 		}
 		lastZ = axisDirs[axis].z();
 
@@ -203,7 +203,7 @@ void CoordinateTripodOverlay::renderImplementation(QPainter& painter, const View
 	}
 
 	if(tripodStyle() == SolidArrows && lastZ < 0) {
-		paintSolidJoint(painter, origin, lineWidth);
+		paintSolidJoint(painter, origin, projParams.viewMatrix, lineWidth);
 	}
 }
 
@@ -271,19 +271,23 @@ FloatType CoordinateTripodOverlay::paintSolidArrow(QPainter& painter, const Vect
 		transform.rotateRadians(std::atan2(dir2d.y(), dir2d.x()));
 		painter.setWorldTransform(transform, true);
 		QPen pen = painter.pen();
-		painter.setPen(QPen(Qt::black, 0.0));
-		painter.drawPath(cylPth);
+		painter.setPen(QPen(Qt::black, 0.3));
 		painter.drawPath(capPth);
+		QBrush brush = painter.brush();
+		QLinearGradient gradient(0, -lineWidth, 0, lineWidth);
+		gradient.setColorAt(0.0, brush.color().darker());
+		gradient.setColorAt(0.2, brush.color());
+		gradient.setColorAt(0.4, (brush.color().lightness() != 0) ? brush.color().lighter() : QColor(200, 200, 200));
+		gradient.setColorAt(0.7, brush.color());
+		gradient.setColorAt(1.0, brush.color().darker());
+		painter.setBrush(gradient);
+		painter.drawPath(cylPth);
 		painter.setPen(pen);
+		painter.setBrush(brush);
 		painter.setWorldTransform(parentTransform);
 	}
 	else {
-		// Draw a circle instead of an arrow when looking head onto the axis.
 		double arrowHeadSize = (lineWidth + tripodSize * arrowSize) * 0.5;
-		QPen pen = painter.pen();
-		painter.setPen(Qt::NoPen);
-		painter.drawEllipse(origin, arrowHeadSize, arrowHeadSize);
-		painter.setPen(pen);
 		return arrowHeadSize * 0.5;
 	}
 	return 0;
@@ -292,15 +296,40 @@ FloatType CoordinateTripodOverlay::paintSolidArrow(QPainter& painter, const Vect
 /******************************************************************************
 * Paints the tripod's joint in solid style.
 ******************************************************************************/
-void CoordinateTripodOverlay::paintSolidJoint(QPainter& painter, QPointF origin, FloatType lineWidth)
+void CoordinateTripodOverlay::paintSolidJoint(QPainter& painter, QPointF origin, const AffineTransformation& viewTM, FloatType lineWidth)
 {
-	FloatType scaling = 1.0;
+	const FloatType scaling = lineWidth;
+	const Vector3 dirs[3] = {
+		viewTM.column(0),
+		viewTM.column(1),
+		viewTM.column(2)
+	};
+
 	QPen pen = painter.pen();
 	QBrush brush = painter.brush();
-	painter.setPen(QPen(Qt::black, 0.0));
-	painter.setBrush(Qt::white);
-	painter.drawEllipse(QRectF(origin.x() - lineWidth*scaling, origin.y() - lineWidth*scaling, lineWidth*scaling*2, lineWidth*scaling*2));
+	painter.setPen(QPen(Qt::black, 0.2));
+
+	QPointF vertices[4];
+	for(int side = 0; side < 3; side++) {
+		qreal lightness = (std::abs(dirs[side].z()) + 0.5) / 1.6;
+		painter.setBrush(QColor::fromHslF(0.0, 0.0, lightness));
+		FloatType flip = (dirs[side].z() < 0) ? -1 : 1;
+		vertices[0] = origin;
+		vertices[0].rx() += (flip * dirs[side].x() + dirs[(side+1)%3].x() + dirs[(side+2)%3].x()) * scaling;
+		vertices[0].ry() -= (flip * dirs[side].y() + dirs[(side+1)%3].y() + dirs[(side+2)%3].y()) * scaling;
+		vertices[1] = origin;
+		vertices[1].rx() += (flip * dirs[side].x() - dirs[(side+1)%3].x() + dirs[(side+2)%3].x()) * scaling;
+		vertices[1].ry() -= (flip * dirs[side].y() - dirs[(side+1)%3].y() + dirs[(side+2)%3].y()) * scaling;
+		vertices[2] = origin;
+		vertices[2].rx() += (flip * dirs[side].x() - dirs[(side+1)%3].x() - dirs[(side+2)%3].x()) * scaling;
+		vertices[2].ry() -= (flip * dirs[side].y() - dirs[(side+1)%3].y() - dirs[(side+2)%3].y()) * scaling;
+		vertices[3] = origin;
+		vertices[3].rx() += (flip * dirs[side].x() + dirs[(side+1)%3].x() - dirs[(side+2)%3].x()) * scaling;
+		vertices[3].ry() -= (flip * dirs[side].y() + dirs[(side+1)%3].y() - dirs[(side+2)%3].y()) * scaling;
+		painter.drawPolygon(vertices, 4);
+	}
 	painter.setPen(pen);
+	painter.setBrush(brush);
 }
 
 OVITO_END_INLINE_NAMESPACE

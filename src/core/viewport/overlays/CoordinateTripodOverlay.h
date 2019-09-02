@@ -81,7 +81,7 @@ private:
 	FloatType paintSolidArrow(QPainter& painter, const Vector2& dir2d, const Vector3& dir3d, FloatType arrowSize, FloatType lineWidth, FloatType tripodSize, QPointF origin);
 
 	/// Paints the tripod's joint in solid style.
-	void paintSolidJoint(QPainter& painter, QPointF origin, FloatType lineWidth);
+	void paintSolidJoint(QPainter& painter, QPointF origin, const AffineTransformation& viewTM, FloatType lineWidth);
 
 	/// The corner of the viewport where the tripod is shown in.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, alignment, setAlignment, PROPERTY_FIELD_MEMORIZE);
