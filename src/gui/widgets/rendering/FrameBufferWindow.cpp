@@ -87,6 +87,8 @@ void FrameBufferWindow::showAndActivateWindow()
 			move(parentWidget()->geometry().center() - QPoint(s.width() / 2, s.height() / 2));
 		}
 		show();
+		updateGeometry();
+		update();
 	}
 	activateWindow();
 }
