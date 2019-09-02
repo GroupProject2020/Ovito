@@ -69,6 +69,7 @@ InputColumnMappingDialog::InputColumnMappingDialog(const InputColumnMapping& map
 	_tableWidget->setHorizontalHeaderLabels(horizontalHeaders);
 	_tableWidget->setEditTriggers(QAbstractItemView::AllEditTriggers);
 
+#if 0
 	_tableWidget->resizeColumnToContents(VECTOR_COMPNT_COLUMN);
 
 	// Calculate the optimum width of the property column.
@@ -80,6 +81,12 @@ InputColumnMappingDialog::InputColumnMappingDialog(const InputColumnMapping& map
 		box->addItem(i.key(), i.value());
 	}
 	_tableWidget->setColumnWidth(PROPERTY_COLUMN, box->sizeHint().width());
+#else
+	_tableWidget->horizontalHeader()->setSectionResizeMode(FILE_COLUMN_COLUMN, QHeaderView::ResizeToContents);
+	_tableWidget->horizontalHeader()->setSectionResizeMode(PROPERTY_COLUMN, QHeaderView::Stretch);
+	_tableWidget->horizontalHeader()->setSectionResizeMode(VECTOR_COMPNT_COLUMN, QHeaderView::ResizeToContents);
+#endif
+
 	_tableWidget->verticalHeader()->setVisible(false);
 	_tableWidget->setShowGrid(false);
 
