@@ -14,21 +14,22 @@
     <para>
     See the <link linkend="development.requirements">list of requirements</link>
     and install the required build tools and third-party libraries. OVITO should be compiled with
-    Apple's Clang compiler that is shipped with Xcode.
-    It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> to install many of the required dependencies.
-    After installing MacPorts, run 
+    Apple's clang compiler shipping with Xcode.
+    It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> for installing many of the required dependencies.
+    After setting up MacPorts, run
 <screen><command>sudo port install netcdf python35 py35-sphinx py35-numpy py35-sip zlib libssh \
-                  boost cmake docbook-xml doxygen libxslt yasm
+                  boost cmake docbook-xml doxygen libxslt yasm fftw-3
 </command></screen>
+    from the terminal to install the dependencies of OVITO.
   </para>
   <para>
-    Download and install <link xlink:href="http://www.qt.io/download/">Qt 5.x for Mac</link>.
+    Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.x for Mac</link>.
   </para>
   <para>
-    Download and install <link xlink:href="http://www.riverbankcomputing.com/software/pyqt/download5">PyQt5</link>. 
-    Adjust the path to Qt's <command>qmake</command> below as needed:
+    Next, download and install <link xlink:href="http://www.riverbankcomputing.com/software/pyqt/download5">PyQt5</link>.
+    Adjust the path to Qt's <command>qmake</command> tool if needed:
 <screen><command>/opt/local/bin/python3.5 configure.py \
-	--qmake $HOME/Qt/5.7/clang_64/bin/qmake \
+	--qmake $HOME/Qt/5.*.*/clang_64/bin/qmake \
 	--confirm-license \
 	--no-designer-plugin \
 	--no-qml-plugin \
@@ -39,25 +40,24 @@
 	--enable QtGui \
 	--enable QtWidgets \
 	--enable QtMacExtras
-make -j2
+make
 sudo make install
 </command></screen>
   </para>
   <para>
-    Download and install <link xlink:href="http://www.riverbankcomputing.com/software/qscintilla/download">QScintilla2</link>. Adjust the path to <command>qmake</command> below as needed:
-<screen><command>
-cd QScintilla_gpl-2.9.3/Qt4Qt5/
-$HOME/Qt/5.7/clang_64/bin/qmake qscintilla.pro
-make -j2
-install_name_tool -id $PWD/libqscintilla2.dylib libqscintilla2.dylib
+    Next, download and extract the source code of <link xlink:href="https://www.riverbankcomputing.com/software/qscintilla/download">QScintilla2</link>.
+    Adjust the path to Qt's <command>qmake</command> tool if needed:
+<screen><command>cd QScintilla_gpl-2.*.*/Qt4Qt5/
+$HOME/Qt/5.*.*/clang_64/bin/qmake qscintilla.pro
+make
+install_name_tool -id $PWD/libqscintilla2_qt5.*.*.*.dylib libqscintilla2_qt5.*.*.*.dylib
 </command></screen>
   </para>
   <para>
-Download and build a static version of the <emphasis>Libav</emphasis> video encoding library:
-<screen><command>
-wget https://libav.org/releases/libav-11.1.tar.gz
-tar xzfv libav-11.1.tar.gz
-cd libav-11.1
+Next, download the source code and build a static version of the <link xlink:href="https://libav.org/">Libav</link> video encoding library (optional):
+<screen><command>curl -O https://libav.org/releases/libav-11.12.tar.gz
+tar xzfv libav-11.12.tar.gz
+cd libav-11.12
 ./configure \
 	--disable-network \
 	--disable-programs \
@@ -65,17 +65,16 @@ cd libav-11.1
 	--disable-doc \
 	--disable-filters \
 	--enable-gpl \
-	--prefix=$HOME/libavstatic
+	--prefix=$HOME/libav
 make install
 </command></screen>
-The compiled libraries will be installed under <filename>$HOME/libavstatic/</filename>.
   </para>
   </simplesect>
 
  <simplesect>
     <title>Downloading the source code</title>
     <para>
-    To download OVITO's source code into a new subdirectory named <filename>ovito</filename>, run: 
+    To download OVITO's source code into a new directory named <filename>ovito</filename>, run:
 <screen><command>git clone https://gitlab.com/stuko/ovito.git ovito</command></screen>
   </para>
   </simplesect>
@@ -83,7 +82,7 @@ The compiled libraries will be installed under <filename>$HOME/libavstatic/</fil
   <simplesect>
     <title>Compiling OVITO</title>
     <para>
-    Within that directory, create a build directory and let CMake generate the Makefile: 
+    Within the source directory, create a build sub-directory and let CMake generate the Makefile:
 <screen>
 <command>cd ovito
 mkdir build
@@ -91,26 +90,27 @@ cd build
 cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=../install \
-      -DCMAKE_PREFIX_PATH=$HOME/Qt/5.7/clang_64/ \
+      -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/` \
       -DPYTHON_INCLUDE_DIR=/opt/local/Library/Frameworks/Python.framework/Versions/3.5/include/python3.5m \
       -DPYTHON_LIBRARY=/opt/local/Library/Frameworks/Python.framework/Versions/3.5/lib/libpython3.5.dylib \
-      -DLIBAV_INCLUDE_DIR=$HOME/libavstatic/include \
-      -DLIBAV_LIBRARY_DIR=$HOME/libavstatic/lib \
-      -DQSCINTILLA_INCLUDE_DIR=$HOME/QScintilla_gpl-2.9.3/Qt4Qt5 \
-      -DQSCINTILLA_LIBRARY=$HOME/QScintilla_gpl-2.9.3/Qt4Qt5/libqscintilla2.dylib \
+      -DLIBAV_INCLUDE_DIR=$HOME/libav/include \
+      -DLIBAV_LIBRARY_DIR=$HOME/libav/lib \
+      -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/QScintilla_gpl-*/Qt4Qt5` \
+      -DQSCINTILLA_LIBRARY=`echo $HOME/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.dylib` \
       ..
 </command></screen>
   </para>
   <para>
-    Adjust the paths above as needed.
-    If this step fails, or if you want to disable individual components of OVITO, you can now run "<command>ccmake .</command>" to open the CMake configuration program.    
-    Finally build OVITO by running 
+    Adjust the paths in the command above as needed.
+    If this step fails, or if you want to disable individual components of OVITO, you can now run "<command>ccmake .</command>" to
+    open the CMake configuration program and make changes to the build settings.
+    Once you are done, build OVITO by running
 <screen>
 <command>make -j4</command></screen>
   </para>
   <para>
-    If this succeeds, you can run <command>make install</command> to create a distributable app bundle in <filename>ovito/install/</filename>, which contains all dependencies.
+    If this step succeeds, you can run <command>make install</command> to generate an app bundle in the <filename>ovito/install/</filename> directory.
   </para>
   </simplesect>
-  
+
 </section>

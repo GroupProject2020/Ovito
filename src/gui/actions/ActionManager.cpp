@@ -151,12 +151,10 @@ void ActionManager::onAnimationSettingsReplaced(AnimationSettings* newAnimationS
 	disconnect(_animationIntervalChangedConnection);
 	disconnect(_animationPlaybackChangedConnection);
 	disconnect(_animationPlaybackToggledConnection);
-	QAction* autoKeyModeAction = getAction(ACTION_AUTO_KEY_MODE_TOGGLE);
-	QAction* animationPlaybackAction = getAction(ACTION_TOGGLE_ANIMATION_PLAYBACK);
 	if(newAnimationSettings) {
-		autoKeyModeAction->setEnabled(true);
+		QAction* autoKeyModeAction = getAction(ACTION_AUTO_KEY_MODE_TOGGLE);
+		QAction* animationPlaybackAction = getAction(ACTION_TOGGLE_ANIMATION_PLAYBACK);
 		autoKeyModeAction->setChecked(newAnimationSettings->autoKeyMode());
-		animationPlaybackAction->setEnabled(true);
 		animationPlaybackAction->setChecked(newAnimationSettings->isPlaybackActive());
 		_autoKeyModeChangedConnection = connect(newAnimationSettings, &AnimationSettings::autoKeyModeChanged, autoKeyModeAction, &QAction::setChecked);
 		_autoKeyModeToggledConnection = connect(autoKeyModeAction, &QAction::toggled, newAnimationSettings, &AnimationSettings::setAutoKeyMode);
@@ -166,8 +164,6 @@ void ActionManager::onAnimationSettingsReplaced(AnimationSettings* newAnimationS
 		onAnimationIntervalChanged(newAnimationSettings->animationInterval());
 	}
 	else {
-		autoKeyModeAction->setEnabled(false);
-		animationPlaybackAction->setEnabled(false);
 		onAnimationIntervalChanged(TimeInterval(0));
 	}
 }
@@ -183,6 +179,9 @@ void ActionManager::onAnimationIntervalChanged(TimeInterval newAnimationInterval
 	getAction(ACTION_TOGGLE_ANIMATION_PLAYBACK)->setEnabled(isAnimationInterval);
 	getAction(ACTION_GOTO_NEXT_FRAME)->setEnabled(isAnimationInterval);
 	getAction(ACTION_GOTO_END_OF_ANIMATION)->setEnabled(isAnimationInterval);
+	getAction(ACTION_AUTO_KEY_MODE_TOGGLE)->setEnabled(isAnimationInterval);
+	if(!isAnimationInterval && getAction(ACTION_AUTO_KEY_MODE_TOGGLE)->isChecked())
+		getAction(ACTION_AUTO_KEY_MODE_TOGGLE)->setChecked(false);
 }
 
 /******************************************************************************
