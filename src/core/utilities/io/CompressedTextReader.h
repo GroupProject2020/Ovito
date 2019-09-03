@@ -111,6 +111,21 @@ public:
 		return *l <= ' ';
 	}
 
+	/// Returns \c true if the last line read via readLine() ends with the given substring.
+	bool lineEndsWith(const char* s, bool ignoreTrailingWhitespace = true) const {
+		size_t len = qstrlen(line());
+		const char* l_end = line() + len;
+		if(ignoreTrailingWhitespace) {
+			while(len != 0 && l_end[-1] <= ' ') {
+				--l_end;
+				len--;
+			}
+		}
+		size_t len_pattern = qstrlen(s);
+		if(len < len_pattern) return false;
+		return std::equal(s, s + len_pattern, l_end - len_pattern);
+	}
+
 	/// Returns the last line read via readLine() as a Qt string.
 	QString lineString() const { return QString::fromUtf8(_line.data()); }
 

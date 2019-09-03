@@ -82,8 +82,8 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 	while(!stream.eof()) {
 		auto byteOffset = stream.byteOffset();
 		auto lineNumber = stream.lineNumber();
-		const char* line = stream.readLineTrimLeft();
-		if(boost::algorithm::icontains(line, "<-- h")) {
+		stream.readLine();
+		if(stream.lineEndsWith("<-- h")) {
 			Frame frame;
 			frame.sourceFile = sourceUrl;
 			frame.byteOffset = byteOffset;
@@ -129,14 +129,14 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 	while(!stream.eof()) {
 		const char* line = stream.readLineTrimLeft();
 
-		if(boost::algorithm::icontains(line, "<-- h")) {
+		if(stream.lineEndsWith("<-- h")) {
 			if(numCellVectors == 3) break;
 			if(sscanf(line, FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
 					&cell(0,numCellVectors), &cell(1,numCellVectors), &cell(2,numCellVectors)) != 3)
 				throw Exception(tr("Invalid simulation cell in CASTEP file at line %1").arg(stream.lineNumber()));
 			numCellVectors++;
 		}
-		else if(boost::algorithm::icontains(line, "<-- r")) {			
+		else if(stream.lineEndsWith("<-- R")) {			
 			Point3 pos;
 			if(sscanf(line, "%*s %*u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
 					&pos.x(), &pos.y(), &pos.z()) != 3)
@@ -146,14 +146,14 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 			while(*typeNameEnd > ' ') typeNameEnd++;
 			types.push_back(typeList->addTypeName(line, typeNameEnd));
 		}
-		else if(boost::algorithm::icontains(line, "<-- v")) {
+		else if(stream.lineEndsWith("<-- V")) {
 			Vector3 v;
 			if(sscanf(line, "%*s %*u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
 					&v.x(), &v.y(), &v.z()) != 3)
 				throw Exception(tr("Invalid velocity in CASTEP file at line %1").arg(stream.lineNumber()));			
 			velocities.push_back(v);
 		}
-		else if(boost::algorithm::icontains(line, "<-- f")) {
+		else if(stream.lineEndsWith("<-- F")) {
 			Vector3 f;
 			if(sscanf(line, "%*s %*u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
 					&f.x(), &f.y(), &f.z()) != 3)
