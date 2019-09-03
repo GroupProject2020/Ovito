@@ -5,7 +5,7 @@ OVITO - Open Visualization Tool
 OVITO is a scientific visualization and analysis software for atomistic and other
 particle simulation data. Visit the website for more information:
 
-   http://www.ovito.org/
+   https://www.ovito.org/
 
 Author:
       Alexander Stukowski (mail@ovito.org)
