@@ -481,6 +481,9 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 
 					// Go to next animation frame.
 					renderTime += animationSettings()->ticksPerFrame() * settings->everyNthFrame();
+
+					// Periodically free visual element resources during animation rendering to avoid clogging the memory.
+					visCache().discardUnusedObjects();
 				}
 			}
 
@@ -493,6 +496,10 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 
 		// Shutdown renderer.
 		renderer->endRender();
+
+		// Free visual element resources to avoid clogging the memory in cases where render() get called repeatedly from a script.
+		if(Application::instance()->executionContext() == Application::ExecutionContext::Scripting)
+			visCache().discardUnusedObjects();
 	}
 	catch(Exception& ex) {
 		// Shutdown renderer.
