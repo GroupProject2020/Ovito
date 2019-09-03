@@ -143,7 +143,6 @@ void ScriptEngine::initializeEmbeddedInterpreter(RefTarget* contextObj)
 		else {
 			os_path["PATH"] = QDir::toNativeSeparators(prefixDir.absolutePath());
 		}
-		py::print(os_module.attr("environ")["PATH"]);
 #endif
 	}
 	catch(Exception& ex) {
