@@ -145,10 +145,9 @@ void defineIOSubmodule(py::module m)
 			auto future = fs.requestFrameList(false, false);
 			return ScriptEngine::waitForFuture(future);
 		})
-		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
+		.def_property_readonly("num_frames", &FileSource::numberOfSourceFrames,
 				"This read-only attribute reports the number of frames found in the input file or sequence of input files. "
 				"The data for the individual frames can be obtained using the :py:meth:`.compute` method.")
-		.def_property("adjust_animation_interval", &FileSource::adjustAnimationIntervalEnabled, &FileSource::setAdjustAnimationIntervalEnabled)
 		.def_property("playback_speed_numerator", &FileSource::playbackSpeedNumerator, &FileSource::setPlaybackSpeedNumerator)
 		.def_property("playback_speed_denominator", &FileSource::playbackSpeedDenominator, &FileSource::setPlaybackSpeedDenominator)
 		.def_property("playback_start_time", &FileSource::playbackStartTime, &FileSource::setPlaybackStartTime)

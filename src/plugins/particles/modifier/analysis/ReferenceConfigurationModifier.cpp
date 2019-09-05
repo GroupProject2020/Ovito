@@ -22,9 +22,9 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
-#include <core/dataset/io/FileSource.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "ReferenceConfigurationModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -65,7 +65,7 @@ bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const DataColle
 {
 	return input.containsObject<ParticlesObject>();
 }
-	
+
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
@@ -109,26 +109,19 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 			refState = modApp->evaluateInput(modApp->sourceFrameToAnimationTime(referenceFrame));
 		}
 		else {
-			// Special handling of FileSources, which allow us to directly access specific frames (not animation times).
-			if(FileSource* fileSource = dynamic_object_cast<FileSource>(referenceConfiguration())) {
-				if(fileSource->numberOfFrames() > 0) {
-					if(referenceFrame < 0 || referenceFrame >= fileSource->numberOfFrames()) {
-						if(referenceFrame > 0)
-							throwException(tr("Requested reference frame number %1 is out of range. "
-								"The loaded reference configuration contains only %2 frame(s).").arg(referenceFrame).arg(fileSource->numberOfFrames()));
-						else
-							throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
-					}
-					refState = fileSource->requestFrame(referenceFrame);
+			if(referenceConfiguration()->numberOfSourceFrames() > 0) {
+				if(referenceFrame < 0 || referenceFrame >= referenceConfiguration()->numberOfSourceFrames()) {
+					if(referenceFrame > 0)
+						throwException(tr("Requested reference frame number %1 is out of range. "
+							"The loaded reference configuration contains only %2 frame(s).").arg(referenceFrame).arg(referenceConfiguration()->numberOfSourceFrames()));
+					else
+						throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
 				}
-				else {
-					// Create an empty state for the reference configuration if it is yet to be specified by the user.
-					refState = Future<PipelineFlowState>::createImmediateEmplace();
-				}
+				refState = referenceConfiguration()->evaluate(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame));
 			}
 			else {
-				// General case: We have an arbitrary pipeline that produces the reference configuration.
-				refState = referenceConfiguration()->evaluate(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame));
+				// Create an empty state for the reference configuration if it is yet to be specified by the user.
+				refState = Future<PipelineFlowState>::createImmediateEmplace();
 			}
 		}
 	}
@@ -155,7 +148,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 				throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
 		}
 
-		// Let subclass create the compute engine. 
+		// Let subclass create the compute engine.
 		return createEngineWithReference(time, modApp, std::move(input), referenceInput, validityInterval);
 	});
 }
@@ -177,7 +170,7 @@ ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
 	_identifiers(std::move(identifiers)),
 	_refIdentifiers(std::move(refIdentifiers)),
 	_affineMapping(affineMapping),
-	_useMinimumImageConvention(useMinimumImageConvention) 
+	_useMinimumImageConvention(useMinimumImageConvention)
 {
 	// Automatically disable PBCs in Z direction for 2D systems.
 	if(_simCell.is2D()) {
@@ -213,7 +206,7 @@ ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
 bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(bool requireCompleteCurrentToRefMapping, bool requireCompleteRefToCurrentMapping)
 {
 	OVITO_ASSERT(task());
-	
+
 	// Build particle-to-particle index maps.
 	_currentToRefIndexMap.resize(positions()->size());
 	_refToCurrentIndexMap.resize(refPositions()->size());
@@ -277,8 +270,8 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 		// Deformed and reference configuration must contain the same number of particles.
 		if(positions()->size() != refPositions()->size())
 			throw Exception(tr("Cannot perform calculation. Numbers of particles in reference configuration and current configuration do not match."));
-		
-		// When particle identifiers are not available, assume the storage order of particles in the 
+
+		// When particle identifiers are not available, assume the storage order of particles in the
 		// reference configuration and the current configuration are the same and use trivial 1-to-1 mapping.
 		std::iota(_refToCurrentIndexMap.begin(), _refToCurrentIndexMap.end(), size_t(0));
 		std::iota(_currentToRefIndexMap.begin(), _currentToRefIndexMap.end(), size_t(0));

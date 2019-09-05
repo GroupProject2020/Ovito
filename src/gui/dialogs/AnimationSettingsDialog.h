@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+//
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,39 +34,40 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 class OVITO_GUI_EXPORT AnimationSettingsDialog : public QDialog, private UndoableTransaction
 {
 	Q_OBJECT
-	
+
 public:
 
 	/// Constructor.
 	AnimationSettingsDialog(AnimationSettings* animSettings, QWidget* parentWindow = nullptr);
-	
-private Q_SLOTS:	
+
+private Q_SLOTS:
 
 	/// Event handler for the Ok button.
 	void onOk();
 
 	/// Is called when the user has selected a new value for the frames per seconds.
 	void onFramesPerSecondChanged(int index);
-	
+
 	/// Is called when the user has selected a new value for the playback speed.
 	void onPlaybackSpeedChanged(int index);
-	
+
 	/// Is called when the user changes the start/end values of the animation interval.
 	void onAnimationIntervalChanged();
 
 private:
-	
+
 	/// Updates the values shown in the dialog.
-	void updateValues();
+	void updateUI();
 
 	/// The animation settings being edited.
 	OORef<AnimationSettings> _animSettings;
 
 	QComboBox* fpsBox;
 	SpinnerWidget* animStartSpinner;
-	SpinnerWidget* animEndSpinner;	
+	SpinnerWidget* animEndSpinner;
 	QComboBox* playbackSpeedBox;
 	QCheckBox* loopPlaybackBox;
+	QGroupBox* animIntervalBox;
 };
 
 OVITO_END_INLINE_NAMESPACE

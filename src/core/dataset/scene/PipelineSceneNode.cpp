@@ -264,7 +264,7 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 		else if(event.type() == ReferenceEvent::TitleChanged) {
 			notifyDependents(ReferenceEvent::TitleChanged);
 		}
-		else if(event.type() == ReferenceEvent::PipelineChanged) {
+		else if(event.type() == ReferenceEvent::PipelineChanged || event.type() == ReferenceEvent::AnimationFramesChanged) {
 			// Forward pipeline changed events from the pipeline.
 			return true;
 		}
@@ -303,6 +303,10 @@ void PipelineSceneNode::referenceReplaced(const PropertyFieldDescriptor& field, 
 {
 	if(field == PROPERTY_FIELD(dataProvider)) {
 		invalidatePipelineCache();
+
+		// The animation length might have changed when an object has been replaced in the scene.
+		if(!isBeingLoaded())
+			notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 	SceneNode::referenceReplaced(field, oldTarget, newTarget);
 }

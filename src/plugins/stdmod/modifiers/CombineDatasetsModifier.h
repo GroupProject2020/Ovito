@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -48,14 +48,14 @@ protected:
 class OVITO_STDMOD_EXPORT CombineDatasetsModifier : public MultiDelegatingModifier
 {
 	/// Give this modifier class its own metaclass.
-	class CombineDatasetsModifierClass : public MultiDelegatingModifier::OOMetaClass  
+	class CombineDatasetsModifierClass : public MultiDelegatingModifier::OOMetaClass
 	{
 	public:
 
 		/// Inherit constructor from base metaclass.
 		using MultiDelegatingModifier::OOMetaClass::OOMetaClass;
 
-		/// Return the metaclass of delegates for this modifier type. 
+		/// Return the metaclass of delegates for this modifier type.
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return CombineDatasetsModifierDelegate::OOClass(); }
 	};
 
@@ -75,6 +75,36 @@ public:
 
 	/// Modifies the input data.
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+	/// Returns the number of animation frames this modifier can provide.
+	virtual int numberOfSourceFrames(int inputFrames) const override {
+		return secondaryDataSource() ? std::max(secondaryDataSource()->numberOfSourceFrames(), inputFrames) : inputFrames;
+	}
+
+	/// Given an animation time, computes the source frame to show.
+	virtual int animationTimeToSourceFrame(TimePoint time, int inputFrame) const override {
+		return inputFrame;
+	}
+
+	/// Given a source frame index, returns the animation time at which it is shown.
+	virtual TimePoint sourceFrameToAnimationTime(int frame, TimePoint inputTime) const override {
+		return inputTime;
+	}
+
+	/// Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
+	virtual QMap<int, QString> animationFrameLabels(QMap<int, QString> inputLabels) const override {
+		if(secondaryDataSource())
+			inputLabels.unite(secondaryDataSource()->animationFrameLabels());
+		return std::move(inputLabels);
+	}
+
+protected:
+
+	/// \brief Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
+
+	/// Is called when the value of a reference field of this object changes.
+	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
 
 private:
 

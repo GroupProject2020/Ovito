@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -175,6 +175,13 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 
 		// Propagate event only from certain sources to the DataSetContainer:
 		return (source == sceneRoot() || source == selection() || source == renderSettings());
+	}
+	else if(event.type() == ReferenceEvent::AnimationFramesChanged && source == sceneRoot() && !isBeingLoaded()) {
+		// Automatically adjust scene's animation interval to length of loaded source animations.
+		if(animationSettings()->autoAdjustInterval()) {
+			UndoSuspender noUndo(this);
+			animationSettings()->adjustAnimationInterval();
+		}
 	}
 	return RefTarget::referenceEvent(source, event);
 }

@@ -46,9 +46,6 @@ CombineDatasetsModifier::CombineDatasetsModifier(DataSet* dataset) : MultiDelega
 	// and caching the data to be merged.
 	OORef<FileSource> fileSource(new FileSource(dataset));
 
-	// Disable automatic adjustment of animation length for the source object.
-	fileSource->setAdjustAnimationIntervalEnabled(false);
-
 	setSecondaryDataSource(fileSource);
 }
 
@@ -63,12 +60,12 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(TimePoint time, Modi
 
 	// Get the state.
 	SharedFuture<PipelineFlowState> secondaryStateFuture = secondaryDataSource()->evaluate(time);
-	
+
 	// Wait for the data to become available.
 	return secondaryStateFuture.then(executor(), [this, state = input, time, modApp = OORef<ModifierApplication>(modApp)](const PipelineFlowState& secondaryState) mutable {
 
 		UndoSuspender noUndo(this);
-		
+
 		// Make sure the obtained dataset is valid and ready to use.
 		if(secondaryState.status().type() == PipelineStatus::Error) {
 			if(FileSource* fileSource = dynamic_object_cast<FileSource>(secondaryDataSource())) {
@@ -128,9 +125,33 @@ void CombineDatasetsModifier::evaluatePreliminary(TimePoint time, ModifierApplic
 			}
 		}
 	}
-	
+
 	// Let the delegates do their job and merge the data objects of the two datasets.
 	applyDelegates(state, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
+}
+
+/******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool CombineDatasetsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+{
+	if(event.type() == ReferenceEvent::AnimationFramesChanged && source == secondaryDataSource()) {
+		// Propagate animation interval events from the secondary source.
+		return true;
+	}
+	return MultiDelegatingModifier::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Gets called when the data object of the node has been replaced.
+******************************************************************************/
+void CombineDatasetsModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
+{
+	if(field == PROPERTY_FIELD(secondaryDataSource) && !isBeingLoaded()) {
+		// The animation length might have changed when the secondary source has been replaced.
+		notifyDependents(ReferenceEvent::AnimationFramesChanged);
+	}
+	MultiDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
 }
 
 }	// End of namespace

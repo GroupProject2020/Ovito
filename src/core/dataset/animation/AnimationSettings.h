@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2014) Alexander Stukowski
+//
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
 
 /**
  * \brief Stores the animation settings such as the animation length, current frame number, playback rate, etc.
- * 
+ *
  * Each \ref Ovito::DataSet "DataSet" owns an instance of this class, which can be accessed via DataSet::animationSettings().
  *
  * OVITO measures animation time in time tick units, which correspond to 1/4800 of a second. The ::TimePoint data type, which is an alias for
@@ -61,16 +61,16 @@ class OVITO_CORE_EXPORT AnimationSettings : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(AnimationSettings)
-	
+
 public:
 
 	/// \brief Constructor that initializes the object with default values.
 	/// \param dataset The context dataset.
 	Q_INVOKABLE AnimationSettings(DataSet* dataset);
-	
+
 	/// \brief Returns the number of frames per second.
 	/// \return The number of frames per second.
-	/// 
+	///
 	/// This setting controls the playback speed of the animation.
 	///
 	/// \sa setFramesPerSecond()
@@ -80,13 +80,13 @@ public:
 	/// \param fps The number of frames per second. Please note that not all
 	///            values are allowed here because time is measured in integer ticks units.
 	/// \undoable
-	/// 
+	///
 	/// This setting controls the playback speed of the animation.
 	///
 	/// \sa setFramesPerSecond()
 	/// \sa framesPerSecond()
 	/// \sa setTicksPerFrame()
-	void setFramesPerSecond(int fps) { setTicksPerFrame(TICKS_PER_SECOND / fps); } 	
+	void setFramesPerSecond(int fps) { setTicksPerFrame(TICKS_PER_SECOND / fps); }
 
 	/// \brief Gets the current animation frame.
 	/// \return The current frame.
@@ -123,15 +123,9 @@ public:
 	TimePoint snapTime(TimePoint time) const {
 		return frameToTime(timeToFrame(time + ticksPerFrame()/(time >= 0 ? 2 : -2)));
 	}
-	
+
     /// \brief Returns the list of names assigned to animation frames.
     const QMap<int,QString>& namedFrames() const { return _namedFrames; }
-
-    /// \brief Clears all names assigned to animation frames.
-    void clearNamedFrames() { _namedFrames.clear(); }
-
-    /// \brief Assigns a name to an animation frame.
-    void assignFrameName(int frameIndex, const QString& name) { _namedFrames[frameIndex] = name; }
 
 	/// \brief Returns whether animation recording is active and animation keys should be automatically generated.
 	/// \return \c true if animating is currently turned on and not suspended; \c false otherwise.
@@ -216,6 +210,10 @@ public Q_SLOTS:
 	/// Sets whether the animation is played back in a loop in the interactive viewports.
     void setLoopPlaybackSlot(bool loop) { setLoopPlayback(loop); }
 
+	/// Recalculates the length of the animation interval to accomodate all loaded source animations
+	/// in the scene.
+	void adjustAnimationInterval();
+
 Q_SIGNALS:
 
 	/// This signal is emitted when the current animation time has changed.
@@ -278,15 +276,19 @@ private:
 	/// The number of time ticks per frame.
 	/// This controls the animation speed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, ticksPerFrame, setTicksPerFrame);
-	
+
 	/// The playback speed factor that is used for animation playback in the viewport.
 	/// A value greater than 1 means that the animation is played at a speed higher
 	/// than realtime.
-	/// A value smaller than -1 that the animation is played at a speed lower than realtime.	
+	/// A value smaller than -1 that the animation is played at a speed lower than realtime.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, playbackSpeed, setPlaybackSpeed);
 
 	/// Controls whether the animation is played back in a loop in the interactive viewports.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, loopPlayback, setLoopPlayback);	
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, loopPlayback, setLoopPlayback);
+
+	/// Controls whether the animation interval is automatically adjusted to accomodate all loaded
+	/// source animations in the scene.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, autoAdjustInterval, setAutoAdjustInterval);
 
     /// List of names assigned to animation frames.
     QMap<int,QString> _namedFrames;
@@ -333,7 +335,7 @@ public:
 	~AnimationSuspender() {
 		if(_animSettings) _animSettings->resumeAnim();
 	}
-	
+
 private:
 	QPointer<AnimationSettings> _animSettings;
 };

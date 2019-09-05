@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -246,11 +246,10 @@ void AnimationTimeSlider::mouseMoveEvent(QMouseEvent* event)
 	TimePoint newTime = (TimePoint)((qint64)newPos * (qint64)(interval.duration() + 1) / (qint64)(rectWidth - thumbSize)) + interval.start();
 
 	// Clamp new time to animation interval.
-	newTime = std::max(newTime, interval.start());
-	newTime = std::min(newTime, interval.end());
+	newTime = qBound(interval.start(), newTime, interval.end());
 
 	// Snap to frames
-	int newFrame = _animSettings->timeToFrame(newTime + _animSettings->ticksPerFrame()/2);
+	int newFrame = _animSettings->timeToFrame(_animSettings->snapTime(newTime));
 	if(_dragPos >= 0) {
 
 		TimePoint newTime = _animSettings->frameToTime(newFrame);

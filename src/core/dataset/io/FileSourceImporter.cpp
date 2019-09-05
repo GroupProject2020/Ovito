@@ -160,20 +160,11 @@ OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> source
 	// Do not create any animation keys during import.
 	AnimationSuspender animSuspender(this);
 
-	OORef<FileSource> fileSource;
+	OORef<FileSource> fileSource = existingFileSource;
 
 	// Create the object that will insert the imported data into the scene.
-	if(existingFileSource == nullptr) {
+	if(!fileSource)
 		fileSource = new FileSource(dataset());
-
-		// When adding the imported data to an existing scene,
-		// do not auto-adjust animation interval.
-		if(importMode == AddToScene)
-			fileSource->setAdjustAnimationIntervalEnabled(false);
-	}
-	else {
-		fileSource = existingFileSource;
-	}
 
 	// Set the input location and importer.
 	if(!fileSource->setSource(std::move(sourceUrls), this, autodetectFileSequences)) {

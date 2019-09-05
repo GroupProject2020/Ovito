@@ -40,7 +40,7 @@ class OVITO_CORE_EXPORT Modifier : public RefTarget
 {
 	OVITO_CLASS_META(Modifier, ModifierClass)
 	Q_OBJECT
-	
+
 protected:
 
 	/// \brief Constructor.
@@ -109,13 +109,25 @@ public:
 	/// \param modApp The ModifierApplication object that has been created for this modifier.
 	virtual void initializeModifier(ModifierApplication* modApp) {}
 
-	/// \brief Decides whether a preliminary viewport update is performed after the modifier has been 
+	/// \brief Decides whether a preliminary viewport update is performed after the modifier has been
 	///        evaluated but before the entire pipeline evaluation is complete.
 	virtual bool performPreliminaryUpdateAfterEvaluation() { return true; }
 
-	/// \brief Decides whether a preliminary viewport update is performed every time the modifier 
+	/// \brief Decides whether a preliminary viewport update is performed every time the modifier
 	///        iself changes. This makes mostly sense for synchronous modifiers.
 	virtual bool performPreliminaryUpdateAfterChange() { return true; }
+
+	/// \brief Returns the number of animation frames this modifier can provide.
+	virtual int numberOfSourceFrames(int inputFrames) const { return inputFrames; }
+
+	/// \brief Given an animation time, computes the source frame to show.
+	virtual int animationTimeToSourceFrame(TimePoint time, int inputFrame) const { return inputFrame; }
+
+	/// \brief Given a source frame index, returns the animation time at which it is shown.
+	virtual TimePoint sourceFrameToAnimationTime(int frame, TimePoint inputTime) const { return inputTime; }
+
+	/// \brief Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
+	virtual QMap<int, QString> animationFrameLabels(QMap<int, QString> inputLabels) const { return std::move(inputLabels); }
 
 private:
 

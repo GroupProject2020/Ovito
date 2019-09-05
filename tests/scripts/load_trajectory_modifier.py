@@ -5,6 +5,7 @@ import numpy
 
 # Load static topology data from a LAMMPS data file.
 pipeline = import_file("../files/LAMMPS/water.start.data.gz")
+pipeline.add_to_scene()
 
 # Load atom trajectories from separate LAMMPS dump file.
 traj_mod = LoadTrajectoryModifier()

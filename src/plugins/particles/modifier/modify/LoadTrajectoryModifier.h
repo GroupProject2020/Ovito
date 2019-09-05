@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,7 +34,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class OVITO_PARTICLES_EXPORT LoadTrajectoryModifier : public Modifier
 {
 	/// Give this modifier class its own metaclass.
-	class LoadTrajectoryModifierClass : public ModifierClass 
+	class LoadTrajectoryModifierClass : public ModifierClass
 	{
 	public:
 
@@ -59,6 +59,29 @@ public:
 	/// Modifies the input data.
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
+	/// Returns the number of animation frames this modifier can provide.
+	virtual int numberOfSourceFrames(int inputFrames) const override {
+		return trajectorySource() ? trajectorySource()->numberOfSourceFrames() : inputFrames;
+	}
+
+	/// Given an animation time, computes the source frame to show.
+	virtual int animationTimeToSourceFrame(TimePoint time, int inputFrame) const override {
+		return trajectorySource() ? trajectorySource()->animationTimeToSourceFrame(time) : inputFrame;
+	}
+
+	/// Given a source frame index, returns the animation time at which it is shown.
+	virtual TimePoint sourceFrameToAnimationTime(int frame, TimePoint inputTime) const override {
+		return trajectorySource() ? trajectorySource()->sourceFrameToAnimationTime(frame) : inputTime;
+	}
+
+protected:
+
+	/// \brief Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
+
+	/// Is called when the value of a reference field of this object changes.
+	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
+
 private:
 
 	/// The source for trajectory data.
@@ -69,5 +92,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -124,37 +124,31 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	_statusLabel = new StatusWidget(rollout);
 	sublayout->addWidget(_statusLabel);
 
-	if(!parentEditor()) {
+	// Create another rollout for animation control.
+	rollout = createRollout(tr("Animation"), rolloutParams.after(rollout).collapse(), "scene_objects.file_source.html");
 
-		// Create another rollout for time series control.
-		rollout = createRollout(tr("Animation"), rolloutParams.after(rollout).collapse(), "scene_objects.file_source.html");
+	// Create the rollout contents.
+	layout = new QVBoxLayout(rollout);
+	layout->setContentsMargins(4,4,4,4);
+	layout->setSpacing(4);
 
-		// Create the rollout contents.
-		layout = new QVBoxLayout(rollout);
-		layout->setContentsMargins(4,4,4,4);
-		layout->setSpacing(4);
+	QHBoxLayout* subsublayout = new QHBoxLayout();
+	subsublayout->setContentsMargins(0,0,0,0);
+	subsublayout->setSpacing(2);
+	IntegerParameterUI* playbackSpeedNumeratorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedNumerator));
+	subsublayout->addWidget(new QLabel(tr("Playback rate:")));
+	subsublayout->addLayout(playbackSpeedNumeratorUI->createFieldLayout());
+	subsublayout->addWidget(new QLabel(tr("/")));
+	IntegerParameterUI* playbackSpeedDenominatorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedDenominator));
+	subsublayout->addLayout(playbackSpeedDenominatorUI->createFieldLayout());
+	layout->addLayout(subsublayout);
 
-		QHBoxLayout* subsublayout = new QHBoxLayout();
-		subsublayout->setContentsMargins(0,0,0,0);
-		subsublayout->setSpacing(2);
-		IntegerParameterUI* playbackSpeedNumeratorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedNumerator));
-		subsublayout->addWidget(new QLabel(tr("Playback rate:")));
-		subsublayout->addLayout(playbackSpeedNumeratorUI->createFieldLayout());
-		subsublayout->addWidget(new QLabel(tr("/")));
-		IntegerParameterUI* playbackSpeedDenominatorUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackSpeedDenominator));
-		subsublayout->addLayout(playbackSpeedDenominatorUI->createFieldLayout());
-		layout->addLayout(subsublayout);
-
-		subsublayout = new QHBoxLayout();
-		subsublayout->setContentsMargins(0,0,0,0);
-		IntegerParameterUI* playbackStartUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackStartTime));
-		subsublayout->addWidget(new QLabel(tr("Start at animation frame:")));
-		subsublayout->addLayout(playbackStartUI->createFieldLayout());
-		layout->addLayout(subsublayout);
-
-		BooleanParameterUI* adjustAnimIntervalUI = new BooleanParameterUI(this, PROPERTY_FIELD(FileSource::adjustAnimationIntervalEnabled));
-		layout->addWidget(adjustAnimIntervalUI->checkBox());
-	}
+	subsublayout = new QHBoxLayout();
+	subsublayout->setContentsMargins(0,0,0,0);
+	IntegerParameterUI* playbackStartUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileSource::playbackStartTime));
+	subsublayout->addWidget(new QLabel(tr("Start at animation frame:")));
+	subsublayout->addLayout(playbackStartUI->createFieldLayout());
+	layout->addLayout(subsublayout);
 
 	// Show settings editor of importer class.
 	new SubObjectParameterUI(this, PROPERTY_FIELD(FileSource::importer), rolloutParams.after(rollout));

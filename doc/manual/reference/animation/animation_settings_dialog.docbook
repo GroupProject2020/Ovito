@@ -15,15 +15,13 @@
        <imagedata fileref="images/animation_settings_dialog/animation_settings_dialog.png" format="PNG" scale="60" />
      </imageobject></mediaobject></screenshot></informalfigure>
 
-      This dialog box can be opened from the animation toolbar:
+      The animation settings dialog can be accessed from the animation toolbar:
       <screenshot><mediaobject><imageobject>
          <imagedata fileref="images/animation_settings_dialog/animation_settings_button.png" format="PNG" scale="38" />
       </imageobject></mediaobject></screenshot>
-      It allows you to change animation-related settings, e.g. the playback frame rate and the length of the
-      current animation.
-   </para>
-   <para>
-      Further information on OVITO's animation system can be found <link linkend="usage.animation">elsewhere</link>.
+      You can change animation-related settings, e.g. the playback frame rate and the length of the
+      current animation, here. Note that a more detailed introduction to OVITO's animation system can be found
+      <link linkend="usage.animation">here</link>.
    </para>
 
   <simplesect>
@@ -33,21 +31,9 @@
        <varlistentry>
         <term>Frames per second</term>
         <listitem><para>
-           Sets the playback speed of the animation in frames per second. In particular, this determines the frame rate of
+           The playback speed of the animation in frames per second. This value also determines the frame rate (FPS) of
            video files rendered by OVITO.
 		    </para></listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>Animation start / end</term>
-        <listitem><para>
-           Specifies the length of the animation interval shown in
-           the timeline in OVITO's main window. Normally, this interval is automatically determined
-           by the length of the loaded simulation sequence. But these controls allow you to
-           override the length if needed. This is useful, for example, if the loaded simulation
-           dataset consists of a single static frame only and you want to create a <link linkend="usage.animation">camera animation</link>
-           with a user-defined length.
-		      </para></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -66,6 +52,18 @@
            Controls whether animation playback in the viewport happens in a repeating loop.
            If turned off, playback stops when the end of the animation is reached.
 		    </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Custom animation interval</term>
+        <listitem><para>
+           This option lets you override the length of the animation interval shown in
+           the timeline of OVITO. Normally, this interval is automatically adjusted
+           to the length of the loaded simulation sequence(s).
+           Setting a custom animation length is useful, for example, if the simulation
+           dataset consists of just a static frame (not a trajectory) but you would like to create a
+           <link linkend="usage.animation">camera animation</link> flying around the dataset.
+		      </para></listitem>
       </varlistentry>
 
     </variablelist>

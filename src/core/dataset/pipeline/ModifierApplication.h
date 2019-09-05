@@ -60,7 +60,7 @@ public:
 
 	/// Returns the global class registry, which allows looking up the ModifierApplication subclass for a Modifier subclass.
 	static Registry& registry();
-	
+
 public:
 
 	/// \brief Constructs a modifier application.
@@ -74,20 +74,26 @@ public:
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
-	
+
 	/// \brief Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
 
+	/// \brief Returns the number of animation frames this pipeline object can provide.
+	virtual int numberOfSourceFrames() const override;
+
 	/// \brief Given an animation time, computes the source frame to show.
 	virtual int animationTimeToSourceFrame(TimePoint time) const override;
-	
+
 	/// \brief Given a source frame index, returns the animation time at which it is shown.
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const override;
-	
-	/// \brief Traverses the pipeline from this modifier application up to the source and 
+
+	/// \brief Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
+	virtual QMap<int, QString> animationFrameLabels() const override;
+
+	/// \brief Traverses the pipeline from this modifier application up to the source and
 	/// returns the source object that generates the input data for the pipeline.
 	PipelineObject* pipelineSource() const;
-		
+
 	/// \brief Returns the title of this modifier application.
 	virtual QString objectTitle() const override {
 		// Inherit title from modifier.
@@ -98,9 +104,9 @@ public:
 protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
-	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) override;	
+	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) override;
 
-	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been 
+	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been
 	///        evaluated but before the rest of the pipeline is complete.
 	virtual bool performPreliminaryUpdateAfterEvaluation() override {
 		return CachingPipelineObject::performPreliminaryUpdateAfterEvaluation() && (!modifier() || modifier()->performPreliminaryUpdateAfterEvaluation());

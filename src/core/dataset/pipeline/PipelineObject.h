@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT PipelineObject : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(PipelineObject)
-	
+
 public:
 
 	/// \brief Constructor.
@@ -54,9 +54,9 @@ public:
 	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.
 	QSet<PipelineSceneNode*> pipelines(bool onlyScenePipelines) const;
 
-	/// \brief Determines whether the data pipeline branches above this pipeline object, 
+	/// \brief Determines whether the data pipeline branches above this pipeline object,
 	///        i.e. whether this pipeline object has multiple dependents, all using this pipeline
-	///        object as input. 
+	///        object as input.
 	///
 	/// \param onlyScenePipelines If true, branches to pipelines which are currently not part of the scene are ignored.
 	bool isPipelineBranch(bool onlyScenePipelines) const;
@@ -66,12 +66,18 @@ public:
 
 	/// \brief Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const { return _status; }
-	
+
+	/// \brief Returns the number of animation frames this pipeline object can provide.
+	virtual int numberOfSourceFrames() const { return 1; }
+
 	/// \brief Given an animation time, computes the source frame to show.
 	virtual int animationTimeToSourceFrame(TimePoint time) const;
-	
+
 	/// \brief Given a source frame index, returns the animation time at which it is shown.
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const;
+
+	/// \brief Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
+	virtual QMap<int, QString> animationFrameLabels() const { return {}; }
 
 	/// Returns the data collection that is managed by this object (if it is a data source).
 	/// The returned data collection will be displayed under the data source in the pipeline editor.

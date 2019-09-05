@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -44,9 +44,6 @@ LoadTrajectoryModifier::LoadTrajectoryModifier(DataSet* dataset) : Modifier(data
 	// and caching the trajectory data.
 	OORef<FileSource> fileSource(new FileSource(dataset));
 
-	// Enable automatic adjustment of animation length for the trajectory source object.
-	fileSource->setAdjustAnimationIntervalEnabled(true);
-
 	setTrajectorySource(fileSource);
 }
 
@@ -63,6 +60,8 @@ bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const DataCollection& i
 ******************************************************************************/
 Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	OVITO_ASSERT(!input.isEmpty());
+
 	// Get the trajectory data source.
 	if(!trajectorySource())
 		throwException(tr("No trajectory data has been provided."));
@@ -237,6 +236,30 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 
 		return std::move(state);
 	});
+}
+
+/******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool LoadTrajectoryModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+{
+	if(event.type() == ReferenceEvent::AnimationFramesChanged && source == trajectorySource()) {
+		// Propagate animation interval events from the trajectory source.
+		return true;
+	}
+	return Modifier::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Gets called when the data object of the node has been replaced.
+******************************************************************************/
+void LoadTrajectoryModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
+{
+	if(field == PROPERTY_FIELD(trajectorySource) && !isBeingLoaded()) {
+		// The animation length might have changed when the trajectory source has been replaced.
+		notifyDependents(ReferenceEvent::AnimationFramesChanged);
+	}
+	Modifier::referenceReplaced(field, oldTarget, newTarget);
 }
 
 OVITO_END_INLINE_NAMESPACE

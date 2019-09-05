@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+//
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,15 +34,17 @@ AnimationSettingsDialog::AnimationSettingsDialog(AnimationSettings* animSettings
 		QDialog(parent), _animSettings(animSettings), UndoableTransaction(animSettings->dataset()->undoStack(), tr("Change animation settings"))
 {
 	setWindowTitle(tr("Animation Settings"));
-	
+
 	QVBoxLayout* layout1 = new QVBoxLayout(this);
-	
-	QGridLayout* contentLayout = new QGridLayout();
-	contentLayout->setContentsMargins(0,0,0,0);
-	contentLayout->setSpacing(0);
+
+	QGroupBox* playbackRateBox = new QGroupBox(tr("Playback"));
+	layout1->addWidget(playbackRateBox);
+
+	QGridLayout* contentLayout = new QGridLayout(playbackRateBox);
+	contentLayout->setHorizontalSpacing(0);
+	contentLayout->setVerticalSpacing(2);
 	contentLayout->setColumnStretch(1, 1);
-	layout1->addLayout(contentLayout);		    
-	
+
 	contentLayout->addWidget(new QLabel(tr("Frames per second:"), this), 0, 0);
 	fpsBox = new QComboBox(this);
 	QLocale locale;
@@ -69,25 +71,7 @@ AnimationSettingsDialog::AnimationSettingsDialog(AnimationSettings* animSettings
 	contentLayout->addWidget(fpsBox, 0, 1, 1, 2);
 	connect(fpsBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &AnimationSettingsDialog::onFramesPerSecondChanged);
 
-	contentLayout->addWidget(new QLabel(tr("Animation start:"), this), 1, 0);
-	QLineEdit* animStartBox = new QLineEdit(this);
-	contentLayout->addWidget(animStartBox, 1, 1);
-	animStartSpinner = new SpinnerWidget(this);
-	animStartSpinner->setTextBox(animStartBox);
-	animStartSpinner->setUnit(animSettings->dataset()->unitsManager().timeUnit());
-	contentLayout->addWidget(animStartSpinner, 1, 2);
-	connect(animStartSpinner, &SpinnerWidget::spinnerValueChanged, this, &AnimationSettingsDialog::onAnimationIntervalChanged);
-
-	contentLayout->addWidget(new QLabel(tr("Animation end:"), this), 2, 0);
-	QLineEdit* animEndBox = new QLineEdit(this);
-	contentLayout->addWidget(animEndBox, 2, 1);
-	animEndSpinner = new SpinnerWidget(this);
-	animEndSpinner->setTextBox(animEndBox);
-	animEndSpinner->setUnit(animSettings->dataset()->unitsManager().timeUnit());
-	contentLayout->addWidget(animEndSpinner, 2, 2);
-	connect(animEndSpinner, &SpinnerWidget::spinnerValueChanged, this, &AnimationSettingsDialog::onAnimationIntervalChanged);
-	
-	contentLayout->addWidget(new QLabel(tr("Playback speed in viewports:"), this), 3, 0);
+	contentLayout->addWidget(new QLabel(tr("Playback speed in viewports:"), this), 1, 0);
 	playbackSpeedBox = new QComboBox(this);
 	playbackSpeedBox->addItem(tr("x 1/40"), -40);
 	playbackSpeedBox->addItem(tr("x 1/20"), -20);
@@ -99,13 +83,45 @@ AnimationSettingsDialog::AnimationSettingsDialog(AnimationSettings* animSettings
 	playbackSpeedBox->addItem(tr("x 5"), 5);
 	playbackSpeedBox->addItem(tr("x 10"), 10);
 	playbackSpeedBox->addItem(tr("x 20"), 20);
-	contentLayout->addWidget(playbackSpeedBox, 3, 1, 1, 2);
+	contentLayout->addWidget(playbackSpeedBox, 1, 1, 1, 2);
 	connect(playbackSpeedBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &AnimationSettingsDialog::onPlaybackSpeedChanged);
 
 	loopPlaybackBox = new QCheckBox(tr("Loop playback"));
-	contentLayout->addWidget(loopPlaybackBox, 4, 0, 1, 3);
-	connect(loopPlaybackBox, &QCheckBox::clicked, [this](bool checked) {
+	contentLayout->addWidget(loopPlaybackBox, 2, 0, 1, 3);
+	connect(loopPlaybackBox, &QCheckBox::clicked, this, [this](bool checked) {
 		_animSettings->setLoopPlayback(checked);
+	});
+
+	animIntervalBox = new QGroupBox(tr("Custom animation interval"));
+	animIntervalBox->setCheckable(true);
+	layout1->addWidget(animIntervalBox);
+
+	contentLayout = new QGridLayout(animIntervalBox);
+	contentLayout->setHorizontalSpacing(0);
+	contentLayout->setVerticalSpacing(2);
+	contentLayout->setColumnStretch(1, 1);
+
+	contentLayout->addWidget(new QLabel(tr("Start frame:"), this), 0, 0);
+	QLineEdit* animStartBox = new QLineEdit(this);
+	contentLayout->addWidget(animStartBox, 0, 1);
+	animStartSpinner = new SpinnerWidget(this);
+	animStartSpinner->setTextBox(animStartBox);
+	animStartSpinner->setUnit(animSettings->dataset()->unitsManager().timeUnit());
+	contentLayout->addWidget(animStartSpinner, 0, 2);
+	connect(animStartSpinner, &SpinnerWidget::spinnerValueChanged, this, &AnimationSettingsDialog::onAnimationIntervalChanged);
+
+	contentLayout->addWidget(new QLabel(tr("End frame:"), this), 1, 0);
+	QLineEdit* animEndBox = new QLineEdit(this);
+	contentLayout->addWidget(animEndBox, 1, 1);
+	animEndSpinner = new SpinnerWidget(this);
+	animEndSpinner->setTextBox(animEndBox);
+	animEndSpinner->setUnit(animSettings->dataset()->unitsManager().timeUnit());
+	contentLayout->addWidget(animEndSpinner, 1, 2);
+	connect(animEndSpinner, &SpinnerWidget::spinnerValueChanged, this, &AnimationSettingsDialog::onAnimationIntervalChanged);
+
+	connect(animIntervalBox, &QGroupBox::clicked, this, [this](bool checked) {
+		_animSettings->setAutoAdjustInterval(!checked);
+		updateUI();
 	});
 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help, Qt::Horizontal, this);
@@ -117,8 +133,8 @@ AnimationSettingsDialog::AnimationSettingsDialog(AnimationSettings* animSettings
 		MainWindow::openHelpTopic(QStringLiteral("animation.animation_settings_dialog.html"));
 	});
 
-	layout1->addWidget(buttonBox); 
-    updateValues();
+	layout1->addWidget(buttonBox);
+    updateUI();
 }
 
 /******************************************************************************
@@ -133,13 +149,16 @@ void AnimationSettingsDialog::onOk()
 /******************************************************************************
 * Updates the values shown in the dialog.
 ******************************************************************************/
-void AnimationSettingsDialog::updateValues()
+void AnimationSettingsDialog::updateUI()
 {
 	fpsBox->setCurrentIndex(fpsBox->findData(_animSettings->ticksPerFrame()));
 	playbackSpeedBox->setCurrentIndex(playbackSpeedBox->findData(_animSettings->playbackSpeed()));
 	animStartSpinner->setIntValue(_animSettings->animationInterval().start());
 	animEndSpinner->setIntValue(_animSettings->animationInterval().end());
 	loopPlaybackBox->setChecked(_animSettings->loopPlayback());
+	animIntervalBox->setChecked(!_animSettings->autoAdjustInterval());
+	animStartSpinner->setEnabled(!_animSettings->autoAdjustInterval());
+	animEndSpinner->setEnabled(!_animSettings->autoAdjustInterval());
 }
 
 /******************************************************************************
@@ -151,7 +170,7 @@ void AnimationSettingsDialog::onFramesPerSecondChanged(int index)
 	OVITO_ASSERT(newTicksPerFrame != 0);
 
 	int currentFrame = _animSettings->currentFrame();
-	
+
 	// Change the animation speed.
 	qint64 oldTicksPerFrame = _animSettings->ticksPerFrame();
 	_animSettings->setTicksPerFrame((int)newTicksPerFrame);
@@ -164,12 +183,12 @@ void AnimationSettingsDialog::onFramesPerSecondChanged(int index)
 	_animSettings->setAnimationInterval(newInterval);
 
 	_animSettings->dataset()->rescaleTime(oldInterval, newInterval);
-	
+
 	// Update animation time to remain at the current frame.
 	_animSettings->setCurrentFrame(currentFrame);
 
 	// Update dialog controls to reflect new values.
-	updateValues();
+	updateUI();
 }
 
 /******************************************************************************
@@ -179,12 +198,12 @@ void AnimationSettingsDialog::onPlaybackSpeedChanged(int index)
 {
 	int newPlaybackSpeed = playbackSpeedBox->itemData(index).toInt();
 	OVITO_ASSERT(newPlaybackSpeed != 0);
-	
+
 	// Change the animation speed.
 	_animSettings->setPlaybackSpeed(newPlaybackSpeed);
-	
+
 	// Update dialog controls to reflect new values.
-	updateValues();
+	updateUI();
 }
 
 /******************************************************************************
@@ -203,7 +222,7 @@ void AnimationSettingsDialog::onAnimationIntervalChanged()
 		_animSettings->setTime(interval.end());
 
 	// Update dialog controls to reflect new values.
-	updateValues();
+	updateUI();
 }
 
 OVITO_END_INLINE_NAMESPACE

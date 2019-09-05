@@ -171,7 +171,7 @@ would look as follows::
     from ovito.data import ParticleProperty
     from ovito.io import FileSource
 
-    reference = FileSource(adjust_animation_interval = False)
+    reference = FileSource()
     reference.load("simulation.0.dump")
 
     def modify(frame, input, output):
@@ -181,8 +181,7 @@ would look as follows::
                           reference.particle_properties.position.array)
 
 The script above creates a :py:class:`~ovito.io.FileSource` to load the reference particle positions from an external
-data file. Setting :py:attr:`~ovito.io.FileSource.adjust_animation_interval` to false is required to
-prevent OVITO from automatically changing the animation length. Within the actual ``modify()`` function we can then access the particle
+data file. Within the actual ``modify()`` function we can then access the particle
 coordinates loaded by the :py:class:`~ovito.io.FileSource` object.
 
 Asynchronous modifiers and progress reporting

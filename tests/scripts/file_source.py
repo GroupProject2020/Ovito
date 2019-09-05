@@ -12,7 +12,6 @@ print("num_frames:", file_source.num_frames)
 print(file_source)
 assert(file_source.loaded_frame == 0)
 assert(file_source.num_frames == 1)
-assert(file_source.adjust_animation_interval == True)
 assert(file_source.loaded_file.endswith("/shear.void.120.cfg"))
 
 data = file_source.compute(0)

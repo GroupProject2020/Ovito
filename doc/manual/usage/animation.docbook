@@ -26,46 +26,38 @@
     <para>
        After loading a simulation sequence into OVITO, the timeline below the viewport windows indicates
        the length of the current animation interval. Animation frame numbers start at zero in OVITO. Thus, an animation
-       starting at frame 0 and ending at frame 100, for example, consists of 101 video frames.
+       ending at frame 100, for example, consists of 101 video frames.
     </para>
     <para>
-       It is important to point out that there is a semantic difference between <emphasis>simulation frames</emphasis>
-       (i.e. the simulation snapshots imported into OVITO) and <emphasis>animation frames</emphasis>, which are
-       the time units used by OVITO's internal timeline.
-       By default there is a one to one mapping between the two, i.e., the number of animation frames in OVITO's timeline is automatically adjusted to match the number of loaded simulation snapshots.
-       This default behavior is controlled by the <guilabel>Adjust animation length to time series</guilabel>
-       option in the <guilabel>Animation panel</guilabel> of the selected <link linkend="scene_objects.file_source">external file source</link>, which is highlighted in the
-       screenshot.
+       It is important to point out the semantic difference between <emphasis>simulation frames</emphasis>
+       (i.e. the series of imported simulation snapshots) and <emphasis>animation frames</emphasis>, which are
+       the time units used in OVITO's internal timeline.
+       Normally there is a one-to-one mapping between the two, i.e., the number of animation frames in OVITO's timeline is
+       automatically adjusted to match the number of frames of the loaded simulation trajectory.
+       This default can be overridden by activating the <guilabel>Custom animation interval</guilabel>
+       option in the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>.
+       Then you will be in control of the animation length. If you extend the animation interval beyond the
+       number of imported simulation frames, you will get additional still images at the end of the rendered animation.
     </para>
     <para>
-       It is possible to decouple the animation length from the length of the loaded simulation sequence by turning
-       off this option. Then you will be in control of the animation length, since OVITO no longer
-       adjusts the internal animation length to accommodate all frames of the loaded simulation.
-       You can manually change the length of the current animation in the
-       <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>.
-       If you make the animation interval longer than the
-       number of imported simulation frames, you will get additional still images at the end of the animation.
-    </para>
-    <para>
-       The <guilabel>Animation panel</guilabel> provides two additional options,
-       which control how the imported simulation frames are mapped to animation frames. The <guilabel>Playback rate</guilabel>
+       The <guilabel>Animation panel</guilabel> of the <link linkend="scene_objects.file_source">External file source</link> panel (see screenshot)
+       provides two options controlling how the frames of the simulation trajectory
+       get mapped to animation frames. The <guilabel>Playback rate</guilabel>
        setting allows you to specify a mapping that is not one to one. For example, a playback rate of
-       1:2 would stretch the simulation sequence to extend over twice as many animation frames. Each snapshot
-       of the simulation would then be visible for two consecutive video frames. A playback rate of
-       2:1, in contrast, would compress the playback of the simulation sequence to half of the animation frames.
-       Then, every other simulation snapshot is skipped in the rendered animation.
-       The <guilabel>Start at animation frame</guilabel> setting controls when the playback of the simulation sequence
-       begins on OVITO's animation timeline. By default it starts immediately at animation frame 0, but you can
+       1:2 stretches the simulation sequence to extend over twice as many animation frames. Each snapshot
+       of the simulation will then be visible for two consecutive video frames. A playback rate of
+       2:1, in contrast, compresses the playback of the simulation sequence to half of the animation frames.
+       Then, every other simulation frame gets skipped in the rendered animation.
+    </para>
+    <para>
+       The <guilabel>Start at animation frame</guilabel> setting specifies the point on OVITO's timeline at which
+       playback of the simulation sequence begins. By default it starts immediately at animation frame 0, but you can
        change this number, e.g. to insert still frames at the beginning of a movie.
     </para>
     <para>
-       Note that OVITO provides the possibility to load multiple simulation datasets simultaneously into one scene to display them
-       next to or on top of each other. Attention must be paid if not all imported simulation sequences
-       contain the same numbers of snapshots. To avoid possible conflicts, OVITO activates the <guilabel>Adjust animation length to time series</guilabel>
-       option only for the first simulation sequence that you import, and not for those subsequently added to the same scene.
-       Of course you can modify these settings later on, or disable the
-       automatic adjustment for all external file sources in the scene and then specify an animation length
-       by hand in the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>.
+       Note that OVITO provides the possibility to insert several simulation datasets into one scene to show them
+       simultaneously side-by-side or on top of each other. By default OVITO adjusts the length of the timeline
+       to fully accommodate all loaded trajectories.
        <informalfigure><screenshot><mediaobject><imageobject>
          <imagedata fileref="images/animation_settings_dialog/animation_settings_dialog.png" format="PNG" scale="60" />
        </imageobject></mediaobject></screenshot></informalfigure>
@@ -75,25 +67,25 @@
   <simplesect>
     <title>Playback speed</title>
     <para>
-      In addition to the animation length, the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>
-      also lets you change the playback speed (frames per second) of the current animation. This number determines the frame rate of
-      video files produced by OVITO (e.g. AVI or MPEG). It also affects the playback within OVITO, which, however, typically
-      happens at a lower effective rate because loading the next simulation snapshot from disk takes too long to reach the
+      In the <link linkend="animation.animation_settings_dialog">Animation settings dialog</link>
+      you set the playback speed (frames per second) of the current animation. This number determines the frame rate of
+      video files produced by OVITO (e.g. AVI or MPEG). It also affects the playback within OVITO's viewports, which, however, typically
+      occurs at a lower effective rate because loading the next simulation snapshot from disk can easily take too long to reach the
       realtime frame rate.
     </para>
   </simplesect>
 
   <simplesect>
-    <title>Animation via time-dependent functions</title>
+    <title>Animating by means of time-dependent formulas</title>
     <para>
-       Simple animation effects can readily be achieved using the <link linkend="particles.modifiers.expression_select">Expression selection</link>
+       Simple animation effects can be readily achieved by using the <link linkend="particles.modifiers.expression_select">Expression selection</link>
        and <link linkend="particles.modifiers.compute_property">Compute property</link> modifiers. These modifiers
-       allow you to enter arbitrary mathematical formulas and Boolean expressions to select subsets of
+       allow you to enter mathematical formulas or Boolean expressions to select subsets of
        particles or to manipulate certain particle properties (e.g. position, color, transparency, etc.).
     </para>
     <para>
-       Within such a math expression, you can incorporate the special variable <literal>Frame</literal>, which evaluates
-       to the current animation frame number. Thus, if you reference this variable in an expression, the formula becomes
+       Within such math expressions, you can incorporate the special variable <literal>Frame</literal>, which evaluates
+       to the current animation frame number. Thus, whenever you reference this variable in an expression, the formula becomes
        time-dependent and OVITO will recompute the results on every animation frame.
     </para>
   </simplesect>

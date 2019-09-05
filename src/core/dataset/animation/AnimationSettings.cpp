@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,6 +33,7 @@ DEFINE_PROPERTY_FIELD(AnimationSettings, animationInterval);
 DEFINE_PROPERTY_FIELD(AnimationSettings, ticksPerFrame);
 DEFINE_PROPERTY_FIELD(AnimationSettings, playbackSpeed);
 DEFINE_PROPERTY_FIELD(AnimationSettings, loopPlayback);
+DEFINE_PROPERTY_FIELD(AnimationSettings, autoAdjustInterval);
 
 /******************************************************************************
 * Constructor.
@@ -42,7 +43,8 @@ AnimationSettings::AnimationSettings(DataSet* dataset) : RefTarget(dataset),
 		_playbackSpeed(1),
 		_animationInterval(0, 0),
 		_time(0),
-		_loopPlayback(true)
+		_loopPlayback(true),
+		_autoAdjustInterval(true)
 {
 }
 
@@ -57,6 +59,8 @@ void AnimationSettings::propertyChanged(const PropertyFieldDescriptor& field)
 		Q_EMIT intervalChanged(animationInterval());
 	else if(field == PROPERTY_FIELD(ticksPerFrame))
 		Q_EMIT speedChanged(ticksPerFrame());
+	else if(field == PROPERTY_FIELD(autoAdjustInterval) && autoAdjustInterval() && !isBeingLoaded())
+		adjustAnimationInterval();
 }
 
 /******************************************************************************
@@ -306,6 +310,54 @@ void AnimationSettings::onPlaybackTimer()
 
 	// Set new time and continue playing.
 	continuePlaybackAtTime(newTime);
+}
+
+/******************************************************************************
+* Recalculates the length of the animation interval to accomodate all loaded
+* source animations in the scene.
+******************************************************************************/
+void AnimationSettings::adjustAnimationInterval()
+{
+	TimeInterval interval;
+	_namedFrames.clear();
+	dataset()->sceneRoot()->visitObjectNodes([&interval,this](PipelineSceneNode* node) {
+		if(node->dataProvider()) {
+			int nframes = node->dataProvider()->numberOfSourceFrames();
+			if(nframes > 0) {
+
+				// Final animation interval should encompass the local intervals
+				// of all animated objects in the scene.
+				TimePoint start = node->dataProvider()->sourceFrameToAnimationTime(0);
+				if(interval.isEmpty() || start < interval.start()) interval.setStart(start);
+				TimePoint end = node->dataProvider()->sourceFrameToAnimationTime(nframes) - 1;
+				if(interval.isEmpty() || end > interval.end()) interval.setEnd(end);
+
+				// Save the list of the named animation frames.
+				// Merge with other list(s) from other scene objects if there are any.
+				if(_namedFrames.empty())
+					_namedFrames = node->dataProvider()->animationFrameLabels();
+				else {
+					auto additionalLabels = node->dataProvider()->animationFrameLabels();
+					if(!additionalLabels.empty())
+						_namedFrames.unite(additionalLabels);
+				}
+			}
+		}
+		return true;
+	});
+	if(interval.isEmpty())
+		interval.setInstant(0);
+	else {
+		// Round interval to nearest frame time.
+		// Always include frame 0 in the animation interval.
+		interval.setStart(std::min(0, frameToTime(timeToFrame(interval.start()))));
+		interval.setEnd(frameToTime(timeToFrame(interval.end())));
+	}
+	setAnimationInterval(interval);
+	if(time() < interval.start())
+		setTime(interval.start());
+	else if(time() > interval.end())
+		setTime(interval.end());
 }
 
 /******************************************************************************

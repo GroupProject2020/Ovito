@@ -48,9 +48,9 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(SceneNode, nodeName, ReferenceEvent::TitleChange
 /******************************************************************************
 * Default constructor.
 ******************************************************************************/
-SceneNode::SceneNode(DataSet* dataset) : RefTarget(dataset), 
+SceneNode::SceneNode(DataSet* dataset) : RefTarget(dataset),
 	_worldTransform(AffineTransformation::Identity()),
-	_worldTransformValidity(TimeInterval::empty()), 
+	_worldTransformValidity(TimeInterval::empty()),
 	_boundingBoxValidity(TimeInterval::empty()),
 	_displayColor(0,0,0)
 {
@@ -196,6 +196,10 @@ bool SceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		if(!dataset()->undoStack().isUndoingOrRedoing())
 			deleteNode();
 	}
+	else if(event.type() == ReferenceEvent::AnimationFramesChanged && children().contains(static_cast<SceneNode*>(source))) {
+		// Forward pipeline changed events from the scene pipelines.
+		return true;
+	}
 	return RefTarget::referenceEvent(source, event);
 }
 
@@ -224,7 +228,11 @@ void SceneNode::referenceInserted(const PropertyFieldDescriptor& field, RefTarge
 		child->_parentNode = this;
 
 		// Invalidate cached world bounding box of this parent node.
-		invalidateBoundingBox();		
+		invalidateBoundingBox();
+
+		// The animation length might have changed when an object has been removed from the scene.
+		if(!isBeingLoaded())
+			notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 	RefTarget::referenceInserted(field, newTarget, listIndex);
 }
@@ -241,7 +249,10 @@ void SceneNode::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget
 		child->_parentNode = nullptr;
 
 		// Invalidate cached world bounding box of this parent node.
-		invalidateBoundingBox();		
+		invalidateBoundingBox();
+
+		// The animation length might have changed when an object has been removed from the scene.
+		notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 	RefTarget::referenceRemoved(field, oldTarget, listIndex);
 }
@@ -296,7 +307,7 @@ void SceneNode::insertChildNode(int index, SceneNode* newChild)
 void SceneNode::removeChildNode(int index)
 {
 	OVITO_ASSERT(index >= 0 && index < children().size());
-	
+
 	SceneNode* child = children()[index];
 	OVITO_ASSERT_MSG(child->parentNode() == this, "SceneNode::removeChildNode()", "The node to be removed is not a child of this parent node.");
 

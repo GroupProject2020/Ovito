@@ -101,7 +101,7 @@ void CalculateDisplacementsModifierEditor::createUI(const RolloutInsertionParame
 	sublayout->setSpacing(6);
 
 	_sourceButtonGroup = new QButtonGroup(this);
-	connect(_sourceButtonGroup, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, &CalculateDisplacementsModifierEditor::onSourceButtonClicked);	
+	connect(_sourceButtonGroup, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, &CalculateDisplacementsModifierEditor::onSourceButtonClicked);
 	QRadioButton* upstreamPipelineBtn = new QRadioButton(tr("Upstream pipeline"));
 	QRadioButton* externalFileBtn = new QRadioButton(tr("External file"));
 	_sourceButtonGroup->addButton(upstreamPipelineBtn, 0);
@@ -132,15 +132,11 @@ void CalculateDisplacementsModifierEditor::onSourceButtonClicked(int id)
 			// Create a file source object, which can be used for loading
 			// the reference configuration from a separate file.
 			OORef<FileSource> fileSource(new FileSource(mod->dataset()));
-			
-			// Disable automatic adjustment of animation length for the secondary file source.
-			// We don't want the scene's animation interval to be affected by this.
-			fileSource->setAdjustAnimationIntervalEnabled(false);
 			mod->setReferenceConfiguration(fileSource);
 		}
 		else {
 			mod->setReferenceConfiguration(nullptr);
-		}	
+		}
 	});
 }
 

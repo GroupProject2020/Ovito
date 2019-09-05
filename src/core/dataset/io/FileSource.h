@@ -31,7 +31,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
 /**
- * \brief An object in the data pipeline that reads data from an external file. 
+ * \brief An object in the data pipeline that reads data from an external file.
  *
  * This class works in concert with the FileSourceImporter class.
  */
@@ -39,17 +39,17 @@ class OVITO_CORE_EXPORT FileSource : public CachingPipelineObject
 {
 	Q_OBJECT
 	OVITO_CLASS(FileSource)
-	
+
 public:
 
 	/// Constructor.
 	Q_INVOKABLE FileSource(DataSet* dataset);
-	
+
 	/// \brief Asks the object for the result of the data pipeline.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
 	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
 	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
-	
+
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
 
@@ -69,11 +69,8 @@ public:
 	void updateListOfFrames();
 
 	/// \brief Implementation method for scanning the external data file to find all contained frames.
-	/// This is an implementation detail. Please use the high-level method updateListOfFrames() instead. 
+	/// This is an implementation detail. Please use the high-level method updateListOfFrames() instead.
 	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame);
-
-	/// \brief Returns the number of frames that are provided by the data source.
-	int numberOfFrames() const { return _frames.size(); }
 
 	/// \brief Returns the index of the input frame currently stored by this source object.
 	int storedFrameIndex() const { return _storedFrameIndex; }
@@ -81,11 +78,17 @@ public:
 	/// \brief Returns the list of animation frames in the input file(s).
 	const QVector<FileSourceImporter::Frame>& frames() const { return _frames; }
 
+	/// \brief Returns the number of animation frames this pipeline object can provide.
+	virtual int numberOfSourceFrames() const override { return _frames.size(); }
+
 	/// \brief Given an animation time, computes the source frame to show.
 	virtual int animationTimeToSourceFrame(TimePoint time) const override;
 
 	/// \brief Given a source frame index, returns the animation time at which it is shown.
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const override;
+
+	/// \brief Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
+	virtual QMap<int, QString> animationFrameLabels() const override;
 
 	/// \brief Requests a source frame from the input sequence.
 	SharedFuture<PipelineFlowState> requestFrame(int frame);
@@ -117,21 +120,15 @@ protected:
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
-
 private:
 
 	/// Requests a source frame from the input sequence.
 	Future<PipelineFlowState> requestFrameInternal(int frame);
 
-	/// \brief Adjusts the animation interval of the current data set to the number of frames in the data source.
-	void adjustAnimationInterval(int gotoFrameIndex = -1);
-
 	/// Sets which frame is currently stored by this source object.
 	void setStoredFrameIndex(int frameIndex);
 
-	/// Updates the internal list of input frames. 
+	/// Updates the internal list of input frames.
 	/// Invalidates cached frames in case they did change.
 	void setListOfFrames(QVector<FileSourceImporter::Frame> frames);
 
@@ -142,9 +139,6 @@ private:
 
 	/// The associated importer object that is responsible for parsing the input file.
 	DECLARE_REFERENCE_FIELD_FLAGS(FileSourceImporter, importer, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_UNDO);
-
-	/// Controls whether the scene's animation interval is adjusted to the number of frames found in the input file.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, adjustAnimationIntervalEnabled, setAdjustAnimationIntervalEnabled);
 
 	/// The list of source files (may include wild-card patterns).
 	DECLARE_PROPERTY_FIELD_FLAGS(std::vector<QUrl>, sourceUrls, PROPERTY_FIELD_NO_UNDO);
@@ -163,6 +157,9 @@ private:
 
 	/// The list of frames of the data source.
 	QVector<FileSourceImporter::Frame> _frames;
+
+	/// The human-readable labels associated with animation frames (e.g. the simulation timestep numbers).
+	mutable QMap<int, QString> _frameLabels;
 
 	/// The active future if loading the list of frames is in progress.
 	SharedFuture<QVector<FileSourceImporter::Frame>> _framesListFuture;
@@ -183,7 +180,7 @@ private:
 	/// Indicates whether the data from a frame loader is currently being handed over to the FileSource.
 	bool _handOverInProgress = false;
 
-	/// Indicates that the cached pipeline state should be updated with the current contents of the data collection 
+	/// Indicates that the cached pipeline state should be updated with the current contents of the data collection
 	/// of this FileSource.
 	bool _updateCacheWithDataCollection = false;
 };

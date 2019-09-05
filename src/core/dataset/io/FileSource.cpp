@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -37,14 +37,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
 IMPLEMENT_OVITO_CLASS(FileSource);
 DEFINE_REFERENCE_FIELD(FileSource, importer);
-DEFINE_PROPERTY_FIELD(FileSource, adjustAnimationIntervalEnabled);
 DEFINE_PROPERTY_FIELD(FileSource, sourceUrls);
 DEFINE_PROPERTY_FIELD(FileSource, playbackSpeedNumerator);
 DEFINE_PROPERTY_FIELD(FileSource, playbackSpeedDenominator);
 DEFINE_PROPERTY_FIELD(FileSource, playbackStartTime);
 DEFINE_REFERENCE_FIELD(FileSource, dataCollection);
 SET_PROPERTY_FIELD_LABEL(FileSource, importer, "File Importer");
-SET_PROPERTY_FIELD_LABEL(FileSource, adjustAnimationIntervalEnabled, "Adjust animation length to time series");
 SET_PROPERTY_FIELD_LABEL(FileSource, sourceUrls, "Source location");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackSpeedNumerator, "Playback rate numerator");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackSpeedDenominator, "Playback rate denominator");
@@ -58,7 +56,6 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(FileSource, sourceUrls, ReferenceEvent::TitleCha
 * Constructs the object.
 ******************************************************************************/
 FileSource::FileSource(DataSet* dataset) : CachingPipelineObject(dataset),
-	_adjustAnimationIntervalEnabled(true),
 	_playbackSpeedNumerator(1),
 	_playbackSpeedDenominator(1),
 	_playbackStartTime(0)
@@ -202,22 +199,26 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 
 	// Replace our internal list of frames.
 	_frames = std::move(frames);
+	// Reset cached frame label list. It will be rebuilt upon request by the method animationFrameLabels().
+	_frameLabels.clear();
 
-	// When loading a new file sequence, jump to the frame initially selected by the user in the
-	// file selection dialog.
-	int jumpToFrame = -1;
+	// Adjust the animation length to match the number of source frames.
+	notifyDependents(ReferenceEvent::AnimationFramesChanged);
+
+	// Position time slider to the frame that corresponds to the file initially picked by the user
+	// in the file selection dialog.
 	if(_isNewFile) {
 		for(int frameIndex = 0; frameIndex < _frames.size(); frameIndex++) {
 			QFileInfo fileInfo(_frames[frameIndex].sourceFile.path());
 			if(fileInfo.fileName() == _originallySelectedFilename) {
-				jumpToFrame = frameIndex;
+				TimePoint jumpToTime = sourceFrameToAnimationTime(frameIndex);
+				AnimationSettings* animSettings = dataset()->animationSettings();
+				if(animSettings->animationInterval().contains(jumpToTime))
+					animSettings->setTime(jumpToTime);
 				break;
 			}
 		}
 	}
-
-	// Adjust the animation length to match the number of source frames.
-	adjustAnimationInterval(jumpToFrame);
 
 	// Notify dependents that the list of source frames has changed.
 	notifyDependents(ReferenceEvent::ObjectStatusChanged);
@@ -247,6 +248,26 @@ TimePoint FileSource::sourceFrameToAnimationTime(int frame) const
 }
 
 /******************************************************************************
+* Returns the human-readable labels associated with the animation frames.
+******************************************************************************/
+QMap<int, QString> FileSource::animationFrameLabels() const
+{
+	// Check if the cached list of frame labels is still available.
+	// If not, rebuild the list here.
+	if(_frameLabels.empty()) {
+		AnimationSettings* animSettings = dataset()->animationSettings();
+		int frameIndex = 0;
+		for(const FileSourceImporter::Frame& frame : _frames) {
+			if(frame.label.isEmpty()) break;
+			// Convert local source frame index to global animation frame number.
+			_frameLabels.insert(animSettings->timeToFrame(FileSource::sourceFrameToAnimationTime(frameIndex)), frame.label);
+			frameIndex++;
+		}
+	}
+	return _frameLabels;
+}
+
+/******************************************************************************
 * Returns the current status of the pipeline object.
 ******************************************************************************/
 PipelineStatus FileSource::status() const
@@ -263,10 +284,11 @@ Future<PipelineFlowState> FileSource::evaluateInternal(TimePoint time, bool brea
 {
 	// Convert the animation time to a frame number.
 	int frame = animationTimeToSourceFrame(time);
+	int frameCount = numberOfSourceFrames();
 
 	// Clamp to frame range.
 	if(frame < 0) frame = 0;
-	else if(frame >= numberOfFrames() && numberOfFrames() > 0) frame = numberOfFrames() - 1;
+	else if(frame >= frameCount && frameCount > 0) frame = frameCount - 1;
 
 	// Call implementation routine.
 	return requestFrameInternal(frame);
@@ -502,44 +524,6 @@ void FileSource::setStoredFrameIndex(int frameIndex)
 }
 
 /******************************************************************************
-* Adjusts the animation interval of the current data set to the number of
-* frames reported by the file parser.
-******************************************************************************/
-void FileSource::adjustAnimationInterval(int gotoFrameIndex)
-{
-	// Automatic adjustment of animation interval may be disabled for this file source.
-	if(!adjustAnimationIntervalEnabled())
-		return;
-
-	AnimationSettings* animSettings = dataset()->animationSettings();
-	UndoSuspender noUndo(this);
-
-	// Adjust the length of the animation interval to match the number of frames in the loaded sequence.
-	TimeInterval interval(sourceFrameToAnimationTime(0), sourceFrameToAnimationTime(std::max(numberOfFrames()-1,0)));
-	animSettings->setAnimationInterval(interval);
-
-	// Jump to the frame corresponding to the file picked by the user in the file selection dialog.
-	if(gotoFrameIndex >= 0 && gotoFrameIndex < numberOfFrames()) {
-		animSettings->setTime(sourceFrameToAnimationTime(gotoFrameIndex));
-	}
-	else if(animSettings->time() > interval.end())
-		animSettings->setTime(interval.end());
-	else if(animSettings->time() < interval.start())
-		animSettings->setTime(interval.start());
-
-	// The file importer might assign names to different input frames, e.g. the file name when
-	// a file sequence was loaded, or the simulation time when it was parsed from the file headers.
-	// We pass the frame names to the animation system so that they can be displayed in the
-	// time line.
-	animSettings->clearNamedFrames();
-	for(int animFrame = animSettings->timeToFrame(interval.start()); animFrame <= animSettings->timeToFrame(interval.end()); animFrame++) {
-		int inputFrame = animationTimeToSourceFrame(animSettings->frameToTime(animFrame));
-		if(inputFrame >= 0 && inputFrame < _frames.size() && !_frames[inputFrame].label.isEmpty())
-			animSettings->assignFrameName(animFrame, _frames[inputFrame].label);
-	}
-}
-
-/******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
 void FileSource::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
@@ -584,11 +568,11 @@ QString FileSource::objectTitle() const
 ******************************************************************************/
 void FileSource::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	if(field == PROPERTY_FIELD(adjustAnimationIntervalEnabled) ||
-			field == PROPERTY_FIELD(playbackSpeedNumerator) ||
+	if(field == PROPERTY_FIELD(playbackSpeedNumerator) ||
 			field == PROPERTY_FIELD(playbackSpeedDenominator) ||
 			field == PROPERTY_FIELD(playbackStartTime)) {
-		adjustAnimationInterval();
+		_frameLabels.clear(); // Clear cached frame label list. Will be rebuilt upon request in animationFrameLabels().
+		notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 	CachingPipelineObject::propertyChanged(field);
 }
@@ -647,20 +631,6 @@ PipelineFlowState FileSource::evaluatePreliminary()
 		pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
 	}
 	return CachingPipelineObject::evaluatePreliminary();
-}
-
-/******************************************************************************
-* Creates a copy of this object.
-******************************************************************************/
-OORef<RefTarget> FileSource::clone(bool deepCopy, CloneHelper& cloneHelper) const
-{
-	// Let the base class create an instance of this class.
-	OORef<FileSource> clone = static_object_cast<FileSource>(CachingPipelineObject::clone(deepCopy, cloneHelper));
-
-	// There should always be only one FileSource in the scene controlling the animation interval length.
-	clone->setAdjustAnimationIntervalEnabled(false);
-
-	return clone;
 }
 
 OVITO_END_INLINE_NAMESPACE

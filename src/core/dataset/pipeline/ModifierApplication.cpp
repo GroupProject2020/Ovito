@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -60,6 +60,12 @@ ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObje
 bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
+
+		// If modifier provides animation frames, the animation interval might change when the
+		// modifier gets enabled/disabled.
+		if(!isBeingLoaded())
+			notifyDependents(ReferenceEvent::AnimationFramesChanged);
+
 		if(!modifier()->isEnabled()) {
 			// Ignore modifier's status if it is currently disabled.
 			setStatus(PipelineStatus(PipelineStatus::Success, tr("Modifier is currently disabled.")));
@@ -71,6 +77,10 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 	}
 	if(event.type() == ReferenceEvent::PipelineChanged && source == input()) {
 		// Propagate pipeline changed events and updates to the preliminary state from upstream.
+		return true;
+	}
+	else if(event.type() == ReferenceEvent::AnimationFramesChanged && (source == input() || source == modifier()) && !isBeingLoaded()) {
+		// Propagate animation interval events from the modifier or the upstream pipeline.
 		return true;
 	}
 	else if(event.type() == ReferenceEvent::TargetChanged) {
@@ -105,10 +115,18 @@ void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field
 			newMod->notifyDependents(ReferenceEvent::ModifierInputChanged);
 		}
 		notifyDependents(ReferenceEvent::TargetEnabledOrDisabled);
+
+		// The animation length might have changed when the modifier has changed.
+		if(!isBeingLoaded())
+			notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
-	else if(field == PROPERTY_FIELD(input) && modifier()) {
-		// Update the status of the Modifier when ModifierApplication is inserted/removed into pipeline.
-		modifier()->notifyDependents(ReferenceEvent::ModifierInputChanged);
+	else if(field == PROPERTY_FIELD(input) && !isBeingLoaded()) {
+		if(modifier()) {
+			// Update the status of the Modifier when ModifierApplication is inserted/removed into pipeline.
+			modifier()->notifyDependents(ReferenceEvent::ModifierInputChanged);
+		}
+		// The animation length might have changed when the pipeline has changed.
+		notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 
 	CachingPipelineObject::referenceReplaced(field, oldTarget, newTarget);
@@ -169,8 +187,8 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, 
 			}
 
 			// Without a modifier, this ModifierApplication becomes a no-op.
-			// The same is true when the Modifier is disabled.
-			if(!modifier() || !modifier()->isEnabled())
+			// The same is true when the Modifier is disabled or if the input data is invalid.
+			if(!modifier() || !modifier()->isEnabled() || inputData.isEmpty())
 				return inputData;
 
 			// We don't want to create any undo records while performing the data modifications.
@@ -294,13 +312,25 @@ PipelineFlowState ModifierApplication::evaluatePreliminary()
 }
 
 /******************************************************************************
+* Returns the number of animation frames this pipeline object can provide.
+******************************************************************************/
+int ModifierApplication::numberOfSourceFrames() const
+{
+	int n = input() ? input()->numberOfSourceFrames() : CachingPipelineObject::numberOfSourceFrames();
+	if(modifier() && modifier()->isEnabled())
+		n = modifier()->numberOfSourceFrames(n);
+	return n;
+}
+
+/******************************************************************************
 * Given an animation time, computes the source frame to show.
 ******************************************************************************/
 int ModifierApplication::animationTimeToSourceFrame(TimePoint time) const
 {
-	if(input())
-		return input()->animationTimeToSourceFrame(time);
-	return CachingPipelineObject::animationTimeToSourceFrame(time);
+	int frame = input() ? input()->animationTimeToSourceFrame(time) : CachingPipelineObject::animationTimeToSourceFrame(time);
+	if(modifier() && modifier()->isEnabled())
+		frame = modifier()->animationTimeToSourceFrame(time, frame);
+	return frame;
 }
 
 /******************************************************************************
@@ -308,9 +338,21 @@ int ModifierApplication::animationTimeToSourceFrame(TimePoint time) const
 ******************************************************************************/
 TimePoint ModifierApplication::sourceFrameToAnimationTime(int frame) const
 {
-	if(input())
-		return input()->sourceFrameToAnimationTime(frame);
-	return CachingPipelineObject::sourceFrameToAnimationTime(frame);
+	TimePoint time = input() ? input()->sourceFrameToAnimationTime(frame) : CachingPipelineObject::sourceFrameToAnimationTime(frame);
+	if(modifier() && modifier()->isEnabled())
+		time = modifier()->sourceFrameToAnimationTime(frame, time);
+	return time;
+}
+
+/******************************************************************************
+* Returns the human-readable labels associated with the animation frames.
+******************************************************************************/
+QMap<int, QString> ModifierApplication::animationFrameLabels() const
+{
+	QMap<int, QString> labels = input() ? input()->animationFrameLabels() : CachingPipelineObject::animationFrameLabels();
+	if(modifier() && modifier()->isEnabled())
+		return modifier()->animationFrameLabels(std::move(labels));
+	return labels;
 }
 
 /******************************************************************************

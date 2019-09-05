@@ -605,7 +605,6 @@ void defineModifiersSubmodule(py::module m)
 					if(!mod.referenceConfiguration()) {
 						PyErr_WarnEx(PyExc_DeprecationWarning, "Access the .reference attribute without creating a FileSource first is deprecated. Automatically creating a FileSource now for backward compatibility.", 2);
 						OORef<FileSource> fileSource = new FileSource(mod.dataset());
-						fileSource->setAdjustAnimationIntervalEnabled(false);
 						mod.setReferenceConfiguration(fileSource);
 					}
 					return mod.referenceConfiguration();

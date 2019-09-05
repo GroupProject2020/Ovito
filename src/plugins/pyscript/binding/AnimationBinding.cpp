@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -84,6 +84,7 @@ void defineAnimationSubmodule(py::module m)
 				"The index of the first animation frame."
 				"\n\n"
 				":Default: 0\n")
+		.def_property("auto_adjust_interval", &AnimationSettings::autoAdjustInterval, &AnimationSettings::setAutoAdjustInterval)
 		//.def_property("playback_speed", &AnimationSettings::playbackSpeed, &AnimationSettings::setPlaybackSpeed)
 		//.def_property_readonly("is_animating", &AnimationSettings::isAnimating)
 		//.def_property("auto_key_mode", &AnimationSettings::autoKeyMode, &AnimationSettings::setAutoKeyMode)

@@ -22,18 +22,19 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/TrajectoryObject.h>
-#include <core/dataset/animation/AnimationSettings.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/DataSet.h>
 #include <core/app/Application.h>
-#include <core/dataset/io/FileSource.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/utilities/concurrent/Promise.h>
 #include <core/utilities/concurrent/TaskManager.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "GenerateTrajectoryLinesModifier.h"
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_OVITO_CLASS(GenerateTrajectoryLinesModifier);	
+IMPLEMENT_OVITO_CLASS(GenerateTrajectoryLinesModifier);
 DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, onlySelectedParticles);
 DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, useCustomInterval);
 DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, customIntervalStart);
@@ -59,11 +60,11 @@ SET_MODIFIER_APPLICATION_TYPE(GenerateTrajectoryLinesModifier, GenerateTrajector
 * Constructor.
 ******************************************************************************/
 GenerateTrajectoryLinesModifier::GenerateTrajectoryLinesModifier(DataSet* dataset) : Modifier(dataset),
-	_onlySelectedParticles(true), 
+	_onlySelectedParticles(true),
 	_useCustomInterval(false),
 	_customIntervalStart(dataset->animationSettings()->animationInterval().start()),
 	_customIntervalEnd(dataset->animationSettings()->animationInterval().end()),
-	_everyNthFrame(1), 
+	_everyNthFrame(1),
 	_unwrapTrajectories(true)
 {
 	// Create the vis element for rendering the trajectories created by the modifier.
@@ -86,7 +87,7 @@ void GenerateTrajectoryLinesModifier::evaluatePreliminary(TimePoint time, Modifi
 	// Inject the precomputed trajectory lines, which are stored in the modifier application, into the pipeline.
 	if(GenerateTrajectoryLinesModifierApplication* myModApp = dynamic_object_cast<GenerateTrajectoryLinesModifierApplication>(modApp)) {
 		if(myModApp->trajectoryData()) {
-			state.addObject(myModApp->trajectoryData());	
+			state.addObject(myModApp->trajectoryData());
 		}
 	}
 }
@@ -139,10 +140,8 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		TimeInterval interval;
 		if(useCustomInterval())
 			interval = customInterval();
-		else if(FileSource* fs = dynamic_object_cast<FileSource>(myModApp->pipelineSource()))
-			interval = TimeInterval(0, myModApp->sourceFrameToAnimationTime(fs->numberOfFrames() - 1));
-		else 
-			interval = dataset()->animationSettings()->animationInterval();
+		else
+			interval = TimeInterval(myModApp->sourceFrameToAnimationTime(0), myModApp->sourceFrameToAnimationTime(myModApp->numberOfSourceFrames() - 1));
 
 		if(interval.duration() <= 0)
 			throwException(tr("The current simulation sequence consists only of a single frame. Thus, no trajectory lines were created."));
@@ -168,7 +167,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(time);
 			if(!operation.waitForFuture(stateFuture))
 				return false;
-		
+
 			const PipelineFlowState& state = stateFuture.result();
 			const ParticlesObject* particles = state.getObject<ParticlesObject>();
 			if(!particles)
@@ -197,7 +196,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 					}
 				}
 				else {
-					// Add coordinates of selected particles by index. 
+					// Add coordinates of selected particles by index.
 					for(auto index : selectedIndices) {
 						if(index < posProperty->size()) {
 							pointData.push_back(posProperty->getPoint3(index));
@@ -236,7 +235,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 			}
 
 			operation.incrementProgressValue(1);
-			if(operation.isCanceled()) 
+			if(operation.isCanceled())
 				return false;
 			timeIndex++;
 		}
@@ -251,7 +250,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 			if(idData[a] > idData[b]) return false;
 			return timeData[a] < timeData[b];
 		});
-		if(operation.isCanceled()) 
+		if(operation.isCanceled())
 			return false;
 
 		// Do not create undo records for the following operations.
@@ -281,7 +280,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 			id = idData[*piter++];
 		}
 
-		if(operation.isCanceled()) 
+		if(operation.isCanceled())
 			return false;
 
 		// Unwrap trajectory vertices at periodic boundaries of the simulation cell.
@@ -292,7 +291,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 			piter = permutation.cbegin();
 			const qlonglong* id = trajIdProperty->constDataInt64();
 			for(auto pos_end = pos + trajPosProperty->size() - 1; pos != pos_end; ++pos, ++piter, ++id) {
-				if(!operation.incrementProgressValue()) 
+				if(!operation.incrementProgressValue())
 					return false;
 				if(id[0] == id[1]) {
 					const SimulationCell& cell1 = cells[timeData[piter[0]]];
@@ -306,7 +305,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 							FloatType delta = reduced2 - reduced1;
 							FloatType shift = std::floor(delta + FloatType(0.5));
 							if(shift != 0) {
-								pos[1] -= cell2.matrix().column(dim) * shift; 
+								pos[1] -= cell2.matrix().column(dim) * shift;
 							}
 						}
 					}

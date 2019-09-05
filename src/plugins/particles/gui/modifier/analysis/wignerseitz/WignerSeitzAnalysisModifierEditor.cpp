@@ -53,7 +53,7 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	QGridLayout* sublayout = new QGridLayout(optionsGroupBox);
 	sublayout->setContentsMargins(4,4,4,4);
 	sublayout->setSpacing(4);
-	
+
 	BooleanParameterUI* perTypeOccupancyUI = new BooleanParameterUI(this, PROPERTY_FIELD(WignerSeitzAnalysisModifier::perTypeOccupancy));
 
 	sublayout->setColumnMinimumWidth(0, 16);
@@ -77,7 +77,7 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	IntegerRadioButtonParameterUI* affineMappingUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(ReferenceConfigurationModifier::affineMapping));
     sublayout->addWidget(affineMappingUI->addRadioButton(ReferenceConfigurationModifier::NO_MAPPING, tr("Off")), 0, 0);
 	sublayout->addWidget(affineMappingUI->addRadioButton(ReferenceConfigurationModifier::TO_REFERENCE_CELL, tr("To reference")), 0, 1);
-    
+
 	QGroupBox* referenceSourceGroupBox = new QGroupBox(tr("Reference configuration source"));
 	layout->addWidget(referenceSourceGroupBox);
 
@@ -85,9 +85,9 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	sublayout->setContentsMargins(4,4,4,4);
 	sublayout->setSpacing(6);
 	sublayout->setColumnStretch(1, 1);
-	
+
 	_sourceButtonGroup = new QButtonGroup(this);
-	connect(_sourceButtonGroup, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, &WignerSeitzAnalysisModifierEditor::onSourceButtonClicked);	
+	connect(_sourceButtonGroup, static_cast<void (QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, &WignerSeitzAnalysisModifierEditor::onSourceButtonClicked);
 	QRadioButton* upstreamPipelineBtn = new QRadioButton(tr("Upstream pipeline"));
 	QRadioButton* externalFileBtn = new QRadioButton(tr("External file"));
 	_sourceButtonGroup->addButton(upstreamPipelineBtn, 0);
@@ -123,8 +123,8 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	sublayout->addWidget(frameOffsetUI->label(), 3, 1, 1, 1);
 	sublayout->addLayout(frameOffsetUI->createFieldLayout(), 3, 2, 1, 1);
 	frameOffsetUI->setEnabled(false);
-	connect(useFrameOffsetUI->buttonTrue(), &QRadioButton::toggled, frameOffsetUI, &IntegerParameterUI::setEnabled);	
-	
+	connect(useFrameOffsetUI->buttonTrue(), &QRadioButton::toggled, frameOffsetUI, &IntegerParameterUI::setEnabled);
+
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
@@ -148,15 +148,11 @@ void WignerSeitzAnalysisModifierEditor::onSourceButtonClicked(int id)
 			// Create a file source object, which can be used for loading
 			// the reference configuration from a separate file.
 			OORef<FileSource> fileSource(new FileSource(mod->dataset()));
-			
-			// Disable automatic adjustment of animation length for the secondary file source.
-			// We don't want the scene's animation interval to be affected by this.
-			fileSource->setAdjustAnimationIntervalEnabled(false);
 			mod->setReferenceConfiguration(fileSource);
 		}
 		else {
 			mod->setReferenceConfiguration(nullptr);
-		}	
+		}
 	});
 }
 

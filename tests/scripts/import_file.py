@@ -74,42 +74,42 @@ import_file(test_data_dir + "VTK/ThomsonTet_Gr1_rotmatNonRand_unstructGrid.vtk")
 import_file(test_data_dir + "VTK/box_a.vtk")
 import_file(test_data_dir + "OBJ/B.obj")
 import_file(test_data_dir + "STL/A-ASCII.stl")
-node = import_file(test_data_dir + "LAMMPS/multi_sequence_*.dump")
-assert(ovito.scene.anim.last_frame == 10)
-node = import_file([test_data_dir + "LAMMPS/multi_sequence_1.dump", test_data_dir + "LAMMPS/multi_sequence_2.dump", test_data_dir + "LAMMPS/multi_sequence_3.dump"])
-assert(ovito.scene.anim.last_frame == 10)
-node = import_file([test_data_dir + "LAMMPS/multi_sequence_*.dump", test_data_dir + "LAMMPS/animation1.dump"])
-assert(ovito.scene.anim.last_frame == 21)
-node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"])
-assert(ovito.scene.anim.last_frame == 3)
-node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"], multiple_frames = True)
-assert(ovito.scene.anim.last_frame == 11)
-node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
+pipeline = import_file(test_data_dir + "LAMMPS/multi_sequence_*.dump")
+assert(pipeline.source.num_frames == 11)
+pipeline = import_file([test_data_dir + "LAMMPS/multi_sequence_1.dump", test_data_dir + "LAMMPS/multi_sequence_2.dump", test_data_dir + "LAMMPS/multi_sequence_3.dump"])
+assert(pipeline.source.num_frames == 11)
+pipeline = import_file([test_data_dir + "LAMMPS/multi_sequence_*.dump", test_data_dir + "LAMMPS/animation1.dump"])
+assert(pipeline.source.num_frames == 22)
+pipeline = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"])
+assert(pipeline.source.num_frames == 4)
+pipeline = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"], multiple_frames = True)
+assert(pipeline.source.num_frames == 12)
+pipeline = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
-ids = node.compute().particles['Particle Identifier']
+ids = pipeline.compute().particles['Particle Identifier']
 assert(not np.all(ids[:-1] <= ids[1:]))
-node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
+pipeline = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"],
                             sort_particles = True)
-ids = node.compute().particles['Particle Identifier']
+ids = pipeline.compute().particles['Particle Identifier']
 assert(np.all(ids[:-1] <= ids[1:]))
 try:
     # This should generate an error:
     print("Note: The following error message is intentional.")
-    node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
+    pipeline = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                                 columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "ExtraProperty"])
     assert False
 except RuntimeError:
     pass
 
-node = import_file(test_data_dir + "LAMMPS/animation1.dump")
-assert(ovito.scene.anim.last_frame == 10)
-node = import_file(test_data_dir + "LAMMPS/animation1.dump", multiple_frames = True)
-assert(ovito.scene.anim.last_frame == 10)
+pipeline = import_file(test_data_dir + "LAMMPS/animation1.dump")
+assert(pipeline.source.num_frames == 11)
+pipeline = import_file(test_data_dir + "LAMMPS/animation1.dump", multiple_frames = True)
+assert(pipeline.source.num_frames == 11)
 
-node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
+pipeline = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", None, "Position.X", "Position.Y", "Position.Z"])
-node.source.load(test_data_dir + "LAMMPS/shear.void.dump.bin",
+pipeline.source.load(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 
 import_file(test_data_dir + "LAMMPS/binary_dump.x86_64.bin", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
