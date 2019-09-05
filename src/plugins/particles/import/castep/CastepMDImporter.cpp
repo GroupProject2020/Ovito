@@ -134,6 +134,8 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 			if(sscanf(line, FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
 					&cell(0,numCellVectors), &cell(1,numCellVectors), &cell(2,numCellVectors)) != 3)
 				throw Exception(tr("Invalid simulation cell in CASTEP file at line %1").arg(stream.lineNumber()));
+			// Convert units from Bohr to Angstrom.
+			cell.column(numCellVectors) *= 0.529177210903;
 			numCellVectors++;
 		}
 		else if(stream.lineEndsWith("<-- R")) {			
@@ -141,6 +143,8 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 			if(sscanf(line, "%*s %*u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
 					&pos.x(), &pos.y(), &pos.z()) != 3)
 				throw Exception(tr("Invalid coordinates in CASTEP file at line %1").arg(stream.lineNumber()));			
+			// Convert units from Bohr to Angstrom.
+			pos *= 0.529177210903;
 			coords.push_back(pos);
 			const char* typeNameEnd = line;
 			while(*typeNameEnd > ' ') typeNameEnd++;
