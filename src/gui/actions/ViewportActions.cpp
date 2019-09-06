@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -50,8 +50,11 @@ void ActionManager::on_ViewportMaximize_triggered()
 void ActionManager::on_ViewportZoomSceneExtents_triggered()
 {
 	ViewportConfiguration* vpconf = _dataset->viewportConfig();
-	if(vpconf->activeViewport())
+
+	if(vpconf->activeViewport() && !QGuiApplication::keyboardModifiers().testFlag(Qt::ControlModifier))
 		vpconf->activeViewport()->zoomToSceneExtents();
+	else
+		vpconf->zoomToSceneExtents();
 }
 
 /******************************************************************************

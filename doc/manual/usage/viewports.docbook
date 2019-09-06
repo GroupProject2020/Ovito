@@ -66,8 +66,9 @@
       <inlinemediaobject><imageobject>
         <imagedata fileref="images/viewport_control_toolbar/zoom_scene_extents.bw.svg" format="svg" width="32px" depth="32px" />
       </imageobject></inlinemediaobject>
-      The <emphasis>Zoom Scene Extents</emphasis> function automatically adjusts the zoom level and repositions the camera of the active viewport
-      such that the complete scene becomes fully visible. The currently active viewport is marked by a yellow border.
+      The <emphasis>Zoom Scene Extents</emphasis> function automatically adjusts the virtual camera of the active viewport
+      such that all objects in the scene become fully visible. The active viewport is marked by a yellow border.
+      Use the <keycap>Ctrl</keycap> key (<keycap>Command</keycap> key on macOS) to zoom all viewports at once.
    </para>
     <para>
       <inlinemediaobject><imageobject>
