@@ -1,11 +1,11 @@
-from ovito.io import *
-from ovito.modifiers import *
+from ovito.io import import_file
+from ovito.modifiers import SpatialCorrelationFunctionModifier, CentroSymmetryModifier
 import numpy as np
 
 pipeline = import_file("../files/LAMMPS/frank_read.dump.gz")
 pipeline.modifiers.append(CentroSymmetryModifier(num_neighbors = 12))
 
-modifier = CorrelationFunctionModifier()
+modifier = SpatialCorrelationFunctionModifier()
 pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")
