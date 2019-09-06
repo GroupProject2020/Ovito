@@ -65,8 +65,6 @@
 		<entry>Audio and video processing libraries used by OVITO to write movie files.</entry></row>
 		<row><entry><link xlink:href="http://www.unidata.ucar.edu/software/netcdf/">libnetcdf</link></entry><entry>optional</entry>
 		<entry>Required by the <literal>NetCDF</literal> plugin to read NetCDF files</entry></row>
-		<row><entry><link xlink:href="http://www.fftw.org">FFTW</link></entry><entry>optional</entry>
-		<entry>Required to build the <link linkend="particles.modifiers.correlation_function"><literal>Correlation Function</literal></link> plugin. </entry></row>
 		<row><entry><link xlink:href="http://www.riverbankcomputing.com/software/qscintilla/">QScintilla2</link></entry><entry>optional</entry>
 		<entry>Text editing widget required by the <literal>PyScript</literal> plugin.</entry></row>
 		<row><entry><link xlink:href="http://www.ospray.org">OSPRay</link></entry><entry>optional</entry>
@@ -90,6 +88,8 @@
 		<entry>Required to build the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link> plugin.</entry></row>
 		<row><entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link></entry>
 		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier.</entry></row>
+		<row><entry><link xlink:href="https://github.com/mborgerding/kissfft">KISS FFT</link></entry>
+		<entry>Required by the <link linkend="particles.modifiers.correlation_function"><literal>Correlation Function</literal></link> plugin. </entry></row>
 	</tbody></tgroup>
 	</informaltable>
     </para>

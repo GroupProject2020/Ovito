@@ -1,7 +1,6 @@
 ###############################################################################
-#
+# 
 #  Copyright (2019) Alexander Stukowski
-#  Copyright (2016) Lars Pastewka
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -20,23 +19,26 @@
 #
 ###############################################################################
 
-# Define the plugin module.
-OVITO_STANDARD_PLUGIN(CorrelationFunctionPlugin
-    SOURCES
-		CorrelationFunctionModifier.cpp
-	PLUGIN_DEPENDENCIES Particles
-	PRIVATE_LIB_DEPENDENCIES kissfft
+# Build the KISS FFT library.
+SET(KISSFFT_SOURCE_FILES
+	kiss_fft.c
+	kiss_fftnd.c
 )
 
-# Build corresponding GUI plugin.
-IF(OVITO_BUILD_GUI)
-	ADD_SUBDIRECTORY(gui)
-ENDIF()
+# Build library.
+ADD_LIBRARY(kissfft ${OVITO_DEFAULT_LIBRARY_TYPE} ${KISSFFT_SOURCE_FILES})
 
-# Build corresponding Python binding plugin.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(scripting)
-ENDIF()
+# Use double precision for FFT calculation.
+TARGET_COMPILE_DEFINITIONS(kissfft PUBLIC "kiss_fft_scalar=double")
 
-# Propagate list of plugins to parent scope.
-SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)
+# Make header files of this library available to dependent targets.
+TARGET_INCLUDE_DIRECTORIES(kissfft INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
+
+# Since we will link this into an Ovito plugin, we need to use the same setting for the fPIC flag.
+SET_PROPERTY(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+# Export this target.
+INSTALL(TARGETS kissfft EXPORT OVITO 
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

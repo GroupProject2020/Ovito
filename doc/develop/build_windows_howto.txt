@@ -243,14 +243,6 @@ Xsltproc & libxml2
 https://www.zlatkovic.com/libxml.en.html  (libxslt)
 
 **************************************************************************
-FFTW-3
-**************************************************************************
-http://www.fftw.org/install/windows.html
-cd deps
-cd fftw-3
-lib /def:libfftw3-3.def
-
-**************************************************************************
 OpenVR
 **************************************************************************
 git clone https://github.com/ValveSoftware/openvr.git
@@ -291,8 +283,6 @@ cmake -G "NMake Makefiles" ^
    -DOVITO_DOUBLE_PRECISION_FP=ON ^
    -DOPENVR_INCLUDE_DIR=%cd:\=/%/../deps/openvr/headers ^
    -DOPENVR_LIBRARY=%cd:\=/%/../deps/openvr/lib/win64/openvr_api.lib ^
-   -DFFTW3_INCLUDE_DIR=%cd:\=/%/../deps/fftw-3 ^
-   -DFFTW3_LIBRARY=%cd:\=/%/../deps/fftw-3/libfftw3-3.lib ^
    -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../deps/libssh/include ^
    -DLIBSSH_LIBRARY=%cd:\=/%/../deps/libssh/lib/ssh.lib ^
    -DOPENSSL_ROOT_DIR=%cd:\=/%/../deps/openssl ^
@@ -340,6 +330,4 @@ cmake -G "NMake Makefiles" ^
    -DOVITO_DOUBLE_PRECISION_FP=ON ^
    -DOVITO_BUILD_MONOLITHIC=ON ^
    -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^
-   -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
-   -DFFTW3_LIBRARY=%cd:\=/%/../deps/fftw-3/libfftw3-3.lib ^
    ../../source

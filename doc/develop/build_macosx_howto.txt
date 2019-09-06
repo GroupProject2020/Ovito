@@ -4,7 +4,7 @@ Install third-party tools
 export MACOSX_DEPLOYMENT_TARGET=10.12
 sudo echo "macos_deployment_target 10.12" >> /opt/local/etc/macports/macports.conf
 sudo port install cmake docbook-xml doxygen libxslt boost yasm povray
-sudo port install -s fftw-3 libssh
+sudo port install -s libssh
 
 **************************************************************************
 Install Qt libraries, version 5.12.4

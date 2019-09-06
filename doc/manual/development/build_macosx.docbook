@@ -18,7 +18,7 @@
     It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> for installing many of the required dependencies.
     After setting up MacPorts, run
 <screen><command>sudo port install netcdf python35 py35-sphinx py35-numpy py35-sip zlib libssh \
-                  boost cmake docbook-xml doxygen libxslt yasm fftw-3
+                  boost cmake docbook-xml doxygen libxslt yasm
 </command></screen>
     from the terminal to install the dependencies of OVITO.
   </para>

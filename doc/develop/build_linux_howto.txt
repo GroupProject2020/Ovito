@@ -6,7 +6,6 @@ Steps to build the redistributable program packages for Linux.
 
 - Install
 yum install lapack
-yum install fftw3-devel
 
 # Install newer GCC compiler toolset (run as "root"):
 yum install centos-release-scl

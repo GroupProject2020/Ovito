@@ -28,7 +28,6 @@ RUN apt-get install -qy  cmake \
                          libavutil-dev \
                          libswscale-dev \
                          libnetcdf-dev \
-                         libfftw3-dev \
                          libssh-dev \
                          libhdf5-dev \
                          libhdf5-serial-dev \

@@ -145,8 +145,8 @@
             <entry></entry>
           </row>
           <row>
-            <entry><link xlink:href="http://www.fftw.org/">FFTW</link></entry>
-            <entry>GPL v2</entry>
+            <entry><link xlink:href="https://github.com/mborgerding/kissfft">KISS FFT</link></entry>
+            <entry><link linkend="appendix.license.kissfft">license</link></entry>
             <entry></entry>
           </row>
           <row>
@@ -193,6 +193,8 @@
   <xi:include href="licenses/PTM.docbook"/>
 
   <xi:include href="licenses/pybind11.docbook"/>
+
+  <xi:include href="licenses/kissfft.docbook"/>
 
   <xi:include href="licenses/qcprot.docbook"/>
 

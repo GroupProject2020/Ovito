@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //  Copyright (2017) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -31,7 +31,7 @@
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "CorrelationFunctionModifier.h"
 
-#include <fftw3.h>
+#include <kiss_fftnd.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -89,10 +89,6 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeE
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange, "Fix y-range");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
-
-// This global mutex is used to serialize access to the FFTW3 planner
-// routines, which are not thread-safe.
-QMutex CorrelationFunctionModifier::_fftwMutex;
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -323,49 +319,50 @@ std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::m
 	return gridData;
 }
 
-// Use single precision FFTW if Ovito is compiled with single precision
-// floating point type.
-#ifdef FLOATTYPE_FLOAT
-#define fftw_complex fftwf_complex
-#define fftw_plan_dft_r2c_3d fftwf_plan_dft_r2c_3d
-#define fftw_plan_dft_c2r_3d fftwf_plan_dft_c2r_3d
-#define fftw_execute fftwf_execute
-#define fftw_destroy_plan fftwf_destroy_plan
-#endif
-
 std::vector<std::complex<FloatType>> CorrelationFunctionModifier::CorrelationAnalysisEngine::r2cFFT(int nX, int nY, int nZ, std::vector<FloatType> &rData)
 {
-	std::vector<std::complex<FloatType>> cData(nX * nY * (nZ/2+1));
+	OVITO_ASSERT(nX * nY * nZ == rData.size());
+	
+	// Convert real-valued input data to complex data type, because KISS FFT expects an array of complex numbers.
+	const int dims[3] = { nX, nY, nZ };
+	kiss_fftnd_cfg kiss = kiss_fftnd_alloc(dims, 3, false, 0, 0);
+	std::vector<kiss_fft_cpx> in(nX * nY * nZ);
+	auto rDataIter = rData.begin();
+	for(kiss_fft_cpx& c : in) {
+		c.r = *rDataIter++;
+		c.i = 0;
+	}
+	
+	// Allocate the output buffer.
+	std::vector<std::complex<FloatType>> cData(nX * nY * nZ);
+	OVITO_STATIC_ASSERT(sizeof(kiss_fft_cpx) == sizeof(std::complex<FloatType>));
 
-	// Only serial access to FFTW3 functions allowed because they are not thread-safe.
-	QMutexLocker locker(&_fftwMutex);
-	auto plan = fftw_plan_dft_r2c_3d(
-		nX, nY, nZ,
-		rData.data(),
-		reinterpret_cast<fftw_complex*>(cData.data()),
-		FFTW_ESTIMATE);
-	locker.unlock();
-	fftw_execute(plan);
-	locker.relock();
-	fftw_destroy_plan(plan);
+	// Perform FFT calculation.
+	kiss_fftnd(kiss, in.data(), reinterpret_cast<kiss_fft_cpx*>(cData.data()));
+	kiss_fft_free(kiss);
 
 	return cData;
 }
 
 std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::c2rFFT(int nX, int nY, int nZ, std::vector<std::complex<FloatType>>& cData)
 {
+	OVITO_ASSERT(nX * nY * nZ == cData.size());
+
+	const int dims[3] = { nX, nY, nZ };
+	kiss_fftnd_cfg kiss = kiss_fftnd_alloc(dims, 3, true, 0, 0);
+	std::vector<kiss_fft_cpx> out(nX * nY * nZ);
+	OVITO_STATIC_ASSERT(sizeof(kiss_fft_cpx) == sizeof(std::complex<FloatType>));
+
+	// Perform FFT calculation.
+	kiss_fftnd(kiss, reinterpret_cast<const kiss_fft_cpx*>(cData.data()), out.data());
+	kiss_fft_free(kiss);
+
+	// Convert complex values to real values.
 	std::vector<FloatType> rData(nX * nY * nZ);
-	// Only serial access to FFTW3 functions allowed because they are not thread-safe.
-	QMutexLocker locker(&_fftwMutex);
-	auto plan = fftw_plan_dft_c2r_3d(
-		nX, nY, nZ,
-		reinterpret_cast<fftw_complex*>(cData.data()),
-		rData.data(),
-		FFTW_ESTIMATE);
-	locker.unlock();
-	fftw_execute(plan);
-	locker.relock();
-	fftw_destroy_plan(plan);
+	auto rDataIter = rData.begin();
+	for(const kiss_fft_cpx& c : out) {
+		*rDataIter++ = c.r;
+	}
 
 	return rData;
 }
@@ -470,7 +467,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	int binIndex = 0;
 	for(int binIndexX = 0; binIndexX < nX; binIndexX++) {
 		for(int binIndexY = 0; binIndexY < nY; binIndexY++) {
-			for(int binIndexZ = 0; binIndexZ < nZ/2+1; binIndexZ++, binIndex++) {
+			for(int binIndexZ = 0; binIndexZ < nZ; binIndexZ++, binIndex++) {
 				// Compute correlation function.
 				std::complex<FloatType> corr = ftProperty1[binIndex] * std::conj(ftProperty2[binIndex]);
 
@@ -579,7 +576,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 		if(task()->isCanceled()) return;
 	}
 
-	// Compute averages and normalize real-space correlation function. Note FFTW computes an unnormalized transform.
+	// Compute averages and normalize real-space correlation function. Note KISS FFT computes an unnormalized transform.
 	normalizationFactor = 1.0 / (sourceProperty1()->size() * sourceProperty2()->size());
 	for(int distanceBinIndex = 0; distanceBinIndex < numberOfDistanceBins; distanceBinIndex++) {
 		if(numberOfValues[distanceBinIndex] != 0) {
