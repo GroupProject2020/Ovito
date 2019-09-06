@@ -29,71 +29,71 @@
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include "CorrelationFunctionModifier.h"
+#include "SpatialCorrelationFunctionModifier.h"
 
 #include <kiss_fftnd.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifier);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty1);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty2);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, averagingDirection);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fftGridSpacing);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, applyWindow);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpace);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpaceByRDF);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpaceByCovariance);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfRealSpacePlot);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeReciprocalSpace);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfReciprocalSpacePlot);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceXAxisRange);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceXAxisRangeStart);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceXAxisRangeEnd);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceYAxisRange);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeStart);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeEnd);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceXAxisRange);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd);
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty1, "First property");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty2, "Second property");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, averagingDirection, "Averaging direction");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fftGridSpacing, "FFT grid spacing");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, applyWindow, "Apply window function to nonperiodic directions");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation, "Direct summation");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpaceByRDF, "Normalize by RDF");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpaceByCovariance, "Normalize by covariance");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(CorrelationFunctionModifier, numberOfNeighBins, IntegerParameterUnit, 4, 100000);
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixRealSpaceXAxisRange, "Fix x-range");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, realSpaceXAxisRangeStart, "X-range start");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, realSpaceXAxisRangeEnd, "X-range end");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixRealSpaceYAxisRange, "Fix y-range");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, realSpaceYAxisRangeStart, "Y-range start");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, realSpaceYAxisRangeEnd, "Y-range end");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceXAxisRange, "Fix x-range");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "X-range start");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd, "X-range end");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange, "Fix y-range");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
+IMPLEMENT_OVITO_CLASS(SpatialCorrelationFunctionModifier);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, sourceProperty1);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, sourceProperty2);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, averagingDirection);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, fftGridSpacing);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, applyWindow);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, doComputeNeighCorrelation);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, neighCutoff);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, numberOfNeighBins);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, normalizeRealSpace);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, normalizeRealSpaceByRDF);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, normalizeRealSpaceByCovariance);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, typeOfRealSpacePlot);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, normalizeReciprocalSpace);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, typeOfReciprocalSpacePlot);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, fixRealSpaceXAxisRange);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, realSpaceXAxisRangeStart);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, realSpaceXAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, fixRealSpaceYAxisRange);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, realSpaceYAxisRangeStart);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, realSpaceYAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, fixReciprocalSpaceXAxisRange);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, fixReciprocalSpaceYAxisRange);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart);
+DEFINE_PROPERTY_FIELD(SpatialCorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd);
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, sourceProperty1, "First property");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, sourceProperty2, "Second property");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, averagingDirection, "Averaging direction");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, fftGridSpacing, "FFT grid spacing");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, applyWindow, "Apply window function to nonperiodic directions");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, doComputeNeighCorrelation, "Direct summation");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, normalizeRealSpaceByRDF, "Normalize by RDF");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, normalizeRealSpaceByCovariance, "Normalize by covariance");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SpatialCorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SpatialCorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(SpatialCorrelationFunctionModifier, numberOfNeighBins, IntegerParameterUnit, 4, 100000);
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, fixRealSpaceXAxisRange, "Fix x-range");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, realSpaceXAxisRangeStart, "X-range start");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, realSpaceXAxisRangeEnd, "X-range end");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, fixRealSpaceYAxisRange, "Fix y-range");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, realSpaceYAxisRangeStart, "Y-range start");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, realSpaceYAxisRangeEnd, "Y-range end");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, fixReciprocalSpaceXAxisRange, "Fix x-range");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "X-range start");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd, "X-range end");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, fixReciprocalSpaceYAxisRange, "Fix y-range");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
+SET_PROPERTY_FIELD_LABEL(SpatialCorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+SpatialCorrelationFunctionModifier::SpatialCorrelationFunctionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_averagingDirection(RADIAL),
 	_fftGridSpacing(3.0),
 	_applyWindow(true),
@@ -124,7 +124,7 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
+bool SpatialCorrelationFunctionModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -133,7 +133,7 @@ bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const DataCollecti
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp)
+void SpatialCorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp)
 {
 	AsynchronousModifier::initializeModifier(modApp);
 
@@ -158,7 +158,7 @@ void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> SpatialCorrelationFunctionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the source data.
 	if(sourceProperty1().isNull())
@@ -203,7 +203,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::crea
 /******************************************************************************
 * Map property onto grid.
 ******************************************************************************/
-std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(const PropertyStorage* property,
+std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(const PropertyStorage* property,
 																			  size_t propertyVectorComponent,
 																			  const AffineTransformation& reciprocalCellMatrix,
 																			  int nX, int nY, int nZ,
@@ -319,7 +319,7 @@ std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::m
 	return gridData;
 }
 
-std::vector<std::complex<FloatType>> CorrelationFunctionModifier::CorrelationAnalysisEngine::r2cFFT(int nX, int nY, int nZ, std::vector<FloatType> &rData)
+std::vector<std::complex<FloatType>> SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::r2cFFT(int nX, int nY, int nZ, std::vector<FloatType> &rData)
 {
 	OVITO_ASSERT(nX * nY * nZ == rData.size());
 	
@@ -344,7 +344,7 @@ std::vector<std::complex<FloatType>> CorrelationFunctionModifier::CorrelationAna
 	return cData;
 }
 
-std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::c2rFFT(int nX, int nY, int nZ, std::vector<std::complex<FloatType>>& cData)
+std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::c2rFFT(int nX, int nY, int nZ, std::vector<std::complex<FloatType>>& cData)
 {
 	OVITO_ASSERT(nX * nY * nZ == cData.size());
 
@@ -370,7 +370,7 @@ std::vector<FloatType> CorrelationFunctionModifier::CorrelationAnalysisEngine::c
 /******************************************************************************
 * Compute real and reciprocal space correlation function via FFT.
 ******************************************************************************/
-void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelation()
+void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelation()
 {
 	// Get reciprocal cell.
 	const AffineTransformation& cellMatrix = cell().matrix();
@@ -591,7 +591,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 /******************************************************************************
 * Compute real space correlation function via direction summation over neighbors.
 ******************************************************************************/
-void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrelation()
+void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrelation()
 {
 	// Get number of particles.
 	size_t particleCount = positions()->size();
@@ -695,7 +695,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 /******************************************************************************
 * Compute means and covariance.
 ******************************************************************************/
-void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
+void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 {
 	// Get pointers to data.
 	const FloatType* floatData1 = nullptr;
@@ -760,7 +760,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 /******************************************************************************
 * Performs the actual computation. This method is executed in a worker thread.
 ******************************************************************************/
-void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
+void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 {
 	task()->setProgressText(tr("Computing correlation function"));
 	task()->beginProgressSubSteps(neighCorrelation() ? 13 : 11);
@@ -784,7 +784,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Output real-space correlation function to the pipeline as a data series.
 	DataSeriesObject* realSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space"), modApp, DataSeriesObject::Line, tr("Real-space correlation"), realSpaceCorrelation());

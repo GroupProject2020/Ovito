@@ -23,7 +23,7 @@
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(CorrelationFunctionPlugin
     SOURCES
-		CorrelationFunctionModifier.cpp
+		SpatialCorrelationFunctionModifier.cpp
 	PLUGIN_DEPENDENCIES Particles
 	PRIVATE_LIB_DEPENDENCIES kissfft
 )

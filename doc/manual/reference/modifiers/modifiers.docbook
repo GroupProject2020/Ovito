@@ -43,7 +43,7 @@
               <entry>Aggregates a particle property over a one-, two- or three-dimensional bin grid.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.correlation_function">Correlation&#xA0;function</link></entry>
+              <entry><link linkend="particles.modifiers.correlation_function">Spatial&#xA0;correlation&#xA0;function</link></entry>
               <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
             </row>
             <row>

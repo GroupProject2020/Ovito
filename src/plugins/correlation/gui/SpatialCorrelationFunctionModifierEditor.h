@@ -34,17 +34,17 @@ class QwtPlotCurve;
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * A properties editor for the CorrelationFunctionModifier class.
+ * A properties editor for the SpatialCorrelationFunctionModifier class.
  */
-class CorrelationFunctionModifierEditor : public ModifierPropertiesEditor
+class SpatialCorrelationFunctionModifierEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(CorrelationFunctionModifierEditor)
+	OVITO_CLASS(SpatialCorrelationFunctionModifierEditor)
 	
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE CorrelationFunctionModifierEditor() {}
+	Q_INVOKABLE SpatialCorrelationFunctionModifierEditor() {}
 
 protected:
 
@@ -71,7 +71,7 @@ private:
     QwtPlotCurve* _neighCurve = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
-	DeferredMethodInvocation<CorrelationFunctionModifierEditor, &CorrelationFunctionModifierEditor::plotAllData> plotAllDataLater;
+	DeferredMethodInvocation<SpatialCorrelationFunctionModifierEditor, &SpatialCorrelationFunctionModifierEditor::plotAllData> plotAllDataLater;
 };
 
 OVITO_END_INLINE_NAMESPACE

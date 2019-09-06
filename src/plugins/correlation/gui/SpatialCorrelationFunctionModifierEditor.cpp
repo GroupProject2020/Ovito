@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/correlation/CorrelationFunctionModifier.h>
+#include <plugins/correlation/SpatialCorrelationFunctionModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <gui/mainwin/MainWindow.h>
@@ -31,7 +31,7 @@
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
 #include <core/oo/CloneHelper.h>
-#include "CorrelationFunctionModifierEditor.h"
+#include "SpatialCorrelationFunctionModifierEditor.h"
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
@@ -40,27 +40,27 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifierEditor);
-SET_OVITO_OBJECT_EDITOR(CorrelationFunctionModifier, CorrelationFunctionModifierEditor);
+IMPLEMENT_OVITO_CLASS(SpatialCorrelationFunctionModifierEditor);
+SET_OVITO_OBJECT_EDITOR(SpatialCorrelationFunctionModifier, SpatialCorrelationFunctionModifierEditor);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void SpatialCorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Correlation function"), rolloutParams, "particles.modifiers.correlation_function.html");
+	QWidget* rollout = createRollout(tr("Spatial correlation function"), rolloutParams, "particles.modifiers.correlation_function.html");
 
 	// Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	PropertyReferenceParameterUI* sourceProperty1UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty1), &ParticlesObject::OOClass());
+	PropertyReferenceParameterUI* sourceProperty1UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::sourceProperty1), &ParticlesObject::OOClass());
 	layout->addWidget(new QLabel(tr("First property:"), rollout));
 	layout->addWidget(sourceProperty1UI->comboBox());
 
-	PropertyReferenceParameterUI* sourceProperty2UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty2), &ParticlesObject::OOClass());
+	PropertyReferenceParameterUI* sourceProperty2UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::sourceProperty2), &ParticlesObject::OOClass());
 	layout->addWidget(new QLabel(tr("Second property:"), rollout));
 	layout->addWidget(sourceProperty2UI->comboBox());
 
@@ -69,23 +69,23 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	gridlayout->setColumnStretch(1, 1);
 
 	// FFT grid spacing parameter.
-	FloatParameterUI* fftGridSpacingRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::fftGridSpacing));
+	FloatParameterUI* fftGridSpacingRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::fftGridSpacing));
 	gridlayout->addWidget(fftGridSpacingRadiusPUI->label(), 0, 0);
 	gridlayout->addLayout(fftGridSpacingRadiusPUI->createFieldLayout(), 0, 1);
 
 	layout->addLayout(gridlayout);
 
-	BooleanParameterUI* applyWindowUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::applyWindow));
+	BooleanParameterUI* applyWindowUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::applyWindow));
 	layout->addWidget(applyWindowUI->checkBox());
 
 #if 0
 	gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
-	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::averagingDirection));
-    averagingDirectionPUI->comboBox()->addItem("radial", QVariant::fromValue(CorrelationFunctionModifier::RADIAL));
-    averagingDirectionPUI->comboBox()->addItem("cell vector 1", QVariant::fromValue(CorrelationFunctionModifier::CELL_VECTOR_1));
-    averagingDirectionPUI->comboBox()->addItem("cell vector 2", QVariant::fromValue(CorrelationFunctionModifier::CELL_VECTOR_2));
-    averagingDirectionPUI->comboBox()->addItem("cell vector 3", QVariant::fromValue(CorrelationFunctionModifier::CELL_VECTOR_3));
+	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::averagingDirection));
+    averagingDirectionPUI->comboBox()->addItem("radial", QVariant::fromValue(SpatialCorrelationFunctionModifier::RADIAL));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 1", QVariant::fromValue(SpatialCorrelationFunctionModifier::CELL_VECTOR_1));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 2", QVariant::fromValue(SpatialCorrelationFunctionModifier::CELL_VECTOR_2));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 3", QVariant::fromValue(SpatialCorrelationFunctionModifier::CELL_VECTOR_3));
     gridlayout->addWidget(averagingDirectionPUI->comboBox(), 0, 1);
     layout->addLayout(gridlayout);
 #endif
@@ -93,20 +93,20 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	QGroupBox* realSpaceGroupBox = new QGroupBox(tr("Real-space correlation function"));
 	layout->addWidget(realSpaceGroupBox);
 
-	BooleanParameterUI* doComputeNeighCorrelationUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::doComputeNeighCorrelation));
+	BooleanParameterUI* doComputeNeighCorrelationUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::doComputeNeighCorrelation));
 
 	QGridLayout* realSpaceGridLayout = new QGridLayout();
 	realSpaceGridLayout->setContentsMargins(4,4,4,4);
 	realSpaceGridLayout->setColumnStretch(1, 1);
 
 	// Neighbor cutoff parameter.
-	FloatParameterUI *neighCutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::neighCutoff));
+	FloatParameterUI *neighCutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::neighCutoff));
 	neighCutoffRadiusPUI->setEnabled(false);
 	realSpaceGridLayout->addWidget(neighCutoffRadiusPUI->label(), 1, 0);
 	realSpaceGridLayout->addLayout(neighCutoffRadiusPUI->createFieldLayout(), 1, 1);
 
 	// Number of bins parameter.
-	IntegerParameterUI* numberOfNeighBinsPUI = new IntegerParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::numberOfNeighBins));
+	IntegerParameterUI* numberOfNeighBinsPUI = new IntegerParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::numberOfNeighBins));
 	numberOfNeighBinsPUI->setEnabled(false);
 	realSpaceGridLayout->addWidget(numberOfNeighBinsPUI->label(), 2, 0);
 	realSpaceGridLayout->addLayout(numberOfNeighBinsPUI->createFieldLayout(), 2, 1);
@@ -116,16 +116,16 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 
 	QGridLayout *normalizeRealSpaceLayout = new QGridLayout();
 	normalizeRealSpaceLayout->addWidget(new QLabel(tr("Type of plot:"), rollout), 0, 0);
-	VariantComboBoxParameterUI* normalizeRealSpacePUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpace));
-    normalizeRealSpacePUI->comboBox()->addItem("Value correlation", QVariant::fromValue(CorrelationFunctionModifier::VALUE_CORRELATION));
-    normalizeRealSpacePUI->comboBox()->addItem("Difference correlation", QVariant::fromValue(CorrelationFunctionModifier::DIFFERENCE_CORRELATION));
+	VariantComboBoxParameterUI* normalizeRealSpacePUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::normalizeRealSpace));
+    normalizeRealSpacePUI->comboBox()->addItem("Value correlation", QVariant::fromValue(SpatialCorrelationFunctionModifier::VALUE_CORRELATION));
+    normalizeRealSpacePUI->comboBox()->addItem("Difference correlation", QVariant::fromValue(SpatialCorrelationFunctionModifier::DIFFERENCE_CORRELATION));
     normalizeRealSpaceLayout->addWidget(normalizeRealSpacePUI->comboBox(), 0, 1);
 
-	BooleanParameterUI* normalizeRealSpaceByRDFUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpaceByRDF));
-	BooleanParameterUI* normalizeRealSpaceByCovarianceUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpaceByCovariance));
+	BooleanParameterUI* normalizeRealSpaceByRDFUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::normalizeRealSpaceByRDF));
+	BooleanParameterUI* normalizeRealSpaceByCovarianceUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::normalizeRealSpaceByCovariance));
 
 	QGridLayout* typeOfRealSpacePlotLayout = new QGridLayout();
-	IntegerRadioButtonParameterUI *typeOfRealSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::typeOfRealSpacePlot));
+	IntegerRadioButtonParameterUI *typeOfRealSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::typeOfRealSpacePlot));
 	typeOfRealSpacePlotLayout->addWidget(new QLabel(tr("Display as:")), 0, 0);
 	typeOfRealSpacePlotLayout->addWidget(typeOfRealSpacePlotPUI->addRadioButton(0, tr("lin-lin")), 0, 1);
 	typeOfRealSpacePlotLayout->addWidget(typeOfRealSpacePlotPUI->addRadioButton(1, tr("log-lin")), 0, 2);
@@ -148,13 +148,13 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	layout->addWidget(axesBox);
 	// x-axis.
 	{
-		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::fixRealSpaceXAxisRange));
+		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::fixRealSpaceXAxisRange));
 		axesSublayout->addWidget(rangeUI->checkBox());
 
 		QHBoxLayout* hlayout = new QHBoxLayout();
 		axesSublayout->addLayout(hlayout);
-		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::realSpaceXAxisRangeStart));
-		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::realSpaceXAxisRangeEnd));
+		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::realSpaceXAxisRangeStart));
+		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::realSpaceXAxisRangeEnd));
 		hlayout->addWidget(new QLabel(tr("From:")));
 		hlayout->addLayout(startPUI->createFieldLayout());
 		hlayout->addSpacing(12);
@@ -167,13 +167,13 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	}
 	// y-axis.
 	{
-		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::fixRealSpaceYAxisRange));
+		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::fixRealSpaceYAxisRange));
 		axesSublayout->addWidget(rangeUI->checkBox());
 
 		QHBoxLayout* hlayout = new QHBoxLayout();
 		axesSublayout->addLayout(hlayout);
-		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::realSpaceYAxisRangeStart));
-		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::realSpaceYAxisRangeEnd));
+		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::realSpaceYAxisRangeStart));
+		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::realSpaceYAxisRangeEnd));
 		hlayout->addWidget(new QLabel(tr("From:")));
 		hlayout->addLayout(startPUI->createFieldLayout());
 		hlayout->addSpacing(12);
@@ -198,10 +198,10 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	QGroupBox* reciprocalSpaceGroupBox = new QGroupBox(tr("Reciprocal-space correlation function"));
 	layout->addWidget(reciprocalSpaceGroupBox);
 
-	BooleanParameterUI* normalizeReciprocalSpaceUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeReciprocalSpace));
+	BooleanParameterUI* normalizeReciprocalSpaceUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::normalizeReciprocalSpace));
 
 	QGridLayout* typeOfReciprocalSpacePlotLayout = new QGridLayout();
-	IntegerRadioButtonParameterUI *typeOfReciprocalSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::typeOfReciprocalSpacePlot));
+	IntegerRadioButtonParameterUI *typeOfReciprocalSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::typeOfReciprocalSpacePlot));
 	typeOfReciprocalSpacePlotLayout->addWidget(new QLabel(tr("Display as:")), 0, 0);
 	typeOfReciprocalSpacePlotLayout->addWidget(typeOfReciprocalSpacePlotPUI->addRadioButton(0, tr("lin-lin")), 0, 1);
 	typeOfReciprocalSpacePlotLayout->addWidget(typeOfReciprocalSpacePlotPUI->addRadioButton(1, tr("log-lin")), 0, 2);
@@ -218,13 +218,13 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	layout->addWidget(axesBox);
 	// x-axis.
 	{
-		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::fixReciprocalSpaceXAxisRange));
+		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::fixReciprocalSpaceXAxisRange));
 		axesSublayout->addWidget(rangeUI->checkBox());
 
 		QHBoxLayout* hlayout = new QHBoxLayout();
 		axesSublayout->addLayout(hlayout);
-		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::reciprocalSpaceXAxisRangeStart));
-		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::reciprocalSpaceXAxisRangeEnd));
+		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::reciprocalSpaceXAxisRangeStart));
+		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::reciprocalSpaceXAxisRangeEnd));
 		hlayout->addWidget(new QLabel(tr("From:")));
 		hlayout->addLayout(startPUI->createFieldLayout());
 		hlayout->addSpacing(12);
@@ -237,13 +237,13 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	}
 	// y-axis.
 	{
-		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::fixReciprocalSpaceYAxisRange));
+		BooleanParameterUI* rangeUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::fixReciprocalSpaceYAxisRange));
 		axesSublayout->addWidget(rangeUI->checkBox());
 
 		QHBoxLayout* hlayout = new QHBoxLayout();
 		axesSublayout->addLayout(hlayout);
-		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::reciprocalSpaceYAxisRangeStart));
-		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::reciprocalSpaceYAxisRangeEnd));
+		FloatParameterUI* startPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::reciprocalSpaceYAxisRangeStart));
+		FloatParameterUI* endPUI = new FloatParameterUI(this, PROPERTY_FIELD(SpatialCorrelationFunctionModifier::reciprocalSpaceYAxisRangeEnd));
 		hlayout->addWidget(new QLabel(tr("From:")));
 		hlayout->addLayout(startPUI->createFieldLayout());
 		hlayout->addSpacing(12);
@@ -261,7 +261,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	reciprocalSpaceLayout->addWidget(_reciprocalSpacePlot);
 	reciprocalSpaceLayout->addWidget(axesBox);
 
-	connect(this, &CorrelationFunctionModifierEditor::contentsReplaced, this, &CorrelationFunctionModifierEditor::plotAllData);
+	connect(this, &SpatialCorrelationFunctionModifierEditor::contentsReplaced, this, &SpatialCorrelationFunctionModifierEditor::plotAllData);
 
 	// Status label.
 	layout->addSpacing(6);
@@ -279,7 +279,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 /******************************************************************************
 * Replots one of the correlation function computed by the modifier.
 ******************************************************************************/
-std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(
+std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotData(
 												const DataSeriesObject* series,
 												DataSeriesPlotWidget* plotWidget,
 												FloatType offset, 
@@ -320,9 +320,9 @@ std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(
 /******************************************************************************
 * Updates the plot of the RDF computed by the modifier.
 ******************************************************************************/
-void CorrelationFunctionModifierEditor::plotAllData()
+void SpatialCorrelationFunctionModifierEditor::plotAllData()
 {
-	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
+	SpatialCorrelationFunctionModifier* modifier = static_object_cast<SpatialCorrelationFunctionModifier>(editObject());
 
 	// Set type of plot.
 	if(modifier && modifier->typeOfRealSpacePlot() & 1)
@@ -375,7 +375,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	FloatType offset = 0.0;
 	FloatType uniformFactor = 1;
 	if(modifier && variance1.isValid() && variance2.isValid() && covariance.isValid()) {
-		if(modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
+		if(modifier->normalizeRealSpace() == SpatialCorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
 			offset = 0.5 * (variance1.toDouble() + variance2.toDouble());
 			uniformFactor = -1;
 		}

@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Correlation function</title>
+  <title>Spatial correlation function</title>
 
   <para>
 
@@ -110,7 +110,7 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.CorrelationFunctionModifier"><classname>CorrelationFunctionModifier</classname> (Python API)</pydoc-link>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.SpatialCorrelationFunctionModifier"><classname>SpatialCorrelationFunctionModifier</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
 

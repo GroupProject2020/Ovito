@@ -89,7 +89,7 @@
 		<row><entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link></entry>
 		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier.</entry></row>
 		<row><entry><link xlink:href="https://github.com/mborgerding/kissfft">KISS FFT</link></entry>
-		<entry>Required by the <link linkend="particles.modifiers.correlation_function"><literal>Correlation Function</literal></link> plugin. </entry></row>
+		<entry>Required by the <link linkend="particles.modifiers.correlation_function"><literal>Spatial Correlation Function</literal></link> plugin. </entry></row>
 	</tbody></tgroup>
 	</informaltable>
     </para>

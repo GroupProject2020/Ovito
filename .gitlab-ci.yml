@@ -207,8 +207,6 @@ build_windows_package:
          -DOVITO_DOUBLE_PRECISION_FP=ON
          -DOPENVR_INCLUDE_DIR=$USERPROFILE/ovito/deps/openvr/headers
          -DOPENVR_LIBRARY=$USERPROFILE/ovito/deps/openvr/lib/win64/openvr_api.lib
-         -DFFTW3_INCLUDE_DIR=$USERPROFILE/ovito/deps/fftw-3
-         -DFFTW3_LIBRARY=$USERPROFILE/ovito/deps/fftw-3/libfftw3-3.lib
          -DLIBSSH_INCLUDE_DIR=$USERPROFILE/ovito/deps/libssh/include
          -DLIBSSH_LIBRARY=$USERPROFILE/ovito/deps/libssh/lib/ssh.lib
          -DOPENSSL_ROOT_DIR=$USERPROFILE/ovito/deps/openssl

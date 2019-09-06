@@ -38,7 +38,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * \brief This modifier computes the spatial correlation function between two particle properties.
  */
-class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT CorrelationFunctionModifier : public AsynchronousModifier
+class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT SpatialCorrelationFunctionModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
 	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
@@ -53,9 +53,10 @@ class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT CorrelationFunctionModifier : publi
 	};
 		
 	Q_OBJECT
-	OVITO_CLASS_META(CorrelationFunctionModifier, OOMetaClass)
+	OVITO_CLASS_META(SpatialCorrelationFunctionModifier, OOMetaClass)
 
-	Q_CLASSINFO("DisplayName", "Correlation function");
+	Q_CLASSINFO("ClassNameAlias", "CorrelationFunctionModifier");
+	Q_CLASSINFO("DisplayName", "Spatial correlation function");
 	Q_CLASSINFO("ModifierCategory", "Analysis");
 
 public:
@@ -75,7 +76,7 @@ public:
     Q_ENUMS(NormalizationType);
 
 	/// Constructor.
-	Q_INVOKABLE CorrelationFunctionModifier(DataSet* dataset);
+	Q_INVOKABLE SpatialCorrelationFunctionModifier(DataSet* dataset);
 
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
@@ -320,7 +321,7 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType);
-Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::NormalizationType);
-Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType, Q_PRIMITIVE_TYPE);
-Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::NormalizationType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::Particles::SpatialCorrelationFunctionModifier::AveragingDirectionType);
+Q_DECLARE_METATYPE(Ovito::Particles::SpatialCorrelationFunctionModifier::NormalizationType);
+Q_DECLARE_TYPEINFO(Ovito::Particles::SpatialCorrelationFunctionModifier::AveragingDirectionType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(Ovito::Particles::SpatialCorrelationFunctionModifier::NormalizationType, Q_PRIMITIVE_TYPE);
