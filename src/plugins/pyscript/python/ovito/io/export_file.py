@@ -75,7 +75,7 @@ def export_file(data, file, format, **params):
 
         By default, only the current animation frame (frame 0 by default) is exported by the function.
         To export a different frame, pass the ``frame`` keyword parameter to the :py:func:`!export_file` function.
-        Alternatively, you can export all frames of the current animation sequence at once by passing ``multiple_frames=True``. Refined
+        Alternatively, you can export all frames of an animation sequence at once by passing ``multiple_frames=True``. Refined
         control of the exported frame sequence is available through the keyword arguments ``start_frame``, ``end_frame``, and ``every_nth_frame``.
 
         The *lammps/dump* and *xyz* file formats can store multiple frames in a single output file. For other formats, or
@@ -173,6 +173,12 @@ def export_file(data, file, format, **params):
         exporter.select_default_exportable_data()
     else:
         raise TypeError("Invalid data. Cannot export this kind of Python object: {}".format(data))
+
+    # Automatically adjust frame interval to length of exportable trajectory.
+    if exporter.multiple_frames:
+        # This method will fetch the length of the trajectory from the pipeline and use it to set
+        # the export interval. We also check whether the user has specified explicit interval bounds. 
+        exporter.determine_export_interval(not 'start_frame' in params, not 'end_frame' in params)
 
     # Let the exporter do its job.
     exporter.do_export()

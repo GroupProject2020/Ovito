@@ -7,8 +7,14 @@ from ovito.modifiers import *
 import os
 import os.path
 
-
 test_data_dir = "../files/"
+
+# Test animation frame export.
+pipeline = import_file(test_data_dir + "LAMMPS/animation.dump.gz")
+assert(pipeline.source.num_frames == 11)
+export_file(pipeline, "_export_file_test.*.dump", "lammps/dump", columns = ["Position.X", "Position.Y", "Position.Z"], multiple_frames = True)
+for i in range(pipeline.source.num_frames):
+    os.remove("_export_file_test.{}.dump".format(i))
 
 node1 = import_file(test_data_dir + "LAMMPS/class2.data", atom_style = "full")
 export_file(node1, "_export_file_test.data", "lammps/data", atom_style = "full")
@@ -31,7 +37,7 @@ export_file(node1, "_export_file_test.*.dump", "lammps/dump", columns = ["Positi
 os.remove("_export_file_test.1.dump")
 os.remove("_export_file_test.3.dump")
 os.remove("_export_file_test.5.dump")
-for i in range(ovito.scene.anim.last_frame + 1):
+for i in range(node1.source.num_frames):
     export_file(node1, "_export_file_test.%i.dump" % i, "lammps/dump", columns = ["Position.X", "Position.Y", "Position.Z"], frame = i)
     os.remove("_export_file_test.%i.dump" % i)
 

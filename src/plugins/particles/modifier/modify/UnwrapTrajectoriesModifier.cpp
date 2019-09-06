@@ -233,15 +233,17 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 		if(!myModApp) continue;
 
 		// Step through the animation frames.
-		TimeInterval interval = dataset()->animationSettings()->animationInterval();
-		operation.setProgressMaximum(dataset()->animationSettings()->lastFrame() - dataset()->animationSettings()->firstFrame() + 1);
+		int num_frames = modApp->numberOfSourceFrames();
+		operation.setProgressMaximum(num_frames);
+		TimeInterval interval = { modApp->sourceFrameToAnimationTime(0), modApp->sourceFrameToAnimationTime(num_frames-1) };
 		std::unordered_map<qlonglong,Point3> previousPositions;
 		SimulationCell previousCell;
 		UnwrapTrajectoriesModifierApplication::UnwrapData unwrapRecords;
 		UnwrapTrajectoriesModifierApplication::UnflipData unflipRecords;
 		std::array<int,3> currentFlipState{{0,0,0}};
-		for(TimePoint time = interval.start(); time <= interval.end(); time += dataset()->animationSettings()->ticksPerFrame()) {
-			operation.setProgressText(tr("Unwrapping particle trajectories (frame %1 of %2)").arg(operation.progressValue()+1).arg(operation.progressMaximum()));
+		for(int frame = 0; frame < num_frames; frame++) {
+			TimePoint time = modApp->sourceFrameToAnimationTime(frame);
+			operation.setProgressText(tr("Unwrapping particle trajectories (frame %1 of %2)").arg(frame+1).arg(num_frames));
 
 			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(time);
 			if(!operation.waitForFuture(stateFuture))
@@ -250,13 +252,13 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 			const PipelineFlowState& state = stateFuture.result();
 			const SimulationCellObject* simCellObj = state.getObject<SimulationCellObject>();
 			if(!simCellObj)
-				throwException(tr("Input data contains no simulation cell information at frame %1.").arg(dataset()->animationSettings()->timeToFrame(time)));
+				throwException(tr("Input data contains no simulation cell information at frame %1.").arg(frame));
 			SimulationCell cell = simCellObj->data();
 			if(!cell.pbcFlags()[0] && !cell.pbcFlags()[1] && !cell.pbcFlags()[2])
 				throwException(tr("No periodic boundary conditions set for the simulation cell."));
 			const ParticlesObject* particles = state.getObject<ParticlesObject>();
 			if(!particles)
-				throwException(tr("Input data contains no particles at frame %1.").arg(dataset()->animationSettings()->timeToFrame(time)));
+				throwException(tr("Input data contains no particles at frame %1.").arg(frame));
 			const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 			ConstPropertyPtr identifierProperty = particles->getPropertyStorage(ParticlesObject::IdentifierProperty);
 			if(identifierProperty && identifierProperty->size() != posProperty->size())

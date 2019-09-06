@@ -82,6 +82,16 @@ void defineIOSubmodule(py::module m)
 			[](FileExporter& exporter, const QString& path) {
 				exporter.setDataObjectToExport(DataObjectReference(&DataObject::OOClass(), path));
 			})
+		.def("determine_export_interval", [](FileExporter& exporter, bool adjustStart, bool adjustEnd) {
+			if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(exporter.nodeToExport())) {
+				if(node->dataProvider()) {
+					if(adjustStart)
+						exporter.setStartFrame(exporter.dataset()->animationSettings()->timeToFrame(node->dataProvider()->sourceFrameToAnimationTime(0)));
+					if(adjustEnd)
+						exporter.setEndFrame(exporter.dataset()->animationSettings()->timeToFrame(node->dataProvider()->sourceFrameToAnimationTime(node->dataProvider()->numberOfSourceFrames()) - 1));
+				}
+			}
+		})
 		.def("do_export", [](FileExporter& exporter) {
 				if(!exporter.doExport(ScriptEngine::currentTask()->createSubTask())) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
