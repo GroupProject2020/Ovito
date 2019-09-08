@@ -262,7 +262,7 @@
       OVITO has the capability to manage several objects in the same three-dimensional scene.
       This enables you to import and visualize several datasets together in a single picture as shown on the right.
       You can also visualize a dataset in several different ways, either side by side or superimposed on each other,
-      using branched data pipelines, which dynamically duplicate the imported data and process the copies in different ways.
+      using <link linkend="clone_pipeline">branched data pipelines</link>, which dynamically duplicate the imported data and process the copies in different ways.
     </para>
     <para>
       The simplest way to visualize multiple datasets in one picture or animation is to invoke the
@@ -283,7 +283,7 @@
       <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> beneath the pipeline selector box.
     </para>
 
-    <simplesect>
+    <simplesect xml:id="usage.import.positioning_objects">
       <title>Positioning datasets in the scene</title>
       <para>
         OVITO places imported datasets in a default position relative
