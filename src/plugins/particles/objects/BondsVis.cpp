@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -150,6 +150,7 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 	const SimulationCellObject* simulationCell = flowState.getObject<SimulationCellObject>();
 	const PropertyObject* particleColorProperty = particles->getProperty(ParticlesObject::ColorProperty);
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* particleRadiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
 	const PropertyObject* bondTypeProperty = bonds->getProperty(BondsObject::TypeProperty);
 	const PropertyObject* bondColorProperty = bonds->getProperty(BondsObject::ColorProperty);
 	const PropertyObject* bondSelectionProperty = bonds->getProperty(BondsObject::SelectionProperty);
@@ -173,6 +174,7 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 		VersionedDataObjectRef,		// Particle position property + revision number
 		VersionedDataObjectRef,		// Particle color property + revision number
 		VersionedDataObjectRef,		// Particle type property + revision number
+		VersionedDataObjectRef,		// Particle radius property + revision number
 		VersionedDataObjectRef,		// Bond color property + revision number
 		VersionedDataObjectRef,		// Bond type property + revision number
 		VersionedDataObjectRef,		// Bond selection property + revision number
@@ -191,6 +193,7 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 			positionProperty,
 			particleColorProperty,
 			particleTypeProperty,
+			particleRadiusProperty,
 			bondColorProperty,
 			bondTypeProperty,
 			bondSelectionProperty,
@@ -214,7 +217,22 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 			arrowPrimitive->startSetElements((int)bondTopologyProperty->size() * 2);
 
 			// Obtain particles vis element.
-			ParticlesVis* particleVis = useParticleColors() ? particles->visElement<ParticlesVis>() : nullptr;
+			ParticlesVis* particleVis = particles->visElement<ParticlesVis>();
+
+			// Cache some variables.
+			size_t particleCount = positionProperty->size();
+			const Point3* positions = positionProperty->constDataPoint3();
+			const AffineTransformation cell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
+
+			// Compute the radii of the particles.
+			std::vector<FloatType> particleRadii;
+			if(particleVis) {
+				particleRadii.resize(particleCount);
+				particleVis->particleRadii(particleRadii, particleRadiusProperty, particleTypeProperty);
+			}
+
+			if(!useParticleColors())
+				particleVis = nullptr;
 
 			// Determine half-bond colors.
 			std::vector<ColorA> colors = halfBondColors(positionProperty->size(), bondTopologyProperty,
@@ -222,24 +240,29 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 					particleVis, particleColorProperty, particleTypeProperty);
 			OVITO_ASSERT(colors.size() == arrowPrimitive->elementCount());
 
-			// Cache some variables.
-			size_t particleCount = positionProperty->size();
-			const Point3* positions = positionProperty->constDataPoint3();
-			const AffineTransformation cell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
+			// Make sure the particle radius array has the correct length.
+			if(particleRadii.size() != particleCount) particleRadii.clear();
 
 			int elementIndex = 0;
 			auto color = colors.cbegin();
 			for(size_t bondIndex = 0; bondIndex < bondTopologyProperty->size(); bondIndex++) {
-				size_t index1 = bondTopologyProperty->getInt64Component(bondIndex, 0);
-				size_t index2 = bondTopologyProperty->getInt64Component(bondIndex, 1);
-				if(index1 < particleCount && index2 < particleCount) {
-					Vector3 vec = positions[index2] - positions[index1];
+				size_t particleIndex1 = bondTopologyProperty->getInt64Component(bondIndex, 0);
+				size_t particleIndex2 = bondTopologyProperty->getInt64Component(bondIndex, 1);
+				if(particleIndex1 < particleCount && particleIndex2 < particleCount) {
+					Vector3 vec = positions[particleIndex2] - positions[particleIndex1];
 					if(bondPeriodicImageProperty) {
 						for(size_t k = 0; k < 3; k++)
 							if(int d = bondPeriodicImageProperty->getIntComponent(bondIndex, k)) vec += cell.column(k) * (FloatType)d;
 					}
-					arrowPrimitive->setElement(elementIndex++, positions[index1], vec * FloatType( 0.5), *color++, bondRadius);
-					arrowPrimitive->setElement(elementIndex++, positions[index2], vec * FloatType(-0.5), *color++, bondRadius);
+					FloatType t = 0.5;
+					FloatType blen = vec.length() * FloatType(2);
+					if(!particleRadii.empty() && blen != 0) {
+						// This calculation determines the point where to split the bond into the two half-bonds
+						// such that the border appears halfway between the two particles, which may have two different sizes.
+						t = FloatType(0.5) + std::min(FloatType(0.5), particleRadii[particleIndex1]/blen) - std::min(FloatType(0.5), particleRadii[particleIndex2]/blen);
+					}
+					arrowPrimitive->setElement(elementIndex++, positions[particleIndex1], vec * t, *color++, bondRadius);
+					arrowPrimitive->setElement(elementIndex++, positions[particleIndex2], vec * (t-FloatType(1)), *color++, bondRadius);
 				}
 				else {
 					arrowPrimitive->setElement(elementIndex++, Point3::Origin(), Vector3::Zero(), *color++, 0);

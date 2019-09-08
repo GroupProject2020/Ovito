@@ -30,7 +30,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) : 
+DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	_mainWindow(mainWindow),
 	_waitingForSceneAnim(":/gui/mainwin/inspector/waiting.gif")
 {
@@ -79,7 +79,7 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	_appletContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
 	_appletContainer->setMinimumWidth(10);
 	_appletContainer->resize(0,0);
-	QLabel* label = new QLabel(tr("There is no data to be displayed"));
+	QLabel* label = new QLabel(tr("No data available or no object selected."));
 	label->setAlignment(Qt::AlignCenter);
 	_appletContainer->addWidget(label);
 	for(DataInspectionApplet* applet : _applets)
@@ -90,11 +90,11 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	connect(_tabBar, &QTabBar::tabBarClicked, this, &DataInspectorPanel::onTabBarClicked);
 	connect(_tabBar, &QTabBar::currentChanged, this, &DataInspectorPanel::onCurrentTabChanged);
 	connect(_appletContainer, &QStackedWidget::currentChanged, this, &DataInspectorPanel::onCurrentPageChanged);
-	connect(&datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &DataInspectorPanel::onSceneSelectionChanged);	
-	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationBegin, this, &DataInspectorPanel::onScenePreparationBegin);	
+	connect(&datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &DataInspectorPanel::onSceneSelectionChanged);
+	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationBegin, this, &DataInspectorPanel::onScenePreparationBegin);
 	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationEnd, this, &DataInspectorPanel::onScenePreparationEnd);
 	connect(&datasetContainer(), &DataSetContainer::timeChanged, this, &DataInspectorPanel::onScenePreparationBegin);
-	connect(&datasetContainer(), &DataSetContainer::timeChangeComplete, this, &DataInspectorPanel::onScenePreparationEnd);	
+	connect(&datasetContainer(), &DataSetContainer::timeChangeComplete, this, &DataInspectorPanel::onScenePreparationEnd);
 	connect(&_selectedNodeListener, &RefTargetListenerBase::notificationEvent, this, &DataInspectorPanel::onSceneNodeNotificationEvent);
 
 	updateTabs(nullptr);
@@ -152,7 +152,7 @@ void DataInspectorPanel::onSceneSelectionChanged()
 {
 	// Find the first selected PipelineSceneNode and make it the active node:
 	PipelineSceneNode* selectedNode = nullptr;
-	SelectionSet* selection = datasetContainer().currentSet() ? datasetContainer().currentSet()->selection() : nullptr;	
+	SelectionSet* selection = datasetContainer().currentSet() ? datasetContainer().currentSet()->selection() : nullptr;
 	if(selection) {
 		for(SceneNode* node : selection->nodes()) {
 			selectedNode = dynamic_object_cast<PipelineSceneNode>(node);
@@ -173,7 +173,7 @@ void DataInspectorPanel::onSceneNodeNotificationEvent(const ReferenceEvent& even
 }
 
 /******************************************************************************
-* Is emitted whenever the scene of the current dataset has been changed and 
+* Is emitted whenever the scene of the current dataset has been changed and
 * is being made ready for rendering.
 ******************************************************************************/
 void DataInspectorPanel::onScenePreparationBegin()
@@ -207,7 +207,7 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 		_expandCollapseButton->setIcon(_collapseIcon);
 		_expandCollapseButton->setToolTip(tr("Collapse"));
 		if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
-			const PipelineFlowState& pipelineState = _selectedNodeListener.target() ? 
+			const PipelineFlowState& pipelineState = _selectedNodeListener.target() ?
 				_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
 				PipelineFlowState();
 			_applets[_activeAppletIndex]->updateDisplay(pipelineState, _selectedNodeListener.target());
@@ -231,7 +231,7 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 void DataInspectorPanel::updateInspector()
 {
 	// Obtain the pipeline output of the currently selected scene node.
-	const PipelineFlowState& pipelineState = _selectedNodeListener.target() ? 
+	const PipelineFlowState& pipelineState = _selectedNodeListener.target() ?
 		_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
 		PipelineFlowState();
 
@@ -321,12 +321,12 @@ void DataInspectorPanel::onCurrentPageChanged(int index)
 	if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 		_applets[_activeAppletIndex]->deactivate(_mainWindow);
 	}
-	
+
 	_activeAppletIndex = index;
 
 	if(_inspectorActive && _activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 		// Obtain the pipeline output of the currently selected scene node.
-		const PipelineFlowState& pipelineState = _selectedNodeListener.target() ? 
+		const PipelineFlowState& pipelineState = _selectedNodeListener.target() ?
 			_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
 			PipelineFlowState();
 		_applets[_activeAppletIndex]->updateDisplay(pipelineState, _selectedNodeListener.target());

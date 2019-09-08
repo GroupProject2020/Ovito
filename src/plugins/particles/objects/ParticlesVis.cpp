@@ -275,6 +275,8 @@ void ParticlesVis::particleRadii(std::vector<FloatType>& output, const PropertyO
 {
 	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticlesObject::RadiusProperty);
 	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
+	OVITO_ASSERT(!radiusProperty || output.size() == radiusProperty->size());
+	OVITO_ASSERT(!typeProperty || output.size() == typeProperty->size());
 
 	FloatType defaultRadius = defaultParticleRadius();
 	if(radiusProperty && radiusProperty->size() == output.size()) {

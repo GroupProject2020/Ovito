@@ -41,24 +41,26 @@ void ModifierTemplatesPage::insertSettingsDialogPage(ApplicationSettingsDialog* 
 	tabWidget->addTab(page, tr("Modifier templates"));
 	QGridLayout* layout1 = new QGridLayout(page);
 	layout1->setColumnStretch(0, 1);
-	layout1->setRowStretch(2, 1);
+	layout1->setRowStretch(3, 1);
+	layout1->setSpacing(2);
 
 	QLabel* label = new QLabel(tr(
 			"All templates you define here will appear in the list of available modifiers, from where they can be quickly inserted into the data pipeline. "
 			"A template may consist of several modifiers, making your life easier if you use the same modifier sequence repeatedly."));
 	label->setWordWrap(true);
 	layout1->addWidget(label, 0, 0, 1, 2);
+	layout1->setRowMinimumHeight(1, 10);
 
-	layout1->addWidget(new QLabel(tr("List of defined modifier templates:")), 1, 0);
+	layout1->addWidget(new QLabel(tr("Modifier templates:")), 2, 0);
 	_listWidget = new QListView(settingsDialog);
-	_listWidget->setUniformItemSizes(true);	
+	_listWidget->setUniformItemSizes(true);
 	_listWidget->setModel(&_templates);
-	layout1->addWidget(_listWidget, 2, 0);
+	layout1->addWidget(_listWidget, 3, 0);
 
 	QVBoxLayout* layout2 = new QVBoxLayout();
 	layout2->setContentsMargins(0,0,0,0);
 	layout2->setSpacing(4);
-	layout1->addLayout(layout2, 2, 1);
+	layout1->addLayout(layout2, 3, 1);
 	QPushButton* createTemplateBtn = new QPushButton(tr("New..."), page);
 	connect(createTemplateBtn, &QPushButton::clicked, this, &ModifierTemplatesPage::onCreateTemplate);
 	layout2->addWidget(createTemplateBtn);
@@ -137,7 +139,7 @@ void ModifierTemplatesPage::onCreateTemplate()
 		else
 			nameBox->setCurrentText(tr("Custom modifier template 1"));
 		mainLayout->addWidget(nameBox);
-		
+
 		mainLayout->addSpacing(12);
 		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel | QDialogButtonBox::Help);
 		connect(buttonBox, &QDialogButtonBox::accepted, [this, &dlg, nameBox, modifierListWidget]() {
@@ -217,8 +219,8 @@ void ModifierTemplatesPage::onRenameTemplate()
 			QString oldTemplateName = _templates.templateList()[index.row()];
 			QString newTemplateName = oldTemplateName;
 			for(;;) {
-				newTemplateName = QInputDialog::getText(_settingsDialog, tr("Rename modifier template"), 
-					tr("Please enter a new name for the modifier template:"), 
+				newTemplateName = QInputDialog::getText(_settingsDialog, tr("Rename modifier template"),
+					tr("Please enter a new name for the modifier template:"),
 					QLineEdit::Normal, newTemplateName);
 				if(newTemplateName.isEmpty() || newTemplateName == oldTemplateName) break;
 				if(!_templates.templateList().contains(newTemplateName)) {
