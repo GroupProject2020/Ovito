@@ -74,12 +74,15 @@ public:
 	/// Returns the property container object that is currently selected.
 	const PropertyContainer* selectedContainerObject() const { return _selectedContainerObject; }
 
+	/// Selects a specific data object in this applet.
+	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint) override;
+
 protected:
 
 	/// Constructor.
 	PropertyInspectionApplet(const PropertyContainerClass& containerClass) : _containerClass(containerClass) {}
 
-	/// Lets the applet create the UI widgets that are to be placed into the data inspector panel. 
+	/// Lets the applet create the UI widgets that are to be placed into the data inspector panel.
 	void createBaseWidgets();
 
 	/// Creates the evaluator object for filter expressions.
@@ -174,7 +177,7 @@ private:
 		void setContentsBegin();
 
 		/// Replaces the contents of this data model.
-		void setContentsEnd() { 
+		void setContentsEnd() {
 			if(_filterExpression.isEmpty() == false)
 				endResetModel();
 		}
@@ -205,10 +208,10 @@ private:
 		/// The filtering expression.
 		QString _filterExpression;
 
-		/// The filter expression evaluator. 
+		/// The filter expression evaluator.
 		mutable std::unique_ptr<PropertyExpressionEvaluator> _evaluator;
 
-		/// The filter expression evaluator worker. 
+		/// The filter expression evaluator worker.
 		mutable std::unique_ptr<PropertyExpressionEvaluator::Worker> _evaluatorWorker;
 
 		friend PropertyInspectionApplet;

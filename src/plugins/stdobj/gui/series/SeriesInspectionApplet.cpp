@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdobj/gui/StdObjGui.h>
+#include <plugins/stdobj/gui/io/DataSeriesPlotExporter.h>
 #include <plugins/stdobj/io/DataSeriesExporter.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/dialogs/FileExporterSettingsDialog.h>
@@ -68,20 +69,26 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 	switchToPlotAction->setChecked(true);
 	toolbar->addSeparator();
 
-	_exportSeriesToFileAction = new QAction(QIcon(":/gui/actions/file/file_save_as.bw.svg"), tr("Export data to file"), this);
+	_exportSeriesToFileAction = new QAction(QIcon(":/gui/actions/file/file_save_as.bw.svg"), tr("Export data plot"), this);
 	connect(_exportSeriesToFileAction, &QAction::triggered, this, &SeriesInspectionApplet::exportDataToFile);
 	toolbar->addAction(_exportSeriesToFileAction);
 
-	QStackedWidget* stackedWidget = new QStackedWidget();
-	rightLayout->addWidget(stackedWidget, 1);
+	_stackedWidget = new QStackedWidget();
+	rightLayout->addWidget(_stackedWidget, 1);
 	rightLayout->addWidget(toolbar, 0);
 
-	connect(switchToPlotAction, &QAction::triggered, stackedWidget, [stackedWidget]() { stackedWidget->setCurrentIndex(0); });
-	connect(switchToTableAction, &QAction::triggered, stackedWidget, [stackedWidget]() { stackedWidget->setCurrentIndex(1); });
+	connect(switchToPlotAction, &QAction::triggered, this, [this]() {
+		_stackedWidget->setCurrentIndex(0);
+		_exportSeriesToFileAction->setToolTip(tr("Export data plot"));
+	});
+	connect(switchToTableAction, &QAction::triggered, this, [this]() {
+		_stackedWidget->setCurrentIndex(1);
+		_exportSeriesToFileAction->setToolTip(tr("Export data to text file"));
+	});
 
 	_plotWidget = new DataSeriesPlotWidget();
-	stackedWidget->addWidget(_plotWidget);
-	stackedWidget->addWidget(tableView());
+	_stackedWidget->addWidget(_plotWidget);
+	_stackedWidget->addWidget(tableView());
 
 	return splitter;
 }
@@ -111,13 +118,13 @@ void SeriesInspectionApplet::exportDataToFile()
 
 	// Let the user select a destination file.
 	HistoryFileDialog dialog("export", _mainWindow, tr("Export Data Series"));
-#ifndef Q_OS_WIN
-	QString filterString = QStringLiteral("%1 (%2)").arg(DataSeriesExporter::OOClass().fileFilterDescription(), DataSeriesExporter::OOClass().fileFilter());
-#else
-	// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-	QString filterString = QStringLiteral("%1 (*)").arg(DataSeriesExporter::OOClass().fileFilterDescription());
-#endif
+	QString filterString;
+	if(_stackedWidget->currentIndex() == 0)
+		filterString = QStringLiteral("%1 (%2)").arg(DataSeriesPlotExporter::OOClass().fileFilterDescription(), DataSeriesPlotExporter::OOClass().fileFilter());
+	else
+		filterString = QStringLiteral("%1 (%2)").arg(DataSeriesExporter::OOClass().fileFilterDescription(), DataSeriesExporter::OOClass().fileFilter());
 	dialog.setNameFilter(filterString);
+	dialog.setOption(QFileDialog::DontUseNativeDialog);
 	dialog.setAcceptMode(QFileDialog::AcceptSave);
 	dialog.setFileMode(QFileDialog::AnyFile);
 	dialog.setConfirmOverwrite(true);
@@ -139,7 +146,11 @@ void SeriesInspectionApplet::exportDataToFile()
 	// Export to selected file.
 	try {
 		// Create exporter service.
-		OORef<DataSeriesExporter> exporter = new DataSeriesExporter(series->dataset());
+		OORef<FileExporter> exporter;
+		if(_stackedWidget->currentIndex() == 0)
+			exporter = new DataSeriesPlotExporter(series->dataset());
+		else
+			exporter = new DataSeriesExporter(series->dataset());
 
 		// Load user-defined default settings.
 		exporter->loadUserDefaults();

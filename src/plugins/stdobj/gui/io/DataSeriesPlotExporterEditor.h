@@ -22,47 +22,29 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
-#include <gui/properties/ModifierPropertiesEditor.h>
-#include <core/utilities/DeferredMethodInvocation.h>
+#include <plugins/stdobj/gui/StdObjGui.h>
+#include <gui/properties/PropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdObj {
 
 /**
- * A properties editor for the CoordinationAnalysisModifier class.
+ * \brief User interface component for the DataSeriesPlotExporter class.
  */
-class CoordinationAnalysisModifierEditor : public ModifierPropertiesEditor
+class DataSeriesPlotExporterEditor : public PropertiesEditor
 {
+	OVITO_CLASS(DataSeriesPlotExporterEditor)
 	Q_OBJECT
-	OVITO_CLASS(CoordinationAnalysisModifierEditor)
 
 public:
 
-	/// Default constructor.
-	Q_INVOKABLE CoordinationAnalysisModifierEditor() {}
+	/// Constructor.
+	Q_INVOKABLE DataSeriesPlotExporterEditor() {}
 
 protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-protected Q_SLOTS:
-
-	/// Replots the RDF computed by the modifier.
-	void plotRDF();
-
-private:
-
-	/// The plotting widget for displaying the computed RDFs.
-	DataSeriesPlotWidget* _rdfPlot;
-
-	/// For deferred invocation of the plot repaint function.
-	DeferredMethodInvocation<CoordinationAnalysisModifierEditor, &CoordinationAnalysisModifierEditor::plotRDF> plotRDFLater;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

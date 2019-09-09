@@ -46,7 +46,7 @@ public:
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 200; }
 
-	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
+	/// Lets the applet create the UI widget that is to be placed into the data inspector panel.
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;
 
 	/// Returns the plotting widget.
@@ -73,6 +73,7 @@ private:
 	DataSeriesPlotWidget* _plotWidget;
 
 	MainWindow* _mainWindow;
+	QStackedWidget* _stackedWidget;
 	QAction* _exportSeriesToFileAction;
 };
 

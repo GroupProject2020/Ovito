@@ -100,6 +100,7 @@ namespace Ovito {
 		OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 			class CoordinateDisplayWidget;
 			class CommandPanel;
+			class DataInspectorPanel;
 			class ModifyCommandPage;
 			class RenderCommandPage;
 			class OverlayCommandPage;

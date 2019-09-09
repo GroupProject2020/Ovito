@@ -43,7 +43,7 @@ public:
 	/// Determines whether the given pipeline data contains data that can be displayed by this applet.
 	virtual bool appliesTo(const DataCollection& data) = 0;
 
-	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
+	/// Lets the applet create the UI widget that is to be placed into the data inspector panel.
 	virtual QWidget* createWidget(MainWindow* mainWindow) = 0;
 
 	/// Lets the applet update the contents displayed in the inspector.
@@ -52,9 +52,12 @@ public:
 	/// This is called when the applet is no longer visible.
 	virtual void deactivate(MainWindow* mainWindow) {}
 
+	/// Selects a specific data object in this applet.
+	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint) { return false; }
+
 public:
 
-	/// A specialized QTableView widget, which allows copying the selected contents of the 
+	/// A specialized QTableView widget, which allows copying the selected contents of the
 	/// table to the clipboard.
 	class TableView : public QTableView
 	{
@@ -68,7 +71,7 @@ public:
 	protected:
 
 		/// Handles key press events for this widget.
-		virtual void keyPressEvent(QKeyEvent* event) override;		
+		virtual void keyPressEvent(QKeyEvent* event) override;
 	};
 };
 

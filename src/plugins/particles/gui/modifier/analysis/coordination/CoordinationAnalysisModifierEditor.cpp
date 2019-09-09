@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
+#include <gui/mainwin/MainWindow.h>
 #include "CoordinationAnalysisModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -70,6 +71,13 @@ void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParamete
 	layout->addSpacing(12);
 	layout->addWidget(new QLabel(tr("Radial distribution function:")));
 	layout->addWidget(_rdfPlot);
+
+	QPushButton* btn = new QPushButton(tr("Show in data inspector"));
+	connect(btn, &QPushButton::clicked, this, [this]() {
+		if(modifierApplication())
+			mainWindow()->openDataInspector(modifierApplication());
+	});
+	layout->addWidget(btn);
 
 	// Status label.
 	layout->addSpacing(6);

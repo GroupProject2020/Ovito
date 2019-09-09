@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,7 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(PropertyInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline dataset contains data that can be 
+* Determines whether the given pipeline dataset contains data that can be
 * displayed by this applet.
 ******************************************************************************/
 bool PropertyInspectionApplet::appliesTo(const DataCollection& data)
@@ -40,8 +40,8 @@ bool PropertyInspectionApplet::appliesTo(const DataCollection& data)
 }
 
 /******************************************************************************
-* Lets the applet create the UI widgets that are to be placed into the data 
-* inspector panel. 
+* Lets the applet create the UI widgets that are to be placed into the data
+* inspector panel.
 ******************************************************************************/
 void PropertyInspectionApplet::createBaseWidgets()
 {
@@ -76,7 +76,7 @@ void PropertyInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 	if(sceneNode != currentSceneNode()) {
 		_resetFilterAction->trigger();
 	}
-	
+
 	_sceneNode = sceneNode;
 	_pipelineState = state;
 	updateContainerList();
@@ -89,7 +89,7 @@ void PropertyInspectionApplet::updateContainerList()
 {
 	// Build list of all property container objects in the current data collection.
 	std::vector<ConstDataObjectPath> objectPaths;
-	if(!currentState().isEmpty()) 
+	if(!currentState().isEmpty())
 		objectPaths = currentState().getObjectsRecursive(_containerClass);
 
 	containerSelectionWidget()->setUpdatesEnabled(false);
@@ -122,7 +122,7 @@ void PropertyInspectionApplet::updateContainerList()
 	// Remove excess items from list.
 	while(containerSelectionWidget()->count() > numItems)
 		delete containerSelectionWidget()->takeItem(containerSelectionWidget()->count() - 1);
-	
+
 	if(!containerSelectionWidget()->currentItem() && containerSelectionWidget()->count() != 0)
 		containerSelectionWidget()->setCurrentRow(0);
 
@@ -168,9 +168,29 @@ void PropertyInspectionApplet::currentContainerChanged()
 }
 
 /******************************************************************************
+* Selects a specific data object in this applet.
+******************************************************************************/
+bool PropertyInspectionApplet::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint)
+{
+	for(int i = 0; i < containerSelectionWidget()->count(); i++) {
+		QListWidgetItem* item = containerSelectionWidget()->item(i);
+		const ConstDataObjectPath& objectPath = item->data(Qt::UserRole).value<ConstDataObjectPath>();
+		if(!objectPath.empty()) {
+			if(objectPath.back()->dataSource() == dataSource) {
+				if(objectIdentifierHint.isEmpty() || objectPath.back()->identifier().startsWith(objectIdentifierHint)) {
+					containerSelectionWidget()->setCurrentRow(i);
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+/******************************************************************************
 * Replaces the contents of this data model.
 ******************************************************************************/
-void PropertyInspectionApplet::PropertyTableModel::setContents(const PropertyContainer* container) 
+void PropertyInspectionApplet::PropertyTableModel::setContents(const PropertyContainer* container)
 {
 	// Generate the new list of properties.
 	std::vector<OORef<PropertyObject>> newProperties;
@@ -181,11 +201,11 @@ void PropertyInspectionApplet::PropertyTableModel::setContents(const PropertyCon
 	int oldRowCount = rowCount();
 	int newRowCount = 0;
 	if(!newProperties.empty())
-		newRowCount = (int)std::min(newProperties.front()->size(), (size_t)std::numeric_limits<int>::max());	
+		newRowCount = (int)std::min(newProperties.front()->size(), (size_t)std::numeric_limits<int>::max());
 
 	// Try to preserve the columns of the model as far as possible.
-	auto iter_pair = std::mismatch(_properties.begin(), _properties.end(), newProperties.begin(), newProperties.end(), 
-		[](PropertyObject* prop1, PropertyObject* prop2) { 
+	auto iter_pair = std::mismatch(_properties.begin(), _properties.end(), newProperties.begin(), newProperties.end(),
+		[](PropertyObject* prop1, PropertyObject* prop2) {
 			if(prop1->type() == PropertyStorage::GenericUserProperty)
 				return prop1->name() == prop2->name();
 			else
@@ -236,7 +256,7 @@ void PropertyInspectionApplet::PropertyTableModel::setContents(const PropertyCon
 /******************************************************************************
 * Replaces the contents of this data model.
 ******************************************************************************/
-void PropertyInspectionApplet::PropertyFilterModel::setContentsBegin() 
+void PropertyInspectionApplet::PropertyFilterModel::setContentsBegin()
 {
 	if(_filterExpression.isEmpty() == false)
 		beginResetModel();
@@ -274,7 +294,7 @@ void PropertyInspectionApplet::PropertyFilterModel::setupEvaluator()
 }
 
 /******************************************************************************
-* Returns the data stored under the given 'role' for the item referred to by 
+* Returns the data stored under the given 'role' for the item referred to by
 * the 'index'.
 ******************************************************************************/
 QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& index, int role) const
@@ -349,7 +369,7 @@ void PropertyInspectionApplet::onFilterStatusChanged(const QString& msgText)
 {
 	if(msgText.isEmpty() == false) {
 		_filterStatusString = msgText;
-		QToolTip::showText(_filterExpressionEdit->mapToGlobal(_filterExpressionEdit->rect().bottomLeft()), msgText, 
+		QToolTip::showText(_filterExpressionEdit->mapToGlobal(_filterExpressionEdit->rect().bottomLeft()), msgText,
 			_filterExpressionEdit, QRect());
 	}
 	else if(!_filterStatusString.isEmpty()) {

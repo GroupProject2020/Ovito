@@ -26,6 +26,7 @@
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
+#include <gui/mainwin/MainWindow.h>
 #include <plugins/stdmod/modifiers/HistogramModifier.h>
 #include "HistogramModifierEditor.h"
 
@@ -86,6 +87,13 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 
 	layout->addWidget(new QLabel(tr("Histogram:")));
 	layout->addWidget(_plotWidget);
+
+	QPushButton* btn = new QPushButton(tr("Show in data inspector"));
+	connect(btn, &QPushButton::clicked, this, [this]() {
+		if(modifierApplication())
+			mainWindow()->openDataInspector(modifierApplication());
+	});
+	layout->addWidget(btn);
 
 	// Input.
 	QGroupBox* inputBox = new QGroupBox(tr("Input"), rollout);
@@ -187,7 +195,7 @@ void HistogramModifierEditor::plotHistogram()
 	else {
 		_plotWidget->setAxisAutoScale(QwtPlot::yLeft);
 	}
-	
+
 	if(modifier && modifier->selectInRange()) {
 		auto minmax = std::minmax(modifier->selectionRangeStart(), modifier->selectionRangeEnd());
 		_selectionRangeIndicator->setInterval(minmax.first, minmax.second);

@@ -97,13 +97,9 @@ void GlobalAttributesInspectionApplet::exportToFile()
 
 	// Let the user select a destination file.
 	HistoryFileDialog dialog("export", _mainWindow, tr("Export Attributes"));
-#ifndef Q_OS_WIN
 	QString filterString = QStringLiteral("%1 (%2)").arg(AttributeFileExporter::OOClass().fileFilterDescription(), AttributeFileExporter::OOClass().fileFilter());
-#else
-		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-	QString filterString = QStringLiteral("%1 (*)").arg(AttributeFileExporter::OOClass().fileFilterDescription());
-#endif
 	dialog.setNameFilter(filterString);
+	dialog.setOption(QFileDialog::DontUseNativeDialog);
 	dialog.setAcceptMode(QFileDialog::AcceptSave);
 	dialog.setFileMode(QFileDialog::AnyFile);
 	dialog.setConfirmOverwrite(true);

@@ -333,6 +333,37 @@ void DataInspectorPanel::onCurrentPageChanged(int index)
 	}
 }
 
+/******************************************************************************
+* Selects a specific data object in the data inspector.
+******************************************************************************/
+bool DataInspectorPanel::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint)
+{
+	if(!_selectedNodeListener.target())
+		return false;
+
+	// Obtain the output of the currently selected pipeline.
+	const PipelineFlowState& pipelineState = _selectedNodeListener.target()->evaluatePipelinePreliminary(true);
+
+	// Update the list of displayed tabs.
+	updateTabs(pipelineState.data());
+
+	for(int appletIndex = 0; appletIndex < _applets.size(); appletIndex++) {
+		if(_appletsToTabs[appletIndex] == -1) continue;
+		DataInspectionApplet* applet = _applets[appletIndex];
+
+		// Update content of the tab.
+		applet->updateDisplay(pipelineState, _selectedNodeListener.target());
+
+		// Check if this applet contains the requested data object.
+		if(applet->selectDataObject(dataSource, objectIdentifierHint)) {
+			// If yes, switch to the tab and we are done.
+			_tabBar->setCurrentIndex(_appletsToTabs[appletIndex]);
+			return true;
+		}
+	}
+	return false;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -64,7 +64,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 		return DataSeriesObject::OOClass().isMember(container) == false;
 	});
 
-	
+
 	PropertyReferenceParameterUI* xPropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(ScatterPlotModifier::xAxisProperty), nullptr);
 	layout->addWidget(new QLabel(tr("X-axis property:"), rollout));
 	layout->addWidget(xPropertyUI->comboBox());
@@ -83,7 +83,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 		}
 	});
 	layout->addSpacing(6);
-	
+
 	_plotWidget = new DataSeriesPlotWidget();
 	_plotWidget->setMinimumHeight(240);
 	_plotWidget->setMaximumHeight(240);
@@ -100,6 +100,13 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 
 	layout->addWidget(new QLabel(tr("Scatter plot:")));
 	layout->addWidget(_plotWidget);
+
+	QPushButton* btn = new QPushButton(tr("Show in data inspector"));
+	connect(btn, &QPushButton::clicked, this, [this]() {
+		if(modifierApplication())
+			mainWindow()->openDataInspector(modifierApplication());
+	});
+	layout->addWidget(btn);
 
 	// Selection.
 	QGroupBox* selectionBox = new QGroupBox(tr("Selection"), rollout);
@@ -193,7 +200,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	connect(this, &ModifierPropertiesEditor::contentsReplaced, this, &ScatterPlotModifierEditor::plotScatterPlot);
 	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotLater(this);
-	});	
+	});
 }
 
 /******************************************************************************

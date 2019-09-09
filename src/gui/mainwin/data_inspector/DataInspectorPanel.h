@@ -41,6 +41,9 @@ public:
 	/// \brief Constructor.
 	DataInspectorPanel(MainWindow* mainWindow);
 
+	/// Selects a specific data object in the data inspector.
+	bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint);
+
 public Q_SLOTS:
 
 	/// Hides the inspector panel.
@@ -100,7 +103,7 @@ private:
 
 private:
 
-	/// Pointer to the main window this inspector panel is part of. 
+	/// Pointer to the main window this inspector panel is part of.
 	MainWindow* _mainWindow;
 
 	/// The list of all installed data inspection applets.
@@ -124,7 +127,7 @@ private:
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<DataInspectorPanel, &DataInspectorPanel::updateInspector> _updateInvocation;
 
-	/// Animation shown in the title bar to indicate process. 
+	/// Animation shown in the title bar to indicate process.
 	QMovie _waitingForSceneAnim;
 
 	/// UI element indicating that we are waiting for computations to complete.
