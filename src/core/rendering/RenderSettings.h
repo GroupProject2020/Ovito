@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -50,7 +50,7 @@ public:
 		CUSTOM_FRAME,		///< Renders a specific animation frame.
 	};
 	Q_ENUMS(RenderingRangeType);
-	
+
 public:
 
 	/// Constructor.
@@ -79,20 +79,20 @@ private:
 	/// Contains the output filename and format of the image to be rendered.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ImageInfo, imageInfo, setImageInfo);
 
-	/// The instance of the plugin renderer class. 
+	/// The instance of the plugin renderer class.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SceneRenderer, renderer, setRenderer, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the background color of the rendered image.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(Controller, backgroundColorController, setBackgroundColorController, PROPERTY_FIELD_MEMORIZE);
-	
+
 	/// The width of the output image in pixels.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, outputImageWidth, setOutputImageWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, outputImageWidth, setOutputImageWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// The height of the output image in pixels.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, outputImageHeight, setOutputImageHeight);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, outputImageHeight, setOutputImageHeight, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the alpha channel will be included in the output image.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, generateAlphaChannel, setGenerateAlphaChannel);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, generateAlphaChannel, setGenerateAlphaChannel, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the rendered image is saved to the output file.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, saveToFile, setSaveToFile);

@@ -275,16 +275,16 @@ private:
 
 	/// The number of time ticks per frame.
 	/// This controls the animation speed.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, ticksPerFrame, setTicksPerFrame);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, ticksPerFrame, setTicksPerFrame, PROPERTY_FIELD_MEMORIZE);
 
 	/// The playback speed factor that is used for animation playback in the viewport.
 	/// A value greater than 1 means that the animation is played at a speed higher
 	/// than realtime.
 	/// A value smaller than -1 that the animation is played at a speed lower than realtime.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, playbackSpeed, setPlaybackSpeed);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, playbackSpeed, setPlaybackSpeed, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the animation is played back in a loop in the interactive viewports.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, loopPlayback, setLoopPlayback);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, loopPlayback, setLoopPlayback, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the animation interval is automatically adjusted to accomodate all loaded
 	/// source animations in the scene.
