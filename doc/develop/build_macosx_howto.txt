@@ -7,11 +7,11 @@ sudo port install cmake docbook-xml doxygen libxslt boost yasm povray
 sudo port install -s libssh
 
 **************************************************************************
-Install Qt libraries, version 5.12.4
+Install Qt libraries, version 5.12.5
 **************************************************************************
 
 # This is a workaround to let VS Code Intellisense find the Qt headers:
-cd $HOME/Qt/5.12.4/clang_64/
+cd $HOME/Qt/5.12.5/clang_64/
 mkdir headers
 cd headers
 ln -s $PWD/../lib/QtCore.framework/Versions/5/Headers/ QtCore

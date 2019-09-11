@@ -197,7 +197,7 @@ ENDIF()
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(Core core/Core.h)
+	ADD_PRECOMPILED_HEADER(Core ovito/core/Core.h)
 ENDIF()
 
 # Install Libav video encoding libraries.

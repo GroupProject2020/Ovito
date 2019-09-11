@@ -138,5 +138,5 @@ OVITO_STANDARD_PLUGIN(Gui
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(Gui gui/GUI.h)
+	ADD_PRECOMPILED_HEADER(Gui ovito/gui/GUI.h)
 ENDIF()

@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -21,7 +21,7 @@
 
 # Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(StdModGui
-	SOURCES 
+	SOURCES
 		StdModGui.cpp
 		SliceModifierEditor.cpp
 		AffineTransformationModifierEditor.cpp
@@ -47,5 +47,5 @@ OVITO_STANDARD_PLUGIN(StdModGui
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(StdModGui plugins/stdmod/gui/StdModGui.h)
+	ADD_PRECOMPILED_HEADER(StdModGui ovito/stdmod/gui/StdModGui.h)
 ENDIF()

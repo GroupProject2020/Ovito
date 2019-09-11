@@ -54,7 +54,7 @@ TARGET_INCLUDE_DIRECTORIES(PyScript PUBLIC ${PYTHON_INCLUDE_PATH})
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(PyScript plugins/pyscript/PyScript.h)
+	ADD_PRECOMPILED_HEADER(PyScript ovito/pyscript/PyScript.h)
 ENDIF()
 
 # Install the Python source files that belong to the plugin and which provide the scripting interface.

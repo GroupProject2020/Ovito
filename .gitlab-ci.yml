@@ -152,7 +152,7 @@ build_windows_package:
          - build/ovito-*.zip
          - build/ovito-*.exe
    script:
-      - export PATH="/cygdrive/c/Qt/5.12.4/msvc2017_64/bin:$PATH"
+      - export PATH="/cygdrive/c/Qt/5.12.5/msvc2017_64/bin:$PATH"
       - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.21.27702/bin/HostX64/x64:$PATH"
       - export PATH="/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/MSBuild/Current/bin/Roslyn:$PATH"
       - export PATH="/cygdrive/c/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x64:$PATH"

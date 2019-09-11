@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -39,13 +39,13 @@ OVITO_STANDARD_PLUGIN(StdMod
 		modifiers/ManualSelectionModifier.cpp
 		modifiers/ComputePropertyModifier.cpp
 		modifiers/CombineDatasetsModifier.cpp
-		viewport/ColorLegendOverlay.cpp	
+		viewport/ColorLegendOverlay.cpp
 	PLUGIN_DEPENDENCIES StdObj
 )
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(StdMod plugins/stdmod/StdMod.h)
+	ADD_PRECOMPILED_HEADER(StdMod ovito/stdmod/StdMod.h)
 ENDIF()
 
 # Build corresponding GUI plugin.

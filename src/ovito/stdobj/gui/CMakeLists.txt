@@ -46,7 +46,7 @@ OVITO_STANDARD_PLUGIN(StdObjGui
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(StdObjGui plugins/stdobj/gui/StdObjGui.h)
+	ADD_PRECOMPILED_HEADER(StdObjGui ovito/stdobj/gui/StdObjGui.h)
 ENDIF()
 
 # Build corresponding Python binding plugin.

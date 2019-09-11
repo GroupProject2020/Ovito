@@ -26,7 +26,7 @@ cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX=../../zlib -DCMAKE_BUILD_TYPE=
 nmake install
 
 **************************************************************************
-Qt 5.12.4
+Qt 5.12.5
 **************************************************************************
 Install the following component in C:\Qt\ :
    msvc2017 64-bit

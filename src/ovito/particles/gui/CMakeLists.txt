@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -24,8 +24,8 @@ QT5_ADD_RESOURCES(ResourceFiles resources/particles_gui.qrc)
 
 # Define the GUI module, which provides the user interface for the parent module.
 OVITO_STANDARD_PLUGIN(ParticlesGui
-	SOURCES 
-		ParticlesGui.cpp 
+	SOURCES
+		ParticlesGui.cpp
 		objects/ParticlesVisEditor.cpp
 		objects/ParticleTypeEditor.cpp
 		objects/BondTypeEditor.cpp
@@ -44,7 +44,7 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 		modifier/analysis/displacements/CalculateDisplacementsModifierEditor.cpp
 		modifier/analysis/centrosymmetry/CentroSymmetryModifierEditor.cpp
 		modifier/analysis/strain/AtomicStrainModifierEditor.cpp
-		modifier/analysis/diamond/IdentifyDiamondModifierEditor.cpp	
+		modifier/analysis/diamond/IdentifyDiamondModifierEditor.cpp
 		modifier/analysis/voronoi/VoronoiAnalysisModifierEditor.cpp
 		modifier/analysis/cluster/ClusterAnalysisModifierEditor.cpp
 		modifier/analysis/wignerseitz/WignerSeitzAnalysisModifierEditor.cpp
@@ -80,5 +80,5 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(ParticlesGui plugins/particles/gui/ParticlesGui.h)
+	ADD_PRECOMPILED_HEADER(ParticlesGui ovito/particles/gui/ParticlesGui.h)
 ENDIF()

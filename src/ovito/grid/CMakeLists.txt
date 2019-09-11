@@ -45,7 +45,7 @@ OVITO_STANDARD_PLUGIN(Grid
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(Grid plugins/grid/Grid.h)
+	ADD_PRECOMPILED_HEADER(Grid ovito/grid/Grid.h)
 ENDIF()
 
 # Build corresponding GUI plugin.

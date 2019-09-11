@@ -69,7 +69,7 @@ OVITO_STANDARD_PLUGIN(Mesh
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
-	ADD_PRECOMPILED_HEADER(Mesh plugins/mesh/Mesh.h)
+	ADD_PRECOMPILED_HEADER(Mesh ovito/mesh/Mesh.h)
 ENDIF()
 
 # Build corresponding GUI plugin.

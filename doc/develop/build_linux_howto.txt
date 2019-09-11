@@ -22,7 +22,7 @@ No installation needed
 Extract archive to $HOME/progs/boost_1_70_0/
 
 **************************************************************************
-Build Qt libraries (version 5.12.4)
+Build Qt libraries (version 5.12.5)
 Note: Update LGPL instructions in the user manual when changing this.
 **************************************************************************
 ./configure \
