@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2014) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,42 +19,24 @@
 #
 ###############################################################################
 
-# Place all compiled libraries into OVITO's library directory.
+# Place all compiled libraries into OVITO's library directory by default.
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
 
-################### 3rd-party libraries  ####################
-
+# Build all third-party libraries.
 ADD_SUBDIRECTORY(3rdparty)
 
-##################### Core library  ########################
+# Build all plugin modules including the core module.
+ADD_SUBDIRECTORY(ovito)
 
-ADD_SUBDIRECTORY(core)
-
-##################### OpenGL renderer  #######################
-
-ADD_SUBDIRECTORY(opengl_renderer)
-	
-##################### Gui library  #######################
-
-IF(OVITO_BUILD_GUI)
-	ADD_SUBDIRECTORY(gui)
-ENDIF()
-
-####################### Plugins ###########################
-
-ADD_SUBDIRECTORY(plugins)
-
-################### Python interpreter #######################
-
+# Build the Python script interpreter 'ovitos'.
 IF(OVITO_BUILD_GUI AND OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(ovitos)
+	ADD_SUBDIRECTORY(ovitos_exe)
 ENDIF()
 
-################### Main executable #######################
-
+# Build the main application executable 'ovito'.
 IF(OVITO_BUILD_GUI)
-	ADD_SUBDIRECTORY(main)
+	ADD_SUBDIRECTORY(ovito_exe)
 ENDIF()
 
 # Propagate list of plugins to parent scope.

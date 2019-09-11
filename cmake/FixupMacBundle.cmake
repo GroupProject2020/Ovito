@@ -1,10 +1,10 @@
 IF(APPLE)
 	# Install the Info.plist file.
-	CONFIGURE_FILE("${OVITO_SOURCE_BASE_DIR}/src/main/resources/Info.plist" "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
+	CONFIGURE_FILE("${OVITO_SOURCE_BASE_DIR}/src/ovito_exe/resources/Info.plist" "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
 
 	# Copy the application icon into the resource directory.
-	INSTALL(FILES "${OVITO_SOURCE_BASE_DIR}/src/main/resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
+	INSTALL(FILES "${OVITO_SOURCE_BASE_DIR}/src/ovito_exe/resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
 
 	SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
 
@@ -68,8 +68,8 @@ IF(APPLE)
 		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
     		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
 			ENDIF()
-			# Leave core Ovito libraries in the MacOS/ directory:
-            IF((item MATCHES \"libCore\\\\.dylib$\" OR item MATCHES \"libOpenGLRenderer\\\\.dylib$\" OR item MATCHES \"libmuParser\\\\.dylib$\" OR item MATCHES \"libNetCDFIntegration\\\\.dylib$\" OR item MATCHES \"libGui\\\\.dylib$\" OR item MATCHES \"libQwt\\\\.dylib$\") AND item MATCHES \"^@rpath\")
+			# Leave helper libraries in the MacOS/ directory:
+            IF((item MATCHES \"libmuParser\\\\.dylib$\" OR item MATCHES \"libNetCDFIntegration\\\\.dylib$\" OR item MATCHES \"libQwt\\\\.dylib$\") AND item MATCHES \"^@rpath\")
 	    	    SET(path \"@executable_path\")
 		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
     		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
@@ -112,7 +112,7 @@ IF(APPLE)
 			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Resources\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Resources\")
 			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Frameworks\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Frameworks\")
 			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../PlugIns\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/PlugIns\")
-			CONFIGURE_FILE(\"${CMAKE_SOURCE_DIR}/src/main/resources/Info.plist\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info.plist\")
+			CONFIGURE_FILE(\"${CMAKE_SOURCE_DIR}/src/ovito_exe/resources/Info.plist\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info.plist\")
 			EXECUTE_PROCESS(COMMAND defaults write \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info\" LSUIElement 1)
 			FILE(GLOB DylibsToSymlink \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
 			FOREACH(FILE_ENTRY \${DylibsToSymlink})

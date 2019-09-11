@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <core/Core.h>
+#include <ovito/core/Core.h>
 #include <QMutex>
 
 #define NCERR(x)  Ovito::NetCDFError::ncerr((x), __FILE__, __LINE__)

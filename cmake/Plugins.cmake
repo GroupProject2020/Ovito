@@ -23,23 +23,25 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	# Make the name of current plugin available to the source code.
 	TARGET_COMPILE_DEFINITIONS(${target_name} PRIVATE "OVITO_PLUGIN_NAME=\"${target_name}\"")
 
-	# Link to OVITO's core module.
-	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Core)
+	# Link to OVITO's core module (unless it's the core plugin itself we are defining).
+	IF(NOT ${target_name} STREQUAL "Core")
+		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Core)
+	ENDIF()
 
 	# Link to OVITO's GUI module when the plugin provides a UI.
 	IF(${ARG_GUI_PLUGIN})
-	    TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
+		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
     	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Widgets)
 	ENDIF()
+
+	# Link to Qt5.
+	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Core Qt5::Gui Qt5::Concurrent)
 
 	# Link to other required libraries needed by this specific plugin.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC ${lib_dependencies})
 
 	# Link to other required libraries needed by this specific plugin, which are not visible to dependent plugins.
 	TARGET_LINK_LIBRARIES(${target_name} PRIVATE ${private_lib_dependencies})
-
-	# Link to Qt5.
-	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Core Qt5::Gui Qt5::Concurrent)
 
 	# Link to other plugin modules that are dependencies of this plugin.
 	FOREACH(plugin_name ${plugin_dependencies})
@@ -82,20 +84,16 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LINK_FLAGS "-headerpad_max_install_names")
 	ENDIF(APPLE)
 
-    # Enable the use of @rpath on macOS.
-    SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
-    SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
-
 	IF(APPLE)
+		# Enable the use of @rpath on macOS.
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
 	    # The build tree target should have rpath of install tree target.
 	    SET_TARGET_PROPERTIES(${target_name} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 	ELSEIF(UNIX)
+		# Look for other shared libraries in the parent directory ("lib/ovito/") and in the plugins directory ("lib/ovito/plugins/")
         SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
 	ENDIF()
-
-    # Place compiled plugin module into the plugins directory.
-    SET_TARGET_PROPERTIES(${target_name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
-    SET_TARGET_PROPERTIES(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
 
 	# Install Python wrapper files.
 	IF(python_wrappers AND OVITO_BUILD_PLUGIN_PYSCRIPT)
@@ -105,13 +103,28 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 			COMMENT "Copying Python files for plugin ${target_name}")
 	ENDIF()
 
-	# This plugin will be part of the installation package.
-	INSTALL(TARGETS ${target_name} EXPORT OVITO
-		RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
-		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
-		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
+	# Make this module part of the installation package.
+	IF(WIN32 AND (${target_name} STREQUAL "Core" OR ${target_name} STREQUAL "Gui"))
+		# On Windows, the Core and Gui DLLs need to be plavced in the same directory
+		# as the Ovito executable, because Windows won't find them if they are in the
+		# plugins subdirectory.
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
+		INSTALL(TARGETS ${target_name} EXPORT OVITO
+			RUNTIME DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}"
+			LIBRARY DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}"
+			ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
+	ELSE()
+		# Install all plugins into the plugins directory.
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
+		INSTALL(TARGETS ${target_name} EXPORT OVITO
+			RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
+			LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
+			ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
+	ENDIF()
 
-	# Keep a list of plugins.
+	# Maintain the list of all plugins.
 	LIST(APPEND OVITO_PLUGIN_LIST ${target_name})
 	SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)
 

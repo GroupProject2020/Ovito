@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <core/Core.h>
-#include <core/utilities/concurrent/Task.h>
+#include <ovito/core/Core.h>
+#include <ovito/core/utilities/concurrent/Task.h>
 #include "NetCDFIntegration.h"
 
 #include <netcdf.h>
