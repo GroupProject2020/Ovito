@@ -239,12 +239,12 @@ public:
 				else if(chunk->type == GSD_TYPE_INT64) {
 					std::vector<int64_t> buffer(chunk->N * chunk->M);
 					errCode = ::gsd_read_chunk(&_handle, buffer.data(), chunk);
-					std::copy(buffer.begin(), buffer.end(), std::back_inserter(list));
+					std::transform(buffer.begin(), buffer.end(), std::back_inserter(list), [](int64_t v) { return QVariant::fromValue((qlonglong)v); });
 				}
 				else if(chunk->type == GSD_TYPE_UINT64) {
 					std::vector<uint64_t> buffer(chunk->N * chunk->M);
 					errCode = ::gsd_read_chunk(&_handle, buffer.data(), chunk);
-					std::copy(buffer.begin(), buffer.end(), std::back_inserter(list));
+					std::transform(buffer.begin(), buffer.end(), std::back_inserter(list), [](uint64_t v) { return QVariant::fromValue((qulonglong)v); });
 				}
 				else if(chunk->type == GSD_TYPE_FLOAT) {
 					std::vector<float> buffer(chunk->N * chunk->M);
