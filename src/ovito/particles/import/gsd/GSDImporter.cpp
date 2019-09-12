@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -142,22 +142,40 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	else
 		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
 
-	readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, frameData);
-	readOptionalParticleProperty(gsd, "particles/charge", frameNumber, numParticles, ParticlesObject::ChargeProperty, frameData);
-	readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, frameData);
-	readOptionalParticleProperty(gsd, "particles/image", frameNumber, numParticles, ParticlesObject::PeriodicImageProperty, frameData);
-	PropertyStorage* radiusProperty = readOptionalParticleProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, frameData);
+	readOptionalProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, false, frameData);
+	readOptionalProperty(gsd, "particles/charge", frameNumber, numParticles, ParticlesObject::ChargeProperty, false, frameData);
+	readOptionalProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, false, frameData);
+	readOptionalProperty(gsd, "particles/image", frameNumber, numParticles, ParticlesObject::PeriodicImageProperty, false, frameData);
+	PropertyStorage* radiusProperty = readOptionalProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, false, frameData);
 	if(radiusProperty) {
-		// Convert particle diameter to radius by dividing by 2.
+		// Convert particle diameters to radii.
 		std::for_each(radiusProperty->dataFloat(), radiusProperty->dataFloat() + radiusProperty->size(), [](FloatType& r) { r /= 2; });
 	}
-	PropertyStorage* orientationProperty = readOptionalParticleProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticlesObject::OrientationProperty, frameData);
+	PropertyStorage* orientationProperty = readOptionalProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticlesObject::OrientationProperty, false, frameData);
 	if(orientationProperty) {
-		// Convert quaternion representation from GSD format to internal format.
+		// Convert quaternion representation from GSD format to OVITO's internal format.
 		// Left-shift all quaternion components by one: (W,X,Y,Z) -> (X,Y,Z,W).
 		std::for_each(orientationProperty->dataQuaternion(), orientationProperty->dataQuaternion() + orientationProperty->size(), [](Quaternion& q) {
 			std::rotate(q.begin(), q.begin() + 1, q.end());
 		});
+	}
+
+	// Read any user-defined particle properties.
+	const char* chunkName = gsd.findMatchingChunkName("log/particles/", nullptr);
+	while(chunkName) {
+		readOptionalProperty(gsd, chunkName, frameNumber, numParticles, ParticlesObject::UserProperty, false, frameData);
+		chunkName = gsd.findMatchingChunkName("log/particles/", chunkName);
+	}
+
+	// Read any user-defined log chunks and add them to the global attributes dictionary.
+	chunkName = gsd.findMatchingChunkName("log/", nullptr);
+	while(chunkName) {
+		QString key(chunkName);
+		if(key.count(QChar('/')) == 1) {
+			key.remove(0, 4);
+			frameData->attributes().insert(key, gsd.readVariant(chunkName, frameNumber));
+		}
+		chunkName = gsd.findMatchingChunkName("log/", chunkName);
 	}
 
 	// Parse number of bonds.
@@ -201,6 +219,14 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 				std::fill(bondTypeProperty->dataInt(), bondTypeProperty->dataInt() + bondTypeProperty->size(), 0);
 			}
 		}
+
+		// Read any user-defined bond properties.
+		const char* chunkName = gsd.findMatchingChunkName("log/bonds/", nullptr);
+		while(chunkName) {
+			readOptionalProperty(gsd, chunkName, frameNumber, numBonds, BondsObject::UserProperty, true, frameData);
+			chunkName = gsd.findMatchingChunkName("log/bonds/", chunkName);
+		}
+
 	}
 
 	QString statusString = tr("Number of particles: %1").arg(numParticles);
@@ -211,19 +237,37 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 }
 
 /******************************************************************************
-* Reads the values of a particle property from the GSD file.
+* Reads the values of a particle or bond property from the GSD file.
 ******************************************************************************/
-PropertyStorage* GSDImporter::FrameLoader::readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticlesObject::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData)
+PropertyStorage* GSDImporter::FrameLoader::readOptionalProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numElements, int propertyType, bool isBondProperty, const std::shared_ptr<ParticleFrameData>& frameData)
 {
 	if(gsd.hasChunk(chunkName, frameNumber)) {
-		PropertyPtr prop = ParticlesObject::OOClass().createStandardStorage(numParticles, propertyType, false);
-		frameData->addParticleProperty(prop);
-		if(prop->dataType() == PropertyStorage::Float)
-			gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numParticles, prop->componentCount());
-		else if(prop->dataType() == PropertyStorage::Int)
-			gsd.readIntArray(chunkName, frameNumber, prop->dataInt(), numParticles, prop->componentCount());
+		PropertyPtr prop;
+		if(propertyType != PropertyStorage::GenericUserProperty) {
+			if(!isBondProperty)
+				prop = ParticlesObject::OOClass().createStandardStorage(numElements, propertyType, false);
+			else
+				prop = BondsObject::OOClass().createStandardStorage(numElements, propertyType, false);
+		}
+		else {
+			QString propertyName(chunkName);
+			int slashPos = propertyName.lastIndexOf(QChar('/'));
+			if(slashPos != -1) propertyName.remove(0, slashPos + 1);
+			std::pair<int, size_t> dataTypeAndComponents = gsd.getChunkDataTypeAndComponentCount(chunkName);
+			prop = std::make_shared<PropertyStorage>(numElements, dataTypeAndComponents.first, dataTypeAndComponents.second, 0, propertyName, false);
+		}
+		if(!isBondProperty)
+			frameData->addParticleProperty(prop);
 		else
-			throw Exception(tr("Particle property '%1' cannot be read from GSD file, because it has an unsupported data type.").arg(prop->name()));
+			frameData->addBondProperty(prop);
+		if(prop->dataType() == PropertyStorage::Float)
+			gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numElements, prop->componentCount());
+		else if(prop->dataType() == PropertyStorage::Int)
+			gsd.readIntArray(chunkName, frameNumber, prop->dataInt(), numElements, prop->componentCount());
+		else if(prop->dataType() == PropertyStorage::Int64)
+			gsd.readIntArray(chunkName, frameNumber, prop->dataInt64(), numElements, prop->componentCount());
+		else
+			throw Exception(tr("Property '%1' cannot be read from GSD file, because its data type is not supported by OVITO.").arg(prop->name()));
 		return prop.get();
 	}
 	else return nullptr;

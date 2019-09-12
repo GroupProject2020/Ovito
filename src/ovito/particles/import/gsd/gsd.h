@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2018 The Regents of the University of Michigan
+// Copyright (c) 2016-2019 The Regents of the University of Michigan
 // This file is part of the General Simulation Data (GSD) project, released under the BSD 2-Clause License.
 
 #ifndef __GSD_H__
@@ -153,6 +153,9 @@ uint64_t gsd_get_nframes(struct gsd_handle* handle);
 
 //! Query size of a GSD type ID
 size_t gsd_sizeof_type(enum gsd_type type);
+
+//! Search for chunk names in a gsd file
+const char *gsd_find_matching_chunk_name(struct gsd_handle* handle, const char* match, const char *prev);
 
 #ifdef __cplusplus
 }

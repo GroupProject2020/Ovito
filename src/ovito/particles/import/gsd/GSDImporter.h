@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -90,8 +90,8 @@ private:
 		/// Loads the frame data from the given file.
 		virtual FrameDataPtr loadFile(QFile& file) override;
 
-		/// Reads the values of a particle property from the GSD file.
-		PropertyStorage* readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticlesObject::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData);
+		/// Reads the values of a particle or bond property from the GSD file.
+		PropertyStorage* readOptionalProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numElements, int propertyType, bool isBondProperty, const std::shared_ptr<ParticleFrameData>& frameData);
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames.
