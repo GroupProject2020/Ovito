@@ -142,6 +142,13 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	else
 		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
 
+	// Parse particle shape information.
+	QStringList particleTypeShapes = gsd.readStringTable("particles/type_shapes", frameNumber);
+	if(particleTypeNames.size() == typeList->types().size()) {
+		for(int i = 0; i < particleTypeNames.size(); i++)
+			parseParticleShape(i, particleTypeShapes[i]);
+	}
+
 	readOptionalProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, false, frameData);
 	readOptionalProperty(gsd, "particles/charge", frameNumber, numParticles, ParticlesObject::ChargeProperty, false, frameData);
 	readOptionalProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, false, frameData);
@@ -271,6 +278,16 @@ PropertyStorage* GSDImporter::FrameLoader::readOptionalProperty(GSDFile& gsd, co
 		return prop.get();
 	}
 	else return nullptr;
+}
+
+/******************************************************************************
+* Parse the JSON string containing a particle shape definition.
+******************************************************************************/
+void GSDImporter::FrameLoader::parseParticleShape(int typeIndex, const QString& shapeSpecString)
+{
+//	qDebug() << typeIndex << "\n" << shapeSpecString;
+
+//	QJsonDocument
 }
 
 

@@ -92,6 +92,9 @@ private:
 
 		/// Reads the values of a particle or bond property from the GSD file.
 		PropertyStorage* readOptionalProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numElements, int propertyType, bool isBondProperty, const std::shared_ptr<ParticleFrameData>& frameData);
+
+		/// Parse the JSON string containing a particle shape definition.
+		void parseParticleShape(int typeIndex, const QString& shapeSpecString);
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames.
