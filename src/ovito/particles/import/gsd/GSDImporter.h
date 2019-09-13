@@ -24,6 +24,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/import/ParticleImporter.h>
+#include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
@@ -94,7 +95,19 @@ private:
 		PropertyStorage* readOptionalProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numElements, int propertyType, bool isBondProperty, const std::shared_ptr<ParticleFrameData>& frameData);
 
 		/// Parse the JSON string containing a particle shape definition.
-		void parseParticleShape(int typeIndex, const QString& shapeSpecString);
+		void parseParticleShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, const QByteArray& shapeSpecString);
+
+		/// Parsing routine for 'Sphere' particle shape definitions.
+		void parseSphereShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+
+		/// Parsing routine for 'Ellipsoid' particle shape definitions.
+		void parseEllipsoidShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, QJsonObject definition);
+
+		/// Parsing routine for 'ConvexPolyhedron' particle shape definitions.
+		void parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+
+		/// Parsing routine for 'Mesh' particle shape definitions.
+		void parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames.

@@ -27,6 +27,7 @@
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/grid/objects/VoxelGrid.h>
+#include <ovito/mesh/tri/TriMeshObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/simcell/SimulationCellVis.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
@@ -334,6 +335,8 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 			if(!ptype) {
 				if(!isBondProperty) {
 					ptype = new ParticleType(typeProperty->dataset());
+					if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
+						ptype->loadUserDefaults();
 					ptype->setNumericId(item.id);
 					ptype->setName(item.name);
 					if(item.radius == 0)
@@ -341,6 +344,8 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 				}
 				else {
 					ptype = new BondType(typeProperty->dataset());
+					if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
+						ptype->loadUserDefaults();
 					ptype->setNumericId(item.id);
 					ptype->setName(item.name);
 					if(item.radius == 0)
@@ -370,6 +375,20 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 			if(item.mass != 0) {
 				if(!isBondProperty)
 					static_object_cast<ParticleType>(ptype)->setMass(item.mass);
+			}
+			if(!isBondProperty) {
+				if(item.shapeMesh) {
+					TriMeshObject* shapeObject = static_object_cast<ParticleType>(ptype)->shapeMesh();
+					if(!shapeObject) {
+						shapeObject = new TriMeshObject(typeProperty->dataset());
+						static_object_cast<ParticleType>(ptype)->setShapeMesh(shapeObject);
+					}
+					shapeObject->mesh() = *item.shapeMesh;
+					shapeObject->notifyTargetChanged();
+				}
+				else {
+					static_object_cast<ParticleType>(ptype)->setShapeMesh(nullptr);
+				}
 			}
 		}
 	}

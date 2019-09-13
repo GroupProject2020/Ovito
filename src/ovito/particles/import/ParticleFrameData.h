@@ -47,6 +47,7 @@ public:
 		Color color;
 		FloatType radius;
 		FloatType mass;
+		std::shared_ptr<TriMesh> shapeMesh;
 	};
 
 	/// Used to store the lists of particle/bond types.
@@ -88,6 +89,26 @@ public:
 			for(auto& type : _types) {
 				if(type.id == id) {
 					type.mass = mass;
+					break;
+				}
+			}
+		}
+
+		/// Changes the radius of an existing type.
+		void setTypeRadius(int id, FloatType radius) {
+			for(auto& type : _types) {
+				if(type.id == id) {
+					type.radius = radius;
+					break;
+				}
+			}
+		}
+
+		/// Assigns a user-defined shape to an existing type.
+		void setTypeShape(int id, std::shared_ptr<TriMesh> shape) {
+			for(auto& type : _types) {
+				if(type.id == id) {
+					type.shapeMesh = std::move(shape);
 					break;
 				}
 			}

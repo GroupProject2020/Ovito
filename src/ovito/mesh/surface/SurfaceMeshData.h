@@ -434,6 +434,12 @@ public:
         _regionProperties.push_back(std::move(property));
     }
 
+    /// Constructs the convex hull from a set of points and adds the resulting polyhedron to the mesh.
+    void constructConvexHull(std::vector<Point3> vecs);
+
+    /// Triangulates the polygonal faces of this mesh and outputs the results as a TriMesh object.
+    void convertToTriMesh(TriMesh& outputMesh, bool smoothShading, const boost::dynamic_bitset<>& faceSubset = boost::dynamic_bitset<>{}, std::vector<size_t>* originalFaceMap = nullptr) const;
+
 protected:
 
     void updateVertexPropertyPointers(const PropertyPtr& property) {

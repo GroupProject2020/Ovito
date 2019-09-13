@@ -292,8 +292,8 @@ public:
 	}
 
 	/// Reads an array of strings from the GSD file.
-	QStringList readStringTable(const char* chunkName, uint64_t frame) {
-		QStringList result;
+	QByteArrayList readStringTable(const char* chunkName, uint64_t frame) {
+		QByteArrayList result;
 		auto chunk = ::gsd_find_chunk(&_handle, frame, chunkName);
 		// Automatically fall back to frame 0 if chunk doesn't exist for the requested simulation frame.
 		if(!chunk && frame != 0) chunk = ::gsd_find_chunk(&_handle, 0, chunkName);
@@ -309,9 +309,9 @@ public:
 				default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 			}
 			for(uint64_t i = 0; i < chunk->N; i++) {
-				// Null-terminate string, just to be save.
+				// Terminate string, just to be save.
 				buffer[(i+1)*chunk->M - 1] = '\0';
-				result.push_back(QString::fromUtf8(buffer.data() + i*chunk->M));
+				result.push_back(QByteArray(buffer.data() + i*chunk->M));
 			}
 		}
 		return result;

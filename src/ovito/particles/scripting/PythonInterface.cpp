@@ -373,6 +373,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 			"This option only has an effect if a user-defined shape has been assigned to the particle type using the :py:meth:`.load_shape` method. "
 			"\n\n"
 			":Default: ``True``\n");
+	createDataSubobjectAccessors(ParticleType_py, "shape", &ParticleType::shapeMesh, &ParticleType::setShapeMesh);
 
 	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"

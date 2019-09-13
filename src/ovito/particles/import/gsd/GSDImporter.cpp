@@ -20,9 +20,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/particles/Particles.h>
-#include <ovito/particles/import/ParticleFrameData.h>
+#include <ovito/mesh/surface/SurfaceMeshData.h>
+#include <ovito/core/utilities/mesh/TriMesh.h>
 #include "GSDImporter.h"
 #include "GSDFile.h"
+
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonParseError>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -120,33 +127,37 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	uint32_t numParticles = gsd.readOptionalScalar<uint32_t>("particles/N", frameNumber, 0);
 
 	// Parse list of particle type names.
-	QStringList particleTypeNames = gsd.readStringTable("particles/types", frameNumber);
+	QByteArrayList particleTypeNames = gsd.readStringTable("particles/types", frameNumber);
 	if(particleTypeNames.empty())
-		particleTypeNames.push_back(QStringLiteral("A"));
+		particleTypeNames.push_back(QByteArrayLiteral("A"));
 
 	// Read particle positions.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
 	gsd.readFloatArray("particles/position", frameNumber, posProperty->dataPoint3(), numParticles, posProperty->componentCount());
+	if(isCanceled()) return {};
 
 	// Create particle types.
 	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	for(int i = 0; i < particleTypeNames.size(); i++)
-		typeList->addTypeId(i, particleTypeNames[i]);
+		typeList->addTypeId(i, QString::fromUtf8(particleTypeNames[i]));
 
 	// Read particle types.
 	if(gsd.hasChunk("particles/typeid", frameNumber))
 		gsd.readIntArray("particles/typeid", frameNumber, typeProperty->dataInt(), numParticles);
 	else
 		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
+	if(isCanceled()) return {};
 
 	// Parse particle shape information.
-	QStringList particleTypeShapes = gsd.readStringTable("particles/type_shapes", frameNumber);
-	if(particleTypeNames.size() == typeList->types().size()) {
-		for(int i = 0; i < particleTypeNames.size(); i++)
-			parseParticleShape(i, particleTypeShapes[i]);
+	QByteArrayList particleTypeShapes = gsd.readStringTable("particles/type_shapes", frameNumber);
+	if(particleTypeShapes.size() == typeList->types().size()) {
+		for(int i = 0; i < particleTypeShapes.size(); i++) {
+			if(isCanceled()) return {};
+			parseParticleShape(i, typeList, numParticles, frameData.get(), particleTypeShapes[i]);
+		}
 	}
 
 	readOptionalProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, false, frameData);
@@ -166,10 +177,12 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 			std::rotate(q.begin(), q.begin() + 1, q.end());
 		});
 	}
+	if(isCanceled()) return {};
 
 	// Read any user-defined particle properties.
 	const char* chunkName = gsd.findMatchingChunkName("log/particles/", nullptr);
 	while(chunkName) {
+		if(isCanceled()) return {};
 		readOptionalProperty(gsd, chunkName, frameNumber, numParticles, ParticlesObject::UserProperty, false, frameData);
 		chunkName = gsd.findMatchingChunkName("log/particles/", chunkName);
 	}
@@ -191,6 +204,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		// Read bond list.
 		std::vector<int> bondList(numBonds * 2);
 		gsd.readIntArray("bonds/group", frameNumber, bondList.data(), numBonds, 2);
+		if(isCanceled()) return {};
 
 		// Convert to OVITO format.
 		PropertyPtr bondTopologyProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TopologyProperty, false);
@@ -202,21 +216,22 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 			*bondTopoPtr = *b;
 		}
 		frameData->generateBondPeriodicImageProperty();
+		if(isCanceled()) return {};
 
 		// Read bond types.
 		if(gsd.hasChunk("bonds/types", frameNumber)) {
 
 			// Parse list of bond type names.
-			QStringList bondTypeNames = gsd.readStringTable("bonds/types", frameNumber);
+			QByteArrayList bondTypeNames = gsd.readStringTable("bonds/types", frameNumber);
 			if(bondTypeNames.empty())
-				bondTypeNames.push_back(QStringLiteral("A"));
+				bondTypeNames.push_back(QByteArrayLiteral("A"));
 
 			// Create bond types.
 			PropertyPtr bondTypeProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TypeProperty, false);
 			frameData->addBondProperty(bondTypeProperty);
 			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(bondTypeProperty);
 			for(int i = 0; i < bondTypeNames.size(); i++)
-				bondTypeList->addTypeId(i, bondTypeNames[i]);
+				bondTypeList->addTypeId(i, QString::fromUtf8(bondTypeNames[i]));
 
 			// Read bond types.
 			if(gsd.hasChunk("bonds/typeid", frameNumber)) {
@@ -225,15 +240,16 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 			else {
 				std::fill(bondTypeProperty->dataInt(), bondTypeProperty->dataInt() + bondTypeProperty->size(), 0);
 			}
+			if(isCanceled()) return {};
 		}
 
 		// Read any user-defined bond properties.
 		const char* chunkName = gsd.findMatchingChunkName("log/bonds/", nullptr);
 		while(chunkName) {
+			if(isCanceled()) return {};
 			readOptionalProperty(gsd, chunkName, frameNumber, numBonds, BondsObject::UserProperty, true, frameData);
 			chunkName = gsd.findMatchingChunkName("log/bonds/", chunkName);
 		}
-
 	}
 
 	QString statusString = tr("Number of particles: %1").arg(numParticles);
@@ -281,13 +297,178 @@ PropertyStorage* GSDImporter::FrameLoader::readOptionalProperty(GSDFile& gsd, co
 }
 
 /******************************************************************************
-* Parse the JSON string containing a particle shape definition.
+* Parse a JSON string containing a particle shape definition.
 ******************************************************************************/
-void GSDImporter::FrameLoader::parseParticleShape(int typeIndex, const QString& shapeSpecString)
+void GSDImporter::FrameLoader::parseParticleShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, const QByteArray& shapeSpecString)
 {
-//	qDebug() << typeIndex << "\n" << shapeSpecString;
+	// Parse the JSON string.
+	QJsonParseError parsingError;
+	QJsonDocument shapeSpec = QJsonDocument::fromJson(shapeSpecString, &parsingError);
+	if(shapeSpec.isNull())
+		throw Exception(tr("Invalid particle shape specification string in GSD file: %1").arg(parsingError.errorString()));
 
-//	QJsonDocument
+	// Empty JSON documents are ignored (assuming spherical particle shape with default radius).
+	if(!shapeSpec.isObject() || shapeSpec.object().isEmpty())
+		return;
+
+	// Parse the "type" field.
+	QString shapeType = shapeSpec.object().value("type").toString();
+	if(shapeType.isNull() || shapeType.isEmpty())
+		throw Exception(tr("Missing 'type' field in particle shape specification in GSD file."));
+
+	if(shapeType == "Sphere") {
+		parseSphereShape(typeId, typeList, shapeSpec.object());
+	}
+	else if(shapeType == "Ellipsoid") {
+		parseEllipsoidShape(typeId, typeList, numParticles, frameData, shapeSpec.object());
+	}
+	else if(shapeType == "ConvexPolyhedron") {
+		parseConvexPolyhedronShape(typeId, typeList, shapeSpec.object());
+	}
+	else if(shapeType == "Mesh") {
+		parseMeshShape(typeId, typeList, shapeSpec.object());
+	}
+	else {
+		qWarning() << "GSD file reader: The following particle shape type is not supported by this version of OVITO:" << shapeType;
+	}
+}
+
+/******************************************************************************
+* Parsing routine for 'Sphere' particle shape definitions.
+******************************************************************************/
+void GSDImporter::FrameLoader::parseSphereShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+{
+	double diameter = definition.value("diameter").toDouble();
+	if(diameter <= 0)
+		throw Exception(tr("Missing or invalid 'diameter' field in 'Sphere' particle shape definition in GSD file."));
+	typeList->setTypeRadius(typeId, diameter / 2);
+}
+
+/******************************************************************************
+* Parsing routine for 'Ellipsoid' particle shape definitions.
+******************************************************************************/
+void GSDImporter::FrameLoader::parseEllipsoidShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, QJsonObject definition)
+{
+	Vector3 abc;
+	abc.x() = definition.value("a").toDouble();
+	abc.y() = definition.value("b").toDouble();
+	abc.z() = definition.value("c").toDouble();
+	if(abc.x() <= 0)
+		throw Exception(tr("Missing or invalid 'a' field in 'Ellipsoid' particle shape definition in GSD file."));
+	if(abc.y() <= 0)
+		throw Exception(tr("Missing or invalid 'b' field in 'Ellipsoid' particle shape definition in GSD file."));
+	if(abc.z() <= 0)
+		throw Exception(tr("Missing or invalid 'c' field in 'Ellipsoid' particle shape definition in GSD file."));
+
+	// Create the 'Aspherical Shape' particle property.
+	PropertyPtr ashapeProperty = frameData->findStandardParticleProperty(ParticlesObject::AsphericalShapeProperty);
+	if(!ashapeProperty) {
+		ashapeProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::AsphericalShapeProperty, true);
+		frameData->addParticleProperty(ashapeProperty);
+	}
+
+	// Assigns the [a,b,c] values to those particles which are of the given type.
+	PropertyPtr typeProperty = frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
+	for(size_t i = 0; i < numParticles; i++) {
+		if(typeProperty->getInt(i) == typeId)
+			ashapeProperty->setVector3(i, abc);
+	}
+}
+
+/******************************************************************************
+* Parsing routine for 'ConvexPolyhedron' particle shape definitions.
+******************************************************************************/
+void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+{
+	// Parse the list of vertices.
+	std::vector<Point3> vertices;
+	const QJsonValue vertexArrayVal = definition.value("vertices");
+	if(!vertexArrayVal.isArray())
+		throw Exception(tr("Missing or invalid 'vertex' array in 'ConvexPolyhedron' particle shape definition in GSD file."));
+	for(QJsonValue val : vertexArrayVal.toArray()) {
+		const QJsonArray coordinateArray = val.toArray();
+		if(coordinateArray.size() != 3)
+			throw Exception(tr("Invalid vertex value in 'vertex' array of 'ConvexPolyhedron' particle shape definition in GSD file."));
+		Point3 vertex;
+		for(int c = 0; c < 3; c++)
+			vertex[c] = coordinateArray[c].toDouble();
+		vertices.push_back(vertex);
+	}
+	if(vertices.size() < 4)
+		throw Exception(tr("Invalid 'ConvexPolyhedron' particle shape definition in GSD file: Number of vertices must be at least 4."));
+
+	// Construct the convex hull of the vertices.
+	// This yields a half-edge surface mesh data structure. 
+	SurfaceMeshData mesh;
+	mesh.constructConvexHull(std::move(vertices));
+
+	// Convert half-edge mesh into a conventional triangle mesh for visualization.
+	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
+	mesh.convertToTriMesh(*triMesh, false);
+	if(triMesh->faceCount() == 0) {
+		qWarning() << "GSD file reader: Convex hull construction did not produce a valid triangle mesh for particle type" << typeId;
+		return;
+	}
+
+	// Render only sharp edges of the mesh in wireframe mode.
+	triMesh->determineEdgeVisibility();
+
+	// Assign shape to particle type.
+	typeList->setTypeShape(typeId, std::move(triMesh));
+}
+
+/******************************************************************************
+* Parsing routine for 'Mesh' particle shape definitions.
+******************************************************************************/
+void GSDImporter::FrameLoader::parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+{
+	// Parse the list of vertices.
+	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
+	const QJsonValue vertexArrayVal = definition.value("vertices");
+	if(!vertexArrayVal.isArray())
+		throw Exception(tr("Missing or invalid 'vertex' array in 'Mesh' particle shape definition in GSD file."));
+	for(QJsonValue val : vertexArrayVal.toArray()) {
+		const QJsonArray coordinateArray = val.toArray();
+		if(coordinateArray.size() != 3)
+			throw Exception(tr("Invalid vertex value in 'vertex' array of 'Mesh' particle shape definition in GSD file."));
+		Point3 vertex;
+		for(int c = 0; c < 3; c++)
+			vertex[c] = coordinateArray[c].toDouble();
+		triMesh->addVertex(vertex);
+	}
+	if(triMesh->vertexCount() < 3)
+		throw Exception(tr("Invalid 'Mesh' particle shape definition in GSD file: Number of vertices must be at least 3."));
+
+	// Parse the face list.
+	const QJsonValue faceArrayVal = definition.value("indices");
+	if(!faceArrayVal.isArray())
+		throw Exception(tr("Missing or invalid 'indices' array in 'Mesh' particle shape definition in GSD file."));
+	for(QJsonValue val : faceArrayVal.toArray()) {
+		const QJsonArray indicesArray = val.toArray();
+		if(indicesArray.size() < 3)
+			throw Exception(tr("Invalid face definition in 'indices' array of 'Mesh' particle shape definition in GSD file."));
+		int nVertices = 0;
+		int vindices[3];
+
+		// Parse face vertex list and triangle the face in case it has more than 3 vertices.
+		for(const QJsonValue val2 : indicesArray) {
+			vindices[std::min(nVertices,2)] = val2.toInt();
+			if(!val2.isDouble() || vindices[std::min(nVertices,2)] < 0 || vindices[std::min(nVertices,2)] >= triMesh->vertexCount())
+				throw Exception(tr("Invalid face definition in 'indices' array of 'Mesh' particle shape definition in GSD file. Vertex index is out of range."));
+			if(nVertices >= 3) {
+				triMesh->addFace().setVertices(vindices[0], vindices[1], vindices[2]);
+				vindices[1] = vindices[2];
+			}
+		}
+	}
+	if(triMesh->faceCount() < 1)
+		throw Exception(tr("Invalid 'Mesh' particle shape definition in GSD file: Face list is empty."));
+
+	// Render only sharp edges of the mesh in wireframe mode.
+	triMesh->determineEdgeVisibility();
+
+	// Assign shape to particle type.
+	typeList->setTypeShape(typeId, std::move(triMesh));
 }
 
 

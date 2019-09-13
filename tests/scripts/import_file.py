@@ -114,3 +114,8 @@ pipeline.source.load(test_data_dir + "LAMMPS/shear.void.dump.bin",
 
 import_file(test_data_dir + "LAMMPS/binary_dump.x86_64.bin", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 import_file(test_data_dir + "LAMMPS/binary_dump.bgq.bin", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+
+# Test the GSD file reader's capability to load particle shape definitions.
+pipeline = import_file(test_data_dir + "GSD/shape_spec_test.gsd")
+assert(pipeline.source.data.particles.particle_types.types[0].shape)
+assert(pipeline.source.data.particles.particle_types.types[1].shape)
