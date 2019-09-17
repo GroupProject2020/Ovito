@@ -322,6 +322,9 @@ void GSDImporter::FrameLoader::parseParticleShape(int typeId, ParticleFrameData:
 	else if(shapeType == "Ellipsoid") {
 		parseEllipsoidShape(typeId, typeList, numParticles, frameData, shapeSpec.object());
 	}
+	else if(shapeType == "Polygon") {
+		parsePolygonShape(typeId, typeList, shapeSpec.object());
+	}
 	else if(shapeType == "ConvexPolyhedron") {
 		parseConvexPolyhedronShape(typeId, typeList, shapeSpec.object());
 	}
@@ -376,10 +379,54 @@ void GSDImporter::FrameLoader::parseEllipsoidShape(int typeId, ParticleFrameData
 }
 
 /******************************************************************************
+* Parsing routine for 'Polygon' particle shape definitions.
+******************************************************************************/
+void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+{
+	// Parse rounding radius.
+	const FloatType roundingRadius = definition.value("rounding_radius").toDouble();
+	if(roundingRadius > 0)
+		qWarning() << "GSD file reader: Positive rounding radius for shape type 'Polygon' is not supported yet by OVITO. Rounding radius will be ignored.";
+
+	// Parse the list of vertices.
+	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
+	const QJsonValue vertexArrayVal = definition.value("vertices");
+	if(!vertexArrayVal.isArray())
+		throw Exception(tr("Missing or invalid 'vertex' array in 'Polygon' particle shape definition in GSD file."));
+	for(QJsonValue val : vertexArrayVal.toArray()) {
+		const QJsonArray coordinateArray = val.toArray();
+		if(coordinateArray.size() != 2)
+			throw Exception(tr("Invalid vertex value in 'vertex' array of 'Polygon' particle shape definition in GSD file."));
+		Point3 vertex = Point3::Origin();
+		for(int c = 0; c < 2; c++)
+			vertex[c] = coordinateArray[c].toDouble();
+		triMesh->addVertex(vertex);
+
+		if(triMesh->vertexCount() >= 3) {
+			TriMeshFace& face = triMesh->addFace();
+			face.setVertices(0, triMesh->vertexCount()-2, triMesh->vertexCount()-1);
+			face.setEdgeVisibility(false, true, false);
+		}
+	}
+	if(triMesh->vertexCount() < 3)
+		throw Exception(tr("Invalid 'Polygon' particle shape definition in GSD file: Number of vertices must be at least 3."));
+	triMesh->face(0).setEdgeVisible(0);
+	triMesh->face(triMesh->faceCount()-1).setEdgeVisible(2);
+
+	// Assign shape to particle type.
+	typeList->setTypeShape(typeId, std::move(triMesh));
+}
+
+/******************************************************************************
 * Parsing routine for 'ConvexPolyhedron' particle shape definitions.
 ******************************************************************************/
 void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
 {
+	// Parse rounding radius.
+	const FloatType roundingRadius = definition.value("rounding_radius").toDouble();
+	if(roundingRadius > 0)
+		qWarning() << "GSD file reader: Positive rounding radius for shape type 'ConvexPolyhedron' is not supported yet by OVITO. Rounding radius will be ignored.";
+
 	// Parse the list of vertices.
 	std::vector<Point3> vertices;
 	const QJsonValue vertexArrayVal = definition.value("vertices");

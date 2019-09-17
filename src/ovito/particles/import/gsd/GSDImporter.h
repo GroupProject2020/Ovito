@@ -103,6 +103,9 @@ private:
 		/// Parsing routine for 'Ellipsoid' particle shape definitions.
 		void parseEllipsoidShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, QJsonObject definition);
 
+		/// Parsing routine for 'Polygon' particle shape definitions.
+		void parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+
 		/// Parsing routine for 'ConvexPolyhedron' particle shape definitions.
 		void parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
 
