@@ -398,7 +398,7 @@ void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFr
 		throw Exception(tr("Invalid 'ConvexPolyhedron' particle shape definition in GSD file: Number of vertices must be at least 4."));
 
 	// Construct the convex hull of the vertices.
-	// This yields a half-edge surface mesh data structure. 
+	// This yields a half-edge surface mesh data structure.
 	SurfaceMeshData mesh;
 	mesh.constructConvexHull(std::move(vertices));
 
@@ -455,6 +455,7 @@ void GSDImporter::FrameLoader::parseMeshShape(int typeId, ParticleFrameData::Typ
 			vindices[std::min(nVertices,2)] = val2.toInt();
 			if(!val2.isDouble() || vindices[std::min(nVertices,2)] < 0 || vindices[std::min(nVertices,2)] >= triMesh->vertexCount())
 				throw Exception(tr("Invalid face definition in 'indices' array of 'Mesh' particle shape definition in GSD file. Vertex index is out of range."));
+			nVertices++;
 			if(nVertices >= 3) {
 				triMesh->addFace().setVertices(vindices[0], vindices[1], vindices[2]);
 				vindices[1] = vindices[2];
