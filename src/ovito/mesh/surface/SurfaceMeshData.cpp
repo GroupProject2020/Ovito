@@ -76,6 +76,28 @@ void SurfaceMeshData::transferTo(SurfaceMesh* sm) const
 }
 
 /******************************************************************************
+* Swaps the contents of two surface meshes.
+******************************************************************************/
+void SurfaceMeshData::swap(SurfaceMeshData& other)
+{
+	_topology.swap(other._topology);
+	std::swap(_cell, other._cell);
+	_vertexProperties.swap(other._vertexProperties);
+	_faceProperties.swap(other._faceProperties);
+	_regionProperties.swap(other._regionProperties);
+	std::swap(_regionCount, other._regionCount);
+	std::swap(_spaceFillingRegion, other._spaceFillingRegion);
+	std::swap(_vertexCoords, other._vertexCoords);
+	std::swap(_faceRegions, other._faceRegions);
+	std::swap(_burgersVectors, other._burgersVectors);
+	std::swap(_crystallographicNormals, other._crystallographicNormals);
+	std::swap(_faceTypes, other._faceTypes);
+	std::swap(_regionPhases, other._regionPhases);
+	std::swap(_regionVolumes, other._regionVolumes);
+	std::swap(_regionSurfaceAreas, other._regionSurfaceAreas);
+}
+
+/******************************************************************************
 * Fairs a closed triangle mesh.
 ******************************************************************************/
 bool SurfaceMeshData::smoothMesh(int numIterations, Task& task, FloatType k_PB, FloatType lambda)
@@ -479,10 +501,13 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 		while(edge2 != faceEdge) {
 			TriMeshFace& outputFace = outputMesh.addFace();
 			outputFace.setVertices(baseVertex, topology.vertex2(edge1), topology.vertex2(edge2));
+			outputFace.setEdgeVisibility(edge1 == topology.nextFaceEdge(faceEdge), true, false);
 			if(originalFaceMap)
 				originalFaceMap->push_back(face);
 			edge1 = edge2;
 			edge2 = topology.nextFaceEdge(edge2);
+			if(edge2 == faceEdge)
+				outputFace.setEdgeVisible(2);
 		}
 	}
 
@@ -491,24 +516,10 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 		std::vector<Vector3> faceNormals(faceCount);
 		auto faceNormal = faceNormals.begin();
 		for(HalfEdgeMesh::face_index face = 0; face < faceCount; face++, ++faceNormal) {
-			faceNormal->setZero();
-			if(!faceSubset.empty() && !faceSubset[face]) continue;
-
-			// Go around the edges of the face to triangulate the general polygon.
-			HalfEdgeMesh::edge_index faceEdge = topology.firstFaceEdge(face);
-			HalfEdgeMesh::edge_index edge1 = topology.nextFaceEdge(faceEdge);
-			HalfEdgeMesh::edge_index edge2 = topology.nextFaceEdge(edge1);
-			Point3 base = vertexPosition(topology.vertex2(faceEdge));
-			Vector3 e1 = cell().wrapVector(vertexPosition(topology.vertex2(edge1)) - base);
-			while(edge2 != faceEdge) {
-				Vector3 e2 = cell().wrapVector(vertexPosition(topology.vertex2(edge2)) - base);
-				*faceNormal += e1.cross(e2);
-				e1 = e2;
-				edge1 = edge2;
-				edge2 = topology.nextFaceEdge(edge2);
-			}
-
-			faceNormal->normalizeSafely();
+			if(!faceSubset.empty() && !faceSubset[face])
+				faceNormal->setZero();
+			else
+				*faceNormal = computeFaceNormal(face);
 		}
 
 		// Smooth normals.
@@ -581,6 +592,141 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 		}
 		OVITO_ASSERT(outputNormal == outputMesh.normals().end());
 	}
+}
+
+/******************************************************************************
+* Computes the unit normal vector of a mesh face.
+******************************************************************************/
+Vector3 SurfaceMeshData::computeFaceNormal(face_index face) const
+{
+	Vector3 faceNormal = Vector3::Zero();
+
+	// Go around the edges of the face to triangulate the general polygon.
+	HalfEdgeMesh::edge_index faceEdge = firstFaceEdge(face);
+	HalfEdgeMesh::edge_index edge1 = nextFaceEdge(faceEdge);
+	HalfEdgeMesh::edge_index edge2 = nextFaceEdge(edge1);
+	Point3 base = vertexPosition(vertex2(faceEdge));
+	Vector3 e1 = cell().wrapVector(vertexPosition(vertex2(edge1)) - base);
+	while(edge2 != faceEdge) {
+		Vector3 e2 = cell().wrapVector(vertexPosition(vertex2(edge2)) - base);
+		faceNormal += e1.cross(e2);
+		e1 = e2;
+		edge1 = edge2;
+		edge2 = nextFaceEdge(edge2);
+	}
+
+	return faceNormal.safelyNormalized();
+}
+
+/******************************************************************************
+* Joins adjacent faces that are coplanar.
+******************************************************************************/
+void SurfaceMeshData::joinCoplanarFaces(FloatType thresholdAngle)
+{
+	FloatType dotThreshold = std::cos(thresholdAngle);
+
+	// Compute mesh face normals.
+	std::vector<Vector3> faceNormals(faceCount());
+	for(face_index face = 0; face < faceCount(); face++) {
+		faceNormals[face] = computeFaceNormal(face);
+	}
+
+	// Visit each face and its adjacent faces.
+	for(face_index face = 0; face < faceCount(); ) {
+		face_index nextFace = face + 1;
+		const Vector3& normal1 = faceNormals[face];
+		edge_index faceEdge = firstFaceEdge(face);
+		edge_index edge = faceEdge;
+		do {
+			edge_index opp_edge = oppositeEdge(edge);
+			if(opp_edge != HalfEdgeMesh::InvalidIndex) {
+				face_index adj_face = adjacentFace(opp_edge);
+				OVITO_ASSERT(adj_face >= 0 && adj_face < faceNormals.size());
+				if(adj_face > face) {
+
+					// Check if current face and its current neighbor are coplanar.
+					const Vector3& normal2 = faceNormals[adj_face];
+					if(normal1.dot(normal2) > dotThreshold) {
+						// Eliminate this half-edge pair and join the two faces.
+						for(edge_index currentEdge = nextFaceEdge(edge); currentEdge != edge; currentEdge = nextFaceEdge(currentEdge)) {
+							OVITO_ASSERT(adjacentFace(currentEdge) == face);
+							topology()->setAdjacentFace(currentEdge, adj_face);
+						}
+						topology()->setFirstFaceEdge(adj_face, nextFaceEdge(opp_edge));
+						topology()->setFirstFaceEdge(face, edge);
+						topology()->setNextFaceEdge(prevFaceEdge(edge), nextFaceEdge(opp_edge));
+						topology()->setPrevFaceEdge(nextFaceEdge(opp_edge), prevFaceEdge(edge));
+						topology()->setNextFaceEdge(prevFaceEdge(opp_edge), nextFaceEdge(edge));
+						topology()->setPrevFaceEdge(nextFaceEdge(edge), prevFaceEdge(opp_edge));
+						topology()->setNextFaceEdge(edge, opp_edge);
+						topology()->setNextFaceEdge(opp_edge, edge);
+						topology()->setPrevFaceEdge(edge, opp_edge);
+						topology()->setPrevFaceEdge(opp_edge, edge);
+						topology()->setAdjacentFace(opp_edge, face);
+						OVITO_ASSERT(adjacentFace(edge) == face);
+						OVITO_ASSERT(topology()->countFaceEdges(face) == 2);
+						faceNormals[face] = faceNormals[faceCount() - 1];
+						deleteFace(face);
+						nextFace = face;
+						break;
+					}
+				}
+			}
+			edge = nextFaceEdge(edge);
+		}
+		while(edge != faceEdge);
+		face = nextFace;
+	}
+}
+
+/******************************************************************************
+* Splits a face along the edge given by two vertices of the face.
+******************************************************************************/
+SurfaceMeshData::edge_index SurfaceMeshData::splitFace(edge_index edge1, edge_index edge2)
+{
+	OVITO_ASSERT(adjacentFace(edge1) == adjacentFace(edge2));
+	OVITO_ASSERT(nextFaceEdge(edge1) != edge2);
+	OVITO_ASSERT(prevFaceEdge(edge1) != edge2);
+	OVITO_ASSERT(!hasOppositeFace(adjacentFace(edge1)));
+
+	face_index old_f = adjacentFace(edge1);
+	face_index new_f = createFace({}, hasFaceRegions() ? faceRegion(old_f) : 1);
+
+	vertex_index v1 = vertex2(edge1);
+	vertex_index v2 = vertex2(edge2);
+	edge_index edge1_successor = nextFaceEdge(edge1);
+	edge_index edge2_successor = nextFaceEdge(edge2);
+
+	// Create the new pair of half-edges.
+	edge_index new_e = topology()->createEdge(v1, v2, old_f, edge1);
+	edge_index new_oe = createOppositeEdge(new_e, new_f);
+
+	// Rewire edge sequence of the primary face.
+	OVITO_ASSERT(prevFaceEdge(new_e) == edge1);
+	OVITO_ASSERT(nextFaceEdge(edge1) == new_e);
+	topology()->setNextFaceEdge(new_e, edge2_successor);
+	topology()->setPrevFaceEdge(edge2_successor, new_e);
+
+	// Rewire edge sequence of the secondary face.
+	topology()->setNextFaceEdge(edge2, new_oe);
+	topology()->setPrevFaceEdge(new_oe, edge2);
+	topology()->setNextFaceEdge(new_oe, edge1_successor);
+	topology()->setPrevFaceEdge(edge1_successor, new_oe);
+
+	// Connect the edges with the newly created secondary face.
+	edge_index e = edge1_successor;
+	do {
+		topology()->setAdjacentFace(e, new_f);
+		e = nextFaceEdge(e);
+	}
+	while(e != new_oe);
+	OVITO_ASSERT(adjacentFace(edge2) == new_f);
+	OVITO_ASSERT(adjacentFace(new_oe) == new_f);
+
+	// Make the newly created edge the leading edge of the original face.
+	topology()->setFirstFaceEdge(old_f, new_e);
+
+	return new_e;
 }
 
 

@@ -80,7 +80,7 @@ HalfEdgeMesh::face_index HalfEdgeMesh::createFace()
 * Creates a new half-edge between two vertices and adjacent to the given face.
 * Returns the index of the new half-edge.
 ******************************************************************************/
-HalfEdgeMesh::edge_index HalfEdgeMesh::createEdge(vertex_index vertex1, vertex_index vertex2, face_index face)
+HalfEdgeMesh::edge_index HalfEdgeMesh::createEdge(vertex_index vertex1, vertex_index vertex2, face_index face, edge_index insertAfterEdge)
 {
 	OVITO_ASSERT(vertex1 >= 0 && vertex1 < vertexCount());
 	OVITO_ASSERT(vertex2 >= 0 && vertex2 < vertexCount());
@@ -98,17 +98,26 @@ HalfEdgeMesh::edge_index HalfEdgeMesh::createEdge(vertex_index vertex1, vertex_i
 	_vertexEdges[vertex1] = newIndex;
 
 	// Insert the half-edge into the linked-list of edges of the face.
-	edge_index& faceEdge = _faceEdges[face];
-	if(faceEdge != InvalidIndex) {
-		_nextFaceEdges.push_back(faceEdge);
-		_prevFaceEdges.push_back(prevFaceEdge(faceEdge));
-		setNextFaceEdge(prevFaceEdge(faceEdge), newIndex);
-		setPrevFaceEdge(faceEdge, newIndex);
+	if(insertAfterEdge == InvalidIndex) {
+		edge_index& faceEdge = _faceEdges[face];
+		if(faceEdge != InvalidIndex) {
+			_nextFaceEdges.push_back(faceEdge);
+			_prevFaceEdges.push_back(prevFaceEdge(faceEdge));
+			setNextFaceEdge(prevFaceEdge(faceEdge), newIndex);
+			setPrevFaceEdge(faceEdge, newIndex);
+		}
+		else {
+			_nextFaceEdges.push_back(newIndex);
+			_prevFaceEdges.push_back(newIndex);
+			faceEdge = newIndex;
+		}
 	}
 	else {
-		_nextFaceEdges.push_back(newIndex);
-		_prevFaceEdges.push_back(newIndex);
-		faceEdge = newIndex;
+		OVITO_ASSERT(adjacentFace(insertAfterEdge) == face);
+		_nextFaceEdges.push_back(nextFaceEdge(insertAfterEdge));
+		_prevFaceEdges.push_back(insertAfterEdge);
+		setNextFaceEdge(insertAfterEdge, newIndex);
+		setPrevFaceEdge(_nextFaceEdges.back(), newIndex);
 	}
 
 	// Initialize opposite edge field.
@@ -532,6 +541,27 @@ void HalfEdgeMesh::deleteVertex(vertex_index vertex)
 		}
 	}
 	_vertexEdges.pop_back();
+}
+
+/******************************************************************************
+* Inserts a vertex in the midle of an existing edge.
+******************************************************************************/
+void HalfEdgeMesh::splitEdge(edge_index edge, vertex_index vertex)
+{
+	OVITO_ASSERT(nextManifoldEdge(edge) == InvalidIndex);
+
+	edge_index successorEdge = createEdge(vertex, vertex2(edge), adjacentFace(edge), edge);
+	_edgeVertices[edge] = vertex;
+
+	edge_index oppEdge = oppositeEdge(edge);
+	if(oppEdge != InvalidIndex) {
+        _oppositeEdges[edge] = InvalidIndex;
+        _oppositeEdges[oppEdge] = InvalidIndex;
+		edge_index successorOppEdge = createEdge(vertex, vertex2(oppEdge), adjacentFace(oppEdge), oppEdge);
+		_edgeVertices[oppEdge] = vertex;
+		linkOppositeEdges(successorOppEdge, edge);
+		linkOppositeEdges(oppEdge, successorEdge);
+	}
 }
 
 }	// End of namespace

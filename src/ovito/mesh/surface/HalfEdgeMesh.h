@@ -23,6 +23,7 @@
 
 
 #include <ovito/mesh/Mesh.h>
+#include <boost/iterator/counting_iterator.hpp>
 
 namespace Ovito { namespace Mesh {
 
@@ -77,6 +78,24 @@ public:
     /// Returns the number of half-edges in this mesh.
     size_type edgeCount() const { return _edgeFaces.size(); }
 
+    /// Returns an iterator that points to the first vertex of the mesh topology.
+	auto begin_vertices() const { return boost::make_counting_iterator<size_type>(0); }
+
+    /// Returns an iterator that points beyond last vertex of the mesh topology.
+	auto end_vertices() const { return boost::make_counting_iterator<size_type>(vertexCount()); }
+
+    /// Returns an iterator that points to the first face of the mesh topology.
+	auto begin_faces() const { return boost::make_counting_iterator<size_type>(0); }
+
+    /// Returns an iterator that points beyond last face of the mesh topology.
+	auto end_faces() const { return boost::make_counting_iterator<size_type>(faceCount()); }
+
+    /// Returns an iterator that points to the first edge of the mesh topology.
+	auto begin_edges() const { return boost::make_counting_iterator<size_type>(0); }
+
+    /// Returns an iterator that points beyond last edge of the mesh topology.
+	auto end_edges() const { return boost::make_counting_iterator<size_type>(edgeCount()); }
+
     /// Adds a new vertex to the mesh.
     /// Returns the index of the newly-created vertex.
     vertex_index createVertex();
@@ -119,7 +138,17 @@ public:
 
     /// Creates a new half-edge between two vertices and adjacent to the given face.
     /// Returns the index of the new half-edge.
-    edge_index createEdge(vertex_index vertex1, vertex_index vertex2, face_index face);
+    edge_index createEdge(vertex_index vertex1, vertex_index vertex2, face_index face, edge_index insertAfterEdge = InvalidIndex);
+
+    /// Creates a new half-edge connecting the two vertices of an existing edge in reverse direction
+    /// and which is adjacent to the given face. Returns the index of the new half-edge.
+    edge_index createOppositeEdge(edge_index edge, face_index face) {
+        OVITO_ASSERT(!hasOppositeEdge(edge));
+        edge_index new_e = createEdge(vertex2(edge), vertex1(edge), face);
+        _oppositeEdges[edge] = new_e;
+        _oppositeEdges[new_e] = edge;
+        return new_e;
+    }
 
     /// Tries to wire each half-edge with its opposite (reverse) half-edge.
     /// Returns true if every half-edge has an opposite half-edge, i.e. if the mesh
@@ -305,6 +334,9 @@ public:
     size_type countFaceEdges(face_index face) const {
         return faceEdgeCount(firstFaceEdge(face));
     }
+
+    /// Inserts a vertex in the midle of an existing edge.
+    void splitEdge(edge_index edge, vertex_index vertex);
 
 private:
 

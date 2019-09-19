@@ -930,13 +930,15 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		// Compute face normals.
 		std::vector<Vector_3<float>> faceNormals(mesh.faceCount());
 		auto faceNormal = faceNormals.begin();
-		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
-			const Point3& p0 = mesh.vertex(face->vertex(0));
-			Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
-			Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
-			*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
-			if(*faceNormal != Vector_3<float>::Zero()) {
-				allMask |= face->smoothingGroups();
+		if(!mesh.hasNormals()) {
+			for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
+				const Point3& p0 = mesh.vertex(face->vertex(0));
+				Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
+				Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
+				*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
+				if(*faceNormal != Vector_3<float>::Zero()) {
+					allMask |= face->smoothingGroups();
+				}
 			}
 		}
 
@@ -946,6 +948,12 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		auto rv_color = colors.begin();
 		auto rv_indices = indices.begin();
 		faceNormal = faceNormals.begin();
+		if(mesh.hasNormals()) {
+			OVITO_ASSERT(mesh.normals().size() == normals.size());
+			std::transform(mesh.normals().cbegin(), mesh.normals().cend(), rv_normal, [&](const Vector3& n) {
+				return normalTM * Vector_3<float>(n);
+			});
+		}
 		ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
 		if(meshBuffer.useInstancedRendering())
 			defaultVertexColor = ColorAT<float>(meshBuffer.perInstanceColors()[instanceIndex]);
@@ -955,10 +963,12 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 			// Initialize render vertices for this face.
 			for(size_t v = 0; v < 3; v++, ++rv_pos, ++rv_normal, ++rv_color) {
 				(*rv_indices)[v] = vindex++;
-				if(face->smoothingGroups())
-					*rv_normal = Vector_3<float>::Zero();
-				else
-					*rv_normal = *faceNormal;
+				if(!mesh.hasNormals()) {
+					if(face->smoothingGroups())
+						*rv_normal = Vector_3<float>::Zero();
+					else
+						*rv_normal = *faceNormal;
+				}
 				*rv_pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
 
 				if(mesh.hasVertexColors())

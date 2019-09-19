@@ -21,6 +21,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/mesh/surface/SurfaceMeshData.h>
+#include <ovito/mesh/util/CapPolygonTessellator.h>
 #include <ovito/core/utilities/mesh/TriMesh.h>
 #include "GSDImporter.h"
 #include "GSDFile.h"
@@ -34,6 +35,21 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
 IMPLEMENT_OVITO_CLASS(GSDImporter);
+DEFINE_PROPERTY_FIELD(GSDImporter, roundingResolution);
+SET_PROPERTY_FIELD_LABEL(GSDImporter, roundingResolution, "Rounding resolution");
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(GSDImporter, roundingResolution, IntegerParameterUnit, 1, 6);
+
+/******************************************************************************
+* Is called when the value of a property of this object has changed.
+******************************************************************************/
+void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(roundingResolution)) {
+		// Reload GSD file when this option has been changed.
+		requestReload();
+	}
+	ParticleImporter::propertyChanged(field);
+}
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -383,38 +399,128 @@ void GSDImporter::FrameLoader::parseEllipsoidShape(int typeId, ParticleFrameData
 ******************************************************************************/
 void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
 {
-	// Parse rounding radius.
-	const FloatType roundingRadius = definition.value("rounding_radius").toDouble();
-	if(roundingRadius > 0)
-		qWarning() << "GSD file reader: Positive rounding radius for shape type 'Polygon' is not supported yet by OVITO. Rounding radius will be ignored.";
-
 	// Parse the list of vertices.
-	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
 	const QJsonValue vertexArrayVal = definition.value("vertices");
 	if(!vertexArrayVal.isArray())
 		throw Exception(tr("Missing or invalid 'vertex' array in 'Polygon' particle shape definition in GSD file."));
+	std::vector<Point2> vertices;
 	for(QJsonValue val : vertexArrayVal.toArray()) {
 		const QJsonArray coordinateArray = val.toArray();
 		if(coordinateArray.size() != 2)
 			throw Exception(tr("Invalid vertex value in 'vertex' array of 'Polygon' particle shape definition in GSD file."));
-		Point3 vertex = Point3::Origin();
+		Point2 vertex = Point2::Origin();
 		for(int c = 0; c < 2; c++)
 			vertex[c] = coordinateArray[c].toDouble();
-		triMesh->addVertex(vertex);
-
-		if(triMesh->vertexCount() >= 3) {
-			TriMeshFace& face = triMesh->addFace();
-			face.setVertices(0, triMesh->vertexCount()-2, triMesh->vertexCount()-1);
-			face.setEdgeVisibility(false, true, false);
-		}
+		vertices.push_back(vertex);
 	}
-	if(triMesh->vertexCount() < 3)
+	if(vertices.size() < 3)
 		throw Exception(tr("Invalid 'Polygon' particle shape definition in GSD file: Number of vertices must be at least 3."));
-	triMesh->face(0).setEdgeVisible(0);
-	triMesh->face(triMesh->faceCount()-1).setEdgeVisible(2);
+
+	// Parse rounding radius.
+	FloatType roundingRadius = definition.value("rounding_radius").toDouble();
+	if(roundingRadius > 0) {
+		// Constructed the rounded polygon.
+		std::vector<Point2> roundedVertices;
+		int res = (1 << (_roundingResolution - 1));
+		roundedVertices.reserve(vertices.size()*(res+1));
+		auto v1 = vertices.cend() - 1;
+		auto v2 = vertices.cbegin();
+		auto v3 = vertices.cbegin() + 1;
+		Vector2 u1 = (*v1) - (*v2);
+		u1.normalizeSafely();
+		do {
+			Vector2 u2 = (*v2) - (*v3);
+			u2.normalizeSafely();
+			FloatType theta1 = std::atan2(u1.x(), -u1.y());
+			FloatType theta2 = std::atan2(u2.x(), -u2.y());
+			FloatType delta_theta = std::fmod(theta2 - theta1, FLOATTYPE_PI*2);
+			if(delta_theta < 0) delta_theta += FLOATTYPE_PI*2;
+			delta_theta /= res;
+			for(int i = 0; i < res+1; i++, theta1 += delta_theta) {
+				Vector2 delta(cos(theta1) * roundingRadius, sin(theta1) * roundingRadius);
+				roundedVertices.push_back((*v2) + delta);
+			}
+			v1 = v2;
+			v2 = v3;
+			++v3;
+			if(v3 == vertices.cend()) v3 = vertices.cbegin();
+			u1 = u2;
+		}
+		while(v2 != vertices.cbegin());
+		vertices.swap(roundedVertices);
+	}
+
+	// Create triangulation of (convex or concave) polygon.
+	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
+	CapPolygonTessellator tessellator(*triMesh, 2, true);
+	tessellator.beginPolygon();
+	tessellator.beginContour();
+	for(const Point2& p : vertices)
+		tessellator.vertex(p);
+	tessellator.endContour();
+	tessellator.endPolygon();
 
 	// Assign shape to particle type.
 	typeList->setTypeShape(typeId, std::move(triMesh));
+}
+
+/******************************************************************************
+* Recursive helper function that tessellates a corner face.
+******************************************************************************/
+static void tessellateCornerFacet(SurfaceMeshData::face_index seedFace, int recursiveDepth, FloatType roundingRadius, SurfaceMeshData& mesh, std::vector<Vector3>& vertexNormals, const Point3& center)
+{
+	if(recursiveDepth <= 1) return;
+
+	// List of edges that should be split during the next iteration.
+	std::set<SurfaceMeshData::edge_index> edgeList;
+
+	// List of faces that should be subdivided during the next iteration.
+	std::vector<SurfaceMeshData::face_index> faceList, faceList2;
+
+	// Initialize lists.
+	faceList.push_back(seedFace);
+	SurfaceMeshData::edge_index e = mesh.firstFaceEdge(seedFace);
+	do {
+		edgeList.insert(e);
+		e = mesh.nextFaceEdge(e);
+	}
+	while(e != mesh.firstFaceEdge(seedFace));
+
+	// Perform iterations of the recursive refinement procedure.
+	for(int iteration = 1; iteration < recursiveDepth; iteration++) {
+
+		// Create new vertices at the midpoints of the existing edges.
+		for(SurfaceMeshData::edge_index edge : edgeList) {
+			Point3 midpoint = mesh.vertexPosition(mesh.vertex1(edge));
+			midpoint += mesh.vertexPosition(mesh.vertex2(edge)) - Point3::Origin();
+			Vector3 normal = (midpoint * FloatType(0.5)) - center;
+			normal.normalizeSafely();
+			SurfaceMeshData::vertex_index new_v = mesh.splitEdge(edge, center + normal * roundingRadius);
+			vertexNormals.push_back(normal);
+		}
+		edgeList.clear();
+
+		// Subdivide the faces.
+		for(SurfaceMeshData::face_index face : faceList) {
+			int order = mesh.topology()->countFaceEdges(face) / 2;
+			SurfaceMeshData::edge_index e = mesh.firstFaceEdge(face);
+			for(int i = 0; i < order; i++) {
+				SurfaceMeshData::edge_index edge2 = mesh.nextFaceEdge(mesh.nextFaceEdge(e));
+				e = mesh.splitFace(e, edge2);
+				// Put edges and the sub-face itself into the list so that
+				// they get refined during the next iteration of the algorithm.
+				SurfaceMeshData::edge_index oe = mesh.oppositeEdge(e);
+				for(int j = 0; j < 3; j++) {
+					edgeList.insert((oe < mesh.oppositeEdge(oe)) ? oe : mesh.oppositeEdge(oe));
+					oe = mesh.nextFaceEdge(oe);
+				}
+				faceList2.push_back(mesh.adjacentFace(oe));
+			}
+			faceList2.push_back(face);
+		}
+		faceList.clear();
+		faceList.swap(faceList2);
+	}
 }
 
 /******************************************************************************
@@ -422,11 +528,6 @@ void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::
 ******************************************************************************/
 void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
 {
-	// Parse rounding radius.
-	const FloatType roundingRadius = definition.value("rounding_radius").toDouble();
-	if(roundingRadius > 0)
-		qWarning() << "GSD file reader: Positive rounding radius for shape type 'ConvexPolyhedron' is not supported yet by OVITO. Rounding radius will be ignored.";
-
 	// Parse the list of vertices.
 	std::vector<Point3> vertices;
 	const QJsonValue vertexArrayVal = definition.value("vertices");
@@ -448,6 +549,115 @@ void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFr
 	// This yields a half-edge surface mesh data structure.
 	SurfaceMeshData mesh;
 	mesh.constructConvexHull(std::move(vertices));
+	mesh.joinCoplanarFaces();
+
+	// Parse rounding radius.
+	FloatType roundingRadius = definition.value("rounding_radius").toDouble();
+	std::vector<Vector3> vertexNormals;
+	if(roundingRadius > 0) {
+		SurfaceMeshData roundedMesh;
+
+		// Maps edges of the old mesh to edges of the new mesh.
+		std::vector<SurfaceMeshData::edge_index> edgeMapping(mesh.edgeCount());
+
+		// Copy the faces of the existing mesh over to the new mesh data structure.
+		SurfaceMeshData::size_type originalFaceCount = mesh.faceCount();
+		for(SurfaceMeshData::face_index face = 0; face <originalFaceCount; face++) {
+
+			// Compute the offset by which the face needs to be extruded outward.
+			Vector3 faceNormal = mesh.computeFaceNormal(face);
+			Vector3 offset = faceNormal * roundingRadius;
+
+			// Duplicate the vertices and shift them along the extrusion vector.
+			SurfaceMeshData::size_type faceVertexCount = 0;
+			SurfaceMeshData::edge_index e = mesh.firstFaceEdge(face);
+			do {
+				roundedMesh.createVertex(mesh.vertexPosition(mesh.vertex1(e)) + offset);
+				vertexNormals.push_back(faceNormal);
+				faceVertexCount++;
+				e = mesh.nextFaceEdge(e);
+			}
+			while(e != mesh.firstFaceEdge(face));
+
+			// Connect the duplicated vertices by a new face.
+			SurfaceMeshData::face_index new_f = roundedMesh.createFace(roundedMesh.topology()->end_vertices() - faceVertexCount, roundedMesh.topology()->end_vertices());
+
+			// Register the newly created edges.
+			SurfaceMeshData::edge_index new_e = roundedMesh.firstFaceEdge(new_f);
+			do {
+				edgeMapping[e] = new_e;
+				e = mesh.nextFaceEdge(e);
+				new_e = roundedMesh.nextFaceEdge(new_e);
+			}
+			while(e != mesh.firstFaceEdge(face));
+		}
+
+		// Insert new faces in between two faces that share an edge.
+		for(SurfaceMeshData::edge_index e = 0; e < mesh.edgeCount(); e++) {
+			// Skip every other half-edge.
+			if(e > mesh.oppositeEdge(e)) continue;
+
+			SurfaceMeshData::edge_index edge = edgeMapping[e];
+			SurfaceMeshData::edge_index opposite_edge = edgeMapping[mesh.oppositeEdge(e)];
+
+			SurfaceMeshData::face_index new_f = roundedMesh.createFace({
+				roundedMesh.vertex2(edge),
+				roundedMesh.vertex1(edge),
+				roundedMesh.vertex2(opposite_edge),
+				roundedMesh.vertex1(opposite_edge) });
+
+			roundedMesh.linkOppositeEdges(edge, roundedMesh.firstFaceEdge(new_f));
+			roundedMesh.linkOppositeEdges(opposite_edge, roundedMesh.nextFaceEdge(roundedMesh.nextFaceEdge(roundedMesh.firstFaceEdge(new_f))));
+		}
+
+		// Fill in the holes at the vertices of the old mesh.
+		for(SurfaceMeshData::edge_index original_edge = 0; original_edge < edgeMapping.size(); original_edge++) {
+			SurfaceMeshData::edge_index new_edge = roundedMesh.oppositeEdge(edgeMapping[original_edge]);
+			SurfaceMeshData::edge_index border_edges[2] = {
+				roundedMesh.nextFaceEdge(new_edge),
+				roundedMesh.prevFaceEdge(new_edge)
+			};
+			SurfaceMeshData::vertex_index corner_vertices[2] = {
+				mesh.vertex1(original_edge),
+				mesh.vertex2(original_edge)
+			};
+			for(int i = 0; i < 2; i++) {
+				SurfaceMeshData::edge_index e = border_edges[i];
+				if(roundedMesh.hasOppositeEdge(e)) continue;
+				SurfaceMeshData::face_index new_f = roundedMesh.createFace({});
+				SurfaceMeshData::edge_index edge = e;
+				do {
+					SurfaceMeshData::edge_index new_e = roundedMesh.createOppositeEdge(edge, new_f);
+					edge = roundedMesh.prevFaceEdge(roundedMesh.oppositeEdge(roundedMesh.prevFaceEdge(roundedMesh.oppositeEdge(roundedMesh.prevFaceEdge(edge)))));
+				}
+				while(edge != e);
+
+				// Tessellate the inserted corner element.
+				tessellateCornerFacet(new_f, _roundingResolution, roundingRadius, roundedMesh, vertexNormals, mesh.vertexPosition(corner_vertices[i]));
+			}
+		}
+
+		// Tessellate the inserted edge elements.
+		for(SurfaceMeshData::edge_index e = 0; e < mesh.edgeCount(); e++) {
+			// Skip every other half-edge.
+			if(e > mesh.oppositeEdge(e)) continue;
+
+			SurfaceMeshData::edge_index startEdge = roundedMesh.oppositeEdge(edgeMapping[e]);
+			SurfaceMeshData::edge_index edge1 = roundedMesh.prevFaceEdge(roundedMesh.prevFaceEdge(startEdge));
+			SurfaceMeshData::edge_index edge2 = roundedMesh.nextFaceEdge(startEdge);
+
+			for(int i = 1; i < (1<<(_roundingResolution-1)); i++) {
+				edge2 = roundedMesh.splitFace(edge1, edge2);
+				edge1 = roundedMesh.prevFaceEdge(edge1);
+				edge2 = roundedMesh.nextFaceEdge(edge2);
+			}
+		}
+
+		OVITO_ASSERT(roundedMesh.topology()->isClosed());
+
+		// Adopt the newly constructed mesh as particle shape.
+		mesh.swap(roundedMesh);
+	}
 
 	// Convert half-edge mesh into a conventional triangle mesh for visualization.
 	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
@@ -457,8 +667,16 @@ void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFr
 		return;
 	}
 
-	// Render only sharp edges of the mesh in wireframe mode.
-	triMesh->determineEdgeVisibility();
+	// Assign precomputed vertex normals to triangle mesh for smooth shading of rounded edges.
+	OVITO_ASSERT(vertexNormals.empty() || vertexNormals.size() == triMesh->vertexCount());
+	if(!vertexNormals.empty()) {
+		triMesh->setHasNormals(true);
+		auto normal = triMesh->normals().begin();
+		for(const TriMeshFace& face : triMesh->faces()) {
+			for(int v = 0; v < 3; v++)
+				*normal++ = vertexNormals[face.vertex(v)];
+		}
+	}
 
 	// Assign shape to particle type.
 	typeList->setTypeShape(typeId, std::move(triMesh));

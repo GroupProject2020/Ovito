@@ -239,6 +239,9 @@ public:
         return fidx;
     }
 
+    /// Splits a face along the edge given by the second vertices of two of its border edges.
+    edge_index splitFace(edge_index edge1, edge_index edge2);
+
     /// Deletes a face from the mesh.
     /// A hole in the mesh will be left behind at the location of the deleted face.
     /// The half-edges of the face are also disconnected from their respective opposite half-edges and deleted by this method.
@@ -263,6 +266,21 @@ public:
     edge_index createEdge(vertex_index vertex1, vertex_index vertex2, face_index face) {
         OVITO_ASSERT(isTopologyMutable());
         return topology()->createEdge(vertex1, vertex2, face);
+    }
+
+    /// Creates a new half-edge connecting the two vertices of an existing edge in reverse direction
+    /// and which is adjacent to the given face. Returns the index of the new half-edge.
+    edge_index createOppositeEdge(edge_index edge, face_index face) {
+        OVITO_ASSERT(isTopologyMutable());
+        return topology()->createOppositeEdge(edge, face);
+    }
+
+    /// Inserts a new vertex in the midle of an existing edge.
+    vertex_index splitEdge(edge_index edge, const Point3& pos) {
+        OVITO_ASSERT(isTopologyMutable());
+        vertex_index new_v = createVertex(pos);
+        topology()->splitEdge(edge, new_v);
+        return new_v;
     }
 
     /// Defines a new spatial region.
@@ -437,8 +455,17 @@ public:
     /// Constructs the convex hull from a set of points and adds the resulting polyhedron to the mesh.
     void constructConvexHull(std::vector<Point3> vecs);
 
+    /// Joins adjacent faces that are coplanar.
+    void joinCoplanarFaces(FloatType thresholdAngle = qDegreesToRadians(0.01));
+
     /// Triangulates the polygonal faces of this mesh and outputs the results as a TriMesh object.
     void convertToTriMesh(TriMesh& outputMesh, bool smoothShading, const boost::dynamic_bitset<>& faceSubset = boost::dynamic_bitset<>{}, std::vector<size_t>* originalFaceMap = nullptr) const;
+
+    /// Swaps the contents of two surface meshes.
+    void swap(SurfaceMeshData& other);
+
+    /// Computes the unit normal vector of a mesh face.
+    Vector3 computeFaceNormal(face_index face) const;
 
 protected:
 

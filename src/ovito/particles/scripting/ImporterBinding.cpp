@@ -110,6 +110,7 @@ void defineImportersSubmodule(py::module m)
 	;
 
 	ovito_class<GSDImporter, ParticleImporter>{m}
+		.def_property("resolution", &GSDImporter::roundingResolution, &GSDImporter::setRoundingResolution)
 	;
 
 	ovito_class<CastepCellImporter, ParticleImporter>{m}

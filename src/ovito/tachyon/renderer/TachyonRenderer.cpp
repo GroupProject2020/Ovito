@@ -584,7 +584,7 @@ void TachyonRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 			Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
 			Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
 			*faceNormal = normalTM * (Vector_3<float>)d2.cross(d1);
-			if(*faceNormal != Vector_3<float>::Zero()) {
+			if(!mesh.hasNormals() && *faceNormal != Vector_3<float>::Zero()) {
 				//faceNormal->normalize();
 				allMask |= face->smoothingGroups();
 			}
@@ -596,11 +596,14 @@ void TachyonRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
 		if(meshBuffer.useInstancedRendering())
 			defaultVertexColor = ColorAT<float>(meshBuffer.perInstanceColors()[instanceIndex]);
-		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
+		int faceIndex = 0;
+		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal, faceIndex++) {
 
 			// Initialize render vertices for this face.
 			for(size_t v = 0; v < 3; v++, rv++) {
-				if(face->smoothingGroups())
+				if(mesh.hasNormals())
+					rv->normal = normalTM * -Vector_3<float>(mesh.faceVertexNormal(faceIndex, v));
+				else if(face->smoothingGroups())
 					rv->normal = Vector_3<float>::Zero();
 				else
 					rv->normal = *faceNormal;

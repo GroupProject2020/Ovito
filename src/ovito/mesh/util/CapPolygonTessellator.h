@@ -33,16 +33,16 @@ namespace Ovito { namespace Mesh { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 /**
  * \brief Helper class that can tessellate a set of non-convex polygons into triangles.
  */
-class CapPolygonTessellator
+class OVITO_MESH_EXPORT CapPolygonTessellator
 {
 public:
 
 	/// Constructor.
-	CapPolygonTessellator(TriMesh& output, size_t dim) : mesh(output), dimz(dim) {
+	CapPolygonTessellator(TriMesh& output, size_t dim, bool windingRuleNonzero = false) : mesh(output), dimz(dim) {
 		dimx = (dimz + 1) % 3;
 		dimy = (dimz + 2) % 3;
 		tess = gluNewTess();
-		gluTessProperty(tess, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+		gluTessProperty(tess, GLU_TESS_WINDING_RULE, windingRuleNonzero ? GLU_TESS_WINDING_NONZERO : GLU_TESS_WINDING_ODD);
 		gluTessCallback(tess, GLU_TESS_ERROR_DATA, (void (*)())errorData);
 		gluTessCallback(tess, GLU_TESS_BEGIN_DATA, (void (*)())beginData);
 		gluTessCallback(tess, GLU_TESS_END_DATA, (void (*)())endData);

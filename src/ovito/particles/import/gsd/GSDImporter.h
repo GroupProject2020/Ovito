@@ -59,7 +59,7 @@ class OVITO_PARTICLES_EXPORT GSDImporter : public ParticleImporter
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE GSDImporter(DataSet* dataset) : ParticleImporter(dataset) {
+	Q_INVOKABLE GSDImporter(DataSet* dataset) : ParticleImporter(dataset), _roundingResolution(4) {
 		setMultiTimestepFile(true);
 	}
 
@@ -68,13 +68,23 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename);
+		return std::make_shared<FrameLoader>(frame, localFilename, std::max(roundingResolution(), 1));
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
 		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
 	}
+
+protected:
+
+	/// \brief Is called when the value of a property of this object has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+
+private:
+
+	/// Controls the tessellation resolution for rounded corners and edges.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, roundingResolution, setRoundingResolution, PROPERTY_FIELD_MEMORIZE);
 
 private:
 
@@ -83,8 +93,9 @@ private:
 	{
 	public:
 
-		/// Inherit constructor from base class.
-		using FileSourceImporter::FrameLoader::FrameLoader;
+		/// Constructor.
+		FrameLoader(const Frame& frame, const QString& filename, int roundingResolution)
+			: FileSourceImporter::FrameLoader(frame, filename), _roundingResolution(roundingResolution) {}
 
 	protected:
 
@@ -111,6 +122,10 @@ private:
 
 		/// Parsing routine for 'Mesh' particle shape definitions.
 		void parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+
+	private:
+
+		int _roundingResolution;
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames.
