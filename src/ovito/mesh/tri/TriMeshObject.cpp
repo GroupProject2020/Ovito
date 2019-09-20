@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 namespace Ovito { namespace Mesh {
 
 IMPLEMENT_OVITO_CLASS(TriMeshObject);
+DEFINE_PROPERTY_FIELD(TriMeshObject, mesh);
 
 /******************************************************************************
 * Default constructor.
@@ -34,14 +35,35 @@ TriMeshObject::TriMeshObject(DataSet* dataset) : DataObject(dataset)
 }
 
 /******************************************************************************
+* Returns a pointer to the internal data structure after making sure it is
+* not shared with any other owners.
+******************************************************************************/
+const TriMeshPtr& TriMeshObject::modifiableMesh()
+{
+	// Copy data if there is more than one reference to the storage.
+	OVITO_ASSERT(mesh());
+	OVITO_ASSERT(mesh().use_count() >= 1);
+	if(mesh().use_count() > 1)
+		_mesh.mutableValue() = std::make_shared<TriMesh>(*mesh());
+	OVITO_ASSERT(mesh().use_count() == 1);
+	return mesh();
+}
+
+/******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
 void TriMeshObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
 	DataObject::saveToStream(stream, excludeRecomputableData);
-	stream.beginChunk(0x01);
-	_mesh.saveToStream(stream);
-	stream.endChunk();
+	if(mesh()) {
+		stream.beginChunk(0x01);
+		mesh()->saveToStream(stream);
+		stream.endChunk();
+	}
+	else {
+		stream.beginChunk(0x00);
+		stream.endChunk();
+	}
 }
 
 /******************************************************************************
@@ -50,23 +72,12 @@ void TriMeshObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputa
 void TriMeshObject::loadFromStream(ObjectLoadStream& stream)
 {
 	DataObject::loadFromStream(stream);
-	stream.expectChunk(0x01);
-	_mesh.loadFromStream(stream);
+	if(stream.expectChunkRange(0x00, 0x01) != 0) {
+		TriMeshPtr m = std::make_shared<TriMesh>();
+		m->loadFromStream(stream);
+		setMesh(std::move(m));
+	}
 	stream.closeChunk();
-}
-
-/******************************************************************************
-* Creates a copy of this object.
-******************************************************************************/
-OORef<RefTarget> TriMeshObject::clone(bool deepCopy, CloneHelper& cloneHelper) const
-{
-	// Let the base class create an instance of this class.
-	OORef<TriMeshObject> clone = static_object_cast<TriMeshObject>(DataObject::clone(deepCopy, cloneHelper));
-
-	// Shallow copy the internal mesh.
-	clone->_mesh = this->_mesh;
-
-	return clone;
 }
 
 }	// End of namespace

@@ -383,8 +383,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 						shapeObject = new TriMeshObject(typeProperty->dataset());
 						static_object_cast<ParticleType>(ptype)->setShapeMesh(shapeObject);
 					}
-					shapeObject->mesh() = *item.shapeMesh;
-					shapeObject->notifyTargetChanged();
+					shapeObject->setMesh(item.shapeMesh);
 				}
 				else {
 					static_object_cast<ParticleType>(ptype)->setShapeMesh(nullptr);

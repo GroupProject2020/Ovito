@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -44,14 +44,10 @@ public:
 	/// \brief Returns the title of this object.
 	virtual QString objectTitle() const override { return tr("Triangle mesh"); }
 
-	/// Returns a const-reference to the triangle mesh encapsulated by this data object.
-	const TriMesh& mesh() const { return _mesh; }
-
-	/// Returns a reference to the triangle mesh encapsulated by this data object.
-	/// The reference can be used to modify the mesh. However, each time the mesh has been modified,
-	/// this->notifyTargetChanged() must be called to increment
-	/// the data object's revision number.
-	TriMesh& mesh() { return _mesh; }
+	/// Returns a pointer to the internal data structure after making sure it is not shared with any other owners.
+	/// The pointer can be used to modify the mesh. However, each time the mesh is modified,
+	/// notifyTargetChanged() must be called to increment the object's revision number.
+	const TriMeshPtr& modifiableMesh();
 
 protected:
 
@@ -61,13 +57,10 @@ protected:
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
-
 private:
 
-	/// The triangle mesh encapsulated by this data object.
-	TriMesh _mesh;
+	/// The data structure storing the mesh.
+	DECLARE_RUNTIME_PROPERTY_FIELD(TriMeshPtr, mesh, setMesh);
 };
 
 }	// End of namespace

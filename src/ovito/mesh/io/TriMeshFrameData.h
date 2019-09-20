@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -40,15 +40,15 @@ public:
 	virtual OORef<DataCollection> handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource) override;
 
 	/// Returns the triangle mesh data structure.
-	const TriMesh& mesh() const { return _mesh; }
+	const TriMesh& mesh() const { return *_mesh; }
 
 	/// Returns a reference to the triangle mesh data structure.
-	TriMesh& mesh() { return _mesh; }
+	TriMesh& mesh() { return *_mesh; }
 
 private:
 
 	/// The triangle mesh.
-	TriMesh _mesh;
+	TriMeshPtr _mesh = std::make_shared<TriMesh>();
 };
 
 }	// End of namespace

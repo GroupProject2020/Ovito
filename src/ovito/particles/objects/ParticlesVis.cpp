@@ -114,9 +114,9 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 	if(typeProperty) {
 		for(const ElementType* etype : typeProperty->elementTypes()) {
 			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(etype)) {
-				if(ptype->shapeMesh() && ptype->shapeMesh()->mesh().faceCount() != 0) {
+				if(ptype->shapeMesh() && ptype->shapeMesh()->mesh() && ptype->shapeMesh()->mesh()->faceCount() != 0) {
 					// Compute the maximum extent of the user-defined shape mesh.
-					const Box3& bbox = ptype->shapeMesh()->mesh().boundingBox();
+					const Box3& bbox = ptype->shapeMesh()->mesh()->boundingBox();
 					FloatType extent = std::max((bbox.minc - Point3::Origin()).length(), (bbox.maxc - Point3::Origin()).length());
 					userShapeParticleTypes.emplace_back(ptype->numericId(), extent);
 				}
@@ -449,7 +449,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	if(typeProperty) {
 		for(const ElementType* etype : typeProperty->elementTypes()) {
 			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(etype)) {
-				if(ptype->shapeMesh() && ptype->shapeMesh()->mesh().faceCount() != 0) {
+				if(ptype->shapeMesh() && ptype->shapeMesh()->mesh() && ptype->shapeMesh()->mesh()->faceCount() != 0) {
 					userShapeParticleTypes.push_back(ptype->numericId());
 				}
 			}
@@ -579,9 +579,9 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				meshVisCache->shapeMeshPrimitives.clear();
 				for(int t : userShapeParticleTypes) {
 					const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(t));
-					OVITO_ASSERT(ptype->shapeMesh());
+					OVITO_ASSERT(ptype->shapeMesh() && ptype->shapeMesh()->mesh());
 					meshVisCache->shapeMeshPrimitives.push_back(renderer->createMeshPrimitive());
-					meshVisCache->shapeMeshPrimitives.back()->setMesh(ptype->shapeMesh()->mesh(), ColorA(0,0,0,0), ptype->highlightShapeEdges());
+					meshVisCache->shapeMeshPrimitives.back()->setMesh(*ptype->shapeMesh()->mesh(), ColorA(0,0,0,0), ptype->highlightShapeEdges());
 					meshVisCache->shapeMeshPrimitives.back()->setCullFaces(ptype->shapeBackfaceCullingEnabled());
 				}
 			}

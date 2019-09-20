@@ -81,13 +81,16 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 	}
 	if(state.isEmpty())
 		throwException(tr("The loaded geometry file does not provide any valid mesh data."));
+	const TriMeshObject* meshObj = state.expectObject<TriMeshObject>();
+	if(!meshObj->mesh())
+		throwException(tr("The loaded geometry file does not contain a valid mesh."));
 
 	// Turn on undo recording again. The final shape assignment should be recorded on the undo stack.
 	noUndo.reset();
-	setShapeMesh(state.expectObject<TriMeshObject>());
+	setShapeMesh(meshObj);
 
 	// Show sharp edges of the mesh.
-	shapeMesh()->mesh().determineEdgeVisibility();
+	shapeMesh()->modifiableMesh()->determineEdgeVisibility();
 
     return !operation.isCanceled();
 }

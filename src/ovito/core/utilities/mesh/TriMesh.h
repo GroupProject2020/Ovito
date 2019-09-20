@@ -575,6 +575,12 @@ private:
 /// Swap function for the TriMesh class, which can be found by argument dependent lookup (ADL).
 inline void swap(TriMesh& mesh_a, TriMesh& mesh_b) noexcept { mesh_a.swap(mesh_b); }
 
+/// A shared pointer to a TriMesh data structure.
+using TriMeshPtr = std::shared_ptr<TriMesh>;
+
+/// A shared pointer to an immutable TriMesh data structure.
+using ConstTriMeshPtr = std::shared_ptr<const TriMesh>;
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

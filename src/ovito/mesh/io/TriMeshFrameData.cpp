@@ -54,7 +54,7 @@ OORef<DataCollection> TriMeshFrameData::handOver(const DataCollection* existing,
 	}
 
 	// Hand over the loaded mesh data.
-	triMeshObj->mesh().swap(mesh());
+	triMeshObj->setMesh(_mesh);
 
 	return output;
 }

@@ -140,8 +140,8 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 		if(ParticleType* ptype = static_object_cast<ParticleType>(editObject)) {
 			loadShapeBtn->setEnabled(true);
 			resetShapeBtn->setEnabled(ptype->shapeMesh() != nullptr);
-			if(ptype->shapeMesh())
-				userShapeLabel->setText(tr("Assigned mesh: %1 faces/%2 vertices").arg(ptype->shapeMesh()->mesh().faceCount()).arg(ptype->shapeMesh()->mesh().vertexCount()));
+			if(ptype->shapeMesh() && ptype->shapeMesh()->mesh())
+				userShapeLabel->setText(tr("Assigned mesh: %1 faces/%2 vertices").arg(ptype->shapeMesh()->mesh()->faceCount()).arg(ptype->shapeMesh()->mesh()->vertexCount()));
 			else
 				userShapeLabel->setText(tr("No user-defined shape assigned"));
 			highlightEdgesUI->setEnabled(ptype->shapeMesh() != nullptr);
