@@ -45,7 +45,10 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(GSDImporter, roundingResolution, IntegerParam
 void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(roundingResolution)) {
-		// Reload GSD file when this option has been changed.
+		// Clear shape cache and reload GSD file when the rounding resolution is changed.
+		_cacheSynchronization.lockForWrite();
+		_particleShapeCache.clear();
+		_cacheSynchronization.unlock();
 		requestReload();
 	}
 	ParticleImporter::propertyChanged(field);
@@ -65,6 +68,26 @@ bool GSDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 	}
 
 	return false;
+}
+
+/******************************************************************************
+* Stores the particle shape geometry generated from a JSON string in the internal cache.
+******************************************************************************/
+void GSDImporter::storeParticleShapeInCache(const QByteArray& jsonString, const TriMeshPtr& mesh)
+{
+	QWriteLocker locker(&_cacheSynchronization);
+	_particleShapeCache.insert(jsonString, mesh);
+}
+
+/******************************************************************************
+* Looks up a particle shape geometry in the internal cache that was previously
+* generated from a JSON string.
+******************************************************************************/
+TriMeshPtr GSDImporter::lookupParticleShapeInCache(const QByteArray& jsonString) const
+{
+	QReadLocker locker(&_cacheSynchronization);
+	auto iter = _particleShapeCache.find(jsonString);
+	return (iter != _particleShapeCache.end()) ? iter.value() : TriMeshPtr();
 }
 
 /******************************************************************************
@@ -317,6 +340,16 @@ PropertyStorage* GSDImporter::FrameLoader::readOptionalProperty(GSDFile& gsd, co
 ******************************************************************************/
 void GSDImporter::FrameLoader::parseParticleShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, const QByteArray& shapeSpecString)
 {
+	// Check if an existing geometry is already stored in the cache for the JSON string.
+	TriMeshPtr cacheShapeMesh = _importer->lookupParticleShapeInCache(shapeSpecString);
+	if(cacheShapeMesh) {
+		// Assign shape to particle type.
+		typeList->setTypeShape(typeId, std::move(cacheShapeMesh));
+		qDebug() << "Reusing geometry for type" << typeId;
+		return; // No need to parse the JSON string again.
+	}
+	qDebug() << "Parsing JSON string for type" << typeId;
+
 	// Parse the JSON string.
 	QJsonParseError parsingError;
 	QJsonDocument shapeSpec = QJsonDocument::fromJson(shapeSpecString, &parsingError);
@@ -339,13 +372,13 @@ void GSDImporter::FrameLoader::parseParticleShape(int typeId, ParticleFrameData:
 		parseEllipsoidShape(typeId, typeList, numParticles, frameData, shapeSpec.object());
 	}
 	else if(shapeType == "Polygon") {
-		parsePolygonShape(typeId, typeList, shapeSpec.object());
+		parsePolygonShape(typeId, typeList, shapeSpec.object(), shapeSpecString);
 	}
 	else if(shapeType == "ConvexPolyhedron") {
-		parseConvexPolyhedronShape(typeId, typeList, shapeSpec.object());
+		parseConvexPolyhedronShape(typeId, typeList, shapeSpec.object(), shapeSpecString);
 	}
 	else if(shapeType == "Mesh") {
-		parseMeshShape(typeId, typeList, shapeSpec.object());
+		parseMeshShape(typeId, typeList, shapeSpec.object(), shapeSpecString);
 	}
 	else {
 		qWarning() << "GSD file reader: The following particle shape type is not supported by this version of OVITO:" << shapeType;
@@ -397,7 +430,7 @@ void GSDImporter::FrameLoader::parseEllipsoidShape(int typeId, ParticleFrameData
 /******************************************************************************
 * Parsing routine for 'Polygon' particle shape definitions.
 ******************************************************************************/
-void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString)
 {
 	// Parse the list of vertices.
 	const QJsonValue vertexArrayVal = definition.value("vertices");
@@ -459,6 +492,9 @@ void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::
 		tessellator.vertex(p);
 	tessellator.endContour();
 	tessellator.endPolygon();
+
+	// Store shape geometry in internal cache to avoid parsing the JSON string again for other animation frames.
+	_importer->storeParticleShapeInCache(shapeSpecString, triMesh);
 
 	// Assign shape to particle type.
 	typeList->setTypeShape(typeId, std::move(triMesh));
@@ -526,7 +562,7 @@ static void tessellateCornerFacet(SurfaceMeshData::face_index seedFace, int recu
 /******************************************************************************
 * Parsing routine for 'ConvexPolyhedron' particle shape definitions.
 ******************************************************************************/
-void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString)
 {
 	// Parse the list of vertices.
 	std::vector<Point3> vertices;
@@ -678,6 +714,9 @@ void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFr
 		}
 	}
 
+	// Store shape geometry in internal cache to avoid parsing the JSON string again for other animation frames.
+	_importer->storeParticleShapeInCache(shapeSpecString, triMesh);
+
 	// Assign shape to particle type.
 	typeList->setTypeShape(typeId, std::move(triMesh));
 }
@@ -685,7 +724,7 @@ void GSDImporter::FrameLoader::parseConvexPolyhedronShape(int typeId, ParticleFr
 /******************************************************************************
 * Parsing routine for 'Mesh' particle shape definitions.
 ******************************************************************************/
-void GSDImporter::FrameLoader::parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition)
+void GSDImporter::FrameLoader::parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString)
 {
 	// Parse the list of vertices.
 	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
@@ -732,6 +771,9 @@ void GSDImporter::FrameLoader::parseMeshShape(int typeId, ParticleFrameData::Typ
 
 	// Render only sharp edges of the mesh in wireframe mode.
 	triMesh->determineEdgeVisibility();
+
+	// Store shape geometry in internal cache to avoid parsing the JSON string again for other animation frames.
+	_importer->storeParticleShapeInCache(shapeSpecString, triMesh);
 
 	// Assign shape to particle type.
 	typeList->setTypeShape(typeId, std::move(triMesh));

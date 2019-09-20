@@ -25,7 +25,10 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/import/ParticleImporter.h>
 #include <ovito/particles/import/ParticleFrameData.h>
+#include <ovito/core/utilities/mesh/TriMesh.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+
+#include <QReadWriteLock>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -68,7 +71,7 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename, std::max(roundingResolution(), 1));
+		return std::make_shared<FrameLoader>(frame, localFilename, this, std::max(roundingResolution(), 1));
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
@@ -76,12 +79,25 @@ public:
 		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
 	}
 
+	/// Stores the particle shape geometry generated from a JSON string in the internal cache.
+	void storeParticleShapeInCache(const QByteArray& jsonString, const TriMeshPtr& mesh);
+
+	/// Looks up a particle shape geometry in the internal cache that was previously
+	/// generated from a JSON string.
+	TriMeshPtr lookupParticleShapeInCache(const QByteArray& jsonString) const;
+
 protected:
 
 	/// \brief Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 private:
+
+	/// A lookup map that holds geometries that have been generated from JSON strings.
+	QHash<QByteArray, TriMeshPtr> _particleShapeCache;
+
+	/// Synchronization object for multi-threaded access to the particle shape cache.
+	mutable QReadWriteLock _cacheSynchronization;
 
 	/// Controls the tessellation resolution for rounded corners and edges.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, roundingResolution, setRoundingResolution, PROPERTY_FIELD_MEMORIZE);
@@ -94,8 +110,8 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename, int roundingResolution)
-			: FileSourceImporter::FrameLoader(frame, filename), _roundingResolution(roundingResolution) {}
+		FrameLoader(const Frame& frame, const QString& filename, GSDImporter* importer, int roundingResolution)
+			: FileSourceImporter::FrameLoader(frame, filename), _importer(importer), _roundingResolution(roundingResolution) {}
 
 	protected:
 
@@ -115,16 +131,17 @@ private:
 		void parseEllipsoidShape(int typeId, ParticleFrameData::TypeList* typeList, size_t numParticles, ParticleFrameData* frameData, QJsonObject definition);
 
 		/// Parsing routine for 'Polygon' particle shape definitions.
-		void parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+		void parsePolygonShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString);
 
 		/// Parsing routine for 'ConvexPolyhedron' particle shape definitions.
-		void parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+		void parseConvexPolyhedronShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString);
 
 		/// Parsing routine for 'Mesh' particle shape definitions.
-		void parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition);
+		void parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString);
 
 	private:
 
+		OORef<GSDImporter> _importer;
 		int _roundingResolution;
 	};
 
