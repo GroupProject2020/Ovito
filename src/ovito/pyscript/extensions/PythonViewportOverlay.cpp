@@ -59,7 +59,7 @@ void PythonViewportOverlay::loadUserDefaults()
 			"    # Also print the current number of particles into the lower left corner of the viewport.\n"
 			"    pipeline = args.scene.selected_pipeline\n"
 			"    if pipeline:\n"
-			"        data = pipeline.compute()\n"
+			"        data = pipeline.compute(args.frame)\n"
 			"        num_particles = data.particles.count\n"
 			"        text2 = \"{} particles\".format(num_particles)\n"
 			"        args.painter.drawText(10, args.painter.window().height() - 10, text2)\n");

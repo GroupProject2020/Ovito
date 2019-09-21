@@ -111,6 +111,7 @@ void PropertyInspectionApplet::updateContainerList()
 			item = containerSelectionWidget()->item(numItems);
 			item->setText(itemTitle);
 		}
+		item->setToolTip(tr("Python identifier: \"%1\"").arg(container->identifier()));
 		item->setData(Qt::UserRole, QVariant::fromValue(path));
 
 		// Select again the previously selected container.

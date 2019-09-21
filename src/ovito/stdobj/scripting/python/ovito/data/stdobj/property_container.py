@@ -19,6 +19,11 @@ collections.Mapping.register(PropertyContainer)
 # len() function returns the number of properties when called on a PropertyContainer.
 PropertyContainer.__len__ = lambda self: len(self.properties)
 
+# Implementation of the printing method for the PropertyContainer class.
+def _PropertyContainer__str__(self):
+    return str(dict(self))
+PropertyContainer.__str__ = _PropertyContainer__str__
+
 # Returns a Python iterator yielding the names of all properties stored in the PropertyContainer.
 def _PropertyContainer__iter__(self):
     for p in self.properties:
@@ -77,27 +82,27 @@ PropertyContainer._create_property_accessor = staticmethod(create_property_acces
 # Implementation of the PropertyContainer.create_property() method.
 def _PropertyContainer_create_property(self, name, dtype=None, components=None, data=None):
     """
-    Adds a new property to the container and optionally initializes it with 
-    the per-element data provided by the *data* parameter. The method returns the new :py:class:`Property` 
+    Adds a new property to the container and optionally initializes it with
+    the per-element data provided by the *data* parameter. The method returns the new :py:class:`Property`
     instance.
 
-    The method allows to create *standard* as well as *user-defined* properties. 
+    The method allows to create *standard* as well as *user-defined* properties.
     To create a *standard* property, one of the :ref:`standard property names <particle-types-list>` must be provided as *name* argument:
-    
+
     .. literalinclude:: ../example_snippets/property_container.py
         :lines: 16-17
-    
+
     The length of the provided *data* array must match the number of existing elements in the container, which is given by the :py:attr:`.count` attribute.
-    You can alternatively assign the per-element values to the property after its construction: 
+    You can alternatively assign the per-element values to the property after its construction:
 
     .. literalinclude:: ../example_snippets/property_container.py
         :lines: 23-25
 
     To create a *user-defined* property, use a non-standard property name:
-    
+
     .. literalinclude:: ../example_snippets/property_container.py
         :lines: 29-30
-    
+
     In this case the data type and the number of vector components of the new property are inferred from
     the provided *data* Numpy array. Providing a one-dimensional array creates a scalar property while
     a two-dimensional array creates a vectorial property.
@@ -117,8 +122,8 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
 
     .. literalinclude:: ../example_snippets/property_container.py
         :lines: 40-45
-    
-    After the initial ``Positions`` property has been created, the number of particles in the container is now determined and any 
+
+    After the initial ``Positions`` property has been created, the number of particles in the container is now determined and any
     subsequently added properties must have the exact same length.
 
     :param name: Either a :ref:`standard property type constant <particle-types-list>` or a name string.
@@ -169,7 +174,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
             dtype = Property.DataType.Float
         else:
             raise TypeError("Invalid property data type. Only 'int', 'int64' or 'float' are allowed.")
-    
+
     # Check if property already exists in the container.
     existing_prop = None
     for prop in self.properties:
@@ -190,7 +195,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     if data is not None:
         if len(data) != num_elements:
             raise ValueError("Property array size mismatch. Length of data array is {}, but number of elements in container is {}.".format(len(data), num_elements))
-                
+
     if existing_prop is None:
         # If property does not exist yet in the container, create and add a new Property instance.
         if property_type != 0:
@@ -204,7 +209,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
         if dtype is not None and existing_prop.data_type != dtype:
             raise ValueError("Existing property '{}' has data type '{}', but data type '{}' has been requested for the new property.".format(
                 existing_prop.name, PyQt5.QtCore.QMetaType.typeName(existing_prop.data_type), PyQt5.QtCore.QMetaType.typeName(dtype)))
-        
+
         # Make a copy of the existing property so that we can safely modify it.
         prop = self.make_mutable(existing_prop)
 

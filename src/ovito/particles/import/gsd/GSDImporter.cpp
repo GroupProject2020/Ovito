@@ -345,10 +345,8 @@ void GSDImporter::FrameLoader::parseParticleShape(int typeId, ParticleFrameData:
 	if(cacheShapeMesh) {
 		// Assign shape to particle type.
 		typeList->setTypeShape(typeId, std::move(cacheShapeMesh));
-		qDebug() << "Reusing geometry for type" << typeId;
 		return; // No need to parse the JSON string again.
 	}
-	qDebug() << "Parsing JSON string for type" << typeId;
 
 	// Parse the JSON string.
 	QJsonParseError parsingError;
