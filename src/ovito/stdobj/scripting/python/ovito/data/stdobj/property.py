@@ -9,7 +9,7 @@ from ovito.plugins.StdObjPython import Property
 # Implement indexing for properties.
 Property.__getitem__ = lambda self, idx: numpy.asanyarray(self)[idx]
 
-def _Property__setitem__(self, idx, value): 
+def _Property__setitem__(self, idx, value):
     numpy.asanyarray(self)[idx] = value  # Note to users: Write access to a property requires a 'with' Python statement.
 Property.__setitem__ = _Property__setitem__
 
@@ -62,7 +62,7 @@ Property.ndim = property(_Property_ndim)
 
 # Implement 'shape' attribute.
 def _Property_shape(self):
-    if self.component_count <= 1: return (len(self), ) 
+    if self.component_count <= 1: return (len(self), )
     else: return (len(self), self.component_count)
 Property.shape = property(_Property_shape)
 
@@ -118,7 +118,7 @@ def _Property_marray_assign(self, other):
 
 def _Property_type_by_id(self, id):
     """
-    Looks up the :py:class:`ElementType` with the given numeric ID in the :py:attr:`.types` list. 
+    Looks up the :py:class:`ElementType` with the given numeric ID in the :py:attr:`.types` list.
     Raises a ``KeyError`` if the ID does not exist.
     """
     t = self._get_type_by_id(int(id))
@@ -130,7 +130,7 @@ Property.type_by_id = _Property_type_by_id
 def _Property_type_by_name(self, name):
     """
     Looks up the :py:class:`ElementType` with the given name in the :py:attr:`.types` list.
-    If multiple types exists with the same name, the first type is returned. 
+    If multiple types exists with the same name, the first type is returned.
     Raises a ``KeyError`` if there is no type with such a name.
     """
     t = self._get_type_by_name(name)
@@ -138,7 +138,7 @@ def _Property_type_by_name(self, name):
         raise KeyError("Element type with name '%s' is not defined." % name)
     return t
 Property.type_by_name = _Property_type_by_name
-        
+
 # For backward compatibility with OVITO 2.9.0:
 Property.marray = property(_Property_marray, _Property_marray_assign)
 Property.get_type_by_id = lambda self, id: self.type_by_id(id)

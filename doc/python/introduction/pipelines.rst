@@ -8,7 +8,7 @@ Modifiers are composable function objects that are arranged in a sequence to for
 They dynamically modify, filter, analyze or extend the data that flows down the pipeline. Here, with *data* we mean
 any form of information that OVITO can process, e.g. particles and their properties, bonds, the simulation cell,
 triangles meshes, voxel data, etc. The main purpose of the pipeline concept is to enable non-destructive and repeatable workflows, i.e.,
-a modification pipeline --once set up-- can be re-used repeatedly on multiple input datasets.
+once a modification pipeline has been set up, it can be re-used repeatedly on multiple input datasets.
 
 A processing pipeline is represented by an instance of the :py:class:`~ovito.pipeline.Pipeline` class in OVITO.
 Initially, a pipeline contains no modifiers. That means its output will be identical to its input. A pipeline's input data
@@ -94,8 +94,8 @@ The :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` prop
 
 .. note::
 
-    When employing a :py:class:`~ovito.pipeline.Pipeline` in a loop to process a sequence of frames, make sure you
-    do not modify the pipeline inside the loop. Adding new modifiers to the pipeline as part of a for-loop is
+    When employing a :py:class:`~ovito.pipeline.Pipeline` in a loop to process a sequence of simulation frames, make sure you
+    do not populate the pipeline inside the loop. Adding new modifiers to the pipeline as part of a for-loop is
     typically wrong::
 
         # WRONG APPROACH:
@@ -104,16 +104,25 @@ The :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` prop
             data = pipeline.compute(frame)
             ...
 
-    Since the loop block gets executed multiple times, this code would keep appending additional modifiers to the same pipeline,
+    Since the loop block gets executed multiple times, this code would keep appending additional modifiers to the pipeline,
     making it longer and longer with every iteration.
-    As a result, we would end up with multiple :py:class:`~ovito.modifiers.AtomicStrainModifier` instances in the pipeline, each performing the same
+    As a result, several :py:class:`~ovito.modifiers.AtomicStrainModifier` instances end up in the pipeline, each performing the same
     computation over and over again when :py:meth:`~ovito.pipeline.Pipeline.compute` is called.
     Instead, you should set up and populate the pipeline with modifiers just once *before* the loop::
 
-        # Step 1: Setting up the pipeline:
+        # CORRECT APPROACH:
+        # Step I: Populate the pipeline with modifiers:
         pipeline.modifiers.append(AtomicStrainModifier(cutoff = 3.2))
 
-        # Step 2: Evaluating the same pipeline for all simulation frames:
+        # Step II: Evaluate the pipeline in a loop over all frames:
         for frame in range(pipeline.source.num_frames):
             data = pipeline.compute(frame)
             ...
+
+    Note that it is sometimes necessary and valid to change the parameters of existing modifiers within the for-loop.
+
+-------------------------------------------------
+Next topic
+-------------------------------------------------
+
+  * :ref:`data_model_intro`

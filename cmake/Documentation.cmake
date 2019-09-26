@@ -1,6 +1,6 @@
 ###############################################################################
 #
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -44,7 +44,7 @@ FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html")
 
 # XSL transform documentation files.
 IF(XSLT_PROCESSOR)
-	# This generates the user manual as a set of static HTML pages which get shipped with
+	# This CMake target generates the user manual as a set of static HTML pages which get shipped with
 	# the Ovito installation packages and which can be accessed from the Help menu of the application.
 	ADD_CUSTOM_TARGET(documentation
 					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/images/"
@@ -53,7 +53,7 @@ IF(XSLT_PROCESSOR)
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
 
-	# This generates the user manual which is put onto the www.ovito.org website.
+	# This CMake target generates the user manual which is put onto the www.ovito.org website.
 	# It consists of a set of PHP files that adopt the look and feel of the WordPress site.
 	ADD_CUSTOM_TARGET(wordpress_doc
 					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${CMAKE_BINARY_DIR}/doc/wordpress/images/"
@@ -73,9 +73,17 @@ ENDIf()
 # Generate documentation for OVITO's scripting interface.
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 
-	# Use OVITO's built in Python interpreter to run the Sphinx doc program.
+	IF(APPLE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+		# Workaround for an issue on the macOS platform, where the Qt framework ships with release and debug
+		# builds. Need to make sure the debug version of Qt gets loaded at runtime when running 'ovitos' below.
+		SET(DYLD_IMAGE_SUFFIX "_debug")
+	ENDIF()
+
+	# This CMake target uses the 'ovitos' Python interpreter to run the Sphinx doc program and
+	# generate the scripting documentation for OVITO's Python modules.
 	ADD_CUSTOM_TARGET(scripting_documentation
-		COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+		COMMAND "${CMAKE_COMMAND}" -E env DYLD_IMAGE_SUFFIX=${DYLD_IMAGE_SUFFIX}
+			"$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
 			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
 			"-D" "release=${OVITO_VERSION_STRING}"
 			"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/"
@@ -85,9 +93,11 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	# Run Sphinx only after OVITO and all of its plugins have been built.
 	ADD_DEPENDENCIES(scripting_documentation ovitos)
 
-	# Use OVITO's built in Python interpreter to run the Sphinx doc program.
+	# This CMake target generates the online version of the scripting documentation, which
+	# is put onto the www.ovito.org website.
 	ADD_CUSTOM_TARGET(wordpress_doc_scripting
-		COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+		COMMAND "${CMAKE_COMMAND}" -E env DYLD_IMAGE_SUFFIX=${DYLD_IMAGE_SUFFIX}
+			"$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
 			"-c" "${CMAKE_SOURCE_DIR}/doc/python/wordpress"
 			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
 			"-D" "release=${OVITO_VERSION_STRING}"
@@ -107,8 +117,10 @@ FIND_PACKAGE(Doxygen QUIET)
 # Generate API documentation files.
 IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(apidocs
-					COMMAND "env" "OVITO_VERSION_STRING=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}"
-					"OVITO_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/src/" ${DOXYGEN_EXECUTABLE} Doxyfile
+					COMMAND "${CMAKE_COMMAND}" -E env
+					"OVITO_VERSION_STRING=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}"
+					"OVITO_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/src/"
+					${DOXYGEN_EXECUTABLE} Doxyfile
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/develop/"
 					COMMENT "Generating C++ API documentation")
 ENDIF()

@@ -96,12 +96,12 @@ Rendering of images and movies is done using the :py:meth:`Viewport.render_image
 :py:meth:`Viewport.render_anim() <ovito.vis.Viewport.render_anim>` methods::
 
     vp.render_image(size=(800,600), filename="figure.png", background=(0,0,0), frame=8)
-    vp.render_movie(size=(800,600), filename="animation.avi", fps=20)
+    vp.render_anim(size=(800,600), filename="animation.avi", fps=20)
 
 OVITO provides several different :ovitoman:`rendering engines <../../rendering>`, which differ in terms of speed and visual quality.
 The default rendering engine is the :py:class:`~ovito.vis.OpenGLRenderer`, which implements a fast, hardware-accelerated
-OpenGL rendering method. See the :py:mod:`ovito.vis` module for the list of other available engines. To use one of them,
-you have to create a renderer object and configure its specific parameters, and finally pass the renderer object to the
+OpenGL rendering method. See the :py:mod:`ovito.vis` module for the list of other available engines. To use them,
+you have to create an instance of the renderer class, configure its specific parameters, and pass the renderer to the
 viewport rendering function::
 
     tachyon = TachyonRenderer(shadows=False, direct_light_intensity=1.1)

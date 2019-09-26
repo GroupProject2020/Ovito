@@ -15,8 +15,9 @@ Introduction:
    introduction/running
    introduction/overview
    introduction/file_io
-   introduction/modifiers
-   introduction/particle_properties
+   introduction/pipelines
+   introduction/data_model
+   introduction/data_manipulation
    introduction/rendering
    introduction/custom_modifiers
    introduction/advanced_topics
