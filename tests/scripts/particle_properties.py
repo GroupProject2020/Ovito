@@ -1,4 +1,5 @@
 from ovito.io import import_file
+import numpy as np
 
 pipeline = import_file("../files/CFG/shear.void.120.cfg")
 data = pipeline.compute()

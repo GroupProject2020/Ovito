@@ -7,49 +7,49 @@ import ovito
 from ovito.plugins.StdObjPython import Property
 
 # Implement indexing for properties.
-Property.__getitem__ = lambda self, idx: numpy.asanyarray(self)[idx]
+Property.__getitem__ = lambda self, idx: self.__array__()[idx]
 
 def _Property__setitem__(self, idx, value):
-    numpy.asanyarray(self)[idx] = value  # Note to users: Write access to a property requires a 'with' Python statement.
+    self.__array__()[idx] = value  # Note to users: Write access to a property requires a 'with' Python statement.
 Property.__setitem__ = _Property__setitem__
 
 # Implement iteration.
-Property.__iter__ = lambda self: iter(numpy.asanyarray(self))
+Property.__iter__ = lambda self: iter(self.__array__())
 
 # Operator overloading.
-Property.__eq__ = lambda self, y: numpy.asanyarray(self).__eq__(y)
-Property.__ne__ = lambda self, y: numpy.asanyarray(self).__ne__(y)
-Property.__lt__ = lambda self, y: numpy.asanyarray(self).__lt__(y)
-Property.__le__ = lambda self, y: numpy.asanyarray(self).__le__(y)
-Property.__gt__ = lambda self, y: numpy.asanyarray(self).__gt__(y)
-Property.__ge__ = lambda self, y: numpy.asanyarray(self).__ge__(y)
-Property.__nonzero__ = lambda self: numpy.asanyarray(self).__nonzero__()
-Property.__neg__ = lambda self: numpy.asanyarray(self).__neg__()
-Property.__pos__ = lambda self: numpy.asanyarray(self).__pos__()
-Property.__abs__ = lambda self: numpy.asanyarray(self).__abs__()
-Property.__invert__ = lambda self: numpy.asanyarray(self).__invert__()
-Property.__add__ = lambda self, y: numpy.asanyarray(self).__add__(y)
-Property.__sub__ = lambda self, y: numpy.asanyarray(self).__sub__(y)
-Property.__mul__ = lambda self, y: numpy.asanyarray(self).__mul__(y)
-Property.__div__ = lambda self, y: numpy.asanyarray(self).__div__(y)
-Property.__truediv__ = lambda self, y: numpy.asanyarray(self).__truediv__(y)
-Property.__floordiv__ = lambda self, y: numpy.asanyarray(self).__floordiv__(y)
-Property.__mod__ = lambda self, y: numpy.asanyarray(self).__mod__(y)
-Property.__pow__ = lambda self, y: numpy.asanyarray(self).__pow__(y)
-Property.__and__ = lambda self, y: numpy.asanyarray(self).__and__(y)
-Property.__or__ = lambda self, y: numpy.asanyarray(self).__or__(y)
-Property.__xor__ = lambda self, y: numpy.asanyarray(self).__xor__(y)
-Property.__iadd__ = lambda self, y: numpy.asanyarray(self).__iadd__(y)
-Property.__isub__ = lambda self, y: numpy.asanyarray(self).__isub__(y)
-Property.__imul__ = lambda self, y: numpy.asanyarray(self).__imul__(y)
-Property.__idiv__ = lambda self, y: numpy.asanyarray(self).__idiv__(y)
-Property.__itruediv__ = lambda self, y: numpy.asanyarray(self).__itruediv__(y)
-Property.__ifloordiv__ = lambda self, y: numpy.asanyarray(self).__ifloordiv__(y)
-Property.__imod__ = lambda self, y: numpy.asanyarray(self).__imod__(y)
-Property.__ipow__ = lambda self, y: numpy.asanyarray(self).__ipow__(y)
-Property.__iand__ = lambda self, y: numpy.asanyarray(self).__iand__(y)
-Property.__ior__ = lambda self, y: numpy.asanyarray(self).__ior__(y)
-Property.__ixor__ = lambda self, y: numpy.asanyarray(self).__ixor__(y)
+Property.__eq__ = lambda self, y: self.__array__().__eq__(y)
+Property.__ne__ = lambda self, y: self.__array__().__ne__(y)
+Property.__lt__ = lambda self, y: self.__array__().__lt__(y)
+Property.__le__ = lambda self, y: self.__array__().__le__(y)
+Property.__gt__ = lambda self, y: self.__array__().__gt__(y)
+Property.__ge__ = lambda self, y: self.__array__().__ge__(y)
+Property.__nonzero__ = lambda self: self.__array__().__nonzero__()
+Property.__neg__ = lambda self: self.__array__().__neg__()
+Property.__pos__ = lambda self: self.__array__().__pos__()
+Property.__abs__ = lambda self: self.__array__().__abs__()
+Property.__invert__ = lambda self: self.__array__().__invert__()
+Property.__add__ = lambda self, y: self.__array__().__add__(y)
+Property.__sub__ = lambda self, y: self.__array__().__sub__(y)
+Property.__mul__ = lambda self, y: self.__array__().__mul__(y)
+Property.__div__ = lambda self, y: self.__array__().__div__(y)
+Property.__truediv__ = lambda self, y: self.__array__().__truediv__(y)
+Property.__floordiv__ = lambda self, y: self.__array__().__floordiv__(y)
+Property.__mod__ = lambda self, y: self.__array__().__mod__(y)
+Property.__pow__ = lambda self, y: self.__array__().__pow__(y)
+Property.__and__ = lambda self, y: self.__array__().__and__(y)
+Property.__or__ = lambda self, y: self.__array__().__or__(y)
+Property.__xor__ = lambda self, y: self.__array__().__xor__(y)
+Property.__iadd__ = lambda self, y: self.__array__().__iadd__(y)
+Property.__isub__ = lambda self, y: self.__array__().__isub__(y)
+Property.__imul__ = lambda self, y: self.__array__().__imul__(y)
+Property.__idiv__ = lambda self, y: self.__array__().__idiv__(y)
+Property.__itruediv__ = lambda self, y: self.__array__().__itruediv__(y)
+Property.__ifloordiv__ = lambda self, y: self.__array__().__ifloordiv__(y)
+Property.__imod__ = lambda self, y: self.__array__().__imod__(y)
+Property.__ipow__ = lambda self, y: self.__array__().__ipow__(y)
+Property.__iand__ = lambda self, y: self.__array__().__iand__(y)
+Property.__ior__ = lambda self, y: self.__array__().__ior__(y)
+Property.__ixor__ = lambda self, y: self.__array__().__ixor__(y)
 
 # Printing / string representation
 Property.__repr__ = lambda self: self.__class__.__name__ + "('" + self.name + "')"
@@ -68,18 +68,18 @@ Property.shape = property(_Property_shape)
 
 # Implement 'dtype' attribute.
 def _Property_dtype(self):
-    return numpy.asanyarray(self).dtype
+    return self.__array__().dtype
 Property.dtype = property(_Property_dtype)
 
 # Implement 'T' attribute (array transposition).
 def _Property_T(self):
-    return numpy.asanyarray(self).T
+    return self.__array__().T
 Property.T = property(_Property_T)
 
 # Context manager section entry method:
 def _Property__enter__(self):
     self.make_writable()
-    return numpy.asanyarray(self)
+    return self.__array__()
 Property.__enter__ = _Property__enter__
 
 # Context manager section exit method:
@@ -93,14 +93,14 @@ Property.__exit__ = _Property__exit__
 # For backward compatibility with OVITO 2.9.0:
 def _Property_array(self):
     # This attribute returns a NumPy array, which provides read access to the per-element data stored in this property object.
-    return numpy.asanyarray(self)
+    return self.__array__()
 Property.array = property(_Property_array)
 
 # Returns a NumPy array wrapper for a property with write access.
 # For backward compatibility with OVITO 2.9.0:
 def _Property_marray(self):
     self.make_writable()
-    a = numpy.asanyarray(self)
+    a = self.__array__()
     self.make_readonly()
     return a
 

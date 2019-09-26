@@ -38,42 +38,6 @@ namespace Ovito { namespace StdObj {
 
 using namespace PyScript;
 
-// Exposes a PropertyStorage object as a Numpy array.
-static py::object buildNumpyArray(const PropertyPtr& p, bool makeWritable, py::handle base)
-{
-	if(!p)
-		return py::none();
-
-	std::vector<ssize_t> shape;
-	std::vector<ssize_t> strides;
-
-	shape.push_back(p->size());
-	strides.push_back(p->stride());
-	if(p->componentCount() > 1) {
-		shape.push_back(p->componentCount());
-		strides.push_back(p->dataTypeSize());
-	}
-	else if(p->componentCount() == 0) {
-		throw Exception("Cannot access empty property array from Python.");
-	}
-	py::dtype t;
-	if(p->dataType() == PropertyStorage::Int) {
-		t = py::dtype::of<int>();
-	}
-	else if(p->dataType() == PropertyStorage::Int64) {
-		t = py::dtype::of<qlonglong>();
-	}
-	else if(p->dataType() == PropertyStorage::Float) {
-		t = py::dtype::of<FloatType>();
-	}
-	else throw Exception("Cannot access property array of this data type from Python.");
-	py::array arr(t, std::move(shape), std::move(strides), p->data(), base);
-	// Mark array as read-only.
-	if(!makeWritable)
-		reinterpret_cast<py::detail::PyArray_Proxy*>(arr.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-	return std::move(arr);
-}
-
 PYBIND11_MODULE(StdObjPython, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
@@ -394,62 +358,41 @@ PYBIND11_MODULE(StdObjPython, m)
 		.def("_get_type_by_id", static_cast<ElementType* (PropertyObject::*)(int) const>(&PropertyObject::elementType))
 		.def("_get_type_by_name", static_cast<ElementType* (PropertyObject::*)(const QString&) const>(&PropertyObject::elementType))
 
-		// Used for Numpy array interface:
-		.def_property_readonly("__array_interface__", [](PropertyObject& p) {
-			py::dict ai;
-			if(p.componentCount() == 1) {
-				ai["shape"] = py::make_tuple(p.size());
-				if(p.stride() != p.dataTypeSize())
-					ai["strides"] = py::make_tuple(p.stride());
-			}
-			else if(p.componentCount() > 1) {
-				ai["shape"] = py::make_tuple(p.size(), p.componentCount());
-				ai["strides"] = py::make_tuple(p.stride(), p.dataTypeSize());
-			}
-			else throw Exception("Cannot access empty property from Python.");
+		// Implementation of the Numpy array protocol:
+		.def("__array__", [](PropertyObject& p, py::object requested_dtype) {
+			// Construct a NumPy array referring to the internal memory of this Property object.
+			py::dtype dtype;
 			if(p.dataType() == PropertyStorage::Int) {
-				OVITO_STATIC_ASSERT(sizeof(int) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-				ai["typestr"] = py::bytes("<i4");
-#else
-				ai["typestr"] = py::bytes(">i4");
-#endif
+				dtype = py::dtype::of<int>();
 			}
 			else if(p.dataType() == PropertyStorage::Int64) {
-				OVITO_STATIC_ASSERT(sizeof(qlonglong) == 8);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-				ai["typestr"] = py::bytes("<i8");
-#else
-				ai["typestr"] = py::bytes(">i8");
-#endif
+				dtype = py::dtype::of<qlonglong>();
 			}
 			else if(p.dataType() == PropertyStorage::Float) {
-#ifdef FLOATTYPE_FLOAT
-				OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-				ai["typestr"] = py::bytes("<f4");
-#else
-				ai["typestr"] = py::bytes(">f4");
-#endif
-#else
-				OVITO_STATIC_ASSERT(sizeof(FloatType) == 8);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-				ai["typestr"] = py::bytes("<f8");
-#else
-				ai["typestr"] = py::bytes(">f8");
-#endif
-#endif
+				dtype = py::dtype::of<FloatType>();
 			}
 			else throw Exception("Cannot access property with this data type from Python.");
-			if(p.isWritableFromPython()) {
-				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
+			if(!requested_dtype.is_none() && !dtype.is(requested_dtype)) {
+				if(py::cast<bool>(dtype.attr("__eq__")(requested_dtype)) == false)
+					throw Exception("Property: Cannot create NumPy array view with dtype other than the native data type of the property.");
 			}
-			else {
-				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
+			py::array arr;
+			if(p.componentCount() == 1) {
+				arr = py::array(dtype, { p.size() }, { p.stride() },
+								p.isWritableFromPython() ? p.data() : p.constData(), py::cast(p));
 			}
-			ai["version"] = py::cast(3);
-			return ai;
-		})
+			else if(p.componentCount() > 1) {
+				arr = py::array(dtype, { p.size(), p.componentCount() }, { p.stride(), p.dataTypeSize() },
+								p.isWritableFromPython() ? p.data() : p.constData(), py::cast(p));
+			}
+			else throw Exception("Cannot access empty property from Python.");
+
+			// Mark NumPy array as read-only if Property is not marked as writable.
+			if(!p.isWritableFromPython())
+				reinterpret_cast<py::detail::PyArray_Proxy*>(arr.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
+
+			return arr;
+		}, py::arg("dtype") = py::none())
 	;
 	expose_mutable_subobject_list(Property_py,
 		std::mem_fn(&PropertyObject::elementTypes),
