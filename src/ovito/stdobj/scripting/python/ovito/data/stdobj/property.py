@@ -35,31 +35,31 @@ class PropertyView(numpy.ndarray):
 
     # Indexed assignment.
     def __setitem__(self, idx, value):
-        with self._data_context_manager: super().__setitem__(idx, value)
+        with self._data_context_manager: super(PropertyView, self).__setitem__(idx, value)
 
     # Augmented arithmetic assignment operators, which require write access to the array:
     def __iadd__(self, y):
-        with self._data_context_manager: return super().__iadd__(y)
+        with self._data_context_manager: return super(PropertyView, self).__iadd__(y)
     def __isub__(self, y):
-        with self._data_context_manager: return super().__isub__(y)
+        with self._data_context_manager: return super(PropertyView, self).__isub__(y)
     def __imul__(self, y):
-        with self._data_context_manager: return super().__imul__(y)
+        with self._data_context_manager: return super(PropertyView, self).__imul__(y)
     def __idiv__(self, y):
-        with self._data_context_manager: return super().__idiv__(y)
+        with self._data_context_manager: return super(PropertyView, self).__idiv__(y)
     def __itruediv__(self, y):
-        with self._data_context_manager: return super().__itruediv__(y)
+        with self._data_context_manager: return super(PropertyView, self).__itruediv__(y)
     def __ifloordiv__(self, y):
-        with self._data_context_manager: return super().__ifloordiv__(y)
+        with self._data_context_manager: return super(PropertyView, self).__ifloordiv__(y)
     def __imod__(self, y):
-        with self._data_context_manager: return super().__imod__(y)
+        with self._data_context_manager: return super(PropertyView, self).__imod__(y)
     def __ipow__(self, y):
-        with self._data_context_manager: return super().__ipow__(y)
+        with self._data_context_manager: return super(PropertyView, self).__ipow__(y)
     def __iand__(self, y):
-        with self._data_context_manager: return super().__iand__(y)
+        with self._data_context_manager: return super(PropertyView, self).__iand__(y)
     def __ior__(self, y):
-        with self._data_context_manager: return super().__ior__(y)
+        with self._data_context_manager: return super(PropertyView, self).__ior__(y)
     def __ixor__(self, y):
-        with self._data_context_manager: return super().__ixor__(y)
+        with self._data_context_manager: return super(PropertyView, self).__ixor__(y)
 
 # Implement indexing for Property arrays.
 def _Property__getitem__(self, idx):
