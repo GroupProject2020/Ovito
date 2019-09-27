@@ -8,6 +8,9 @@
 # Base image
 FROM ubuntu:latest
 
+# Avoid interactive prompts during setup.
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Upgrade the base packages
 RUN apt-get update -qy
 RUN apt-get upgrade -qy

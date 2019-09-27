@@ -18,8 +18,8 @@ Introduction:
    introduction/pipelines
    introduction/data_model
    introduction/data_manipulation
-   introduction/rendering
    introduction/custom_modifiers
+   introduction/rendering
    introduction/advanced_topics
    introduction/examples
    introduction/version_changes

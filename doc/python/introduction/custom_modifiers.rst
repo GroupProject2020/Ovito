@@ -10,7 +10,7 @@ is useful in situations where the built-in modifiers of OVITO (found in the :py:
 to solve your specific problem at hand.
 
 ----------------------------------------------
-Defining the modifier function
+Defining a modifier function
 ----------------------------------------------
 
 You develop a user-defined modifier by simply writing a Python function, which will get automatically called by OVITO's
@@ -38,7 +38,11 @@ You need to perform one of the following steps to insert your modifier function 
                 ...
                 ...
 
+            # Insert the modifier function into a pipeline:
             pipeline.modifiers.append(my_mod_function)
+
+            # Pipeline evaluation: This will let the system invoke your user-defined function.
+            data = pipeline.compute()
 
        Your modifier function -which can have an arbitrary name such as ``my_mod_function()`` in this case- is inserted into the pipeline
        by appending it to the :py:attr:`Pipeline.modifiers <ovito.pipeline.Pipeline.modifiers>` list. Behind the scenes, OVITO automatically creates a
@@ -50,20 +54,43 @@ viewports or when you render an image. In a batch script you typically request t
 by calling :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` or indirectly by invoking a function such as :py:func:`~ovito.io.export_file`.
 
 ---------------------------------------
-Implementing the modifier function
+Implementing a modifier function
 ---------------------------------------
 
 When OVITO's pipeline system calls your modifier function, it passes it the :py:class:`~ovito.data.DataCollection` produced by the upstream part of the pipeline
-(e.g. data loaded by the input :py:class:`~ovito.pipeline.FileSource` and further processed by any modifiers
+(e.g. typically some data loaded by the pipeline's :py:class:`~ovito.pipeline.FileSource` and further processed by any modifiers
 preceding the user-defined modifier in the pipeline). Your Python modifier function then has the option to modify or amend
 the :py:class:`~ovito.data.DataCollection` in some way. After your modifier function has done its work and returns,
-the modified data state is automatically passed on to subsequent modifiers and continues flowing down the pipeline.
+the modified data state is automatically passed on to any subsequent modifiers down the pipeline.
 
 It is important to note that a user-defined modifier function is subject to certain restrictions.
-Since it will get called by the pipeline system as needed in a callback fashion, the function may manipulate
-only the :py:class:`~ovito.data.DataCollection` object it receives through the ``data`` function parameter and nothing else.
-In particular it must not manipulate the pipeline structure itself (e.g. add/remove modifiers) or perform other operations that
-have side effects on the global program state.
+Since it will get called by the pipeline system as needed, the function may only manipulate
+the :py:class:`~ovito.data.DataCollection` it receives through the ``data`` function parameter and nothing else.
+In particular, it must not modify the pipeline structure itself (e.g. add/remove modifiers) or perform other operations that
+have side effects on the global program state. Here are a few examples for things you should *not* do within a user-defined modifier function,
+because they lead to undesired side effects::
+
+    total_energy = 0.0  # A global variable accessed below
+
+    def modify(time, data):
+
+        # Do NOT add modifiers to the current pipeline (because any changes made to a pipeline
+        # while it is being evaluated will lead to an infinite loop):
+        ovito.scene.selected_pipeline.modifiers.append(...)
+
+        # Do NOT insert new objects into the current scene (because a modifier function is only
+        # supposed to modify the data collection flowing down the pipeline):
+        pipeline2 = import_file(...)
+        pipeline2.add_to_scene()
+
+        # Do NOT modify global variables or objects (because the system may call your
+        # function an arbitrary number of times):
+        total_energy += numpy.sum(data.particles['Potential Energy'])
+
+When implementing a modifier function that alters the contents of the :py:class:`~ovito.data.DataCollection` passed in by
+the system, make sure you adhere to the rules of :ref:`shared data ownership <data_ownership>` and make use of the :ref:`underscore notation <underscore_notation>`
+to announce any modifications your are going make to data objects. See the :ref:`examples section <modifier_script_examples>` of this manual, which provides various examples
+of user-defined modifier functions.
 
 Initialization phase
 -----------------------------------

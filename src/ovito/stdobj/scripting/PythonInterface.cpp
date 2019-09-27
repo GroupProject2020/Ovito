@@ -171,7 +171,7 @@ PYBIND11_MODULE(StdObjPython, m)
 		".. literalinclude:: ../example_snippets/property_container.py\n"
 		"	:lines: 7-11\n"
 		"\n\n"
-		"New properties can be added with the :py:meth:`.create_property` method. "
+		"New properties can be added with the :py:meth:`.create_property` method as described :ref:`here <creating_new_properties>`. "
 		"\n\n"
 		"OVITO provides several concrete implementations of the abstract :py:class:`!PropertyContainer` base class: "
 		"\n\n"

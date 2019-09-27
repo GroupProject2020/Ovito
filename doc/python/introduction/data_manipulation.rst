@@ -4,9 +4,19 @@
 Manipulating data
 ===================================
 
-This section discusses how the data in a :py:class:`~ovito.data.DataCollection` can be modified or amended, for example how
-you can manipulate the property values of particles or add new properties. See the :ref:`previous section <data_model_intro>` for a description of how
-the data is organized in a :py:class:`~ovito.data.DataCollection` container and how it can be accessed from Python code.
+This chapter discusses how the contents of a :py:class:`~ovito.data.DataCollection` can be modified or amended from Python code, e.g., how
+you can manipulate the values of particle properties or give particles additional properties. Please make sure to read the
+:ref:`preceding section <data_model_intro>` first, which gives a description of how the data structures in a :py:class:`~ovito.data.DataCollection`
+container are organized.
+
+   * :ref:`data_ownership`
+   * :ref:`underscore_notation`
+   * :ref:`creating_new_properties`
+   * :ref:`creating_new_bond_properties`
+   * :ref:`modifying_properties`
+   * :ref:`adding_global_attributes`
+   * :ref:`modifying_simulation_cell`
+   * :ref:`direct_modifier_application`
 
 .. _data_ownership:
 
@@ -106,7 +116,8 @@ This is necessary, because :py:meth:`~ovito.data.PropertyContainer.create_proper
 object to the particles container object, which may be implicitly shared by multiple data collections (see previous section).
 
 If the particle property with the given name already exists in the :py:class:`~ovito.data.Particles` container, then its contents will be overwritten
-with the per-particle array provided in the NumPy array.
+with the per-particle array provided in the NumPy array. For details, please see the documentation of the
+:py:meth:`create_property() <ovito.data.PropertyContainer.create_property>` method.
 
 .. _creating_new_bond_properties:
 
@@ -148,6 +159,8 @@ You can also make use of NumPy's advanced indexing capabilities to modify just a
     # Alternatively, modify just the z-component of each position vector:
     data.particles_.positions_[data.particles.selection != 0, 2] += 1
 
+For more information, please see also the documentation of the :py:class:`~ovito.data.Property` class.
+
 .. _adding_global_attributes:
 
 Adding global attributes
@@ -173,6 +186,42 @@ and the simulation cell's :py:attr:`~ovito.data.SimulationCell.volume`.
    When modifying the :py:attr:`~ovito.data.DataCollection.attributes` dictionary, the underscore notation is not needed,
    because the :py:attr:`~ovito.data.DataCollection.attributes` dictionary is not an object that is ever shared between more
    than one data collection.
+
+.. _modifying_simulation_cell:
+
+Modifying the simulation cell
+-----------------------------------
+
+The following code demonstrates how to set the three vectors spanning the :py:class:`~ovito.data.SimulationCell` by modifying
+the individual columns of the 3x4 matrix cell matrix::
+
+    data.cell_[:,0] = (3.15, 0, 0)  # Cell vector 'a'
+    data.cell_[:,1] = (0, 3.15, 0)  # Cell vector 'b'
+    data.cell_[:,2] = (0, 0, 3.30)  # Cell vector 'c'
+    data.cell_[:,3] = (0, 0, 0)     # Cell origin
+
+Note that this will only change the dimensions of the simulation cell without affecting the contents of the cell (e.g. particle coordinates).
+If you want to rescale the cell together with the contents, consider using a :py:class:`~ovito.modifiers.AffineTransformationModifier`.
+
+.. _direct_modifier_application:
+
+Direct application of modifiers
+-----------------------------------
+
+The built-in modifiers from the :py:mod:`ovito.modifiers` module are normally employed within a data :py:class:`~ovito.pipeline.Pipeline`,
+which produces a new :py:class:`~ovito.data.DataCollection`. However, it is also possible to directly apply any such modifier to
+an existing :py:class:`~ovito.data.DataCollection` and let it modify the data in-place. This is done by invoking the
+:py:meth:`DataCollection.apply() <ovito.data.DataCollection.apply>` method::
+
+    data = pipeline.compute()
+    data.apply(ExpressionSelectionModifier(expression = "PotentialEnergy<-3.6"))
+    data.apply(DeleteSelectedModifier())
+
+In this example, two temporarily created modifiers act on a data collection that was previously produced by another pipeline.
+This type of direct modifier application to an exiting data collection can in some situations be easier than
+building and evaluating a full pipeline containing the modifier(s). Another important use case for the :py:meth:`DataCollection.apply() <ovito.data.DataCollection.apply>` method
+is within implementations of :ref:`user-defined modifier functions <writing_custom_modifiers>` that need to call one of the built-in modifiers
+as a sub-operation.
 
 -------------------------------------------------
 Next topic
