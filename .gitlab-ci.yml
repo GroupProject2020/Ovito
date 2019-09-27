@@ -10,9 +10,9 @@ build_linux_python3:
       - cmake
            -DCMAKE_BUILD_TYPE=Debug
            -DOVITO_BUILD_DOCUMENTATION=ON
-           -DPYTHON_EXECUTABLE=/usr/bin/python3.5
-           -DPYTHON_INCLUDE_DIR=/usr/include/python3.5m
-           -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.5m.so
+           -DPYTHON_EXECUTABLE=/usr/bin/python3m
+           -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m
+           -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so
            -DCMAKE_INSTALL_PREFIX=../install
            ..
       - make -j3 install
@@ -34,7 +34,7 @@ build_linux_python2:
       - cmake
            -DCMAKE_BUILD_TYPE=Debug
            -DOVITO_BUILD_DOCUMENTATION=ON
-           -DPYTHON_EXECUTABLE=/usr/bin/python2.7
+           -DPYTHON_EXECUTABLE=/usr/bin/python2
            -DPYTHON_INCLUDE_DIR=/usr/include/python2.7
            -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so
            -DCMAKE_INSTALL_PREFIX=../install
