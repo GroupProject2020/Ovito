@@ -40,6 +40,5 @@ bond_vectors = positions[topology[:,1]] - positions[topology[:,0]]
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-cell = data.cell
-bond_vectors += numpy.dot(cell[:3,:3], data.particles.bonds.pbc_vectors.T).T
+bond_vectors += numpy.dot(data.cell[:3,:3], data.particles.bonds.pbc_vectors.T).T
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

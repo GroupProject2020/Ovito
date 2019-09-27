@@ -14,14 +14,12 @@ def mymodify(frame, data):
     print("mymodify()")
     data.particles.vis.radius = 0.5
     color_property = data.particles_.create_property("Color")
-    with color_property:
-        color_property[:] = (0,0.5,0)
+    color_property[:] = (0,0.5,0)
     my_property = data.particles_.create_property("MyCoordination", dtype=int, components=1)
-    with my_property:
-        finder = CutoffNeighborFinder(3.5, data)
-        for index in range(data.particles.count):
-            if index % 100 == 0: yield index/data.particles.count
-            my_property[index] = compute_coordination(index, finder)
+    finder = CutoffNeighborFinder(3.5, data)
+    for index in range(data.particles.count):
+        if index % 100 == 0: yield index/data.particles.count
+        my_property[index] = compute_coordination(index, finder)
 
 modifier = PythonScriptModifier(function = mymodify)
 pipeline.modifiers.append(modifier)

@@ -1,24 +1,23 @@
-# Note: The Ovito modules should generally be imported before the PyQt5 modules,
-# in order to avoid loading the wrong copies of the Qt shared libraries into
-# memory.
-from ovito.vis import Viewport
-from ovito.pipeline import StaticSource, Pipeline
-from ovito.data import DataCollection, SimulationCell, Particles
-from ovito.modifiers import CreateBondsModifier
-import ovito
-
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget
+
+# Make sure we are not running within the context of an OVITO session.
+# This script doesn't work when executed with the ovitos interpreter application.
+if 'ovitos' in sys.executable:
+    print("Warning: This Python script should not be run using the 'ovitos' interpreter. Please use a normal Python interpreter instead.")
+    sys.exit(0)
+
+# Create the global Qt application object:
+app = QApplication(sys.argv)
 
 def create_ovito_pipeline():
     # Insert a SimulationCell object into a new data collection:
     data = DataCollection()
     cell = SimulationCell(pbc = (False, False, False))
     cell.vis.line_width = 0.1
-    with cell:
-        cell[:,0] = (5,0,0)
-        cell[:,1] = (0,5,0)
-        cell[:,2] = (0,0,5)
+    cell[:,0] = (5,0,0)
+    cell[:,1] = (0,5,0)
+    cell[:,2] = (0,0,5)
     data.objects.append(cell)
 
     # Create a Particles object containing three particles:
@@ -35,18 +34,17 @@ def create_ovito_pipeline():
 
     return pipeline
 
-# Make sure we are not running within the context of an OVITO session.
-# This script doesn't work when executed with the ovitos interpreter application.
-if 'ovitos' in sys.executable:
-    print("Warning: This Python script should not be run using the 'ovitos' interpreter. Please use a normal Python interpreter instead.")
-    sys.exit(0)
+# Note: The Ovito modules should generally be imported after the PyQt5 modules
+# to avoid creating a second QApplication object by the Ovito modules.
+from ovito.vis import Viewport
+from ovito.pipeline import StaticSource, Pipeline
+from ovito.data import DataCollection, SimulationCell, Particles
+from ovito.modifiers import CreateBondsModifier
+import ovito
 
 # OpenGL graphics not supported when running in an environment without a screen:
 if ovito.headless_mode:
     sys.exit(0)
-
-# Create the global Qt application object:
-app = QApplication(sys.argv)
 
 # Add a data pipeline to the current scene, which will show up in the viewport:
 pipeline = create_ovito_pipeline()

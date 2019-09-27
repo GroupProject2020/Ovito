@@ -161,6 +161,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 
 	// Look up the property container object.
    	PropertyContainer* container = state.expectMutableLeafObject(subject());
+	container->verifyIntegrity();
 
 	// Get the property that will be overwritten by the stored one.
 	PropertyObject* outputProperty;

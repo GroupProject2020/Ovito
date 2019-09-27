@@ -11,11 +11,14 @@ mutable_cell = data.cell_
 mutable_cell.pbc = (False, True, True)
 
 print("  input cell:\n{}".format(cell))
-with mutable_cell:
-    mutable_cell[...] = [[10,0,0,0],[0,2,0,0],[0,0,1,0]]
+mutable_cell[...] = [[10,0,0,0],[0,2,0,0],[0,0,1,0]]
 
 assert(mutable_cell[0,0] == 10)
 assert(mutable_cell[1,1] == 2)
+
+# Test augmented arithmetic assignment operators:
+mutable_cell[1,:] *= 2.0
+assert(mutable_cell[1,1] == 4.0)
 
 print("Output cell:")
 print(mutable_cell)

@@ -1,57 +1,166 @@
 import numpy
 
-# Load dependencies
+# Load dependencies.
 import ovito
 
-# Load the native code module
+# Load the native code module.
 from ovito.plugins.StdObjPython import Property
 
-# Implement indexing for properties.
-Property.__getitem__ = lambda self, idx: self.__array__()[idx]
+# View into a property array, which manages write access to the underlying data.
+class PropertyView(numpy.ndarray):
+    def __new__(cls, input_array, ovito_property):
+        # Input array is an already formed ndarray instance. We first cast to be our class type.
+        obj = input_array.view(cls)
+        # Keep a reference to the underlying OVITO object managing the memory.
+        obj._data_context_manager = ovito_property
+        # Finally, return the newly created object.
+        return obj
 
+    def __array_finalize__(self, obj):
+        self._data_context_manager = self
+        if obj is None: return
+        # Do not keep a reference to the underlying OVITO object if this NumPy array manages its own memory (independent of OVITO).
+        # To find out, we need to walk up the chain of base objects.
+        b = self
+        while isinstance(b, numpy.ndarray):
+            if b.flags.owndata: return
+            b = b.base
+        self._data_context_manager = getattr(obj, '_data_context_manager', self)
+
+    # Implement a no-op context manager.
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+    # Indexed assignment.
+    def __setitem__(self, idx, value):
+        with self._data_context_manager: super().__setitem__(idx, value)
+
+    # Augmented arithmetic assignment operators, which require write access to the array:
+    def __iadd__(self, y):
+        with self._data_context_manager: return super().__iadd__(y)
+    def __isub__(self, y):
+        with self._data_context_manager: return super().__isub__(y)
+    def __imul__(self, y):
+        with self._data_context_manager: return super().__imul__(y)
+    def __idiv__(self, y):
+        with self._data_context_manager: return super().__idiv__(y)
+    def __itruediv__(self, y):
+        with self._data_context_manager: return super().__itruediv__(y)
+    def __ifloordiv__(self, y):
+        with self._data_context_manager: return super().__ifloordiv__(y)
+    def __imod__(self, y):
+        with self._data_context_manager: return super().__imod__(y)
+    def __ipow__(self, y):
+        with self._data_context_manager: return super().__ipow__(y)
+    def __iand__(self, y):
+        with self._data_context_manager: return super().__iand__(y)
+    def __ior__(self, y):
+        with self._data_context_manager: return super().__ior__(y)
+    def __ixor__(self, y):
+        with self._data_context_manager: return super().__ixor__(y)
+
+# Implement indexing for Property arrays.
+def _Property__getitem__(self, idx):
+    return self.__array__()[idx]
+Property.__getitem__ = _Property__getitem__
+
+# Indexed assignment.
 def _Property__setitem__(self, idx, value):
-    self.__array__()[idx] = value  # Note to users: Write access to a property requires a 'with' Python statement.
+    # Write access to a property array requires a 'with' Python statement.
+    with self: self.__array__impl__()[idx] = value
 Property.__setitem__ = _Property__setitem__
 
-# Implement iteration.
+# Implementation of the Numpy array protocol:
+def _Property__array__(self, dtype=None):
+    return PropertyView(self.__array__impl__(dtype), self)
+Property.__array__ = _Property__array__
+
+# Array element iteration.
 Property.__iter__ = lambda self: iter(self.__array__())
 
-# Operator overloading.
-Property.__eq__ = lambda self, y: self.__array__().__eq__(y)
-Property.__ne__ = lambda self, y: self.__array__().__ne__(y)
-Property.__lt__ = lambda self, y: self.__array__().__lt__(y)
-Property.__le__ = lambda self, y: self.__array__().__le__(y)
-Property.__gt__ = lambda self, y: self.__array__().__gt__(y)
-Property.__ge__ = lambda self, y: self.__array__().__ge__(y)
-Property.__nonzero__ = lambda self: self.__array__().__nonzero__()
-Property.__neg__ = lambda self: self.__array__().__neg__()
-Property.__pos__ = lambda self: self.__array__().__pos__()
-Property.__abs__ = lambda self: self.__array__().__abs__()
-Property.__invert__ = lambda self: self.__array__().__invert__()
-Property.__add__ = lambda self, y: self.__array__().__add__(y)
-Property.__sub__ = lambda self, y: self.__array__().__sub__(y)
-Property.__mul__ = lambda self, y: self.__array__().__mul__(y)
-Property.__div__ = lambda self, y: self.__array__().__div__(y)
-Property.__truediv__ = lambda self, y: self.__array__().__truediv__(y)
-Property.__floordiv__ = lambda self, y: self.__array__().__floordiv__(y)
-Property.__mod__ = lambda self, y: self.__array__().__mod__(y)
-Property.__pow__ = lambda self, y: self.__array__().__pow__(y)
-Property.__and__ = lambda self, y: self.__array__().__and__(y)
-Property.__or__ = lambda self, y: self.__array__().__or__(y)
-Property.__xor__ = lambda self, y: self.__array__().__xor__(y)
-Property.__iadd__ = lambda self, y: self.__array__().__iadd__(y)
-Property.__isub__ = lambda self, y: self.__array__().__isub__(y)
-Property.__imul__ = lambda self, y: self.__array__().__imul__(y)
-Property.__idiv__ = lambda self, y: self.__array__().__idiv__(y)
-Property.__itruediv__ = lambda self, y: self.__array__().__itruediv__(y)
-Property.__ifloordiv__ = lambda self, y: self.__array__().__ifloordiv__(y)
-Property.__imod__ = lambda self, y: self.__array__().__imod__(y)
-Property.__ipow__ = lambda self, y: self.__array__().__ipow__(y)
-Property.__iand__ = lambda self, y: self.__array__().__iand__(y)
-Property.__ior__ = lambda self, y: self.__array__().__ior__(y)
-Property.__ixor__ = lambda self, y: self.__array__().__ixor__(y)
+# Standard array operators.
+Property.__eq__ = lambda self, y: self.__array__impl__().__eq__(y)
+Property.__ne__ = lambda self, y: self.__array__impl__().__ne__(y)
+Property.__lt__ = lambda self, y: self.__array__impl__().__lt__(y)
+Property.__le__ = lambda self, y: self.__array__impl__().__le__(y)
+Property.__gt__ = lambda self, y: self.__array__impl__().__gt__(y)
+Property.__ge__ = lambda self, y: self.__array__impl__().__ge__(y)
+Property.__nonzero__ = lambda self: self.__array__impl__().__nonzero__()
+Property.__neg__ = lambda self: self.__array__impl__().__neg__()
+Property.__pos__ = lambda self: self.__array__impl__().__pos__()
+Property.__abs__ = lambda self: self.__array__impl__().__abs__()
+Property.__invert__ = lambda self: self.__array__impl__().__invert__()
+Property.__add__ = lambda self, y: self.__array__impl__().__add__(y)
+Property.__sub__ = lambda self, y: self.__array__impl__().__sub__(y)
+Property.__mul__ = lambda self, y: self.__array__impl__().__mul__(y)
+Property.__div__ = lambda self, y: self.__array__impl__().__div__(y)
+Property.__truediv__ = lambda self, y: self.__array__impl__().__truediv__(y)
+Property.__floordiv__ = lambda self, y: self.__array__impl__().__floordiv__(y)
+Property.__mod__ = lambda self, y: self.__array__impl__().__mod__(y)
+Property.__pow__ = lambda self, y: self.__array__impl__().__pow__(y)
+Property.__and__ = lambda self, y: self.__array__impl__().__and__(y)
+Property.__or__ = lambda self, y: self.__array__impl__().__or__(y)
+Property.__xor__ = lambda self, y: self.__array__impl__().__xor__(y)
 
-# Printing / string representation
+# Augmented arithmetic assignment operators, which require write access to the array:
+def __Property__iadd__(self, y):
+    with self: self.__array__impl__().__iadd__(y)
+    return self
+Property.__iadd__ = __Property__iadd__
+
+def __Property__isub__(self, y):
+    with self: self.__array__impl__().__isub__(y)
+    return self
+Property.__isub__ = __Property__isub__
+
+def __Property__imul__(self, y):
+    with self: self.__array__impl__().__imul__(y)
+    return self
+Property.__imul__ = __Property__imul__
+
+def __Property__idiv__(self, y):
+    with self: self.__array__impl__().__idiv__(y)
+    return self
+Property.__idiv__ = __Property__idiv__
+
+def __Property__itruediv__(self, y):
+    with self: self.__array__impl__().__itruediv__(y)
+    return self
+Property.__itruediv__ = __Property__itruediv__
+
+def __Property__ifloordiv__(self, y):
+    with self: self.__array__impl__().__ifloordiv__(y)
+    return self
+Property.__ifloordiv__ = __Property__ifloordiv__
+
+def __Property__imod__(self, y):
+    with self: self.__array__impl__().__imod__(y)
+    return self
+Property.__imod__ = __Property__imod__
+
+def __Property__ipow__(self, y):
+    with self: self.__array__impl__().__ipow__(y)
+    return self
+Property.__ipow__ = __Property__ipow__
+
+def __Property__iand__(self, y):
+    with self: self.__array__impl__().__iand__(y)
+    return self
+Property.__iand__ = __Property__iand__
+
+def __Property__ior__(self, y):
+    with self: self.__array__impl__().__ior__(y)
+    return self
+Property.__ior__ = __Property__ior__
+
+def __Property__ixor__(self, y):
+    with self: self.__array__impl__().__ixor__(y)
+    return self
+Property.__ixor__ = __Property__ixor__
+
+# Printing / string representation.
 Property.__repr__ = lambda self: self.__class__.__name__ + "('" + self.name + "')"
 
 # Implement 'ndim' attribute.
@@ -68,7 +177,7 @@ Property.shape = property(_Property_shape)
 
 # Implement 'dtype' attribute.
 def _Property_dtype(self):
-    return self.__array__().dtype
+    return self.__array__impl__().dtype
 Property.dtype = property(_Property_dtype)
 
 # Implement 'T' attribute (array transposition).
@@ -79,7 +188,7 @@ Property.T = property(_Property_T)
 # Context manager section entry method:
 def _Property__enter__(self):
     self.make_writable()
-    return self.__array__()
+    return self
 Property.__enter__ = _Property__enter__
 
 # Context manager section exit method:

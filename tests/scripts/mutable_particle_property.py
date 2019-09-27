@@ -5,8 +5,7 @@ pipeline = import_file("../files/CFG/shear.void.120.cfg")
 data = pipeline.compute()
 
 pos_property = data.particles_['Position_']
-with pos_property:
-    pos_property[0] = (0.2,0.4,0.6)
+pos_property[0] = (0.2,0.4,0.6)
 assert(np.all(pos_property[0] == (0.2, 0.4, 0.6)))
 
 # Backward compatibility with OVITO 2.9.0:

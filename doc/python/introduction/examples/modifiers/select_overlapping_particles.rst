@@ -14,4 +14,4 @@ neighboring particles that are within a certain range of a central particles. Th
 ``Selection``.
 
 .. literalinclude:: ../../../example_snippets/select_close_particles.py
-  :lines: 8-42
+  :lines: 8-39

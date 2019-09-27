@@ -101,9 +101,8 @@ def ase_to_ovito(atoms):
     # Set the unit cell and origin (if specified in atoms.info)
     cell = SimulationCell()
     cell.pbc = [bool(p) for p in atoms.get_pbc()]
-    with cell:
-        cell[:, :3] = atoms.get_cell().T
-        cell[:, 3]  = atoms.info.get('cell_origin', [0., 0., 0.])
+    cell[:, :3] = atoms.get_cell().T
+    cell[:, 3]  = atoms.info.get('cell_origin', [0., 0., 0.])
     data_collection.objects.append(cell)
 
     # Create particle property from atomic positions
@@ -116,9 +115,9 @@ def ase_to_ovito(atoms):
     type_list = list(set(symbols))
     for i, sym in enumerate(type_list):
         types.type_list.append(ParticleType(id=i+1, name=sym))
-    with types:
+    with types as tarray:
         for i,sym in enumerate(symbols):
-            types[i] = type_list.index(sym)+1
+            tarray[i] = type_list.index(sym)+1
 
     # Check for computed properties - forces, energies, stresses
     calc = atoms.get_calculator()

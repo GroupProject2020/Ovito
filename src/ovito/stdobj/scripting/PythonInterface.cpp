@@ -53,30 +53,31 @@ PYBIND11_MODULE(StdObjPython, m)
 			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"
 			"Stores the geometric shape and the boundary conditions of the simulation cell. "
-			"A :py:class:`!SimulationCell` data object is typically part of a :py:class:`DataCollection` and can be retrieved through its :py:attr:`~DataCollection.cell` property: "
+			"A :py:class:`!SimulationCell` data object is typically part of a :py:class:`DataCollection` and can be retrieved through its :py:attr:`~DataCollection.cell` field: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
-			"   :lines: 1-8\n"
+			"   :lines: 2-7\n"
 			"\n\n"
 			"The simulation cell geometry is stored as a 3x4 matrix (with column-major ordering). The first three columns of the matrix represent the three cell vectors "
 			"and the last column is the position of the cell's origin. For two-dimensional datasets, the :py:attr:`is2D` flag ist set. "
 			"In this case the third cell vector and the z-coordinate of the cell origin are ignored by OVITO in many computations. "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
-			"   :lines: 10-17\n"
+			"   :lines: 14-19\n"
 			"\n\n"
-			"The :py:class:`!SimulationCell` object behaves like a standard Numpy array of shape (3,4). Data access is read-only, however. "
-			"If you want to manipulate the cell vectors, you have to use a ``with`` compound statement as follows: "
+			"The :py:class:`!SimulationCell` object behaves like a standard Numpy array of shape (3,4). "
+			"When modifying the values of the cell matrix, make sure you use the :py:ref:`underscore notation <underscore_notation>` "
+			"to request a modifiable version of the :py:class:`!SimulationCell` object: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
-			"   :lines: 19-21\n"
+			"   :lines: 23-24\n"
 			"\n\n"
-			"A :py:class:`!SimulationCell` instance are always associated with a corresponding :py:class:`~ovito.vis.SimulationCellVis` "
+			"A :py:class:`!SimulationCell` instance are always associated with a :py:class:`~ovito.vis.SimulationCellVis` "
 			"controlling the visual appearance of the simulation box. It can be accessed through "
 			"the :py:attr:`~DataObject.vis` attribute inherited from the :py:class:`~ovito.data.DataObject` base class. "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
-			"   :lines: 23-\n"
+			"   :lines: 28-29\n"
 			"\n\n",
 			// Python class name:
 			"SimulationCell")
@@ -94,35 +95,23 @@ PYBIND11_MODULE(StdObjPython, m)
 		.def_property("matrix", MatrixGetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::cellMatrix>(),
 								MatrixSetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::setCellMatrix>())
 
-		// Used for Numpy array interface:
-		.def_property_readonly("__array_interface__", [](SimulationCellObject& cell) {
-			py::dict ai;
-			ai["shape"] = py::make_tuple(3, 4);
-			ai["strides"] = py::make_tuple(sizeof(AffineTransformation::element_type), sizeof(AffineTransformation::column_type));
-#ifdef FLOATTYPE_FLOAT
-			OVITO_STATIC_ASSERT(sizeof(AffineTransformation::element_type) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-			ai["typestr"] = py::bytes("<f4");
-#else
-			ai["typestr"] = py::bytes(">f4");
-#endif
-#else
-			OVITO_STATIC_ASSERT(sizeof(AffineTransformation::element_type) == 8);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-			ai["typestr"] = py::bytes("<f8");
-#else
-			ai["typestr"] = py::bytes(">f8");
-#endif
-#endif
-			if(cell.isWritableFromPython()) {
-				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(cell.cellMatrix().elements()), false);
+		// Implementation of the Numpy array protocol:
+		.def("__array__impl__", [](SimulationCellObject& cell, py::object requested_dtype) {
+			// Construct a NumPy array referring to the internal memory of this Property object.
+			py::dtype dtype = py::dtype::of<FloatType>();
+			if(!requested_dtype.is_none() && !dtype.is(requested_dtype)) {
+				if(py::cast<bool>(dtype.attr("__eq__")(requested_dtype)) == false)
+					throw Exception("Property: Cannot create NumPy array view with dtype other than the native data type of the cell matrix.");
 			}
-			else {
-				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(cell.cellMatrix().elements()), true);
-			}
-			ai["version"] = py::cast(3);
-			return ai;
-		})
+			py::array arr(dtype, { 3, 4 }, { sizeof(AffineTransformation::element_type), sizeof(AffineTransformation::column_type) },
+								cell.cellMatrix().elements(), py::cast(cell));
+
+			// Mark NumPy array as read-only if simulation cell is shared by multiple owners.
+			if(!cell.isSafeToModify())
+				reinterpret_cast<py::detail::PyArray_Proxy*>(arr.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
+
+			return arr;
+		}, py::arg("dtype") = py::none())
 	;
 	// Property fields:
 	createDataPropertyAccessors(SimulationCell_py, "is2D", &SimulationCellObject::is2D, &SimulationCellObject::setIs2D,
@@ -251,7 +240,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			"\n\n"
 			"Stores the property values for an array of data elements (e.g. particles, bonds or voxels). "
 			"\n\n"
-			"Each particle property, for example, is represented by one :py:class:`!Property` object storing the property values for all particles. "
+			"Each property, for example a particle property, is represented by one :py:class:`!Property` object storing the property values for all particles. "
 			"Thus, a :py:class:`!Property` object is basically an array of values whose length matches the number of data elements. "
 			"\n\n"
 			"All :py:class:`!Property` objects belonging to the same class of data elements, for example all particle properties, are managed by "
@@ -260,7 +249,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			"\n\n"
 			"**Data access**"
 			"\n\n"
-			"A :py:class:`!Property` object behaves almost like a Numpy array. For example, you can access the property value for the *i*-th data element using indexing:: "
+			"A :py:class:`!Property` object behaves like a Numpy array. For example, you can access the property value for the *i*-th data element using indexing:: "
 			"\n\n"
 			"     positions = data.particles['Position']\n"
 			"     print('Position of first particle:', positions[0])\n"
@@ -270,26 +259,13 @@ PYBIND11_MODULE(StdObjPython, m)
 			"\n\n"
 			"Element indices start at zero. Properties can be either vectorial (e.g. velocity vectors are stored as an *N* x 3 array) "
 			"or scalar (1-d array of length *N*). The length of the first array dimension is in both cases equal to "
-			"the number of data elements (number of particles in the example above). Array elements can either be of data type ``float`` or ``int``. "
+			"the number of data elements (number of particles in the example above). Array elements can either be of data type ``float64``, ``int32`` or ``int64``. "
 			"\n\n"
-			"If necessary, you can cast a :py:class:`!Property` to a standard Numpy array:: "
+			"If you want to modify the per-element values in a property array, make sure you are working with a modifiable version of the array "
+			"by employing the :py:ref:`underscore notation <underscore_notation>`, e.g.:: "
 			"\n\n"
-			"     numpy_array = numpy.asarray(positions)\n"
-			"\n\n"
-			"No data is copied during this conversion; the Numpy array will reference the same memory as the :py:class:`!Property`. "
-			"The internal memory array of a :py:class:`!Property` is write-protected by default to prevent unattended data modifications. "
-			"Thus, trying to modify property values will raise an error:: "
-			"\n\n"
-			"    positions[0] = (0,2,4) # Raises \"ValueError: assignment destination is read-only\"\n"
-			"\n\n"
-			"A direct modification is prevented by the system, because OVITO's data pipeline uses shallow data copies and needs to know when data objects are being modified. "
-			"We need to explicitly announce a modification by using Python's ``with`` statement:: "
-			"\n\n"
-			"    with positions:\n"
-			"        positions[0] = (0,2,4)\n"
-			"\n\n"
-			"Within the ``with`` compound statement, the array is temporarily made writable, allowing you to alter "
-			"the per-element data stored in the :py:class:`!Property` object. "
+			"    modifiable_positions = data.particles_['Position_']\n"
+			"    modifiable_positions[0] = (0.1, 2.3, 0.5)\n"
 			"\n\n"
 			"**Typed properties**"
 			"\n\n"
@@ -359,7 +335,7 @@ PYBIND11_MODULE(StdObjPython, m)
 		.def("_get_type_by_name", static_cast<ElementType* (PropertyObject::*)(const QString&) const>(&PropertyObject::elementType))
 
 		// Implementation of the Numpy array protocol:
-		.def("__array__", [](PropertyObject& p, py::object requested_dtype) {
+		.def("__array__impl__", [](PropertyObject& p, py::object requested_dtype) {
 			// Construct a NumPy array referring to the internal memory of this Property object.
 			py::dtype dtype;
 			if(p.dataType() == PropertyStorage::Int) {
@@ -377,18 +353,19 @@ PYBIND11_MODULE(StdObjPython, m)
 					throw Exception("Property: Cannot create NumPy array view with dtype other than the native data type of the property.");
 			}
 			py::array arr;
+			bool modifiable = p.isSafeToModify();
 			if(p.componentCount() == 1) {
 				arr = py::array(dtype, { p.size() }, { p.stride() },
-								p.isWritableFromPython() ? p.data() : p.constData(), py::cast(p));
+								modifiable ? p.data() : p.constData(), py::cast(p));
 			}
 			else if(p.componentCount() > 1) {
 				arr = py::array(dtype, { p.size(), p.componentCount() }, { p.stride(), p.dataTypeSize() },
-								p.isWritableFromPython() ? p.data() : p.constData(), py::cast(p));
+								modifiable ? p.data() : p.constData(), py::cast(p));
 			}
 			else throw Exception("Cannot access empty property from Python.");
 
-			// Mark NumPy array as read-only if Property is not marked as writable.
-			if(!p.isWritableFromPython())
+			// Mark NumPy array as read-only if Property is shared by multiple owners.
+			if(!modifiable)
 				reinterpret_cast<py::detail::PyArray_Proxy*>(arr.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 
 			return arr;

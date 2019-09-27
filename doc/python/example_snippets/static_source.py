@@ -6,10 +6,9 @@ from ovito.io import export_file
 # Insert a new SimulationCell object into a data collection:
 data = DataCollection()
 cell = SimulationCell(pbc = (False, False, False))
-with cell:
-    cell[:,0] = (4,0,0)
-    cell[:,1] = (0,2,0)
-    cell[:,2] = (0,0,2)
+cell[:,0] = (4,0,0)
+cell[:,1] = (0,2,0)
+cell[:,2] = (0,0,2)
 data.objects.append(cell)
 
 # Create a Particles object containing two particles:

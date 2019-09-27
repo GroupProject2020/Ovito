@@ -84,6 +84,7 @@ void ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplic
 
 	if(subject()) {
 		PropertyContainer* container = state.expectMutableLeafObject(subject());
+		container->verifyIntegrity();
 
 		PipelineStatus status = selectionSet->applySelection(
 				container->createProperty(PropertyStorage::GenericSelectionProperty),

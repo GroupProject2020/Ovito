@@ -103,6 +103,7 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
 
 	PropertyContainer* container = state.expectMutableLeafObject(subject());
+	container->verifyIntegrity();
 
 	// Get the input property.
 	const PropertyObject* typeProperty = sourceProperty().findInContainer(container);

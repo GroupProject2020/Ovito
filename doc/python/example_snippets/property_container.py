@@ -21,9 +21,9 @@ data.particles_.create_property('Color', data=colors)
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 prop = data.particles_.create_property('Color')
-with prop:
-    prop[...] = numpy.random.random_sample(size = prop.shape)
+prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 values = numpy.arange(0, data.particles.count, dtype=int)
@@ -32,9 +32,9 @@ data.particles_.create_property('myint', data=values)
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 prop = data.particles_.create_property('myvector', dtype=float, components=3)
-with prop:
-    prop[...] = numpy.random.random_sample(size = prop.shape)
+prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # An empty Particles container to begin with:

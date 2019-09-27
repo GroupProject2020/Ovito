@@ -27,6 +27,13 @@ assert(data.particles.positions is pos)
 with data.particles_.positions_:
     data.particles_.positions[3] = (1,2,3)
 mutable_pos = data.particles_['Position_']
+mutable_pos[0] = (1,2,0)
+mutable_pos[0][...] += (0,0,3)
+mutable_pos[1:3] = [(4,5,6),(7,8,9)]
+mutable_pos[2,2] = 10
+assert(data.particles.positions[0,2] == 3.0)
+assert(data.particles.positions[2,1] == 8.0)
+assert(data.particles.positions[2,2] == 10.0)
 with mutable_pos:
     mutable_pos[0][0] = 1.234
 assert(mutable_pos[0,0] == 1.234)

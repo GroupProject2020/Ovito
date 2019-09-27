@@ -72,10 +72,14 @@ PropertyContainer.values = _PropertyContainer_values
 
 # Helper function for registering standard property accessor fields for a PropertyContainer subclass.
 def create_property_accessor(property_name, doc = None):
+    base_property_name = property_name
+    if base_property_name.endswith('_'): base_property_name = base_property_name[:-1]
     def getter(self):
         return self[property_name]
     def setter(self, val):
-        self.create_property(property_name, data=val)
+        # Detect trivial case where the property object is assigned to itself:
+        if val in self.properties and val.name == base_property_name: return
+        self.create_property(base_property_name, data=val)
     return property(getter, setter, doc=doc)
 PropertyContainer._create_property_accessor = staticmethod(create_property_accessor)
 
@@ -96,7 +100,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     You can alternatively assign the per-element values to the property after its construction:
 
     .. literalinclude:: ../example_snippets/property_container.py
-        :lines: 23-25
+        :lines: 23-24
 
     To create a *user-defined* property, use a non-standard property name:
 
@@ -110,7 +114,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     if you are going to assign the property values after property creation:
 
     .. literalinclude:: ../example_snippets/property_container.py
-        :lines: 34-36
+        :lines: 34-35
 
     If the property to be created already exists in the container, it is replaced with a new one.
     The existing per-element data from the old property is however retained if *data* is ``None``.

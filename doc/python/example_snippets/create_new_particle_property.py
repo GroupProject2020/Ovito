@@ -18,10 +18,9 @@ pos_prop = particles.create_property('Position', data=pos)
 type_prop = particles.create_property('Particle Type')
 type_prop.types.append(ParticleType(id = 1, name = 'Cu', color = (0.0,1.0,0.0)))
 type_prop.types.append(ParticleType(id = 2, name = 'Ni', color = (0.0,0.5,1.0)))
-with type_prop:
-    type_prop[0] = 1  # First atom is Cu
-    type_prop[1] = 2  # Second atom is Ni
-    type_prop[2] = 2  # Third atom is Ni
+type_prop[0] = 1  # First atom is Cu
+type_prop[1] = 2  # Second atom is Ni
+type_prop[2] = 2  # Third atom is Ni
 
 # Create a user-defined particle property with some data:
 my_data = [3.141, -1.2, 0.23]
@@ -29,10 +28,9 @@ my_prop = particles.create_property('My property', data=my_data)
 
 # Create the simulation box:
 cell = SimulationCell(pbc = (False, False, False))
-with cell:
-    cell[...] = [[10,0,0,0],
-                 [0,10,0,0],
-                 [0,0,10,0]]
+cell[...] = [[10,0,0,0],
+             [0,10,0,0],
+             [0,0,10,0]]
 cell.vis.line_width = 0.1
 data.objects.append(cell)
 

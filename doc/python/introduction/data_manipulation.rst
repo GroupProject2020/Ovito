@@ -8,6 +8,8 @@ This section discusses how the data in a :py:class:`~ovito.data.DataCollection` 
 you can manipulate the property values of particles or add new properties. See the :ref:`previous section <data_model_intro>` for a description of how
 the data is organized in a :py:class:`~ovito.data.DataCollection` container and how it can be accessed from Python code.
 
+.. _data_ownership:
+
 Data ownership
 -----------------------------------
 
@@ -48,6 +50,8 @@ data collection would also affect the contents of another data collection owned 
    Data objects can be part of more than one data collection (or other type of container) at a time.
    Then only read access to a shared data object is allowed, because object modifications would
    result in unexpected side effects.
+
+.. _underscore_notation:
 
 Announcing object modification
 ------------------------------------
@@ -104,6 +108,8 @@ object to the particles container object, which may be implicitly shared by mult
 If the particle property with the given name already exists in the :py:class:`~ovito.data.Particles` container, then its contents will be overwritten
 with the per-particle array provided in the NumPy array.
 
+.. _creating_new_bond_properties:
+
 Assigning new bond properties
 -----------------------------------------------------
 
@@ -116,10 +122,33 @@ both objects in this case (``particles_.bonds_.``)::
     color_values = numpy.random.random_sample(size = (data.particles.bonds.count, 3))
     data.particles_.bonds_.create_property('Color', data=color_values)
 
+.. _modifying_properties:
+
 Modifying property values
 -----------------------------------------------------
 
-To be written...
+Manipulating the values of existing particle or bond properties is as easy as changing values in a NumPy array;
+just make sure you use the :py:ref:`underscore notation <underscore_notation>` introduced above to make the
+property array modifiable::
+
+    # Move the first particle to new XYZ coordinates:
+    data.particles_.positions_[0] = (10.0, 8.0, 4.5)
+
+    # Displace the first particle by 2 length units along the x-axis:
+    data.particles_.positions_[0] += (2.0, 0, 0)
+
+    # Displace all particles by 1 length unit along the z-axis:
+    data.particles_.positions_[...] += (0, 0, 1.0)
+
+You can also make use of NumPy's advanced indexing capabilities to modify just a subset of the elements::
+
+    # Displace only selected particles, i.e. those whose 'Selection' property is non-zero:
+    data.particles_.positions_[data.particles.selection != 0] += (0, 0, 1)
+
+    # Alternatively, modify just the z-component of each position vector:
+    data.particles_.positions_[data.particles.selection != 0, 2] += 1
+
+.. _adding_global_attributes:
 
 Adding global attributes
 -----------------------------------
@@ -144,46 +173,6 @@ and the simulation cell's :py:attr:`~ovito.data.SimulationCell.volume`.
    When modifying the :py:attr:`~ovito.data.DataCollection.attributes` dictionary, the underscore notation is not needed,
    because the :py:attr:`~ovito.data.DataCollection.attributes` dictionary is not an object that is ever shared between more
    than one data collection.
-
-Changing visualization parameters
------------------------------------
-
-.. warning::
-   The following sections on this page are out of date! They have not been updated yet to reflect the changes made in the current
-   development version of OVITO.
-
-Many data objects such as the :py:class:`~ovito.data.Bonds` or :py:class:`~ovito.data.SimulationCell` object are associated with
-a corresponding :py:class:`~ovito.vis.Display` object, which is responsible for rendering (visualizing) the data in the viewports.
-The necessary :py:class:`~ovito.vis.Display` object is created automatically when the data object is created and is attached to it by OVITO.
-It can be accessed through the :py:attr:`~ovito.data.DataObject.vis` attribute of the :py:class:`~ovito.data.DataObject` base class.
-
-If the script modifier function injects a new data objects into the pipeline, it can configure the parameters of the attached display object.
-In the following example, the parameters of the :py:class:`~ovito.vis.BondsVis` are being initialized::
-
-   def modify(frame, input, output):
-
-       # Create a new bonds data object.
-       bonds = ovito.data.Bonds()
-       output.add(bonds)
-       ...
-
-       # Configure visual appearance of bonds.
-       bonds.vis.color = (1.0, 1.0, 1.0)
-       bonds.vis.use_particle_colors = False
-       bonds.vis.width = 0.4
-
-However, every time our modifier function is executed, it will create a new :py:class:`~ovito.data.Bonds` object together with a
-new :py:class:`~ovito.vis.BondsVis` instance. If the modifier is used in an interactive OVITO session, this will lead to unexpected behavior
-when the user tries to change the display settings.
-All parameter changes made by the user will get lost as soon as the modification pipeline is re-evaluated. To mitigate the problem, it is a good idea to
-create the :py:class:`~ovito.vis.BondsVis` just once outside the modifier function and then attach it to the :py:class:`~ovito.data.Bonds`
-object created by the modifier function::
-
-   bonds_display = BondsVis(color=(1,0,0), use_particle_colors=False, width=0.4)
-
-   def modify(frame, input, output):
-       bonds = ovito.data.Bonds(display = bonds_display)
-       output.add(bonds)
 
 -------------------------------------------------
 Next topic

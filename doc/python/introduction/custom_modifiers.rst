@@ -65,38 +65,12 @@ only the :py:class:`~ovito.data.DataCollection` object it receives through the `
 In particular it must not manipulate the pipeline structure itself (e.g. add/remove modifiers) or perform other operations that
 have side effects on the global program state.
 
-Modifying data objects
+Initialization phase
 -----------------------------------
 
 .. warning::
    The following sections on this page are out of date! They have not been updated yet to reflect the changes made in the current
    development version of OVITO.
-
-For performance reasons no data copies are made by default, and the *output* collection consists of references to the original data objects from the *input* collection.
-This means, before it is safe to modify a data object in the *output* data collection, you have to make a copy first. Otherwise you risk permanently
-modifying data that is owned by the upstream part of the modification pipeline (e.g. the :py:class:`~ovito.io.FileSource` data cache). An in-place copy of a data object
-is made using the :py:meth:`DataCollection.copy_if_needed() <ovito.data.DataCollection.copy_if_needed>` method. The following example demonstrates the
-principle::
-
-   def modify(frame, input, output):
-
-       # Original simulation cell is passed through by default.
-       # Output simulation cell is just a reference to the input cell.
-       assert(output.cell is input.cell)
-
-       # Make a copy of the simulation cell:
-       cell = output.copy_if_needed(output.cell)
-
-       # copy_if_needed() made a deep copy of the simulation cell object.
-       # Now the the input and output each point to different objects.
-       assert(cell is output.cell)
-       assert(cell is not input.cell)
-
-       # Now it's safe to modify the object copy:
-       cell.pbc = (False, False, False)
-
-Initialization phase
------------------------------------
 
 Initialization of parameters and other inputs needed by our custom modifier function should be done outside of the function.
 For example, our modifier may require reference coordinates of particles, which need to be loaded from an external file.
@@ -104,13 +78,12 @@ One example is the *Displacement vectors* modifier of OVITO, which asks the user
 coordinates that should be subtracted from the current particle coordinates. A corresponding implementation of this modifier in Python
 would look as follows::
 
-    from ovito.data import ParticleProperty
     from ovito.io import FileSource
 
     reference = FileSource()
     reference.load("simulation.0.dump")
 
-    def modify(frame, input, output):
+    def modify(frame, data):
         prop = output.create_particle_property(ParticleProperty.Type.Displacement)
 
         prop.marray[:] = (    input.particle_properties.position.array -

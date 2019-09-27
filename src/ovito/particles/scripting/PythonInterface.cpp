@@ -242,7 +242,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 		"This is done by adding the product of the cell matrix and the shift vectors from the ``Periodic Image`` bond property: "
 		"\n\n"
 		".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-        "  :lines: 43-44\n"
+        "  :lines: 43-43\n"
 		"\n\n"
 		"The shift vectors array is transposed here to facilitate the transformation "
     	"of the entire array of vectors with a single 3x3 cell matrix. "
