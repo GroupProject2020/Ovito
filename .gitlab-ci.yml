@@ -5,7 +5,6 @@ build_linux_python3:
    tags:
       - linux
    script:
-      - /usr/bin/python3.5 -m pip install --upgrade --user numpy
       - mkdir build
       - cd build
       - cmake
@@ -30,7 +29,6 @@ build_linux_python2:
    tags:
       - linux
    script:
-      - /usr/bin/python2.7 -m pip install --upgrade --user numpy
       - mkdir build
       - cd build
       - cmake

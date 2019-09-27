@@ -53,3 +53,7 @@ RUN apt-get install -qy  cmake \
                          docbook-xml \
                          povray \
                          linkchecker
+
+# We need a more recent version of the NumPy package.
+RUN pip2 install --upgrade numpy
+RUN pip3 install --upgrade numpy
