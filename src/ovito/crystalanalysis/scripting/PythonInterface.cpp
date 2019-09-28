@@ -212,7 +212,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 		.def_property("output_interface_mesh", &DislocationAnalysisModifier::outputInterfaceMesh, &DislocationAnalysisModifier::setOutputInterfaceMesh)
 	;
 
-	py::enum_<StructureAnalysis::LatticeStructureType>(DislocationAnalysisModifier_py, "Lattice")
+	ovito_enum<StructureAnalysis::LatticeStructureType>(DislocationAnalysisModifier_py, "Lattice")
 		.value("Other", StructureAnalysis::LATTICE_OTHER)
 		.value("FCC", StructureAnalysis::LATTICE_FCC)
 		.value("HCP", StructureAnalysis::LATTICE_HCP)
@@ -347,7 +347,7 @@ PYBIND11_MODULE(CrystalAnalysisPython, m)
 				"\n")
 	;
 
-	py::enum_<DislocationVis::LineColoringMode>(DislocationVis_py, "ColoringMode")
+	ovito_enum<DislocationVis::LineColoringMode>(DislocationVis_py, "ColoringMode")
 		.value("ByDislocationType", DislocationVis::ColorByDislocationType)
 		.value("ByBurgersVector", DislocationVis::ColorByBurgersVector)
 		.value("ByCharacter", DislocationVis::ColorByCharacter)

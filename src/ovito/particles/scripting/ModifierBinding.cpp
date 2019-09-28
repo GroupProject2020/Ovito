@@ -140,7 +140,7 @@ void defineModifiersSubmodule(py::module m)
 				":Default: 1\n")
 	;
 
-	py::enum_<ExpandSelectionModifier::ExpansionMode>(ExpandSelectionModifier_py, "ExpansionMode")
+	ovito_enum<ExpandSelectionModifier::ExpansionMode>(ExpandSelectionModifier_py, "ExpansionMode")
 		.value("Cutoff", ExpandSelectionModifier::CutoffRange)
 		.value("Nearest", ExpandSelectionModifier::NearestNeighbors)
 		.value("Bonded", ExpandSelectionModifier::BondedNeighbors)
@@ -194,7 +194,7 @@ void defineModifiersSubmodule(py::module m)
 		"   modifier.structures[AcklandJonesModifier.Type.FCC].color = (0, 0, 1)\n"
 		"\n\n.\n");
 
-	py::enum_<AcklandJonesModifier::StructureType>(AcklandJonesModifier_py, "Type")
+	ovito_enum<AcklandJonesModifier::StructureType>(AcklandJonesModifier_py, "Type")
 		.value("OTHER", AcklandJonesModifier::OTHER)
 		.value("FCC", AcklandJonesModifier::FCC)
 		.value("HCP", AcklandJonesModifier::HCP)
@@ -266,13 +266,13 @@ void defineModifiersSubmodule(py::module m)
 		"   modifier.structures[CommonNeighborAnalysisModifier.Type.FCC].color = (0, 0, 1)\n"
 		"\n\n.\n");
 
-	py::enum_<CommonNeighborAnalysisModifier::CNAMode>(CommonNeighborAnalysisModifier_py, "Mode")
+	ovito_enum<CommonNeighborAnalysisModifier::CNAMode>(CommonNeighborAnalysisModifier_py, "Mode")
 		.value("FixedCutoff", CommonNeighborAnalysisModifier::FixedCutoffMode)
 		.value("AdaptiveCutoff", CommonNeighborAnalysisModifier::AdaptiveCutoffMode)
 		.value("BondBased", CommonNeighborAnalysisModifier::BondMode)
 	;
 
-	py::enum_<CommonNeighborAnalysisModifier::StructureType>(CommonNeighborAnalysisModifier_py, "Type")
+	ovito_enum<CommonNeighborAnalysisModifier::StructureType>(CommonNeighborAnalysisModifier_py, "Type")
 		.value("OTHER", CommonNeighborAnalysisModifier::OTHER)
 		.value("FCC", CommonNeighborAnalysisModifier::FCC)
 		.value("HCP", CommonNeighborAnalysisModifier::HCP)
@@ -335,7 +335,7 @@ void defineModifiersSubmodule(py::module m)
 		"      modifier.structures[IdentifyDiamondModifier.Type.HEX_DIAMOND].color = (0, 0, 1)\n"
 		"\n\n.\n");
 
-	py::enum_<IdentifyDiamondModifier::StructureType>(IdentifyDiamondModifier_py, "Type")
+	ovito_enum<IdentifyDiamondModifier::StructureType>(IdentifyDiamondModifier_py, "Type")
 		.value("OTHER", IdentifyDiamondModifier::OTHER)
 		.value("CUBIC_DIAMOND", IdentifyDiamondModifier::CUBIC_DIAMOND)
 		.value("CUBIC_DIAMOND_FIRST_NEIGHBOR", IdentifyDiamondModifier::CUBIC_DIAMOND_FIRST_NEIGH)
@@ -382,7 +382,7 @@ void defineModifiersSubmodule(py::module m)
 		"   modifier.structures[ChillPlusModifier.Type.HEXAGONAL_ICE].color = (0.0, 0.0, 1.0)\n"
 		"\n\n.\n");
 
-	py::enum_<ChillPlusModifier::StructureType>(ChillPlusModifier_py, "Type")
+	ovito_enum<ChillPlusModifier::StructureType>(ChillPlusModifier_py, "Type")
 		.value("OTHER", ChillPlusModifier::OTHER)
 		.value("HEXAGONAL_ICE", ChillPlusModifier::HEXAGONAL_ICE)
 		.value("CUBIC_ICE", ChillPlusModifier::CUBIC_ICE)
@@ -452,7 +452,7 @@ void defineModifiersSubmodule(py::module m)
 				py::arg("type_a"), py::arg("type_b"))
 	;
 
-	py::enum_<CreateBondsModifier::CutoffMode>(CreateBondsModifier_py, "Mode")
+	ovito_enum<CreateBondsModifier::CutoffMode>(CreateBondsModifier_py, "Mode")
 		.value("Uniform", CreateBondsModifier::UniformCutoff)
 		.value("Pairwise", CreateBondsModifier::PairCutoff)
 	;
@@ -522,7 +522,7 @@ void defineModifiersSubmodule(py::module m)
 				":Default: ``False``\n")
 	;
 
-	py::enum_<ClusterAnalysisModifier::NeighborMode>(ClusterAnalysisModifier_py, "NeighborMode")
+	ovito_enum<ClusterAnalysisModifier::NeighborMode>(ClusterAnalysisModifier_py, "NeighborMode")
 		.value("CutoffRange", ClusterAnalysisModifier::CutoffRange)
 		.value("Bonding", ClusterAnalysisModifier::Bonding)
 	;
@@ -667,7 +667,7 @@ void defineModifiersSubmodule(py::module m)
 				[](ReferenceConfigurationModifier& mod) { return !mod.useMinimumImageConvention(); },
 				[](ReferenceConfigurationModifier& mod, bool b) { mod.setUseMinimumImageConvention(!b); })
 	;
-	py::enum_<ReferenceConfigurationModifier::AffineMappingType>(ReferenceConfigurationModifier_py, "AffineMapping")
+	ovito_enum<ReferenceConfigurationModifier::AffineMappingType>(ReferenceConfigurationModifier_py, "AffineMapping")
 		.value("Off", ReferenceConfigurationModifier::NO_MAPPING)
 		.value("ToReference", ReferenceConfigurationModifier::TO_REFERENCE_CELL)
 		.value("ToCurrent", ReferenceConfigurationModifier::TO_CURRENT_CELL)
@@ -1032,7 +1032,7 @@ void defineModifiersSubmodule(py::module m)
 		".. literalinclude:: ../example_snippets/polyhedral_template_matching.py\n"
 		"   :lines: 5-\n");
 
-	py::enum_<PTMAlgorithm::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
+	ovito_enum<PTMAlgorithm::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
 		.value("OTHER", PTMAlgorithm::OTHER)
 		.value("FCC", PTMAlgorithm::FCC)
 		.value("HCP", PTMAlgorithm::HCP)
@@ -1044,7 +1044,7 @@ void defineModifiersSubmodule(py::module m)
 		.value("GRAPHENE", PTMAlgorithm::GRAPHENE)
 	;
 
-	py::enum_<PTMAlgorithm::OrderingType>(PolyhedralTemplateMatchingModifier_py, "OrderingType")
+	ovito_enum<PTMAlgorithm::OrderingType>(PolyhedralTemplateMatchingModifier_py, "OrderingType")
 		.value("NONE", PTMAlgorithm::ORDERING_NONE)
 		.value("PURE", PTMAlgorithm::ORDERING_PURE)
 		.value("L10", PTMAlgorithm::ORDERING_L10)

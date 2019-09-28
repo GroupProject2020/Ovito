@@ -386,7 +386,7 @@ PYBIND11_MODULE(StdObjPython, m)
 			  "\n\n"
 			  "Note that the element types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
 
-	py::enum_<PropertyStorage::StandardDataType>(Property_py, "DataType")
+	ovito_enum<PropertyStorage::StandardDataType>(Property_py, "DataType")
 		.value("Int", PropertyStorage::Int)
 		.value("Int64", PropertyStorage::Int64)
 		.value("Float", PropertyStorage::Float)
@@ -428,7 +428,7 @@ PYBIND11_MODULE(StdObjPython, m)
 	createDataPropertyAccessors(DataSeries_py, "interval_start", &DataSeriesObject::intervalStart, &DataSeriesObject::setIntervalStart);
 	createDataPropertyAccessors(DataSeries_py, "interval_end", &DataSeriesObject::intervalEnd, &DataSeriesObject::setIntervalEnd);
 
-	py::enum_<DataSeriesObject::Type>(DataSeries_py, "Type")
+	ovito_enum<DataSeriesObject::Type>(DataSeries_py, "Type")
 		.value("User", DataSeriesObject::UserProperty)
 		.value("X", DataSeriesObject::XProperty)
 		.value("Y", DataSeriesObject::YProperty)

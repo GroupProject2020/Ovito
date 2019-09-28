@@ -323,6 +323,15 @@ pybind11::class_<Vector, holder_type> bind_vector_readonly(pybind11::module &m, 
     return cl;
 }
 
+/// Helper method that creates bindings for a C++ enum type.
+/// Makes sure that the enum type does not appear in the Python documentation by including
+/// the 'AUTODOC_SKIP_MEMBER' keyword in the docstring. This helps the Sphinx filter function
+/// to skip the object during doc generation (needed because pybind11 automatically generates a docstring for enum types).
+template<typename CppEnumType>
+pybind11::enum_<CppEnumType> ovito_enum(const pybind11::handle &scope, const char *name) {
+	return pybind11::enum_<CppEnumType>(scope, name, "AUTODOC_SKIP_MEMBER");
+}
+
 namespace detail {
 
 template<typename PythonClass, typename ListGetterFunction>

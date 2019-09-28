@@ -117,7 +117,7 @@ void defineAnimationSubmodule(py::module m)
 		.def("set_scaling_value", &Controller::setScalingValue)
 	;
 
-	py::enum_<Controller::ControllerType>(Controller_py, "Type")
+	ovito_enum<Controller::ControllerType>(Controller_py, "Type")
 		.value("Float", Controller::ControllerTypeFloat)
 		.value("Int", Controller::ControllerTypeInt)
 		.value("Vector3", Controller::ControllerTypeVector3)

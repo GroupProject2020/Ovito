@@ -43,3 +43,7 @@ html {
 table th {
 	text-transform: none;
 }
+
+.property {
+	display: none;
+}

@@ -111,7 +111,7 @@ void defineViewportSubmodule(py::module m)
 								".. literalinclude:: ../example_snippets/viewport_add_overlay.py"
 								"\n\n");
 
-	py::enum_<Viewport::ViewType>(Viewport_py, "Type")
+	ovito_enum<Viewport::ViewType>(Viewport_py, "Type")
 		.value("Top", Viewport::VIEW_TOP)
 		.value("Bottom", Viewport::VIEW_BOTTOM)
 		.value("Front", Viewport::VIEW_FRONT)
@@ -276,7 +276,7 @@ void defineViewportSubmodule(py::module m)
 				"\n")
 	;
 
-	py::enum_<CoordinateTripodOverlay::TripodStyle>(CoordinateTripodOverlay_py, "Style")
+	ovito_enum<CoordinateTripodOverlay::TripodStyle>(CoordinateTripodOverlay_py, "Style")
 		.value("Flat", CoordinateTripodOverlay::TripodStyle::FlatArrows)
 		.value("Solid", CoordinateTripodOverlay::TripodStyle::SolidArrows)
 	;

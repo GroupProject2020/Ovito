@@ -57,7 +57,7 @@ void defineSceneSubmodule(py::module m)
 		.def(py::self != PipelineStatus())
 	;
 
-	py::enum_<PipelineStatus::StatusType>(PipelineStatus_py, "Type")
+	ovito_enum<PipelineStatus::StatusType>(PipelineStatus_py, "Type")
 		.value("Success", PipelineStatus::Success)
 		.value("Warning", PipelineStatus::Warning)
 		.value("Error", PipelineStatus::Error)

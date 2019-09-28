@@ -168,7 +168,7 @@ PYBIND11_MODULE(GridPython, m)
 				":Default: ``False``\n")
 	;
 
-	py::enum_<SpatialBinningModifier::ReductionOperationType>(BinningModifier_py, "Operation")
+	ovito_enum<SpatialBinningModifier::ReductionOperationType>(BinningModifier_py, "Operation")
 		.value("Mean", SpatialBinningModifier::RED_MEAN)
 		.value("Sum", SpatialBinningModifier::RED_SUM)
 		.value("SumVol", SpatialBinningModifier::RED_SUM_VOL)
@@ -176,7 +176,7 @@ PYBIND11_MODULE(GridPython, m)
 		.value("Max", SpatialBinningModifier::RED_MAX)
 	;
 
-	py::enum_<SpatialBinningModifier::BinDirectionType>(BinningModifier_py, "Direction")
+	ovito_enum<SpatialBinningModifier::BinDirectionType>(BinningModifier_py, "Direction")
 		.value("X", SpatialBinningModifier::CELL_VECTOR_1)
 		.value("Y", SpatialBinningModifier::CELL_VECTOR_2)
 		.value("Z", SpatialBinningModifier::CELL_VECTOR_3)

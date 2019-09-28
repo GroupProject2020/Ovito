@@ -131,7 +131,7 @@ void defineRenderingSubmodule(py::module m)
 		.def_property("frames_per_second", &RenderSettings::framesPerSecond, &RenderSettings::setFramesPerSecond)
 	;
 
-	py::enum_<RenderSettings::RenderingRangeType>(RenderSettings_py, "Range")
+	ovito_enum<RenderSettings::RenderingRangeType>(RenderSettings_py, "Range")
 		.value("CurrentFrame", RenderSettings::CURRENT_FRAME)
 		.value("Animation", RenderSettings::ANIMATION_INTERVAL)
 		.value("CustomInterval", RenderSettings::CUSTOM_INTERVAL)
@@ -189,35 +189,35 @@ void defineRenderingSubmodule(py::module m)
 
 	ovito_abstract_class<TransformingDataVis, DataVis>{m};
 
-	py::enum_<ParticlePrimitive::ShadingMode>(m, "ParticleShadingMode")
+	ovito_enum<ParticlePrimitive::ShadingMode>(m, "ParticleShadingMode")
 		.value("Normal", ParticlePrimitive::NormalShading)
 		.value("Flat", ParticlePrimitive::FlatShading)
 	;
 
-	py::enum_<ParticlePrimitive::RenderingQuality>(m, "ParticleRenderingQuality")
+	ovito_enum<ParticlePrimitive::RenderingQuality>(m, "ParticleRenderingQuality")
 		.value("LowQuality", ParticlePrimitive::LowQuality)
 		.value("MediumQuality", ParticlePrimitive::MediumQuality)
 		.value("HighQuality", ParticlePrimitive::HighQuality)
 		.value("AutoQuality", ParticlePrimitive::AutoQuality)
 	;
 
-	py::enum_<ParticlePrimitive::ParticleShape>(m, "ParticleShape")
+	ovito_enum<ParticlePrimitive::ParticleShape>(m, "ParticleShape")
 		.value("Round", ParticlePrimitive::SphericalShape)
 		.value("Square", ParticlePrimitive::SquareCubicShape)
 	;
 
-	py::enum_<ArrowPrimitive::ShadingMode>(m, "ArrowShadingMode")
+	ovito_enum<ArrowPrimitive::ShadingMode>(m, "ArrowShadingMode")
 		.value("Normal", ArrowPrimitive::NormalShading)
 		.value("Flat", ArrowPrimitive::FlatShading)
 	;
 
-	py::enum_<ArrowPrimitive::RenderingQuality>(m, "ArrowRenderingQuality")
+	ovito_enum<ArrowPrimitive::RenderingQuality>(m, "ArrowRenderingQuality")
 		.value("LowQuality", ArrowPrimitive::LowQuality)
 		.value("MediumQuality", ArrowPrimitive::MediumQuality)
 		.value("HighQuality", ArrowPrimitive::HighQuality)
 	;
 
-	py::enum_<ArrowPrimitive::Shape>(m, "ArrowShape")
+	ovito_enum<ArrowPrimitive::Shape>(m, "ArrowShape")
 		.value("CylinderShape", ArrowPrimitive::CylinderShape)
 		.value("ArrowShape", ArrowPrimitive::ArrowShape)
 	;

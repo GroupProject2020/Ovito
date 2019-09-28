@@ -52,7 +52,7 @@ void defineIOSubmodule(py::module m)
 	;
 
 	// This is needed by implementation of import_file():
-	py::enum_<FileImporter::ImportMode>(m, "ImportMode")
+	ovito_enum<FileImporter::ImportMode>(m, "ImportMode")
 		.value("AddToScene", FileImporter::AddToScene)
 		.value("ReplaceSelected", FileImporter::ReplaceSelected)
 		.value("ResetScene", FileImporter::ResetScene)

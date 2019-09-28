@@ -71,7 +71,7 @@ void defineImportersSubmodule(py::module m)
 	auto LAMMPSDataImporter_py = ovito_class<LAMMPSDataImporter, ParticleImporter>(m)
 		.def_property("_atom_style", &LAMMPSDataImporter::atomStyle, &LAMMPSDataImporter::setAtomStyle)
 	;
-	py::enum_<LAMMPSDataImporter::LAMMPSAtomStyle>(LAMMPSDataImporter_py, "LAMMPSAtomStyle")
+	ovito_enum<LAMMPSDataImporter::LAMMPSAtomStyle>(LAMMPSDataImporter_py, "LAMMPSAtomStyle")
 		.value("unknown", LAMMPSDataImporter::AtomStyle_Unknown)
 		.value("angle", LAMMPSDataImporter::AtomStyle_Angle)
 		.value("atomic", LAMMPSDataImporter::AtomStyle_Atomic)

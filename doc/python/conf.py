@@ -23,7 +23,7 @@ import os
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.0'
+needs_sphinx = '2.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -31,6 +31,13 @@ needs_sphinx = '1.0'
 extensions = [
     'sphinx.ext.autodoc',
 ]
+
+autodoc_default_options = {
+    'members': True,
+    'imported-members': True
+}
+
+autodoc_inherit_docstrings = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -182,48 +189,6 @@ html_file_suffix = ".html"
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'OVITOdoc'
 
-
-# -- Options for LaTeX output ---------------------------------------------
-
-latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
-
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
-
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-  ('index', 'OVITO.tex', u'OVITO Documentation',
-   u'Alexander Stukowski', 'manual'),
-]
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-#latex_logo = None
-
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# If true, show page references after internal links.
-#latex_show_pagerefs = False
-
-# If true, show URL addresses after external links.
-#latex_show_urls = False
-
-# Documents to append as an appendix to all manuals.
-#latex_appendices = []
-
-# If false, no module index is generated.
-#latex_domain_indices = True
-
 def process_docstring(app, what, name, obj, options, lines):
     # Filter out lines that contain the keyword "SIGNATURE:"
     # These lines allow the C++ code to specify a custom function signature string for the Python documentation.
@@ -237,6 +202,19 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
             if line.strip().startswith("SIGNATURE:"):
                 return (line[len("SIGNATURE:"):].strip(), return_annotation)
     return (signature, return_annotation)
+
+def skip_member(app, what, name, obj, skip, options):
+    # This will skip class aliases and exclude them from the documentation:
+    if what == "module" and getattr(obj, "__name__", name) != name:
+        return True
+
+    # Skip objects whose docstring contains the special keyword 'AUTODOC_SKIP_MEMBER'.
+    # This is mainly needed, because pybind11 automatically generates docstrings for enum types,
+    # and there is no other way to suppress the including of these enums in the documentation.
+    if "AUTODOC_SKIP_MEMBER" in str(getattr(obj, "__doc__", "")):
+        return True
+
+    return None
 
 import docutils
 from sphinx.util.nodes import split_explicit_title
@@ -256,7 +234,9 @@ def ovitoman_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
     return [ref], []
 
 def setup(app):
+    pass
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-process-signature', process_signature)
+    app.connect('autodoc-skip-member', skip_member)
     app.add_role('ovitoman', ovitoman_role)
     app.add_config_value('ovito_user_manual_url', '.', 'html')

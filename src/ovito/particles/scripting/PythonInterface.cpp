@@ -137,7 +137,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 	createDataSubobjectAccessors(Particles_py, "bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds,
 		"The :py:class:`Bonds` data object, which stores the bond information associated with this particle dataset. ");
 
-	py::enum_<ParticlesObject::Type>(Particles_py, "Type")
+	ovito_enum<ParticlesObject::Type>(Particles_py, "Type")
 		.value("User", ParticlesObject::UserProperty)
 		.value("ParticleType", ParticlesObject::TypeProperty)
 		.value("Position", ParticlesObject::PositionProperty)
@@ -274,7 +274,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 		,"Bonds")
 	;
 
-	py::enum_<BondsObject::Type>(Bonds_py, "Type")
+	ovito_enum<BondsObject::Type>(Bonds_py, "Type")
 		.value("User", BondsObject::UserProperty)
 		.value("BondType", BondsObject::TypeProperty)
 		.value("Selection", BondsObject::SelectionProperty)
@@ -409,7 +409,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 				"\n")
 		;
 
-	py::enum_<ParticlesVis::ParticleShape>(ParticlesVis_py, "Shape")
+	ovito_enum<ParticlesVis::ParticleShape>(ParticlesVis_py, "Shape")
 		.value("Sphere", ParticlesVis::Sphere)
 		.value("Box", ParticlesVis::Box)
 		.value("Circle", ParticlesVis::Circle)
@@ -482,7 +482,7 @@ PYBIND11_MODULE(ParticlesPython, m)
 				":Default: 1.0\n")
 	;
 
-	py::enum_<VectorVis::ArrowPosition>(VectorVis_py, "Alignment")
+	ovito_enum<VectorVis::ArrowPosition>(VectorVis_py, "Alignment")
 		.value("Base", VectorVis::Base)
 		.value("Center", VectorVis::Center)
 		.value("Head", VectorVis::Head)

@@ -64,7 +64,7 @@ void defineExportersSubmodule(py::module m)
 		.def_property("sub_format", &XYZExporter::subFormat, &XYZExporter::setSubFormat)
 	;
 
-	py::enum_<XYZExporter::XYZSubFormat>(XYZExporter_py, "XYZSubFormat")
+	ovito_enum<XYZExporter::XYZSubFormat>(XYZExporter_py, "XYZSubFormat")
 		.value("Parcas", XYZExporter::ParcasFormat)
 		.value("Extended", XYZExporter::ExtendedFormat)
 	;

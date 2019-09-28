@@ -86,7 +86,7 @@ PYBIND11_MODULE(CorrelationFunctionPluginPython, m)
 				"\n\n"
 				":Default: 50\n")
 	;
-	py::enum_<SpatialCorrelationFunctionModifier::NormalizationType>(SpatialCorrelationFunctionModifier_py, "Normalization")
+	ovito_enum<SpatialCorrelationFunctionModifier::NormalizationType>(SpatialCorrelationFunctionModifier_py, "Normalization")
 		.value("ValueCorrelation", SpatialCorrelationFunctionModifier::VALUE_CORRELATION)
 		.value("DifferenceCorrelation", SpatialCorrelationFunctionModifier::DIFFERENCE_CORRELATION)
 	;
