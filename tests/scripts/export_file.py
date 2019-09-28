@@ -25,7 +25,7 @@ export_file(node1, "_export_file_test.data", "imd", precision=400)
 export_file(node1, "_export_file_test.data", "vasp")
 export_file(node1, "_export_file_test.data", "vasp", reduced=True)
 export_file(node1, "_export_file_test.data", "povray")
-export_file(node1, "_export_file_test.data", "netcdf/amber", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+export_file(node1, "_export_file_test.data", "netcdf/amber", columns = ["Particle Type", "Position.X", "Position.Y", "Position.Z"])
 export_file(node1, "_export_file_test.data", "xyz", columns = ["Position.X", "Position.Y", "Position.Z"])
 os.remove("_export_file_test.data")
 ovito.scene.anim.last_frame = 7

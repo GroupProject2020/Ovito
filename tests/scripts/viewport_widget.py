@@ -1,10 +1,16 @@
 import sys
+import os
 from PyQt5.QtWidgets import QApplication, QWidget
 
-# Make sure we are not running within the context of an OVITO session.
+# Make sure we are NOT running within the context of an OVITO session.
 # This script doesn't work when executed with the ovitos interpreter application.
 if 'ovitos' in sys.executable:
     print("Warning: This Python script should not be run using the 'ovitos' interpreter. Please use a normal Python interpreter instead.")
+    sys.exit(0)
+
+# Make sure a display is available. This test script won't work in a headless environment.
+if sys.platform.startswith('linux') and not "DISPLAY" in os.environ:
+    print("Warning: This Python script cannot be run in a headless environment.")
     sys.exit(0)
 
 # Create the global Qt application object:
