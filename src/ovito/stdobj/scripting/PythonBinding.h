@@ -48,7 +48,7 @@ namespace pybind11 { namespace detail {
 	/// Automatic Python string <--> TypedPropertyReference conversion
     template<class PropertyObjectType> struct type_caster<Ovito::StdObj::TypedPropertyReference<PropertyObjectType>> {
     public:
-        PYBIND11_TYPE_CASTER(Ovito::StdObj::TypedPropertyReference<PropertyObjectType>, _("PropertyReference<") + make_caster<PropertyObjectType>::name() + _(">"));
+        PYBIND11_TYPE_CASTER(Ovito::StdObj::TypedPropertyReference<PropertyObjectType>, _("PropertyReference<") + make_caster<PropertyObjectType>::name + _(">"));
 
         bool load(handle src, bool) {
 			using namespace Ovito;
