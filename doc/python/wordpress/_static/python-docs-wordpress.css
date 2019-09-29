@@ -12,9 +12,31 @@ dl {
 	margin: 0px;
 }
 
+dl.field-list {
+	display: flex;
+	flex-wrap: wrap;
+	margin-bottom: 10px;
+}
+
+dl.field-list dd {
+	margin: 0px;
+	flex-basis: 80%;
+}
+
+dl.field-list dt {
+	font-weight: 600;
+	flex-basis: 17%;
+	display: block;
+}
+
+dl.field-list > dt:after {
+	content: ":";
+}
+
 blockquote {
 	font-style: normal;
 	border-style: none;
+	margin-left: 20px;
 }
 
 .py .pre {
@@ -46,4 +68,8 @@ table th {
 
 .property {
 	display: none;
+}
+
+blockquote li p {
+	margin: 0px;
 }

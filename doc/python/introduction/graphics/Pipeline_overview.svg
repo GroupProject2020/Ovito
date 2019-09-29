@@ -9,8 +9,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="614.41809"
-   height="111.33205"
+   width="596.125"
+   height="107.85714"
    id="svg2"
    version="1.1"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
@@ -23,8 +23,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="280.00204"
-     inkscape:cy="-96.409156"
+     inkscape:cx="221.43054"
+     inkscape:cy="-94.266314"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -51,9 +51,9 @@
        orient="auto"
        inkscape:stockid="TriangleOutS">
       <path
-         transform="scale(0.2,0.2)"
-         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt"
-         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         transform="scale(0.2)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
          id="path4305"
          inkscape:connector-curvature="0" />
     </marker>
@@ -80,8 +80,8 @@
        inkscape:stockid="Arrow1Lend">
       <path
          transform="matrix(-0.8,0,0,-0.8,-10,0)"
-         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt"
-         d="M 0,0 5,-5 -12.5,0 5,5 0,0 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
          id="path4160"
          inkscape:connector-curvature="0" />
     </marker>
@@ -218,9 +218,9 @@
        orient="auto"
        inkscape:stockid="TriangleOutSd">
       <path
-         transform="scale(0.2,0.2)"
-         style="fill:#afafaf;fill-rule:evenodd;stroke:#afafaf;stroke-width:1pt"
-         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         transform="scale(0.2)"
+         style="fill:#afafaf;fill-rule:evenodd;stroke:#afafaf;stroke-width:1.00000003pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
          id="path5012"
          inkscape:connector-curvature="0" />
     </marker>
@@ -294,9 +294,9 @@
        orient="auto"
        inkscape:stockid="TriangleOutSd">
       <path
-         transform="scale(0.2,0.2)"
-         style="fill:#afafaf;fill-rule:evenodd;stroke:#afafaf;stroke-width:1pt"
-         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         transform="scale(0.2)"
+         style="fill:#afafaf;fill-rule:evenodd;stroke:#afafaf;stroke-width:1.00000003pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
          id="path5012-6"
          inkscape:connector-curvature="0" />
     </marker>
@@ -309,7 +309,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -317,25 +317,25 @@
      id="layer1"
      inkscape:groupmode="layer"
      inkscape:label="Layer 1"
-     transform="translate(-21.594544,-331.03015)"
+     transform="translate(-51.594611,-335.93362)"
      style="display:inline">
     <rect
-       y="361.64792"
+       y="345.93362"
        x="127.14286"
-       height="252.14285"
-       width="441.42865"
+       height="87.85714"
+       width="422.14294"
        id="rect2985-9"
-       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#f3eebf;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:5.89341736;marker:none;enable-background:accumulate" />
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#f3eebf;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.40198112;marker:none;enable-background:accumulate" />
     <path
        inkscape:connector-curvature="0"
        id="path4151"
-       d="m 192.2223,531.40553 h 17.14286"
+       d="m 113.65087,396.40553 h 17.14286"
        style="fill:none;stroke:#afafaf;stroke-width:7;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutSd)"
        sodipodi:nodetypes="cc" />
     <path
        sodipodi:nodetypes="cc"
        style="fill:none;stroke:#afafaf;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutSd)"
-       d="m 237.93659,398.54839 41.02079,0"
+       d="m 237.93659,398.54839 h 41.02079"
        id="path5955"
        inkscape:connector-curvature="0" />
     <rect
@@ -351,15 +351,15 @@
        x="189.66576"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333333px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;writing-mode:lr-tb;text-anchor:middle"
          y="403.1864"
-         x="150.01732"
+         x="189.66576"
          id="tspan3757-0-3"
          sodipodi:role="line">FileSource</tspan></text>
     <path
        inkscape:connector-curvature="0"
        id="path5957"
-       d="m 375.79373,398.54839 41.02079,0"
+       d="m 375.79373,398.54839 h 41.02079"
        style="fill:none;stroke:#afafaf;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutSd)"
        sodipodi:nodetypes="cc" />
     <rect
@@ -376,21 +376,14 @@
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        xml:space="preserve"><tspan
          id="tspan3935"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333333px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;writing-mode:lr-tb;text-anchor:middle"
          y="403.90067"
          x="339.54855"
          sodipodi:role="line">Modifier #1</tspan></text>
-    <rect
-       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#f2f2f2;fill-opacity:1;stroke:#000000;stroke-width:0.99311084;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
-       id="rect4428"
-       width="100.54068"
-       height="130.08594"
-       x="219.1696"
-       y="469.46216" />
     <path
        sodipodi:nodetypes="cc"
        style="fill:none;stroke:#afafaf;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutSd)"
-       d="m 512.2223,398.54839 41.02079,0"
+       d="m 512.2223,398.54839 h 41.02079"
        id="path5965"
        inkscape:connector-curvature="0" />
     <rect
@@ -409,101 +402,85 @@
          sodipodi:role="line"
          x="477.40573"
          y="403.90067"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333333px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;writing-mode:lr-tb;text-anchor:middle"
          id="tspan5963">Modifier #2</tspan></text>
     <path
        inkscape:connector-curvature="0"
-       d="m 140.38154,560.31734 h 51.73691 v -51.7373 L 181.77099,498.2325 h -41.38945 z"
+       d="m 61.810111,425.31734 h 51.736909 v -51.7373 L 103.19956,363.2325 H 61.810111 Z"
        style="fill:#f9f9f9;fill-opacity:1;stroke:#000000;stroke-width:0.43099999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
        id="path1211" />
     <text
        id="text1215"
-       y="541.013"
-       x="144.67068"
+       y="406.013"
+       x="66.099258"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        xml:space="preserve"><tspan
          id="tspan1213"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         y="541.013"
-         x="144.67068"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;writing-mode:lr-tb;text-anchor:start"
+         y="406.013"
+         x="66.099258"
          sodipodi:role="line">Data file</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       x="145.16599"
-       y="506.33243"
+       x="66.594559"
+       y="371.33243"
        id="text1219"><tspan
          sodipodi:role="line"
          id="tspan1217"
-         x="145.16599"
-         y="506.33243"
+         x="66.594559"
+         y="371.33243"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.30095196px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start">.......</tspan></text>
     <text
        id="text1223"
-       y="512.78558"
-       x="145.16599"
+       y="377.78558"
+       x="66.594559"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        xml:space="preserve"><tspan
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.30095196px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         y="512.78558"
-         x="145.16599"
+         y="377.78558"
+         x="66.594559"
          id="tspan1221"
          sodipodi:role="line">.......</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       x="145.16599"
-       y="519.42316"
+       x="66.594559"
+       y="384.42316"
        id="text1227"><tspan
          sodipodi:role="line"
          id="tspan1225"
-         x="145.16599"
-         y="519.42316"
+         x="66.594559"
+         y="384.42316"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.30095196px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start">.......</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       x="128.58875"
-       y="353.9007"
+       x="132.7316"
+       y="363.1864"
        id="text1231"><tspan
          sodipodi:role="line"
          id="tspan1229"
-         x="128.58875"
-         y="353.9007"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333333px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start">Data pipeline:</tspan></text>
+         x="132.7316"
+         y="363.1864"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;writing-mode:lr-tb;text-anchor:start">Data pipeline:</tspan></text>
+    <rect
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.69999999;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker:none;enable-background:accumulate"
+       id="rect1097"
+       width="70.238091"
+       height="41.190479"
+       x="567.13153"
+       y="377.48126" />
     <text
-       id="text1235"
-       y="444.61499"
-       x="221.44589"
+       id="text1103"
+       y="401.04352"
+       x="601.69147"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         y="444.61499"
-         x="221.44589"
-         sodipodi:role="line"
-         id="tspan1237">Master data </tspan><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:start;writing-mode:lr-tb;text-anchor:start"
-         y="461.28165"
-         x="221.44589"
-         sodipodi:role="line"
-         id="tspan1241">collection:</tspan></text>
-    <rect
-       y="476.35733"
-       x="225.32986"
-       height="32.724174"
-       width="88.199516"
-       id="rect1243"
-       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#adccdf;fill-opacity:1;stroke:#000000;stroke-width:0.63690764;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;line-height:0%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       x="268.95148"
-       y="496.75784"
-       id="text1247"><tspan
-         sodipodi:role="line"
-         id="tspan1245"
-         x="268.95148"
-         y="496.75784"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle">Data object A</tspan></text>
+         id="tspan1101"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;writing-mode:lr-tb;text-anchor:middle"
+         y="401.04352"
+         x="601.69147"
+         sodipodi:role="line">output</tspan></text>
   </g>
 </svg>

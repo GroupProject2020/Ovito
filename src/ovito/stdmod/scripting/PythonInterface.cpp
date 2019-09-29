@@ -299,8 +299,8 @@ PYBIND11_MODULE(StdModPython, m)
 		.def_property("end_value", &ColorCodingModifier::endValue, &ColorCodingModifier::setEndValue,
 				"This parameter defines, together with the :py:attr:`.start_value` parameter, the normalization range for mapping the input property values to colors.")
 		.def_property("gradient", &ColorCodingModifier::colorGradient, &ColorCodingModifier::setColorGradient,
-				"The color gradient object, which is responsible for mapping normalized property values to colors. "
-				"Available gradient types are:\n"
+				"The color gradient used to map normalized property values to colors. "
+				"Available gradient types are:\n\n"
 				" * ``ColorCodingModifier.BlueWhiteRed()``\n"
 				" * ``ColorCodingModifier.Grayscale()``\n"
 				" * ``ColorCodingModifier.Hot()``\n"
