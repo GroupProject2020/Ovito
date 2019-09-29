@@ -113,6 +113,12 @@ the data type and the dimensionality are prescribed by OVITO. For user-defined p
 :py:ref:`creating a new property <creating_new_properties>`.
 
 -------------------------------------------------
+Global attributes
+-------------------------------------------------
+
+...
+
+-------------------------------------------------
 Next topic
 -------------------------------------------------
 

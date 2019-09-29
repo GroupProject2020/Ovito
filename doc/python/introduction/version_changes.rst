@@ -66,42 +66,30 @@ The :py:class:`~ovito.data.PropertyContainer` class has been introduced as a gen
 e.g. :py:class:`~ovito.data.Particles`, :py:class:`~ovito.data.Bonds`, :py:class:`~ovito.data.VoxelGrid` and
 :py:class:`~ovito.data.DataSeries`, that each represent different collections of elements.
 
-The :py:class:`ovito.data.Particles` container behaves like a (read-only) dictionary of particle properties,
+The :py:class:`ovito.data.Particles` container behaves like a dictionary of particle properties,
 providing key-based access to the :py:attr:`~ovito.data.Property` objects it manages.
 
 The :py:attr:`!ParticleProperty.array` and :py:attr:`!ParticleProperty.marray` attributes
-for accessing property values have been deprecated. Instead, the :py:class:`~ovito.data.Property` object itself now behaves like a Numpy array::
+for accessing property values have been deprecated. Instead, the :py:class:`~ovito.data.Property` class itself now behaves like
+a regular Numpy array::
 
+    # Read access:
     pos_property = data.particles['Position']
     assert(len(pos_property) == data.particles.count)
-    print('XYZ position of first particle:', pos_property[0])
+    print('XYZ coordinates of first particle:', pos_property[0])
 
-Note, however, that :py:class:`~ovito.data.Property` is not a true Numpy array subclass; it just mimics the Numpy array
-interface to some extent. You can turn it into true Numpy array if needed in two ways::
-
-    pos_array = numpy.asarray(pos_property)
-    pos_array = pos_property[...]
-
-In both cases no data copy is made. The Numpy array will be a view of the internal memory of the :py:class:`~ovito.data.Property`.
-To modify the data stored in a :py:class:`~ovito.data.Property`, write access must be explicitly requested using a Python ``with``
-statement::
-
-    with pos_property:
-        pos_property[0] = (0,0,0)
-
-The old :py:attr:`!ParticleProperty.marray` accessor attribute and a
-call to the removed :py:meth:`!ParticleProperty.changed` method to finalize the write transaction are no longer needed.
+    # Write access:
+    pos_property = data.particles_['Position_']
+    pos_property[0] += displacement
 
 Simulation cells
 ------------------------------------------
 
-The :py:class:`~ovito.data.SimulationCell` class now behaves like a read-only Numpy array of shape (3,4), providing direct
-access to the cell vectors and the cell origin. The old :py:attr:`!array` and :py:attr:`!marray` accessor attributes have been deprecated.
-Write access to the cell matrix now requires a ``with`` statement::
+The :py:class:`~ovito.data.SimulationCell` class now behaves like a Numpy matrix array of shape (3,4), providing direct
+access to the cell vectors and the cell origin. The old :py:attr:`!array` and :py:attr:`!marray` accessor attributes have been deprecated::
 
-    cell = data.cell_
-    with cell:
-        cell[:,1] *= 1.1   # Expand cell along y-direction by scaling second cell vector
+    # Expand cell along y-direction by scaling second cell vector
+    data.cell_[:,1] *= 1.05
 
 Bonds
 ------------------------------------------

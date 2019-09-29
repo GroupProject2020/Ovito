@@ -234,7 +234,6 @@ def ovitoman_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
     return [ref], []
 
 def setup(app):
-    pass
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-process-signature', process_signature)
     app.connect('autodoc-skip-member', skip_member)

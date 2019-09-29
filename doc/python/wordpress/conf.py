@@ -31,6 +31,13 @@ extensions = [
     'sphinx.ext.autodoc'
 ]
 
+autodoc_default_options = {
+    'members': True,
+    'imported-members': True
+}
+
+autodoc_inherit_docstrings = False
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -201,6 +208,19 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
                 return (line[len("SIGNATURE:"):].strip(), return_annotation)
     return (signature, return_annotation)
 
+def skip_member(app, what, name, obj, skip, options):
+    # This will skip class aliases and exclude them from the documentation:
+    if what == "module" and getattr(obj, "__name__", name) != name:
+        return True
+
+    # Skip objects whose docstring contains the special keyword 'AUTODOC_SKIP_MEMBER'.
+    # This is mainly needed, because pybind11 automatically generates docstrings for enum types,
+    # and there is no other way to suppress the including of these enums in the documentation.
+    if "AUTODOC_SKIP_MEMBER" in str(getattr(obj, "__doc__", "")):
+        return True
+
+    return None
+
 import docutils
 from sphinx.util.nodes import split_explicit_title
 
@@ -221,5 +241,6 @@ def ovitoman_role(typ, rawtext, text, lineno, inliner, options={}, content=[]):
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-process-signature', process_signature)
+    app.connect('autodoc-skip-member', skip_member)
     app.add_role('ovitoman', ovitoman_role)
     app.add_config_value('ovito_user_manual_url', '.', 'html')

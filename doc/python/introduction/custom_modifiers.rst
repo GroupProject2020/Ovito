@@ -41,12 +41,12 @@ You need to perform one of the following steps to insert your modifier function 
             # Insert the modifier function into a pipeline:
             pipeline.modifiers.append(my_mod_function)
 
-            # Pipeline evaluation: This will let the system invoke your user-defined function.
+            # Pipeline evaluation: The system will invoke your user-defined function.
             data = pipeline.compute()
 
        Your modifier function -which can have an arbitrary name such as ``my_mod_function()`` in this case- is inserted into the pipeline
-       by appending it to the :py:attr:`Pipeline.modifiers <ovito.pipeline.Pipeline.modifiers>` list. Behind the scenes, OVITO automatically creates a
-       :py:class:`~ovito.modifiers.PythonScriptModifier` instance to wrap the Python function object.
+       by appending it to the :py:attr:`Pipeline.modifiers <ovito.pipeline.Pipeline.modifiers>` list. Behind the scenes, OVITO automatically wraps
+       the Python function object in a :py:class:`~ovito.modifiers.PythonScriptModifier` instance.
 
 Keep in mind that OVITO is going to invoke your Python function whenever it needs to, and as many times as it needs to. Typically this will happen
 when the pipeline is being evaluated. In the graphical program, a pipeline evaluation routinely occurs as part of updating the interactive
@@ -63,12 +63,15 @@ preceding the user-defined modifier in the pipeline). Your Python modifier funct
 the :py:class:`~ovito.data.DataCollection` in some way. After your modifier function has done its work and returns,
 the modified data state is automatically passed on to any subsequent modifiers down the pipeline.
 
+Writing well-behaved modifier functions
+----------------------------------------
+
 It is important to note that a user-defined modifier function is subject to certain restrictions.
-Since it will get called by the pipeline system as needed, the function may only manipulate
+Since it will get called by the pipeline system as needed, the function should only manipulate
 the :py:class:`~ovito.data.DataCollection` it receives through the ``data`` function parameter and nothing else.
 In particular, it must not modify the pipeline structure itself (e.g. add/remove modifiers) or perform other operations that
-have side effects on the global program state. Here are a few examples for things you should *not* do within a user-defined modifier function,
-because they lead to undesired side effects::
+have side effects on the global program state. Here are a few examples for things you should typically *not* do inside a user-defined modifier function,
+because they can lead to undesired side effects::
 
     total_energy = 0.0  # A global variable accessed below
 
@@ -87,80 +90,101 @@ because they lead to undesired side effects::
         # function an arbitrary number of times):
         total_energy += numpy.sum(data.particles['Potential Energy'])
 
+        # Do NOT perform file I/O from within a modifier function, because you don't know when
+        # and how often the pipeline system is going to call your function:
+        file = open('my_output.txt', 'w')
+
 When implementing a modifier function that alters the contents of the :py:class:`~ovito.data.DataCollection` passed in by
 the system, make sure you adhere to the rules of :ref:`shared data ownership <data_ownership>` and make use of the :ref:`underscore notation <underscore_notation>`
 to announce any modifications your are going make to data objects. See the :ref:`examples section <modifier_script_examples>` of this manual, which provides various examples
 of user-defined modifier functions.
 
-Initialization phase
------------------------------------
+How to save computed information to disk
+-------------------------------------------------
 
-.. warning::
-   The following sections on this page are out of date! They have not been updated yet to reflect the changes made in the current
-   development version of OVITO.
+A typical use case for custom analysis functions is the computation of some specific information for each frame of a simulation
+trajectory. The analysis results often need to be written to disk in order to subsequently use them (e.g. for creating a data plot).
+As mentioned in the previous section, however, the user-defined modifier function itself should not directly write data to disk. Instead, the
+information should be fed back to the data pipeline of OVITO by storing it in the :py:class:`~ovito.data.DataCollection` object.
+You can subsequently use OVITO's standard file export function to write the results of the data pipeline to disk (accessible from the file menu in
+the GUI, or by calling the :py:func:`~ovito.io.export_file` Python function in a batch script).
 
-Initialization of parameters and other inputs needed by our custom modifier function should be done outside of the function.
-For example, our modifier may require reference coordinates of particles, which need to be loaded from an external file.
-One example is the *Displacement vectors* modifier of OVITO, which asks the user to load a reference configuration file with the
-coordinates that should be subtracted from the current particle coordinates. A corresponding implementation of this modifier in Python
-would look as follows::
+Simple quantities computed by your modifier function can be :ref:`output as global attributes <adding_global_attributes>`
+by storing them in the :py:attr:`DataCollection.attributes <ovito.data.DataCollection.attributes>` dictionary. You can then
+export the attribute(s) to a text file for all simulation frames by invoking the :py:func:`~ovito.io.export_file` function with the
+``"txt/attr"`` output format (or by selecting the "Table of values" format in the GUI). See the :ref:`this example <example_msd_calculation>`.
 
-    from ovito.io import FileSource
+A similar approach should be followed when your modifier functions computes some information for each particle that needs to
+be written to disk. In this case, the function should stores the computed per-particle information as a :ref:`new particle property <creating_new_properties>`
+and then use OVITO's file export function to write the pipeline results out to disk (e.g. in the simple XYZ file format).
 
-    reference = FileSource()
-    reference.load("simulation.0.dump")
+In more complicated situations, for example when the computed information needs to be written to a file in a custom format, a different approach
+may be more suitable. Instead of performing the computation within a user-defined modifier function that gets called by the pipeline system, you
+should rather do the analysis in a :ref:`batch script <scripting_running>` looping over all simulation frames::
 
-    def modify(frame, data):
-        prop = output.create_particle_property(ParticleProperty.Type.Displacement)
+    pipeline = import_file(...)
+    for frame in range(pipeline.source.num_frames):
+        data = pipeline.compute(frame)
+        ...
+        # Perform analysis of the current frame...
+        ...
+        # Write results to an output file using Python functions
+        file = open('output_file.%i.txt' % frame, 'w')
+        ...
 
-        prop.marray[:] = (    input.particle_properties.position.array -
-                          reference.particle_properties.position.array)
+Note that this approach requires that you execute the batch script outlined above through the :ref:`ovitos <ovitos_interpreter>`
+script interpreter in the system terminal. It cannot be used within the graphical program environment.
 
-The script above creates a :py:class:`~ovito.io.FileSource` to load the reference particle positions from an external
-data file. Within the actual ``modify()`` function we can then access the particle
-coordinates loaded by the :py:class:`~ovito.io.FileSource` object.
+One-time loading of input data
+---------------------------------------
+
+Some user-defined modifier functions may require additional input data that needs to be read from disk. For example, this could be
+extra per-particle information stored in a separate file. Loading such auxiliary information should be done outside of the modifier function,
+in particular if the information is static, i.e., does not depend on the current simulation frame.
+
+Consider as an example the *Displacement vectors* modifier of OVITO, which lets the user load a separate file
+containing the reference particle coordinates that should be subtracted from the current positions. A corresponding implementation of this modifier
+in Python would look as follows:
+
+.. literalinclude:: ../example_snippets/displacement_vector_calculation.py
+  :lines: 4-14
 
 Long-running modifier functions
 ------------------------------------------------------
 
-Due to technical limitations the custom modifier function is always executed in the main thread of the application.
-This is in contrast to the built-in asynchronous modifiers of OVITO, which are implemented in C++.
-They are executed in a background thread to not block the graphical user interface during long-running operations.
-
-That means, if our Python modifier function takes a long time to compute before returning control to OVITO, no input events
-can be processed by the application and the user interface will freeze. To avoid this, you can make your modifier function asynchronous using
-the ``yield`` Python statement (see the `Python docs <https://docs.python.org/3/reference/expressions.html#yieldexpr>`__ for more information).
-Calling ``yield`` within the modifier function temporarily yields control to the
+The user-defined modifier function is always executed in the main thread of the graphical application. That means, if our Python function takes a
+long time to execute before returning control to the system, no mouse or keyboard input events can be processed by the application and
+the user interface will freeze. To avoid this situation, you can make your modifier function asynchronous by including
+one or more ``yield`` Python statements (see the `Python docs <https://docs.python.org/3/reference/expressions.html#yieldexpr>`__ for more information).
+Calling ``yield`` within the modifier function temporarily yields control back to the
 main program, giving it the chance to process waiting user input events or repaint the viewports::
 
-   def modify(frame, input, output):
-       for i in range(input.number_of_particles):
-           # Perform a small computation step
+    def modify(frame, data):
+        # This is a long-running loop over all particles in the system:
+        for i in range(data.particles.count):
+            # Perform one short computational step:
+            ...
+            # Temporarily yield control to the system to process input events:
+            yield
+
+``yield`` should be called periodically and as frequently as possible, for example after processing one input element at a time as
+in the code above. The ``yield`` keyword also gives the system the possibility to cancel the execution of the
+modifier function. When the evaluation of the data pipeline is interrupted by the system, the ``yield`` statement does not return
+control back to the function and execution is discontinued.
+
+Finally, the ``yield`` mechanism also gives the modifier function the possibility to report its progress back to the system.
+The current progress must be specified as a fraction in the range 0.0-1.0 using the ``yield`` statement. For example::
+
+   def modify(frame, data):
+       for i in range(data.particles.count):
            ...
-           # Temporarily yield control to the system
-           yield
+           yield (i / data.particles.count)
 
-In general, ``yield`` should be called periodically and as frequently as possible, for example after processing one particle from the input as
-in the code above.
+The reported progress value will be displayed in the status bar of OVITO while the modifier function is executing.
+Moreover, a string describing the current operation can be passed to the system, which will also be displayed in the status bar::
 
-The ``yield`` keyword also gives the user (and the system) the possibility to cancel the execution of the custom
-modifier function. When the evaluation of the modification pipeline is interrupted by the system, the ``yield`` statement does not return
-and the Python function execution is discontinued.
-
-Finally, the ``yield`` mechanism gives the custom modifier function the possibility to report its progress back to the system.
-The progress must be reported as a fraction in the range 0.0 to 1.0 using the ``yield`` statement. For example::
-
-   def modify(frame, input, output):
-       total_count = input.number_of_particles
-       for i in range(0, total_count):
-           ...
-           yield (i/total_count)
-
-The current progress value will be displayed in the status bar by OVITO.
-Moreover, a string describing the current status can be yielded, which will also be displayed in the status bar::
-
-   def modify(frame, input, output):
-       yield "Performing an expensive analysis..."
+   def modify(frame, data):
+       yield "Performing an analysis..."
        ...
 
 -------------------------------------------------

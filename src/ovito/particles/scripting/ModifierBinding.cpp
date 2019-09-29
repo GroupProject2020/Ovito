@@ -737,7 +737,7 @@ void defineModifiersSubmodule(py::module m)
 			" * ``Selection`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The modifier can select those particles for which a local deformation could not be computed because there were not\n"
 			"   enough neighbors within the :py:attr:`.cutoff` range. Those particles with invalid deformation values can subsequently be removed using the\n"
-			"   :py:class:`DeleteSelectedParticlesModifier`, for example. Selection of invalid particles is controlled by the :py:attr:`.select_invalid_particles` flag.\n"
+			"   :py:class:`DeleteSelectedModifier`, for example. Selection of invalid particles is controlled by the :py:attr:`.select_invalid_particles` flag.\n"
 			" * ``AtomicStrain.invalid_particle_count`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of particles for which the local strain calculation failed because they had not enough neighbors within the :py:attr:`.cutoff` range.\n"
 			)

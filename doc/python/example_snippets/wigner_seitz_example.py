@@ -48,7 +48,7 @@ export_file(pipeline, "output/antisites.txt", "txt/attr",
 
 # Export the XYZ coordinates of just the antisites by removing all other atoms.
 pipeline.modifiers.append(InvertSelectionModifier())
-pipeline.modifiers.append(DeleteSelectedParticlesModifier())
+pipeline.modifiers.append(DeleteSelectedModifier())
 export_file(pipeline, "output/antisites.xyz", "xyz",
     columns = ['Position.X', 'Position.Y', 'Position.Z'],
     multiple_frames = True)
