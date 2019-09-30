@@ -102,13 +102,14 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 
 		// Parse list of atomic sites.
 		std::vector<gemmi::AtomicStructure::Site> sites = structure.get_all_unit_cell_sites();
-		PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::PositionProperty, true);
+		PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::PositionProperty, false);
 		frameData->addParticleProperty(posProperty);
-		PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::TypeProperty, true);
+		PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::TypeProperty, false);
 		frameData->addParticleProperty(typeProperty);
 		ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 		Point3* posIter = posProperty->dataPoint3();
 		int* typeIter = typeProperty->dataInt();
+		bool hasOccupancy = false;
 		for(const gemmi::AtomicStructure::Site& site : sites) {
 			gemmi::Position pos = structure.cell.orthogonalize(site.fract.wrap_to_unit());
 			posIter->x() = pos.x;
@@ -116,8 +117,19 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 			posIter->z() = pos.z;
 			++posIter;
 			*typeIter++ = typeList->addTypeName(site.type_symbol.empty() ? site.label.c_str() : site.type_symbol.c_str());
+			if(site.occ != 1) hasOccupancy = true;
 		}
 		if(isCanceled()) return {};
+
+		// Parse the optional site occupancy information.
+		if(hasOccupancy) {
+			PropertyPtr occupancyProperty = std::make_shared<PropertyStorage>(sites.size(), PropertyStorage::Float, 1, 0, QStringLiteral("Occupancy"), false);
+			frameData->addParticleProperty(occupancyProperty);
+			FloatType* occupancyIter = occupancyProperty->dataFloat();
+			for(const gemmi::AtomicStructure::Site& site : sites) {
+				*occupancyIter++ = site.occ;
+			}
+		}
 
 		// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 		// depend on the storage order of particles in the file We rather want a well-defined particle type ordering, that's
