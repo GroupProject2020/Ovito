@@ -114,7 +114,9 @@ def ase_to_ovito(atoms):
     symbols = atoms.get_chemical_symbols()
     type_list = list(set(symbols))
     for i, sym in enumerate(type_list):
-        types.type_list.append(ParticleType(id=i+1, name=sym))
+        ovito_ptype = ParticleType(id=i+1, name=sym)
+        ovito_ptype.load_defaults()
+        types.type_list.append(ovito_ptype)
     with types as tarray:
         for i,sym in enumerate(symbols):
             tarray[i] = type_list.index(sym)+1

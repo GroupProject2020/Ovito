@@ -315,6 +315,14 @@ PYBIND11_MODULE(ParticlesPython, m)
 			"\n\n"
 			"Represents a particle type or atom type. :py:class:`!ParticleType` instances are typically part of a typed :py:class:`Property`, "
 			"but this class is also used in other contexts, for example to define the list of structural types identified by the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier`. ")
+		.def("load_defaults", [](ParticleType& ptype) {
+				ptype.setColor(ParticleType::getDefaultParticleColor(ParticlesObject::TypeProperty, ptype.nameOrNumericId(), ptype.numericId()));
+				ptype.setRadius(ParticleType::getDefaultParticleRadius(ParticlesObject::TypeProperty, ptype.nameOrNumericId(), ptype.numericId()));
+			},
+				"Given the type's chemical :py:attr:`~ovito.data.ElementType.name`, which must have been set before calling this method, "
+				"initializes the type's :py:attr:`~ovito.data.ElementType.color` and :py:attr:`~ovito.data.ParticleType.radius` fields with default "
+				"values from OVITO's internal database of chemical elements. "
+				"This method is useful when creating new atom types while building up a molecule structure. ")
 		.def("load_shape", [](ParticleType& ptype, const QString& filepath) {
 				ensureDataObjectIsMutable(ptype);
 				if(!ptype.loadShapeMesh(filepath, ScriptEngine::currentTask()->createSubTask()))

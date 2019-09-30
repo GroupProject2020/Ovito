@@ -224,16 +224,22 @@ PYBIND11_MODULE(StdObjPython, m)
 		"   * :py:class:`BondType` (used with typed properties in a :py:class:`Bonds` container)\n")
 	;
 	createDataPropertyAccessors(ElementType_py, "id", &ElementType::numericId, &ElementType::setNumericId,
-			"The unique numeric identifier of the type (typically a positive ``int``). ");
+			"The unique numeric identifier of the type (typically a positive ``int``). "
+			"\n\n"
+			":Default: ``0``\n");
 	createDataPropertyAccessors(ElementType_py, "color", &ElementType::color, &ElementType::setColor,
-			"The display color used to render elements of this type. This is a tuple with RGB values in the range 0 to 1.");
+			"The display color used for rendering elements of this type. This is a tuple with RGB values in the range 0 to 1."
+			"\n\n"
+			":Default: ``(1.0, 1.0, 1.0)``\n");
 	createDataPropertyAccessors(ElementType_py, "name", &ElementType::name, &ElementType::setName,
 			"The display name of this type. If this string is empty, the numeric :py:attr:`.id` will be used when referring to this type. ");
 	createDataPropertyAccessors(ElementType_py, "enabled", &ElementType::enabled, &ElementType::setEnabled,
 			"This flag only has a meaning in the context of structure analysis and identification. "
 			"Modifiers such as the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier` or the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier` "
 			"manage a list of structural types that they can identify (e.g. FCC, BCC, etc.). The identification of individual structure types "
-			"can be turned on or off by setting their :py:attr:`!enabled` flag.");
+			"can be turned on or off by setting their :py:attr:`!enabled` flag."
+			"\n\n"
+			":Default: ``True``\n");
 
 	auto Property_py = ovito_abstract_class<PropertyObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`"
