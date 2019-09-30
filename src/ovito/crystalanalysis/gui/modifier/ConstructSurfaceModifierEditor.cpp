@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +22,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/modifier/ConstructSurfaceModifier.h>
 #include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
 #include <ovito/gui/properties/FloatParameterUI.h>
 #include <ovito/gui/properties/BooleanParameterUI.h>
 #include <ovito/gui/properties/SubObjectParameterUI.h>
@@ -49,22 +50,29 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	layout->addWidget(radiusUI->label(), 0, 0);
 	layout->addLayout(radiusUI->createFieldLayout(), 0, 1);
 
-	IntegerParameterUI* smoothingLevelUI = new IntegerParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::smoothingLevel));
-	layout->addWidget(smoothingLevelUI->label(), 1, 0);
-	layout->addLayout(smoothingLevelUI->createFieldLayout(), 1, 1);
-
 	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::onlySelectedParticles));
-	layout->addWidget(onlySelectedUI->checkBox(), 2, 0, 1, 2);
+	layout->addWidget(onlySelectedUI->checkBox(), 1, 0, 1, 2);
+
+	IntegerRadioButtonParameterUI* methodUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::method));
+	QRadioButton* alphaShapeMethodBtn = methodUI->addRadioButton(ConstructSurfaceModifier::AlphaShape, tr("Use alpha-shape method:"));
+	layout->addWidget(alphaShapeMethodBtn, 2, 0, 1, 2);
+
+	IntegerParameterUI* smoothingLevelUI = new IntegerParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::smoothingLevel));
+	layout->addWidget(smoothingLevelUI->label(), 3, 0);
+	layout->addLayout(smoothingLevelUI->createFieldLayout(), 3, 1);
 
 	BooleanParameterUI* selectSurfaceParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::selectSurfaceParticles));
-	layout->addWidget(selectSurfaceParticlesUI->checkBox(), 3, 0, 1, 2);
+	layout->addWidget(selectSurfaceParticlesUI->checkBox(), 4, 0, 1, 2);
+
+	QRadioButton* gaussianDensityBtn = methodUI->addRadioButton(ConstructSurfaceModifier::GaussianDensity, tr("Use Gaussian density method:"));
+	layout->addWidget(gaussianDensityBtn, 5, 0, 1, 2);
 
 	// Status label.
-	layout->setRowMinimumHeight(3, 10);
-	layout->addWidget(statusLabel(), 4, 0, 1, 2);
+	layout->setRowMinimumHeight(5, 10);
+	layout->addWidget(statusLabel(), 6, 0, 1, 2);
 	statusLabel()->setMinimumHeight(100);
 
-	// Open a sub-editor for the mesh vis element.
+	// Open a sub-editor for the surface mesh vis element.
 	new SubObjectParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::surfaceMeshVis), rolloutParams.after(rollout));
 }
 
