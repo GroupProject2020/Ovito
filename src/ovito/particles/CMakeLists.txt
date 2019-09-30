@@ -77,6 +77,7 @@ SET(SourceFiles
 	import/xsf/XSFImporter.cpp
 	import/dl_poly/DLPOLYImporter.cpp
 	import/quantumespresso/QuantumEspressoImporter.cpp
+	import/cif/CIFImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp
 	export/OutputColumnMapping.cpp

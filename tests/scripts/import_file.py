@@ -119,3 +119,9 @@ import_file(test_data_dir + "LAMMPS/binary_dump.bgq.bin", columns = ["Particle I
 pipeline = import_file(test_data_dir + "GSD/shape_spec_test.gsd")
 assert(pipeline.source.data.particles.particle_types.types[0].shape)
 assert(pipeline.source.data.particles.particle_types.types[1].shape)
+
+# Test the CIF file reader.
+pipeline = import_file(test_data_dir + "CIF/9002806.cif")
+assert(pipeline.source.data.particles.count == 20)
+pipeline = import_file(test_data_dir + "CIF/9002807_occupancies.cif")
+assert(pipeline.source.data.particles.count == 24)

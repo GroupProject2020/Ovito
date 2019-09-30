@@ -164,6 +164,16 @@
             <entry>Apache 2.0</entry>
             <entry></entry>
           </row>
+          <row>
+            <entry><link xlink:href="https://github.com/project-gemmi/gemmi">GEMMI (GEneral MacroMolecular I/O)</link></entry>
+            <entry>MPL v2</entry>
+            <entry></entry>
+          </row>
+          <row>
+            <entry><link xlink:href="https://github.com/taocpp/PEGTL/">Parsing Expression Grammar Template Library (PEGTL)</link></entry>
+            <entry><link linkend="appendix.license.pegtl">license</link></entry>
+            <entry></entry>
+          </row>
         </tbody>
       </tgroup>
     </informaltable>
@@ -211,5 +221,7 @@
   <xi:include href="licenses/libssh.instructions.docbook"/>
 
   <xi:include href="licenses/libav.instructions.docbook"/>
+
+  <xi:include href="licenses/pegtl.docbook"/>
 
 </chapter>
