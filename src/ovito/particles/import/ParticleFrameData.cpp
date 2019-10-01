@@ -386,7 +386,9 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 					shapeObject->setMesh(item.shapeMesh);
 				}
 				else {
-					static_object_cast<ParticleType>(ptype)->setShapeMesh(nullptr);
+					// Note: Do not automatically reset shape, because we don't want to loose
+					// a shape manually assigned by the user to this particle type.
+					//static_object_cast<ParticleType>(ptype)->setShapeMesh(nullptr);
 				}
 			}
 		}
