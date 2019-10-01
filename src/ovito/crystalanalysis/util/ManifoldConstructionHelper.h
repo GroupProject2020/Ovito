@@ -71,7 +71,10 @@ public:
 			_mesh.createRegion();
 
 		// Algorithm is divided into several sub-steps.
-		promise.beginProgressSubSteps(CreateDisconnectedRegions ? 4 : 3);
+		if(CreateDisconnectedRegions)
+			promise.beginProgressSubStepsWithWeights({1,8,2,1});
+		else
+			promise.beginProgressSubStepsWithWeights({1,1,2});
 
 		// Assign tetrahedra to spatial regions.
 		if(!classifyTetrahedra(std::move(determineCellRegion), promise))
@@ -167,6 +170,8 @@ private:
 	/// Aggregates adjacent Delaunay tetrahedra into disconnected regions.
 	bool formRegions(Task& promise)
 	{
+		promise.beginProgressSubStepsWithWeights({2,3,1});
+
 		// Create a lookup map that allows to retreive the primary Delaunay cell image that belongs to a triangular face formed by three particles.
 		if(!createCellMap(promise))
 			return false;
@@ -180,7 +185,9 @@ private:
 		std::deque<size_t> toProcess;
 
 		// Loop over all cells to cluster them.
-		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
+		promise.nextProgressSubStep();
+		promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
+		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells() && !promise.isCanceled(); ++cellIter) {
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Skip outside cells and cells that have already been assigned to a cluster.
@@ -205,6 +212,8 @@ private:
 
 				DelaunayTessellation::CellHandle currentCell = toProcess.front();
 				toProcess.pop_front();
+				if(!promise.incrementProgressValue())
+					break;
 
 				// Add the volume of the current cell to the total region volume.
 				regionVolume += cellVolume(currentCell);
@@ -237,6 +246,7 @@ private:
 			// Create a spatial region in the output mesh.
 			_mesh.createRegion(0, regionVolume);
 		}
+		promise.nextProgressSubStep();
 
 		if(_mesh.regionCount() > 1) {
 			// Shift interior region IDs to start at index 1.
@@ -247,9 +257,12 @@ private:
 			}
 
 			// Copy assigned region IDs from primary tetrahedra to ghost tetrahedra.
+			promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
 			for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 				DelaunayTessellation::CellHandle cell = *cellIter;
 				if(_tessellation.getUserField(cell) == 1 && _tessellation.isGhostCell(cell)) {
+					if(!promise.setProgressValueIntermittent(cell))
+						break;
 
 					// Get the 3 vertices of the first face of the tet.
 					std::array<size_t, 3> vertices;
@@ -267,6 +280,7 @@ private:
 				}
 			}
 		}
+		promise.endProgressSubSteps();
 
 		return true;
 	}
@@ -275,7 +289,8 @@ private:
 	/// triangular face formed by three particles.
 	bool createCellMap(Task& promise)
 	{
-		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells() && !promise.isCanceled(); ++cellIter) {
+		promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
+		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Skip cells that belong to the exterior region.
@@ -285,6 +300,10 @@ private:
 			// Skip ghost cells.
 			if(_tessellation.isGhostCell(cell))
 				continue;
+
+			// Update progress indicator.
+			if(!promise.setProgressValueIntermittent(cell))
+				break;
 
 			// Loop over the 4 facets of the cell.
 			for(int f = 0; f < 4; f++) {
@@ -300,7 +319,7 @@ private:
 				// Each key in the map should be unique.
 				OVITO_ASSERT(_cellLookupMap.find(vertices) == _cellLookupMap.end());
 
-				// Add adjecent cell to the map.
+				// Add facet and its adjacent cell to the loopup map.
 				_cellLookupMap.emplace(vertices, cell);
 			}
 		}
@@ -582,10 +601,18 @@ private:
 	std::vector<std::array<HalfEdgeMesh::face_index, 4>> _tetrahedraFaceList;
 
 	/// This map allows to lookup output mesh faces based on their vertices.
+#if 0
 	std::unordered_map<std::array<size_t,3>, HalfEdgeMesh::face_index, boost::hash<std::array<size_t,3>>> _faceLookupMap;
+#else
+	std::map<std::array<size_t,3>, HalfEdgeMesh::face_index> _faceLookupMap;
+#endif
 
 	/// This map allows to lookup the tetrahedron that is adjacent to a given triangular face.
+#if 0
 	std::unordered_map<std::array<size_t,3>, DelaunayTessellation::CellHandle, boost::hash<std::array<size_t,3>>> _cellLookupMap;
+#else
+	std::map<std::array<size_t,3>, DelaunayTessellation::CellHandle> _cellLookupMap;
+#endif
 };
 
 }	// End of namespace

@@ -41,35 +41,75 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	// Create the rollout.
 	QWidget* rollout = createRollout(tr("Construct surface mesh"), rolloutParams, "particles.modifiers.construct_surface_mesh.html");
 
-    QGridLayout* layout = new QGridLayout(rollout);
+    QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
-	layout->setSpacing(6);
-	layout->setColumnStretch(1, 1);
+	layout->setSpacing(4);
 
-	FloatParameterUI* radiusUI = new FloatParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::probeSphereRadius));
-	layout->addWidget(radiusUI->label(), 0, 0);
-	layout->addLayout(radiusUI->createFieldLayout(), 0, 1);
+	QGroupBox* methodGroupBox = new QGroupBox(tr("Method"));
+	layout->addWidget(methodGroupBox);
 
-	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::onlySelectedParticles));
-	layout->addWidget(onlySelectedUI->checkBox(), 1, 0, 1, 2);
+    QGridLayout* sublayout = new QGridLayout(methodGroupBox);
+	sublayout->setContentsMargins(4,4,4,4);
+	sublayout->setSpacing(6);
+	sublayout->setColumnStretch(2, 1);
+	sublayout->setColumnMinimumWidth(0, 20);
 
 	IntegerRadioButtonParameterUI* methodUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::method));
-	QRadioButton* alphaShapeMethodBtn = methodUI->addRadioButton(ConstructSurfaceModifier::AlphaShape, tr("Use alpha-shape method:"));
-	layout->addWidget(alphaShapeMethodBtn, 2, 0, 1, 2);
+	QRadioButton* alphaShapeMethodBtn = methodUI->addRadioButton(ConstructSurfaceModifier::AlphaShape, tr("Alpha-shape method (default):"));
+	sublayout->addWidget(alphaShapeMethodBtn, 0, 0, 1, 3);
+
+	FloatParameterUI* probeSphereRadiusUI = new FloatParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::probeSphereRadius));
+	probeSphereRadiusUI->setEnabled(false);
+	sublayout->addWidget(probeSphereRadiusUI->label(), 1, 1);
+	sublayout->addLayout(probeSphereRadiusUI->createFieldLayout(), 1, 2);
+	connect(alphaShapeMethodBtn, &QRadioButton::toggled, probeSphereRadiusUI, &FloatParameterUI::setEnabled);
 
 	IntegerParameterUI* smoothingLevelUI = new IntegerParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::smoothingLevel));
-	layout->addWidget(smoothingLevelUI->label(), 3, 0);
-	layout->addLayout(smoothingLevelUI->createFieldLayout(), 3, 1);
+	smoothingLevelUI->setEnabled(false);
+	sublayout->addWidget(smoothingLevelUI->label(), 2, 1);
+	sublayout->addLayout(smoothingLevelUI->createFieldLayout(), 2, 2);
+	connect(alphaShapeMethodBtn, &QRadioButton::toggled, smoothingLevelUI, &IntegerParameterUI::setEnabled);
 
 	BooleanParameterUI* selectSurfaceParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::selectSurfaceParticles));
-	layout->addWidget(selectSurfaceParticlesUI->checkBox(), 4, 0, 1, 2);
+	selectSurfaceParticlesUI->setEnabled(false);
+	sublayout->addWidget(selectSurfaceParticlesUI->checkBox(), 3, 1, 1, 2);
+	connect(alphaShapeMethodBtn, &QRadioButton::toggled, selectSurfaceParticlesUI, &BooleanParameterUI::setEnabled);
 
-	QRadioButton* gaussianDensityBtn = methodUI->addRadioButton(ConstructSurfaceModifier::GaussianDensity, tr("Use Gaussian density method:"));
-	layout->addWidget(gaussianDensityBtn, 5, 0, 1, 2);
+	QRadioButton* gaussianDensityBtn = methodUI->addRadioButton(ConstructSurfaceModifier::GaussianDensity, tr("Gaussian density method (experimental):"));
+	sublayout->setRowMinimumHeight(4, 10);
+	sublayout->addWidget(gaussianDensityBtn, 5, 0, 1, 3);
+
+	IntegerParameterUI* gridResolutionUI = new IntegerParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::gridResolution));
+	gridResolutionUI->setEnabled(false);
+	sublayout->addWidget(gridResolutionUI->label(), 6, 1);
+	sublayout->addLayout(gridResolutionUI->createFieldLayout(), 6, 2);
+	connect(gaussianDensityBtn, &QRadioButton::toggled, gridResolutionUI, &IntegerParameterUI::setEnabled);
+
+	FloatParameterUI* radiusFactorUI = new FloatParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::radiusFactor));
+	radiusFactorUI->setEnabled(false);
+	sublayout->addWidget(radiusFactorUI->label(), 7, 1);
+	sublayout->addLayout(radiusFactorUI->createFieldLayout(), 7, 2);
+	connect(gaussianDensityBtn, &QRadioButton::toggled, radiusFactorUI, &FloatParameterUI::setEnabled);
+
+	FloatParameterUI* isoValueUI = new FloatParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::isoValue));
+	isoValueUI->setEnabled(false);
+	sublayout->addWidget(isoValueUI->label(), 8, 1);
+	sublayout->addLayout(isoValueUI->createFieldLayout(), 8, 2);
+	connect(gaussianDensityBtn, &QRadioButton::toggled, isoValueUI, &FloatParameterUI::setEnabled);
+
+	QGroupBox* generalGroupBox = new QGroupBox(tr("Options"));
+	layout->addWidget(generalGroupBox);
+
+    sublayout = new QGridLayout(generalGroupBox);
+	sublayout->setContentsMargins(4,4,4,4);
+	sublayout->setSpacing(6);
+	sublayout->setColumnStretch(1, 1);
+
+	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::onlySelectedParticles));
+	sublayout->addWidget(onlySelectedUI->checkBox(), 1, 0, 1, 2);
 
 	// Status label.
-	layout->setRowMinimumHeight(5, 10);
-	layout->addWidget(statusLabel(), 6, 0, 1, 2);
+	layout->addWidget(statusLabel());
 	statusLabel()->setMinimumHeight(100);
 
 	// Open a sub-editor for the surface mesh vis element.

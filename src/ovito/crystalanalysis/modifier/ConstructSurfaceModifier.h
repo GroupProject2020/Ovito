@@ -88,11 +88,10 @@ private:
 	public:
 
 		/// Constructor.
-		ConstructSurfaceEngineBase(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius) :
+		ConstructSurfaceEngineBase(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell) :
 			_positions(positions),
 			_selection(std::move(selection)),
-			_mesh(simCell),
-			_radius(radius) {}
+			_mesh(simCell) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -119,13 +118,12 @@ private:
 		/// Returns the input particle selection.
 		const ConstPropertyPtr& selection() const { return _selection; }
 
-		/// Returns the evalue of the probe sphere radius parameter.
-		FloatType probeSphereRadius() const { return _radius; }
-
 	private:
 
-		const FloatType _radius;
+		/// The input particle coordinates.
 		ConstPropertyPtr _positions;
+
+		/// The input particle selection flags.
 		ConstPropertyPtr _selection;
 
 		/// The generated surface mesh.
@@ -135,14 +133,15 @@ private:
 		double _surfaceArea = 0;
 	};
 
-	/// Computation engine that builds the surface mesh.
+	/// Compute engine building the surface mesh using the alpha shape method.
 	class AlphaShapeEngine : public ConstructSurfaceEngineBase
 	{
 	public:
 
 		/// Constructor.
-		AlphaShapeEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel, bool selectSurfaceParticles) :
-			ConstructSurfaceEngineBase(std::move(positions), std::move(selection), simCell, radius),
+		AlphaShapeEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType probeSphereRadius, int smoothingLevel, bool selectSurfaceParticles) :
+			ConstructSurfaceEngineBase(std::move(positions), std::move(selection), simCell),
+			_probeSphereRadius(probeSphereRadius),
 			_smoothingLevel(smoothingLevel),
 			_totalVolume(std::abs(simCell.matrix().determinant())),
 			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::SelectionProperty, true) : nullptr) {}
@@ -165,7 +164,13 @@ private:
 		/// Returns the selection set containing the particles at the constructed surfaces.
 		const PropertyPtr& surfaceParticleSelection() const { return _surfaceParticleSelection; }
 
+		/// Returns the evalue of the probe sphere radius parameter.
+		FloatType probeSphereRadius() const { return _probeSphereRadius; }
+
 	private:
+
+		/// The radius of the virtual probe sphere (alpha-shape parameter).
+		const FloatType _probeSphereRadius;
 
 		/// The number of iterations of the smoothing algorithm to apply to the surface mesh.
 		const int _smoothingLevel;
@@ -178,7 +183,42 @@ private:
 
 		/// The selection set containing the particles right on the constructed surfaces.
 		PropertyPtr _surfaceParticleSelection;
-	};	
+	};
+
+	/// Compute engine building the surface mesh using the Gaussian density method.
+	class GaussianDensityEngine : public ConstructSurfaceEngineBase
+	{
+	public:
+
+		/// Constructor.
+		GaussianDensityEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell,
+				FloatType radiusFactor, FloatType isoLevel, int gridResolution, std::vector<FloatType> radii) :
+			ConstructSurfaceEngineBase(std::move(positions), std::move(selection), simCell),
+			_radiusFactor(radiusFactor),
+			_isoLevel(isoLevel),
+			_gridResolution(gridResolution),
+			_particleRadii(std::move(radii)) {}
+
+		/// Computes the modifier's results and stores them in this object for later retrieval.
+		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+
+	private:
+
+		/// Scaling factor applied to atomic radii.
+		const FloatType _radiusFactor;
+
+		/// The threshold for constructing the isosurface of the density field.
+		const FloatType _isoLevel;
+
+		/// The number of voxels in the density grid.
+		const int _gridResolution;
+
+		/// The atomic input radii.
+		std::vector<FloatType> _particleRadii;
+	};
 
 	/// Controls the radius of the probe sphere.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, probeSphereRadius, setProbeSphereRadius, PROPERTY_FIELD_MEMORIZE);
@@ -195,8 +235,17 @@ private:
 	/// The vis element for rendering the surface.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, surfaceMeshVis, setSurfaceMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 
-	/// Surface construction method
+	/// Surface construction method to use.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(SurfaceMethod, method, setMethod, PROPERTY_FIELD_MEMORIZE);
+
+	/// Controls the number of grid cells in each spatial direction (density field method).
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, gridResolution, setGridResolution, PROPERTY_FIELD_MEMORIZE);
+
+	/// The scaling factor applied to atomic radii (density field method).
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, radiusFactor, setRadiusFactor, PROPERTY_FIELD_MEMORIZE);
+
+	/// The threshold value for constructing the isosurface of the density field.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, isoValue, setIsoValue, PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

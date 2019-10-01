@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,7 @@ namespace Ovito { namespace Grid {
 /**
 * The Marching Cubes algorithm for constructing isosurfaces from grid data.
 */
-class MarchingCubes
+class OVITO_GRID_EXPORT MarchingCubes
 {
 public:
 
@@ -73,7 +73,7 @@ public:
     /// Returns the generated surface mesh.
     const SurfaceMeshData& mesh() const { return _outputMesh; }
 
-protected:
+private:
 
     /// Tessellates one cube.
     void processCube(int i, int j, int k);
@@ -137,7 +137,7 @@ protected:
         return _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + axis];
     }
 
-protected:
+private:
 
 	const std::array<bool,3> _pbcFlags; ///< PBC flags
     int _data_size_x;  ///< width  of the input data grid

@@ -170,9 +170,8 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	_mesh.transformVertices(tm);
 
 	// Flip surface orientation if cell matrix is a mirror transformation.
-	if(tm.determinant() < 0) {
+	if(tm.determinant() < 0)
 		_mesh.flipFaces();
-	}
 	if(task()->isCanceled())
 		return;
 

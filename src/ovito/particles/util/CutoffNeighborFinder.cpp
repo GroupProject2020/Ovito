@@ -219,14 +219,29 @@ CutoffNeighborFinder::Query::Query(const CutoffNeighborFinder& finder, size_t pa
 	OVITO_ASSERT(particleIndex < _builder.particles.size());
 
 	_stencilIter = _builder.stencil.begin();
-	_neighbor = nullptr;
-	_atEnd = false;
 	_center = _builder.particles[particleIndex].pos;
-	_neighborIndex = std::numeric_limits<size_t>::max();
 
 	// Determine the bin the central particle is located in.
 	for(size_t k = 0; k < 3; k++) {
-		_centerBin[k] = (int)floor(_builder.reciprocalBinCell.prodrow(_center, k));
+		_centerBin[k] = (int)std::floor(_builder.reciprocalBinCell.prodrow(_center, k));
+		if(_centerBin[k] < 0) _centerBin[k] = 0;
+		else if(_centerBin[k] >= _builder.binDim[k]) _centerBin[k] = _builder.binDim[k] - 1;
+	}
+
+	next();
+}
+
+/******************************************************************************
+* Iterator constructor
+******************************************************************************/
+CutoffNeighborFinder::Query::Query(const CutoffNeighborFinder& finder, const Point3& location)
+	: _builder(finder), _center(finder.simCell.wrapPoint(location))
+{
+	_stencilIter = _builder.stencil.begin();
+
+	// Determine the bin the central particle is located in.
+	for(size_t k = 0; k < 3; k++) {
+		_centerBin[k] = (int)std::floor(_builder.reciprocalBinCell.prodrow(_center, k));
 		if(_centerBin[k] < 0) _centerBin[k] = 0;
 		else if(_centerBin[k] >= _builder.binDim[k]) _centerBin[k] = _builder.binDim[k] - 1;
 	}

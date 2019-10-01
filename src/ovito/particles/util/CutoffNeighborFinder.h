@@ -92,10 +92,15 @@ public:
 	{
 	public:
 
-		/// Constructs a new neighbor query object that can be used to iterate over the neighbors of a particle.
-		/// \param finder The object that stores the particles, and which is used to compute the results of the query.
-		/// \param particleIndex The index of the particle for which to find the neighbors.
+		/// Constructs a new neighbor query object that allows iterating over the neighbors of a particle.
+		/// \param finder The parent object holding the list of input particles.
+		/// \param particleIndex The index of the particle for which to enumerate the neighbors within the cutoff radius.
 		Query(const CutoffNeighborFinder& finder, size_t particleIndex);
+
+		/// Constructs a new neighbor query object that allows iterating over the neighbors withing the cutoff range of the given spatial location.
+		/// \param finder The parent object holding the list of input particles.
+		/// \param location The spatial around which to look for neighbors.
+		Query(const CutoffNeighborFinder& finder, const Point3& location);
 
 		/// Indicates whether the end of the list of neighbors has been reached.
 		bool atEnd() const { return _atEnd; }
@@ -131,14 +136,14 @@ public:
 	private:
 
 		const CutoffNeighborFinder& _builder;
-		bool _atEnd;
+		bool _atEnd = false;
 		Point3 _center, _shiftedCenter;
-		size_t _centerIndex;
+		size_t _centerIndex = std::numeric_limits<size_t>::max();
 		std::vector<Vector3I>::const_iterator _stencilIter;
 		Point3I _centerBin;
 		Point3I _currentBin;
-		const NeighborListParticle* _neighbor;
-		size_t _neighborIndex;
+		const NeighborListParticle* _neighbor = nullptr;
+		size_t _neighborIndex = std::numeric_limits<size_t>::max();
 		Vector3I _pbcShift;
 		Vector3 _delta;
 		FloatType _distsq;
