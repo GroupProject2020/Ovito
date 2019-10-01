@@ -144,7 +144,7 @@ private:
 			_probeSphereRadius(probeSphereRadius),
 			_smoothingLevel(smoothingLevel),
 			_totalVolume(std::abs(simCell.matrix().determinant())),
-			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::SelectionProperty, true) : nullptr) {}
+			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(this->positions()->size(), ParticlesObject::SelectionProperty, true) : nullptr) {}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
