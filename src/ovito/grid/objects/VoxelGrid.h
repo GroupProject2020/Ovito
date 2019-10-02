@@ -42,6 +42,9 @@ class OVITO_GRID_EXPORT VoxelGrid : public PropertyContainer
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
 
+		/// \brief Create a storage object for standard voxel properties.
+		virtual PropertyPtr createStandardStorage(size_t voxelCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
+
 	protected:
 
 		/// Is called by the system after construction of the meta-class instance.
@@ -55,6 +58,12 @@ public:
 
 	/// Data type used to store the number of cells of the voxel grid in each dimension.
 	using GridDimensions = std::array<size_t,3>;
+
+	/// \brief The list of standard voxel properties.
+	enum Type {
+		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
+		ColorProperty = PropertyStorage::GenericColorProperty
+	};
 
 	/// \brief Constructor.
 	Q_INVOKABLE VoxelGrid(DataSet* dataset, const QString& title = QString());
@@ -75,6 +84,14 @@ public:
 	/// Makes sure that all property arrays in this container have a consistent length.
 	/// If this is not the case, the method throws an exception.
 	void verifyIntegrity() const;
+
+	/// Converts a grid coordinate to a linear voxel array index.
+	size_t voxelIndex(size_t x, size_t y, size_t z) const {
+		OVITO_ASSERT(x >= 0 && x < shape()[0]);
+		OVITO_ASSERT(y >= 0 && y < shape()[1]);
+		OVITO_ASSERT(z >= 0 && z < shape()[2]);
+		return z * (shape()[0] * shape()[1]) + y * shape()[0] + x;
+	}
 
 protected:
 

@@ -21,6 +21,7 @@
 
 SET(SourceFiles
 	objects/VoxelGrid.cpp
+	objects/VoxelGridVis.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
 	modifier/SpatialBinningModifier.cpp
@@ -31,6 +32,8 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 	LIST(APPEND SourceFiles
 		modifier/VoxelGridReplicateModifierDelegate.cpp
 		modifier/VoxelGridAffineTransformationModifierDelegate.cpp
+		modifier/VoxelGridColorCodingModifierDelegate.cpp
+		modifier/VoxelGridComputePropertyModifierDelegate.cpp
 	)
 ENDIF()
 

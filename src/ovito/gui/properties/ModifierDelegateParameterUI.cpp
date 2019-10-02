@@ -42,7 +42,6 @@ ModifierDelegateParameterUI::ModifierDelegateParameterUI(QObject* parent, const 
 	connect(comboBox(), static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &ModifierDelegateParameterUI::updatePropertyValue);
 }
 
-
 /******************************************************************************
 * Destructor.
 ******************************************************************************/

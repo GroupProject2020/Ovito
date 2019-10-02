@@ -21,8 +21,11 @@
 
 #include <ovito/grid/Grid.h>
 #include <ovito/grid/objects/VoxelGrid.h>
+#include <ovito/grid/objects/VoxelGridVis.h>
 #include <ovito/grid/modifier/CreateIsosurfaceModifier.h>
 #include <ovito/grid/modifier/SpatialBinningModifier.h>
+#include <ovito/grid/modifier/VoxelGridComputePropertyModifierDelegate.h>
+#include <ovito/grid/modifier/VoxelGridColorCodingModifierDelegate.h>
 #include <ovito/grid/io/VTKVoxelGridExporter.h>
 #include <ovito/stdobj/scripting/PythonBinding.h>
 #include <ovito/pyscript/binding/PythonBinding.h>
@@ -101,6 +104,8 @@ PYBIND11_MODULE(GridPython, m)
 		.def_property("vis", &CreateIsosurfaceModifier::surfaceMeshVis, &CreateIsosurfaceModifier::setSurfaceMeshVis,
 				"The :py:class:`~ovito.vis.SurfaceMeshVis` controlling the visual representation of the generated isosurface.\n")
 	;
+
+	ovito_class<VoxelGridVis, DataVis>{m};
 
 	ovito_abstract_class<SpatialBinningModifierDelegate, AsynchronousModifierDelegate>{m}
 	;
@@ -188,6 +193,9 @@ PYBIND11_MODULE(GridPython, m)
 
 	ovito_class<VTKVoxelGridExporter, FileExporter>{m}
 	;
+
+	ovito_class<VoxelGridComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m};
+	ovito_class<VoxelGridColorCodingModifierDelegate, ColorCodingModifierDelegate>{m};
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(GridPython);

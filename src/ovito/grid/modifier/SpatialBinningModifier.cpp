@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -50,6 +50,7 @@ DEFINE_PROPERTY_FIELD(SpatialBinningModifier, propertyAxisRangeStart);
 DEFINE_PROPERTY_FIELD(SpatialBinningModifier, propertyAxisRangeEnd);
 DEFINE_PROPERTY_FIELD(SpatialBinningModifier, sourceProperty);
 DEFINE_PROPERTY_FIELD(SpatialBinningModifier, onlySelectedElements);
+DEFINE_REFERENCE_FIELD(SpatialBinningModifier, gridVis);
 SET_PROPERTY_FIELD_LABEL(SpatialBinningModifier, reductionOperation, "Reduction operation");
 SET_PROPERTY_FIELD_LABEL(SpatialBinningModifier, firstDerivative, "Compute first derivative");
 SET_PROPERTY_FIELD_LABEL(SpatialBinningModifier, binDirection, "Bin direction");
@@ -80,6 +81,11 @@ SpatialBinningModifier::SpatialBinningModifier(DataSet* dataset) : AsynchronousD
     _propertyAxisRangeEnd(1),
 	_onlySelectedElements(false)
 {
+	// Create the vis element for the voxel grid computed by the modifier.
+	setGridVis(new VoxelGridVis(dataset));
+	gridVis()->setEnabled(false);
+	gridVis()->setTitle(tr("Binning grid"));
+
 	// Let this modifier act on particles by default.
 	createDefaultModifierDelegate(SpatialBinningModifierDelegate::OOClass(), QStringLiteral("ParticlesSpatialBinningModifierDelegate"));
 }
@@ -243,6 +249,9 @@ void SpatialBinningModifierDelegate::SpatialBinningEngine::emitResults(TimePoint
 	else {
 		// In 2D and 3D binning mode, output a voxel grid.
 		VoxelGrid* gridObj = state.createObject<VoxelGrid>(QStringLiteral("binning[%1]").arg(title), modApp, tr("Binning (%1)").arg(title));
+		OVITO_ASSERT(!modifier->dataset()->undoStack().isRecording());
+		modifier->gridVis()->setTitle(tr("Binning grid (%1)").arg(title));
+		gridObj->setVisElement(modifier->gridVis());
 		gridObj->createProperty(binData());
 		gridObj->setShape({(size_t)binCount(0), (size_t)binCount(1), (size_t)binCount(2)});
 		// Set up the cell for the grid with the right dimensionality, orientation and boundary conditions.

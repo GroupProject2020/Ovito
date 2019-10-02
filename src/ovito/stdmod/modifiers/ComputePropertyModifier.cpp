@@ -122,7 +122,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	// Get input selection property and existing property data.
 	ConstPropertyPtr selectionProperty;
 	ConstPropertyPtr existingProperty;
-	if(onlySelectedElements()) {
+	if(onlySelectedElements() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)) {
 		selectionProperty = container->getPropertyStorage(PropertyStorage::GenericSelectionProperty);
 		if(!selectionProperty)
 			throwException(tr("Compute property modifier has been restricted to selected elements, but no selection was previously defined."));

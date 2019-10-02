@@ -46,6 +46,47 @@ void VoxelGrid::OOMetaClass::initialize()
 	setPropertyClassDisplayName(tr("Voxel grid"));
 	setElementDescriptionName(QStringLiteral("voxels"));
 	setPythonName(QStringLiteral("voxels"));
+
+	const QStringList emptyList;
+	const QStringList rgbList = QStringList() << "R" << "G" << "B";
+
+	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Voxel colors"));
+}
+
+/******************************************************************************
+* Creates a storage object for standard voxel properties.
+******************************************************************************/
+PropertyPtr VoxelGrid::OOMetaClass::createStandardStorage(size_t voxelCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath) const
+{
+	int dataType;
+	size_t componentCount;
+	size_t stride;
+
+	switch(type) {
+	case ColorProperty:
+		dataType = PropertyStorage::Float;
+		componentCount = 3;
+		stride = componentCount * sizeof(FloatType);
+		OVITO_ASSERT(stride == sizeof(Color));
+		break;
+	default:
+		OVITO_ASSERT_MSG(false, "VoxelGrid::createStandardStorage", "Invalid standard property type");
+		throw Exception(tr("This is not a valid standard voxel property type: %1").arg(type));
+	}
+	const QStringList& componentNames = standardPropertyComponentNames(type);
+	const QString& propertyName = standardPropertyName(type);
+
+	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
+
+	PropertyPtr property = std::make_shared<PropertyStorage>(voxelCount, dataType, componentCount, stride,
+								propertyName, false, type, componentNames);
+
+	if(initializeMemory) {
+		// Default-initialize property values with zeros.
+		std::memset(property->data(), 0, property->size() * property->stride());
+	}
+
+	return property;
 }
 
 /******************************************************************************

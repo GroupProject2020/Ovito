@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 
 
 #include <ovito/grid/Grid.h>
+#include <ovito/grid/objects/VoxelGridVis.h>
 #include <ovito/stdobj/properties/PropertyReference.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/stdobj/series/DataSeriesObject.h>
@@ -306,6 +307,9 @@ private:
 
 	/// Controls whether the modifier should take into account only selected elements.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedElements, setOnlySelectedElements);
+
+	/// The vis element for the computed grid.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(VoxelGridVis, gridVis, setGridVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 };
 }	// End of namespace
 }	// End of namespace

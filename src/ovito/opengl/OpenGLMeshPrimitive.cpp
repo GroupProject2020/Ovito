@@ -29,7 +29,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
 * Constructor.
 ******************************************************************************/
 OpenGLMeshPrimitive::OpenGLMeshPrimitive(OpenGLSceneRenderer* renderer) :
-	_contextGroup(QOpenGLContextGroup::currentContextGroup()), _hasAlpha(false)
+	_contextGroup(QOpenGLContextGroup::currentContextGroup())
 {
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
@@ -49,16 +49,16 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 	// Allocate render vertex buffer.
 	_vertexBuffer.create(QOpenGLBuffer::StaticDraw, mesh.faceCount(), 3);
 	if(mesh.hasVertexColors() || mesh.hasFaceColors())
-		_hasAlpha = false;
+		_alpha = 1.0;
 	else {
 		if(materialColors().empty()) {
-			_hasAlpha = (meshColor.a() != 1);
+			_alpha = meshColor.a();
 		}
 		else {
-			_hasAlpha = false;
+			_alpha = 1.0;
 			for(const ColorA& c : materialColors()) {
-				if(c.a() != 1) {
-					_hasAlpha = true;
+				if(c.a() != 1.0) {
+					_alpha = c.a();
 					break;
 				}
 			}
@@ -105,11 +105,11 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 				rv->pos = static_cast<Point_3<float>>(mesh.vertex(face->vertex(v)));
 				if(mesh.hasVertexColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.vertexColor(face->vertex(v)));
-					_hasAlpha |= (rv->color.a() != 1);
+					if(rv->color.a() != 1) _alpha = rv->color.a();
 				}
 				else if(mesh.hasFaceColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
-					_hasAlpha |= (rv->color.a() != 1);
+					if(rv->color.a() != 1) _alpha = rv->color.a();
 				}
 				else if(face->materialIndex() < materialColors().size() && face->materialIndex() >= 0) {
 					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);
@@ -165,11 +165,11 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 				rv->pos = static_cast<Point_3<float>>(mesh.vertex(face->vertex(v)));
 				if(mesh.hasVertexColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.vertexColor(face->vertex(v)));
-					_hasAlpha |= (rv->color.a() != 1);
+					if(rv->color.a() != 1) _alpha = rv->color.a();
 				}
 				else if(mesh.hasFaceColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
-					_hasAlpha |= (rv->color.a() != 1);
+					if(rv->color.a() != 1) _alpha = rv->color.a();
 				}
 				else if(face->materialIndex() >= 0 && face->materialIndex() < materialColors().size()) {
 					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);
@@ -184,7 +184,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 	_vertexBuffer.unmap();
 
 	// Save a list of coordinates which will be used to sort faces back-to-front.
-	if(_hasAlpha) {
+	if(_alpha != 1) {
 		_triangleCoordinates.resize(mesh.faceCount());
 		auto tc = _triangleCoordinates.begin();
 		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++tc) {
@@ -231,7 +231,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 void OpenGLMeshPrimitive::setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors)
 {
 	OVITO_ASSERT(_perInstanceTMs.size() == _perInstanceColors.size());
-	_hasAlpha = std::any_of(perInstanceColors.begin(), perInstanceColors.end(), [](const ColorA& c) { return c.a() != FloatType(1); });
+	_alpha = std::any_of(perInstanceColors.begin(), perInstanceColors.end(), [](const ColorA& c) { return c.a() != FloatType(1); }) ? 0.5 : 1.0;
 	_perInstanceTMs = std::move(perInstanceTMs);
 	_perInstanceColors = std::move(perInstanceColors);
 	_useInstancedRendering = true;
@@ -260,7 +260,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 
 	// If object is translucent, don't render it during the first rendering pass.
 	// Queue primitive so that it gets rendered during the second pass.
-	if(!renderer->isPicking() && _hasAlpha && vpRenderer->translucentPass() == false) {
+	if(!renderer->isPicking() && _alpha != 1 && vpRenderer->translucentPass() == false) {
 		vpRenderer->registerTranslucentPrimitive(shared_from_this());
 		return;
 	}
@@ -271,13 +271,18 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 	if(!renderer->isPicking() && _edgeLinesBuffer.isCreated()) {
 		if(!_lineShader->bind())
 			vpRenderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
-		ColorA wireframeColor(0.1f, 0.1f, 0.1f, 1.0f);
+		ColorA wireframeColor(0.1f, 0.1f, 0.1f, _alpha);
 		if(vpRenderer->glformat().majorVersion() >= 3) {
 			OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
 		}
 		else if(vpRenderer->oldGLFunctions()) {
 			// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
 			OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+		}
+		if(_alpha != 1.0) {
+			vpRenderer->glEnable(GL_BLEND);
+			vpRenderer->glBlendEquation(GL_FUNC_ADD);
+			vpRenderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_COLOR, GL_ONE);
 		}
 		_edgeLinesBuffer.bindPositions(vpRenderer, _lineShader);
 		Matrix4 mvp_matrix = vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM();
@@ -286,15 +291,35 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 			OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
 		}
 		else {
-			for(const AffineTransformation& instanceTM : _perInstanceTMs) {
-				_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(mvp_matrix * instanceTM));
-				OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
+			if(_alpha == 1.0) {
+				for(const AffineTransformation& instanceTM : _perInstanceTMs) {
+					_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(mvp_matrix * instanceTM));
+					OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
+				}
+			}
+			else {
+				auto instanceColor = _perInstanceColors.cbegin();
+				for(const AffineTransformation& instanceTM : _perInstanceTMs) {
+					_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(mvp_matrix * instanceTM));
+					wireframeColor.a() = instanceColor->a();
+					++instanceColor;
+					if(vpRenderer->glformat().majorVersion() >= 3) {
+						OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+					}
+					else if(vpRenderer->oldGLFunctions()) {
+						// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
+						OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
+					}
+					OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
+				}
 			}
 		}
 		_edgeLinesBuffer.detachPositions(vpRenderer, _lineShader);
 		_lineShader->release();
 		vpRenderer->glEnable(GL_POLYGON_OFFSET_FILL);
 		vpRenderer->glPolygonOffset(1.0f, 1.0f);
+		if(_alpha != 1.0)
+			vpRenderer->glDisable(GL_BLEND);
 	}
 
 	OVITO_REPORT_OPENGL_ERRORS();
@@ -318,7 +343,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 
 	_vertexBuffer.bindPositions(vpRenderer, shader, offsetof(ColoredVertexWithNormal, pos));
 	if(!renderer->isPicking()) {
-		if(_hasAlpha) {
+		if(_alpha != 1.0) {
 			vpRenderer->glEnable(GL_BLEND);
 			vpRenderer->glBlendEquation(GL_FUNC_ADD);
 			vpRenderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_COLOR, GL_ONE);
@@ -365,7 +390,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 			}
 		}
 
-		if(!renderer->isPicking() && _hasAlpha && !_triangleCoordinates.empty()) {
+		if(!renderer->isPicking() && _alpha != 1.0 && !_triangleCoordinates.empty()) {
 			OVITO_ASSERT(_triangleCoordinates.size() == faceCount());
 			OVITO_ASSERT(_vertexBuffer.verticesPerElement() == 3);
 			// Render faces in back-to-front order to avoid artifacts at overlapping translucent faces.
@@ -407,7 +432,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		if(!_useInstancedRendering)
 			_vertexBuffer.detachColors(vpRenderer, shader);
 		_vertexBuffer.detachNormals(vpRenderer, shader);
-		if(_hasAlpha) vpRenderer->glDisable(GL_BLEND);
+		if(_alpha != 1.0) vpRenderer->glDisable(GL_BLEND);
 	}
 	else {
 		vpRenderer->deactivateVertexIDs(_pickingShader);

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -81,23 +81,26 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, Pip
 	newVoxelGrid->mutableDomain()->setCellMatrix(simCell);
 
 	// Replicate voxel property data.
-	newVoxelGrid->makePropertiesMutable();
-	for(PropertyObject* property : newVoxelGrid->properties()) {
-		ConstPropertyPtr oldData = property->storage();
-		property->resize(oldData->size() * numCopies, false);
+	newVoxelGrid->replicate(numCopies, false);
 
+	// We cannot rely on the replicate() method above to duplicate the data in the property
+	// arrays, because for three-dimensional voxel grids, the storage order of voxel data matters.
+	// The following loop takes care of replicating the the property values the right way.
+	for(PropertyObject* property : newVoxelGrid->properties()) {
+		// First, copy the original property data to a temporary buffer so that
+		// it doesn't get destroyed while we are rewriting it to the replicated property array.
+		size_t stride = property->stride();
 		char* dst = (char*)property->data();
-		const char* src = (const char*)oldData->constData();
-		size_t stride = oldData->stride();
+		std::vector<char> buffer(dst, dst + stride * existingVoxelGrid->elementCount());
+		const char* src = buffer.data();
 		for(size_t z = 0; z < shape[2]; z++) {
 			size_t zs = z % oldShape[2];
 			for(size_t y = 0; y < shape[1]; y++) {
 				size_t ys = y % oldShape[1];
 				for(size_t x = 0; x < shape[0]; x++) {
 					size_t xs = x % oldShape[0];
-					size_t index = xs + ys * oldShape[0] + zs * oldShape[0] * oldShape[1];
-					OVITO_ASSERT(index < oldData->size());
-					memcpy(dst, src + index * stride, stride);
+					size_t index = existingVoxelGrid->voxelIndex(xs, ys, zs);
+					std::memcpy(dst, src + index * stride, stride);
 					dst += stride;
 				}
 			}

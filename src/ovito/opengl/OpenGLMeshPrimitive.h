@@ -79,7 +79,7 @@ private:
 	QOpenGLShaderProgram* _lineShader;
 
 	/// Are we rendering a semi-transparent mesh?
-	bool _hasAlpha;
+	FloatType _alpha = 1.0;
 
 	/// This is required to render translucent triangles in the correct order from back to front.
 	std::vector<Point3> _triangleCoordinates;

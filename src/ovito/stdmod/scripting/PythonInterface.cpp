@@ -251,13 +251,14 @@ PYBIND11_MODULE(StdModPython, m)
 	auto ColorCodingModifier_py = ovito_class<ColorCodingModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
-			"Assigns colors to elements based on some scalar input property to visualize the property values. "
+			"Assigns colors to data elements based on one of their input properties to visualize the values. "
 			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.color_coding>` for this modifier. "
 			"The modifier can operate on several kinds of data elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Color'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Particle vectors (setting the ``'Vector Color'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Bonds (setting the ``'Color'`` :ref:`bond property <bond-types-list>`)\n"
+			"  * Voxel grids (setting the ``'Color'`` voxel property)\n"
 			"\n\n"
 			"The modifier will act on particles by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "
 			"\n\n"
@@ -329,7 +330,7 @@ PYBIND11_MODULE(StdModPython, m)
 				":Default: ``False``\n")
 		.def_property("operate_on", modifierDelegateGetter<ColorCodingModifier>(), modifierDelegateSetter<ColorCodingModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
-				"Supported values are: ``'particles'``, ``'bonds'``, ``'vectors'``. "
+				"Supported values are: ``'particles'``, ``'bonds'``, ``'vectors'``, ``'voxels'``. "
 				"\n\n"
 				":Default: ``'particles'``\n")
 	;
@@ -702,6 +703,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"\n\n"
 			"  * Particles (:py:class:`~ovito.data.ParticleProperty`)\n"
 			"  * Bonds (:py:class:`~ovito.data.BondProperty`)\n"
+			"  * Voxel grids (:py:class:`~ovito.data.Voxelgrid`)\n"
 			"\n\n"
 			"The modifier will operate on particles by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "
 			"\n\n"
@@ -715,7 +717,7 @@ PYBIND11_MODULE(StdModPython, m)
 		)
 		.def_property("operate_on", modifierDelegateGetter<ComputePropertyModifier>(), modifierDelegateSetter<ComputePropertyModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
-				"Supported values are: ``'particles'``, ``'bonds'``. "
+				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
 				":Default: ``'particles'``\n")
 		.def_property("expressions", &ComputePropertyModifier::expressions, &ComputePropertyModifier::setExpressions,

@@ -150,7 +150,7 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(outputProperty()->size());
 
-	// Parallelized loop over all particles.
+	// Parallelized loop over all bonds.
 	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
 
