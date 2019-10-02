@@ -32,11 +32,14 @@ IMPLEMENT_OVITO_CLASS(ParticlesAffineTransformationModifierDelegate);
 IMPLEMENT_OVITO_CLASS(VectorParticlePropertiesAffineTransformationModifierDelegate);
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> ParticlesAffineTransformationModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	return input.containsObject<ParticlesObject>();
+	if(input.containsObject<ParticlesObject>())
+		return { DataObjectReference(&ParticlesObject::OOClass()) };
+	return {};
 }
 
 /******************************************************************************
@@ -88,17 +91,18 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 }
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool VectorParticlePropertiesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> VectorParticlePropertiesAffineTransformationModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
 	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
 		for(const PropertyObject* property : particles->properties()) {
 			if(isTransformableProperty(property))
-				return true;
+				return { DataObjectReference(&ParticlesObject::OOClass()) };
 		}
 	}
-	return false;
+	return {};
 }
 
 /******************************************************************************

@@ -26,6 +26,43 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
+/// Utility class that is used to reference a particular data object in a DataCollection
+/// as a path through the hierarchy of nested data objects.
+class OVITO_CORE_EXPORT ConstDataObjectPath : public QVarLengthArray<const DataObject*, 3>
+{
+public:
+
+	/// Inherit constructors from base class.
+	using QVarLengthArray::QVarLengthArray;
+
+	/// Converts the path to a string representation.
+	QString toString() const;
+
+	/// Produces a string representation of the object path that is suitable for the user interface.
+	QString toHumanReadableString() const;
+};
+
+/// Utility class that is used to reference a particular data object in a DataCollection
+/// as a path through the hierarchy of nested data objects.
+class OVITO_CORE_EXPORT DataObjectPath : public QVarLengthArray<DataObject*, 3>
+{
+public:
+
+	/// Inherit constructors from base class.
+	using QVarLengthArray::QVarLengthArray;
+
+	/// A path to a mutable object can be implicitly converted to a path to a constant object.
+	operator const ConstDataObjectPath&() const {
+		return *reinterpret_cast<const ConstDataObjectPath*>(this);
+	}
+
+	/// Converts the path to a string representation.
+	QString toString() const { return static_cast<const ConstDataObjectPath&>(*this).toString(); }
+
+	/// Produces a string representation of the object path that is suitable for the user interface.
+	QString toHumanReadableString() const { return static_cast<const ConstDataObjectPath&>(*this).toHumanReadableString(); }
+};
+
 /**
  * \brief A reference to a DataObject in a PipelineFlowState.
  */
@@ -39,6 +76,9 @@ public:
 	/// \brief Constructs a reference to a data object.
 	DataObjectReference(const DataObject::OOMetaClass* dataClass, const QString& dataPath = QString(), const QString& dataTitle = QString()) :
 		_dataClass(dataClass), _dataPath(dataPath), _dataTitle(dataTitle) {}
+
+	/// \brief Constructs a reference to a data object from a data object path.
+	DataObjectReference(const ConstDataObjectPath& path) : DataObjectReference(path.empty() ? nullptr : &path.back()->getOOMetaClass(), path.toString(), path.toHumanReadableString()) {}
 
 	/// Returns the DataObject subclass being referenced.
 	const DataObject::OOMetaClass* dataClass() const { return _dataClass; }

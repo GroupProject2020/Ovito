@@ -29,11 +29,14 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(VoxelGridAffineTransformationModifierDelegate);
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool VoxelGridAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> VoxelGridAffineTransformationModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	return input.containsObject<VoxelGrid>();
+	if(input.containsObject<VoxelGrid>())
+		return { DataObjectReference(&VoxelGrid::OOClass()) };
+	return {};
 }
 
 /******************************************************************************

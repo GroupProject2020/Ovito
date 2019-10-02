@@ -20,12 +20,26 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/grid/Grid.h>
-#include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/grid/objects/VoxelGrid.h>
 #include "VoxelGridColorCodingModifierDelegate.h"
 
 namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(VoxelGridColorCodingModifierDelegate);
+
+/******************************************************************************
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
+******************************************************************************/
+QVector<DataObjectReference> VoxelGridColorCodingModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+{
+	// Gather list of all VoxelGrid objects in the input data collection.
+	QVector<DataObjectReference> objects;
+	for(const ConstDataObjectPath& path : input.getObjectsRecursive(VoxelGrid::OOClass())) {
+		objects.push_back(path);
+	}
+	return objects;
+}
 
 }	// End of namespace
 }	// End of namespace

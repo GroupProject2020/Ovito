@@ -31,12 +31,16 @@ IMPLEMENT_OVITO_CLASS(ParticlesExpressionSelectionModifierDelegate);
 IMPLEMENT_OVITO_CLASS(BondsExpressionSelectionModifierDelegate);
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool ParticlesExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> ParticlesExpressionSelectionModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	return input.containsObject<ParticlesObject>();
+	if(input.containsObject<ParticlesObject>())
+		return { DataObjectReference(&ParticlesObject::OOClass()) };
+	return {};
 }
+
 
 /******************************************************************************
 * Looks up the container for the properties in the input pipeline state.
@@ -57,13 +61,16 @@ std::unique_ptr<PropertyExpressionEvaluator> ParticlesExpressionSelectionModifie
 }
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool BondsExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> BondsExpressionSelectionModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
-		return particles->bonds() != nullptr;
-	return false;
+    if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+        if(particles->bonds())
+       		return { DataObjectReference(&ParticlesObject::OOClass()) };
+    }
+    return {};
 }
 
 /******************************************************************************

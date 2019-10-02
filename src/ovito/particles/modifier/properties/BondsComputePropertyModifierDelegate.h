@@ -43,12 +43,8 @@ class OVITO_PARTICLES_EXPORT BondsComputePropertyModifierDelegate : public Compu
 		/// Inherit constructor from base class.
 		using ComputePropertyModifierDelegate::OOMetaClass::OOMetaClass;
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const DataCollection& input) const override {
-			if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
-				return particles->bonds() != nullptr;
-			return false;
-		}
+		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
+		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("bonds"); }

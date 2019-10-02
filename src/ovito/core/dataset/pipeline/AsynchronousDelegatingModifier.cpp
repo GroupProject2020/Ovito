@@ -27,6 +27,8 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifierDelegate);
+DEFINE_PROPERTY_FIELD(AsynchronousModifierDelegate, inputDataObject);
+SET_PROPERTY_FIELD_LABEL(AsynchronousModifierDelegate, inputDataObject, "Data object");
 
 IMPLEMENT_OVITO_CLASS(AsynchronousDelegatingModifier);
 DEFINE_REFERENCE_FIELD(AsynchronousDelegatingModifier, delegate);
@@ -79,7 +81,7 @@ bool AsynchronousDelegatingModifier::OOMetaClass::isApplicableTo(const DataColle
 
 	// Check if there is any modifier delegate that could handle the input data.
 	for(const AsynchronousModifierDelegate::OOMetaClass* clazz : PluginManager::instance().metaclassMembers<AsynchronousModifierDelegate>(delegateMetaclass())) {
-		if(clazz->isApplicableTo(input))
+		if(clazz->getApplicableObjects(input).empty() == false)
 			return true;
 	}
 

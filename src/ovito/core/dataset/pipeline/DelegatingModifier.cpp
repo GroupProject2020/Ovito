@@ -28,9 +28,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 
 IMPLEMENT_OVITO_CLASS(ModifierDelegate);
 DEFINE_PROPERTY_FIELD(ModifierDelegate, isEnabled);
-DEFINE_PROPERTY_FIELD(ModifierDelegate, dataObjects);
+DEFINE_PROPERTY_FIELD(ModifierDelegate, inputDataObject);
 SET_PROPERTY_FIELD_LABEL(ModifierDelegate, isEnabled, "Enabled");
-SET_PROPERTY_FIELD_LABEL(ModifierDelegate, dataObjects, "Data objects");
+SET_PROPERTY_FIELD_LABEL(ModifierDelegate, inputDataObject, "Data object");
 
 IMPLEMENT_OVITO_CLASS(DelegatingModifier);
 DEFINE_REFERENCE_FIELD(DelegatingModifier, delegate);
@@ -88,7 +88,7 @@ bool DelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& input
 
 	// Check if there is any modifier delegate that could handle the input data.
 	for(const ModifierDelegate::OOMetaClass* clazz : PluginManager::instance().metaclassMembers<ModifierDelegate>(delegateMetaclass())) {
-		if(clazz->isApplicableTo(input))
+		if(clazz->getApplicableObjects(input).empty() == false)
 			return true;
 	}
 	return false;
@@ -114,7 +114,7 @@ void DelegatingModifier::applyDelegate(PipelineFlowState& state, TimePoint time,
 		return;
 
 	// Skip function if not applicable.
-	if(!state.data() || !delegate()->getOOMetaClass().isApplicableTo(*state.data()))
+	if(!state.data() || delegate()->getOOMetaClass().getApplicableObjects(*state.data()).empty())
 		throwException(tr("The modifier input does not contain the expected kind of data."));
 
 	// Call the delegate function.
@@ -162,7 +162,7 @@ bool MultiDelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& 
 
 	// Check if there is any modifier delegate that could handle the input data.
 	for(const ModifierDelegate::OOMetaClass* clazz : PluginManager::instance().metaclassMembers<ModifierDelegate>(delegateMetaclass())) {
-		if(clazz->isApplicableTo(input))
+		if(clazz->getApplicableObjects(input).empty() == false)
 			return true;
 	}
 	return false;
@@ -187,7 +187,7 @@ void MultiDelegatingModifier::applyDelegates(PipelineFlowState& state, TimePoint
 	for(ModifierDelegate* delegate : delegates()) {
 
 		// Skip function if not applicable.
-		if(!state.data() || !delegate->isEnabled() || !delegate->getOOMetaClass().isApplicableTo(*state.data()))
+		if(!state.data() || !delegate->isEnabled() || delegate->getOOMetaClass().getApplicableObjects(*state.data()).empty())
 			continue;
 
 		// Call the delegate function.

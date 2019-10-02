@@ -43,16 +43,19 @@ public:
 		/// Inherit constructor from base class.
 		using RefTarget::OOMetaClass::OOMetaClass;
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const DataCollection& input) const {
-			OVITO_ASSERT_MSG(false, "AsynchronousModifierDelegate::OOMetaClass::isApplicableTo()",
-				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the isApplicableTo() method.").arg(name())));
-			return false;
+		/// Asks the metaclass which data objects in the given input data collection the modifier delegate can operate on.
+		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const {
+			OVITO_ASSERT_MSG(false, "AsynchronousModifierDelegate::OOMetaClass::getApplicableObjects()",
+				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the getApplicableObjects() method.").arg(name())));
+			return {};
 		}
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		bool isApplicableToState(const PipelineFlowState& input) const { return input.data() && isApplicableTo(*input.data()); }
-
+		/// Asks the metaclass which data objects in the given input pipeline state the modifier delegate can operate on.
+		QVector<DataObjectReference> getApplicableObjects(const PipelineFlowState& input) const {
+			if(input.isEmpty()) return {};
+			return getApplicableObjects(*input.data()); 
+		}
+		
 		/// \brief The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const {
 			OVITO_ASSERT_MSG(false, "AsynchronousModifierDelegate::OOMetaClass::pythonDataName()",
@@ -73,6 +76,11 @@ public:
 
 	/// \brief Returns the modifier to which this delegate belongs.
 	AsynchronousDelegatingModifier* modifier() const;
+
+private:
+
+	/// Optionally specifies a particular input data object this delegate should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(DataObjectReference, inputDataObject, setInputDataObject);
 };
 
 /**

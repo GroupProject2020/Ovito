@@ -31,11 +31,14 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(DislocationReplicateModifierDelegate);
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool DislocationReplicateModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> DislocationReplicateModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	return input.containsObject<DislocationNetworkObject>();
+	if(input.containsObject<DislocationNetworkObject>())
+		return { DataObjectReference(&DislocationNetworkObject::OOClass()) };
+	return {};
 }
 
 /******************************************************************************

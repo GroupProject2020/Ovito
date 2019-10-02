@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,6 +30,41 @@ IMPLEMENT_OVITO_CLASS(DataObject);
 DEFINE_PROPERTY_FIELD(DataObject, identifier);
 DEFINE_REFERENCE_FIELD(DataObject, visElements);
 SET_PROPERTY_FIELD_LABEL(DataObject, visElements, "Visual elements");
+
+/******************************************************************************
+* Produces a string representation of the object path.
+******************************************************************************/
+QString ConstDataObjectPath::toString() const
+{
+	QString s;
+	for(const DataObject* o : *this) {
+		if(!s.isEmpty()) s += QChar('/');
+		s += o->identifier();
+	}
+	return s;
+}
+
+/******************************************************************************
+* Produces a string representation of the object path that is suitable for the 
+* user interface.
+******************************************************************************/
+QString ConstDataObjectPath::toHumanReadableString() const
+{
+	if(empty()) return {};
+	QString str = back()->getOOMetaClass().displayName();
+	bool first = true;
+	for(const DataObject* obj : *this) {
+		if(!obj->identifier().isEmpty()) {
+			if(first) {
+				first = false;
+				str += QStringLiteral(": ");
+			}
+			else str += QStringLiteral(" / ");
+			str += obj->objectTitle();
+		}
+	}
+	return str;
+}
 
 /******************************************************************************
 * Constructor.

@@ -32,11 +32,14 @@ IMPLEMENT_OVITO_CLASS(ParticlesDeleteSelectedModifierDelegate);
 IMPLEMENT_OVITO_CLASS(BondsDeleteSelectedModifierDelegate);
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> ParticlesDeleteSelectedModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	return input.containsObject<ParticlesObject>();
+	if(input.containsObject<ParticlesObject>())
+		return { DataObjectReference(&ParticlesObject::OOClass()) };
+	return {};
 }
 
 /******************************************************************************
@@ -86,13 +89,16 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 }
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> BondsDeleteSelectedModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
-	if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
-		return particles->bonds() != nullptr;
-	return false;
+    if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+        if(particles->bonds())
+       		return { DataObjectReference(&ParticlesObject::OOClass()) };
+    }
+    return {};
 }
 
 /******************************************************************************

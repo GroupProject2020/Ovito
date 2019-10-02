@@ -30,6 +30,17 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(DislocationSliceModifierDelegate);
 
 /******************************************************************************
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
+******************************************************************************/
+QVector<DataObjectReference> DislocationSliceModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+{
+	if(input.containsObject<DislocationNetworkObject>())
+		return { DataObjectReference(&DislocationNetworkObject::OOClass()) };
+	return {};
+}
+
+/******************************************************************************
 * Performs the actual rejection of particles.
 ******************************************************************************/
 PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)

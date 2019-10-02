@@ -31,14 +31,6 @@ namespace Ovito { namespace Mesh {
 IMPLEMENT_OVITO_CLASS(SurfaceMeshReplicateModifierDelegate);
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
-******************************************************************************/
-bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
-{
-	return input.containsObject<SurfaceMesh>();
-}
-
-/******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
 PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)

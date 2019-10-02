@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -90,12 +90,20 @@ void ModifierDelegateParameterUI::updateUI()
 
 	Modifier* mod = dynamic_object_cast<Modifier>(editObject());
 	RefTarget* delegate = nullptr;
-	if(DelegatingModifier* delegatingMod = dynamic_object_cast<DelegatingModifier>(mod))
+	DataObjectReference inputDataObject;
+	if(DelegatingModifier* delegatingMod = dynamic_object_cast<DelegatingModifier>(mod)) {
 		delegate = delegatingMod->delegate();
-	else if(AsynchronousDelegatingModifier* delegatingMod = dynamic_object_cast<AsynchronousDelegatingModifier>(mod))
+		if(delegate)
+			inputDataObject = delegatingMod->delegate()->inputDataObject();
+	}
+	else if(AsynchronousDelegatingModifier* delegatingMod = dynamic_object_cast<AsynchronousDelegatingModifier>(mod)) {
 		delegate = delegatingMod->delegate();
-	else if(mod)
+		if(delegate)
+			inputDataObject = delegatingMod->delegate()->inputDataObject();
+	}
+	else if(mod) {
 		OVITO_ASSERT(false);
+	}
 
 	OVITO_ASSERT(!delegate || _delegateType.isMember(delegate));
 
@@ -105,26 +113,58 @@ void ModifierDelegateParameterUI::updateUI()
 		// Obtain modifier inputs.
 		std::vector<OORef<DataCollection>> modifierInputs;
 		for(ModifierApplication* modApp : mod->modifierApplications()) {
-			modifierInputs.push_back(modApp->evaluateInputPreliminary().data());
+			if(const DataCollection* data = modApp->evaluateInputPreliminary().data())
+				modifierInputs.push_back(data);
 		}
 
 		// Add list items for the registered delegate classes.
+		int indexToBeSelected = -1;
 		const QStandardItemModel* model = qobject_cast<const QStandardItemModel*>(comboBox()->model());
 		for(const OvitoClassPtr& clazz : PluginManager::instance().listClasses(_delegateType)) {
-			comboBox()->addItem(clazz->displayName(), QVariant::fromValue(clazz));
 
-			// Check if this delegate can handle the current modifier input data.
-			// If not, disable the list entry for this delegate.
-			if(clazz->isDerivedFrom(ModifierDelegate::OOClass())) {
-				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), [clazz = static_cast<const ModifierDelegate::OOMetaClass*>(clazz)](const DataCollection* data) { return data && clazz->isApplicableTo(*data); }))
-					continue;
-			}
-			else if(clazz->isDerivedFrom(AsynchronousModifierDelegate::OOClass())) {
-				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), [clazz = static_cast<const AsynchronousModifierDelegate::OOMetaClass*>(clazz)](const DataCollection* data) { return data && clazz->isApplicableTo(*data); }))
-					continue;
+			// Collect the set of data objects in the modifier's pipeline input this delegate can handle.
+			QVector<DataObjectReference> applicableObjects;
+			for(const DataCollection* data : modifierInputs) {
+
+				// Query the delegate for the list of input data objects it can handle.
+				QVector<DataObjectReference> objList;
+				if(clazz->isDerivedFrom(ModifierDelegate::OOClass()))
+					objList = static_cast<const ModifierDelegate::OOMetaClass*>(clazz)->getApplicableObjects(*data);
+				else if(clazz->isDerivedFrom(AsynchronousModifierDelegate::OOClass()))
+					objList = static_cast<const AsynchronousModifierDelegate::OOMetaClass*>(clazz)->getApplicableObjects(*data);
+
+				// Combine the delegate's list with the existing list. 
+				// Make sure no data object appears more than once.
+				if(applicableObjects.empty()) {
+					applicableObjects = std::move(objList);
+				}
+				else {
+					for(const DataObjectReference& ref : objList) {
+						if(!applicableObjects.contains(ref)) 
+							applicableObjects.push_back(ref);
+					}
+				}					
 			}
 
-			model->item(comboBox()->count() - 1)->setEnabled(false);
+			if(!applicableObjects.empty()) {
+				// Add an extra item to the list box for every data object that the delegate can handle. 
+				for(const DataObjectReference& ref : applicableObjects) {
+					qDebug() << "List item:" << ref.dataClass() << ref.dataPath() << ref.dataTitle();
+					comboBox()->addItem(ref.dataTitle().isEmpty() ? clazz->displayName() : ref.dataTitle(), QVariant::fromValue(clazz));
+					comboBox()->setItemData(comboBox()->count() - 1, QVariant::fromValue(ref), Qt::UserRole + 1);
+					if(&delegate->getOOClass() == clazz && (inputDataObject == ref || !inputDataObject)) {
+						qDebug() << "  sel index";
+						indexToBeSelected = comboBox()->count() - 1;
+					}
+				}
+			}
+			else {
+				// Even if this delegate cannot handle the input data, still show it in the list box as a disabled item.
+				comboBox()->addItem(clazz->displayName(), QVariant::fromValue(clazz));
+				if(&delegate->getOOClass() == clazz)
+					indexToBeSelected = comboBox()->count() - 1;
+				model->item(comboBox()->count() - 1)->setEnabled(false);
+			}
 		}
 
 		if(comboBox()->count() == 0)
@@ -132,8 +172,7 @@ void ModifierDelegateParameterUI::updateUI()
 
 		// Select the right item in the list box.
 		if(delegate) {
-			int selIndex = comboBox()->findData(QVariant::fromValue(&delegate->getOOClass()));
-			comboBox()->setCurrentIndex(selIndex);
+			comboBox()->setCurrentIndex(indexToBeSelected);
 		}
 		else {
 			comboBox()->addItem(tr("<none>"));
@@ -155,13 +194,25 @@ void ModifierDelegateParameterUI::updatePropertyValue()
 	if(comboBox() && mod) {
 		undoableTransaction(tr("Change input type"), [this,mod]() {
 			if(OvitoClassPtr delegateType = comboBox()->currentData().value<OvitoClassPtr>()) {
+				DataObjectReference ref = comboBox()->currentData(Qt::UserRole + 1).value<DataObjectReference>();
+				qDebug() << "Selected:" << ref.dataClass() << ref.dataPath() << ref.dataTitle();
 				if(DelegatingModifier* delegatingMod = dynamic_object_cast<DelegatingModifier>(mod)) {
-					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType)
-						delegatingMod->setDelegate(static_object_cast<ModifierDelegate>(delegateType->createInstance(mod->dataset())));
+					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType) {
+						OORef<ModifierDelegate> delegate = static_object_cast<ModifierDelegate>(delegateType->createInstance(mod->dataset()));
+						delegatingMod->setDelegate(std::move(delegate));
+					}
+					else if(delegatingMod->delegate()) {
+						delegatingMod->delegate()->setInputDataObject(ref);
+					}
 				}
 				else if(AsynchronousDelegatingModifier* delegatingMod = dynamic_object_cast<AsynchronousDelegatingModifier>(mod)) {
-					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType)
-						delegatingMod->setDelegate(static_object_cast<AsynchronousModifierDelegate>(delegateType->createInstance(mod->dataset())));
+					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType) {
+						OORef<AsynchronousModifierDelegate> delegate = static_object_cast<AsynchronousModifierDelegate>(delegateType->createInstance(mod->dataset()));
+						delegatingMod->setDelegate(std::move(delegate));
+					}
+					else if(delegatingMod->delegate()) {
+						delegatingMod->delegate()->setInputDataObject(ref);
+					}
 				}
 			}
 			Q_EMIT valueEntered();

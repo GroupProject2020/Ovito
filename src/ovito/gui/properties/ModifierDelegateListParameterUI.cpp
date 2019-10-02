@@ -83,7 +83,7 @@ Qt::ItemFlags ModifierDelegateListParameterUI::getItemFlags(RefTarget* target, c
 		if(ModifierDelegate* delegate = dynamic_object_cast<ModifierDelegate>(target)) {
 			if(ModifierPropertiesEditor* editor = dynamic_object_cast<ModifierPropertiesEditor>(this->editor())) {
 				const PipelineFlowState& input = editor->getModifierInput();
-				if(input.isEmpty() || !delegate->getOOMetaClass().isApplicableTo(*input.data())) {
+				if(delegate->getOOMetaClass().getApplicableObjects(input).empty()) {
 					flags &= ~Qt::ItemIsEnabled;
 				}
 			}

@@ -31,18 +31,42 @@ IMPLEMENT_OVITO_CLASS(ParticleVectorsAssignColorModifierDelegate);
 IMPLEMENT_OVITO_CLASS(BondsAssignColorModifierDelegate);
 
 /******************************************************************************
-* Returns whether this function can be applied to the given input data.
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
 ******************************************************************************/
-bool ParticleVectorsAssignColorModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> ParticlesAssignColorModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+{
+	if(input.containsObject<ParticlesObject>())
+		return { DataObjectReference(&ParticlesObject::OOClass()) };
+	return {};
+}
+
+/******************************************************************************
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
+******************************************************************************/
+QVector<DataObjectReference> ParticleVectorsAssignColorModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
 {
     if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
         for(const PropertyObject* property : particles->properties()) {
             if(property->visElement<VectorVis>() != nullptr)
-                return true;
+                return { DataObjectReference(&ParticlesObject::OOClass()) };
         }
     }
-	return false;
+	return {};
+}
 
+/******************************************************************************
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
+******************************************************************************/
+QVector<DataObjectReference> BondsAssignColorModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+{
+    if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+        if(particles->bonds())
+       		return { DataObjectReference(&ParticlesObject::OOClass()) };
+    }
+    return {};
 }
 
 OVITO_END_INLINE_NAMESPACE

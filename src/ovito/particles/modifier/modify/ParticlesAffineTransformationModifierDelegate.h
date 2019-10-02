@@ -40,8 +40,8 @@ class ParticlesAffineTransformationModifierDelegate : public AffineTransformatio
 		/// Inherit constructor from base class.
 		using AffineTransformationModifierDelegate::OOMetaClass::OOMetaClass;
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const DataCollection& input) const override;
+		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
+		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
@@ -74,8 +74,8 @@ class VectorParticlePropertiesAffineTransformationModifierDelegate : public Affi
 		/// Inherit constructor from base class.
 		using AffineTransformationModifierDelegate::OOMetaClass::OOMetaClass;
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const DataCollection& input) const override;
+		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
+		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("vector_properties"); }

@@ -31,6 +31,17 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(ParticlesSliceModifierDelegate);
 
 /******************************************************************************
+* Indicates which data objects in the given input data collection the modifier 
+* delegate is able to operate on.
+******************************************************************************/
+QVector<DataObjectReference> ParticlesSliceModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+{
+	if(input.containsObject<ParticlesObject>())
+		return { DataObjectReference(&ParticlesObject::OOClass()) };
+	return {};
+}
+
+/******************************************************************************
 * Performs the actual rejection of particles.
 ******************************************************************************/
 PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)

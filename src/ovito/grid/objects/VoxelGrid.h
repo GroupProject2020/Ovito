@@ -53,6 +53,7 @@ class OVITO_GRID_EXPORT VoxelGrid : public PropertyContainer
 
 	Q_OBJECT
 	OVITO_CLASS_META(VoxelGrid, VoxelGridClass);
+	Q_CLASSINFO("DisplayName", "Voxel grid");
 
 public:
 

@@ -43,15 +43,18 @@ public:
 		/// Inherit constructor from base class.
 		using RefTarget::OOMetaClass::OOMetaClass;
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const DataCollection& input) const {
-			OVITO_ASSERT_MSG(false, "ModifierDelegate::OOMetaClass::isApplicableTo()",
-				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the isApplicableTo() method.").arg(name())));
-			return false;
+		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
+		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const {
+			OVITO_ASSERT_MSG(false, "ModifierDelegate::OOMetaClass::getApplicableObjects()",
+				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the getApplicableObjects() method.").arg(name())));
+			return {};
 		}
 
-		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		bool isApplicableToState(const PipelineFlowState& input) const { return input.data() && isApplicableTo(*input.data()); }
+		/// Asks the metaclass which data objects in the given input pipeline state the modifier delegate can operate on.
+		QVector<DataObjectReference> getApplicableObjects(const PipelineFlowState& input) const {
+			if(input.isEmpty()) return {};
+			return getApplicableObjects(*input.data()); 
+		}
 
 		/// \brief The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const {
@@ -74,7 +77,7 @@ public:
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) = 0;
 
-	/// \brief Returns the modifier to which this delegate belongs.
+	/// \brief Returns the modifier owning this delegate.
 	Modifier* modifier() const;
 
 private:
@@ -82,8 +85,8 @@ private:
 	/// Indicates whether this delegate is active or not.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isEnabled, setEnabled);
 
-	/// List of data object names this delegate should operate on.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QStringList, dataObjects, setDataObjects);
+	/// Optionally specifies a particular input data object this delegate should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(DataObjectReference, inputDataObject, setInputDataObject);
 };
 
 /**

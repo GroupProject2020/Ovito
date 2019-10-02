@@ -88,11 +88,16 @@ void AffineTransformationModifier::evaluatePreliminary(TimePoint time, ModifierA
 }
 
 /******************************************************************************
-* Determines whether this delegate can handle the given input data.
+* Asks the metaclass which data objects in the given input data collection the 
+* modifier delegate can operate on.
 ******************************************************************************/
-bool SimulationCellAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
+QVector<DataObjectReference> SimulationCellAffineTransformationModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
-	return input.containsObject<SimulationCellObject>() || input.containsObject<PeriodicDomainDataObject>();
+	if(input.containsObject<SimulationCellObject>())
+		return { DataObjectReference(&SimulationCellObject::OOClass()) };
+	if(input.containsObject<PeriodicDomainDataObject>())
+		return { DataObjectReference(&PeriodicDomainDataObject::OOClass()) };
+	return {};
 }
 
 /******************************************************************************

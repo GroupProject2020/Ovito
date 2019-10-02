@@ -32,51 +32,6 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
-/// Utility class that is used to reference a particular data object in a DataCollection
-/// as a path through the hierarchy of nested data objects.
-class ConstDataObjectPath : public QVarLengthArray<const DataObject*, 3>
-{
-public:
-
-	/// Inherit constructors from base class.
-	using QVarLengthArray::QVarLengthArray;
-
-	/// Converts the path to a string representation.
-	QString toString() const {
-		QString s;
-		for(const DataObject* o : *this) {
-			if(!s.isEmpty()) s += QChar('/');
-			s += o->identifier();
-		}
-		return s;
-	}
-};
-
-/// Utility class that is used to reference a particular data object in a DataCollection
-/// as a path through the hierarchy of nested data objects.
-class DataObjectPath : public QVarLengthArray<DataObject*, 3>
-{
-public:
-
-	/// Inherit constructors from base class.
-	using QVarLengthArray::QVarLengthArray;
-
-	/// Converts the path to a string representation.
-	QString toString() const {
-		QString s;
-		for(DataObject* o : *this) {
-			if(!s.isEmpty()) s += QChar('/');
-			s += o->identifier();
-		}
-		return s;
-	}
-
-	/// A path to a mutable object can be implicitly converted to a path to a constant object.
-	operator const ConstDataObjectPath&() const {
-		return *reinterpret_cast<const ConstDataObjectPath*>(this);
-	}
-};
-
 /**
  * \brief This data structure holds the list of data objects that flows down a data pipeline.
  */
