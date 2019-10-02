@@ -44,6 +44,9 @@ class OVITO_GRID_EXPORT VoxelGridComputePropertyModifierDelegate : public Comput
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
+		/// Indicates which class of data objects the modifier delegate is able to operate on.
+		virtual const DataObject::OOMetaClass& getApplicableObjectClass() const override { return VoxelGrid::OOClass(); }
+
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("voxels"); }
 	};
@@ -56,10 +59,7 @@ class OVITO_GRID_EXPORT VoxelGridComputePropertyModifierDelegate : public Comput
 public:
 
 	/// Constructor.
-	Q_INVOKABLE VoxelGridComputePropertyModifierDelegate(DataSet* dataset);
-
-	/// \brief Returns the class of property containers this delegate operates on.
-	virtual const PropertyContainerClass& containerClass() const override { return VoxelGrid::OOClass(); }
+	Q_INVOKABLE VoxelGridComputePropertyModifierDelegate(DataSet* dataset) :  ComputePropertyModifierDelegate(dataset) {}
 
 	/// Creates a computation engine that will compute the property values.
 	virtual std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> createEngine(

@@ -9,7 +9,7 @@ print(data.grids)
 
 
 ################# Code snippet begin #####################
-charge_density_grid = data.grids['imported']
+charge_density_grid = data.grids['charge-density']
 print(charge_density_grid.shape)
 ################## Code snippet end ######################
 

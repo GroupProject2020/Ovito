@@ -26,7 +26,7 @@ surface_mesh = data.surfaces['isosurface']
 assert(surface_mesh.vis is modifier.vis)
 
 # Add a second isosurface modifer:
-modifier2 = CreateIsosurfaceModifier(property = "Charge density", operate_on = "voxels:imported")
+modifier2 = CreateIsosurfaceModifier(property = "Charge density", operate_on = "voxels:charge-density")
 pipeline.modifiers.append(modifier2)
 data = pipeline.compute()
 

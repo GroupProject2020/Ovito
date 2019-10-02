@@ -50,7 +50,7 @@ class VoxelGridReplicateModifierDelegate : public ReplicateModifierDelegate
 	Q_OBJECT
 	OVITO_CLASS_META(VoxelGridReplicateModifierDelegate, OOMetaClass)
 
-	Q_CLASSINFO("DisplayName", "Voxel grid");
+	Q_CLASSINFO("DisplayName", "Voxel grids");
 
 public:
 

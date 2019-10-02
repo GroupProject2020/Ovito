@@ -46,6 +46,9 @@ class OVITO_PARTICLES_EXPORT ParticlesComputePropertyModifierDelegate : public C
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
+		/// Indicates which class of data objects the modifier delegate is able to operate on.
+		virtual const DataObject::OOMetaClass& getApplicableObjectClass() const override { return ParticlesObject::OOClass(); }
+
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};
@@ -59,9 +62,6 @@ public:
 
 	/// Constructor.
 	Q_INVOKABLE ParticlesComputePropertyModifierDelegate(DataSet* dataset);
-
-	/// \brief Returns the class of property containers this delegate operates on.
-	virtual const PropertyContainerClass& containerClass() const override { return ParticlesObject::OOClass(); }
 
 	/// \brief Sets the math expression that is used to compute the neighbor-terms of the property function.
 	/// \param index The property component for which the expression should be set.

@@ -32,7 +32,6 @@
 namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(AssignColorModifierDelegate);
-DEFINE_PROPERTY_FIELD(AssignColorModifierDelegate, containerPath);
 
 IMPLEMENT_OVITO_CLASS(AssignColorModifier);
 DEFINE_REFERENCE_FIELD(AssignColorModifier, colorController);
@@ -86,7 +85,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, PipelineFl
 		return PipelineStatus::Success;
 
 	// Look up the property container object and make sure we can safely modify it.
-   	DataObjectPath objectPath = state.expectMutableObject(containerClass(), containerPath());
+   	DataObjectPath objectPath = state.expectMutableObject(subject());
 	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
 
 	// Get the input selection property.

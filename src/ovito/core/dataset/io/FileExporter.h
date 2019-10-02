@@ -83,7 +83,7 @@ public:
 	/// \brief Returns the specific type(s) of data objects that this exporter service can export.
 	/// The default implementation returns an empty list to indicate that the exporter is not restricted to
 	/// a specfic class of data objects. Subclasses should override this behavior.
-	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const { return {}; }
+	virtual std::vector<DataObjectClassPtr> exportableDataObjectClass() const { return {}; }
 
 	/// \brief Sets the name of the output file that should be written by this exporter.
 	virtual void setOutputFilename(const QString& filename);

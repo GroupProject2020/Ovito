@@ -324,6 +324,8 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				};
 
 				frameData->setVoxelGridShape({nx, ny, nz});
+				frameData->setVoxelGridTitle(tr("Charge density"));
+				frameData->setVoxelGridId(QStringLiteral("charge-density"));
 
 				// Parse spin up + spin down denisty.
 				PropertyPtr chargeDensity = parseFieldData(nx, ny, nz, tr("Charge density"));

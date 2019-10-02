@@ -57,7 +57,7 @@ public:
 	Q_INVOKABLE VTKDislocationsExporter(DataSet* dataset) : FileExporter(dataset) {}
 
 	/// \brief Returns the type(s) of data objects that this exporter service can export.
-	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const override {
+	virtual std::vector<DataObjectClassPtr> exportableDataObjectClass() const override {
 		return { &DislocationNetworkObject::OOClass() };
 	}
 

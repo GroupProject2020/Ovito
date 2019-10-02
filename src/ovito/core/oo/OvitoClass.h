@@ -204,6 +204,20 @@ protected:
 	friend class PluginManager;
 };
 
+/// \brief Static cast operator for OvitoClass pointers.
+///
+/// Returns a OvitoClass pointer, cast to target type \c T, which must be an OvitoObject-derived type.
+/// Performs a runtime check in debug builds to make sure the input class
+/// is really a derived type of the target class.
+///
+/// \relates OvitoClass
+template<class T>
+inline const typename T::OOMetaClass* static_class_cast(const OvitoClass* clazz) {
+	OVITO_ASSERT_MSG(!clazz || clazz->isDerivedFrom(T::OOClass()), "static_class_cast",
+		qPrintable(QString("Runtime type check failed. The source class %1 is not drived from the target class %2.").arg(clazz->name()).arg(T::OOClass().name())));
+	return static_cast<const typename T::OOMetaClass*>(clazz);
+}
+
 /// This macro must be included in the class definition of any OvitoObject-derived class.
 #define OVITO_CLASS_INTERNAL(classname, baseclassname) \
 public: \

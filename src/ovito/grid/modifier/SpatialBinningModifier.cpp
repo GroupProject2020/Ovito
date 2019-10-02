@@ -36,7 +36,6 @@
 namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(SpatialBinningModifierDelegate);
-DEFINE_PROPERTY_FIELD(SpatialBinningModifierDelegate, containerPath);
 
 IMPLEMENT_OVITO_CLASS(SpatialBinningModifier);
 DEFINE_PROPERTY_FIELD(SpatialBinningModifier, reductionOperation);
@@ -101,13 +100,14 @@ void SpatialBinningModifier::initializeModifier(ModifierApplication* modApp)
 	// Use the first available property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && delegate() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		if(const PropertyContainer* container = input.getLeafObject(delegate()->subject())) {
-			PropertyReference bestProperty;
+		if(const PropertyContainer* container = input.getLeafObject(delegate()->inputContainerRef())) {
+			PropertyReference bestPropertyRef;
 			for(const PropertyObject* property : container->properties()) {
-				bestProperty = PropertyReference(&delegate()->containerClass(), property, (property->componentCount() > 1) ? 0 : -1);
+				bestPropertyRef = PropertyReference(delegate()->inputContainerClass(),
+					property, (property->componentCount() > 1) ? 0 : -1);
 			}
-			if(!bestProperty.isNull()) {
-				setSourceProperty(bestProperty);
+			if(!bestPropertyRef.isNull()) {
+				setSourceProperty(bestPropertyRef);
 			}
 		}
 	}
@@ -119,7 +119,7 @@ void SpatialBinningModifier::initializeModifier(ModifierApplication* modApp)
 void SpatialBinningModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !isAboutToBeDeleted() && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
-		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
+		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? delegate()->inputContainerClass() : nullptr));
 	}
 	AsynchronousDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
 }
@@ -137,7 +137,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
 		throwException(tr("No input property for binning has been selected."));
 
 	// Look up the property container which we will operate on.
-	const PropertyContainer* container = input.expectLeafObject(delegate()->subject());
+	const PropertyContainer* container = input.expectLeafObject(delegate()->inputContainerRef());
 	if(sourceProperty().containerClass() != &container->getOOMetaClass())
 		throwException(tr("Property %1 to be binned is not a %2 property.").arg(sourceProperty().name()).arg(container->getOOMetaClass().elementDescriptionName()));
 

@@ -116,7 +116,7 @@ PYBIND11_MODULE(GridPython, m)
 			"The output of the modifier is a one-, two- or three-dimensional grid of bin values. "
 			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.bin_and_reduce>` for this modifier. ")
 		.def_property("property", &SpatialBinningModifier::sourceProperty, [](SpatialBinningModifier& mod, py::object val) {
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? mod.delegate()->inputContainerClass() : nullptr));
 				},
 				"The name of the input particle property to which the reduction operation should be applied. "
 				"This can be one of the :ref:`standard particle properties <particle-types-list>` or a custom particle property. "

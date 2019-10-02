@@ -36,7 +36,6 @@
 namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(ColorCodingModifierDelegate);
-DEFINE_PROPERTY_FIELD(ColorCodingModifierDelegate, containerPath);
 
 IMPLEMENT_OVITO_CLASS(ColorCodingGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingHSVGradient);
@@ -131,10 +130,10 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 	// When the modifier is inserted, automatically select the most recently added property from the input.
 	if(sourceProperty().isNull() && delegate() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		if(const PropertyContainer* container = input.getLeafObject(delegate()->subject())) {
+		if(const PropertyContainer* container = input.getLeafObject(delegate()->inputContainerRef())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
-				bestProperty = PropertyReference(&delegate()->containerClass(), property, (property->componentCount() > 1) ? 0 : -1);
+				bestProperty = PropertyReference(delegate()->inputContainerClass(), property, (property->componentCount() > 1) ? 0 : -1);
 			}
 			if(!bestProperty.isNull())
 				setSourceProperty(bestProperty);
@@ -153,7 +152,7 @@ void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field
 {
 	// Whenever the delegate of this modifier is being replaced, update the source property reference.
 	if(field == PROPERTY_FIELD(DelegatingModifier::delegate) && !isBeingLoaded() && !isAboutToBeDeleted() && !dataset()->undoStack().isUndoingOrRedoing()) {
-		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
+		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? delegate()->inputContainerClass() : nullptr));
 	}
 	DelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
 }
@@ -165,7 +164,7 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 {
 	if(!delegate() || state.isEmpty())
 		return false;
-	const PropertyContainer* container = state.getLeafObject(delegate()->subject());
+	const PropertyContainer* container = state.getLeafObject(delegate()->inputContainerRef());
 	if(!container)
 		return false;
 	const PropertyObject* propertyObj = sourceProperty().findInContainer(container);
@@ -308,14 +307,14 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	if(sourceProperty.isNull())
 		throwException(tr("No source property was set as input for color coding."));
 
+	// Look up the selected property container. Make sure we can safely modify it.
+	DataObjectPath objectPath = state.expectMutableObject(inputContainerRef());
+	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+
 	// Check if the source property is the right kind of property.
-	if(sourceProperty.containerClass() != &containerClass())
+	if(sourceProperty.containerClass() != &container->getOOMetaClass())
 		throwException(tr("Color coding modifier was set to operate on '%1', but the selected input is a '%2' property.")
 			.arg(getOOMetaClass().pythonDataName()).arg(sourceProperty.containerClass()->propertyClassDisplayName()));
-
-	// Look up the selected property container. Make sure we can safely modify it.
-	DataObjectPath objectPath = state.expectMutableObject(containerClass(), containerPath());
-	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
 
 	const PropertyObject* propertyObj = sourceProperty.findInContainer(container);
 	if(!propertyObj)

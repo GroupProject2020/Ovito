@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -104,12 +104,14 @@ protected:
 
 public:
 
-	/// \brief Returns the class of property containers this delegate operates on.
-	virtual const PropertyContainerClass& containerClass() const = 0;
+	/// Returns the type of input property container that this delegate can process.
+	PropertyContainerClassPtr inputContainerClass() const {
+		return static_class_cast<PropertyContainer>(&getOOMetaClass().getApplicableObjectClass());
+	}
 
-	/// \brief Returns a reference to the property container being operated on by this delegate.
-	PropertyContainerReference subject() const {
-		return PropertyContainerReference(&containerClass(), containerPath());
+	/// Returns the reference to the selected input property container for this delegate.
+	PropertyContainerReference inputContainerRef() const {
+		return PropertyContainerReference(inputContainerClass(), inputDataObject().dataPath(), inputDataObject().dataTitle());
 	}
 
 	/// \brief Sets the number of vector components of the property to compute.
@@ -125,11 +127,6 @@ public:
 				PropertyPtr outputProperty,
 				ConstPropertyPtr selectionProperty,
 				QStringList expressions) = 0;
-
-private:
-
-	/// Specifies the ID container object the modifier should operate on.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 /**

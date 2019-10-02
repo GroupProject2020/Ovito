@@ -32,23 +32,16 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(BondsComputePropertyModifierDelegate);
 
 /******************************************************************************
-* Indicates which data objects in the given input data collection the modifier 
+* Indicates which data objects in the given input data collection the modifier
 * delegate is able to operate on.
 ******************************************************************************/
-QVector<DataObjectReference> BondsComputePropertyModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+QVector<DataObjectReference> BondsComputePropertyModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
     if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
         if(particles->bonds())
        		return { DataObjectReference(&ParticlesObject::OOClass()) };
     }
     return {};
-}
-
-/******************************************************************************
-* Constructs a new instance of this class.
-******************************************************************************/
-BondsComputePropertyModifierDelegate::BondsComputePropertyModifierDelegate(DataSet* dataset) : ComputePropertyModifierDelegate(dataset)
-{
 }
 
 /******************************************************************************

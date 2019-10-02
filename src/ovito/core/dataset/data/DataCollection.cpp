@@ -169,7 +169,7 @@ const DataObject* DataCollection::expectLeafObject(const DataObject::OOMetaClass
 			if(pathString.isEmpty())
 				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
 			else
-				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
+				throwException(tr("The data collection contains no %1 data object for the key '%2'.").arg(objectClass.displayName()).arg(pathString));
 		}
 	}
 	return obj;
@@ -280,7 +280,7 @@ ConstDataObjectPath DataCollection::expectObject(const DataObject::OOMetaClass& 
 			if(pathString.isEmpty())
 				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
 			else
-				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
+				throwException(tr("The data collection contains no %1 data object for the key '%2'.").arg(objectClass.displayName()).arg(pathString));
 		}
 	}
 	return path;
@@ -304,7 +304,7 @@ DataObjectPath DataCollection::expectMutableObject(const DataObject::OOMetaClass
 			if(pathString.isEmpty())
 				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
 			else
-				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
+				throwException(tr("The data collection contains no %1 data object for the key '%2'.").arg(objectClass.displayName()).arg(pathString));
 		}
 	}
 	return path;

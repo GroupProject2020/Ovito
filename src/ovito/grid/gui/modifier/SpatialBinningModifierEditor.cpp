@@ -70,7 +70,7 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	connect(this, &PropertiesEditor::contentsChanged, this, [sourcePropertyUI](RefTarget* editObject) {
 		SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject);
         if(modifier && modifier->delegate())
-    		sourcePropertyUI->setContainerRef(modifier->delegate()->subject());
+    		sourcePropertyUI->setContainerRef(modifier->delegate()->inputContainerRef());
         else
     		sourcePropertyUI->setContainerRef({});
 	});

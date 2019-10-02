@@ -175,6 +175,9 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			if(coords.empty())
 				throw Exception(tr("Invalid ATOMS section in line %1 of XSF file.").arg(stream.lineNumber()));
 
+			// Will continue parsing subsequent lines from the file.
+			line = stream.line();
+
 			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
 			frameData->addParticleProperty(posProperty);
 			std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
@@ -278,6 +281,14 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 				catch(Exception& ex) {
 					throw ex.prependGeneralMessage(tr("Parsing error in line %1 of XSF file.").arg(atomsLineNumber + i));
 				}
+			}
+		}
+		else if(boost::algorithm::starts_with(line, "BEGIN_BLOCK_DATAGRID_3D") || boost::algorithm::starts_with(line, "BLOCK_DATAGRID_3D") || boost::algorithm::starts_with(line, "BEGIN_BLOCK_DATAGRID3D")) {
+			stream.readLine();
+			QString gridId = stream.lineString().trimmed();
+			if(!gridId.isEmpty()) {
+				frameData->setVoxelGridTitle(gridId);
+				frameData->setVoxelGridId(gridId);
 			}
 		}
 		else if(boost::algorithm::starts_with(line, "BEGIN_DATAGRID_3D_") || boost::algorithm::starts_with(line, "DATAGRID_3D_")) {

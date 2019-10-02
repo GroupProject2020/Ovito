@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -114,7 +114,7 @@ void DelegatingModifier::applyDelegate(PipelineFlowState& state, TimePoint time,
 		return;
 
 	// Skip function if not applicable.
-	if(!state.data() || delegate()->getOOMetaClass().getApplicableObjects(*state.data()).empty())
+	if(delegate()->getOOMetaClass().getApplicableObjects(state).empty())
 		throwException(tr("The modifier input does not contain the expected kind of data."));
 
 	// Call the delegate function.

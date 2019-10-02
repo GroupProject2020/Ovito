@@ -58,11 +58,11 @@ void ColorCodingModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	_sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(ColorCodingModifier::sourceProperty), nullptr);
 	layout1->addWidget(new QLabel(tr("Input property:")));
 	layout1->addWidget(_sourcePropertyUI->comboBox());
-	connect(this, &PropertiesEditor::contentsReplaced, this, [this](RefTarget* editObject) {
-		// When a new modifier is being edited, update the list of available input properties.
+	connect(this, &PropertiesEditor::contentsChanged, this, [this](RefTarget* editObject) {
+		// When the modifier's delegate changes, update the list of available input properties.
 		ColorCodingModifier* modifier = static_object_cast<ColorCodingModifier>(editObject);
 		if(modifier && modifier->delegate())
-			_sourcePropertyUI->setContainerRef(modifier->delegate()->subject());
+			_sourcePropertyUI->setContainerRef(modifier->delegate()->inputContainerRef());
 		else
 			_sourcePropertyUI->setContainerRef({});
 	});
@@ -221,14 +221,6 @@ bool ColorCodingModifierEditor::referenceEvent(RefTarget* source, const Referenc
 	if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged) {
 		if(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(ColorCodingModifier::colorGradient)) {
 			updateColorGradient();
-		}
-		else if(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(DelegatingModifier::delegate)) {
-			// When the delegate of the modifier changes, update the list of available input properties.
-			ColorCodingModifier* modifier = static_object_cast<ColorCodingModifier>(editObject());
-			if(modifier && modifier->delegate())
-				_sourcePropertyUI->setContainerRef(modifier->delegate()->subject());
-			else
-				_sourcePropertyUI->setContainerRef({});
 		}
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

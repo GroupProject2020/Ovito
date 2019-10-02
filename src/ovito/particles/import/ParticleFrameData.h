@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -274,6 +274,18 @@ public:
 	/// Sets the shape of the voxel grid.
 	void setVoxelGridShape(const VoxelGrid::GridDimensions& shape) { _voxelGridShape = shape; }
 
+	/// Returns the human-readable name being assigned to the loaded voxel grid.
+	const QString& voxelGridTitle() const { return _voxelGridTitle; }
+
+	/// Sets the human-readable name that will be assigned to the voxel grid.
+	void setVoxelGridTitle(const QString& title) { _voxelGridTitle = title; }
+
+	/// Returns the unique data object ID being assigned to the loaded voxel grid.
+	const QString& voxelGridId() const { return _voxelGridId; }
+
+	/// Sets the unique data object ID that will be assigned to the voxel grid.
+	void setVoxelGridId(const QString& id) { _voxelGridId = id; }
+
 	/// Returns the list of voxel properties.
 	const std::vector<PropertyPtr>& voxelProperties() const { return _voxelProperties; }
 
@@ -318,8 +330,14 @@ private:
 	/// Voxel grid properties.
 	std::vector<PropertyPtr> _voxelProperties;
 
-	/// The shape of the voxel grid.
+	/// The dimensions of the voxel grid.
 	VoxelGrid::GridDimensions _voxelGridShape{{0,0,0}};
+
+	/// The human-readable name to assign to the loaded voxel grid.
+	QString _voxelGridTitle;
+
+	/// The ID to assign to the voxel grid data object.
+	QString _voxelGridId;
 
 	/// Stores the lists of types for typed properties (both particle and bond properties).
 	std::map<const PropertyStorage*, std::unique_ptr<TypeList>> _typeLists;

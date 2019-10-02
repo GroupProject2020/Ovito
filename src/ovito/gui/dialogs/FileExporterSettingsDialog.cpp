@@ -221,12 +221,12 @@ void FileExporterSettingsDialog::updateDataObjectList()
 	// Update the data objects list.
 	_dataObjectBox->clear();
 
-	std::vector<const DataObject::OOMetaClass*> objClasses = _exporter->exportableDataObjectClass();
+	std::vector<DataObjectClassPtr> objClasses = _exporter->exportableDataObjectClass();
 	if(!objClasses.empty()) {
 		if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_exporter->nodeToExport())) {
 			const PipelineFlowState& state = pipeline->evaluatePipelinePreliminary(true);
 			if(!state.isEmpty()) {
-				for(const DataObject::OOMetaClass* clazz : objClasses) {
+				for(DataObjectClassPtr clazz : objClasses) {
 					OVITO_ASSERT(clazz != nullptr);
 					for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(*clazz)) {
 						QString title = dataPath.back()->objectTitle();

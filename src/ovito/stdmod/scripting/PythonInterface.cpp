@@ -248,6 +248,8 @@ PYBIND11_MODULE(StdModPython, m)
 				":Default: ``'particles'``\n")
 	;
 
+	ovito_abstract_class<ColorCodingModifierDelegate, ModifierDelegate>{m};
+
 	auto ColorCodingModifier_py = ovito_class<ColorCodingModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -285,7 +287,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"\n")
 
 		.def_property("property", &ColorCodingModifier::sourceProperty, [](ColorCodingModifier& mod, py::object val) {
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? mod.delegate()->inputContainerClass() : nullptr));
 				},
 				"The name of the input property that should be used to color elements. "
 				"\n\n"
@@ -728,7 +730,7 @@ PYBIND11_MODULE(StdModPython, m)
 				"\n\n"
 				":Default: ``[\"0\"]``\n")
 		.def_property("output_property", &ComputePropertyModifier::outputProperty, [](ComputePropertyModifier& mod, py::object val) {
-					mod.setOutputProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
+					mod.setOutputProperty(convertPythonPropertyReference(val, mod.delegate() ? mod.delegate()->inputContainerClass() : nullptr));
 				},
 				"The output property that will receive the computed values. "
 				"This can be one of the :ref:`standard property names <particle-types-list>` defined by OVITO or a user-defined property name. "

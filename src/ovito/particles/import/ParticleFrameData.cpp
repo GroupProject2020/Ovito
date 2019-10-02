@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,6 +27,7 @@
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/grid/objects/VoxelGrid.h>
+#include <ovito/grid/objects/VoxelGridVis.h>
 #include <ovito/mesh/tri/TriMeshObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/simcell/SimulationCellVis.h>
@@ -259,10 +260,37 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 	// Transfer voxel data.
 	if(voxelGridShape() != VoxelGrid::GridDimensions{0,0,0}) {
 
-		const VoxelGrid* existingVoxelGrid = existing ? existing->getObject<VoxelGrid>() : nullptr;
-		VoxelGrid* voxelGrid = output->createObject<VoxelGrid>(QStringLiteral("imported"), fileSource);
+		// Look for an existing VoxelGrid object in the old data collection.
+		const VoxelGrid* existingVoxelGrid = nullptr;
+		if(existing) {
+			if(!voxelGridId().isEmpty()) {
+				ConstDataObjectPath path = existing->getObject<VoxelGrid>(voxelGridId());
+				if(!path.empty()) existingVoxelGrid = static_object_cast<VoxelGrid>(path.back());
+			}
+			else existingVoxelGrid = existing->getObject<VoxelGrid>();
+		}
+
+		// Create the new VoxelGrid object.
+		VoxelGrid* voxelGrid = output->createObject<VoxelGrid>(voxelGridId().isEmpty() ? QStringLiteral("imported") : voxelGridId(), fileSource, voxelGridTitle());
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
+
+		// Create a visualization element for the voxel grid.
+		if(!existingVoxelGrid) {
+			voxelGrid->setVisElement(new VoxelGridVis(voxelGrid->dataset()));
+			// Initialize the vis element to default values.
+			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
+				voxelGrid->visElement()->loadUserDefaults();
+			voxelGrid->visElement()->setEnabled(false);
+		}
+		else {
+			// Adopt the existing vis element.
+			voxelGrid->setVisElements(existingVoxelGrid->visElements());
+		}
+
+		// Give the vis element an expressive title.
+		if(VoxelGridVis* gridVis = voxelGrid->visElement<VoxelGridVis>())
+			gridVis->setTitle(voxelGridTitle());
 
 		for(auto& property : voxelProperties()) {
 

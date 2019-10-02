@@ -74,14 +74,14 @@ public:
 	DataObjectReference() = default;
 
 	/// \brief Constructs a reference to a data object.
-	DataObjectReference(const DataObject::OOMetaClass* dataClass, const QString& dataPath = QString(), const QString& dataTitle = QString()) :
+	DataObjectReference(DataObjectClassPtr dataClass, const QString& dataPath = QString(), const QString& dataTitle = QString()) :
 		_dataClass(dataClass), _dataPath(dataPath), _dataTitle(dataTitle) {}
 
 	/// \brief Constructs a reference to a data object from a data object path.
 	DataObjectReference(const ConstDataObjectPath& path) : DataObjectReference(path.empty() ? nullptr : &path.back()->getOOMetaClass(), path.toString(), path.toHumanReadableString()) {}
 
 	/// Returns the DataObject subclass being referenced.
-	const DataObject::OOMetaClass* dataClass() const { return _dataClass; }
+	DataObjectClassPtr dataClass() const { return _dataClass; }
 
 	/// Returns the identifier and path of the data object being referenced.
 	const QString& dataPath() const { return _dataPath; }
@@ -105,7 +105,7 @@ public:
 private:
 
 	/// The DataObject subclass being referenced.
-	const DataObject::OOMetaClass* _dataClass = nullptr;
+	DataObjectClassPtr _dataClass = nullptr;
 
 	/// The identifier and path of the data object being referenced.
 	QString _dataPath;

@@ -284,12 +284,14 @@ public:
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 
-	/// \brief Returns the class of property containers that can serve as input for the color coding.
-	virtual const PropertyContainerClass& containerClass() const = 0;
+	/// Returns the type of input property container that this delegate can process.
+	PropertyContainerClassPtr inputContainerClass() const {
+		return static_class_cast<PropertyContainer>(&getOOMetaClass().getApplicableObjectClass());
+	}
 
-	/// \brief Returns a reference to the property container being modified by this delegate.
-	PropertyContainerReference subject() const {
-		return PropertyContainerReference(&containerClass(), containerPath());
+	/// Returns the reference to the selected input property container for this delegate.
+	PropertyContainerReference inputContainerRef() const {
+		return PropertyContainerReference(inputContainerClass(), inputDataObject().dataPath(), inputDataObject().dataTitle());
 	}
 
 protected:
@@ -299,11 +301,6 @@ protected:
 
 	/// \brief returns the ID of the standard property that will receive the computed colors.
 	virtual int outputColorPropertyId() const = 0;
-
-private:
-
-	/// Specifies the property container object the modifier should operate on.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 /**

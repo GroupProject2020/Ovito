@@ -9,7 +9,7 @@ except ImportError:
 import ovito
 from ovito.data import DataCollection
 
-# Helper class that exposes all data objects of a given class stored in a DataCollection. 
+# Helper class that exposes all data objects of a given class stored in a DataCollection.
 class DataObjectsDict(collections.Mapping):
     """
     A dictionary-like view of all :py:class:`DataObject` instances of a particular type in a :py:class:`DataCollection`.
@@ -36,18 +36,18 @@ class DataObjectsDict(collections.Mapping):
         else:
             request_mutable = False
         for obj in self._data.objects:
-            if isinstance(obj, self._data_object_class): 
+            if isinstance(obj, self._data_object_class):
                 if obj.identifier == key:
                     if request_mutable:
                         return self._data.make_mutable(obj)
                     else:
                         return obj
-        raise KeyError("No data object of type <{}> with key '{}'".format(self._data_object_class.__name__, str(key)))
-    
+        raise KeyError("No data object of type <{}> for key '{}'".format(self._data_object_class.__name__, str(key)))
+
     def __iter__(self):
         for obj in self._data.objects:
             if isinstance(obj, self._data_object_class):
                 yield obj.identifier
-    
+
     def __repr__(self):
         return repr(dict(self))

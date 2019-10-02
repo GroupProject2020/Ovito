@@ -48,7 +48,7 @@ public:
 
 	/// \brief Returns a reference to the property container being modified by this delegate.
 	PropertyContainerReference subject() const {
-		return PropertyContainerReference(&containerClass(), containerPath());
+		return PropertyContainerReference(&containerClass(), inputDataObject().dataPath(), inputDataObject().dataTitle());
 	}
 
 protected:
@@ -58,11 +58,6 @@ protected:
 
 	/// \brief returns the ID of the standard property that will receive the assigned colors.
 	virtual int outputColorPropertyId() const = 0;
-
-private:
-
-	/// Specifies the property container object the modifier should operate on.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 

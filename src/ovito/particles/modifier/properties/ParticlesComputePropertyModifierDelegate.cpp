@@ -39,10 +39,10 @@ SET_PROPERTY_FIELD_LABEL(ParticlesComputePropertyModifierDelegate, useMultilineF
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticlesComputePropertyModifierDelegate, cutoff, WorldParameterUnit, 0);
 
 /******************************************************************************
-* Indicates which data objects in the given input data collection the modifier 
+* Indicates which data objects in the given input data collection the modifier
 * delegate is able to operate on.
 ******************************************************************************/
-QVector<DataObjectReference> ParticlesComputePropertyModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+QVector<DataObjectReference> ParticlesComputePropertyModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
 	if(input.containsObject<ParticlesObject>())
 		return { DataObjectReference(&ParticlesObject::OOClass()) };

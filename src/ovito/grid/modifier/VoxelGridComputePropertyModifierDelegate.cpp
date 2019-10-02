@@ -30,21 +30,17 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(VoxelGridComputePropertyModifierDelegate);
 
 /******************************************************************************
-* Indicates which data objects in the given input data collection the modifier 
+* Indicates which data objects in the given input data collection the modifier
 * delegate is able to operate on.
 ******************************************************************************/
-QVector<DataObjectReference> VoxelGridComputePropertyModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+QVector<DataObjectReference> VoxelGridComputePropertyModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
-	if(input.containsObject<VoxelGrid>())
-		return { DataObjectReference(&VoxelGrid::OOClass()) };
-	return {};
-}
-
-/******************************************************************************
-* Constructs a new instance of this class.
-******************************************************************************/
-VoxelGridComputePropertyModifierDelegate::VoxelGridComputePropertyModifierDelegate(DataSet* dataset) : ComputePropertyModifierDelegate(dataset)
-{
+	// Gather list of all VoxelGrid objects in the input data collection.
+	QVector<DataObjectReference> objects;
+	for(const ConstDataObjectPath& path : input.getObjectsRecursive(VoxelGrid::OOClass())) {
+		objects.push_back(path);
+	}
+	return objects;
 }
 
 /******************************************************************************

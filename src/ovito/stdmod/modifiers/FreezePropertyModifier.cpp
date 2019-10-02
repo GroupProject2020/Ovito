@@ -129,7 +129,7 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 						return std::move(state);
 					}
 					else {
-						throwException(tr("The property '%1' is not present in the input state").arg(sourceProperty().name()));
+						throwException(tr("The property '%1' is not present in the input state.").arg(sourceProperty().name()));
 					}
 				}
 				myModApp->invalidateFrozenState();

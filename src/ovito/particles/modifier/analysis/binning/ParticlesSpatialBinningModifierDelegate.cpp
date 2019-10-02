@@ -30,21 +30,14 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(ParticlesSpatialBinningModifierDelegate);
 
 /******************************************************************************
-* Indicates which data objects in the given input data collection the modifier 
+* Indicates which data objects in the given input data collection the modifier
 * delegate is able to operate on.
 ******************************************************************************/
-QVector<DataObjectReference> ParticlesSpatialBinningModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+QVector<DataObjectReference> ParticlesSpatialBinningModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
 	if(input.containsObject<ParticlesObject>())
 		return { DataObjectReference(&ParticlesObject::OOClass()) };
 	return {};
-}
-
-/******************************************************************************
-* Constructs a new instance of this class.
-******************************************************************************/
-ParticlesSpatialBinningModifierDelegate::ParticlesSpatialBinningModifierDelegate(DataSet* dataset) : SpatialBinningModifierDelegate(dataset)
-{
 }
 
 /******************************************************************************

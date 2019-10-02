@@ -53,9 +53,16 @@ public:
 		/// Asks the metaclass which data objects in the given input pipeline state the modifier delegate can operate on.
 		QVector<DataObjectReference> getApplicableObjects(const PipelineFlowState& input) const {
 			if(input.isEmpty()) return {};
-			return getApplicableObjects(*input.data()); 
+			return getApplicableObjects(*input.data());
 		}
-		
+
+		/// Indicates which class of data objects the modifier delegate is able to operate on.
+		virtual const DataObject::OOMetaClass& getApplicableObjectClass() const {
+			OVITO_ASSERT_MSG(false, "AsynchronousModifierDelegate::OOMetaClass::getApplicableObjectClass()",
+				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the getApplicableObjectClass() method.").arg(name())));
+			return DataObject::OOClass();
+		}
+
 		/// \brief The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const {
 			OVITO_ASSERT_MSG(false, "AsynchronousModifierDelegate::OOMetaClass::pythonDataName()",
@@ -70,7 +77,7 @@ public:
 protected:
 
 	/// \brief Constructor.
-	using RefTarget::RefTarget;
+	AsynchronousModifierDelegate(DataSet* dataset, const DataObjectReference& inputDataObj = DataObjectReference()) : RefTarget(dataset), _inputDataObject(inputDataObj) {}
 
 public:
 

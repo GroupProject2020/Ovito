@@ -636,7 +636,13 @@ template<typename DelegatingModifierClass>
 py::cpp_function modifierDelegateGetter()
 {
 	return [](const DelegatingModifierClass& mod) {
-		return mod.delegate() ? mod.delegate()->getOOMetaClass().pythonDataName() : QString();
+		QString s;
+		if(mod.delegate()) {
+			s = mod.delegate()->getOOMetaClass().pythonDataName();
+			if(mod.delegate()->inputDataObject().dataPath().isEmpty() == false)
+				s += QChar(':') + mod.delegate()->inputDataObject().dataPath();
+		}
+		return s;
 	};
 }
 
@@ -645,12 +651,29 @@ template<typename DelegatingModifierClass>
 py::cpp_function modifierDelegateSetter()
 {
 	return [](DelegatingModifierClass& mod, const QString& typeName) {
+
+		// First, split the input string into a delegate type and an optional data object path.
+		QStringRef delegateStr, dataPathStr;
+		int separatorPos = typeName.indexOf(QChar(':'));
+		if(separatorPos == -1) {
+			delegateStr = &typeName;
+		}
+		else {
+			delegateStr = QStringRef(&typeName, 0, separatorPos);
+			dataPathStr = QStringRef(&typeName, separatorPos+1, typeName.length() - separatorPos - 1);
+		}
+
 		const OvitoClass& delegateType = DelegatingModifierClass::OOClass().delegateMetaclass();
-		if(mod.delegate() && mod.delegate()->getOOMetaClass().pythonDataName() == typeName)
+		if(mod.delegate() && mod.delegate()->getOOMetaClass().pythonDataName() == delegateStr && mod.delegate()->inputDataObject().dataPath() == dataPathStr)
 			return;
 		for(auto clazz : PluginManager::instance().metaclassMembers<typename DelegatingModifierClass::DelegateBaseType>(delegateType)) {
-			if(clazz->pythonDataName() == typeName) {
-				mod.setDelegate(static_object_cast<typename DelegatingModifierClass::DelegateBaseType>(clazz->createInstance(mod.dataset())));
+			if(clazz->pythonDataName() == delegateStr) {
+				// Create the new delegate object.
+				OORef<typename DelegatingModifierClass::DelegateBaseType> delegate = static_object_cast<typename DelegatingModifierClass::DelegateBaseType>(clazz->createInstance(mod.dataset()));
+				// Set which input data object the delegate should operate on.
+				delegate->setInputDataObject(DataObjectReference(&clazz->getApplicableObjectClass(), dataPathStr.toString()));
+				// Activate the new delegate.
+				mod.setDelegate(std::move(delegate));
 				return;
 			}
 		}
@@ -661,7 +684,7 @@ py::cpp_function modifierDelegateSetter()
 			delegateTypeNames.push_back(QString("'%1'").arg(clazz->pythonDataName()));
 		}
 		mod.throwException(QStringLiteral("'%1' is not a valid type of data element this modifier can operate on. Supported types are: (%2)")
-			.arg(typeName).arg(delegateTypeNames.join(QStringLiteral(", "))));
+			.arg(delegateStr).arg(delegateTypeNames.join(QStringLiteral(", "))));
 	};
 }
 

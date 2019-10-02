@@ -204,6 +204,9 @@ private:
 	template<typename DataObjectClass> friend class StrongDataObjectRef;
 };
 
+/// A pointer to a DataObject-derived metaclass.
+using DataObjectClassPtr = const DataObject::OOMetaClass*;
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

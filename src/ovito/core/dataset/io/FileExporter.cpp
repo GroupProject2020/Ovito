@@ -148,10 +148,10 @@ bool FileExporter::isSuitableNode(SceneNode* node) const
 bool FileExporter::isSuitablePipelineOutput(const PipelineFlowState& state) const
 {
 	if(state.isEmpty()) return false;
-	std::vector<const DataObject::OOMetaClass*> objClasses = exportableDataObjectClass();
+	std::vector<DataObjectClassPtr> objClasses = exportableDataObjectClass();
 	if(objClasses.empty())
 		return true;
-	for(const DataObject::OOMetaClass* objClass : objClasses) {
+	for(DataObjectClassPtr objClass : objClasses) {
 		if(state.containsObjectRecursive(*objClass))
 			return true;
 	}

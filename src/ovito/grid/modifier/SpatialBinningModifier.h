@@ -131,12 +131,14 @@ protected:
 
 public:
 
-	/// \brief Returns the class of property containers this delegate operates on.
-	virtual const PropertyContainerClass& containerClass() const = 0;
+	/// Returns the type of input property container that this delegate can process.
+	PropertyContainerClassPtr inputContainerClass() const {
+		return static_class_cast<PropertyContainer>(&getOOMetaClass().getApplicableObjectClass());
+	}
 
-	/// \brief Returns a reference to the property container being operated on by this delegate.
-	PropertyContainerReference subject() const {
-		return PropertyContainerReference(&containerClass(), containerPath());
+	/// Returns the reference to the selected input property container for this delegate.
+	PropertyContainerReference inputContainerRef() const {
+		return PropertyContainerReference(inputContainerClass(), inputDataObject().dataPath(), inputDataObject().dataTitle());
 	}
 
 	/// Creates a computation engine that will perform the actual binning of elements.
@@ -153,11 +155,6 @@ public:
 				const Vector3I& binDir,
 				int reductionOperation,
 				bool computeFirstDerivative) = 0;
-
-private:
-
-	/// Specifies the input object the modifier should operate on.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 /**

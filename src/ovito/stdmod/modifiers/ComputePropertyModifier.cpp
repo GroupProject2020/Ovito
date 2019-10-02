@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2018) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,6 @@
 namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifierDelegate);
-DEFINE_PROPERTY_FIELD(ComputePropertyModifierDelegate, containerPath);
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifier);
 DEFINE_PROPERTY_FIELD(ComputePropertyModifier, expressions);
@@ -64,7 +63,7 @@ ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : Asynchronou
 	createDefaultModifierDelegate(ComputePropertyModifierDelegate::OOClass(), QStringLiteral("ParticlesComputePropertyModifierDelegate"));
 	// Set default output property.
 	if(delegate())
-		setOutputProperty(PropertyReference(&delegate()->containerClass(), QStringLiteral("My property")));
+		setOutputProperty(PropertyReference(delegate()->inputContainerClass(), QStringLiteral("My property")));
 }
 
 /******************************************************************************
@@ -91,7 +90,7 @@ void ComputePropertyModifier::setPropertyComponentCount(int newComponentCount)
 void ComputePropertyModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !isAboutToBeDeleted() && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
-		setOutputProperty(outputProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
+		setOutputProperty(outputProperty().convertToContainerClass(delegate() ? delegate()->inputContainerClass() : nullptr));
 		if(delegate()) delegate()->setComponentCount(expressions().size());
 	}
 	AsynchronousDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
@@ -108,10 +107,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 		throwException(tr("No delegate set for the compute property modifier."));
 
 	// Look up the property container which we will operate on.
-   	ConstDataObjectPath objectPath = input.expectObject(delegate()->containerClass(), delegate()->containerPath());
+   	ConstDataObjectPath objectPath = input.expectObject(delegate()->inputContainerRef());
 	const PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
-	if(outputProperty().containerClass() != &delegate()->containerClass())
-		throwException(tr("Property %1 to be computed is not a %2 property.").arg(outputProperty().name()).arg(delegate()->containerClass().elementDescriptionName()));
+	if(outputProperty().containerClass() != delegate()->inputContainerClass())
+		throwException(tr("Property %1 to be computed is not a %2 property.").arg(outputProperty().name()).arg(delegate()->inputContainerClass()->elementDescriptionName()));
 
 	// Get the number of input elements.
 	size_t nelements = container->elementCount();
@@ -233,8 +232,7 @@ void ComputePropertyModifierDelegate::PropertyComputeEngine::emitResults(TimePoi
 		modifier->throwException(tr("No delegate set for the Compute Property modifier."));
 
 	// Look up the container we are operating on.
-   	DataObjectPath objectPath = state.expectMutableObject(modifier->delegate()->containerClass(), modifier->delegate()->containerPath());
-	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+	PropertyContainer* container = state.expectMutableLeafObject(modifier->delegate()->inputContainerRef());
 
 	// Create the output property object in the container.
 	PropertyObject* outputPropertyObj = container->createProperty(outputProperty());

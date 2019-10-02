@@ -113,8 +113,9 @@ void ModifierDelegateParameterUI::updateUI()
 		// Obtain modifier inputs.
 		std::vector<OORef<DataCollection>> modifierInputs;
 		for(ModifierApplication* modApp : mod->modifierApplications()) {
-			if(const DataCollection* data = modApp->evaluateInputPreliminary().data())
-				modifierInputs.push_back(data);
+			const PipelineFlowState& state = modApp->evaluateInputPreliminary();
+			if(state.data())
+				modifierInputs.push_back(state.data());
 		}
 
 		// Add list items for the registered delegate classes.
@@ -133,27 +134,25 @@ void ModifierDelegateParameterUI::updateUI()
 				else if(clazz->isDerivedFrom(AsynchronousModifierDelegate::OOClass()))
 					objList = static_cast<const AsynchronousModifierDelegate::OOMetaClass*>(clazz)->getApplicableObjects(*data);
 
-				// Combine the delegate's list with the existing list. 
+				// Combine the delegate's list with the existing list.
 				// Make sure no data object appears more than once.
 				if(applicableObjects.empty()) {
 					applicableObjects = std::move(objList);
 				}
 				else {
 					for(const DataObjectReference& ref : objList) {
-						if(!applicableObjects.contains(ref)) 
+						if(!applicableObjects.contains(ref))
 							applicableObjects.push_back(ref);
 					}
-				}					
+				}
 			}
 
 			if(!applicableObjects.empty()) {
-				// Add an extra item to the list box for every data object that the delegate can handle. 
+				// Add an extra item to the list box for every data object that the delegate can handle.
 				for(const DataObjectReference& ref : applicableObjects) {
-					qDebug() << "List item:" << ref.dataClass() << ref.dataPath() << ref.dataTitle();
 					comboBox()->addItem(ref.dataTitle().isEmpty() ? clazz->displayName() : ref.dataTitle(), QVariant::fromValue(clazz));
 					comboBox()->setItemData(comboBox()->count() - 1, QVariant::fromValue(ref), Qt::UserRole + 1);
 					if(&delegate->getOOClass() == clazz && (inputDataObject == ref || !inputDataObject)) {
-						qDebug() << "  sel index";
 						indexToBeSelected = comboBox()->count() - 1;
 					}
 				}
@@ -167,17 +166,39 @@ void ModifierDelegateParameterUI::updateUI()
 			}
 		}
 
-		if(comboBox()->count() == 0)
-			comboBox()->addItem(tr("<No input types available>"));
-
 		// Select the right item in the list box.
+		static QIcon warningIcon(QStringLiteral(":/gui/mainwin/status/status_warning.png"));
 		if(delegate) {
-			comboBox()->setCurrentIndex(indexToBeSelected);
+			if(indexToBeSelected < 0) {
+				if(delegate && inputDataObject) {
+					// Add a place-holder item if the selected data object does not exist anymore.
+					QString title = inputDataObject.dataTitle();
+					if(title.isEmpty() && inputDataObject.dataClass())
+						title = inputDataObject.dataClass()->displayName();
+					title += tr(" (not available)");
+					comboBox()->addItem(title, QVariant::fromValue(QVariant::fromValue(&delegate->getOOClass())));
+					QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(comboBox()->count()-1);
+					item->setIcon(warningIcon);
+				}
+				else if(comboBox()->count() != 0) {
+					comboBox()->addItem(tr("<Please select a data object>"));
+				}
+				indexToBeSelected = comboBox()->count() - 1;
+			}
+			if(comboBox()->count() == 0) {
+				comboBox()->addItem(tr("<No inputs available>"));
+				QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(0);
+				item->setIcon(warningIcon);
+				indexToBeSelected = 0;
+			}
 		}
 		else {
-			comboBox()->addItem(tr("<none>"));
-			comboBox()->setCurrentIndex(comboBox()->count() - 1);
+			comboBox()->addItem(tr("<None>"));
+			indexToBeSelected = comboBox()->count() - 1;
+			QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(indexToBeSelected);
+			item->setIcon(warningIcon);
 		}
+		comboBox()->setCurrentIndex(indexToBeSelected);
 	}
 	else if(comboBox()) {
 		comboBox()->clear();
@@ -195,23 +216,24 @@ void ModifierDelegateParameterUI::updatePropertyValue()
 		undoableTransaction(tr("Change input type"), [this,mod]() {
 			if(OvitoClassPtr delegateType = comboBox()->currentData().value<OvitoClassPtr>()) {
 				DataObjectReference ref = comboBox()->currentData(Qt::UserRole + 1).value<DataObjectReference>();
-				qDebug() << "Selected:" << ref.dataClass() << ref.dataPath() << ref.dataTitle();
 				if(DelegatingModifier* delegatingMod = dynamic_object_cast<DelegatingModifier>(mod)) {
-					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType) {
+					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType || delegatingMod->delegate()->inputDataObject() != ref) {
+						// Create the new delegate object.
 						OORef<ModifierDelegate> delegate = static_object_cast<ModifierDelegate>(delegateType->createInstance(mod->dataset()));
+						// Set which input data object the delegate should operate on.
+						delegate->setInputDataObject(ref);
+						// Activate the new delegate.
 						delegatingMod->setDelegate(std::move(delegate));
-					}
-					else if(delegatingMod->delegate()) {
-						delegatingMod->delegate()->setInputDataObject(ref);
 					}
 				}
 				else if(AsynchronousDelegatingModifier* delegatingMod = dynamic_object_cast<AsynchronousDelegatingModifier>(mod)) {
-					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType) {
+					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType || delegatingMod->delegate()->inputDataObject() != ref) {
+						// Create the new delegate object.
 						OORef<AsynchronousModifierDelegate> delegate = static_object_cast<AsynchronousModifierDelegate>(delegateType->createInstance(mod->dataset()));
+						// Set which input data object the delegate should operate on.
+						delegate->setInputDataObject(ref);
+						// Activate the new delegate.
 						delegatingMod->setDelegate(std::move(delegate));
-					}
-					else if(delegatingMod->delegate()) {
-						delegatingMod->delegate()->setInputDataObject(ref);
 					}
 				}
 			}

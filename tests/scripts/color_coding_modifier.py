@@ -56,3 +56,30 @@ modifier = ColorCodingModifier(
 )
 assert(modifier.property == 'Length')
 assert(modifier.operate_on == 'bonds')
+
+
+# Test operation on voxel grids.
+pipeline = import_file("../files/POSCAR/CHGCAR.nospin.gz")
+# Add another voxel grid.
+pipeline.modifiers.append(SpatialBinningModifier(direction = SpatialBinningModifier.Direction.XY, property = "Position.X"))
+modifier = ColorCodingModifier(
+        operate_on = "voxels",
+        property = "Charge density"
+    )
+pipeline.modifiers.append(modifier)
+# Check if the 'Color' property has been created by the modifier.
+data = pipeline.compute()
+print(data.grids['charge-density']['Color'][...])
+# Check if we can control which voxel grid the modifier operates on.
+modifier.operate_on = "voxels:binning[Position.X]"
+modifier.property = "Position.X"
+assert(modifier.operate_on == "voxels:binning[Position.X]")
+data = pipeline.compute()
+assert(not "Color" in data.grids['charge-density'])
+print(data.grids['binning[Position.X]']['Color'][...])
+# Do the counter check: activate coloring of the other voxel grid.
+modifier.property = "Charge density"
+modifier.operate_on = "voxels:charge-density"
+data = pipeline.compute()
+assert(not "Color" in data.grids['binning[Position.X]'])
+print(data.grids['charge-density']['Color'][...])
