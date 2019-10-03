@@ -566,7 +566,7 @@ py::cpp_function modifierPropertyContainerSetter(const PropertyFieldDescriptor& 
 		// Now build the list of valid names to generate a helpful error message.
 		QStringList containerClassNames;
 		for(PropertyContainerClassPtr containerClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
-			containerClassNames.push_back(QString("'%1'").arg(containerClass->pythonName()));
+			containerClassNames.push_back(QStringLiteral("'%1'").arg(containerClass->pythonName()));
 		}
 		mod.throwException(Modifier::tr("'%1' is not a valid element type this modifier can operate on. Supported types are: (%2)")
 				.arg(dataClassStr.toString()).arg(containerClassNames.join(QStringLiteral(", "))));

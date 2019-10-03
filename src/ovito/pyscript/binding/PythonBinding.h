@@ -681,10 +681,10 @@ py::cpp_function modifierDelegateSetter()
 		// Now build the list of valid names to generate a helpful error message.
 		QStringList delegateTypeNames;
 		for(auto clazz : PluginManager::instance().metaclassMembers<typename DelegatingModifierClass::DelegateBaseType>(delegateType)) {
-			delegateTypeNames.push_back(QString("'%1'").arg(clazz->pythonDataName()));
+			delegateTypeNames.push_back(QStringLiteral("'%1'").arg(clazz->pythonDataName()));
 		}
 		mod.throwException(QStringLiteral("'%1' is not a valid type of data element this modifier can operate on. Supported types are: (%2)")
-			.arg(delegateStr).arg(delegateTypeNames.join(QStringLiteral(", "))));
+			.arg(delegateStr.toString()).arg(delegateTypeNames.join(QStringLiteral(", "))));
 	};
 }
 
