@@ -50,6 +50,9 @@ void VoxelGridVisEditor::createUI(const RolloutInsertionParameters& rolloutParam
 
 	BooleanParameterUI* highlightLinesUI = new BooleanParameterUI(this, PROPERTY_FIELD(VoxelGridVis::highlightGridLines));
 	layout->addWidget(highlightLinesUI->checkBox(), 2, 0, 1, 2);
+
+	BooleanParameterUI* interpolateColorsUI = new BooleanParameterUI(this, PROPERTY_FIELD(VoxelGridVis::interpolateColors));
+	layout->addWidget(interpolateColorsUI->checkBox(), 3, 0, 1, 2);
 }
 
 OVITO_END_INLINE_NAMESPACE

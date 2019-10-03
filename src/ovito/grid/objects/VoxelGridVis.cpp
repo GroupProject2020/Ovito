@@ -33,15 +33,18 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(VoxelGridVis);
 DEFINE_REFERENCE_FIELD(VoxelGridVis, transparencyController);
 DEFINE_PROPERTY_FIELD(VoxelGridVis, highlightGridLines);
+DEFINE_PROPERTY_FIELD(VoxelGridVis, interpolateColors);
 SET_PROPERTY_FIELD_LABEL(VoxelGridVis, transparencyController, "Transparency");
 SET_PROPERTY_FIELD_LABEL(VoxelGridVis, highlightGridLines, "Highlight grid lines");
+SET_PROPERTY_FIELD_LABEL(VoxelGridVis, interpolateColors, "Interpolate colors");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoxelGridVis, transparencyController, PercentParameterUnit, 0, 1);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 VoxelGridVis::VoxelGridVis(DataSet* dataset) : DataVis(dataset),
-	_highlightGridLines(true)
+	_highlightGridLines(true),
+	_interpolateColors(false)
 {
 	setTransparencyController(ControllerManager::createFloatController(dataset));
 }
@@ -92,7 +95,8 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 		VersionedDataObjectRef,		// The voxel grid object
 		VersionedDataObjectRef,		// Color property
 		FloatType,					// Transparency
-		bool						// Grid line highlighting
+		bool,						// Grid line highlighting
+		bool						// Interpolate colors
 	>;
 
 	// The values stored in the vis cache.
@@ -109,20 +113,28 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	FloatType alpha = FloatType(1) - transp;
 
 	// Look up the rendering primitive in the vis cache.
-	auto& primitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, gridObj, colorProperty, transp, highlightGridLines()));
+	auto& primitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, gridObj, colorProperty, transp, highlightGridLines(), interpolateColors()));
 
 	// Check if we already have valid rendering primitives that are up to date.
 	if(!primitives.volumeFaces || !primitives.volumeFaces->isValid(renderer)) {
 		primitives.volumeFaces = renderer->createMeshPrimitive();
 		if(gridObj->domain()) {
 			TriMesh mesh;
-			mesh.setHasFaceColors(colorArray != nullptr);
+			if(colorArray) {
+				if(interpolateColors())
+					mesh.setHasVertexColors(true);
+				else
+					mesh.setHasFaceColors(true);
+			}
 			VoxelGrid::GridDimensions gridDims = gridObj->shape();
+			std::array<bool, 3> pbcFlags = gridObj->domain()->pbcFlags();
 
 			// Helper function that creates the mesh vertices and faces for one side of the grid volume.
 			auto createFacesForSide = [&](size_t dim1, size_t dim2, int dim3, bool oppositeSide) {
 				int nx = gridDims[dim1] + 1;
 				int ny = gridDims[dim2] + 1;
+				size_t coords[3];
+				coords[dim3] = (oppositeSide && !pbcFlags[dim3]) ? (gridDims[dim3]-1) : 0;
 				int baseVertexCount = mesh.vertexCount();
 				int baseFaceCount = mesh.faceCount();
 				mesh.setVertexCount(baseVertexCount + nx * ny);
@@ -134,10 +146,44 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				auto vertex = mesh.vertices().begin() + baseVertexCount;
 				auto face = mesh.faces().begin() + baseFaceCount;
 				ColorA* faceColor = nullptr;
-				if(colorArray) faceColor = mesh.faceColors().data() + baseFaceCount;
+				ColorA* vertexColor = nullptr;
+				if(colorArray) {
+					if(interpolateColors())
+						vertexColor = mesh.vertexColors().data() + baseVertexCount;
+					else
+						faceColor = mesh.faceColors().data() + baseFaceCount;
+				}
 				for(int iy = 0; iy < ny; iy++) {
 					for(int ix = 0; ix < nx; ix++) {
 						*vertex++ = origin + (ix * dx) + (iy * dy);
+						if(vertexColor) {
+							// Compute the color at the current vertex, which is the average from the
+							// colors of the four adjacent voxel facets.
+							Color interpolatedColor(0,0,0);
+							int numNeighbors = 0;
+							for(int niy = iy-1; niy <= iy; niy++) {
+								if(niy < 0) {
+									if(pbcFlags[dim2]) coords[dim2] = ny-2; else continue;
+								}
+								else if(niy > ny-2) {
+									if(pbcFlags[dim2]) coords[dim2] = 0; else continue;
+								}
+								else coords[dim2] = niy;
+								for(int nix = ix-1; nix <= ix; nix++) {
+									if(nix < 0) {
+										if(pbcFlags[dim1]) coords[dim1] = nx-2; else continue;
+									}
+									else if(nix > nx-2) {
+										if(pbcFlags[dim1]) coords[dim1] = 0; else continue;
+									}
+									else coords[dim1] = nix;
+									interpolatedColor += colorArray->getColor(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
+									numNeighbors++;
+								}
+							}
+							OVITO_ASSERT(numNeighbors >= 1);
+							*vertexColor++ = ColorA((FloatType(1) / numNeighbors) * interpolatedColor, alpha);
+						}
 						if(ix+1 < nx && iy+1 < ny) {
 							face->setVertices(baseVertexCount + iy * nx + ix, baseVertexCount + iy * nx + ix+1, baseVertexCount + (iy+1) * nx + ix+1);
 							face->setEdgeVisibility(true, true, false);
@@ -145,11 +191,9 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 							face->setVertices(baseVertexCount + iy * nx + ix, baseVertexCount + (iy+1) * nx + ix+1, baseVertexCount + (iy+1) * nx + ix);
 							face->setEdgeVisibility(false, true, true);
 							++face;
-							if(colorArray) {
-								size_t coords[3];
+							if(faceColor) {
 								coords[dim1] = ix;
 								coords[dim2] = iy;
-								coords[dim3] = 0;
 								const Color& c = colorArray->getColor(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
 								*faceColor++ = ColorA(c, alpha);
 								*faceColor++ = ColorA(c, alpha);

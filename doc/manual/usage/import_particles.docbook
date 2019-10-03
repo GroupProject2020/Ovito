@@ -180,7 +180,7 @@
             </row>
             <row>
               <entry>GALAMOST</entry>
-              <entry><para>XML-based file format used by the <link xlink:href="http://galamost.ciac.jl.cn/index.php">GALAMOST molecular dynamics code</link>.</para></entry>
+              <entry><para>XML-based file format used by the <link xlink:href="https://galamost.readthedocs.io/en/latest/">GALAMOST molecular dynamics code</link>.</para></entry>
               <entry>particles, bonds</entry>
             </row>
             <row>

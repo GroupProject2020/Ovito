@@ -62,7 +62,10 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, transparencyController, setTransparencyController);
 
 	/// Controls whether the grid lines should be highlighted.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, highlightGridLines, sethighlightGridLines);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, highlightGridLines, setHighlightGridLines);
+
+	/// Controls whether the voxel face colors should be interpolated.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, interpolateColors, setInterpolateColors);
 };
 
 }	// End of namespace

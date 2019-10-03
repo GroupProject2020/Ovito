@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Copyright (2013) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -26,13 +26,13 @@ uniform mat3 normal_matrix;
 	in vec3 position;
 	in vec3 normal;
 	in vec4 color;
-	
-	flat out vec4 vertex_color_fs;
+
+	out vec4 vertex_color_fs;
 	out vec3 vertex_normal_fs;
 #else
 	#define normal gl_Normal
 	#define color gl_Color
-	
+
 	#define vertex_color_fs gl_FrontColor
 	varying vec3 vertex_normal_fs;
 #endif
