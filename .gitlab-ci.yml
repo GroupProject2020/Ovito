@@ -54,6 +54,7 @@ build_linux_package:
    artifacts:
       paths:
          - build/ovito-*.tar.gz
+         - build/ovito-*.tar.xz
    script:
       - scl enable devtoolset-7 bash
       - source /opt/rh/devtoolset-7/enable
@@ -91,6 +92,8 @@ build_linux_package:
          ..
       - make
       - cpack
+      - cpack -G TXZ
+      - sshpass -v -e sftp ovito.org:testing/ <<< $'put ovito-*.tar.xz'
       - sshpass -v -e sftp ovito.org:testing/ <<< $'put ovito-*.tar.gz'
 
 # This pipeline job generates the redistributable program package for MacOS.

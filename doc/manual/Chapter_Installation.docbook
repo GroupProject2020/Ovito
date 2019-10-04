@@ -13,17 +13,17 @@
       Binary program packages for Linux, Windows, and macOS
       can be downloaded from <link xlink:href="https://www.ovito.org/">www.ovito.org</link>.
     </para>
-    
+
     <para>
       Note that OVITO uses the OpenGL interface to render three-dimensional content using your computer's graphics hardware.
-      Older OpenGL drivers may not be fully compatible with OVITO. It is recommended that you install the most recent 
+      Older OpenGL drivers may not be fully compatible with OVITO. It is recommended that you install the most recent
       version of your hardware vendor's graphics driver.
     </para>
 
     <simplesect xml:id="installation.runovito.linux">
       <title>Linux</title>
-      <para>Extract the downloaded <filename>.tar.gz</filename> archive using the <command>tar</command> command, e.g.: <command>tar xzf ovito-3.0.0-x86_64.tar.gz</command>. 
-      This will create a new subdirectory containing the program package. 
+      <para>Extract the downloaded <filename>.tar.xz</filename> archive using the <command>tar</command> command, e.g.: <command>tar xJfv ovito-3.0.0-x86_64.tar.xz</command>.
+      This will create a new subdirectory containing the program package.
       Change into the new directory and start OVITO by running the executable <command>./bin/ovito</command>.
       </para>
     </simplesect>
@@ -31,15 +31,15 @@
     <simplesect xml:id="installation.runovito.windows">
       <title>Windows</title>
 
-      <para>Run the installer program <filename>ovito-x.y.z-win64.exe</filename> to install OVITO in a directory of your choice. 
-      Windows might ask whether you really want to launch the program, because it was downloaded from the web and is not digitally signed. 
+      <para>Run the installer program <filename>ovito-x.y.z-win64.exe</filename> to install OVITO in a directory of your choice.
+      Windows might ask whether you really want to launch the program, because it was downloaded from the web and is not digitally signed.
       </para>
     </simplesect>
 
     <simplesect xml:id="installation.runovito.macos">
       <title>macOS</title>
 
-      <para>Double-click the <filename>.dmg</filename> disk image file downloaded from the OVITO website to open it, 
+      <para>Double-click the <filename>.dmg</filename> disk image file downloaded from the OVITO website to open it,
       agree to the program license, and drag the <filename>Ovito</filename> application bundle into your <filename>Applications</filename> folder.
       Then start OVITO by double-clicking the application bundle.
       </para>
