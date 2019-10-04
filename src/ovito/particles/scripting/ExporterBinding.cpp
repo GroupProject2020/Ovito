@@ -31,6 +31,7 @@
 #include <ovito/particles/export/lammps/LAMMPSDumpExporter.h>
 #include <ovito/particles/export/lammps/LAMMPSDataExporter.h>
 #include <ovito/particles/export/fhi_aims/FHIAimsExporter.h>
+#include <ovito/particles/export/gsd/GSDExporter.h>
 #include "PythonBinding.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -70,6 +71,9 @@ void defineExportersSubmodule(py::module m)
 	;
 
 	ovito_class<FHIAimsExporter, ParticleExporter>{m}
+	;
+
+	ovito_class<GSDExporter, ParticleExporter>{m}
 	;
 }
 

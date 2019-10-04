@@ -194,6 +194,8 @@ private:
 				_reciprocalSimulationCell(1,0) = -_simulationCell(1,0) / det;
 				_reciprocalSimulationCell(0,1) = -_simulationCell(0,1) / det;
 				_reciprocalSimulationCell(1,1) = _simulationCell(0,0) / det;
+				_reciprocalSimulationCell.translation().x() = -(_reciprocalSimulationCell(0,0) * _simulationCell.translation().x() + _reciprocalSimulationCell(0,1) * _simulationCell.translation().y());
+				_reciprocalSimulationCell.translation().y() = -(_reciprocalSimulationCell(1,0) * _simulationCell.translation().x() + _reciprocalSimulationCell(1,1) * _simulationCell.translation().y());
 			}
 		}
 	}

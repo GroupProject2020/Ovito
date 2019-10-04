@@ -35,7 +35,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
 class GSDFile;	// Defined in GSDFile.h
 
 /**
- * \brief File parser for GSD (General Simulation Data) files.
+ * \brief File parser for GSD (General Simulation Data) files written by the HOOMD simulation code.
  */
 class OVITO_PARTICLES_EXPORT GSDImporter : public ParticleImporter
 {

@@ -157,7 +157,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	simCell(0,1) = boxValues[3] * boxValues[1];
 	simCell(0,2) = boxValues[4] * boxValues[2];
 	simCell(1,2) = boxValues[5] * boxValues[2];
-	simCell.column(3) = simCell * Vector3(FloatType(-0.5));
+	simCell.translation() = simCell.linear() * Vector3(FloatType(-0.5));
 	frameData->simulationCell().setMatrix(simCell);
 	frameData->simulationCell().setPbcFlags(true, true, true);
 	frameData->simulationCell().set2D(ndimensions == 2);
@@ -490,6 +490,7 @@ void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::
 		tessellator.vertex(p);
 	tessellator.endContour();
 	tessellator.endPolygon();
+	triMesh->determineEdgeVisibility();
 
 	// Store shape geometry in internal cache to avoid parsing the JSON string again for other animation frames.
 	_importer->storeParticleShapeInCache(shapeSpecString, triMesh);

@@ -48,6 +48,7 @@ def export_file(data, file, format, **params):
             * ``"vasp"`` -- POSCAR format
             * ``"xyz"`` -- XYZ format
             * ``"fhi-aims"`` -- FHI-aims format
+            * ``"gsd/hoomd"`` -- GSD format used by the HOOMD simulation code
             * ``"netcdf/amber"`` -- Binary format for MD data following the `AMBER format convention <http://ambermd.org/netcdf/nctraj.pdf>`__
             * ``"vtk/trimesh"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.SurfaceMesh` objects
             * ``"vtk/disloc"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.DislocationNetwork` objects
@@ -177,7 +178,7 @@ def export_file(data, file, format, **params):
     # Automatically adjust frame interval to length of exportable trajectory.
     if exporter.multiple_frames:
         # This method will fetch the length of the trajectory from the pipeline and use it to set
-        # the export interval. We also check whether the user has specified explicit interval bounds. 
+        # the export interval. We also check whether the user has specified explicit interval bounds.
         exporter.determine_export_interval(not 'start_frame' in params, not 'end_frame' in params)
 
     # Let the exporter do its job.

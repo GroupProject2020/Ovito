@@ -60,3 +60,6 @@ RUN apt-get install -qy  cmake \
 # We need a more recent version of the NumPy package.
 RUN pip2 install --upgrade numpy
 RUN pip3 install --upgrade numpy
+
+# We need a more recent version of the Sphinx package.
+RUN pip3 install --upgrade sphinx

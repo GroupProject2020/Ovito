@@ -87,6 +87,7 @@ SET(SourceFiles
 	export/lammps/LAMMPSDumpExporter.cpp
 	export/xyz/XYZExporter.cpp
 	export/imd/IMDExporter.cpp
+	export/gsd/GSDExporter.cpp
 	util/NearestNeighborFinder.cpp
 	util/CutoffNeighborFinder.cpp
 	util/ParticleExpressionEvaluator.cpp

@@ -534,6 +534,14 @@ public:
 		return maxId;
 	}
 
+	/// Helper method that remaps the existing type IDs to a contiguous range starting at the given
+	/// base ID. This method is mainly used for file output, because some file formats
+	/// work with numeric particle types only, which must form a contiguous range.
+	/// The method returns the mapping of output type IDs to original type IDs
+	/// and a copy of the property array in which the original type ID values have
+	/// been remapped to the output IDs.
+	std::tuple<std::map<int,int>, ConstPropertyPtr> generateContiguousTypeIdMapping(int baseId = 1) const;
+
 	////////////////////////////// Support functions for the Python bindings //////////////////////////////
 
 	/// Indicates to the Python binding layer that this property object has been temporarily put into a

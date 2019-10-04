@@ -28,22 +28,21 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-template<typename T> gsd_type gsdDataType() { OVITO_ASSERT(false); }
-template<> gsd_type gsdDataType<uint8_t>() { return GSD_TYPE_UINT8; }
-template<> gsd_type gsdDataType<uint16_t>() { return GSD_TYPE_UINT16; }
-template<> gsd_type gsdDataType<uint32_t>() { return GSD_TYPE_UINT32; }
-template<> gsd_type gsdDataType<uint64_t>() { return GSD_TYPE_UINT64; }
-template<> gsd_type gsdDataType<int8_t>() { return GSD_TYPE_INT8; }
-template<> gsd_type gsdDataType<int16_t>() { return GSD_TYPE_INT16; }
-template<> gsd_type gsdDataType<int32_t>() { return GSD_TYPE_INT32; }
-template<> gsd_type gsdDataType<int64_t>() { return GSD_TYPE_INT64; }
-template<> gsd_type gsdDataType<float>() { return GSD_TYPE_FLOAT; }
-template<> gsd_type gsdDataType<double>() { return GSD_TYPE_DOUBLE; }
-
+template<typename T> inline gsd_type gsdDataType() { OVITO_ASSERT(false); }
+template<> inline gsd_type gsdDataType<uint8_t>() { return GSD_TYPE_UINT8; }
+template<> inline gsd_type gsdDataType<uint16_t>() { return GSD_TYPE_UINT16; }
+template<> inline gsd_type gsdDataType<uint32_t>() { return GSD_TYPE_UINT32; }
+template<> inline gsd_type gsdDataType<uint64_t>() { return GSD_TYPE_UINT64; }
+template<> inline gsd_type gsdDataType<int8_t>() { return GSD_TYPE_INT8; }
+template<> inline gsd_type gsdDataType<int16_t>() { return GSD_TYPE_INT16; }
+template<> inline gsd_type gsdDataType<int32_t>() { return GSD_TYPE_INT32; }
+template<> inline gsd_type gsdDataType<int64_t>() { return GSD_TYPE_INT64; }
+template<> inline gsd_type gsdDataType<float>() { return GSD_TYPE_FLOAT; }
+template<> inline gsd_type gsdDataType<double>() { return GSD_TYPE_DOUBLE; }
 
 /**
  * \brief A thin wrapper class around the GSD (General Simulation Data) routines
- *        used by the GSDImporter class.
+ *        used by the GSDImporter and GSDExporter classes.
  */
 class GSDFile
 {
@@ -60,6 +59,16 @@ public:
 			case -5: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Unable to allocate memory."));
 			default: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Unknown error."));
 		}
+	}
+
+	/// Creates a new GSD file and opens it for writing.
+	static std::unique_ptr<GSDFile> create(const char* filename, const char* application, const char* schema, unsigned int schema_version_major, unsigned int schema_version_minor) {
+		switch(::gsd_create(filename, application, schema, ::gsd_make_version(schema_version_major, schema_version_minor))) {
+			case 0: break; // Success
+			case -1: throw Exception(GSDImporter::tr("Failed to create GSD file. I/O error."));
+			default: throw Exception(GSDImporter::tr("Failed to create GSD file. Unknown error."));
+		}
+		return std::make_unique<GSDFile>(filename, GSD_OPEN_APPEND);
 	}
 
 	/// Destructor.
@@ -433,6 +442,23 @@ public:
 			case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
 			case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
 			case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+			default: throw Exception(GSDImporter::tr("GSD file I/O error."));
+		}
+	}
+
+	/// Moves on to writing the next frame and flushes the cached chunk index to disk.
+	void endFrame() {
+		switch(::gsd_end_frame(&_handle)) {
+			case 0: break; // Success
+			default: throw Exception(GSDImporter::tr("GSD file I/O error. Failed to close frame."));
+		}
+	}
+
+	/// Writes a data chunk to the current frame. The chunk name must be unique within each frame.
+	template<typename T>
+	void writeChunk(const char* chunkName, uint64_t N, uint32_t M, const void* data) {
+		switch(::gsd_write_chunk(&_handle, chunkName, gsdDataType<T>(), N, M, 0, data)) {
+			case 0: break; // Success
 			default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 		}
 	}

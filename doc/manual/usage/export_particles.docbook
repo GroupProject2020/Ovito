@@ -88,6 +88,11 @@
               <entry>particles</entry>
             </row>
             <row>
+              <entry>GSD/HOOMD</entry>
+              <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="https://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue code</link>. See <link xlink:href="https://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
+              <entry>particles, bond, global&#xA0;attributess</entry>
+            </row>
+            <row>
               <entry>Table&#xA0;of&#xA0;values</entry>
               <entry><para>A simple tabular text file with scalar quantities computed by OVITO's data pipeline.</para></entry>
               <entry>global&#xA0;attributes</entry>

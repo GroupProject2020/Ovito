@@ -145,5 +145,49 @@ void PropertyObject::makeWritableFromPython()
 	_isWritableFromPython++;
 }
 
+/******************************************************************************
+* Helper method that remaps the existing type IDs to a contiguous range starting at the given
+* base ID. This method is mainly used for file output, because some file formats
+* work with numeric particle types only, which must form a contiguous range.
+* The method returns the mapping of output type IDs to original type IDs
+* and a copy of the property array in which the original type ID values have
+* been remapped to the output IDs.
+******************************************************************************/
+std::tuple<std::map<int,int>, ConstPropertyPtr> PropertyObject::generateContiguousTypeIdMapping(int baseId) const
+{
+	// Generate sorted list of existing type IDs.
+	std::set<int> typeIds;
+	for(const ElementType* t : elementTypes())
+		typeIds.insert(t->numericId());
+
+	// Add ID values that occur in the property array but which have not been defined as a type.
+	for(int t : storage()->constIntRange())
+		typeIds.insert(t);
+
+	// Build the mappings between old and new IDs.
+	std::map<int,int> oldToNewMap;
+	std::map<int,int> newToOldMap;
+	bool remappingRequired = false;
+	for(int id : typeIds) {
+		if(id != baseId) remappingRequired = true;
+		oldToNewMap.emplace(id, baseId);
+		newToOldMap.emplace(baseId++, id);
+	}
+
+	// Create a copy of the per-element type array in which old IDs have been replaced with new ones.
+	PropertyPtr remappedArray;
+	if(remappingRequired) {
+		remappedArray = std::make_shared<PropertyStorage>(*storage());
+		for(int& id : remappedArray->intRange())
+			id = oldToNewMap[id];
+	}
+	else {
+		remappedArray = storage();
+	}
+
+	return { std::move(newToOldMap), std::move(remappedArray) };
+}
+
+
 }	// End of namespace
 }	// End of namespace
