@@ -27,7 +27,7 @@
 #include "ElasticStrainEngine.h"
 #include "ElasticStrainModifier.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /******************************************************************************
 * Constructor.
@@ -203,6 +203,5 @@ void ElasticStrainEngine::emitResults(TimePoint time, ModifierApplication* modAp
 		particles->createProperty(volumetricStrains());
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

@@ -25,7 +25,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/gui/properties/PropertiesEditor.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief A properties editor for the MicrostructurePhase class.
@@ -57,6 +57,3 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
-
-

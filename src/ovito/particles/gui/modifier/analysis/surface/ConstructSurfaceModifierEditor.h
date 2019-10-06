@@ -22,10 +22,10 @@
 #pragma once
 
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
+#include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * Properties editor for the ConstructSurfaceModifier class.
@@ -46,6 +46,8 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-}	// End of namespace
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

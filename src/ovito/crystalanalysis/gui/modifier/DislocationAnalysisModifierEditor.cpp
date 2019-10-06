@@ -30,7 +30,7 @@
 #include <ovito/gui/properties/SubObjectParameterUI.h>
 #include "DislocationAnalysisModifierEditor.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierEditor);
 SET_OVITO_OBJECT_EDITOR(DislocationAnalysisModifier, DislocationAnalysisModifierEditor);
@@ -239,6 +239,5 @@ void DislocationTypeListParameterUI::onDoubleClickDislocationType(const QModelIn
 	});
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

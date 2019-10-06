@@ -22,7 +22,7 @@
 #pragma once
 
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
+#include <ovito/stdobj/StdObj.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 
@@ -30,12 +30,14 @@
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/permutation_iterator.hpp>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Delaunay {
+
+using namespace Ovito::StdObj;
 
 /**
  * Generates a Delaunay tessellation of a particle system.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT DelaunayTessellation
+class OVITO_DELAUNAY_EXPORT DelaunayTessellation
 {
 public:
 
@@ -266,6 +268,5 @@ private:
 	SimulationCell _simCell;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

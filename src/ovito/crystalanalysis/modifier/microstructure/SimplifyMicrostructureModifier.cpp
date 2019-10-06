@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "SimplifyMicrostructureModifier.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(SimplifyMicrostructureModifier);
 DEFINE_PROPERTY_FIELD(SimplifyMicrostructureModifier, smoothingLevel);
@@ -147,6 +147,5 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(T
     }
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

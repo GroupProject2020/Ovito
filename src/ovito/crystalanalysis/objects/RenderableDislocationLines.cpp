@@ -22,11 +22,10 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include "RenderableDislocationLines.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(RenderableDislocationLines);
 DEFINE_PROPERTY_FIELD(RenderableDislocationLines, lineSegments);
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

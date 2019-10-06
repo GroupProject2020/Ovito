@@ -27,7 +27,7 @@
 #include <ovito/particles/objects/ParticleType.h>
 #include "BurgersVectorFamily.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief Data structure representing a phase (e.g. a crystal structure) in a Microstructure.
@@ -100,9 +100,8 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::Plugins::CrystalAnalysis::MicrostructurePhase::Dimensionality);
-Q_DECLARE_TYPEINFO(Ovito::Plugins::CrystalAnalysis::MicrostructurePhase::Dimensionality, Q_PRIMITIVE_TYPE);
-Q_DECLARE_METATYPE(Ovito::Plugins::CrystalAnalysis::MicrostructurePhase::CrystalSymmetryClass);
-Q_DECLARE_TYPEINFO(Ovito::Plugins::CrystalAnalysis::MicrostructurePhase::CrystalSymmetryClass, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::CrystalAnalysis::MicrostructurePhase::Dimensionality);
+Q_DECLARE_TYPEINFO(Ovito::CrystalAnalysis::MicrostructurePhase::Dimensionality, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::CrystalAnalysis::MicrostructurePhase::CrystalSymmetryClass);
+Q_DECLARE_TYPEINFO(Ovito::CrystalAnalysis::MicrostructurePhase::CrystalSymmetryClass, Q_PRIMITIVE_TYPE);

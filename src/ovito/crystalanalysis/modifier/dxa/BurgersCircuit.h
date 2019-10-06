@@ -26,7 +26,7 @@
 #include <ovito/crystalanalysis/data/ClusterVector.h>
 #include "InterfaceMesh.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 struct DislocationNode;		// Defined in DislocationNetwork.h
 
@@ -139,6 +139,5 @@ struct BurgersCircuit
 	}
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

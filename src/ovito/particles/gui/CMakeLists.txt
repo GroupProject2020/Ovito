@@ -49,6 +49,7 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 		modifier/analysis/cluster/ClusterAnalysisModifierEditor.cpp
 		modifier/analysis/wignerseitz/WignerSeitzAnalysisModifierEditor.cpp
 		modifier/analysis/ptm/PolyhedralTemplateMatchingModifierEditor.cpp
+		modifier/analysis/surface/ConstructSurfaceModifierEditor.cpp
 		modifier/selection/ExpandSelectionModifierEditor.cpp
 		modifier/properties/InterpolateTrajectoryModifierEditor.cpp
 		modifier/properties/GenerateTrajectoryLinesModifierEditor.cpp

@@ -23,13 +23,15 @@
 
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/util/DelaunayTessellation.h>
+#include <ovito/delaunay/DelaunayTessellation.h>
 #include <ovito/core/utilities/MemoryPool.h>
 #include <ovito/crystalanalysis/data/Cluster.h>
 #include <ovito/crystalanalysis/data/ClusterGraph.h>
 #include "StructureAnalysis.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
+
+using namespace Ovito::Delaunay;
 
 /**
  * Computes the elastic mapping from the physical configuration to a stress-free reference state.
@@ -174,6 +176,5 @@ private:
 	std::vector<Cluster*> _vertexClusters;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

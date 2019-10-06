@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
+#include <ovito/stdobj/StdObj.h>
 #include <ovito/core/utilities/concurrent/Task.h>
 #include "DelaunayTessellation.h"
 
@@ -32,7 +32,7 @@
 #include <boost/functional/hash.hpp>
 #include <cstdlib>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Delaunay {
 
 /******************************************************************************
 * Generates the tessellation.
@@ -251,6 +251,5 @@ bool DelaunayTessellation::alphaTest(CellHandle cell, FloatType alpha) const
 	return (num_x*num_x + num_y*num_y + num_z*num_z) / (4 * den * den) < alpha;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

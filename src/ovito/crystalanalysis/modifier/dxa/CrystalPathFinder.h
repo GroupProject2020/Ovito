@@ -29,7 +29,7 @@
 
 #include <boost/optional.hpp>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * Utility class that can find the shortest connecting path between two atoms
@@ -98,6 +98,5 @@ private:
 	int _maxPathLength;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

@@ -23,7 +23,7 @@
 
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/util/DelaunayTessellation.h>
+#include <ovito/delaunay/DelaunayTessellation.h>
 #include <ovito/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include "StructureAnalysis.h"
@@ -31,7 +31,9 @@
 #include "InterfaceMesh.h"
 #include "DislocationTracer.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
+
+using namespace Ovito::Delaunay;
 
 /*
  * Computation engine of the DislocationAnalysisModifier, which performs the actual dislocation analysis.
@@ -142,6 +144,5 @@ private:
 	FloatType _simCellVolume;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

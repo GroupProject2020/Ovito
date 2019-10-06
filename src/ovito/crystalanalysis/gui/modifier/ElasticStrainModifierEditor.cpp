@@ -29,7 +29,7 @@
 #include <ovito/gui/properties/SubObjectParameterUI.h>
 #include "ElasticStrainModifierEditor.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(ElasticStrainModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ElasticStrainModifier, ElasticStrainModifierEditor);
@@ -116,5 +116,3 @@ void ElasticStrainModifierEditor::modifierChanged(RefTarget* editObject)
 
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
-

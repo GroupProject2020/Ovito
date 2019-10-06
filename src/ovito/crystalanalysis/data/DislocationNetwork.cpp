@@ -23,7 +23,7 @@
 #include <ovito/crystalanalysis/objects/Microstructure.h>
 #include "DislocationNetwork.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /******************************************************************************
 * Copy constructor.
@@ -431,5 +431,3 @@ Point3 DislocationSegment::getPointOnLine(FloatType t) const
 
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
-

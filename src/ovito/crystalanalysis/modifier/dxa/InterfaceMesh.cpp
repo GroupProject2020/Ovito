@@ -20,14 +20,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/util/ManifoldConstructionHelper.h>
+#include <ovito/delaunay/ManifoldConstructionHelper.h>
 #include <ovito/core/utilities/concurrent/Task.h>
 #include "InterfaceMesh.h"
 #include "DislocationTracer.h"
 #include "DislocationAnalysisModifier.h"
 #include "DislocationAnalysisEngine.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
+
+using namespace Ovito::Delaunay;
 
 /** Find the most common element in the [first, last) range.
 
@@ -277,6 +279,5 @@ bool InterfaceMesh::generateDefectMesh(const DislocationTracer& tracer, SurfaceM
 	return true;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

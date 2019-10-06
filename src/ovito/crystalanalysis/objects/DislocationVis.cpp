@@ -30,7 +30,7 @@
 #include "DislocationVis.h"
 #include "RenderableDislocationLines.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(DislocationVis);
 DEFINE_PROPERTY_FIELD(DislocationVis, lineWidth);
@@ -778,6 +778,5 @@ QString DislocationPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 	return str;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

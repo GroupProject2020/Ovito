@@ -22,7 +22,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include "CrystalPathFinder.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /******************************************************************************
 * Finds an atom-to-atom path from atom 1 to atom 2 that lies entirely in the
@@ -149,6 +149,5 @@ boost::optional<ClusterVector> CrystalPathFinder::findPath(size_t atomIndex1, si
 	return result;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

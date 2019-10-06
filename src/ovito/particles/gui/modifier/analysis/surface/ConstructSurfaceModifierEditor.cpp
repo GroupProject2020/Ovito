@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/modifier/ConstructSurfaceModifier.h>
+#include <ovito/particles/gui/ParticlesGui.h>
+#include <ovito/particles/modifier/analysis/surface/ConstructSurfaceModifier.h>
 #include <ovito/gui/properties/IntegerParameterUI.h>
 #include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
 #include <ovito/gui/properties/FloatParameterUI.h>
@@ -28,7 +28,7 @@
 #include <ovito/gui/properties/SubObjectParameterUI.h>
 #include "ConstructSurfaceModifierEditor.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 IMPLEMENT_OVITO_CLASS(ConstructSurfaceModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ConstructSurfaceModifier, ConstructSurfaceModifierEditor);
@@ -116,7 +116,8 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	new SubObjectParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::surfaceMeshVis), rolloutParams.after(rollout));
 }
 
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
-

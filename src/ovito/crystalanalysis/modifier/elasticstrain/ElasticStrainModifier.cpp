@@ -26,7 +26,7 @@
 #include "ElasticStrainModifier.h"
 #include "ElasticStrainEngine.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(ElasticStrainModifier);
 DEFINE_PROPERTY_FIELD(ElasticStrainModifier, inputCrystalStructure);
@@ -100,6 +100,5 @@ Future<AsynchronousModifier::ComputeEnginePtr> ElasticStrainModifier::createEngi
 			latticeConstant(), axialRatio(), pushStrainTensorsForward());
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

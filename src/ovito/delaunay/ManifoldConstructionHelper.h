@@ -22,16 +22,18 @@
 #pragma once
 
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
+#include <ovito/stdobj/StdObj.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/mesh/surface/SurfaceMeshData.h>
 #include <ovito/core/utilities/concurrent/Task.h>
-#include <ovito/crystalanalysis/util/DelaunayTessellation.h>
+#include <ovito/delaunay/DelaunayTessellation.h>
 
 #include <boost/functional/hash.hpp>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Delaunay {
+
+using namespace Ovito::Mesh;
 
 /**
  * Constructs a closed manifold which separates different regions
@@ -615,6 +617,5 @@ private:
 #endif
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

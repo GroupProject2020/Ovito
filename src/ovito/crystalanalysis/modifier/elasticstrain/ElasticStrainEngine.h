@@ -26,7 +26,7 @@
 #include <ovito/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <ovito/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /*
  * Computation engine of the ElasticStrainModifier, which performs the actual strain tensor calculation.
@@ -96,6 +96,5 @@ private:
 	const PropertyPtr _deformationGradients;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

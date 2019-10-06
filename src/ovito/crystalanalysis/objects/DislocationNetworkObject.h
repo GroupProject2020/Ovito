@@ -28,7 +28,7 @@
 #include <ovito/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief Stores a collection of dislocation segments.
@@ -81,6 +81,5 @@ private:
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(MicrostructurePhase, crystalStructures, setCrystalStructures);
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

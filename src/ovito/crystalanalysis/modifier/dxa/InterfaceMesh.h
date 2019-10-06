@@ -26,7 +26,7 @@
 #include <ovito/mesh/surface/SurfaceMeshData.h>
 #include "ElasticMapping.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 struct BurgersCircuit;				// defined in BurgersCircuit.h
 struct BurgersCircuitSearchStruct;	// defined in DislocationTracer.cpp
@@ -215,6 +215,5 @@ private:
 	std::vector<Face> _faces;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

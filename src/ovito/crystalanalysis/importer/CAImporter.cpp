@@ -30,7 +30,7 @@
 #include <ovito/core/utilities/io/CompressedTextReader.h>
 #include "CAImporter.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(CAImporter);
 
@@ -593,6 +593,5 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 	return output;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

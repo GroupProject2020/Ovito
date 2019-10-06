@@ -52,6 +52,7 @@ SET(SourceFiles
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifier.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
 	modifier/analysis/ptm/PTMAlgorithm.cpp
+	modifier/analysis/surface/ConstructSurfaceModifier.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
 	modifier/properties/GenerateTrajectoryLinesModifier.cpp
@@ -114,7 +115,7 @@ OVITO_STANDARD_PLUGIN(Particles
 	SOURCES
 		Particles.cpp
 		${SourceFiles}
-	PLUGIN_DEPENDENCIES Mesh Grid StdObj
+	PLUGIN_DEPENDENCIES Mesh Grid StdObj Delaunay
 	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching CombinatoriallyOptimalPointRegistration
 	OPTIONAL_PLUGIN_DEPENDENCIES StdMod
 )

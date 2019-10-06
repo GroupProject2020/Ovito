@@ -29,7 +29,7 @@
 #include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
 #include "DislocationVisEditor.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(DislocationVisEditor);
 SET_OVITO_OBJECT_EDITOR(DislocationVis, DislocationVisEditor);
@@ -108,6 +108,5 @@ void DislocationVisEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	sublayout->addWidget(new QLabel(tr("<p> (<font color=\"#FF0000\">screw</font>/<font color=\"#0000FF\">edge</font>)</p>")), 2, 1);
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

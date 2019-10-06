@@ -35,7 +35,6 @@ SET(SourceFiles
 	objects/SlipSurfaceVis.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
-	modifier/ConstructSurfaceModifier.cpp
 	modifier/dxa/DislocationAnalysisModifier.cpp
 	modifier/dxa/DislocationAnalysisEngine.cpp
 	modifier/dxa/StructureAnalysis.cpp
@@ -46,7 +45,6 @@ SET(SourceFiles
 	modifier/elasticstrain/ElasticStrainModifier.cpp
 	modifier/elasticstrain/ElasticStrainEngine.cpp
 	modifier/microstructure/SimplifyMicrostructureModifier.cpp
-	util/DelaunayTessellation.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)
@@ -61,8 +59,7 @@ OVITO_STANDARD_PLUGIN(CrystalAnalysis
 	SOURCES
 		CrystalAnalysis.cpp
 		${SourceFiles}
-	PLUGIN_DEPENDENCIES Particles Mesh StdObj Grid
-	LIB_DEPENDENCIES geogram
+	PLUGIN_DEPENDENCIES Particles Mesh StdObj Grid Delaunay
 	PRIVATE_LIB_DEPENDENCIES NetCDFIntegration
 	OPTIONAL_PLUGIN_DEPENDENCIES StdMod
 )

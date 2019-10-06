@@ -19,14 +19,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef _OVITO_CA_CLUSTER_VECTOR_H
-#define _OVITO_CA_CLUSTER_VECTOR_H
+#pragma once
+
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include "Cluster.h"
 #include "ClusterGraph.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /// Two lattice space vectors are considered equal if they don't differ by more than this value.
 #define CA_LATTICE_VECTOR_EPSILON					Ovito::FloatType(1e-3)
@@ -114,6 +114,3 @@ inline std::ostream& operator<<(std::ostream& stream, const ClusterVector& v)
 
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
-
-#endif // _OVITO_CA_CLUSTER_VECTOR_H

@@ -26,7 +26,7 @@
 #include <ovito/crystalanalysis/data/ClusterGraph.h>
 #include <ovito/core/dataset/data/DataObject.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief A graph of atomic clusters.
@@ -56,6 +56,5 @@ private:
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<ClusterGraph>, storage, setStorage);
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

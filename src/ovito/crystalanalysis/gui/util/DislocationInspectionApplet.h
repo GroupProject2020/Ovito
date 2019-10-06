@@ -30,7 +30,7 @@
 #include <ovito/gui/viewport/input/ViewportInputManager.h>
 #include <ovito/gui/viewport/input/ViewportGizmo.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief Data inspector page for dislocation lines.
@@ -178,6 +178,5 @@ private:
 	QPointer<PipelineSceneNode> _sceneNode;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

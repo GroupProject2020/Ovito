@@ -31,7 +31,7 @@
 #include "DislocationAnalysisModifier.h"
 #include "DislocationAnalysisEngine.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifier);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, inputCrystalStructure);
@@ -211,6 +211,5 @@ Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::crea
 			outputInterfaceMesh());
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

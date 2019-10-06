@@ -12,7 +12,7 @@ from ovito.plugins.ParticlesPython import (
         CoordinationAnalysisModifier, CalculateDisplacementsModifier, AtomicStrainModifier, WignerSeitzAnalysisModifier,
         VoronoiAnalysisModifier, IdentifyDiamondModifier, LoadTrajectoryModifier, PolyhedralTemplateMatchingModifier,
         CoordinationPolyhedraModifier, InterpolateTrajectoryModifier, GenerateTrajectoryLinesModifier, UnwrapTrajectoriesModifier,
-        ChillPlusModifier)
+        ChillPlusModifier, ConstructSurfaceModifier)
 
 # Load submodules.
 from .compute_property_modifier import ComputePropertyModifier
@@ -40,6 +40,7 @@ ovito.modifiers.InterpolateTrajectoryModifier = InterpolateTrajectoryModifier
 ovito.modifiers.GenerateTrajectoryLinesModifier = GenerateTrajectoryLinesModifier
 ovito.modifiers.UnwrapTrajectoriesModifier = UnwrapTrajectoriesModifier
 ovito.modifiers.ChillPlusModifier = ChillPlusModifier
+ovito.modifiers.ConstructSurfaceModifier = ConstructSurfaceModifier
 ovito.modifiers.__all__ += [
             'AmbientOcclusionModifier',
             'WrapPeriodicImagesModifier',
@@ -62,7 +63,8 @@ ovito.modifiers.__all__ += [
             'InterpolateTrajectoryModifier',
             'GenerateTrajectoryLinesModifier',
             'UnwrapTrajectoriesModifier',
-            'ChillPlusModifier']
+            'ChillPlusModifier',
+            'ConstructSurfaceModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 ovito.modifiers.CoordinationNumberModifier = CoordinationAnalysisModifier

@@ -27,7 +27,7 @@
 #include "StructureAnalysis.h"
 #include "DislocationAnalysisModifier.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /// Contains the known coordination structures.
 StructureAnalysis::CoordinationStructure StructureAnalysis::_coordinationStructures[NUM_COORD_TYPES];
@@ -1136,5 +1136,3 @@ bool StructureAnalysis::formSuperClusters(Task& promise)
 
 }	// End of namespace
 }	// End of namespace
-}	// End of namespace
-

@@ -25,7 +25,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/stdobj/properties/ElementType.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief represents a dislocation type.
@@ -49,6 +49,5 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, burgersVector, setBurgersVector);
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

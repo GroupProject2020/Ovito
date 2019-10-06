@@ -28,7 +28,7 @@
 #include <ovito/mesh/surface/RenderableSurfaceMesh.h>
 #include <ovito/particles/objects/ParticleType.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * \brief A visualization element for rendering the slip facets of a Microstructure.
@@ -129,6 +129,5 @@ private:
 	OORef<SlipSurfaceVis> _visElement;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

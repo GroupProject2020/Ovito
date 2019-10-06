@@ -22,20 +22,20 @@
 #pragma once
 
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
+#include <ovito/particles/Particles.h>
+#include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/mesh/surface/SurfaceMeshData.h>
 #include <ovito/mesh/surface/SurfaceMeshVis.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
-#include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /*
  * Constructs a surface mesh from a particle system.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT ConstructSurfaceModifier : public AsynchronousModifier
+class OVITO_PARTICLES_EXPORT ConstructSurfaceModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
 	class OOMetaClass : public AsynchronousModifier::OOMetaClass
@@ -248,9 +248,10 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, isoValue, setIsoValue, PROPERTY_FIELD_MEMORIZE);
 };
 
-}	// End of namespace
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::Plugins::CrystalAnalysis::ConstructSurfaceModifier::SurfaceMethod);
-Q_DECLARE_TYPEINFO(Ovito::Plugins::CrystalAnalysis::ConstructSurfaceModifier::SurfaceMethod, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::Particles::ConstructSurfaceModifier::SurfaceMethod);
+Q_DECLARE_TYPEINFO(Ovito::Particles::ConstructSurfaceModifier::SurfaceMethod, Q_PRIMITIVE_TYPE);

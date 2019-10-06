@@ -22,7 +22,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include "ClusterGraph.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /******************************************************************************
 * Constructor. Creates an empty cluster graph.
@@ -281,6 +281,5 @@ ClusterTransition* ClusterGraph::concatenateClusterTransitions(ClusterTransition
 	return createClusterTransition(tAB->cluster1, tBC->cluster2, tBC->tm * tAB->tm, tAB->distance + tBC->distance);
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

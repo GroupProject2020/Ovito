@@ -45,6 +45,7 @@
 #include <ovito/particles/modifier/analysis/voronoi/VoronoiAnalysisModifier.h>
 #include <ovito/particles/modifier/analysis/diamond/IdentifyDiamondModifier.h>
 #include <ovito/particles/modifier/analysis/chill_plus/ChillPlusModifier.h>
+#include <ovito/particles/modifier/analysis/surface/ConstructSurfaceModifier.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/stdobj/scripting/PythonBinding.h>
 #include <ovito/pyscript/binding/PythonBinding.h>
@@ -1194,6 +1195,61 @@ void defineModifiersSubmodule(py::module m)
 	;
 
 	ovito_class<BondsComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m};
+
+	ovito_class<ConstructSurfaceModifier, AsynchronousModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
+			"Constructs the geometric surface of a solid made of point-like particles. The modifier generates "
+			"a :py:class:`~ovito.data.SurfaceMesh`, which is a closed manifold consisting of triangles. It also computes the total "
+			"surface area and the volume of the region enclosed by the surface mesh. "
+			"See also the corresponding :ovitoman:`user manual page <../../particles.modifiers.construct_surface_mesh>` for this modifier. "
+			"\n\n"
+			"The :py:attr:`.radius` parameter controls how many details of the solid shape are resolved during surface construction. "
+			"A larger radius leads to a surface with fewer details, reflecting only coarse features of the surface topology. "
+			"A small radius, on the other hand, will resolve finer surface features and small pores in the interior of a solid, for example. "
+			"\n\n"
+			"See `[A. Stukowski, JOM 66 (2014), 399-407] <http://dx.doi.org/10.1007/s11837-013-0827-5>`_ for a description of the surface construction algorithm."
+			"\n\n"
+			"**Modifier outputs:**"
+			"\n\n"
+			" * :py:class:`~ovito.data.SurfaceMesh`:\n"
+			"   The surface mesh computed by the modifier.\n"
+			" * ``ConstructSurfaceMesh.surface_area`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			"   The area of the surface mesh.\n"
+			" * ``ConstructSurfaceMesh.solid_volume`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			"   The volume of the solid region bounded by the surface mesh.\n"
+			"\n\n"
+			"Example:\n\n"
+			".. literalinclude:: ../example_snippets/construct_surface_modifier.py\n"
+			"   :lines: 4-\n"
+			)
+		.def_property("radius", &ConstructSurfaceModifier::probeSphereRadius, &ConstructSurfaceModifier::setProbeSphereRadius,
+				"The radius of the probe sphere used in the surface construction algorithm."
+				"\n\n"
+				"A rule of thumb is that the radius parameter should be slightly larger than the typical distance between "
+				"nearest neighbor particles."
+				"\n\n"
+				":Default: 4.0\n")
+		.def_property("smoothing_level", &ConstructSurfaceModifier::smoothingLevel, &ConstructSurfaceModifier::setSmoothingLevel,
+				"The number of iterations of the smoothing algorithm applied to the computed surface mesh."
+				"\n\n"
+				"Note that the smoothing level does only affect the computed surface area but not the solid volume. "
+				"That is because the solid volume is computed before smoothing the mesh. (Smoothing is supposed to be "
+				"volume preserving.)"
+				"\n\n"
+				":Default: 8\n")
+		.def_property("only_selected", &ConstructSurfaceModifier::onlySelectedParticles, &ConstructSurfaceModifier::setOnlySelectedParticles,
+				"If ``True``, the modifier acts only on selected particles and ignores other particles; "
+				"if ``False``, the modifier constructs the surface around all particles."
+				"\n\n"
+				":Default: ``False``\n")
+		.def_property("select_surface_particles", &ConstructSurfaceModifier::selectSurfaceParticles, &ConstructSurfaceModifier::setSelectSurfaceParticles,
+				"This option activates the selection of particles that form the constructed surface. "
+				"When set to ``True``, the modifier will generate the ``Selection`` output particle property. "
+				"\n\n"
+				":Default: ``False``\n")
+		.def_property("vis", &ConstructSurfaceModifier::surfaceMeshVis, &ConstructSurfaceModifier::setSurfaceMeshVis,
+				"The :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the computed surface.\n")
+	;
 }
 
 OVITO_END_INLINE_NAMESPACE

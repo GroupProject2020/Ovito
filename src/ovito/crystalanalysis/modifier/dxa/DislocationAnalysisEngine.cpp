@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/util/DelaunayTessellation.h>
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/crystalanalysis/objects/ClusterGraphObject.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
@@ -34,7 +33,7 @@
 #include <fstream>
 #endif
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /******************************************************************************
 * Constructor.
@@ -388,6 +387,5 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 		state.setStatus(PipelineStatus(PipelineStatus::Success, DislocationAnalysisModifier::tr("Found %1 dislocation segments\nTotal line length: %2").arg(totalSegmentCount).arg(totalLineLength)));
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

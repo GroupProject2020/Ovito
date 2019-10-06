@@ -34,7 +34,7 @@
 #include <boost/random/uniform_int.hpp>
 #endif
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * This is the central class for dislocation line tracing.
@@ -148,6 +148,5 @@ private:
 #endif
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

@@ -26,7 +26,7 @@
 #include <ovito/gui/properties/BooleanParameterUI.h>
 #include "SimplifyMicrostructureModifierEditor.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(SimplifyMicrostructureModifierEditor);
 SET_OVITO_OBJECT_EDITOR(SimplifyMicrostructureModifier, SimplifyMicrostructureModifierEditor);
@@ -57,6 +57,5 @@ void SimplifyMicrostructureModifierEditor::createUI(const RolloutInsertionParame
 	layout->addLayout(lambdaUI->createFieldLayout(), 2, 1);
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

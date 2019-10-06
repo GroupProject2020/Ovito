@@ -25,7 +25,7 @@
 #include <ovito/gui/properties/StringParameterUI.h>
 #include "BurgersVectorFamilyEditor.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(BurgersVectorFamilyEditor);
 SET_OVITO_OBJECT_EDITOR(BurgersVectorFamily, BurgersVectorFamilyEditor);
@@ -55,6 +55,5 @@ void BurgersVectorFamilyEditor::createUI(const RolloutInsertionParameters& rollo
 	layout1->addWidget(colorPUI->colorPicker(), 1, 1);
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

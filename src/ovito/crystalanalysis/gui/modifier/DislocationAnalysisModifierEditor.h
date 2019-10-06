@@ -28,7 +28,7 @@
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 #include <ovito/gui/properties/RefTargetListParameterUI.h>
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * List box that displays the dislocation types.
@@ -113,6 +113,5 @@ private:
 	std::unique_ptr<DislocationTypeListParameterUI> _burgersFamilyListUI;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

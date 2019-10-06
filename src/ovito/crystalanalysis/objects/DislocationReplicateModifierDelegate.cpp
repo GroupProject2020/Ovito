@@ -26,15 +26,15 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "DislocationReplicateModifierDelegate.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(DislocationReplicateModifierDelegate);
 
 /******************************************************************************
-* Indicates which data objects in the given input data collection the modifier 
+* Indicates which data objects in the given input data collection the modifier
 * delegate is able to operate on.
 ******************************************************************************/
-QVector<DataObjectReference> DislocationReplicateModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const 
+QVector<DataObjectReference> DislocationReplicateModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
 	if(input.containsObject<DislocationNetworkObject>())
 		return { DataObjectReference(&DislocationNetworkObject::OOClass()) };
@@ -117,6 +117,5 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, P
 	return PipelineStatus::Success;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

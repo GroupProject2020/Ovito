@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/io/NumberParsing.h>
 #include "ParaDiSImporter.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(ParaDiSImporter);
 
@@ -356,6 +356,5 @@ OORef<DataCollection> ParaDiSImporter::DislocFrameData::handOver(const DataColle
 	return output;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

@@ -22,7 +22,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include "MicrostructurePhase.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(MicrostructurePhase);
 DEFINE_PROPERTY_FIELD(MicrostructurePhase, shortName);
@@ -139,6 +139,5 @@ Color MicrostructurePhase::getBurgersVectorColor(ParticleType::PredefinedStructu
 	return Color(0.9f, 0.9f, 0.9f);
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

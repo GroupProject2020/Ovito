@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "VTKDislocationsExporter.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(VTKDislocationsExporter);
 
@@ -164,6 +164,5 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 	return !operation.isCanceled();
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

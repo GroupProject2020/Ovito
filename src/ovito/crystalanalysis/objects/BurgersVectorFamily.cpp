@@ -24,7 +24,7 @@
 #include "BurgersVectorFamily.h"
 #include "MicrostructurePhase.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(BurgersVectorFamily);
 DEFINE_PROPERTY_FIELD(BurgersVectorFamily, burgersVector);
@@ -78,6 +78,5 @@ bool BurgersVectorFamily::isMember(const Vector3& v, const MicrostructurePhase* 
 	return false;
 }
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace

@@ -19,21 +19,23 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/util/DelaunayTessellation.h>
-#include <ovito/crystalanalysis/util/ManifoldConstructionHelper.h>
+#include <ovito/particles/Particles.h>
+#include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/particles/util/CutoffNeighborFinder.h>
+#include <ovito/delaunay/DelaunayTessellation.h>
+#include <ovito/delaunay/ManifoldConstructionHelper.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include <ovito/grid/modifier/MarchingCubes.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
-#include <ovito/particles/objects/ParticlesObject.h>
-#include <ovito/particles/util/CutoffNeighborFinder.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "ConstructSurfaceModifier.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+
+using namespace Ovito::Delaunay;
 
 IMPLEMENT_OVITO_CLASS(ConstructSurfaceModifier);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel);
@@ -412,6 +414,7 @@ void ConstructSurfaceModifier::GaussianDensityEngine::emitResults(TimePoint time
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1").arg(surfaceArea())));
 }
 
-}	// End of namespace
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

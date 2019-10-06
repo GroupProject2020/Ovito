@@ -28,7 +28,7 @@
 #include <ovito/crystalanalysis/modifier/dxa/BurgersCircuit.h>
 #include "ClusterVector.h"
 
-namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+namespace Ovito { namespace CrystalAnalysis {
 
 /**
  * Every dislocation segment is delimited by two dislocation nodes.
@@ -302,6 +302,5 @@ private:
 	MemoryPool<DislocationSegment> _segmentPool;
 };
 
-}	// End of namespace
 }	// End of namespace
 }	// End of namespace
