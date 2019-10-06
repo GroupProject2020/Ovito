@@ -185,7 +185,7 @@ std::tuple<std::map<int,int>, ConstPropertyPtr> PropertyObject::generateContiguo
 		remappedArray = storage();
 	}
 
-	return { std::move(newToOldMap), std::move(remappedArray) };
+	return std::make_tuple(std::move(newToOldMap), std::move(remappedArray));
 }
 
 

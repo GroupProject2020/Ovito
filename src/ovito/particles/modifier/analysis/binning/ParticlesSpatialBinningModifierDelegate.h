@@ -31,7 +31,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * \brief Delegate plugin for the SpatialBinningModifier that operates on particles.
  */
-class ParticlesSpatialBinningModifierDelegate : public SpatialBinningModifierDelegate
+class OVITO_PARTICLES_EXPORT ParticlesSpatialBinningModifierDelegate : public SpatialBinningModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public SpatialBinningModifierDelegate::OOMetaClass

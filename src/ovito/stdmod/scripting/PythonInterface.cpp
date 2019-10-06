@@ -56,6 +56,7 @@ PYBIND11_MODULE(StdModPython, m)
 	py::options options;
 	options.disable_function_signatures();
 
+	ovito_abstract_class<SliceModifierDelegate, ModifierDelegate>{m};
 	auto SliceModifier_py = ovito_class<SliceModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -115,7 +116,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"\n\n"
 			":Default: ``{'particles', 'surfaces', 'dislocations'}``\n");
 
-
+	ovito_abstract_class<AffineTransformationModifierDelegate, ModifierDelegate>{m};
 	auto AffineTransformationModifier_py = ovito_class<AffineTransformationModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -175,6 +176,7 @@ PYBIND11_MODULE(StdModPython, m)
 			":Default: ``{'particles', 'vector_properties', 'cell', 'surfaces'}``\n");
 
 
+	ovito_abstract_class<ReplicateModifierDelegate, ModifierDelegate>{m};
 	auto ReplicateModifier_py = ovito_class<ReplicateModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -257,7 +259,6 @@ PYBIND11_MODULE(StdModPython, m)
 	;
 
 	ovito_abstract_class<ColorCodingModifierDelegate, ModifierDelegate>{m};
-
 	auto ColorCodingModifier_py = ovito_class<ColorCodingModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -492,6 +493,7 @@ PYBIND11_MODULE(StdModPython, m)
 
 	ovito_class<ScatterPlotModifier, GenericPropertyModifier>{m};
 
+	ovito_abstract_class<AssignColorModifierDelegate, ModifierDelegate>{m};
 	ovito_class<AssignColorModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -521,6 +523,7 @@ PYBIND11_MODULE(StdModPython, m)
 				":Default: ``'particles'``\n")
 	;
 
+	ovito_abstract_class<DeleteSelectedModifierDelegate, ModifierDelegate>{m};
 	auto DeleteSelectedModifier_py = ovito_class<DeleteSelectedModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -612,6 +615,7 @@ PYBIND11_MODULE(StdModPython, m)
 				":Default: ``False``\n")
 	;
 
+	ovito_abstract_class<ExpressionSelectionModifierDelegate, ModifierDelegate>{m};
 	ovito_class<ExpressionSelectionModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
@@ -702,8 +706,7 @@ PYBIND11_MODULE(StdModPython, m)
 	;
 	ovito_class<ManualSelectionModifierApplication, ModifierApplication>{m};
 
-	ovito_abstract_class<ComputePropertyModifierDelegate, AsynchronousModifierDelegate>{m}
-	;
+	ovito_abstract_class<ComputePropertyModifierDelegate, AsynchronousModifierDelegate>{m};
 	ovito_class<ComputePropertyModifier, AsynchronousDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Evaluates a user-defined math expression for every particle or bond and assigns the computed values to the selected output property. "
@@ -757,6 +760,7 @@ PYBIND11_MODULE(StdModPython, m)
 	;
 	ovito_class<ComputePropertyModifierApplication, AsynchronousModifierApplication>{m};
 
+	ovito_abstract_class<CombineDatasetsModifierDelegate, ModifierDelegate>{m};
 	ovito_class<CombineDatasetsModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier loads a set of particles from a separate simulation file and merges them into the current dataset. "

@@ -22,6 +22,9 @@
 #include <ovito/mesh/Mesh.h>
 #include <ovito/pyscript/binding/PythonBinding.h>
 #include <ovito/core/app/PluginManager.h>
+#include <ovito/mesh/modifier/SurfaceMeshAffineTransformationModifierDelegate.h>
+#include <ovito/mesh/modifier/SurfaceMeshReplicateModifierDelegate.h>
+#include <ovito/mesh/modifier/SurfaceMeshSliceModifierDelegate.h>
 
 namespace Ovito { namespace Mesh {
 
@@ -34,6 +37,10 @@ PYBIND11_MODULE(MeshModPython, m)
 
 	py::options options;
 	options.disable_function_signatures();
+
+	ovito_class<SurfaceMeshAffineTransformationModifierDelegate, AffineTransformationModifierDelegate>{m};
+	ovito_class<SurfaceMeshReplicateModifierDelegate, ReplicateModifierDelegate>{m};
+	ovito_class<SurfaceMeshSliceModifierDelegate, SliceModifierDelegate>{m};
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(MeshModPython);

@@ -107,8 +107,7 @@ PYBIND11_MODULE(GridPython, m)
 
 	ovito_class<VoxelGridVis, DataVis>{m};
 
-	ovito_abstract_class<SpatialBinningModifierDelegate, AsynchronousModifierDelegate>{m}
-	;
+	ovito_abstract_class<SpatialBinningModifierDelegate, AsynchronousModifierDelegate>{m};
 	auto BinningModifier_py = ovito_class<SpatialBinningModifier, AsynchronousDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"

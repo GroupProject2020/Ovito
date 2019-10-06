@@ -31,6 +31,7 @@
 #include <ovito/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
 #include <ovito/particles/modifier/properties/ParticlesComputePropertyModifierDelegate.h>
 #include <ovito/particles/modifier/properties/BondsComputePropertyModifierDelegate.h>
+#include <ovito/particles/modifier/analysis/binning/ParticlesSpatialBinningModifierDelegate.h>
 #include <ovito/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <ovito/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <ovito/particles/modifier/analysis/ackland_jones/AcklandJonesModifier.h>
@@ -1250,6 +1251,8 @@ void defineModifiersSubmodule(py::module m)
 		.def_property("vis", &ConstructSurfaceModifier::surfaceMeshVis, &ConstructSurfaceModifier::setSurfaceMeshVis,
 				"The :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the computed surface.\n")
 	;
+
+	ovito_class<ParticlesSpatialBinningModifierDelegate, SpatialBinningModifierDelegate>{m};
 }
 
 OVITO_END_INLINE_NAMESPACE
