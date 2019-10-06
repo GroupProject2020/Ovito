@@ -29,6 +29,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Function for the AssignColorModifier that operates on particles.
  */
@@ -44,7 +46,7 @@ class ParticlesAssignColorModifierDelegate : public AssignColorModifierDelegate
 
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
-		
+
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};

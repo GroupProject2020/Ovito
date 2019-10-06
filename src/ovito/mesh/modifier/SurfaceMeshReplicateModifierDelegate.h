@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,23 +23,24 @@
 
 
 #include <ovito/mesh/Mesh.h>
-#include <ovito/mesh/surface/SurfaceMesh.h>
-#include <ovito/stdmod/modifiers/SliceModifier.h>
+#include <ovito/stdmod/modifiers/ReplicateModifier.h>
 
 namespace Ovito { namespace Mesh {
 
+using namespace Ovito::StdMod;
+
 /**
- * \brief Slice function that operates on surface meshes.
+ * \brief Delegate for the ReplicateModifier that operates on surface meshes.
  */
-class OVITO_MESH_EXPORT SurfaceMeshSliceModifierDelegate : public SliceModifierDelegate
+class SurfaceMeshReplicateModifierDelegate : public ReplicateModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class SurfaceMeshSliceModifierDelegateClass : public SliceModifierDelegate::OOMetaClass
+	class OOMetaClass : public ReplicateModifierDelegate::OOMetaClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
-		using SliceModifierDelegate::OOMetaClass::OOMetaClass;
+		using ReplicateModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override {
@@ -53,15 +54,16 @@ class OVITO_MESH_EXPORT SurfaceMeshSliceModifierDelegate : public SliceModifierD
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(SurfaceMeshSliceModifierDelegate, SurfaceMeshSliceModifierDelegateClass)
+	OVITO_CLASS_META(SurfaceMeshReplicateModifierDelegate, OOMetaClass)
+
 	Q_CLASSINFO("DisplayName", "Surfaces");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SurfaceMeshSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
+	Q_INVOKABLE SurfaceMeshReplicateModifierDelegate(DataSet* dataset) : ReplicateModifierDelegate(dataset) {}
 
-	/// \brief Applies a slice operation to a data object.
+	/// Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 

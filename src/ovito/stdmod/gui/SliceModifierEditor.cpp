@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -101,6 +101,10 @@ void SliceModifierEditor::createUI(const RolloutInsertionParameters& rolloutPara
 	// Apply to selection only parameter.
 	BooleanParameterUI* applyToSelectionPUI = new BooleanParameterUI(this, PROPERTY_FIELD(SliceModifier::applyToSelection));
 	layout->addWidget(applyToSelectionPUI->checkBox());
+
+	// Visualize plane.
+	BooleanParameterUI* visualizePlanePUI = new BooleanParameterUI(this, PROPERTY_FIELD(SliceModifier::enablePlaneVisualization));
+	layout->addWidget(visualizePlanePUI->checkBox());
 
 	layout->addSpacing(8);
 	QPushButton* centerPlaneBtn = new QPushButton(tr("Move plane to simulation box center"), rollout);

@@ -1,5 +1,6 @@
 # Load dependencies
 import ovito.vis.stdobj
+import ovito.vis.mesh
 
 # Load the native code module
 from ovito.plugins.StdModPython import ColorLegendOverlay

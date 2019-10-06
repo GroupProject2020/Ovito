@@ -29,6 +29,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/mesh/Mesh.h>
 #include <ovito/grid/Grid.h>
+#include <ovito/stdobj/StdObj.h>
 
 /*! \namespace Ovito::Particles
     \brief This root namespace of the particles plugin.
@@ -72,6 +73,7 @@ namespace Ovito {
 
 		using namespace Ovito::Mesh;
 		using namespace Ovito::Grid;
+		using namespace Ovito::StdObj;
 
 		class ParticleType;
 		class ParticlesObject;

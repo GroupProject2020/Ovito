@@ -23,22 +23,25 @@
 
 
 #include <ovito/mesh/Mesh.h>
-#include <ovito/stdmod/modifiers/ReplicateModifier.h>
+#include <ovito/mesh/surface/SurfaceMesh.h>
+#include <ovito/stdmod/modifiers/AffineTransformationModifier.h>
 
 namespace Ovito { namespace Mesh {
 
+using namespace Ovito::StdMod;
+
 /**
- * \brief Delegate for the ReplicateModifier that operates on surface meshes.
+ * \brief Delegate for the AffineTransformationModifier that operates on surface meshes.
  */
-class SurfaceMeshReplicateModifierDelegate : public ReplicateModifierDelegate
+class SurfaceMeshAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public ReplicateModifierDelegate::OOMetaClass
+	class SurfaceMeshAffineTransformationModifierDelegateClass : public AffineTransformationModifierDelegate::OOMetaClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
-		using ReplicateModifierDelegate::OOMetaClass::OOMetaClass;
+		using AffineTransformationModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override {
@@ -52,14 +55,13 @@ class SurfaceMeshReplicateModifierDelegate : public ReplicateModifierDelegate
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(SurfaceMeshReplicateModifierDelegate, OOMetaClass)
-
+	OVITO_CLASS_META(SurfaceMeshAffineTransformationModifierDelegate, SurfaceMeshAffineTransformationModifierDelegateClass)
 	Q_CLASSINFO("DisplayName", "Surfaces");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SurfaceMeshReplicateModifierDelegate(DataSet* dataset) : ReplicateModifierDelegate(dataset) {}
+	Q_INVOKABLE SurfaceMeshAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
 
 	/// Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;

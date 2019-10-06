@@ -28,6 +28,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Function for the SliceModifier that operates on particles.
  */

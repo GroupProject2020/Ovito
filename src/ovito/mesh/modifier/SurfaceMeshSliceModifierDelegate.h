@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2016) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,22 +24,24 @@
 
 #include <ovito/mesh/Mesh.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
-#include <ovito/stdmod/modifiers/AffineTransformationModifier.h>
+#include <ovito/stdmod/modifiers/SliceModifier.h>
 
 namespace Ovito { namespace Mesh {
 
+using namespace Ovito::StdMod;
+
 /**
- * \brief Delegate for the AffineTransformationModifier that operates on surface meshes.
+ * \brief Slice function that operates on surface meshes.
  */
-class SurfaceMeshAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
+class SurfaceMeshSliceModifierDelegate : public SliceModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class SurfaceMeshAffineTransformationModifierDelegateClass : public AffineTransformationModifierDelegate::OOMetaClass
+	class SurfaceMeshSliceModifierDelegateClass : public SliceModifierDelegate::OOMetaClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
-		using AffineTransformationModifierDelegate::OOMetaClass::OOMetaClass;
+		using SliceModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override {
@@ -53,15 +55,15 @@ class SurfaceMeshAffineTransformationModifierDelegate : public AffineTransformat
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(SurfaceMeshAffineTransformationModifierDelegate, SurfaceMeshAffineTransformationModifierDelegateClass)
+	OVITO_CLASS_META(SurfaceMeshSliceModifierDelegate, SurfaceMeshSliceModifierDelegateClass)
 	Q_CLASSINFO("DisplayName", "Surfaces");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SurfaceMeshAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
+	Q_INVOKABLE SurfaceMeshSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
 
-	/// Applies the modifier operation to the data in a pipeline flow state.
+	/// \brief Applies a slice operation to a data object.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 

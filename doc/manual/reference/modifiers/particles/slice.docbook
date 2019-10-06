@@ -108,6 +108,13 @@
           <para>Restricts the effect of the modifier to the subset of elements that are currently selected.</para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>Visualize plane</term>
+        <listitem>
+          <para>Lets the modifier generate polygonal geometry to visualize the plane's intersection with the simulation cell in rendered images.</para>
+        </listitem>
+      </varlistentry>
     </variablelist>
   </simplesect>
 

@@ -190,15 +190,32 @@ OvitoClassPtr OvitoClass::deserializeRTTI(LoadStream& stream)
 		return nullptr;
 
 	try {
-		// Lookup class descriptor.
+		// Look plugin.
 		Plugin* plugin = PluginManager::instance().plugin(pluginId);
-		if(!plugin)
+		if(!plugin) {
+
+			// If plugin does not exist anymore, fall back to searching other plugins for the requested class.
+			for(Plugin* otherPlugin : PluginManager::instance().plugins()) {
+				if(OvitoClassPtr clazz = otherPlugin->findClass(className))
+					return clazz;
+			}
+
 			throw Exception(OvitoObject::tr("A required plugin is not installed: %1").arg(pluginId));
+		}
 		OVITO_CHECK_POINTER(plugin);
 
+		// Look up class descriptor.
 		OvitoClassPtr clazz = plugin->findClass(className);
-		if(!clazz)
+		if(!clazz) {
+
+			// If class does not exist in the plugin anymore, fall back to searching other plugins for the requested class.
+			for(Plugin* otherPlugin : PluginManager::instance().plugins()) {
+				if(OvitoClassPtr clazz = otherPlugin->findClass(className))
+					return clazz;
+			}
+
 			throw Exception(OvitoObject::tr("Required class '%1' not found in plugin '%2'.").arg(className, pluginId));
+		}
 
 		return clazz;
 	}
@@ -226,15 +243,32 @@ OvitoClassPtr OvitoClass::decodeFromString(const QString& str)
 	if(tokens.size() != 2)
 		throw Exception(OvitoObject::tr("Invalid type or encoding: %1").arg(str));
 
-	// Lookup class descriptor.
+	// Look up plugin.
 	Plugin* plugin = PluginManager::instance().plugin(tokens[0]);
-	if(!plugin)
+	if(!plugin) {
+
+		// If plugin does not exist anymore, fall back to searching other plugins for the requested class.
+		for(Plugin* otherPlugin : PluginManager::instance().plugins()) {
+			if(OvitoClassPtr clazz = otherPlugin->findClass(tokens[1]))
+				return clazz;
+		}
+
 		throw Exception(OvitoObject::tr("A required plugin is not installed: %1").arg(tokens[0]));
+	}
 	OVITO_CHECK_POINTER(plugin);
 
+	// Look up class descriptor.
 	OvitoClassPtr clazz = plugin->findClass(tokens[1]);
-	if(!clazz)
+	if(!clazz) {
+
+		// If class does not exist in the plugin anymore, fall back to searching other plugins for the requested class.
+		for(Plugin* otherPlugin : PluginManager::instance().plugins()) {
+			if(OvitoClassPtr clazz = otherPlugin->findClass(tokens[1]))
+				return clazz;
+		}
+
 		throw Exception(OvitoObject::tr("Required class '%1' not found in plugin '%2'.").arg(tokens[1], tokens[0]));
+	}
 
 	return clazz;
 }

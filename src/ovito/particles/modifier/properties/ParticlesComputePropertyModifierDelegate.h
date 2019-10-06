@@ -30,6 +30,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Delegate plugin for the ComputePropertyModifier that operates on particles.
  */

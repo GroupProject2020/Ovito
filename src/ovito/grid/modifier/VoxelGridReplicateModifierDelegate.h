@@ -27,6 +27,8 @@
 
 namespace Ovito { namespace Grid {
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Delegate for the ReplicateModifier that operates on voxel grids.
  */

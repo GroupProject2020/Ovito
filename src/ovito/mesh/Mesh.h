@@ -27,13 +27,11 @@
 #define __OVITO_MESH_
 
 #include <ovito/core/Core.h>
-#include <ovito/stdmod/StdMod.h>
+#include <ovito/stdobj/StdObj.h>
 
 namespace Ovito {
 	namespace Mesh {
-
-		using namespace Ovito::StdMod;
-
+		using namespace Ovito::StdObj;
 		class TriMeshObject;
 		class TriMeshVis;
 		class SurfaceMesh;

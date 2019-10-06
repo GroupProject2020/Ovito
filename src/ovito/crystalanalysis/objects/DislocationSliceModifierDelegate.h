@@ -28,6 +28,8 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Slice function that operates on dislocation lines.
  */

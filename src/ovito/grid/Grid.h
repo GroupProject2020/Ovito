@@ -28,10 +28,12 @@
 
 #include <ovito/core/Core.h>
 #include <ovito/mesh/Mesh.h>
+#include <ovito/stdobj/StdObj.h>
 
 namespace Ovito {
 	namespace Grid {
 		using namespace Ovito::Mesh;
+		using namespace Ovito::StdObj;
 	}
 }
 

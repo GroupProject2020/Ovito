@@ -28,6 +28,8 @@
 
 namespace Ovito { namespace Grid {
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Function for the ColorCodingModifier that operates on voxel grid cells.
  */

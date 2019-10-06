@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,12 +22,14 @@
 #include <ovito/stdmod/StdMod.h>
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
+#include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/scene/SelectionSet.h>
 #include <ovito/core/dataset/animation/controller/Controller.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/mesh/tri/TriMeshObject.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/app/PluginManager.h>
 #include "SliceModifier.h"
@@ -42,12 +44,16 @@ DEFINE_REFERENCE_FIELD(SliceModifier, widthController);
 DEFINE_PROPERTY_FIELD(SliceModifier, createSelection);
 DEFINE_PROPERTY_FIELD(SliceModifier, inverse);
 DEFINE_PROPERTY_FIELD(SliceModifier, applyToSelection);
+DEFINE_PROPERTY_FIELD(SliceModifier, enablePlaneVisualization);
+DEFINE_REFERENCE_FIELD(SliceModifier, planeVis);
 SET_PROPERTY_FIELD_LABEL(SliceModifier, normalController, "Normal");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, distanceController, "Distance");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, widthController, "Slab width");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, createSelection, "Create selection (do not delete)");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, inverse, "Reverse orientation");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, applyToSelection, "Apply to selection only");
+SET_PROPERTY_FIELD_LABEL(SliceModifier, enablePlaneVisualization, "Visualize plane");
+SET_PROPERTY_FIELD_LABEL(SliceModifier, planeVis, "Plane");
 SET_PROPERTY_FIELD_UNITS(SliceModifier, normalController, WorldParameterUnit);
 SET_PROPERTY_FIELD_UNITS(SliceModifier, distanceController, WorldParameterUnit);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SliceModifier, widthController, WorldParameterUnit, 0);
@@ -58,12 +64,19 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SliceModifier, widthController, WorldParame
 SliceModifier::SliceModifier(DataSet* dataset) : MultiDelegatingModifier(dataset),
 	_createSelection(false),
 	_inverse(false),
-	_applyToSelection(false)
+	_applyToSelection(false),
+	_enablePlaneVisualization(false)
 {
 	setNormalController(ControllerManager::createVector3Controller(dataset));
 	setDistanceController(ControllerManager::createFloatController(dataset));
 	setWidthController(ControllerManager::createFloatController(dataset));
 	if(normalController()) normalController()->setVector3Value(0, Vector3(1,0,0));
+
+	// Create the vis element for the plane.
+	setPlaneVis(new TriMeshVis(dataset));
+	planeVis()->setTitle(tr("Plane"));
+	planeVis()->setHighlightEdges(true);
+	planeVis()->setTransparency(0.5);
 
 	// Generate the list of delegate objects.
 	createModifierDelegates(SliceModifierDelegate::OOClass());
@@ -239,6 +252,76 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 			if(std::abs(centerDistance) > FLOATTYPE_EPSILON && distanceController())
 				distanceController()->setFloatValue(0, centerDistance);
 		}
+	}
+}
+
+/******************************************************************************
+* Modifies the input data in an immediate, preliminary way.
+******************************************************************************/
+void SliceModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+{
+	MultiDelegatingModifier::evaluatePreliminary(time, modApp, state);
+
+	if(enablePlaneVisualization()) {
+
+		Plane3 plane;
+		FloatType slabWidth;
+		TimeInterval interval;
+		std::tie(plane, slabWidth) = slicingPlane(time, interval);
+
+		// Compute intersection polygon of slicing plane with simulation cell.
+		const SimulationCellObject* cellObj = state.expectObject<SimulationCellObject>();
+		const AffineTransformation& cellMatrix = cellObj->cellMatrix();
+
+		// Compute intersection lines of slicing plane and simulation cell.
+		TriMeshPtr mesh = std::make_shared<TriMesh>();
+		auto createIntersectionPolygon = [&](const Plane3& plane) {
+			QVector<Point3> vertices;
+			auto planeEdgeIntersection = [&](const Vector3& b, const Vector3& d) {
+				Ray3 edge(Point3::Origin() + b, d);
+				FloatType t = plane.intersectionT(edge, FLOATTYPE_EPSILON);
+				if(t >= 0 && t <= 1)
+					vertices.push_back(edge.point(t));
+			};
+			planeEdgeIntersection(cellMatrix.translation(), cellMatrix.column(0));
+			planeEdgeIntersection(cellMatrix.translation(), cellMatrix.column(1));
+			planeEdgeIntersection(cellMatrix.translation(), cellMatrix.column(2));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(0), cellMatrix.column(1));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(0), cellMatrix.column(2));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(1), cellMatrix.column(0));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(1), cellMatrix.column(2));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(2), cellMatrix.column(0));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(2), cellMatrix.column(1));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(0) + cellMatrix.column(1), cellMatrix.column(2));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(1) + cellMatrix.column(2), cellMatrix.column(0));
+			planeEdgeIntersection(cellMatrix.translation() + cellMatrix.column(2) + cellMatrix.column(0), cellMatrix.column(1));
+			if(vertices.size() < 3) return;
+			std::sort(vertices.begin()+1, vertices.end(), [&](const Point3& a, const Point3& b) {
+				return (a - vertices.front()).cross(b - vertices.front()).dot(plane.normal) < 0;
+			});
+			int baseVertexCount = mesh->vertexCount();
+			mesh->setVertexCount(baseVertexCount + vertices.size());
+			std::copy(vertices.begin(), vertices.end(), mesh->vertices().begin() + baseVertexCount);
+			for(int f = 2; f < vertices.size(); f++) {
+				TriMeshFace& face = mesh->addFace();
+				face.setVertices(baseVertexCount, baseVertexCount+f-1, baseVertexCount+f);
+				face.setEdgeVisibility(f == 2, true, f == vertices.size()-1);
+			}
+		};
+		if(slabWidth <= 0) {
+			createIntersectionPolygon(plane);
+		}
+		else {
+			plane.dist += slabWidth / 2;
+			createIntersectionPolygon(plane);
+			plane.dist -= slabWidth;
+			createIntersectionPolygon(plane);
+		}
+
+		// Create an output mesh for visualizing the cutting plane.
+		TriMeshObject* meshObj = state.createObject<TriMeshObject>(QStringLiteral("plane"), modApp);
+		meshObj->setMesh(std::move(mesh));
+		meshObj->setVisElement(planeVis());
 	}
 }
 

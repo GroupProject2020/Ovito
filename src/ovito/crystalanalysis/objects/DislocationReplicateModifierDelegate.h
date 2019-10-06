@@ -28,6 +28,8 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Delegate for the ReplicateModifier that operates on dislocation lines.
  */

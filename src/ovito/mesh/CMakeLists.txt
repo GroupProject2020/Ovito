@@ -37,13 +37,6 @@ SET(SourceFiles
 	io/STLImporter.cpp
 )
 
-IF(OVITO_BUILD_PLUGIN_STDMOD)
-	LIST(APPEND SourceFiles
-		surface/SurfaceMeshSliceModifierDelegate.cpp
-		surface/SurfaceMeshAffineTransformationModifierDelegate.cpp
-		surface/SurfaceMeshReplicateModifierDelegate.cpp)
-ENDIF()
-
 # List of source files of the GLU library used for polygon tessellation.
 SET(GLUSourceFiles
 	util/polytess/dict.c
@@ -64,7 +57,7 @@ OVITO_STANDARD_PLUGIN(Mesh
 		Mesh.cpp
 		${SourceFiles}
 		${GLUSourceFiles}
-	OPTIONAL_PLUGIN_DEPENDENCIES StdObj StdMod
+	PLUGIN_DEPENDENCIES StdObj
 )
 
 # Speed up compilation by using precompiled headers.

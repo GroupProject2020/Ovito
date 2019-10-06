@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,13 +23,14 @@
 
 
 #include <ovito/stdmod/StdMod.h>
+#include <ovito/mesh/tri/TriMeshVis.h>
 #include <ovito/core/dataset/animation/controller/Controller.h>
 #include <ovito/core/dataset/pipeline/DelegatingModifier.h>
 
 namespace Ovito { namespace StdMod {
 
 /**
- * \brief Base class for SliceModifier delegates that operate on different kinds of data.
+ * \brief Base class for delegates of the SliceModifier, which perform the slice operation on different kinds of data.
  */
 class OVITO_STDMOD_EXPORT SliceModifierDelegate : public ModifierDelegate
 {
@@ -75,6 +76,9 @@ public:
 
 	/// Lets the modifier render itself into the viewport.
 	virtual void renderModifierVisual(TimePoint time, PipelineSceneNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay) override;
+
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	// Property access functions:
 
@@ -130,6 +134,12 @@ protected:
 
 	/// Controls whether the modifier should only be applied to the currently selected data elements.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, applyToSelection, setApplyToSelection);
+
+	/// Enables the visualization of the cutting plane.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, enablePlaneVisualization, setEnablePlaneVisualization);
+
+	/// The vis element for plane.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TriMeshVis, planeVis, setPlaneVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

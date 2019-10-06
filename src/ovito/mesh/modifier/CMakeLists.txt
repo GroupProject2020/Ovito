@@ -19,11 +19,14 @@
 #
 ###############################################################################
 
-# Define the Python bindings module, which provides the scripting interface for the parent module.
-OVITO_STANDARD_PLUGIN(MeshPython
+# Define the plugin module.
+OVITO_STANDARD_PLUGIN(MeshMod
 	SOURCES
-		PythonInterface.cpp
-	PLUGIN_DEPENDENCIES PyScript Mesh MeshMod
-	OPTIONAL_PLUGIN_DEPENDENCIES StdObjPython StdModPython
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/python/"
+		SurfaceMeshSliceModifierDelegate.cpp
+		SurfaceMeshAffineTransformationModifierDelegate.cpp
+		SurfaceMeshReplicateModifierDelegate.cpp
+	PLUGIN_DEPENDENCIES Mesh StdMod
 )
+
+# Propagate list of plugins to parent scope.
+SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

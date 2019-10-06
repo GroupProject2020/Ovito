@@ -100,6 +100,14 @@ PYBIND11_MODULE(StdModPython, m)
 				"Controls whether the modifier should act only on currently selected data elements (e.g. selected particles)."
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("render_plane", &SliceModifier::enablePlaneVisualization, &SliceModifier::setEnablePlaneVisualization,
+				"Controls whether the modifier should produce renderable geometry to visualize the cutting plane. "
+				"The visual appearance of the plane can be adjusted through the :py:attr:`.plane_vis` element. "
+				"\n\n"
+				":Default: ``False``\n")
+		.def_property("plane_vis", &SliceModifier::planeVis, &SliceModifier::setPlaneVis,
+				"A :py:class:`~ovito.vis.TriMeshVis` object controlling the visual appearance of the cutting plane in rendered images. "
+				"It is only used when :py:attr:`.render_plane` has been set to ``True``. ")
 	;
 	modifier_operate_on_list(SliceModifier_py, std::mem_fn(&SliceModifier::delegates), "operate_on",
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "

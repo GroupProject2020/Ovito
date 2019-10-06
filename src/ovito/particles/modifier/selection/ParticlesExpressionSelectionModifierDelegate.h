@@ -27,6 +27,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
+using namespace Ovito::StdMod;
+
 /**
  * \brief Delegate for the ExpressionSelectionModifier that operates on particles.
  */
