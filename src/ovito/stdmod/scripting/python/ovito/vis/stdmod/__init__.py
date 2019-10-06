@@ -1,4 +1,5 @@
 # Load dependencies
+import ovito.vis
 import ovito.vis.stdobj
 import ovito.vis.mesh
 

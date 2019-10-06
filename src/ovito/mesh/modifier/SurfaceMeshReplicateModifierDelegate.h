@@ -32,7 +32,7 @@ using namespace Ovito::StdMod;
 /**
  * \brief Delegate for the ReplicateModifier that operates on surface meshes.
  */
-class SurfaceMeshReplicateModifierDelegate : public ReplicateModifierDelegate
+class OVITO_MESHMOD_EXPORT SurfaceMeshReplicateModifierDelegate : public ReplicateModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public ReplicateModifierDelegate::OOMetaClass

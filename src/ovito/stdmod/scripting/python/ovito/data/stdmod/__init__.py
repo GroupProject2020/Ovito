@@ -1,4 +1,5 @@
 # Load dependencies
+import ovito.data
 import ovito.data.stdobj
 import ovito.data.mesh
 

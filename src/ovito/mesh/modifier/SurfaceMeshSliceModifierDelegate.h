@@ -33,7 +33,7 @@ using namespace Ovito::StdMod;
 /**
  * \brief Slice function that operates on surface meshes.
  */
-class SurfaceMeshSliceModifierDelegate : public SliceModifierDelegate
+class OVITO_MESHMOD_EXPORT SurfaceMeshSliceModifierDelegate : public SliceModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
 	class SurfaceMeshSliceModifierDelegateClass : public SliceModifierDelegate::OOMetaClass

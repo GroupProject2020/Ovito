@@ -1,9 +1,11 @@
 # Load dependencies
+import ovito.modifiers
 import ovito.modifiers.stdobj
+import ovito.modifiers.mesh
 
 # Load the native code module.
-from ovito.plugins.StdModPython import (SliceModifier, AffineTransformationModifier, ClearSelectionModifier, 
-                                InvertSelectionModifier, ColorCodingModifier, AssignColorModifier, 
+from ovito.plugins.StdModPython import (SliceModifier, AffineTransformationModifier, ClearSelectionModifier,
+                                InvertSelectionModifier, ColorCodingModifier, AssignColorModifier,
                                 DeleteSelectedModifier, ScatterPlotModifier, ReplicateModifier,
                                 ExpressionSelectionModifier, FreezePropertyModifier, ManualSelectionModifier,
                                 ComputePropertyModifier, CombineDatasetsModifier)
@@ -29,9 +31,9 @@ ovito.modifiers.FreezePropertyModifier = FreezePropertyModifier
 ovito.modifiers.ManualSelectionModifier = ManualSelectionModifier
 ovito.modifiers.ComputePropertyModifier = ComputePropertyModifier
 ovito.modifiers.CombineDatasetsModifier = CombineDatasetsModifier
-ovito.modifiers.__all__ += ['SliceModifier', 'AffineTransformationModifier', 
+ovito.modifiers.__all__ += ['SliceModifier', 'AffineTransformationModifier',
             'ClearSelectionModifier', 'InvertSelectionModifier', 'ColorCodingModifier',
-            'AssignColorModifier', 'DeleteSelectedModifier', 'SelectTypeModifier', 'HistogramModifier', 
+            'AssignColorModifier', 'DeleteSelectedModifier', 'SelectTypeModifier', 'HistogramModifier',
             'ScatterPlotModifier', 'ReplicateModifier', 'ExpressionSelectionModifier',
             'FreezePropertyModifier', 'ManualSelectionModifier', 'ComputePropertyModifier',
             'CombineDatasetsModifier']
@@ -39,7 +41,7 @@ ovito.modifiers.__all__ += ['SliceModifier', 'AffineTransformationModifier',
 # For backward compatibility with OVITO 2.9.0:
 def _ColorCodingModifier_set_particle_property(self, v): self.property = v
 ColorCodingModifier.particle_property = property(lambda self: self.property, _ColorCodingModifier_set_particle_property)
-def _ColorCodingModifier_set_bond_property(self, v): 
+def _ColorCodingModifier_set_bond_property(self, v):
     self.operate_on = 'bonds'
     self.property = v
 ColorCodingModifier.bond_property = property(lambda self: self.property, _ColorCodingModifier_set_bond_property)

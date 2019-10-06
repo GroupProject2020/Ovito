@@ -33,7 +33,7 @@ using namespace Ovito::StdMod;
 /**
  * \brief Delegate for the AffineTransformationModifier that operates on surface meshes.
  */
-class SurfaceMeshAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
+class OVITO_MESHMOD_EXPORT SurfaceMeshAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
 	class SurfaceMeshAffineTransformationModifierDelegateClass : public AffineTransformationModifierDelegate::OOMetaClass
