@@ -144,18 +144,9 @@ QT5_ADD_RESOURCES(ResourceFiles resources/core.qrc)
 # Define library target.
 OVITO_STANDARD_PLUGIN(Core
 	SOURCES Core.cpp ${SourceFiles} ${ResourceFiles}
-	PRIVATE_LIB_DEPENDENCIES Qt5::Network
+	LIB_DEPENDENCIES Boost::boost ZLIB::ZLIB
+	PRIVATE_LIB_DEPENDENCIES Qt5::Network Libssh::Libssh
 )
-# Link to libssh.
-TARGET_INCLUDE_DIRECTORIES(Core PRIVATE ${LIBSSH_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(Core PRIVATE ${LIBSSH_LIBRARIES})
-
-# Link to zlib library.
-TARGET_LINK_LIBRARIES(Core PRIVATE "${ZLIB_LIBRARIES}")
-TARGET_INCLUDE_DIRECTORIES(Core PRIVATE "${ZLIB_INCLUDE_DIRS}")
-
-# Add Boost include directories.
-TARGET_INCLUDE_DIRECTORIES(Core PUBLIC "${Boost_INCLUDE_DIRS}")
 
 # Link to video encoding lib.
 IF(LIBAV_FOUND)

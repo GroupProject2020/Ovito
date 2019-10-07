@@ -21,9 +21,6 @@
 
 # Find OpenGL library.
 FIND_PACKAGE(OpenGL REQUIRED)
-ADD_LIBRARY(OpenGLLib SHARED IMPORTED GLOBAL)
-SET_PROPERTY(TARGET OpenGLLib PROPERTY IMPORTED_LOCATION "${OPENGL_gl_LIBRARY}")
-SET_PROPERTY(TARGET OpenGLLib APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${OPENGL_INCLUDE_DIR}")
 
 # Compile resources.
 QT5_ADD_RESOURCES(ResourceFiles resources/resources.qrc)
@@ -43,8 +40,13 @@ OVITO_STANDARD_PLUGIN(OpenGLRenderer
 		StandardSceneRenderer.cpp
 		${ResourceFiles}
 	PRIVATE_LIB_DEPENDENCIES
-		${OPENGL_gl_LIBRARY}
+		OpenGL::GL
 )
+
+IF(APPLE)
+	# OpenGL functions have been marked as deprecated since macOS 10.14. Silence the compiler warnings.
+	TARGET_COMPILE_DEFINITIONS(OpenGLRenderer PRIVATE "GL_SILENCE_DEPRECATION")
+ENDIF()
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
