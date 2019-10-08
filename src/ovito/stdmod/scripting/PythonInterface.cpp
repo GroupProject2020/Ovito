@@ -128,6 +128,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"  * Particle vector properties (``'Velocity'``, ``'Force'``, ``'Displacement'``)\n"
 			"  * Simulation cells (:py:class:`~ovito.data.SimulationCell`) \n"
 			"  * Surfaces (:py:class:`~ovito.data.SurfaceMesh`) \n"
+			"  * Dislocations (:py:class:`~ovito.data.DislocationNetwork`) \n"
 			"\n\n"
 			"The modifier will act on all of them simultaneously by default. Restricting the modifier to a subset is possible by setting the :py:attr:`.operate_on` field. "
 			"Example::"
@@ -173,7 +174,7 @@ PYBIND11_MODULE(StdModPython, m)
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"
-			":Default: ``{'particles', 'vector_properties', 'cell', 'surfaces'}``\n");
+			":Default: ``{'particles', 'vector_properties', 'cell', 'surfaces', 'dislocations'}``\n");
 
 
 	ovito_abstract_class<ReplicateModifierDelegate, ModifierDelegate>{m};

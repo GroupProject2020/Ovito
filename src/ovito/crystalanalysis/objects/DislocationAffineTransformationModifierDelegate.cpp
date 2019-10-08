@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,19 +22,19 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
-#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
-#include "DislocationSliceModifierDelegate.h"
+#include <ovito/core/dataset/pipeline/ModifierApplication.h>
+#include "DislocationAffineTransformationModifierDelegate.h"
 
 namespace Ovito { namespace CrystalAnalysis {
 
-IMPLEMENT_OVITO_CLASS(DislocationSliceModifierDelegate);
+IMPLEMENT_OVITO_CLASS(DislocationAffineTransformationModifierDelegate);
 
 /******************************************************************************
 * Indicates which data objects in the given input data collection the modifier
 * delegate is able to operate on.
 ******************************************************************************/
-QVector<DataObjectReference> DislocationSliceModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
+QVector<DataObjectReference> DislocationAffineTransformationModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
 	if(input.containsObject<DislocationNetworkObject>())
 		return { DataObjectReference(&DislocationNetworkObject::OOClass()) };
@@ -42,31 +42,37 @@ QVector<DataObjectReference> DislocationSliceModifierDelegate::OOMetaClass::getA
 }
 
 /******************************************************************************
-* Performs the actual rejection of particles.
+* Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus DislocationAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
-	if(mod->createSelection())
+	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
+
+	if(mod->selectionOnly())
 		return PipelineStatus::Success;
 
-	// Obtain modifier parameter values.
-	Plane3 plane;
-	FloatType sliceWidth;
-	std::tie(plane, sliceWidth) = mod->slicingPlane(time, state.mutableStateValidity());
+	AffineTransformation tm;
+	if(mod->relativeMode())
+		tm = mod->transformationTM();
+	else
+		tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 
 	for(const DataObject* obj : state.data()->objects()) {
 		if(const DislocationNetworkObject* inputDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
-			QVector<Plane3> planes = inputDislocations->cuttingPlanes();
-			if(sliceWidth <= 0) {
-				planes.push_back(plane);
-			}
-			else {
-				planes.push_back(Plane3( plane.normal,  plane.dist + sliceWidth/2));
-				planes.push_back(Plane3(-plane.normal, -plane.dist + sliceWidth/2));
-			}
 			DislocationNetworkObject* outputDislocations = state.makeMutable(inputDislocations);
-			outputDislocations->setCuttingPlanes(std::move(planes));
+
+			// Apply transformation to the vertices of the dislocation lines.
+			for(DislocationSegment* segment : outputDislocations->modifiableSegments()) {
+				for(Point3& vertex : segment->line) {
+					vertex = tm * vertex;
+				}
+			}
+
+			// Apply transformation to the cutting planes attached to the dislocation network.
+			QVector<Plane3> cuttingPlanes = outputDislocations->cuttingPlanes();
+			for(Plane3& plane : cuttingPlanes)
+				plane = tm * plane;
+			outputDislocations->setCuttingPlanes(std::move(cuttingPlanes));
 		}
 	}
 

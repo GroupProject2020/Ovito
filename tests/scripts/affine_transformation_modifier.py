@@ -30,3 +30,6 @@ modifier.target_cell = [[2,0,0,0],[0,1,0,0],[0,0,1,0]]
 modifier.target_cell = np.array([[1,2,0,0],[0,1,0,0],[0,0,1,0.5]])
  
 data = pipeline.compute()
+
+modifier.operate_on = {'dislocations', 'surfaces', 'vector_properties'}
+data = pipeline.compute()

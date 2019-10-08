@@ -23,7 +23,6 @@
 
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/stdmod/modifiers/ReplicateModifier.h>
 
 namespace Ovito { namespace CrystalAnalysis {

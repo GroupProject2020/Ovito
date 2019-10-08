@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,24 +23,24 @@
 
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
-#include <ovito/stdmod/modifiers/SliceModifier.h>
+#include <ovito/stdmod/modifiers/AffineTransformationModifier.h>
 
 namespace Ovito { namespace CrystalAnalysis {
 
 using namespace Ovito::StdMod;
 
 /**
- * \brief Slice function that operates on dislocation lines.
+ * \brief Delegate for the AffineTransformationModifier that operates on dislocation lines.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT DislocationSliceModifierDelegate : public SliceModifierDelegate
+class DislocationAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public SliceModifierDelegate::OOMetaClass
+	class OOMetaClass : public AffineTransformationModifierDelegate::OOMetaClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
-		using SliceModifierDelegate::OOMetaClass::OOMetaClass;
+		using AffineTransformationModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
@@ -50,16 +50,15 @@ class OVITO_CRYSTALANALYSIS_EXPORT DislocationSliceModifierDelegate : public Sli
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(DislocationSliceModifierDelegate, OOMetaClass)
-
-	Q_CLASSINFO("DisplayName", "Dislocation lines");
+	OVITO_CLASS_META(DislocationAffineTransformationModifierDelegate, OOMetaClass)
+	Q_CLASSINFO("DisplayName", "Dislocations");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE DislocationSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
+	Q_INVOKABLE DislocationAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
 
-	/// \brief Applies a slice operation to a data object.
+	/// Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 
