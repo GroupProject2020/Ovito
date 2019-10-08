@@ -37,7 +37,7 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		return false;
 
 	// Set the application name.
-	QCoreApplication::setApplicationName(tr("Ovito"));
+	QCoreApplication::setApplicationName(QStringLiteral(OVITO_APPLICATION_NAME));
 	QCoreApplication::setOrganizationName(tr("Ovito"));
 	QCoreApplication::setOrganizationDomain("ovito.org");
 	QCoreApplication::setApplicationVersion(QStringLiteral(OVITO_VERSION_STRING));
@@ -53,7 +53,7 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		QString arg = QString::fromLocal8Bit(argv[i]);
 #ifdef Q_OS_MAC
 		// When started from the macOS Finder, the OS may pass the 'process serial number' to the application.
-		// We are not interested in this command line parameter.
+		// We are not interested in this command line parameter, so filter it out from the list.
 		if(arg.startsWith(QStringLiteral("-psn")))
 			continue;
 #endif

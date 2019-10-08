@@ -71,7 +71,7 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 ENDFOREACH()
 
 # Define tests for the scripting interface.
-SET(PYTHON_TEST_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/tests/scripts")
+SET(PYTHON_TEST_SCRIPTS_DIR "${Ovito_SOURCE_DIR}/tests/scripts")
 FILE(GLOB_RECURSE PYTHON_TEST_SCRIPTS RELATIVE "${PYTHON_TEST_SCRIPTS_DIR}" "${PYTHON_TEST_SCRIPTS_DIR}/*.py")
 FOREACH(test_script ${PYTHON_TEST_SCRIPTS})
 	# Run each test case both with 'ovitos' and a second time with the system Python interpreter.
@@ -93,7 +93,7 @@ FOREACH(test_script ${PYTHON_TEST_SCRIPTS})
 ENDFOREACH()
 
 # Also test all code example snippets that are part of scripting documentation.
-SET(PYTHON_EXAMPLE_SNIPPETS_DIR "${CMAKE_SOURCE_DIR}/doc/python/example_snippets")
+SET(PYTHON_EXAMPLE_SNIPPETS_DIR "${Ovito_SOURCE_DIR}/doc/python/example_snippets")
 FILE(GLOB_RECURSE PYTHON_EXAMPLE_SNIPPETS RELATIVE "${PYTHON_EXAMPLE_SNIPPETS_DIR}" "${PYTHON_EXAMPLE_SNIPPETS_DIR}/*.py")
 FOREACH(test_script ${PYTHON_EXAMPLE_SNIPPETS})
 	ADD_TEST(NAME "snippet_${test_script}" WORKING_DIRECTORY "${PYTHON_EXAMPLE_SNIPPETS_DIR}" COMMAND "$<TARGET_FILE:ovitos>" "${test_script}")

@@ -38,7 +38,7 @@ IF(NOT CMAKE_VERSION VERSION_LESS "3.12")
 	CMAKE_POLICY(SET CMP0074 NEW)   # find_package() uses <PackageName>_ROOT variables.
 ENDIF()
 
-# Check compiler requirement.
+# Check compiler requirements.
 IF(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
 	IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19")
 		MESSAGE(FATAL_ERROR "OVITO requires Visual C++ 2015 or newer.")

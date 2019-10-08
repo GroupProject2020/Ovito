@@ -136,6 +136,11 @@ OVITO_STANDARD_PLUGIN(Gui
 		Qt5::Network
 )
 
+# Inject copyright notice text into the source code.
+SET_PROPERTY(SOURCE actions/FileActions.cpp
+	APPEND PROPERTY COMPILE_DEFINITIONS
+    "OVITO_COPYRIGHT_NOTICE=\"${OVITO_COPYRIGHT_NOTICE}\"")
+
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(Gui ovito/gui/GUI.h)

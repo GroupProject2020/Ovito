@@ -80,7 +80,7 @@ bool VTKVoxelGridExporter::exportFrame(int frameNumber, TimePoint time, const QS
 
 	auto dims = voxelGrid->shape();
 	textStream() << "# vtk DataFile Version 3.0\n";
-	textStream() << "# Voxel grid data - written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
+	textStream() << "# Voxel grid data written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
 	textStream() << "ASCII\n";
 	textStream() << "DATASET STRUCTURED_POINTS\n";
 	textStream() << "DIMENSIONS " << dims[0] << " " << dims[1] << " " << dims[2] << "\n";

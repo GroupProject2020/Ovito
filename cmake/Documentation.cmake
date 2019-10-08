@@ -50,18 +50,18 @@ IF(XSLT_PROCESSOR)
 					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/images/"
 					COMMAND ${CMAKE_COMMAND} "-E" copy "manual.css" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/"
 					COMMAND ${XSLT_PROCESSOR} "${XSLT_PROCESSOR_OPTIONS}" --nonet --stringparam base.dir "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" html-customization-layer.xsl Manual.docbook
-					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
+					WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
 
 	# This CMake target generates the user manual which is put onto the www.ovito.org website.
 	# It consists of a set of PHP files that adopt the look and feel of the WordPress site.
 	ADD_CUSTOM_TARGET(wordpress_doc
-					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${CMAKE_BINARY_DIR}/doc/wordpress/images/"
+					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${Ovito_BINARY_DIR}/doc/wordpress/images/"
 					COMMAND ${XSLT_PROCESSOR} "${XSLT_PROCESSOR_OPTIONS}" --nonet
-						--stringparam base.dir "${CMAKE_BINARY_DIR}/doc/wordpress/"
+						--stringparam base.dir "${Ovito_BINARY_DIR}/doc/wordpress/"
 						--stringparam ovito.version "${OVITO_VERSION_STRING}"
 						wordpress-customization-layer.xsl Manual.docbook
-					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
+					WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation (WordPress version)")
 
 	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/")
@@ -83,11 +83,11 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	# generate the scripting documentation for OVITO's Python modules.
 	ADD_CUSTOM_TARGET(scripting_documentation
 		COMMAND "${CMAKE_COMMAND}" -E env DYLD_IMAGE_SUFFIX=${DYLD_IMAGE_SUFFIX}
-			"$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+			"$<TARGET_FILE:ovitos>" "${Ovito_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
 			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
 			"-D" "release=${OVITO_VERSION_STRING}"
 			"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/"
-		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
+		WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/python/"
 		COMMENT "Generating scripting documentation")
 
 	# Run Sphinx only after OVITO and all of its plugins have been built.
@@ -97,13 +97,13 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	# is put onto the www.ovito.org website.
 	ADD_CUSTOM_TARGET(wordpress_doc_scripting
 		COMMAND "${CMAKE_COMMAND}" -E env DYLD_IMAGE_SUFFIX=${DYLD_IMAGE_SUFFIX}
-			"$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
-			"-c" "${CMAKE_SOURCE_DIR}/doc/python/wordpress"
+			"$<TARGET_FILE:ovitos>" "${Ovito_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
+			"-c" "${Ovito_SOURCE_DIR}/doc/python/wordpress"
 			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
 			"-D" "release=${OVITO_VERSION_STRING}"
 			"-D" "html_short_title=Ovito ${OVITO_VERSION_STRING}"
-			"." "${CMAKE_BINARY_DIR}/doc/wordpress/python/"
-		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
+			"." "${Ovito_BINARY_DIR}/doc/wordpress/python/"
+		WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/python/"
 		COMMENT "Generating scripting documentation (WordPress version)")
 
 	IF(OVITO_BUILD_DOCUMENTATION)
@@ -119,8 +119,8 @@ IF(DOXYGEN_FOUND)
 	ADD_CUSTOM_TARGET(apidocs
 					COMMAND "${CMAKE_COMMAND}" -E env
 					"OVITO_VERSION_STRING=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}"
-					"OVITO_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/src/"
+					"OVITO_INCLUDE_PATH=${Ovito_SOURCE_DIR}/src/"
 					${DOXYGEN_EXECUTABLE} Doxyfile
-					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/develop/"
+					WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/develop/"
 					COMMENT "Generating C++ API documentation")
 ENDIF()

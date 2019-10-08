@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -49,7 +49,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 ******************************************************************************/
 MainWindow::MainWindow() : _datasetContainer(this)
 {
-	setWindowTitle(tr("Ovito (Open Visualization Tool)"));
+	setWindowTitle(tr("%1 (Open Visualization Tool)").arg(QCoreApplication::applicationName()));
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	// Setup the layout of docking widgets.
@@ -487,9 +487,9 @@ void MainWindow::setCurrentCommandPanelPage(CommandPanelPage page)
 void MainWindow::setWindowFilePath(const QString& filePath)
 {
 	if(filePath.isEmpty())
-		setWindowTitle(tr("Ovito (Open Visualization Tool) [*]"));
+		setWindowTitle(tr("%1 (Open Visualization Tool) [*]").arg(QCoreApplication::applicationName()));
 	else
-		setWindowTitle(tr("Ovito (Open Visualization Tool) - %1[*]").arg(QFileInfo(filePath).fileName()));
+		setWindowTitle(tr("%1 (Open Visualization Tool) - %2[*]").arg(QCoreApplication::applicationName()).arg(QFileInfo(filePath).fileName()));
 	QMainWindow::setWindowFilePath(filePath);
 }
 

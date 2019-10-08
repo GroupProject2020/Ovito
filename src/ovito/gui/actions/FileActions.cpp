@@ -51,18 +51,12 @@ void ActionManager::on_Quit_triggered()
 void ActionManager::on_HelpAbout_triggered()
 {
 	QMessageBox msgBox(QMessageBox::NoIcon, QCoreApplication::applicationName(),
-			tr("<h3>Ovito (Open Visualization Tool)</h3>"
-				"<p>Version %1</p>").arg(QCoreApplication::applicationVersion()),
+			tr("<h3>%1 (Open Visualization Tool)</h3>"
+				"<p>Version %2</p>").arg(QCoreApplication::applicationName()).arg(QCoreApplication::applicationVersion()),
 			QMessageBox::Ok, mainWindow());
-	msgBox.setInformativeText(tr(
-			"<p>A visualization and analysis software for atomistic simulation data.</p>"
-			"<p>Copyright (C) 2019, Alexander Stukowski</p>"
-			"<p>"
-			"This is free, open-source software, and you are welcome to redistribute\n"
-			"it under certain conditions. See the source for copying conditions.</p>"
-			"<p><a href=\"https://www.ovito.org/\">https://www.ovito.org/</a></p>"));
+	msgBox.setInformativeText(QStringLiteral(OVITO_COPYRIGHT_NOTICE));
 	msgBox.setDefaultButton(QMessageBox::Ok);
-	QPixmap icon = QApplication::windowIcon().pixmap(64 * mainWindow()->devicePixelRatio());
+	QPixmap icon = QApplication::windowIcon().pixmap(32 * mainWindow()->devicePixelRatio());
 	icon.setDevicePixelRatio(mainWindow()->devicePixelRatio());
 	msgBox.setIconPixmap(icon);
 	msgBox.exec();

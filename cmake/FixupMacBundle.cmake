@@ -1,3 +1,24 @@
+###############################################################################
+#
+#  Copyright (2019) Alexander Stukowski
+#
+#  This file is part of OVITO (Open Visualization Tool).
+#
+#  OVITO is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  OVITO is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
+
 IF(APPLE)
 	# Install the Info.plist file.
 	CONFIGURE_FILE("${OVITO_SOURCE_BASE_DIR}/src/ovito_exe/resources/Info.plist" "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
@@ -112,7 +133,7 @@ IF(APPLE)
 			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Resources\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Resources\")
 			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Frameworks\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Frameworks\")
 			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../PlugIns\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/PlugIns\")
-			CONFIGURE_FILE(\"${CMAKE_SOURCE_DIR}/src/ovito_exe/resources/Info.plist\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info.plist\")
+			CONFIGURE_FILE(\"${Ovito_SOURCE_DIR}/src/ovito_exe/resources/Info.plist\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info.plist\")
 			EXECUTE_PROCESS(COMMAND defaults write \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info\" LSUIElement 1)
 			FILE(GLOB DylibsToSymlink \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
 			FOREACH(FILE_ENTRY \${DylibsToSymlink})
