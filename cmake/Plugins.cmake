@@ -35,7 +35,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	SET(python_wrappers ${ARG_PYTHON_WRAPPERS})
 
 	# Create the library target for the plugin.
-    ADD_LIBRARY(${target_name} ${OVITO_DEFAULT_LIBRARY_TYPE} ${plugin_sources})
+    ADD_LIBRARY(${target_name} ${plugin_sources})
 
     # Set default include directory.
     TARGET_INCLUDE_DIRECTORIES(${target_name} PUBLIC
@@ -89,11 +89,11 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 
 	# Define macro for symbol export from shared library.
 	STRING(TOUPPER "${target_name}" _uppercase_plugin_name)
-	IF(OVITO_BUILD_MONOLITHIC)
-		TARGET_COMPILE_DEFINITIONS(${target_name} PUBLIC "OVITO_${_uppercase_plugin_name}_EXPORT=")
-	ELSE()
+	IF(BUILD_SHARED_LIBS)
 		TARGET_COMPILE_DEFINITIONS(${target_name} PRIVATE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_EXPORT")
 		TARGET_COMPILE_DEFINITIONS(${target_name} INTERFACE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_IMPORT")
+	ELSE()
+		TARGET_COMPILE_DEFINITIONS(${target_name} PUBLIC "OVITO_${_uppercase_plugin_name}_EXPORT=")
 	ENDIF()
 
 	# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.

@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -23,7 +23,8 @@
 OVITO_STANDARD_PLUGIN(Tachyon
 	SOURCES
 		renderer/TachyonRenderer.cpp
-	LIB_DEPENDENCIES TachyonLib
+	LIB_DEPENDENCIES
+		TachyonLib
 )
 
 # Build corresponding GUI plugin.

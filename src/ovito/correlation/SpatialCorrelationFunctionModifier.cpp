@@ -31,7 +31,7 @@
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "SpatialCorrelationFunctionModifier.h"
 
-#include <kiss_fftnd.h>
+#include <kissfft/kiss_fftnd.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 

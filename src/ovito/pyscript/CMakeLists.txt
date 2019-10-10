@@ -1,6 +1,6 @@
 ###############################################################################
 #
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,6 +19,7 @@
 #
 ###############################################################################
 
+# Locate the Python headers and library.
 SET(Python_ADDITIONAL_VERSIONS 3.4 3.5 3.6 3.7 3.8)
 FIND_PACKAGE(PythonInterp REQUIRED)
 FIND_PACKAGE(PythonLibs REQUIRED)
@@ -45,8 +46,11 @@ OVITO_STANDARD_PLUGIN(PyScript
 		binding/TypeCasting.cpp
 		extensions/PythonViewportOverlay.cpp
 		extensions/PythonScriptModifier.cpp
-	LIB_DEPENDENCIES ${PYTHON_LIBRARIES} OpenGLRenderer
-	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/python/"
+	LIB_DEPENDENCIES
+		${PYTHON_LIBRARIES}
+		OpenGLRenderer
+	PYTHON_WRAPPERS
+		"${CMAKE_CURRENT_SOURCE_DIR}/python/"
 )
 
 # Add Python include directory.
@@ -139,11 +143,11 @@ ELSEIF(WIN32)
 		DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}")
 
 	# Install Python interpreter dlls.
-	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../${PYTHON_LIBRARY_NAME}.dll")
-	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../python3.dll")
+	OVITO_INSTALL_SHARED_LIB("${PYTHON_LIBRARY_PATH}/../${PYTHON_LIBRARY_NAME}.dll" ".")
+	OVITO_INSTALL_SHARED_LIB("${PYTHON_LIBRARY_PATH}/../python3.dll" ".")
 
 	# Install Visual C++ runtime needed by Python interpreter.
-	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../vcruntime140.dll")
+	OVITO_INSTALL_SHARED_LIB("${PYTHON_LIBRARY_PATH}/../vcruntime140.dll" ".")
 ENDIF()
 
 # Propagate list of plugins to parent scope.

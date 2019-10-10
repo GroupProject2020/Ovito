@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2018) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -20,7 +20,7 @@
 ###############################################################################
 
 # Compile the Geogram library (Delaunay "Pluggable Software Module")
-ADD_LIBRARY(geogram STATIC Delaunay_psm.cpp)
+ADD_LIBRARY(geogram Delaunay_psm.cpp)
 
 # Set floating-point math compiler options.
 IF(UNIX OR APPLE)
@@ -33,8 +33,11 @@ ENDIF()
 # Enable Geogram's support for 64-bit indices.
 TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GARGANTUA=1" )
 
-# Build static version of Geogram lib.
-TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GEO_STATIC_LIBS=1")
+# Build shared library version of Geogram lib.
+TARGET_COMPILE_DEFINITIONS(geogram PRIVATE "geogram_EXPORTS")
+
+# Give our library file a new name to not confuse it with any system versions of the library.
+SET_TARGET_PROPERTIES(geogram PROPERTIES OUTPUT_NAME "ovito_geogram")
 
 # Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
 SET_TARGET_PROPERTIES(geogram PROPERTIES CXX_VISIBILITY_PRESET "hidden")
@@ -42,7 +45,9 @@ SET_TARGET_PROPERTIES(geogram PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 # Make header files of this library available to dependent targets.
 TARGET_INCLUDE_DIRECTORIES(geogram INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
-SET_PROPERTY(TARGET geogram PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Export this target.
-INSTALL(TARGETS geogram EXPORT OVITO ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" CONFIGURATIONS "")
+INSTALL(TARGETS geogram EXPORT OVITO
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

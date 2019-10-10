@@ -32,11 +32,10 @@ OVITO_STANDARD_PLUGIN(VRPlugin
 		#VRCacheModifier.cpp
 		VRSettingsObject.cpp
 		VRSettingsObjectEditor.cpp
+	PRIVATE_LIB_DEPENDENCIES
+		OpenVR::OpenVR
 	GUI_PLUGIN
 )
-
-# Link to OpenVR library.
-TARGET_LINK_LIBRARIES(VRPlugin PRIVATE OpenVR::OpenVR)
 
 IF(WIN32)
 	# Determine location of OpenVR DLL.
@@ -44,7 +43,7 @@ IF(WIN32)
 	GET_FILENAME_COMPONENT(OPENVR_LIBRARY_PATH "${OpenVR_FIRST_LIBRARY}" PATH)
 
 	# Deploy OpenVR DLL.
-	OVITO_INSTALL_DLL("${OPENVR_LIBRARY_PATH}/../../bin/win64/openvr_api.dll")
+	OVITO_INSTALL_SHARED_LIB("${OPENVR_LIBRARY_PATH}/../../bin/win64/openvr_api.dll" ".")
 ENDIF()
 
 # Propagate list of plugins to parent scope.

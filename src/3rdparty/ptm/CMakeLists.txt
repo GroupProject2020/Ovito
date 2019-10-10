@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2016) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,7 +19,8 @@
 #
 ###############################################################################
 
-SET(PTM_SOURCE_FILES
+# Build library.
+ADD_LIBRARY(PolyhedralTemplateMatching
 	ptm_alloy_types.cpp
 	ptm_canonical_coloured.cpp
 	ptm_convex_hull_incremental.cpp
@@ -37,8 +38,8 @@ SET(PTM_SOURCE_FILES
 	ptm_voronoi_cell.cpp
 )
 
-# Build library.
-ADD_LIBRARY(PolyhedralTemplateMatching STATIC ${PTM_SOURCE_FILES})
+# Give our library file a new name to not confuse it with any system versions of the library.
+SET_TARGET_PROPERTIES(PolyhedralTemplateMatching PROPERTIES OUTPUT_NAME "ovito_ptm")
 
 # Link to Voro++ library.
 TARGET_LINK_LIBRARIES(PolyhedralTemplateMatching PRIVATE VoroPlusPlus)
@@ -46,8 +47,8 @@ TARGET_LINK_LIBRARIES(PolyhedralTemplateMatching PRIVATE VoroPlusPlus)
 # Make header files of this library available to dependent targets.
 TARGET_INCLUDE_DIRECTORIES(PolyhedralTemplateMatching INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
-# Since we will link this into the Particles plugin, we need to use the same setting for the fPIC flag.
-SET_PROPERTY(TARGET PolyhedralTemplateMatching PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 # Export this target.
-INSTALL(TARGETS PolyhedralTemplateMatching EXPORT OVITO ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" CONFIGURATIONS "")
+INSTALL(TARGETS PolyhedralTemplateMatching EXPORT OVITO
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -24,8 +24,10 @@ OVITO_STANDARD_PLUGIN(VoroTop
 	SOURCES
 		VoroTopModifier.cpp
 		Filter.cpp
-	PLUGIN_DEPENDENCIES Particles
-	LIB_DEPENDENCIES VoroPlusPlus
+	PLUGIN_DEPENDENCIES
+		Particles
+	LIB_DEPENDENCIES
+		VoroPlusPlus
 )
 
 # Build corresponding GUI plugin.

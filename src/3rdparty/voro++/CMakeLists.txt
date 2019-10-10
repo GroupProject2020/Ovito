@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2014) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,42 +19,28 @@
 #
 ###############################################################################
 
-# Find Voro++ library.
-FIND_PACKAGE(VoroPlusPlus QUIET)
+# Build library.
+ADD_LIBRARY(VoroPlusPlus
+	src/cell.cc
+	src/common.cc
+	src/container.cc
+	src/unitcell.cc
+	src/v_compute.cc
+	src/c_loops.cc
+	src/v_base.cc
+	src/wall.cc
+	src/pre_container.cc
+	src/container_prd.cc
+)
 
-IF(VOROPLUSPLUS_FOUND)
+# Give our library file a new name to not confuse it with any system versions of the library.
+SET_TARGET_PROPERTIES(VoroPlusPlus PROPERTIES OUTPUT_NAME "ovito_voro++")
 
-	# Create imported target for the existing Voro++ library.
-	ADD_LIBRARY(VoroPlusPlus SHARED IMPORTED GLOBAL)
-	SET_PROPERTY(TARGET VoroPlusPlus PROPERTY IMPORTED_LOCATION "${VoroPlusPlus_LIBRARIES}")
-	SET_PROPERTY(TARGET VoroPlusPlus APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${VoroPlusPlus_INCLUDE_DIRS}")
+# Make header files of this library available to dependent targets.
+TARGET_INCLUDE_DIRECTORIES(VoroPlusPlus INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-ELSE()
-
-	# Build our own version of the library.
-	SET(VOROPLUSPLUS_SOURCE_FILES
-		src/cell.cc 
-		src/common.cc 
-		src/container.cc
-		src/unitcell.cc
-		src/v_compute.cc
-		src/c_loops.cc
-		src/v_base.cc
-		src/wall.cc
-		src/pre_container.cc
-		src/container_prd.cc
-	)
-
-	# Build library.
-	ADD_LIBRARY(VoroPlusPlus STATIC ${VOROPLUSPLUS_SOURCE_FILES})
-
-	# Make header files of this library available to dependent targets.
-	TARGET_INCLUDE_DIRECTORIES(VoroPlusPlus INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-	
-	# Since we will link this into the Particles plugin, we need to use the same setting for the fPIC flag.
-    SET_PROPERTY(TARGET VoroPlusPlus PROPERTY POSITION_INDEPENDENT_CODE ON)        
-
-    # Export this target.
-	INSTALL(TARGETS VoroPlusPlus EXPORT OVITO ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" CONFIGURATIONS "")
-		
-ENDIF()
+# Export this target.
+INSTALL(TARGETS VoroPlusPlus EXPORT OVITO
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

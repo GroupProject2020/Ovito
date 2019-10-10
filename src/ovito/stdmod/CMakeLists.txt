@@ -40,7 +40,9 @@ OVITO_STANDARD_PLUGIN(StdMod
 		modifiers/ComputePropertyModifier.cpp
 		modifiers/CombineDatasetsModifier.cpp
 		viewport/ColorLegendOverlay.cpp
-	PLUGIN_DEPENDENCIES StdObj Mesh
+	PLUGIN_DEPENDENCIES
+		StdObj
+		Mesh
 )
 
 # Speed up compilation by using precompiled headers.

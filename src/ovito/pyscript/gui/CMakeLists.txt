@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -39,13 +39,13 @@ OVITO_STANDARD_PLUGIN(PyScriptGui
 	GUI_PLUGIN
 )
 
-# Install required libraries. 
+# Install required libraries.
 IF(APPLE)
 	# Nothing to do.
 ELSEIF(UNIX)
 	IF(OVITO_REDISTRIBUTABLE_PACKAGE)
 		# Install a copy of the QScintilla2 library.
-		CONFIGURE_FILE("${QScintilla_LIBRARIES}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)		
+		CONFIGURE_FILE("${QScintilla_LIBRARIES}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)
 		GET_FILENAME_COMPONENT(real_qscintilla_lib "${QScintilla_LIBRARIES}" REALPATH)
 		INSTALL(FILES "${QScintilla_LIBRARIES}" "${real_qscintilla_lib}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
 	ENDIF()
@@ -53,5 +53,5 @@ ELSEIF(WIN32)
 	# Install QScintilla DLL.
 	GET_FILENAME_COMPONENT(QSCINTILLA_BASE_NAME "${QScintilla_LIBRARIES}" NAME_WE)
 	GET_FILENAME_COMPONENT(QSCINTILLA_LIB_PATH "${QScintilla_LIBRARIES}" PATH)
-	OVITO_INSTALL_DLL("${QSCINTILLA_LIB_PATH}/${QSCINTILLA_BASE_NAME}.dll")
+	OVITO_INSTALL_SHARED_LIB("${QSCINTILLA_LIB_PATH}/${QSCINTILLA_BASE_NAME}.dll" ".")
 ENDIF()

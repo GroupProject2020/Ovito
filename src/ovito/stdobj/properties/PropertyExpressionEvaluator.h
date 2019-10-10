@@ -26,7 +26,7 @@
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 
-#include <muParser.h>
+#include <muparser/muParser.h>
 #include <boost/utility.hpp>
 #include <boost/optional.hpp>
 

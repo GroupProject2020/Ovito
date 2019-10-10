@@ -19,12 +19,6 @@
 #
 ###############################################################################
 
-# Define the plugin module.
-OVITO_STANDARD_PLUGIN(OSPRayRenderer SOURCES
-	renderer/OSPRayRenderer.cpp
-	renderer/OSPRayBackend.cpp
-)
-
 # Locate the OSPRay library.
 FIND_PACKAGE(ospray 1.8.0 REQUIRED)
 
@@ -34,9 +28,18 @@ FIND_PACKAGE(embree 3.3.0 REQUIRED)
 # Locate Intel Thread Building Blocks (TBB) library
 FIND_PACKAGE(TBB COMPONENTS tbb tbbmalloc REQUIRED)
 
-# Link to the OSPRay library and its dependencies.
-TARGET_LINK_LIBRARIES(OSPRayRenderer PRIVATE ospray::ospray ospray::ospray_module_ispc)
-TARGET_LINK_LIBRARIES(OSPRayRenderer PRIVATE "${EMBREE_LIBRARIES}")
+# Define the plugin module.
+OVITO_STANDARD_PLUGIN(OSPRayRenderer
+	SOURCES
+		renderer/OSPRayRenderer.cpp
+		renderer/OSPRayBackend.cpp
+	PRIVATE_LIB_DEPENDENCIES
+		ospray::ospray
+		ospray::ospray_module_ispc
+		"${EMBREE_LIBRARIES}"
+)
+
+# Link to the Embree library and its dependencies.
 TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE "${EMBREE_INCLUDE_DIRS}")
 TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE "$<TARGET_PROPERTY:TBB::tbb,INTERFACE_INCLUDE_DIRECTORIES>")
 SET_TARGET_PROPERTIES(OSPRayRenderer PROPERTIES MACOSX_RPATH TRUE)
@@ -70,7 +73,7 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Deploy Embree shared libraries.
 	FOREACH(lib ${EMBREE_LIBRARIES})
 		OVITO_INSTALL_SHARED_LIB("${lib}" ".")
-	ENDFOREACH()		
+	ENDFOREACH()
 	# Deploy Thread Building Blocks (TBB) shared libraries.
 	OVITO_INSTALL_SHARED_LIB("${TBB_LIBRARY}" ".")
 	OVITO_INSTALL_SHARED_LIB("${TBB_LIBRARY_MALLOC}" ".")
@@ -80,12 +83,12 @@ ENDIF()
 IF(WIN32)
 	# Deploy TBB DLLs.
 	GET_TARGET_PROPERTY(TBB_DLL_LOCATION TBB::tbb IMPORTED_LOCATION_RELEASE)
-	OVITO_INSTALL_DLL("${TBB_DLL_LOCATION}")
+	OVITO_INSTALL_SHARED_LIB("${TBB_DLL_LOCATION}" ".")
 	GET_TARGET_PROPERTY(TBBMALLOC_DLL_LOCATION TBB::tbbmalloc IMPORTED_LOCATION_RELEASE)
-	OVITO_INSTALL_DLL("${TBBMALLOC_DLL_LOCATION}")
+	OVITO_INSTALL_SHARED_LIB("${TBBMALLOC_DLL_LOCATION}" ".")
 
-	# Deploy Embree DLLs
-	OVITO_INSTALL_DLL("${EMBREE_ROOT_DIR}/bin/embree3.dll")
+	# Deploy Embree DLL.
+	OVITO_INSTALL_SHARED_LIB("${EMBREE_ROOT_DIR}/bin/embree3.dll" ".")
 ENDIF()
 
 # Build corresponding GUI plugin.

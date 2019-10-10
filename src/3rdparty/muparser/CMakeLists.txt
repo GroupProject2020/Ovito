@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2013) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,42 +19,25 @@
 #
 ###############################################################################
 
-# Find muParser library.
-FIND_PACKAGE(MuParser QUIET)
+# Build library.
+ADD_LIBRARY(muParser
+	muParser.cpp
+	muParserBytecode.cpp
+	muParserInt.cpp
+	muParserTokenReader.cpp
+	muParserError.cpp
+	muParserCallback.cpp
+	muParserBase.cpp
+)
 
-IF(MUPARSER_FOUND)
+# Give our library file a new name to not confuse it with any system versions of the library.
+SET_TARGET_PROPERTIES(muParser PROPERTIES OUTPUT_NAME "ovito_muparser")
 
-	# Create imported target for the existing muParser library.
-	ADD_LIBRARY(muParser SHARED IMPORTED GLOBAL)
-	SET_PROPERTY(TARGET muParser PROPERTY IMPORTED_LOCATION "${MuParser_LIBRARIES}")
-	SET_PROPERTY(TARGET muParser APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MuParser_INCLUDE_DIRS}")
-	
-ELSE()
+# Make header files of this library available to dependent targets.
+TARGET_INCLUDE_DIRECTORIES(muParser INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
-	# Build our own version of the library.
-	SET(MUPARSER_SOURCE_FILES
-		muParser.cpp
-		muParserBytecode.cpp
-		muParserInt.cpp
-		muParserTokenReader.cpp
-		muParserError.cpp
-		muParserCallback.cpp
-		muParserBase.cpp
-	)
-
-	# Build library.
-	ADD_LIBRARY(muParser ${OVITO_DEFAULT_LIBRARY_TYPE} ${MUPARSER_SOURCE_FILES})
-
-	# Make header files of this library available to dependent targets.
-	TARGET_INCLUDE_DIRECTORIES(muParser INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
-
-    # Since we will link this into the Particles plugin, we need to use the same setting for the fPIC flag.
-	SET_PROPERTY(TARGET muParser PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-	# Export this target.
-	INSTALL(TARGETS muParser EXPORT OVITO 
-		RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
-		LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
-		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
-    
-ENDIF()
+# Export this target.
+INSTALL(TARGETS muParser EXPORT OVITO
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

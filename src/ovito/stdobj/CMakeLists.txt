@@ -39,7 +39,8 @@ OVITO_STANDARD_PLUGIN(StdObj
 		series/DataSeriesObject.cpp
 		io/DataSeriesExporter.cpp
 		util/ElementSelectionSet.cpp
-	LIB_DEPENDENCIES muParser
+	LIB_DEPENDENCIES
+		muParser
 )
 
 # Speed up compilation by using precompiled headers.

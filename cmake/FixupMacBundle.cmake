@@ -19,171 +19,123 @@
 #
 ###############################################################################
 
-IF(APPLE)
-	# Install the Info.plist file.
-	CONFIGURE_FILE("${OVITO_SOURCE_BASE_DIR}/src/ovito_exe/resources/Info.plist" "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
-	SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
+# Install needed Qt plugins by copying directories from the Qt installation
+SET(_qtplugins_source_dir "${_qt5Core_install_prefix}/plugins")
+SET(_qtplugins_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
+INSTALL(DIRECTORY "${_qtplugins_source_dir}/imageformats" DESTINATION ${_qtplugins_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+INSTALL(DIRECTORY "${_qtplugins_source_dir}/platforms" DESTINATION ${_qtplugins_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+INSTALL(DIRECTORY "${_qtplugins_source_dir}/iconengines" DESTINATION ${_qtplugins_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+IF(NOT Qt5Core_VERSION VERSION_LESS "5.12")
+	INSTALL(DIRECTORY "${_qtplugins_source_dir}/styles" DESTINATION ${_qtplugins_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+ENDIF()
 
-	# Copy the application icon into the resource directory.
-	INSTALL(FILES "${OVITO_SOURCE_BASE_DIR}/src/ovito_exe/resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
+# Install a qt.conf file.
+# This inserts some cmake code into the install script to write the file
+INSTALL(CODE "
+	file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Resources/qt.conf\" \"[Paths]\\nPlugins = PlugIns/\")
+	")
 
-	SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
-
-	# Install needed Qt plugins by copying directories from the Qt installation
-	SET(plugin_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
-	SET(qtconf_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/iconengines" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	IF(NOT Qt5Core_VERSION VERSION_LESS "5.12")
-		INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/styles" DESTINATION ${plugin_dest_dir} PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
-	ENDIF()
-
-	# Install a qt.conf file.
-	# This inserts some cmake code into the install script to write the file
+# Purge any previous version of the nested bundle to avoid errors during bundle fixup.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	INSTALL(CODE "
-	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${qtconf_dest_dir}/qt.conf\" \"[Paths]\\nPlugins = PlugIns/\")
-	    ")
+		FILE(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.app\")
+		")
+ENDIF()
 
-	# Purge any previous version of the nested bundle to avoid errors during bundle fixup.
-	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-		INSTALL(CODE "
-			FILE(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App\")
-			")
-	ENDIF()
+# Use BundleUtilities to get all other dependencies for the application to work.
+# It takes a bundle or executable along with possible plugins and inspects it
+# for dependencies.  If they are not system dependencies, they are copied.
+
+# Now the work of copying dependencies into the bundle/package
+# The quotes are escaped and variables to use at install time have their $ escaped
+# An alternative is the do a configure_file() on a script and use install(SCRIPT  ...).
+# Note that the image plugins depend on QtSvg and QtXml, and it got those copied
+# over.
+INSTALL(CODE "
+	CMAKE_POLICY(SET CMP0011 NEW)
+	CMAKE_POLICY(SET CMP0009 NEW)
 
 	# Use BundleUtilities to get all other dependencies for the application to work.
 	# It takes a bundle or executable along with possible plugins and inspects it
 	# for dependencies.  If they are not system dependencies, they are copied.
+	SET(APPS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
 
-	# Now the work of copying dependencies into the bundle/package
-	# The quotes are escaped and variables to use at install time have their $ escaped
-	# An alternative is the do a configure_file() on a script and use install(SCRIPT  ...).
-	# Note that the image plugins depend on QtSvg and QtXml, and it got those copied
-	# over.
-	INSTALL(CODE "
-		CMAKE_POLICY(SET CMP0011 NEW)
-		CMAKE_POLICY(SET CMP0009 NEW)
+	# Directories to look for dependencies:
+	SET(DIRS
+		${QT_LIBRARY_DIRS}
+		\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}\"
+		\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks\"
+		\"\${CMAKE_INSTALL_PREFIX}/${_qtplugins_dest_dir}/imageformats\"
+		\"\${CMAKE_INSTALL_PREFIX}/${_qtplugins_dest_dir}/platforms\"
+		\"\${CMAKE_INSTALL_PREFIX}/${_qtplugins_dest_dir}/iconengines\"
+		/opt/local/lib)
 
-		# Use BundleUtilities to get all other dependencies for the application to work.
-		# It takes a bundle or executable along with possible plugins and inspects it
-		# for dependencies.  If they are not system dependencies, they are copied.
-		SET(APPS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
-
-		# Directories to look for dependencies:
-		SET(DIRS
-			${QT_LIBRARY_DIRS}
-			\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}\"
-			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks\"
-			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/imageformats\"
-			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/platforms\"
-			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/iconengines\"
-			/opt/local/lib)
-
-		# Returns the path that others should refer to the item by when the item is embedded inside a bundle.
-		# This ensures that all plugin libraries go into the PlugIns/ directory of the bundle.
-		FUNCTION(gp_item_default_embedded_path_override item default_embedded_path_var)
-			# Embed plugin libraries (.so) in the PlugIns/ subdirectory:
-            IF(item MATCHES \"\\\\${OVITO_PLUGIN_LIBRARY_SUFFIX}$\" AND (item MATCHES \"^@rpath\" OR item MATCHES \"PlugIns/\"))
-	    	    SET(path \"@executable_path/../PlugIns\")
-		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
-    		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
-			ENDIF()
-			# Leave helper libraries in the MacOS/ directory:
-            IF((item MATCHES \"libmuParser\\\\.dylib$\" OR item MATCHES \"libNetCDFIntegration\\\\.dylib$\" OR item MATCHES \"libQwt\\\\.dylib$\") AND item MATCHES \"^@rpath\")
-	    	    SET(path \"@executable_path\")
-		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
-    		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
-            ENDIF()
-		ENDFUNCTION()
-		# This is needed to correctly install Matplotlib's shared libraries in the .dylibs/ subdirectory:
-		FUNCTION(gp_resolved_file_type_override resolved_file type)
-			IF(resolved_file MATCHES \"@loader_path/\" AND resolved_file MATCHES \"/.dylibs/\")
-				SET(\${type} \"system\" PARENT_SCOPE)
-			ENDIF()
-		ENDFUNCTION()
-		FILE(GLOB_RECURSE QTPLUGINS
-			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
-		FILE(GLOB_RECURSE OVITO_PLUGINS
-			\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}/*${OVITO_PLUGIN_LIBRARY_SUFFIX}\")
-		FILE(GLOB_RECURSE PYTHON_DYNLIBS
-			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/*.so\")
-		FILE(GLOB OTHER_DYNLIBS
-			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
-		FILE(GLOB OTHER_FRAMEWORK_DYNLIBS
-			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
-		FOREACH(lib \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
-			IF(NOT IS_SYMLINK \${lib})
-				LIST(APPEND BUNDLE_LIBS \${lib})
-			ENDIF()
-		ENDFOREACH()
-		MESSAGE(\"Bundle libs: \${BUNDLE_LIBS}\")
-		SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
-		INCLUDE(BundleUtilities)
-		FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
-		")
-
-	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-
-		# Create a nested bundle for 'ovitos'.
-		# This is to prevent the program icon from showing up in the dock when 'ovitos' is run.
-		INSTALL(CODE "
-			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E make_directory \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/MacOS\")
-			FILE(RENAME \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/ovitos.exe\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/MacOS/ovitos\")
-			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Resources\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Resources\")
-			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Frameworks\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Frameworks\")
-			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../PlugIns\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/PlugIns\")
-			CONFIGURE_FILE(\"${Ovito_SOURCE_DIR}/src/ovito_exe/resources/Info.plist\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info.plist\")
-			EXECUTE_PROCESS(COMMAND defaults write \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/Info\" LSUIElement 1)
-			FILE(GLOB DylibsToSymlink \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
-			FOREACH(FILE_ENTRY \${DylibsToSymlink})
-				GET_FILENAME_COMPONENT(FILE_ENTRY_NAME \"\${FILE_ENTRY}\" NAME)
-				EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../\${FILE_ENTRY_NAME}\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/MacOS/\${FILE_ENTRY_NAME}\")
-			ENDFOREACH()
-		")
-
-		# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
-		INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
-	ENDIF()
-
-	# Sign bundle (starting from the inside out with all executables/libraries,
-	# then the nested 'ovitos' bundle, finally the main bundle).
-	SET(SigningIdentity "Developer ID Application: Alexander Stukowski")
-	INSTALL(CODE "
-		CMAKE_POLICY(SET CMP0012 NEW)
-
-		SET(FilesToBeSigned)
-		# Sign the shared libraries in the Python framework:
-		IF(${OVITO_BUILD_PLUGIN_PYSCRIPT})
-			FILE(GLOB_RECURSE PythonDylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/Versions/*.dylib\")
-			LIST(APPEND FilesToBeSigned \${PythonDylibsToBeSigned})
+	# Returns the path that others should refer to the item by when the item is embedded inside a bundle.
+	# This ensures that all plugin libraries go into the PlugIns/ directory of the bundle.
+	FUNCTION(gp_item_default_embedded_path_override item default_embedded_path_var)
+		# Embed plugin libraries (.so) in the PlugIns/ subdirectory:
+		IF(item MATCHES \"\\\\${OVITO_PLUGIN_LIBRARY_SUFFIX}$\" AND (item MATCHES \"^@rpath\" OR item MATCHES \"PlugIns/\"))
+			SET(path \"@executable_path/../PlugIns\")
+			SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
+			MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
 		ENDIF()
-		FILE(GLOB DylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
-		LIST(APPEND FilesToBeSigned \${DylibsToBeSigned})
-		FILE(GLOB FrameworksToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.framework\")
-		LIST(APPEND FilesToBeSigned \${FrameworksToBeSigned})
-		FILE(GLOB_RECURSE DylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns/*.dylib\")
-		LIST(APPEND FilesToBeSigned \${DylibsToBeSigned})
-		FILE(GLOB_RECURSE DylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
-		LIST(APPEND FilesToBeSigned \${DylibsToBeSigned})
-		FILE(GLOB SolibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns/*.so\")
-		LIST(APPEND FilesToBeSigned \${SolibsToBeSigned})
-		IF(${OVITO_BUILD_PLUGIN_PYSCRIPT})
-			LIST(APPEND FilesToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.app/Contents/MacOS/ovitos\")
-			LIST(APPEND FilesToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/ovitos\")
-			LIST(APPEND FilesToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.app\")
+		# Leave helper libraries in the MacOS/ directory:
+		IF(item MATCHES \"libovito\"  AND item MATCHES \"^@rpath\")
+			SET(path \"@executable_path\")
+			SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
+			MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
 		ENDIF()
-		LIST(APPEND FilesToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
+	ENDFUNCTION()
 
-		# Sign executable files one by one.
-		FOREACH(FILE_ENTRY \${FilesToBeSigned})
-			MESSAGE(\"Signing \${FILE_ENTRY}\")
-			EXECUTE_PROCESS(COMMAND codesign -s \"${SigningIdentity}\" --force \"\${FILE_ENTRY}\")
+	# This is needed to correctly install Matplotlib's shared libraries in the .dylibs/ subdirectory:
+	FUNCTION(gp_resolved_file_type_override resolved_file type)
+		IF(resolved_file MATCHES \"@loader_path/\" AND resolved_file MATCHES \"/.dylibs/\")
+			SET(\${type} \"system\" PARENT_SCOPE)
+		ENDIF()
+	ENDFUNCTION()
+
+	FILE(GLOB_RECURSE QTPLUGINS
+		\"\${CMAKE_INSTALL_PREFIX}/${_qtplugins_dest_dir}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+	FILE(GLOB_RECURSE OVITO_PLUGINS
+		\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}/*${OVITO_PLUGIN_LIBRARY_SUFFIX}\")
+	FILE(GLOB_RECURSE PYTHON_DYNLIBS
+		\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/*.so\")
+	FILE(GLOB OTHER_DYNLIBS
+		\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
+	FILE(GLOB OTHER_FRAMEWORK_DYNLIBS
+		\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
+	FOREACH(lib \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
+		IF(NOT IS_SYMLINK \${lib})
+			LIST(APPEND BUNDLE_LIBS \${lib})
+		ENDIF()
+	ENDFOREACH()
+
+	MESSAGE(\"Bundle libs: \${BUNDLE_LIBS}\")
+	SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
+	INCLUDE(BundleUtilities)
+	FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
+")
+
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+
+	# Create a nested bundle for 'ovitos'.
+	# This is to prevent the program icon from showing up in the dock when 'ovitos' is run.
+	INSTALL(CODE "
+		SET(BundlePath \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
+		EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E make_directory \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/MacOS\")
+		FILE(RENAME \"\${BundlePath}/Contents/MacOS/ovitos.exe\" \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/MacOS/ovitos\")
+		EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Resources\" \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/Resources\")
+		EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../Frameworks\" \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/Frameworks\")
+		EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../PlugIns\" \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/PlugIns\")
+		CONFIGURE_FILE(\"${Ovito_SOURCE_DIR}/src/ovito_exe/resources/Info.plist\" \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/Info.plist\")
+		EXECUTE_PROCESS(COMMAND defaults write \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/Info\" LSUIElement 1)
+		FILE(GLOB DylibsToSymlink \"\${BundlePath}/Contents/MacOS/*.dylib\")
+		FOREACH(FILE_ENTRY \${DylibsToSymlink})
+			GET_FILENAME_COMPONENT(FILE_ENTRY_NAME \"\${FILE_ENTRY}\" NAME)
+			EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../\${FILE_ENTRY_NAME}\" \"\${BundlePath}/Contents/MacOS/Ovito.app/Contents/MacOS/\${FILE_ENTRY_NAME}\")
 		ENDFOREACH()
+	")
 
-		# Verify signing process:
-		EXECUTE_PROCESS(COMMAND codesign --verify --verbose --deep \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
-		EXECUTE_PROCESS(COMMAND spctl --assess --type execute \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
-		")
-
+	# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
+	INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
 ENDIF()

@@ -1,6 +1,6 @@
 ###############################################################################
 #
-#  Copyright (2017) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -34,6 +34,7 @@ ENDIF()
 IF(NOT CMAKE_VERSION VERSION_LESS "3.9")
 	CMAKE_POLICY(SET CMP0068 OLD)   # Use the 'RPATH' settings for 'install_name' on macOS.
 ENDIF()
+
 IF(NOT CMAKE_VERSION VERSION_LESS "3.12")
 	CMAKE_POLICY(SET CMP0074 NEW)   # find_package() uses <PackageName>_ROOT variables.
 ENDIF()
@@ -51,9 +52,9 @@ INCLUDE(CMakeToolsHelpers OPTIONAL)
 
 SET(OVITO_SOURCE_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 LIST(APPEND CMAKE_MODULE_PATH ${OVITO_SOURCE_BASE_DIR}/cmake)
-INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/Version.cmake)
-INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/Plugins.cmake)
-INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/PrecompiledHeader.cmake)
+INCLUDE(cmake/Version.cmake)
+INCLUDE(cmake/Plugins.cmake)
+INCLUDE(cmake/PrecompiledHeader.cmake)
 
 # Define build options.
 OPTION(OVITO_DOUBLE_PRECISION_FP "Use double-precision floating-point numbers." "ON")
@@ -75,11 +76,13 @@ OPTION(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS "Build the CrystalAnalysis plugin." "O
 OPTION(OVITO_BUILD_PLUGIN_PYSCRIPT "Build the Python scripting plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_NETCDFPLUGIN "Build the NetCDF plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray renderer plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_OSPRAY "Build the OSPRay renderer plugin (experimental)." "OFF")
+OPTION(OVITO_BUILD_PLUGIN_OSPRAY "Build the OSPRay renderer plugin." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the spatial correlation function modifier plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop modifier plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_GALAMOST "Build the GALAMOST I/O plugin." "ON")
+
+# Experimental features:
+OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." "OFF")
 
 # This is a global list of plugin targets that will be built.
 # It will get populated by the OVITO_PLUGIN macro.
@@ -112,38 +115,36 @@ IF(MSVC)
 	ADD_COMPILE_OPTIONS("/bigobj")
 ENDIF()
 
-IF(UNIX)
-	IF(APPLE)
-		SET(MACOSX_BUNDLE_NAME "Ovito")
-		SET(MACOSX_BUNDLE_BUNDLE_NAME "${MACOSX_BUNDLE_NAME}")
+IF(UNIX AND NOT APPLE)
+	# The directory where the main executable goes to.
+	SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
+	# The directory where the main libraries go to.
+	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "lib/ovito")
+	# The directory where the third-party libraries go to.
+	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "lib/ovito")
+	# The directory where the auxiliary files go to.
+	SET(OVITO_RELATIVE_SHARE_DIRECTORY "share/ovito")
+	# The directory where the compiled plugins go to.
+	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
+	# The directory where the Python source modules go to.
+	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
+ELSEIF(APPLE)
+	SET(MACOSX_BUNDLE_NAME "Ovito")
+	SET(MACOSX_BUNDLE_BUNDLE_NAME "${MACOSX_BUNDLE_NAME}")
 
-		# The directory where the main executable goes to.
-		SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
-		# The directory where the main libraries of Ovito go to.
-		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
-		# The directory where the third-party libraries go to.
-		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks")
-		# The directory where the auxiliary files go to.
-		SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
-		# The directory where the compiled plugins go to.
-		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
-		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
-	ELSE()
-		# The directory where the main executable goes to.
-		SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
-		# The directory where the main libraries go to.
-		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "lib/ovito")
-		# The directory where the third-party libraries go to.
-		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "lib/ovito")
-		# The directory where the auxiliary files go to.
-		SET(OVITO_RELATIVE_SHARE_DIRECTORY "share/ovito")
-		# The directory where the compiled plugins go to.
-		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
-		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
-	ENDIF()
-ELSE()
+	# The directory where the main executable goes to.
+	SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
+	# The directory where the main libraries of Ovito go to.
+	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
+	# The directory where the third-party libraries go to.
+	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks")
+	# The directory where the auxiliary files go to.
+	SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
+	# The directory where the compiled plugins go to.
+	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
+	# The directory where the Python source modules go to.
+	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
+ELSEIF(WIN32)
 	# The directory where the main executable goes to.
 	SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
 	# The directory where the main libraries go to.
@@ -160,23 +161,23 @@ ENDIF()
 
 IF(APPLE OR WIN32 OR NOT OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Add the automatically determined parts of the RPATH,
-	# which point to directories outside the build tree to the install RPATH
+	# which point to directories outside the build tree to the install RPATH.
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 ENDIF()
 
-# Select linking type (shared or static) for plugin libraries.
+# Select linkage type (shared or static) for plugin libraries.
 IF(OVITO_BUILD_MONOLITHIC)
-	SET(OVITO_DEFAULT_LIBRARY_TYPE STATIC)
-	SET(OVITO_PLUGIN_LIBRARY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
+	SET(BUILD_SHARED_LIBS OFF)
+	SET(OVITO_PLUGIN_LIBRARY_SUFFIX "${CMAKE_STATIC_LIBRARY_SUFFIX}")
 ELSE()
-	SET(OVITO_DEFAULT_LIBRARY_TYPE SHARED)
+	SET(BUILD_SHARED_LIBS ON)
 	# Define name suffix used for generating plugin libraries.
 	IF(APPLE)
 		# On macOS, we use the .so extension instead of the standard .dylib to be compatible
 		# with the Python interpreter, which only finds modules having a .so suffix.
 		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ".so")
 	ELSE()
-		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+		SET(OVITO_PLUGIN_LIBRARY_SUFFIX "${CMAKE_SHARED_LIBRARY_SUFFIX}")
 	ENDIF()
 ENDIF()
 
@@ -191,85 +192,8 @@ SET(OVITO_PYTHON_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_PYTHON_DIRECTOR
 # The directory where the auxiliary files go to.
 SET(OVITO_SHARE_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_SHARE_DIRECTORY}")
 
-# This macro installs a required third-party DLL in the OVITO directory
-# so that it can be distributed together with the program.
-MACRO(OVITO_INSTALL_DLL dll)
-	MESSAGE("Deploying DLL ${dll}")
-	EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" "-E" "copy_if_different" "${dll}" "${OVITO_BINARY_DIRECTORY}" RESULT_VARIABLE error_var)
-	IF(error_var)
-		MESSAGE(FATAL_ERROR "Failed to copy DLL into build directory: ${dll}")
-	ENDIF()
-	INSTALL(FILES "${dll}" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}")
-ENDMACRO()
-
-# This macro installs a required third-party shared library in the OVITO directory
-# so that it can be distributed together with the program.
-MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
-	FILE(MAKE_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}")
-	# Strip version number from shared lib filename.
-	GET_FILENAME_COMPONENT(shared_lib_ext "${shared_lib}" EXT)
-	STRING(REPLACE ${shared_lib_ext} "" shared_lib_new "${shared_lib}")
-	FILE(GLOB lib_versions LIST_DIRECTORIES FALSE "${shared_lib}" "${shared_lib_new}.*${CMAKE_SHARED_LIBRARY_SUFFIX}" "${shared_lib_new}${CMAKE_SHARED_LIBRARY_SUFFIX}.*")
-	IF(NOT lib_versions)
-		MESSAGE(FATAL_ERROR "Did not find any library files that match the file path ${shared_lib} (globbing patterns: ${shared_lib_new}.*${CMAKE_SHARED_LIBRARY_SUFFIX}; ${shared_lib_new}${CMAKE_SHARED_LIBRARY_SUFFIX}.*)")
-	ENDIF()
-	FOREACH(lib_version ${lib_versions})
-		WHILE(IS_SYMLINK ${lib_version})
-			GET_FILENAME_COMPONENT(symlink_target "${lib_version}" REALPATH)
-			GET_FILENAME_COMPONENT(symlink_target_name "${symlink_target}" NAME)
-			GET_FILENAME_COMPONENT(lib_version_name "${lib_version}" NAME)
-			IF(NOT lib_version_name STREQUAL symlink_target_name)
-				MESSAGE("Installing symlink ${lib_version_name} to ${symlink_target_name}")
-				EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink ${symlink_target_name} "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}/${lib_version_name}")
-				IF(NOT APPLE)
-					INSTALL(FILES "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}/${lib_version_name}" DESTINATION "${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}/")
-				ENDIF()
-			ENDIF()
-			SET(lib_version "${symlink_target}")
-		ENDWHILE()
-		IF(NOT IS_SYMLINK ${lib_version})
-			LIST(APPEND lib_files "${lib_version}")
-		ENDIF()
-	ENDFOREACH()
-	LIST(REMOVE_DUPLICATES lib_files)
-	FOREACH(lib_file ${lib_files})
-		IF(NOT APPLE)
-			MESSAGE("Installing shared library ${lib_file}")
-			CONFIGURE_FILE("${lib_file}" "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}/" COPYONLY)
-			INSTALL(FILES "${lib_file}" DESTINATION "${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}/")
-		ENDIF()
-	ENDFOREACH()
-	UNSET(lib_files)
-ENDMACRO()
-
-# Tell CMake to run Qt moc whenever necessary.
-SET(CMAKE_AUTOMOC ON)
-# As moc files are generated in the binary dir, tell CMake to always look for includes there.
-SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-# Determine the set of required Qt5 modules.
-LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui)
-IF(OVITO_BUILD_GUI)
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg)
-	IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
-		# This is an indirect dependency required by the Xcb platform plugin of Qt:
-		LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS DBus)
-	ENDIF()
-ENDIF()
-IF(OVITO_BUILD_PLUGIN_GALAMOST)
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Xml)
-ENDIF()
-
-# Find the required Qt5 modules.
-FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
-	FIND_PACKAGE(Qt5${component} REQUIRED)
-ENDFOREACH()
-
-# Find the Boost library.
-FIND_PACKAGE(Boost REQUIRED)
-IF(NOT Boost_FOUND)
-	MESSAGE(FATAL_ERROR "The Boost library could not be found on your system. ${Boost_ERROR_REASON}")
-ENDIF()
+# Make prerequisites availables.
+INCLUDE(cmake/Prerequisites.cmake)
 
 # Determine the command for running the clang-tidy tool.
 IF(OVITO_RUN_CLANG_TIDY AND NOT CMAKE_VERSION VERSION_LESS "3.6")
@@ -280,15 +204,28 @@ ENDIF()
 # Set the default component name for the installer.
 SET(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "Ovito")
 
-# Generate build targets.
+# Generate all the build targets.
 ADD_SUBDIRECTORY(src)
 
 # Generate user documentation.
 INCLUDE(cmake/Documentation.cmake)
 
-# Set up CPack for generating distributable program packages.
-INCLUDE(cmake/Packaging.cmake)
+# Ship informational text files with the program.
+IF(APPLE OR WIN32)
+	INSTALL(FILES "${Ovito_SOURCE_DIR}/README.txt" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
+	INSTALL(FILES "${Ovito_SOURCE_DIR}/LICENSE.txt" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
+	INSTALL(FILES "${Ovito_SOURCE_DIR}/CHANGELOG.txt" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
+ELSE()
+	INSTALL(FILES "${Ovito_SOURCE_DIR}/README.txt" DESTINATION "./")
+	INSTALL(FILES "${Ovito_SOURCE_DIR}/LICENSE.txt" DESTINATION "./")
+	INSTALL(FILES "${Ovito_SOURCE_DIR}/CHANGELOG.txt" DESTINATION "./")
+ENDIF()
 
 # Export our targets so that external plugins can use them.
 CONFIGURE_FILE(cmake/OVITOConfig.cmake "${Ovito_BINARY_DIR}/" @ONLY)
 EXPORT(EXPORT OVITO NAMESPACE "Ovito::" FILE OVITOTargets.cmake)
+
+# This allows external CMake projects to inject their customization code into the OVITO project:
+IF(OVITO_CMAKE_FILE_INJECTION)
+	INCLUDE("${OVITO_CMAKE_FILE_INJECTION}")
+ENDIF()

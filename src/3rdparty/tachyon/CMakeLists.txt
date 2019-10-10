@@ -1,6 +1,6 @@
 ###############################################################################
-# 
-#  Copyright (2014) Alexander Stukowski
+#
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -35,7 +35,7 @@ SET(TACHYON_SOURCE_FILES
 	tachyon/hash.c
 	tachyon/imap.c
 	tachyon/imageio.c
-	tachyon/intersect.c	
+	tachyon/intersect.c
 	tachyon/light.c
 	tachyon/parallel.c
 	tachyon/plane.c
@@ -62,7 +62,10 @@ SET(TACHYON_SOURCE_FILES
 )
 
 # Build library.
-ADD_LIBRARY(TachyonLib STATIC ${TACHYON_SOURCE_FILES})
+ADD_LIBRARY(TachyonLib ${TACHYON_SOURCE_FILES})
+
+# Give our library file a new name to not confuse it with any system versions of the library.
+SET_TARGET_PROPERTIES(TachyonLib PROPERTIES OUTPUT_NAME "ovito_tachyon")
 
 TARGET_COMPILE_DEFINITIONS(TachyonLib PRIVATE TACHYON_NO_DEPRECATED THR _REENTRANT)
 IF(APPLE)
@@ -73,9 +76,6 @@ ELSEIF(WIN32)
 	TARGET_COMPILE_DEFINITIONS(TachyonLib PRIVATE WIN32)
 ENDIF()
 
-# Make header files of this library available to dependent targets.
-TARGET_INCLUDE_DIRECTORIES(TachyonLib INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
-
 IF(APPLE OR UNIX)
 	# Link to Pthreads multi-threading library on Unix/MacOS.
 	TARGET_LINK_LIBRARIES(TachyonLib pthread)
@@ -84,8 +84,11 @@ ELSEIF(WIN32)
 	TARGET_LINK_LIBRARIES(TachyonLib ws2_32)
 ENDIF()
 
-# Since we will link this into the Tachyon plugin, we need to use the same setting for the fPIC flag.
-SET_PROPERTY(TARGET TachyonLib PROPERTY POSITION_INDEPENDENT_CODE ON)
+# Make header files of this library available to dependent targets.
+TARGET_INCLUDE_DIRECTORIES(TachyonLib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Export this target.
-INSTALL(TARGETS TachyonLib EXPORT OVITO ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" CONFIGURATIONS "")
+INSTALL(TARGETS TachyonLib EXPORT OVITO
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

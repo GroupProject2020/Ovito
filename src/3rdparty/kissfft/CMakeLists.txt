@@ -1,5 +1,5 @@
 ###############################################################################
-# 
+#
 #  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -20,25 +20,26 @@
 ###############################################################################
 
 # Build the KISS FFT library.
-SET(KISSFFT_SOURCE_FILES
+ADD_LIBRARY(kissfft
 	kiss_fft.c
 	kiss_fftnd.c
 )
 
-# Build library.
-ADD_LIBRARY(kissfft ${OVITO_DEFAULT_LIBRARY_TYPE} ${KISSFFT_SOURCE_FILES})
+# Give our library file a new name to not confuse it with any system versions of the library.
+SET_TARGET_PROPERTIES(kissfft PROPERTIES OUTPUT_NAME "ovito_kissfft")
 
 # Use double precision for FFT calculation.
 TARGET_COMPILE_DEFINITIONS(kissfft PUBLIC "kiss_fft_scalar=double")
 
 # Make header files of this library available to dependent targets.
-TARGET_INCLUDE_DIRECTORIES(kissfft INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
+TARGET_INCLUDE_DIRECTORIES(kissfft INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
-# Since we will link this into an Ovito plugin, we need to use the same setting for the fPIC flag.
-SET_PROPERTY(TARGET kissfft PROPERTY POSITION_INDEPENDENT_CODE ON)
+# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+SET_TARGET_PROPERTIES(kissfft PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+SET_TARGET_PROPERTIES(kissfft PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 # Export this target.
-INSTALL(TARGETS kissfft EXPORT OVITO 
+INSTALL(TARGETS kissfft EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")

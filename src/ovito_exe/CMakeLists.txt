@@ -69,7 +69,9 @@ INSTALL(TARGETS Ovito DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/")
 
 # Build all plugins first before building the main executable.
 FOREACH(plugin ${OVITO_PLUGIN_LIST})
-	IF(OVITO_BUILD_MONOLITHIC)
+	IF(BUILD_SHARED_LIBS)
+		ADD_DEPENDENCIES(Ovito ${plugin})
+	ELSE()
 		IF(UNIX)
 			TARGET_LINK_LIBRARIES(Ovito -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
 		ELSE()
@@ -78,8 +80,6 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 				SET_PROPERTY(TARGET Ovito APPEND_STRING PROPERTY LINK_FLAGS " /WHOLEARCHIVE:${plugin}")
 			ENDIF()
 		ENDIF()
-	ELSE()
-		ADD_DEPENDENCIES(Ovito ${plugin})
 	ENDIF()
 ENDFOREACH()
 
@@ -90,94 +90,31 @@ ENDIF()
 
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 
-	# Install copies of the Qt libraries.
-	FILE(MAKE_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}/lib")
-	FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
-		GET_TARGET_PROPERTY(lib Qt5::${component} LOCATION)
-		GET_TARGET_PROPERTY(lib_soname Qt5::${component} IMPORTED_SONAME_RELEASE)
-		CONFIGURE_FILE("${lib}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)
-		GET_FILENAME_COMPONENT(lib_realname "${lib}" NAME)
-		EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink "${lib_realname}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/${lib_soname}")
-		EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink "../${lib_soname}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib/${lib_soname}")
-		INSTALL(FILES "${lib}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
-		INSTALL(FILES "${OVITO_LIBRARY_DIRECTORY}/${lib_soname}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
-		INSTALL(FILES "${OVITO_LIBRARY_DIRECTORY}/lib/${lib_soname}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib/")
-		GET_FILENAME_COMPONENT(QtBinaryPath ${lib} PATH)
-	ENDFOREACH()
-
 	# Create a qt.conf file.
 	# This is required to let Qt search for its plugin modules in the program directory.
 	INSTALL(CODE "
-	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/qt.conf\" \"[Paths]\\nPlugins = ../${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/\")
+	    FILE(WRITE \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/qt.conf\" \"[Paths]\\nPlugins = ../${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/\")
 	    ")
-
-	# Install Qt plugins.
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/platforms" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/bearer" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/imageformats" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" PATTERN "libqsvg.so" EXCLUDE)
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/iconengines" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/xcbglintegrations" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
-	# The XcbQpa library is required by the Qt5 Gui module.
-	OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5XcbQpa.so" "./lib")
-
-	# Distribute libxkbcommon.so with Ovito, which is a dependency of the Qt XCB plugin that might not be present on all systems.
-	FIND_LIBRARY(OVITO_XKBCOMMON_DEP NAMES libxkbcommon.so.0 PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /usr/lib64 NO_DEFAULT_PATH)
-	IF(NOT OVITO_XKBCOMMON_DEP)
-		MESSAGE(FATAL_ERROR "Could not find shared library libxkbcommon.so.0 in system path.")
-	ENDIF()
-	OVITO_INSTALL_SHARED_LIB("${OVITO_XKBCOMMON_DEP}" "./lib")
-	UNSET(OVITO_XKBCOMMON_DEP CACHE)
-
-	# Distribute libxkbcommon-x11.so with Ovito, which is a dependency of the Qt XCB plugin that might not be present on all systems.
-	FIND_LIBRARY(OVITO_XKBCOMMONX11_DEP NAMES libxkbcommon-x11.so.0 PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /usr/lib64 NO_DEFAULT_PATH)
-	IF(NOT OVITO_XKBCOMMONX11_DEP)
-		MESSAGE(FATAL_ERROR "Could not find shared library libxkbcommon-x11.so.0 in system path.")
-	ENDIF()
-	OVITO_INSTALL_SHARED_LIB("${OVITO_XKBCOMMONX11_DEP}" "./lib")
-	UNSET(OVITO_XKBCOMMONX11_DEP CACHE)
 
 ELSEIF(WIN32)
 
-	# On Windows, the third-party library DLLs need to be installed in the OVITO directory.
-	# Gather Qt dynamic link libraries.
-	FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
-		GET_TARGET_PROPERTY(dll Qt5::${component} LOCATION_${CMAKE_BUILD_TYPE})
-		OVITO_INSTALL_DLL("${dll}")
-		IF(${component} MATCHES "Core")
-			GET_FILENAME_COMPONENT(QtBinaryPath ${dll} PATH)
-			IF(Qt5Core_VERSION VERSION_LESS "5.7")
-				OVITO_INSTALL_DLL("${QtBinaryPath}/icudt54.dll")
-				OVITO_INSTALL_DLL("${QtBinaryPath}/icuin54.dll")
-				OVITO_INSTALL_DLL("${QtBinaryPath}/icuuc54.dll")
-			ENDIF()
-		ENDIF()
-	ENDFOREACH()
-
-	# Install Qt plugins.
-	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindowsd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpegd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgifd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/iconengines/qsvgicond.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/iconengines/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/styles/qwindowsvistastyled.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/styles/")
-	ELSE()
-		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindows.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpeg.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgif.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/iconengines/qsvgicon.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/iconengines/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/styles/qwindowsvistastyle.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/styles/")
-	ENDIF()
-
 	# Create a qt.conf file.
 	# This is required to let Qt search for its plugin modules in the program directory.
 	INSTALL(CODE "
-	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/qt.conf\" \"[Paths]\\nPlugins = plugins/\")
+	    FILE(WRITE \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/qt.conf\" \"[Paths]\\nPlugins = plugins/\")
 		")
 
 ELSEIF(APPLE)
 
+	# Install the Info.plist file in the app bundle.
+	CONFIGURE_FILE("resources/Info.plist" "${Ovito_BINARY_DIR}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${Ovito_BINARY_DIR}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
+
+	# Copy the application icon into the resource directory.
+	INSTALL(FILES "resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
+
 	# Fix Mac app bundle.
-	INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/FixupMacBundle.cmake)
+	INCLUDE("${Ovito_SOURCE_DIR}/cmake/FixupMacBundle.cmake")
 
 ENDIF()
 
