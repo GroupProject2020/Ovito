@@ -1,6 +1,6 @@
 ###############################################################################
 #
-#  Copyright (2018) Alexander Stukowski
+#  Copyright (2019) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -28,7 +28,7 @@
 ###############################################################################
 
 # Locate the HDF5 library.
-FIND_PACKAGE(HDF5 REQUIRED)
+FIND_PACKAGE(HDF5 REQUIRED COMPONENTS C HL)
 
 # Locate the NetCDF library.
 FIND_PACKAGE(NetCDF REQUIRED)
@@ -76,23 +76,30 @@ IF(NOT APPLE)
 	GET_TARGET_PROPERTY(NETCDF_LIBRARY netcdf LOCATION)
 	OVITO_INSTALL_SHARED_LIB("${NETCDF_LIBRARY}" ".")
 
-	# Deploy HDF5 shared libraries, which are required by NetCDF lib.
+	# Deploy HDF5 shared library, which is required by NetCDF lib.
 	IF(TARGET hdf5-shared)
 		GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5-shared IMPORTED_LOCATION_RELEASE)
 	ENDIF()
 	IF(NOT HDF5_LIBRARY AND TARGET hdf5::hdf5-shared)
 		GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5::hdf5-shared IMPORTED_LOCATION_RELEASE)
 	ENDIF()
+	IF(NOT HDF5_LIBRARY AND UNIX)
+		LIST(GET HDF5_LIBRARIES 0 HDF5_LIBRARY)
+	ENDIF()
 	IF(NOT HDF5_LIBRARY)
 		MESSAGE(FATAL_ERROR "CMake target for the HDF5 library does not exist. Please check you HDF5 installation.")
 	ENDIF()
 	OVITO_INSTALL_SHARED_LIB("${HDF5_LIBRARY}" ".")
 
+	# Deploy HDF5_HL shared library, which is required by NetCDF lib.
 	IF(TARGET hdf5_hl-shared)
 		GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
 	ENDIF()
 	IF(NOT HDF5_HL_LIBRARY AND TARGET hdf5::hdf5_hl-shared)
 		GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5::hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
+	ENDIF()
+	IF(NOT HDF5_HL_LIBRARY AND UNIX)
+                LIST(GET HDF5_HL_LIBRARIES 0 HDF5_HL_LIBRARY)
 	ENDIF()
 	IF(NOT HDF5_HL_LIBRARY)
 		MESSAGE(FATAL_ERROR "CMake target for the HDF5_HL library does not exist. Please check you HDF5 installation.")

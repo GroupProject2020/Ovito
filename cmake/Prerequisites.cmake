@@ -24,17 +24,10 @@ SET(CMAKE_AUTOMOC ON)
 # As moc files are generated in the binary dir, tell CMake to always look for includes there.
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Determine the set of required Qt modules.
-LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui)
+# The set of required Qt modules:
+LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui Xml) # Note: Xml is a dependency of the Galamost plugin.
 IF(OVITO_BUILD_GUI)
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg)
-	IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
-		# This is an indirect dependency required by the Xcb platform plugin of Qt:
-		LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS DBus)
-	ENDIF()
-ENDIF()
-IF(OVITO_BUILD_PLUGIN_GALAMOST)
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Xml)
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg DBus) # Note: PrintSupport is an indirect dependency of the Qwt library. DBus is an indirect dependency of the Xcb platform plugin under Linux.
 ENDIF()
 
 # Find the required Qt5 modules.
@@ -42,16 +35,11 @@ FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
 	FIND_PACKAGE(Qt5${component} REQUIRED)
 ENDFOREACH()
 
-# Find the Boost library.
-FIND_PACKAGE(Boost REQUIRED)
-IF(NOT Boost_FOUND)
-	MESSAGE(FATAL_ERROR "The Boost library could not be found on your system. ${Boost_ERROR_REASON}")
-ENDIF()
-
 # This macro installs a third-party shared library or DLL in the OVITO program directory
 # so that it can be distributed together with the program.
 MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 
+	IF(WIN32 OR OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Make sure the destination directory exists.
 	SET(_abs_dest_dir "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}")
 	FILE(MAKE_DIRECTORY "${_abs_dest_dir}")
@@ -94,6 +82,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 		ENDIF()
 	ENDFOREACH()
 	UNSET(lib_files)
+	ENDIF()
 
 ENDMACRO()
 

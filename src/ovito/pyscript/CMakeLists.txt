@@ -114,7 +114,7 @@ ELSEIF(UNIX)
 		INSTALL(FILES "${PYTHON_LIBRARIES}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
 
 		# Also install copies of shared libraries that are required by Python modules.
-		SET(OVITO_PYTHON_DEPENDENCIES libssl.so libcrypto.so liblapack.so.3 libblas.so.3 libquadmath.so.0 libgfortran.so.3 libncurses.so libsqlite3.so.0 libffi.so.5)
+		SET(OVITO_PYTHON_DEPENDENCIES libssl.so libcrypto.so liblapack.so.3 libblas.so.3 libquadmath.so.0 libgfortran.so.3 libncurses.so libsqlite3.so.0 libffi.so)
 		FOREACH(PYTHON_DEPENDENCY ${OVITO_PYTHON_DEPENDENCIES})
 			FIND_LIBRARY(OVITO_PYTHON_DEP NAMES ${PYTHON_DEPENDENCY} PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /usr/lib64 NO_DEFAULT_PATH)
 			IF(NOT OVITO_PYTHON_DEP)
