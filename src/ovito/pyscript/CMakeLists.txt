@@ -148,6 +148,9 @@ ELSEIF(WIN32)
 
 	# Install Visual C++ runtime needed by Python interpreter.
 	OVITO_INSTALL_SHARED_LIB("${PYTHON_LIBRARY_PATH}/../vcruntime140.dll" ".")
+
+	# Also install the Tcl/Tk files shipping with the Python interpreter.
+	INSTALL(DIRECTORY "${PYTHON_LIBRARY_PATH}/../tcl/" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/Lib/")
 ENDIF()
 
 # Propagate list of plugins to parent scope.

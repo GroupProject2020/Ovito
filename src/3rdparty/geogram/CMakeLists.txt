@@ -33,8 +33,14 @@ ENDIF()
 # Enable Geogram's support for 64-bit indices.
 TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GARGANTUA=1" )
 
-# Build shared library version of Geogram lib.
-TARGET_COMPILE_DEFINITIONS(geogram PRIVATE "geogram_EXPORTS")
+IF(BUILD_SHARED_LIBS)
+	# Build shared library version of Geogram lib.
+	TARGET_COMPILE_DEFINITIONS(geogram PRIVATE "geogram_EXPORTS")
+ELSE()
+	# Build static version of Geogram lib.
+	TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GEO_STATIC_LIBS=1")
+	SET_PROPERTY(TARGET geogram PROPERTY POSITION_INDEPENDENT_CODE ON)
+ENDIF()
 
 # Give our library file a new name to not confuse it with any system versions of the library.
 SET_TARGET_PROPERTIES(geogram PROPERTIES OUTPUT_NAME "ovito_geogram")
