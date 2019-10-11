@@ -86,7 +86,7 @@
 		<entry>For plotting and data visualization.</entry></row>
 		<row><entry><link xlink:href="https://en.wikipedia.org/wiki/Tachyon_(software)">Tachyon</link></entry>
 		<entry>Required to build the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link> plugin.</entry></row>
-		<row><entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link></entry>
+		<row><entry><link xlink:href="https://doi.org/10.1063/1.3215722">Voro++</link></entry>
 		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier.</entry></row>
 		<row><entry><link xlink:href="https://github.com/mborgerding/kissfft">KISS FFT</link></entry>
 		<entry>Required by the <link linkend="particles.modifiers.correlation_function"><literal>Spatial Correlation Function</literal></link> plugin. </entry></row>

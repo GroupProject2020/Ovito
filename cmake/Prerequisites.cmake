@@ -43,7 +43,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 		SET(_abs_dest_dir "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY}/${destination_dir}")
 		FILE(MAKE_DIRECTORY "${_abs_dest_dir}")
 		# Strip version number from shared lib filename.
-		FILE(TO_CMAKE_PATH "${shared_lib}" shared_lib_cmake)
+		STRING(REPLACE "\\" "/" shared_lib_cmake "${shared_lib}")
 		GET_FILENAME_COMPONENT(shared_lib_ext "${shared_lib_cmake}" EXT)
 		STRING(REPLACE ${shared_lib_ext} "" shared_lib_new "${shared_lib_cmake}")
 		FILE(GLOB lib_versions LIST_DIRECTORIES FALSE "${shared_lib_cmake}" "${shared_lib_new}.*${CMAKE_SHARED_LIBRARY_SUFFIX}" "${shared_lib_new}${CMAKE_SHARED_LIBRARY_SUFFIX}.*")
