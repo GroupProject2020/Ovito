@@ -12,13 +12,11 @@
  <simplesect>
   <title>Installing dependencies</title>
   <para>
-    OVITO for Windows is typically built using Microsoft's Visual C++ 2015 compiler. However, building
-    it with the MinGW compiler should still be possible too. 
+    OVITO for Windows is typically built using Microsoft's Visual C++ 2017 compiler. However, building
+    it with the MinGW compiler should still be possible too.
   </para>
   <para>
-    More instructions how to build the required dependencies on Windows and OVITO itself
-    can be found in the file <filename>doc/develop/build_windows_howto.txt</filename> after downloading the source code.
-    The required steps are quite involved, and the available instructions may be insufficient. 
+    The required steps are quite involved, and the available instructions may be insufficient.
     Please contact the author if you want to build OVITO on Windows and get stuck.
   </para>
   </simplesect>
@@ -26,7 +24,7 @@
  <simplesect>
     <title>Downloading the source code</title>
     <para>
-    To download OVITO's source code into a new subdirectory named <filename>ovito</filename>, install <link xlink:href="http://git-scm.com">Git</link> and run: 
+    To download OVITO's source code into a new subdirectory named <filename>ovito</filename>, install <link xlink:href="http://git-scm.com">Git</link> and run:
 <screen><command>git clone https://gitlab.com/stuko/ovito.git ovito</command></screen>
     from the command line or go to <link xlink:href="https://gitlab.com/stuko/ovito">https://gitlab.com/stuko/ovito</link>
   </para>

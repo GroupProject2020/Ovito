@@ -17,24 +17,24 @@
     Apple's clang compiler shipping with Xcode.
     It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> for installing many of the required dependencies.
     After setting up MacPorts, run
-<screen><command>sudo port install netcdf python35 py35-sphinx py35-numpy py35-sip zlib libssh \
+<screen><command>sudo port install netcdf python37 py37-sphinx py37-numpy py37-sip zlib libssh \
                   boost cmake docbook-xml doxygen libxslt yasm
 </command></screen>
     from the terminal to install the dependencies of OVITO.
   </para>
   <para>
-    Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.x for Mac</link>.
+    Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.12.5 for Mac</link>.
   </para>
   <para>
     Next, download and install <link xlink:href="http://www.riverbankcomputing.com/software/pyqt/download5">PyQt5</link>.
     Adjust the path to Qt's <command>qmake</command> tool if needed:
-<screen><command>/opt/local/bin/python3.5 configure.py \
+<screen><command>/opt/local/bin/python3.7 configure.py \
 	--qmake $HOME/Qt/5.*.*/clang_64/bin/qmake \
 	--confirm-license \
 	--no-designer-plugin \
 	--no-qml-plugin \
 	--assume-shared \
-	--sip=/opt/local/bin/sip-3.5 \
+	--sip=/opt/local/bin/sip-3.7 \
 	--concatenate \
 	--enable QtCore \
 	--enable QtGui \
@@ -91,8 +91,8 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=../install \
       -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/` \
-      -DPYTHON_INCLUDE_DIR=/opt/local/Library/Frameworks/Python.framework/Versions/3.5/include/python3.5m \
-      -DPYTHON_LIBRARY=/opt/local/Library/Frameworks/Python.framework/Versions/3.5/lib/libpython3.5.dylib \
+      -DPYTHON_INCLUDE_DIR=/opt/local/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m \
+      -DPYTHON_LIBRARY=/opt/local/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib \
       -DLIBAV_INCLUDE_DIR=$HOME/libav/include \
       -DLIBAV_LIBRARY_DIR=$HOME/libav/lib \
       -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/QScintilla_gpl-*/Qt4Qt5` \

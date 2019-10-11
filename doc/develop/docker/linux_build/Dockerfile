@@ -34,8 +34,6 @@ RUN apt-get install -qy  cmake \
                          libssh-dev \
                          libhdf5-dev \
                          libhdf5-serial-dev \
-                         libmuparser-dev \
-                         libqwt-qt5-dev \
                          python3-dev \
                          python3-sphinx \
                          python3-numpy \
