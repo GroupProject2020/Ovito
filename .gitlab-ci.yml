@@ -23,6 +23,8 @@ test_linux_python3:
            --ignore-url=http://dx.doi.org/10.1088/0965-0393/20/3/035012
            --ignore-url=http://dx.doi.org/10.1088/0965-0393/20/4/045021
            --ignore-url=http://dx.doi.org/10.1038/nature04421
+           --ignore-url=http://dx.doi.org/10.1088/0965-0393/20/8/085007
+           --ignore-url=http://stacks.iop.org/0965-0393/20/085007
 
 test_linux_python2:
    stage: build
