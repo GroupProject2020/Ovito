@@ -139,23 +139,23 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 
 			setProgressMaximum(natoms);
 		}
-    	else if(line.find("atom types") != string::npos) {
+    	else if(line.find("atom") != string::npos && line.find("types") != string::npos) {
     		if(sscanf(line.c_str(), "%u", &natomtypes) != 1)
     			throw Exception(tr("Invalid number of atom types (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("xlo xhi") != string::npos) {
+    	else if(line.find("xlo") != string::npos && line.find("xhi") != string::npos) {
     		if(sscanf(line.c_str(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &xlo, &xhi) != 2)
     			throw Exception(tr("Invalid xlo/xhi values (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("ylo yhi") != string::npos) {
+    	else if(line.find("ylo") != string::npos && line.find("yhi") != string::npos) {
     		if(sscanf(line.c_str(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &ylo, &yhi) != 2)
     			throw Exception(tr("Invalid ylo/yhi values (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("zlo zhi") != string::npos) {
+    	else if(line.find("zlo") != string::npos && line.find("zhi") != string::npos) {
     		if(sscanf(line.c_str(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &zlo, &zhi) != 2)
     			throw Exception(tr("Invalid zlo/zhi values (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("xy xz yz") != string::npos) {
+    	else if(line.find("xy") != string::npos && line.find("xz") != string::npos && line.find("yz") != string::npos) {
     		if(sscanf(line.c_str(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &xy, &xz, &yz) != 3)
     			throw Exception(tr("Invalid xy/xz/yz values (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
@@ -163,19 +163,19 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     		if(sscanf(line.c_str(), "%llu", &nbonds) != 1)
     			throw Exception(tr("Invalid number of bonds (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("bond types") != string::npos) {
+    	else if(line.find("bond") != string::npos && line.find("types") != string::npos) {
     		if(sscanf(line.c_str(), "%u", &nbondtypes) != 1)
     			throw Exception(tr("Invalid number of bond types (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("angle types") != string::npos) {
+    	else if(line.find("angle") != string::npos && line.find("types") != string::npos) {
     		if(sscanf(line.c_str(), "%u", &nangletypes) != 1)
     			throw Exception(tr("Invalid number of angle types (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("dihedral types") != string::npos) {
+    	else if(line.find("dihedral") != string::npos && line.find("types") != string::npos) {
     		if(sscanf(line.c_str(), "%u", &ndihedraltypes) != 1)
     			throw Exception(tr("Invalid number of dihedral types (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("improper types") != string::npos) {
+    	else if(line.find("improper") != string::npos && line.find("types") != string::npos) {
     		if(sscanf(line.c_str(), "%u", &nimpropertypes) != 1)
     			throw Exception(tr("Invalid number of improper types (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
@@ -191,11 +191,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     		if(sscanf(line.c_str(), "%u", &nimpropers) != 1)
     			throw Exception(tr("Invalid number of impropers (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
-    	else if(line.find("extra bond per atom") != string::npos) {}
-    	else if(line.find("extra angle per atom") != string::npos) {}
-    	else if(line.find("extra dihedral per atom") != string::npos) {}
-    	else if(line.find("extra improper per atom") != string::npos) {}
-    	else if(line.find("extra special per atom") != string::npos) {}
+    	else if(line.find("extra") != string::npos && line.find("per") != string::npos && line.find("atom") != string::npos) {}
     	else if(line.find("triangles") != string::npos) {}
     	else if(line.find("ellipsoids") != string::npos) {}
     	else if(line.find("lines") != string::npos) {}
