@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2017) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2017 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,19 +32,19 @@ uniform float marker_size;
 	// The marker data:
 	in vec3 position;
 	in vec4 color;
-	
+
 	// Outputs to fragment shader
 	flat out vec4 vertex_color_fs;
-	
+
 #else
-	
+
 	// The marker data:
 	attribute float vertexID;
 
 #endif
 
 void main()
-{	
+{
 #if __VERSION__ >= 130
 
 	// Forward color to fragment shader.

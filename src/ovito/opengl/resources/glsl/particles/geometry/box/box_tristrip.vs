@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,13 +35,13 @@ uniform vec3 normals[14];
 	in vec3 shape;
 	in vec4 orientation;
 	in float particle_radius;
-	
+
 	// Outputs to fragment shader
 	flat out vec4 particle_color_fs;
 	flat out vec3 surface_normal_fs;
-	
+
 #else
-	
+
 	// The particle data:
 	attribute vec3 shape;
 	attribute vec4 orientation;
@@ -61,11 +61,11 @@ void main()
 			1.0 - 2.0*(orientation.y*orientation.y + orientation.z*orientation.z),
 			2.0*(orientation.x*orientation.y + orientation.w*orientation.z),
 			2.0*(orientation.x*orientation.z - orientation.w*orientation.y),
-			
+
 			2.0*(orientation.x*orientation.y - orientation.w*orientation.z),
 			1.0 - 2.0*(orientation.x*orientation.x + orientation.z*orientation.z),
 			2.0*(orientation.y*orientation.z + orientation.w*orientation.x),
-			
+
 			2.0*(orientation.x*orientation.z + orientation.w*orientation.y),
 			2.0*(orientation.y*orientation.z - orientation.w*orientation.x),
 			1.0 - 2.0*(orientation.x*orientation.x + orientation.y*orientation.y)
@@ -74,7 +74,7 @@ void main()
 	else {
 		rot = mat3(1.0);
 	}
-	
+
 #if __VERSION__ >= 130
 
 	// Forward color to fragment shader.

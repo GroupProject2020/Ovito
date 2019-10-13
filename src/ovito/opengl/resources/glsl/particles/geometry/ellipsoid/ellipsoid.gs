@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -46,10 +46,10 @@ void main()
 		rot = mat3(
 			1.0 - 2.0*(quat.y*quat.y + quat.z*quat.z),
 			2.0*(quat.x*quat.y + quat.w*quat.z),
-			2.0*(quat.x*quat.z - quat.w*quat.y),			
+			2.0*(quat.x*quat.z - quat.w*quat.y),
 			2.0*(quat.x*quat.y - quat.w*quat.z),
 			1.0 - 2.0*(quat.x*quat.x + quat.z*quat.z),
-			2.0*(quat.y*quat.z + quat.w*quat.x),			
+			2.0*(quat.y*quat.z + quat.w*quat.x),
 			2.0*(quat.x*quat.z + quat.w*quat.y),
 			2.0*(quat.y*quat.z - quat.w*quat.x),
 			1.0 - 2.0*(quat.x*quat.x + quat.y*quat.y)
@@ -58,20 +58,20 @@ void main()
 	else {
 		rot = mat3(1.0);
 	}
-	
+
 	vec3 particle_view_pos = (modelview_matrix * gl_in[0].gl_Position).xyz;
-	
+
 	mat3 qmat = mat3(1.0/(particle_shape_gs[0].x*particle_shape_gs[0].x), 0, 0,
 			  0, 1.0/(particle_shape_gs[0].y*particle_shape_gs[0].y), 0,
 			  0, 0, 1.0/(particle_shape_gs[0].z*particle_shape_gs[0].z));
 
 	mat3 view_rot = mat3(modelview_matrix) * rot;
     mat3 quadric = view_rot * qmat * transpose(view_rot);
-    
+
 #if 0
-	// This code leads, which generates a single triangle strip for the cube, seems to be 
+	// This code leads, which generates a single triangle strip for the cube, seems to be
 	// incompatible with the Intel graphics driver on Linux.
-    
+
 	particle_color_fs = particle_color_gs[0];
 	particle_quadric_fs = quadric;
 	particle_view_pos_fs = particle_view_pos;
@@ -204,7 +204,7 @@ void main()
 	gl_Position = corner + dz;
 	EmitVertex();
 	EndPrimitive();
-	
+
 	// +X
 	particle_color_fs = particle_color_gs[0];
 	particle_quadric_fs = quadric;
@@ -229,7 +229,7 @@ void main()
 	particle_view_pos_fs = particle_view_pos;
 	gl_Position = corner + dx + dy + dz;
 	EmitVertex();
-	EndPrimitive();	
+	EndPrimitive();
 
 	// -Y
 	particle_color_fs = particle_color_gs[0];
@@ -334,6 +334,6 @@ void main()
 	gl_Position = corner + dx + dy + dz;
 	EmitVertex();
 	EndPrimitive();
-	
+
 #endif
 }

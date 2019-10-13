@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,5 +42,5 @@ void main()
 	color_gs = color;
 	cylinder_axis_gs = cylinder_axis;
 	cylinder_radius_gs = cylinder_radius;
-	gl_Position = vec4(position, 1);	
+	gl_Position = vec4(position, 1);
 }

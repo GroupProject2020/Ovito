@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -40,7 +40,7 @@ uniform float radius_scalingfactor;
 #else
 	// The particle data:
 	attribute float particle_radius;
-	
+
 	// Output to fragment shader:
 	#define particle_radius_fs gl_TexCoord[1].x
 	#define ze0 gl_TexCoord[1].y
@@ -73,7 +73,7 @@ void main()
 
 	// Forward particle radius to fragment shader.
 	particle_radius_fs = particle_radius * radius_scalingfactor;
-	
+
 	// Pass particle position in eye coordinates to fragment shader.
 	ze0 = eye_position.z;
 }

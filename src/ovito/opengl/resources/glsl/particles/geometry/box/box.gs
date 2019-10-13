@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -45,11 +45,11 @@ void main()
 			1.0 - 2.0*(particle_orientation_gs[0].y*particle_orientation_gs[0].y + particle_orientation_gs[0].z*particle_orientation_gs[0].z),
 			2.0*(particle_orientation_gs[0].x*particle_orientation_gs[0].y + particle_orientation_gs[0].w*particle_orientation_gs[0].z),
 			2.0*(particle_orientation_gs[0].x*particle_orientation_gs[0].z - particle_orientation_gs[0].w*particle_orientation_gs[0].y),
-			
+
 			2.0*(particle_orientation_gs[0].x*particle_orientation_gs[0].y - particle_orientation_gs[0].w*particle_orientation_gs[0].z),
 			1.0 - 2.0*(particle_orientation_gs[0].x*particle_orientation_gs[0].x + particle_orientation_gs[0].z*particle_orientation_gs[0].z),
 			2.0*(particle_orientation_gs[0].y*particle_orientation_gs[0].z + particle_orientation_gs[0].w*particle_orientation_gs[0].x),
-			
+
 			2.0*(particle_orientation_gs[0].x*particle_orientation_gs[0].z + particle_orientation_gs[0].w*particle_orientation_gs[0].y),
 			2.0*(particle_orientation_gs[0].y*particle_orientation_gs[0].z - particle_orientation_gs[0].w*particle_orientation_gs[0].x),
 			1.0 - 2.0*(particle_orientation_gs[0].x*particle_orientation_gs[0].x + particle_orientation_gs[0].y*particle_orientation_gs[0].y)
@@ -58,9 +58,9 @@ void main()
 	else {
 		rot = mat3(1.0);
 	}
-	
+
 #if 0
-	// This code leads, which generates a single triangle strip for the cube, seems to be 
+	// This code leads, which generates a single triangle strip for the cube, seems to be
 	// incompatible with the Intel graphics driver on Linux.
 
 	particle_color_fs = particle_color_gs[0];
@@ -177,7 +177,7 @@ void main()
 	gl_Position = corner + dz;
 	EmitVertex();
 	EndPrimitive();
-	
+
 	// +X
 	particle_color_fs = particle_color_gs[0];
 	surface_normal_fs = normal_matrix[0];
@@ -198,7 +198,7 @@ void main()
 	surface_normal_fs = normal_matrix[0];
 	gl_Position = corner + dx + dy + dz;
 	EmitVertex();
-	EndPrimitive();	
+	EndPrimitive();
 
 	// -Y
 	particle_color_fs = particle_color_gs[0];
@@ -287,6 +287,6 @@ void main()
 	gl_Position = corner + dx + dy + dz;
 	EmitVertex();
 	EndPrimitive();
-	
+
 #endif
 }

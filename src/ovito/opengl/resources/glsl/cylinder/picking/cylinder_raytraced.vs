@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,9 +35,9 @@ uniform int pickingBaseID;
 	#define in attribute
 	#define out varying
 	#define flat
-	
+
 	#define color gl_Color
-	
+
 #endif
 
 // The cylinder data:
@@ -58,13 +58,13 @@ void main()
 	// Compute color from object ID.
 	int objectID = pickingBaseID + gl_VertexID;
 	cylinder_color_gs = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
 
 #endif
-	
+
 	// Pass radius to geometry shader.
 	cylinder_radius_gs = cylinder_radius * modelview_uniform_scale;
 

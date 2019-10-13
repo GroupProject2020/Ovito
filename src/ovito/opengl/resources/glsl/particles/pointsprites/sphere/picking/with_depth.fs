@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@ uniform mat4 projection_matrix;
 	flat in vec4 particle_color_fs;
 	flat in float particle_radius_fs;
 	flat in float ze0;				// The particle's Z coordinate in eye coordinates.
-	
+
 	out vec4 FragColor;
 
 #else
@@ -37,24 +37,24 @@ uniform mat4 projection_matrix;
 	#define particle_radius_fs gl_TexCoord[1].x
 	#define ze0 gl_TexCoord[1].y
 	#define particle_color_fs gl_Color
-	
+
 	#define FragColor gl_FragColor
-	
+
 	#if __VERSION__ < 120
 		#define gl_PointCoord gl_TexCoord[0].xy
 	#endif
 
 #endif
 
-void main() 
+void main()
 {
 	vec2 shifted_coords = gl_PointCoord - vec2(0.5, 0.5);
 	float rsq = dot(shifted_coords, shifted_coords);
 	if(rsq >= 0.25) discard;
-	
+
 	FragColor = particle_color_fs;
 
-	// Vary the depth value across the imposter to obtain proper intersections between particles.	
+	// Vary the depth value across the imposter to obtain proper intersections between particles.
 	float dz = sqrt(1.0 - 4.0 * rsq) * particle_radius_fs;
 	float ze = ze0 + dz;
 	float zn = (projection_matrix[2][2] * ze + projection_matrix[3][2]) / (projection_matrix[2][3] * ze + projection_matrix[3][3]);

@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@ uniform int pickingBaseID;
 	// The input particle data:
 	in vec3 position;
 	in float particle_radius;
-	
+
 	// Output passed to fragment shader.
 	flat out vec4 particle_color_fs;
 
@@ -48,23 +48,23 @@ void main()
 	int objectID = pickingBaseID + gl_VertexID;
 
 	particle_color_fs = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
-		
+
 	// Transform and project particle position.
 	vec4 eye_position = modelview_matrix * vec4(position, 1);
 
 #else
 	// Compute color from object ID.
 	float objectID = pickingBaseID + vertexID;
-	
+
 	gl_FrontColor = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
-		floor(mod(objectID / 256.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 65536.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);	
+		floor(mod(objectID / 256.0, 256.0)) / 255.0,
+		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
+		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
 
 	// Transform and project particle position.
 	vec4 eye_position = modelview_matrix * gl_Vertex;

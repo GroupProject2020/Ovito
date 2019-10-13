@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,7 +27,7 @@ uniform mat3 normal_matrix;
 	in vec3 position;
 	in vec3 normal;
 	in vec4 color;
-	
+
 	flat out vec4 vertex_color_fs;
 	out vec3 vertex_normal_fs;
 
@@ -40,16 +40,16 @@ uniform mat3 normal_matrix;
 void main()
 {
 #if __VERSION__ >= 130
-	
+
 	vertex_color_fs = color;
 	gl_Position = modelview_projection_matrix * vec4(position, 1.0);
 	vertex_normal_fs = normalize(normal_matrix * normal);
-	
+
 #else
-	
+
 	gl_FrontColor = gl_Color;
 	gl_Position = modelview_projection_matrix * gl_Vertex;
 	vertex_normal_fs = normalize(normal_matrix * gl_Normal);
-	
+
 #endif
 }

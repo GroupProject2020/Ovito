@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,7 +41,7 @@ const float diffuse_strength = 1.0 - ambient;
 const float shininess = 6.0;
 const vec3 specular_lightdir = normalize(vec3(-1.8, 1.5, -0.2));
 
-void main() 
+void main()
 {
 #if __VERSION__ < 130
 	vec3 surface_normal_fs = normalize(cross(dFdx(ec_pos), dFdy(ec_pos)));

@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,13 +33,13 @@ uniform vec3 normals[14];
 	in vec3 position;
 	in vec4 color;
 	in float particle_radius;
-	
+
 	// Outputs to fragment shader
 	flat out vec4 particle_color_fs;
 	flat out vec3 surface_normal_fs;
-	
+
 #else
-	
+
 	// The particle data:
 	attribute float particle_radius;
 	attribute float vertexID;

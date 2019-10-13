@@ -1,10 +1,32 @@
+#######################################################################################
+#
+#  Copyright 2019 Alexander Stukowski
+#
+#  This file is part of OVITO (Open Visualization Tool).
+#
+#  OVITO is free software; you can redistribute it and/or modify it either under the
+#  terms of the GNU General Public License version 3 as published by the Free Software
+#  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+#  If you do not alter this notice, a recipient may use your version of this
+#  file under either the GPL or the MIT License.
+#
+#  You should have received a copy of the GPL along with this program in a
+#  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+#  with this program in a file LICENSE.MIT.txt
+#
+#  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+#  either express or implied. See the GPL or the MIT License for the specific language
+#  governing rights and limitations.
+#
+#######################################################################################
+
 # - Finds Libav libraries and headers
 #
 #  Will look for header files in LIBAV_INCLUDE_DIR if defined.
 #  Will look for library files in LIBAV_LIBRARY_DIR if defined.
 #
 # Once done this will define
-#  
+#
 #  LIBAV_FOUND			- system has Libav
 #  Libav_INCLUDE_DIRS	- the include directories
 #  Libav_LIBRARY_DIR	- the directory containing the libraries
@@ -17,7 +39,7 @@ SET(LIBAV_HEADER_NAMES libavformat/avformat.h libavcodec/avcodec.h libavutil/avu
 SET(LIBAV_LIBRARY_NAMES avformat avcodec avutil avfilter swscale avresample)
 
 # Detect header path.
-FIND_PATH(LIBAV_INCLUDE_DIR NAMES libavcodec/avcodec.h PATH_SUFFIXES ffmpeg) 
+FIND_PATH(LIBAV_INCLUDE_DIR NAMES libavcodec/avcodec.h PATH_SUFFIXES ffmpeg)
 SET(Libav_INCLUDE_DIRS "${LIBAV_INCLUDE_DIR}")
 
 # Detect library path.
@@ -37,7 +59,7 @@ FOREACH(header ${LIBAV_HEADER_NAMES})
 	IF(NOT header_path)
 	    IF(NOT Libav_FIND_QUIETLY)
 		    MESSAGE("Could not find Libav header file '${header}' in search path(s) '${LIBAV_INCLUDE_DIR}'.")
-        ENDIF() 
+        ENDIF()
         UNSET(LIBAV_INCLUDE_DIR)
 	ENDIF()
 	UNSET(header_path CACHE)
@@ -53,7 +75,7 @@ FOREACH(lib ${LIBAV_LIBRARY_NAMES})
 	ELSE()
 	    IF(NOT Libav_FIND_QUIETLY)
 		    MESSAGE("Could not find Libav library '${lib}' in search path(s) '${LIBAV_LIBRARY_DIR}'.")
-		ENDIF() 
+		ENDIF()
 		UNSET(LIBAV_LIBRARY_DIR)
 	ENDIF()
 	UNSET(lib_path CACHE)
@@ -65,7 +87,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Libav DEFAULT_MSG LIBAV_LIBRARY_DIR LIBAV_INCL
 IF(APPLE)
 	# libbz2 is an indirect dependency that needs to be linked in on MacOS.
 	FIND_PACKAGE(BZip2 REQUIRED)
-	
+
 	# Apple's system libraries are required too.
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
 	FIND_LIBRARY(COREVIDEO_LIBRARY CoreVideo)

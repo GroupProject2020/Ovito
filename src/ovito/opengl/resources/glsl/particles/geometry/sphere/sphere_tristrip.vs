@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,7 +32,7 @@ uniform float radius_scalingfactor;
 	in vec3 position;
 	in vec4 color;
 	in float particle_radius;
-	
+
 	// Outputs to fragment shader
 	flat out vec4 particle_color_fs;
 	flat out float particle_radius_squared_fs;

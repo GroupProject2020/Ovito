@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@
 
 	#define particle_color_fs gl_Color
 	#define FragColor gl_FragColor
-	
+
 	#if __VERSION__ < 120
 		#define gl_PointCoord gl_TexCoord[0].xy
 	#endif

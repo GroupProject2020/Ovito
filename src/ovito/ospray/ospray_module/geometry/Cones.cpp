@@ -1,23 +1,24 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2017) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2017 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
-//  OVITO is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation; either version 2 of the License, or
-//  (at your option) any later version.
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
 //
-//  OVITO is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 
 #include "Cones.h"
 // 'export'ed functions from the ispc file:
@@ -58,7 +59,7 @@ namespace ospray {
       colorData         = getParamData("color");
       colorOffset       = getParam1i("color_offset",0);
       texcoordData      = getParamData("texcoord");
-      
+
       if (colorData) {
         if (hasParam("color_format")) {
           colorFormat = static_cast<OSPDataType>(getParam1i("color_format", OSP_UNKNOWN));
@@ -104,7 +105,7 @@ namespace ospray {
     if (texcoordData && texcoordData->numBytes > INT32_MAX)
       huge_mesh = true;
 
-      ispc::ConesGeometry_set(getIE(), model->getIE(), coneData->data, 
+      ispc::ConesGeometry_set(getIE(), model->getIE(), coneData->data,
         materialList ? ispcMaterialPtrs.data() : nullptr,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
         colorData ? colorData->data : nullptr,

@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2014) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2014 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,14 +34,14 @@ uniform int pickingBaseID;
 	in vec4 orientation;
 	in float particle_radius;
 	in float vertexID;
-	
+
 	// Outputs to fragment shader
 	flat out vec4 particle_color_fs;
 	flat out mat3 particle_quadric_fs;
 	flat out vec3 particle_view_pos_fs;
-	
+
 #else
-	
+
 	// The particle data:
 	attribute vec3 shape;
 	attribute vec4 orientation;
@@ -62,10 +62,10 @@ void main()
 		rot = mat3(
 			1.0 - 2.0*(quat.y*quat.y + quat.z*quat.z),
 			2.0*(quat.x*quat.y + quat.w*quat.z),
-			2.0*(quat.x*quat.z - quat.w*quat.y),			
+			2.0*(quat.x*quat.z - quat.w*quat.y),
 			2.0*(quat.x*quat.y - quat.w*quat.z),
 			1.0 - 2.0*(quat.x*quat.x + quat.z*quat.z),
-			2.0*(quat.y*quat.z + quat.w*quat.x),			
+			2.0*(quat.y*quat.z + quat.w*quat.x),
 			2.0*(quat.x*quat.z + quat.w*quat.y),
 			2.0*(quat.y*quat.z - quat.w*quat.x),
 			1.0 - 2.0*(quat.x*quat.x + quat.y*quat.y)
@@ -74,18 +74,18 @@ void main()
 	else {
 		rot = mat3(1.0);
 	}
-	
+
 	vec3 shape2 = shape;
 	if(shape2.x == 0.0) shape2.x = particle_radius;
 	if(shape2.y == 0.0) shape2.y = particle_radius;
 	if(shape2.z == 0.0) shape2.z = particle_radius;
-	
+
 	mat3 qmat = mat3(1.0/(shape2.x*shape2.x), 0, 0,
 			 		 0, 1.0/(shape2.y*shape2.y), 0,
 			  		 0, 0, 1.0/(shape2.z*shape2.z));
 
 	mat3 view_rot = mat3(modelview_matrix) * rot;
-    
+
 #if __VERSION__ >= 130
 
     particle_quadric_fs = view_rot * qmat * transpose(view_rot);
@@ -93,9 +93,9 @@ void main()
 	// Compute color from object ID.
 	int objectID = pickingBaseID + int(vertexID) / 14;
 	particle_color_fs = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
 
 	// Transform and project vertex.
@@ -117,9 +117,9 @@ void main()
 	float objectID = pickingBaseID + floor(vertexID / 14);
 	gl_FrontColor = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
-		floor(mod(objectID / 256.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 65536.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);	
+		floor(mod(objectID / 256.0, 256.0)) / 255.0,
+		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
+		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
 
 	// Transform and project vertex.
 	int cubeCorner = int(mod(vertexID+0.5, 14.0));

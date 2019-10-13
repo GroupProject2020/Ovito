@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,23 +34,23 @@ in vec3 cylinder_axis_gs[1];
 in float cylinder_radius_gs[1];
 
 // Outputs to fragment shader
-flat out vec4 vertex_color_out;	
+flat out vec4 vertex_color_out;
 
 void main()
 {
-	
-	if(cylinder_axis_gs[0] != vec3(0)) {	
+
+	if(cylinder_axis_gs[0] != vec3(0)) {
 		// Get view direction.
 		vec3 view_dir;
 		if(!is_perspective)
 			view_dir = parallel_view_dir;
 		else
 			view_dir = eye_pos - gl_in[0].gl_Position.xyz;
-	
+
 		// Build local coordinate system.
 		vec3 u = normalize(cross(view_dir, cylinder_axis_gs[0]));
 		vec3 v = cylinder_axis_gs[0];
-		
+
 		gl_Position = modelview_projection_matrix * vec4(v * position.x + u * position.y + gl_in[0].gl_Position.xyz, 1.0);
 		vertex_color_out = color_gs[0];
 		EmitVertex();

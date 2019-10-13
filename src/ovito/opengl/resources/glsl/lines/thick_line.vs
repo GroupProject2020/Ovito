@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@ uniform float line_width;
 	in vec4 color;
 	in vec3 vector;
 	out vec4 vertex_color_fs;
-	
+
 #else
 
 	attribute vec3 vector;
@@ -44,7 +44,7 @@ void main()
 #else
 	gl_FrontColor = gl_Color;
 #endif
-	
+
 #if __VERSION__ >= 130
 	vec4 view_position = modelview_matrix * vec4(position, 1.0);
 #else
@@ -64,5 +64,5 @@ void main()
 	else {
 		gl_Position = vec4(0);
 	}
-	
+
 }

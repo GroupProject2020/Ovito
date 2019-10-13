@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,11 +42,11 @@ const float diffuse_strength = 1.0 - ambient;
 const float shininess = 6.0;
 const vec3 specular_lightdir = normalize(vec3(-1.8, 1.5, -0.2));
 
-void main() 
+void main()
 {
 	// Calculate the pixel position in viewport coordinates.
 	vec2 view_c = ((gl_FragCoord.xy - viewport_origin) * inverse_viewport_size) - 1.0;
-	
+
 	// Calculate viewing ray direction in view space.
 	vec3 ray_dir;
 	vec3 ray_origin;
@@ -60,8 +60,8 @@ void main()
 		ray_origin.z = particle_view_pos_fs.z;
 		ray_dir = vec3(0.0, 0.0, -1.0);
 	}
-	
-#if __VERSION__ >= 130	
+
+#if __VERSION__ >= 130
 	float a = particle_quadric_fs[0][0];
 	float b = particle_quadric_fs[1][0];
 	float c = particle_quadric_fs[2][0];
@@ -131,13 +131,13 @@ void main()
 	// Discard intersections behind the view point.
 	if(is_perspective && tnear < 0.0)
 		discard;
-		
+
 	// Calculate intersection point in view coordinate system.
 	vec3 view_intersection_pnt = ray_origin + tnear * ray_dir;
-	
-	// Output the ray-sphere intersection point as the fragment depth 
+
+	// Output the ray-sphere intersection point as the fragment depth
 	// rather than the depth of the bounding box polygons.
-	// The eye coordinate Z value must be transformed to normalized device 
+	// The eye coordinate Z value must be transformed to normalized device
 	// coordinates before being assigned as the final fragment depth.
 	vec4 projected_intersection = projection_matrix * vec4(view_intersection_pnt, 1.0);
 	gl_FragDepth = ((gl_DepthRange.diff * (projected_intersection.z / projected_intersection.w)) + gl_DepthRange.near + gl_DepthRange.far) * 0.5;
@@ -148,7 +148,7 @@ void main()
 			a*r.x + b*r.y + c*r.z + d,
 			b*r.x + e*r.y + f*r.z + g,
 			c*r.x + f*r.y + h*r.z + i));
-	
+
 	float diffuse = abs(surface_normal.z) * diffuse_strength;
 	float specular = pow(max(0.0, dot(reflect(specular_lightdir, surface_normal), ray_dir)), shininess) * 0.25;
 	FragColor = vec4(particle_color_fs.rgb * (diffuse + ambient) + vec3(specular), particle_color_fs.a);

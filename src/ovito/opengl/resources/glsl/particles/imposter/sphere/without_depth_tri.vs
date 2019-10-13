@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,7 +35,7 @@ uniform float radius_scalingfactor;
 	// Output passed to fragment shader.
 	flat out vec4 particle_color_fs;
 	out vec2 texcoords;
-	
+
 #else
 	attribute float particle_radius;
 	attribute float vertexID;
@@ -47,8 +47,8 @@ void main()
 #if __VERSION__ >= 130
 	// Pass color to fragment shader.
 	particle_color_fs = color;
-	
-	// Assign texture coordinates. 
+
+	// Assign texture coordinates.
 	texcoords = imposter_texcoords[gl_VertexID % 6];
 
 	// Transform and project particle position.
@@ -64,7 +64,7 @@ void main()
 
 	int cornerIndex = int(mod(vertexID+0.5, 6.0));
 
-	// Assign texture coordinates. 
+	// Assign texture coordinates.
 	gl_TexCoord[0].xy = imposter_texcoords[cornerIndex];
 
 	gl_Position = projection_matrix * (eye_position + (particle_radius * radius_scalingfactor) * imposter_voffsets[cornerIndex]);

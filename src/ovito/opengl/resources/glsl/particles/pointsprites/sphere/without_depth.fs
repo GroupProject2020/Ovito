@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,20 +31,20 @@ uniform sampler2D tex;			// The imposter texture.
 	#define particle_color_fs gl_Color
 	#define FragColor gl_FragColor
 	#define texture texture2D
-	
+
 	#if __VERSION__ < 120
 		#define gl_PointCoord gl_TexCoord[0].xy
 	#endif
 
 #endif
 
-void main() 
+void main()
 {
 	vec2 shifted_coords = gl_PointCoord - vec2(0.5, 0.5);
 	if(dot(shifted_coords, shifted_coords) >= 0.25) discard;
 	vec4 texValue = texture(tex, gl_PointCoord);
-	
-	// Specular highlights are stored in the green channel of the texture. 
+
+	// Specular highlights are stored in the green channel of the texture.
 	// Modulate diffuse color with brightness value stored in the red channel of the texture.
 	FragColor = vec4(texValue.r * particle_color_fs.rgb + texValue.g, particle_color_fs.a);
 }

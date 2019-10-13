@@ -1,23 +1,24 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2018) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2018 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
-//  OVITO is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation; either version 2 of the License, or
-//  (at your option) any later version.
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
 //
-//  OVITO is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 
 // ospray
 #include "math/vec.ih"
@@ -31,7 +32,7 @@
 
 struct Discs {
   /*! inherit from "Geometry" class: */
-  Geometry   super; 
+  Geometry   super;
 
   /*! data array that contains the disc data (possibly but not
       necessarily including the color, which could be in color);
@@ -42,16 +43,16 @@ struct Discs {
   int        offset_normal;
   int        offset_radius;
   int        offset_materialID;
-  int        offset_colorID; 
-  
+  int        offset_colorID;
+
   float      radius;
   int        materialID;
 
   uint8     *color;
   int        color_stride;
   int        color_offset;
-  int        color_format; 
- 
+  int        color_format;
+
   vec2f     *texcoord;
   bool       huge_mesh;
 };
@@ -241,7 +242,7 @@ export void DiscsGeometry_set(void  *uniform _self
 
   RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
   uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
-  
+
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numDiscs;

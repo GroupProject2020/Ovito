@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -56,11 +56,11 @@ void main()
 	// Compute color from object ID.
 	int objectID = pickingBaseID + (int(vertexID) / verticesPerElement);
 	cylinder_color_fs = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
-		
+
 	// Transform and project vertex position.
 	gl_Position = modelview_projection_matrix * vec4(position, 1.0);
 
@@ -70,15 +70,15 @@ void main()
 	float objectID = pickingBaseID + floor(vertexID / verticesPerElement);
 	cylinder_color_fs = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
-		floor(mod(objectID / 256.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 65536.0, 256.0)) / 255.0, 
+		floor(mod(objectID / 256.0, 256.0)) / 255.0,
+		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
 		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
-						
+
 	// Transform and project vertex position.
 	gl_Position = modelview_projection_matrix * gl_Vertex;
 
 #endif
-	
+
 	// Pass radius to fragment shader.
 	cylinder_radius_sq_fs = cylinder_radius * modelview_uniform_scale;
 	cylinder_radius_sq_fs *= cylinder_radius_sq_fs;

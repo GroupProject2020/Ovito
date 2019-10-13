@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -37,9 +37,9 @@ flat out vec4 particle_color_fs;
 void main()
 {
 #if 0
-	// This code leads, which generates a single triangle strip for the cube, seems to be 
+	// This code leads, which generates a single triangle strip for the cube, seems to be
 	// incompatible with the Intel graphics driver on Linux.
-	
+
 	particle_color_fs = particle_color_gs[0];
 	gl_Position = modelviewprojection_matrix *
 		(gl_in[0].gl_Position + vec4(particle_radius_gs[0], particle_radius_gs[0], particle_radius_gs[0], 0));
@@ -135,7 +135,7 @@ void main()
 	gl_Position = corner + dz;
 	EmitVertex();
 	EndPrimitive();
-	
+
 	// +X
 	particle_color_fs = particle_color_gs[0];
 	gl_Position = corner + dx;
@@ -152,7 +152,7 @@ void main()
 	particle_color_fs = particle_color_gs[0];
 	gl_Position = corner + dx + dy + dz;
 	EmitVertex();
-	EndPrimitive();	
+	EndPrimitive();
 
 	// -Y
 	particle_color_fs = particle_color_gs[0];

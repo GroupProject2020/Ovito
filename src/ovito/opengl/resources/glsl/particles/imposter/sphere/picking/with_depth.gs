@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -47,25 +47,25 @@ void main()
 	texcoords = vec2(1,1);
 	gl_Position = gl_in[0].gl_Position + vec4(psizeX, -psizeY, 0.0, 0.0);
 	EmitVertex();
-	
+
 	particle_color_fs = particle_color_gs[0];
 	particle_radius_fs = particle_radius_gs[0];
 	ze0 = particle_ze0_gs[0];
 	texcoords = vec2(1,0);
 	gl_Position = gl_in[0].gl_Position + vec4(psizeX, psizeY, 0.0, 0.0);
 	EmitVertex();
-	
+
 	particle_color_fs = particle_color_gs[0];
 	particle_radius_fs = particle_radius_gs[0];
 	ze0 = particle_ze0_gs[0];
 	texcoords = vec2(0,1);
 	gl_Position = gl_in[0].gl_Position + vec4(-psizeX, -psizeY, 0.0, 0.0);
 	EmitVertex();
-	
+
 	particle_color_fs = particle_color_gs[0];
 	particle_radius_fs = particle_radius_gs[0];
 	ze0 = particle_ze0_gs[0];
 	texcoords = vec2(0,0);
 	gl_Position = gl_in[0].gl_Position + vec4(-psizeX, psizeY, 0.0, 0.0);
-	EmitVertex();	
+	EmitVertex();
 }

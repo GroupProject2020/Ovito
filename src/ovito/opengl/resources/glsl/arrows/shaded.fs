@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,10 +38,10 @@ const float diffuse_strength = 0.6;
 const float shininess = 6.0;
 const vec3 specular_lightdir = normalize(vec3(1.8, -1.5, 0.2));
 
-void main() 
+void main()
 {
-	float diffuse = abs(vertex_normal_fs.z) * diffuse_strength;	
+	float diffuse = abs(vertex_normal_fs.z) * diffuse_strength;
 	float specular = pow(max(0.0, dot(reflect(specular_lightdir, vertex_normal_fs), vec3(0,0,1))), shininess) * 0.25;
-	
+
 	FragColor = vec4(vertex_color_fs.rgb * (diffuse + ambient) + vec3(specular), vertex_color_fs.a);
 }

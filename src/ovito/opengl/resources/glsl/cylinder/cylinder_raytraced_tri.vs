@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,9 +35,9 @@ uniform float modelview_uniform_scale;
 	#define in attribute
 	#define out varying
 	#define flat
-	
+
 	#define color gl_Color
-	
+
 #endif
 
 // The cylinder data:
@@ -56,7 +56,7 @@ void main()
 {
 	// Pass color to fragment shader.
 	cylinder_color_fs = color;
-	
+
 	// Pass radius to fragment shader.
 	cylinder_radius_sq_fs = cylinder_radius * modelview_uniform_scale;
 	cylinder_radius_sq_fs *= cylinder_radius_sq_fs;

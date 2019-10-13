@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,7 +38,7 @@ uniform vec2 inverse_viewport_size;	// Specifies the transformation from screen 
 	#define FragColor gl_FragColor
 #endif
 
-void main() 
+void main()
 {
 	// Calculate the pixel coordinate in viewport space.
 	vec2 view_c = ((gl_FragCoord.xy - viewport_origin) * inverse_viewport_size) - 1.0;
@@ -56,31 +56,31 @@ void main()
 	}
 
 	vec3 sphere_dir = particle_view_pos_fs - ray_origin;
-	
+
 	// Perform ray-sphere intersection test.
 	float b = dot(ray_dir, sphere_dir);
 	float sphere_dir_sq = dot(sphere_dir, sphere_dir);
 	vec3 delta = ray_dir * b - sphere_dir;
-	float x = dot(delta, delta);	
+	float x = dot(delta, delta);
 	float disc = particle_radius_squared_fs - x;
-		
+
 	// Only calculate the intersection closest to the viewer.
 	if(disc <= 0.0)
 		discard; // Ray missed sphere entirely, discard fragment
-		
+
 	// Calculate closest intersection position.
 	float tnear = b - sqrt(disc);
 
 	// Discard intersections behind the view point.
 	if(is_perspective && tnear < 0.0)
 		discard;
-		
+
 	// Calculate intersection point in view coordinate system.
 	vec3 view_intersection_pnt = ray_origin + tnear * ray_dir;
-	
-	// Output the ray-sphere intersection point as the fragment depth 
+
+	// Output the ray-sphere intersection point as the fragment depth
 	// rather than the depth of the bounding box polygons.
-	// The eye coordinate Z value must be transformed to normalized device 
+	// The eye coordinate Z value must be transformed to normalized device
 	// coordinates before being assigned as the final fragment depth.
 	vec4 projected_intersection = projection_matrix * vec4(view_intersection_pnt, 1.0);
 	gl_FragDepth = (projected_intersection.z / projected_intersection.w + 1.0) * 0.5;

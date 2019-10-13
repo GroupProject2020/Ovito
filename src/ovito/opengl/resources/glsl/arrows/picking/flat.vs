@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -45,14 +45,14 @@ void main()
 	// Compute color from object ID.
 	int objectID = pickingBaseID + gl_VertexID;
 	color_gs = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
 
 #endif
 
 	cylinder_axis_gs = cylinder_axis;
 	cylinder_radius_gs = cylinder_radius;
-	gl_Position = vec4(position, 1);	
+	gl_Position = vec4(position, 1);
 }

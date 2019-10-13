@@ -1,23 +1,24 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2017) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2017 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
-//  OVITO is free software; you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation; either version 2 of the License, or
-//  (at your option) any later version.
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
 //
-//  OVITO is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
 //
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 
@@ -35,7 +36,7 @@ namespace ospray {
     // import ospcommon component - vec3f etc
     using namespace ospcommon;
 
-    /*! a geometry type that implements circular discs. 
+    /*! a geometry type that implements circular discs.
       This implements a new ospray geometry, and as such has
       to
 
@@ -79,17 +80,17 @@ namespace ospray {
       /*! data array from which we read the per-disc color data; if
         NULL we do not have per-disc data */
       Ref<Data> colorData;
-      
-      
+
+
       /*! The color format of the colorData array, one of:
           OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
       OSPDataType colorFormat;
-      
+
       /*! stride in colorData array for accessing i'th disc's
         color. color of disc i will be read as 3 floats from
         'colorOffset+i*colorStride */
       size_t    colorStride;
-        
+
       /*! offset in colorData array for accessing i'th disc's
         color. color of disc i will be read as 3 floats from
         'colorOffset+i*colorStride */

@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2014) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2014 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,14 +33,14 @@ uniform vec3 cubeVerts[14];
 	in vec3 shape;
 	in vec4 orientation;
 	in float particle_radius;
-	
+
 	// Outputs to fragment shader
 	flat out vec4 particle_color_fs;
 	flat out mat3 particle_quadric_fs;
 	flat out vec3 particle_view_pos_fs;
-	
+
 #else
-	
+
 	// The particle data:
 	attribute vec3 shape;
 	attribute vec4 orientation;
@@ -61,10 +61,10 @@ void main()
 		rot = mat3(
 			1.0 - 2.0*(quat.y*quat.y + quat.z*quat.z),
 			2.0*(quat.x*quat.y + quat.w*quat.z),
-			2.0*(quat.x*quat.z - quat.w*quat.y),			
+			2.0*(quat.x*quat.z - quat.w*quat.y),
 			2.0*(quat.x*quat.y - quat.w*quat.z),
 			1.0 - 2.0*(quat.x*quat.x + quat.z*quat.z),
-			2.0*(quat.y*quat.z + quat.w*quat.x),			
+			2.0*(quat.y*quat.z + quat.w*quat.x),
 			2.0*(quat.x*quat.z + quat.w*quat.y),
 			2.0*(quat.y*quat.z - quat.w*quat.x),
 			1.0 - 2.0*(quat.x*quat.x + quat.y*quat.y)
@@ -73,18 +73,18 @@ void main()
 	else {
 		rot = mat3(1.0);
 	}
-	
+
 	vec3 shape2 = shape;
 	if(shape2.x == 0.0) shape2.x = particle_radius;
 	if(shape2.y == 0.0) shape2.y = particle_radius;
 	if(shape2.z == 0.0) shape2.z = particle_radius;
-	
+
 	mat3 qmat = mat3(1.0/(shape2.x*shape2.x), 0, 0,
 			 		 0, 1.0/(shape2.y*shape2.y), 0,
 			  		 0, 0, 1.0/(shape2.z*shape2.z));
 
 	mat3 view_rot = mat3(modelview_matrix) * rot;
-	
+
 #if __VERSION__ >= 130
 
     particle_quadric_fs = view_rot * qmat * transpose(view_rot);
@@ -115,7 +115,7 @@ void main()
 	// Transform and project vertex.
 	int cubeCorner = int(mod(vertexID+0.5, 14.0));
 	vec3 delta = cubeVerts[cubeCorner] * shape2;
-		
+
 	gl_Position = modelviewprojection_matrix * vec4(gl_Vertex.xyz + rot * delta, 1);
 
 	particle_view_pos_fs = (modelview_matrix * gl_Vertex).xyz;

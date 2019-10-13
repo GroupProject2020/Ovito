@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -48,32 +48,32 @@ void main()
 	// Compute color from object ID.
 	int objectID = pickingBaseID + (gl_VertexID / verticesPerElement);
 	vertex_color_out = vec4(
-		float(objectID & 0xFF) / 255.0, 
-		float((objectID >> 8) & 0xFF) / 255.0, 
-		float((objectID >> 16) & 0xFF) / 255.0, 
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
-		
+
 #else
 
 	// Compute color from object ID.
 	float objectID = pickingBaseID + floor(vertexID / verticesPerElement);
 	vertex_color_out = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
-		floor(mod(objectID / 256.0, 256.0)) / 255.0, 
-		floor(mod(objectID / 65536.0, 256.0)) / 255.0, 
+		floor(mod(objectID / 256.0, 256.0)) / 255.0,
+		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
 		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
-						
+
 #endif
-	
+
 	if(cylinder_axis != vec3(0)) {
-	
+
 		// Get view direction.
 		vec3 view_dir;
 		if(!is_perspective)
 			view_dir = parallel_view_dir;
 		else
 			view_dir = eye_pos - cylinder_base;
-	
+
 		// Build local coordinate system.
 		vec3 u = normalize(cross(view_dir, cylinder_axis));
 		vec3 rotated_pos = cylinder_axis * position.x + u * position.y + cylinder_base;
@@ -81,5 +81,5 @@ void main()
 	}
 	else {
 		gl_Position = vec4(0);
-	}	
+	}
 }

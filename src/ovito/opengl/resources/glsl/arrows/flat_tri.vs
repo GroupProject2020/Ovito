@@ -1,6 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// 
-//  Copyright (2013) Alexander Stukowski
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2013 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -43,16 +43,16 @@ flat out vec4 vertex_color_out;
 void main()
 {
 	vertex_color_out = color;
-	
+
 	if(cylinder_axis != vec3(0)) {
-	
+
 		// Get view direction.
 		vec3 view_dir;
 		if(!is_perspective)
 			view_dir = parallel_view_dir;
 		else
 			view_dir = eye_pos - cylinder_base;
-	
+
 		// Build local coordinate system.
 		vec3 u = normalize(cross(view_dir, cylinder_axis));
 		vec3 rotated_pos = cylinder_axis * position.x + u * position.y + cylinder_base;
@@ -60,5 +60,5 @@ void main()
 	}
 	else {
 		gl_Position = vec4(0);
-	}	
+	}
 }
