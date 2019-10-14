@@ -69,8 +69,19 @@ PYBIND11_MODULE(PyScript, m)
 				app->createQtApplication(argc, argv);
 			}
 
+			// Create an operation object that represents the script execution.
+			static AsyncOperation scriptOperation(app->datasetContainer()->taskManager());
+			scriptOperation.setProgressText(QStringLiteral("Script execution in progress"));
+			scriptOperation.setStarted();
+
+			// Install exit handler that deletes the application object on interpreter shutdown.
+			Py_AtExit([]() {
+				scriptOperation.setFinished();
+				delete AdhocApplication::instance();
+			});
+
 			// Set up script execution environment.
-			ScriptEngine::initializeExternalInterpreter(app->datasetContainer()->currentSet());
+			ScriptEngine::initializeExternalInterpreter(app->datasetContainer()->currentSet(), scriptOperation.task());
 		}
 		catch(const Exception& ex) {
 			ex.logError();

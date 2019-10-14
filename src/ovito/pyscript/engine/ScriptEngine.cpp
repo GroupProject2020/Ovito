@@ -574,7 +574,7 @@ Future<> ScriptEngine::executeAsync(RefTarget* context, const char* stdoutSlot, 
 * This is called to set up an ad-hoc environment when the Ovito Python module is loaded from
 * an external Python interpreter.
 ******************************************************************************/
-void ScriptEngine::initializeExternalInterpreter(DataSet* dataset)
+void ScriptEngine::initializeExternalInterpreter(DataSet* dataset, TaskPtr scriptExecutionTask)
 {
 	OVITO_ASSERT(Py_IsInitialized());
 	OVITO_ASSERT(dataset);
@@ -584,8 +584,7 @@ void ScriptEngine::initializeExternalInterpreter(DataSet* dataset)
 	Application::instance()->switchExecutionContext(Application::ExecutionContext::Scripting);
 
 	// Create script execution context and make it permanently active.
-	static AsyncOperation scriptOperation(dataset->taskManager());
-	static ScriptExecutionContext execContext(dataset, nullptr, scriptOperation.task());
+	static ScriptExecutionContext execContext(dataset, nullptr, std::move(scriptExecutionTask));
 }
 
 }

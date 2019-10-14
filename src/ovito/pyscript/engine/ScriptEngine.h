@@ -85,7 +85,7 @@ public:
 
 	/// \brief This is called to set up an ad-hoc environment when the Ovito Python module is loaded from
 	///        an external Python interpreter.
-	static void initializeExternalInterpreter(DataSet* dataset);
+	static void initializeExternalInterpreter(DataSet* dataset, TaskPtr scriptExecutionTask);
 
 private:
 
