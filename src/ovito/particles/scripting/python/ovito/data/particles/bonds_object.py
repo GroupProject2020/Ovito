@@ -24,3 +24,37 @@ Bonds.selection_ = PropertyContainer._create_property_accessor("Selection_")
 
 Bonds.bond_types  = PropertyContainer._create_property_accessor("Bond Type", "The :py:class:`~ovito.data.Property` data array for the ``Bond Type`` standard bond property; or ``None`` if that property is undefined.")
 Bonds.bond_types_ = PropertyContainer._create_property_accessor("Bond Type_")
+
+# Bond creation function.
+def _Bonds_create_bond(self, a, b, type=None, pbcvec=None):
+    """
+    Creates a new bond between two particles *a* and *b*, both parameters being indices into the :py:class:`~ovito.data.Particles` list
+    to which this :py:class:`!Bonds` container belongs.
+
+    :param int a: Index of first particle connected by the new bond. Particle indices start at 0.
+    :param int b: Index of second particle connected by the new bond.
+    :param int type: Optional type ID to be assigned to the new bond. This value will be stored to the :py:attr:`bond_types` array.
+    :param tuple pbcvec: Three integers specifying the bond's crossings of periodic cell boundaries. The information will be stored in the :py:attr:`pbc_vectors` array.
+    :returns: The index of the newly created bond.
+
+    The method does *not* check if there is already an existing bond connecting the same pair of particles. 
+
+    The method does *not* check if the particle indices *a* and *b* do exist. You should make sure both indices are in the range 0 to :py:attr:`Partices.count-1 <ovito.data.PropertyContainer.count>`.
+
+    If the :py:class:`~ovito.data.SimulationCell` has periodic boundary conditions enabled, and the two particles connected by the bond are located on opposite sides of the simulation box, 
+    make sure you specify the *pbcvec* parameter correctly. It is required so that OVITO does not draw the bond in a straight line from particle *a* to particle *b* but through the periodic boundary.
+    """
+    bond_index = self.count # Index of the newly created bond.
+    
+    # Extend the bonds array by 1:
+    self.set_element_count(bond_index + 1)
+    # Store the indices (a,b) in the 'Topology' bond property:
+    self.make_mutable(self.create_property("Topology"))[bond_index] = (a,b)
+    # Assign other bond properties:
+    if type is not None:
+        self.make_mutable(self.create_property("Bond Type"))[bond_index] = type
+    if pbcvec is not None:
+        self.make_mutable(self.create_property("Periodic Image"))[bond_index] = pbcvec
+ 
+    return bond_index
+Bonds.create_bond = _Bonds_create_bond

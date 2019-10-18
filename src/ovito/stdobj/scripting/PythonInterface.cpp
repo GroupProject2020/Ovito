@@ -184,6 +184,14 @@ PYBIND11_MODULE(StdObjPython, m)
 		.def_property_readonly("count", &PropertyContainer::elementCount,
 			"The number of data elements in this container, e.g. the number of particles. This value is always equal to the lengths of the :py:class:`Property` arrays managed by this container. ")
 
+		// Implementation detail that is used by public methods that add new elements to the container.
+		.def("set_element_count", [](PropertyContainer& container, size_t count) {
+			// Make sure it is safe to modify the property container.
+			ensureDataObjectIsMutable(container);
+			container.setElementCount(count);
+			OVITO_ASSERT(container.elementCount() == count);
+		})
+
 		// Required by implementation of create_property() method:
 		.def("standard_property_type_id", [](const PropertyContainer& container, const QString& name) {
 			return container.getOOMetaClass().standardPropertyTypeId(name);

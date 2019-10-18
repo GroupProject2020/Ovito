@@ -33,3 +33,22 @@ Particles.selection_ = PropertyContainer._create_property_accessor("Selection_")
 
 Particles.masses  = PropertyContainer._create_property_accessor("Mass", "The :py:class:`~ovito.data.Property` data array for the ``Mass`` standard particle property; or ``None`` if that property is undefined.")
 Particles.masses_ = PropertyContainer._create_property_accessor("Mass_")
+
+# Particle creation function.
+def _Particles_create_particle(self, position):
+    """
+    Adds a new particle to the particle system.
+
+    :param tuple position: The xyz coordinates for the new particle.
+    :returns: The index of the newly created particle.
+    """
+    assert(len(position) == 3)
+    particle_index = self.count # Index of the newly created particle.
+    
+    # Extend the particles array by 1:
+    self.set_element_count(particle_index + 1)
+    # Store the coordinates in the 'Position' particle property:
+    self.make_mutable(self.create_property("Position"))[particle_index] = position
+
+    return particle_index
+Particles.create_particle = _Particles_create_particle
