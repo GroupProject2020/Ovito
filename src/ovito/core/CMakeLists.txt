@@ -152,8 +152,8 @@ QT5_ADD_RESOURCES(ResourceFiles resources/core.qrc)
 # Define library target.
 OVITO_STANDARD_PLUGIN(Core
 	SOURCES Core.cpp ${SourceFiles} ${ResourceFiles}
-	LIB_DEPENDENCIES Boost::boost ZLIB::ZLIB
-	PRIVATE_LIB_DEPENDENCIES Qt5::Network Libssh::Libssh
+	LIB_DEPENDENCIES Boost::boost ZLIB::ZLIB Qt5::Network
+	PRIVATE_LIB_DEPENDENCIES Libssh::Libssh
 )
 
 # Link to video encoding lib.

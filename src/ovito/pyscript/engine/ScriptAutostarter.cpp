@@ -38,7 +38,7 @@ ScriptAutostarter::~ScriptAutostarter()
 {
 	// Shut down Python interpreter.
 	// This will run the Python functions registered with the 'atexit' module.
-	if(Py_IsInitialized()) {
+	if(_isStandaloneApplication && Py_IsInitialized()) {
 		py::finalize_interpreter();
 	}
 }
@@ -63,6 +63,9 @@ void ScriptAutostarter::registerCommandLineOptions(QCommandLineParser& cmdLinePa
 ******************************************************************************/
 void ScriptAutostarter::applicationStarted()
 {
+	/// Application is running in standalone mode and is using the embedded Python interpreter.
+	_isStandaloneApplication = true;
+
 	// Execute the script commands and files passed on the command line.
 	QStringList scriptCommands = StandaloneApplication::instance()->cmdLineParser().values("exec");
 	QStringList scriptFiles = StandaloneApplication::instance()->cmdLineParser().values("script");
@@ -100,4 +103,4 @@ void ScriptAutostarter::applicationStarted()
 	}
 }
 
-};
+}	// End of namespace

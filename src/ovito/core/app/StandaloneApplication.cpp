@@ -135,6 +135,15 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 			return false;
 		}
 
+		// Notify registered application services that application is starting up.
+		for(const auto& service : applicationServices()) {
+			// If any of the service callbacks returns false, abort the application startup process.
+			if(!service->applicationStarting()) {
+				shutdown();
+				return false;
+			}
+		}
+
 		// Complete the startup process once the event loop is running.
 		QTimer::singleShot(0, this, &StandaloneApplication::postStartupInitialization);
 	}

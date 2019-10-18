@@ -35,6 +35,9 @@ ENDIF()
 IF(NOT CMAKE_VERSION VERSION_LESS "3.9")
 	CMAKE_POLICY(SET CMP0068 OLD)   # Use the 'RPATH' settings for 'install_name' on macOS.
 ENDIF()
+IF(NOT CMAKE_VERSION VERSION_LESS "3.13")
+	CMAKE_POLICY(SET CMP0079 NEW)   # Allows use of target_link_libraries() with targets defined in other directories.
+ENDIF()
 
 IF(NOT CMAKE_VERSION VERSION_LESS "3.12")
 	CMAKE_POLICY(SET CMP0074 NEW)   # find_package() uses <PackageName>_ROOT variables.
@@ -52,7 +55,7 @@ ENDIF()
 INCLUDE(CMakeToolsHelpers OPTIONAL)
 
 SET(OVITO_SOURCE_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
-LIST(APPEND CMAKE_MODULE_PATH ${OVITO_SOURCE_BASE_DIR}/cmake)
+LIST(APPEND CMAKE_MODULE_PATH "${OVITO_SOURCE_BASE_DIR}/cmake")
 INCLUDE(cmake/Version.cmake)
 INCLUDE(cmake/Plugins.cmake)
 INCLUDE(cmake/PrecompiledHeader.cmake)

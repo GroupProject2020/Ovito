@@ -24,6 +24,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/UndoStack.h>
 #include <ovito/core/app/PluginManager.h>
+#include <ovito/core/app/ApplicationService.h>
 #include <ovito/opengl/OpenGLSceneRenderer.h>
 #include "AdhocApplication.h"
 
@@ -59,6 +60,12 @@ bool AdhocApplication::initialize()
 	// Set the global default OpenGL surface format.
 	// This will let Qt use core profile contexts.
 	QSurfaceFormat::setDefaultFormat(OpenGLSceneRenderer::getDefaultSurfaceFormat());
+
+	// Notify plugin services.
+	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ApplicationService::OOClass())) {
+		OORef<ApplicationService> service = static_object_cast<ApplicationService>(clazz->createInstance(nullptr));
+		service->importedByExternalPythonInterpreter();
+	}
 
 	return true;
 }

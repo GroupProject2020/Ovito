@@ -84,8 +84,8 @@ PYBIND11_MODULE(PyScript, m)
 			ScriptEngine::initializeExternalInterpreter(app->datasetContainer()->currentSet(), scriptOperation.task());
 		}
 		catch(const Exception& ex) {
-			ex.logError();
-			throw std::runtime_error("Error during OVITO runtime environment initialization.");
+			throw std::runtime_error(qPrintable(AdhocApplication::tr("OVITO runtime environment initialization failed: %1")
+				.arg(ex.messages().join(QStringLiteral(" - ")))));
 		}
 	}
 	OVITO_ASSERT(QCoreApplication::instance() != nullptr);

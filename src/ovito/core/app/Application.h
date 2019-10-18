@@ -121,6 +121,9 @@ public:
 		_executionContext = context;
 	}
 
+	/// Returns the application-wide network access manager object.
+	QNetworkAccessManager* networkAccessManager();
+
 protected:
 
 	/// Creates the global FileManager class instance.
@@ -147,6 +150,9 @@ protected:
 
 	/// The global file manager instance.
 	std::unique_ptr<FileManager> _fileManager;
+
+	/// The application-wide network manager object.
+	QNetworkAccessManager* _networkAccessManager = nullptr;
 
 	/// The default message handler method of Qt.
 	static QtMessageHandler defaultQtMessageHandler;

@@ -52,6 +52,11 @@ public:
 
 	/// \brief Is called after the application has been completely initialized.
 	virtual void applicationStarted() override;
+
+private:
+
+	/// Indicates that the application is running in standalone mode and is using the embedded Python interpreter.
+	bool _isStandaloneApplication = false;
 };
 
 }	// End of namespace

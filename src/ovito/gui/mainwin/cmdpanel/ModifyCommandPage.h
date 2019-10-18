@@ -87,7 +87,7 @@ protected Q_SLOTS:
 	void onMakeElementIndependent();
 
 	/// Is called by the system when fetching the news web page from the server is completed.
-	void onWebRequestFinished(QNetworkReply* reply);
+	void onWebRequestFinished();
 
 private:
 

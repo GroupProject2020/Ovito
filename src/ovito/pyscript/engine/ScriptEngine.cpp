@@ -587,4 +587,4 @@ void ScriptEngine::initializeExternalInterpreter(DataSet* dataset, TaskPtr scrip
 	static ScriptExecutionContext execContext(dataset, nullptr, std::move(scriptExecutionTask));
 }
 
-}
+} // End of namespace

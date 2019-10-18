@@ -534,7 +534,6 @@ void ModifyCommandPage::createAboutPanel()
 #endif
 
 		// Fetch newest web page from web server.
-		QNetworkAccessManager* networkAccessManager = new QNetworkAccessManager(_aboutRollout);
 		QString urlString = QString("http://www.ovito.org/appnews/v%1.%2.%3/?ovito=%4&OS=%5%6")
 				.arg(Application::applicationVersionMajor())
 				.arg(Application::applicationVersionMinor())
@@ -542,8 +541,9 @@ void ModifyCommandPage::createAboutPanel()
 				.arg(QString(id.toHex()))
 				.arg(operatingSystemString)
 				.arg(QT_POINTER_SIZE*8);
+		QNetworkAccessManager* networkAccessManager = Application::instance()->networkAccessManager();
 		QNetworkReply* networkReply = networkAccessManager->get(QNetworkRequest(QUrl(urlString)));
-		connect(networkAccessManager, &QNetworkAccessManager::finished, this, &ModifyCommandPage::onWebRequestFinished);
+		connect(networkReply, &QNetworkReply::finished, this, &ModifyCommandPage::onWebRequestFinished);
 	}
 #endif
 }
@@ -552,8 +552,9 @@ void ModifyCommandPage::createAboutPanel()
 * Is called by the system when fetching the news web page from the server is
 * completed.
 ******************************************************************************/
-void ModifyCommandPage::onWebRequestFinished(QNetworkReply* reply)
+void ModifyCommandPage::onWebRequestFinished()
 {
+	QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 	if(reply->error() == QNetworkReply::NoError) {
 		QByteArray page = reply->readAll();
 		reply->close();
