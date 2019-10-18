@@ -187,13 +187,12 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
         elif property_type == 0 and prop.name == property_name:
             existing_prop = prop
 
+    num_elements = self.count
     if len(self.properties) == 0:
-        if data is None:
-            raise RuntimeError("Cannot create property, because the container contains no elements yet and no initial property data has been specified.")
-        else:
+        if data is not None:
             num_elements = len(data)
-    else:
-        num_elements = self.count
+        elif num_elements == 0:
+            raise RuntimeError("Cannot create property, because the container contains no elements yet and no initial property data has been specified.")
 
     # Check data array dimensions.
     if data is not None:
@@ -203,9 +202,9 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     if existing_prop is None:
         # If property does not exist yet in the container, create and add a new Property instance.
         if property_type != 0:
-            prop = self.create_standard_property(property_type, data is None, len(data) if not data is None else 0)
+            prop = self.create_standard_property(property_type, data is None, len(data) if data is not None else num_elements)
         else:
-            prop = self.create_user_property(property_name, dtype, components, 0, data is None, len(data) if not data is None else 0)
+            prop = self.create_user_property(property_name, dtype, components, 0, data is None, len(data) if data is not None else num_elements)
     else:
         # Make sure the data layout of the existing property is compatible with the requested layout.
         if components is not None and existing_prop.component_count != components:
