@@ -113,6 +113,92 @@ PYBIND11_MODULE(StdObjPython, m)
 
 			return arr;
 		}, py::arg("dtype") = py::none())
+
+		// Part of the implementation of the SimulationCell.delta_vector() method:
+		.def("_delta_vector", [](const SimulationCellObject& cell, py::array_t<FloatType> delta, bool computePbcVectors) -> py::object {
+			// Compute reciprocal cell matrix.
+			const Matrix3& h = cell.cellMatrix().linear();
+			Matrix3 inv;
+			if(!h.inverse(inv))
+				cell.throwException("Cannot wrap vector(s), because simulation cell is degenerate.");
+			if(delta.ndim() != 1 && delta.ndim() != 2)
+				throw std::domain_error("Input arrays have incorrect number of dimensions: " + std::to_string(delta.ndim()) + "; expected 1- or 2- dimensional arrays.");
+			if(delta.shape()[delta.ndim()-1] != 3)
+				throw std::domain_error("Last dimension of input arrays must have size 3.");
+
+			py::array_t<int> pbcVectors;
+			if(delta.ndim() == 1) {
+				// Process a single 3d input vector.
+				auto delta_unchecked = delta.mutable_unchecked<1>();
+				Vector3 delta_ovito(delta_unchecked(0), delta_unchecked(1), delta_unchecked(2));
+				Vector3I pbcVec = Vector3I::Zero();
+				if(cell.pbcX()) {
+					auto s = std::lround(inv.prodrow(delta_ovito, 0));
+					pbcVec.x() = s;
+					delta_unchecked(0) -= h(0,0) * s;
+					delta_unchecked(1) -= h(1,0) * s;
+					delta_unchecked(2) -= h(2,0) * s;
+				}
+				if(cell.pbcY()) {
+					auto s = std::lround(inv.prodrow(delta_ovito, 1));
+					pbcVec.y() = s;
+					delta_unchecked(0) -= h(0,1) * s;
+					delta_unchecked(1) -= h(1,1) * s;
+					delta_unchecked(2) -= h(2,1) * s;
+				}
+				if(cell.pbcZ()) {
+					auto s = std::lround(inv.prodrow(delta_ovito, 2));
+					pbcVec.z() = s;
+					delta_unchecked(0) -= h(0,2) * s;
+					delta_unchecked(1) -= h(1,2) * s;
+					delta_unchecked(2) -= h(2,2) * s;
+				}
+				if(computePbcVectors)
+					pbcVectors = py::array_t<int>((size_t)3, pbcVec.data());
+			}
+			else {
+				// Process an array of 3d input vectors.
+				auto delta_unchecked = delta.mutable_unchecked<2>();
+				size_t n = delta_unchecked.shape(0);
+				int* pbcVec = nullptr;
+				if(computePbcVectors) {
+					pbcVectors = py::array_t<int>({ n, (size_t)3 });
+					pbcVec = pbcVectors.mutable_data(0,0);
+				}
+				for(size_t i = 0; i < n; i++) {
+					Vector3 delta_ovito(delta_unchecked(i,0), delta_unchecked(i,1), delta_unchecked(i,2));
+					if(cell.pbcX()) {
+						auto s = std::lround(inv.prodrow(delta_ovito, 0));
+						delta_unchecked(i,0) -= h(0,0) * s;
+						delta_unchecked(i,1) -= h(1,0) * s;
+						delta_unchecked(i,2) -= h(2,0) * s;
+						if(pbcVec) *pbcVec++ = s;
+					}
+					else if(pbcVec) *pbcVec++ = 0;
+					if(cell.pbcY()) {
+						auto s = std::lround(inv.prodrow(delta_ovito, 1));
+						delta_unchecked(i,0) -= h(0,1) * s;
+						delta_unchecked(i,1) -= h(1,1) * s;
+						delta_unchecked(i,2) -= h(2,1) * s;
+						if(pbcVec) *pbcVec++ = s;
+					}
+					else if(pbcVec) *pbcVec++ = 0;
+					if(cell.pbcZ()) {
+						auto s = std::lround(inv.prodrow(delta_ovito, 2));
+						delta_unchecked(i,0) -= h(0,2) * s;
+						delta_unchecked(i,1) -= h(1,2) * s;
+						delta_unchecked(i,2) -= h(2,2) * s;
+						if(pbcVec) *pbcVec++ = s;
+					}
+					else if(pbcVec) *pbcVec++ = 0;
+				}
+			}
+
+			if(!computePbcVectors)
+				return std::move(delta);
+			else
+				return py::make_tuple(std::move(delta), std::move(pbcVectors));
+		})
 	;
 	// Property fields:
 	createDataPropertyAccessors(SimulationCell_py, "is2D", &SimulationCellObject::is2D, &SimulationCellObject::setIs2D,

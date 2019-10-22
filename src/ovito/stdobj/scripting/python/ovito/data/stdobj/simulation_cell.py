@@ -140,3 +140,45 @@ def _set_SimulationCell_pbc(self, flags):
     self.pbc_z = flags[2]
 
 SimulationCell.pbc = property(_get_SimulationCell_pbc, _set_SimulationCell_pbc)
+
+# Implementation of the SimulationCell.delta_vector() method.
+def _SimulationCell_delta_vector(self, ra, rb, return_pbcvec=False):
+    """
+    Computes the correct vector connecting points :math:`r_a` and :math:`r_b` in a periodic simulation cell by applying the minimum image convention.
+
+    The method starts by computing the 3d vector :math:`{\Delta} = r_b - r_a` for two points :math:`r_a` and :math:`r_b`, which may be located in different images
+    of the periodic simulation cell. The `minimum image convention <https://en.wikipedia.org/wiki/Periodic_boundary_conditions>`_
+    is then applied to obtain the new vector :math:`{\Delta'} = r_b' - r_a`, where the original point :math:`r_b` has been replaced by the periodic image
+    :math:`r_b'` that is closest to :math:`r_a`, making the vector :math:`{\Delta'}` as short as possible (in reduced coordinate space).
+    :math:`r_b'` is obtained by translating :math:`r_b` an integer number of times along each of the three cell directions:
+    :math:`r_b' = r_b - H*n`, with :math:`H` being the 3x3 cell matrix and :math:`n` being a vector of three integers that are chosen by the
+    method such that :math:`r_b'` is as close to :math:`r_a` as possible.
+
+    Note that the periodic image convention is applied only along those cell directions for which
+    periodic boundary conditions are enabled (see :py:attr:`pbc` property). For other directions
+    no shifting is performed, i.e., the corresponding components of :math:`n = (n_x,n_y,n_z)` will always be zero.
+
+    The method is able to compute the results for either an individual pair of input points or for two *arrays* of input points. In the latter case,
+    i.e. if the input parameters *ra* and *rb* are both 2-D arrays of shape *Nx3*, the method returns a 2-D array containing
+    *N* output vectors. This allows applying the minimum image convention to a large number of point pairs in one function call.
+
+    The optional *return_pbcvec* flag makes the method return as an additional output the vector :math:`n` introduced above.
+    The components of this vector specify the number of times the image point :math:`r_b'` needs to be shifted along each of the three cell directions
+    in order to bring it onto the original input point :math:`r_b`. In other words, it specifies the number of times the
+    computed vector :math:`{\Delta} = r_b - r_a` crosses a periodic boundary of the cell (either in positive or negative direction).
+    For example, the PBC shift vector :math:`n = (1,0,-2)` would indicate that, in order to get from input point :math:`r_a` to input point :math:`r_b`, one has to cross the
+    cell boundaries once in the positive x-direction and twice in the negative z-direction. If *return_pbcvec* is True,
+    the method returns the tuple (:math:`{\Delta'}`, :math:`n`); otherwise it returns just :math:`{\Delta'}`.
+    Note that the vector :math:`n` computed by this method can be used, for instance, to correctly initialize the :py:attr:`Bonds.pbc_vectors <ovito.data.Bonds.pbc_vectors>`
+    property for newly created bonds that cross a periodic cell boundary.
+
+    :param ra: The Cartesian xyz coordinates of the first input point(s). Either a 1-D array of length 3 or a 2-D array of shape (*N*,3).
+    :param rb: The Cartesian xyz coordinates of the second input point(s). Must have the same shape as *ra*.
+    :param bool return_pbcvec: If True, also returns the vector :math:`n`, which specifies how often the vector :math:`(r_b'r - r_a)` crosses the periodic cell boundaries.
+    :returns: The vector :math:`{\Delta'}` and, optionally, the vector :math:`n`.
+
+    Note that there exists also a convenience method :py:meth:`Particles.delta_vector() <ovito.data.Particles.delta_vector>`,
+    which should be used in cases where :math:`r_a` and :math:`r_b` are both positions of particles in the simulation cell.
+    """
+    return self._delta_vector(rb - ra, return_pbcvec)
+SimulationCell.delta_vector = _SimulationCell_delta_vector

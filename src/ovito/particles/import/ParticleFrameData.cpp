@@ -112,7 +112,7 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 		Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(index2) - posProperty->getPoint3(index1));
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(simulationCell().pbcFlags()[dim])
-				bondPeriodicImageProperty->setIntComponent(bondIndex, dim, -(int)floor(delta[dim] + FloatType(0.5)));
+				bondPeriodicImageProperty->setIntComponent(bondIndex, dim, -(int)std::floor(delta[dim] + FloatType(0.5)));
 		}
 	}
 }
