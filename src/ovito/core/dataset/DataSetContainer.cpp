@@ -41,7 +41,7 @@ DEFINE_REFERENCE_FIELD(DataSetContainer, currentSet);
 /******************************************************************************
 * Initializes the dataset manager.
 ******************************************************************************/
-DataSetContainer::DataSetContainer() : _taskManager(*this)
+DataSetContainer::DataSetContainer() : _taskManager(this)
 {
 }
 

@@ -57,7 +57,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		// But first check if the file exists.
 		QString filePath = url.toLocalFile();
 		if(!QFileInfo(url.toLocalFile()).exists())
-			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), &taskManager.datasetContainer()));
+			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), taskManager.datasetContainer()));
 
 		return filePath;
 	}
@@ -88,7 +88,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		return future;
 	}
 	else {
-		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), &taskManager.datasetContainer()));
+		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
 	}
 }
 
@@ -104,7 +104,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 		return future;
 	}
 	else {
-		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), &taskManager.datasetContainer()));
+		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
 	}
 }
 

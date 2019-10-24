@@ -35,7 +35,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /******************************************************************************
 * Initializes the task manager.
 ******************************************************************************/
-TaskManager::TaskManager(DataSetContainer& owner) : _owner(owner)
+TaskManager::TaskManager(DataSetContainer* datasetContainer) : _datasetContainer(datasetContainer)
 {
 	qRegisterMetaType<TaskPtr>("TaskPtr");
 }
@@ -212,12 +212,14 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 
 	// Make sure this method is not called while rendering a viewport.
 	// Qt doesn't allow a local event loops during paint event processing.
-	if(DataSet* dataset = _owner.currentSet()) {
-		if(dataset->viewportConfig()->isRendering()) {
-			qWarning() << "WARNING: Do not call TaskManager::waitForTask() during interactive viewport rendering!";
-			task->setException(std::make_exception_ptr(Exception(tr("This operation is not permitted during interactive viewport rendering. "
-				"Note that certain long-running operations, e.g. I/O operations or complex computations, cannot be performed while viewport rendering is in progress. "), dataset)));
-			return !task->isCanceled();;
+	if(datasetContainer()) {
+		if(DataSet* dataset = datasetContainer()->currentSet()) {
+			if(dataset->viewportConfig()->isRendering()) {
+				qWarning() << "WARNING: Do not call TaskManager::waitForTask() during interactive viewport rendering!";
+				task->setException(std::make_exception_ptr(Exception(tr("This operation is not permitted during interactive viewport rendering. "
+					"Note that certain long-running operations, e.g. I/O operations or complex computations, cannot be performed while viewport rendering is in progress. "), dataset)));
+				return !task->isCanceled();;
+			}
 		}
 	}
 

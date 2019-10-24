@@ -38,21 +38,17 @@ class OVITO_CORE_EXPORT TaskManager : public QObject
 {
 	Q_OBJECT
 
-private:
+public:
 
 	/// Constructor.
-	TaskManager(DataSetContainer& owner);
+	TaskManager(DataSetContainer* datasetContainer = nullptr);
 
 	/// Destructor.
 	~TaskManager();
 
-	/// Only DataSetContainer can create a TaskManager.
-	friend class DataSetContainer;
-
-public:
-
-	/// Returns the dataset container owning this task manager.
-	DataSetContainer& datasetContainer() { return _owner; }
+	/// \brief Returns the dataset container this task manager belongs to.
+	/// \return The dataset container that owns this task manager; or nullptr if the task manager doesn't belong to any dataset container.
+	DataSetContainer* datasetContainer() const { return _datasetContainer; }
 
     /// \brief Returns the watchers for all currently running tasks.
     /// \return A list of TaskWatcher objects, one for each registered task that is currently in the 'started' state.
@@ -174,10 +170,10 @@ private:
 	/// Indicates that waitForTask() has started a local event loop.
 	int _inLocalEventLoop = 0;
 
-	/// The dataset container owning this task manager.
-	DataSetContainer& _owner;
+	/// The dataset container owning this task manager (may be NULL).
+	DataSetContainer* _datasetContainer;
 
-	// Needed by MainThreadTask::createSubOperation():
+	// Needed by MainThreadTask::createSubTask():
 	friend class MainThreadTask;
 };
 
@@ -186,5 +182,3 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::TaskPtr);
-
-
