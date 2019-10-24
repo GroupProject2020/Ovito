@@ -54,7 +54,7 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 	createCommandAction(ACTION_FILE_IMPORT, tr("Load File"), ":/gui/actions/file/file_import.bw.svg", tr("Import data from a file on this computer."), Qt::CTRL + Qt::Key_I);
 	createCommandAction(ACTION_FILE_REMOTE_IMPORT, tr("Load Remote File"), ":/gui/actions/file/file_import_remote.bw.svg", tr("Import a file from a remote location."), Qt::CTRL + Qt::SHIFT + Qt::Key_I);
 	createCommandAction(ACTION_FILE_EXPORT, tr("Export File"), ":/gui/actions/file/file_export.bw.svg", tr("Export data to a file."), Qt::CTRL + Qt::Key_E);
-	createCommandAction(ACTION_FILE_NEW_WINDOW, tr("New Program Window"), ":/gui/actions/file/new_window.bw.svg", tr("Opens a new OVITO window."));
+	createCommandAction(ACTION_FILE_NEW_WINDOW, tr("New Program Window"), ":/gui/actions/file/new_window.bw.svg", tr("Opens a new OVITO window."), QKeySequence::New);
 	createCommandAction(ACTION_HELP_ABOUT, tr("About Ovito"), ":/gui/actions/file/about.bw.svg", tr("Show information about the application."));
 	createCommandAction(ACTION_HELP_SHOW_ONLINE_HELP, tr("User Manual"), ":/gui/actions/file/user_manual.bw.svg", tr("Open the user manual."), QKeySequence::HelpContents);
 	createCommandAction(ACTION_HELP_SHOW_SCRIPTING_HELP, tr("Scripting Reference"), ":/gui/actions/file/scripting_manual.bw.svg", tr("Open the scripting reference."));
