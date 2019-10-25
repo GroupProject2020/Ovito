@@ -21,7 +21,7 @@ if not hasattr(sys, '__OVITO_BUILD_MONOLITHIC'):
     # If the OVITO plugins are present as shared libraries, we need to specify
     # the path where they are found:
     if sys.platform.startswith('darwin'):  # macOS
-        if __path__[0].endswith("/Contents/Resources/python/ovito/plugins"):
+        if __path__[0].endswith("/Resources/python/ovito/plugins"):
             __path__[0] += "/../../../../PlugIns"
     elif sys.platform.startswith('win32'):  # Windows
         if __path__[0].endswith("/plugins/python/ovito/plugins"):
