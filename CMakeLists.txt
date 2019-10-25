@@ -65,6 +65,7 @@ OPTION(OVITO_DOUBLE_PRECISION_FP "Use double-precision floating-point numbers." 
 OPTION(OVITO_BUILD_GUI "Build the graphical user interface." "ON")
 OPTION(OVITO_BUILD_MONOLITHIC "Build a monolithic executable, statically linking all plugins." "OFF")
 OPTION(OVITO_REDISTRIBUTABLE_PACKAGE "Create a redistributable program package that includes third-party libraries." "OFF")
+OPTION(OVITO_BUILD_PYTHON_PACKAGE "Build just the Python module and nothing else" "OFF")
 OPTION(OVITO_BUILD_APPSTORE_VERSION "Build binaries for the Apple App Store and Windows Store." "OFF")
 OPTION(OVITO_RUN_CLANG_TIDY "Run the clang-tidy tool to check code." "OFF")
 OPTION(OVITO_USE_PRECOMPILED_HEADERS "Use precompiled C++ headers to speed up build." "ON")
@@ -91,6 +92,9 @@ OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." 
 # This is a global list of plugin targets that will be built.
 # It will get populated by the OVITO_PLUGIN macro.
 SET(OVITO_PLUGINS_LIST "")
+
+# Set the default component name for the installer.
+SET(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "Ovito")
 
 # Enable software testing framework.
 ENABLE_TESTING()
@@ -119,48 +123,65 @@ IF(MSVC)
 	ADD_COMPILE_OPTIONS("/bigobj")
 ENDIF()
 
-IF(UNIX AND NOT APPLE)
-	# The directory where the main executable goes to.
-	SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
-	# The directory where the main libraries go to.
-	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "lib/ovito")
-	# The directory where the third-party libraries go to.
-	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "lib/ovito")
-	# The directory where the auxiliary files go to.
-	SET(OVITO_RELATIVE_SHARE_DIRECTORY "share/ovito")
-	# The directory where the compiled plugins go to.
-	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
-	# The directory where the Python source modules go to.
-	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
-ELSEIF(APPLE)
-	SET(MACOSX_BUNDLE_NAME "Ovito")
-	SET(MACOSX_BUNDLE_BUNDLE_NAME "${MACOSX_BUNDLE_NAME}")
+IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
+	IF(UNIX AND NOT APPLE)
+		# The directory where the main executable goes to.
+		SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
+		# The directory where the main libraries go to.
+		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "lib/ovito")
+		# The directory where the third-party libraries go to.
+		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "lib/ovito")
+		# The directory where the auxiliary files go to.
+		SET(OVITO_RELATIVE_SHARE_DIRECTORY "share/ovito")
+		# The directory where the compiled plugins go to.
+		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
+		# The directory where the Python source modules go to.
+		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
+	ELSEIF(APPLE)
+		SET(MACOSX_BUNDLE_NAME "Ovito")
+		SET(MACOSX_BUNDLE_BUNDLE_NAME "${MACOSX_BUNDLE_NAME}")
+
+		# The directory where the main executable goes to.
+		SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
+		# The directory where the main libraries of Ovito go to.
+		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
+		# The directory where the third-party libraries go to.
+		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks")
+		# The directory where the auxiliary files go to.
+		SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
+		# The directory where the compiled plugins go to.
+		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
+		# The directory where the Python source modules go to.
+		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
+	ELSEIF(WIN32)
+		# The directory where the main executable goes to.
+		SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
+		# The directory where the main libraries go to.
+		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY ".")
+		# The directory where the third-party libraries go to.
+		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY ".")
+		# The directory where the auxiliary files go to.
+		SET(OVITO_RELATIVE_SHARE_DIRECTORY ".")
+		# The directory where the compiled plugins go to.
+		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
+			# The directory where the Python source modules go to.
+		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
+	ENDIF()
+ELSE()
+	# For Python-only build:
 
 	# The directory where the main executable goes to.
-	SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
-	# The directory where the main libraries of Ovito go to.
-	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
-	# The directory where the third-party libraries go to.
-	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks")
-	# The directory where the auxiliary files go to.
-	SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
-	# The directory where the compiled plugins go to.
-	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
-	# The directory where the Python source modules go to.
-	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
-ELSEIF(WIN32)
-	# The directory where the main executable goes to.
-	SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
+	SET(OVITO_RELATIVE_BINARY_DIRECTORY "ovito")
 	# The directory where the main libraries go to.
-	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY ".")
+	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "ovito/plugins")
 	# The directory where the third-party libraries go to.
-	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY ".")
+	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 	# The directory where the auxiliary files go to.
-	SET(OVITO_RELATIVE_SHARE_DIRECTORY ".")
+	SET(OVITO_RELATIVE_SHARE_DIRECTORY "ovito")
 	# The directory where the compiled plugins go to.
-	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
+	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 		# The directory where the Python source modules go to.
-	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
+	SET(OVITO_RELATIVE_PYTHON_DIRECTORY ".")
 ENDIF()
 
 IF(APPLE OR WIN32 OR NOT OVITO_REDISTRIBUTABLE_PACKAGE)
@@ -204,9 +225,6 @@ IF(OVITO_RUN_CLANG_TIDY AND NOT CMAKE_VERSION VERSION_LESS "3.6")
 	FIND_PROGRAM(CLANG_TIDY_EXE NAMES "clang-tidy" DOC "Path to clang-tidy executable")
 	SET(OVITO_CLANG_TIDY_CMD "${CLANG_TIDY_EXE}") # List of checks will be read from the .clang-tidy file.
 ENDIF()
-
-# Set the default component name for the installer.
-SET(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "Ovito")
 
 # Generate all the build targets.
 ADD_SUBDIRECTORY(src)

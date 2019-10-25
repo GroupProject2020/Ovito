@@ -39,12 +39,12 @@ ENDIF()
 SET(XSLT_PROCESSOR_OPTIONS "--xinclude" CACHE STRING "Additional to pass to the XSLT processor program when building the documentation")
 MARK_AS_ADVANCED(XSLT_PROCESSOR_OPTIONS)
 
-# Create destination directories.
-FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual")
-FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html")
-
 # XSL transform documentation files.
-IF(XSLT_PROCESSOR)
+IF(XSLT_PROCESSOR AND OVITO_BUILD_GUI)
+	# Create destination directories.
+	FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual")
+	FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html")
+
 	# This CMake target generates the user manual as a set of static HTML pages which get shipped with
 	# the Ovito installation packages and which can be accessed from the Help menu of the application.
 	ADD_CUSTOM_TARGET(documentation
@@ -72,7 +72,7 @@ IF(XSLT_PROCESSOR)
 ENDIf()
 
 # Generate documentation for OVITO's scripting interface.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT AND OVITO_BUILD_GUI)
 
 	IF(APPLE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 		# Workaround for an issue on the macOS platform, where the Qt framework ships with release and debug
