@@ -84,7 +84,7 @@ public:
 	}
 
 	/// Loads a user-defined display shape from a geometry file and assigns it to this particle type.
-	bool loadShapeMesh(const QString& filepath, AsyncOperation&& operation);
+	bool loadShapeMesh(const QString& filepath, AsyncOperation&& operation, const FileImporterClass* importerType = nullptr);
 
 	//////////////////////////////////// Default settings ////////////////////////////////
 
@@ -128,6 +128,9 @@ private:
 
 	/// Activates the culling of back-facing faces of the user-defined shape assigned to this particle type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, shapeBackfaceCullingEnabled, setShapeBackfaceCullingEnabled, PROPERTY_FIELD_MEMORIZE);
+
+	/// Use the mesh colors intead of particle colors when rendering the user-defined shape.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, shapeUseMeshColor, setShapeUseMeshColor);
 
 	/// The mass of this particle type (maybe zero if not set).
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, mass, setMass);

@@ -22,12 +22,21 @@
 
 #include <ovito/mesh/Mesh.h>
 #include <ovito/core/utilities/io/CompressedTextReader.h>
+#include <ovito/mesh/tri/TriMeshObject.h>
 #include "WavefrontOBJImporter.h"
 #include "TriMeshFrameData.h"
 
 namespace Ovito { namespace Mesh {
 
 IMPLEMENT_OVITO_CLASS(WavefrontOBJImporter);
+
+/******************************************************************************
+* Returns whether this importer class supports importing data of the given type.
+******************************************************************************/
+bool WavefrontOBJImporter::OOMetaClass::supportsDataType(const DataObject::OOMetaClass& dataObjectType) const
+{
+	return TriMeshObject::OOClass().isDerivedFrom(dataObjectType);
+}
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.

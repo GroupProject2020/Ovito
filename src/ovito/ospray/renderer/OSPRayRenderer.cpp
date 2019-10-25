@@ -956,7 +956,7 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 			});
 		}
 		ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
-		if(meshBuffer.useInstancedRendering())
+		if(meshBuffer.useInstancedRendering() && !meshBuffer.perInstanceColors().empty())
 			defaultVertexColor = ColorAT<float>(meshBuffer.perInstanceColors()[instanceIndex]);
 		int vindex = 0;
 		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal, ++rv_indices) {
@@ -972,14 +972,17 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 				}
 				*rv_pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
 
-				if(mesh.hasVertexColors())
-					*rv_color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
-				else if(mesh.hasFaceColors())
-					*rv_color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
-				else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
-					*rv_color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
-				else
-					*rv_color = defaultVertexColor;
+				if(!meshBuffer.useInstancedRendering() || meshBuffer.perInstanceColors().empty()) {
+					if(mesh.hasVertexColors())
+						*rv_color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
+					else if(mesh.hasFaceColors())
+						*rv_color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
+					else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
+						*rv_color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
+					else
+						*rv_color = defaultVertexColor;
+				}
+				else *rv_color = defaultVertexColor;
 			}
 		}
 

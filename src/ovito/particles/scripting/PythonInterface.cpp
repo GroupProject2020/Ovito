@@ -381,6 +381,11 @@ PYBIND11_MODULE(ParticlesPython, m)
 			"This option only has an effect if a user-defined shape has been assigned to the particle type using the :py:meth:`.load_shape` method. "
 			"\n\n"
 			":Default: ``True``\n");
+	createDataPropertyAccessors(ParticleType_py, "use_mesh_color", &ParticleType::shapeUseMeshColor, &ParticleType::setShapeUseMeshColor,
+			"Use the intrinsic mesh color(s) instead of the particle color when rendering particles of this type. "
+			"This option only has an effect if a user-defined shape has been assigned to the particle type using the :py:meth:`.load_shape` method. "
+			"\n\n"
+			":Default: ``False``\n");
 	createDataSubobjectAccessors(ParticleType_py, "shape", &ParticleType::shapeMesh, &ParticleType::setShapeMesh);
 
 	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,

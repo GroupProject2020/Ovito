@@ -33,11 +33,13 @@ DEFINE_PROPERTY_FIELD(ParticleType, radius);
 DEFINE_REFERENCE_FIELD(ParticleType, shapeMesh);
 DEFINE_PROPERTY_FIELD(ParticleType, highlightShapeEdges);
 DEFINE_PROPERTY_FIELD(ParticleType, shapeBackfaceCullingEnabled);
+DEFINE_PROPERTY_FIELD(ParticleType, shapeUseMeshColor);
 DEFINE_PROPERTY_FIELD(ParticleType, mass);
 SET_PROPERTY_FIELD_LABEL(ParticleType, radius, "Radius");
 SET_PROPERTY_FIELD_LABEL(ParticleType, shapeMesh, "Shape");
 SET_PROPERTY_FIELD_LABEL(ParticleType, highlightShapeEdges, "Highlight edges");
 SET_PROPERTY_FIELD_LABEL(ParticleType, shapeBackfaceCullingEnabled, "Back-face culling");
+SET_PROPERTY_FIELD_LABEL(ParticleType, shapeUseMeshColor, "Use mesh color");
 SET_PROPERTY_FIELD_LABEL(ParticleType, mass, "Mass");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticleType, radius, WorldParameterUnit, 0);
 
@@ -48,6 +50,7 @@ ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset),
 	_radius(0),
 	_highlightShapeEdges(false),
 	_shapeBackfaceCullingEnabled(true),
+	_shapeUseMeshColor(false),
 	_mass(0)
 {
 }
@@ -55,15 +58,21 @@ ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset),
 /******************************************************************************
  * Loads a user-defined display shape from a geometry file and assigns it to this particle type.
  ******************************************************************************/
-bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& operation)
+bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& operation, const FileImporterClass* importerType)
 {
     operation.setProgressText(tr("Loading mesh geometry file %1").arg(filepath));
 
 	// Temporarily disable undo recording while loading the geometry data.
 	UndoSuspender noUndo(this);
 
-	// Inspect input file to detect its format.
-	OORef<FileSourceImporter> importer = dynamic_object_cast<FileSourceImporter>(FileImporter::autodetectFileFormat(dataset(), filepath, filepath));
+	OORef<FileSourceImporter> importer;
+	if(!importerType) {
+		// Inspect input file to detect its format.
+		importer = dynamic_object_cast<FileSourceImporter>(FileImporter::autodetectFileFormat(dataset(), filepath, filepath));
+	}
+	else {
+		importer = dynamic_object_cast<FileSourceImporter>(importerType->createInstance(dataset()));
+	}
 	if(!importer)
 		throwException(tr("Could not detect the format of the geometry file. The format might not be supported."));
 

@@ -62,6 +62,13 @@ public:
 	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const {
 		return false;
 	}
+
+	/// \brief Returns whether this importer class supports importing data of the given type.
+	/// \param dataObjectType A DataObject-derived class.
+	/// \return \c true if this importer can import data object the given type.
+	virtual bool supportsDataType(const DataObject::OOMetaClass& dataObjectType) const {
+		return false;
+	}
 };
 
 /**

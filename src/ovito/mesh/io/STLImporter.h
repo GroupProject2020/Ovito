@@ -49,6 +49,9 @@ class OVITO_MESH_EXPORT STLImporter : public FileSourceImporter
 
 		/// Checks if the given file has format that can be read by this importer.
 		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+
+		/// Returns whether this importer class supports importing data of the given type.
+		virtual bool supportsDataType(const DataObject::OOMetaClass& dataObjectType) const override;
 	};
 
 	Q_OBJECT

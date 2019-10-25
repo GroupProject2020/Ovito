@@ -67,7 +67,7 @@ public:
 
 	/// Activates rendering of multiple instances of the mesh.
 	virtual void setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors) override {
-		OVITO_ASSERT(perInstanceTMs.size() == perInstanceColors.size());
+		OVITO_ASSERT(perInstanceTMs.size() == perInstanceColors.size() || perInstanceColors.empty());
 		_perInstanceTMs = std::move(perInstanceTMs);
 		_perInstanceColors = std::move(perInstanceColors);
 		_useInstancedRendering = true;

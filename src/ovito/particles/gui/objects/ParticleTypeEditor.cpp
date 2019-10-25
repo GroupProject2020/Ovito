@@ -23,14 +23,17 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/mesh/tri/TriMeshObject.h>
 #include <ovito/gui/properties/ColorParameterUI.h>
 #include <ovito/gui/properties/FloatParameterUI.h>
 #include <ovito/gui/properties/IntegerParameterUI.h>
 #include <ovito/gui/properties/StringParameterUI.h>
 #include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/dialogs/HistoryFileDialog.h>
+#include <ovito/gui/dialogs/ImportFileDialog.h>
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
 #include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/core/app/PluginManager.h>
+#include <ovito/core/dataset/io/FileSourceImporter.h>
 #include "ParticleTypeEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -135,6 +138,8 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	gridLayout->addWidget(highlightEdgesUI->checkBox(), 2, 0, 1, 1);
 	BooleanParameterUI* shapeBackfaceCullingUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleType::shapeBackfaceCullingEnabled));
 	gridLayout->addWidget(shapeBackfaceCullingUI->checkBox(), 2, 1, 1, 1);
+	BooleanParameterUI* shapeUseMeshColorUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleType::shapeUseMeshColor));
+	gridLayout->addWidget(shapeUseMeshColorUI->checkBox(), 3, 0, 1, 2);
 
 	// Update the shape buttons whenever the particle type is being modified.
 	connect(this, &PropertiesEditor::contentsChanged, this, [=](RefTarget* editObject) {
@@ -147,10 +152,12 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 				userShapeLabel->setText(tr("No user-defined shape assigned"));
 			highlightEdgesUI->setEnabled(ptype->shapeMesh() != nullptr);
 			shapeBackfaceCullingUI->setEnabled(ptype->shapeMesh() != nullptr);
+			shapeUseMeshColorUI->setEnabled(ptype->shapeMesh() != nullptr);
 		}
 		else {
 			loadShapeBtn->setEnabled(false);
 			resetShapeBtn->setEnabled(false);
+			shapeUseMeshColorUI->setEnabled(false);
 			userShapeLabel->setText({});
 		}
 	});
@@ -160,21 +167,28 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 		if(OORef<ParticleType> ptype = static_object_cast<ParticleType>(editObject())) {
 
 			undoableTransaction(tr("Set particle shape"), [&]() {
-				QStringList selectedFiles;
+				QString selectedFile;
+				const FileImporterClass* fileImporterType = nullptr;
 				// Put code in a block: Need to release dialog before loading the input file.
 				{
-					HistoryFileDialog fileDialog(QStringLiteral("particle_shape_mesh"), container(), tr("Pick geometry file"),
-						QString(), tr("Mesh Files (*.obj *.stl *.vtk)"));
-					fileDialog.setFileMode(QFileDialog::ExistingFile);
+					// Build list of file importers that can import triangle meshes.
+					QVector<const FileImporterClass*> meshImporters;
+					for(const FileImporterClass* importerClass : PluginManager::instance().metaclassMembers<FileSourceImporter>()) {
+						if(importerClass->supportsDataType(TriMeshObject::OOClass()))
+							meshImporters.push_back(importerClass);
+					}
 
-					if(!fileDialog.exec())
+					// Let the user select a geometry file to import.
+					ImportFileDialog fileDialog(meshImporters, ptype->dataset(), mainWindow(), tr("Load mesh file"), QStringLiteral("particle_shape_mesh"));
+					if(fileDialog.exec() != QDialog::Accepted)
 						return;
-					selectedFiles = fileDialog.selectedFiles();
+
+					selectedFile = fileDialog.fileToImport();
+					fileImporterType = fileDialog.selectedFileImporterType();
 				}
-				if(!selectedFiles.empty()) {
-					ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
-					ptype->loadShapeMesh(selectedFiles.front(), progressDialog.taskManager());
-				}
+				// Load the geometry from the selected file.
+				ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
+				ptype->loadShapeMesh(selectedFile, progressDialog.taskManager(), fileImporterType);
 			});
 		}
 	});

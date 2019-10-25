@@ -762,7 +762,7 @@ void POVRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 
 		// Write material
 		_outputStream << "material {\n";
-		ColorA color = meshBuffer.useInstancedRendering() ? meshBuffer.perInstanceColors()[instanceIndex] : meshBuffer.meshColor();
+		ColorA color = (meshBuffer.useInstancedRendering() && !meshBuffer.perInstanceColors().empty()) ? meshBuffer.perInstanceColors()[instanceIndex] : meshBuffer.meshColor();
 		_outputStream << "  texture { pigment { color "; write(color); _outputStream << " } }\n";
 		_outputStream << "}\n";
 

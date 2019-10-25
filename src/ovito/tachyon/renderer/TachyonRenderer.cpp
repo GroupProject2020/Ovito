@@ -595,7 +595,7 @@ void TachyonRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		std::vector<ColoredVertexWithNormal>::iterator rv = renderVertices.begin();
 		faceNormal = faceNormals.begin();
 		ColorAT<float> defaultVertexColor = ColorAT<float>(meshBuffer.meshColor());
-		if(meshBuffer.useInstancedRendering())
+		if(meshBuffer.useInstancedRendering() && !meshBuffer.perInstanceColors().empty())
 			defaultVertexColor = ColorAT<float>(meshBuffer.perInstanceColors()[instanceIndex]);
 		int faceIndex = 0;
 		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal, faceIndex++) {
@@ -610,14 +610,17 @@ void TachyonRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 					rv->normal = *faceNormal;
 				rv->pos = tm * (Point_3<float>)mesh.vertex(face->vertex(v));
 
-				if(mesh.hasVertexColors())
-					rv->color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
-				else if(mesh.hasFaceColors())
-					rv->color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
-				else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
-					rv->color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
-				else
-					rv->color = defaultVertexColor;
+				if(!meshBuffer.useInstancedRendering() || meshBuffer.perInstanceColors().empty()) {
+					if(mesh.hasVertexColors())
+						rv->color = ColorAT<float>(mesh.vertexColor(face->vertex(v)));
+					else if(mesh.hasFaceColors())
+						rv->color = ColorAT<float>(mesh.faceColor(face - mesh.faces().constBegin()));
+					else if(face->materialIndex() < meshBuffer.materialColors().size() && face->materialIndex() >= 0)
+						rv->color = ColorAT<float>(meshBuffer.materialColors()[face->materialIndex()]);
+					else
+						rv->color = defaultVertexColor;
+				}
+				else rv->color = defaultVertexColor;
 			}
 		}
 

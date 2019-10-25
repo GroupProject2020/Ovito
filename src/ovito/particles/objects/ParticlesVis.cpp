@@ -564,6 +564,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 		// The data structure stored in the vis cache.
 		struct ShapeMeshCacheValue {
 			std::vector<std::shared_ptr<MeshPrimitive>> shapeMeshPrimitives;
+			std::vector<bool> shapeUseMeshColor;
 			std::vector<OORef<ObjectPickInfo>> pickInfos;
 		};
 		// Look up the rendering primitive in the vis cache.
@@ -578,12 +579,14 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			if(meshVisCache->shapeMeshPrimitives.empty() || !meshVisCache->shapeMeshPrimitives.front()->isValid(renderer)) {
 				// Create the mesh rendering primitives.
 				meshVisCache->shapeMeshPrimitives.clear();
+				meshVisCache->shapeUseMeshColor.clear();
 				for(int t : userShapeParticleTypes) {
 					const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(t));
 					OVITO_ASSERT(ptype->shapeMesh() && ptype->shapeMesh()->mesh());
 					meshVisCache->shapeMeshPrimitives.push_back(renderer->createMeshPrimitive());
-					meshVisCache->shapeMeshPrimitives.back()->setMesh(*ptype->shapeMesh()->mesh(), ColorA(0,0,0,0), ptype->highlightShapeEdges());
+					meshVisCache->shapeMeshPrimitives.back()->setMesh(*ptype->shapeMesh()->mesh(), ColorA(1,1,1,1), ptype->highlightShapeEdges());
 					meshVisCache->shapeMeshPrimitives.back()->setCullFaces(ptype->shapeBackfaceCullingEnabled());
+					meshVisCache->shapeUseMeshColor.push_back(ptype->shapeUseMeshColor());
 				}
 			}
 
@@ -640,13 +643,15 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 						tm = tm * Matrix3::rotation(quat);
 					}
 					shapeParticleTMs[typeIndex].push_back(tm);
-					shapeParticleColors[typeIndex].push_back(colors[i]);
 					shapeParticleIndices[typeIndex].push_back(i);
+					shapeParticleColors[typeIndex].push_back(colors[i]);
 				}
 
 				// Store the per-particle data in the mesh rendering primitives.
 				meshVisCache->pickInfos.clear();
 				for(size_t i = 0; i < meshVisCache->shapeMeshPrimitives.size(); i++) {
+					if(meshVisCache->shapeUseMeshColor[i])
+						shapeParticleColors[i].clear();
 					meshVisCache->shapeMeshPrimitives[i]->setInstancedRendering(std::move(shapeParticleTMs[i]), std::move(shapeParticleColors[i]));
 					meshVisCache->pickInfos.emplace_back(new ParticlePickInfo(this, flowState, std::move(shapeParticleIndices[i])));
 				}

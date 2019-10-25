@@ -28,8 +28,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Constructs the dialog window.
 ******************************************************************************/
-ImportFileDialog::ImportFileDialog(const QVector<const FileImporterClass*>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory) :
-	HistoryFileDialog("import", parent, caption, directory), _importerTypes(importerTypes)
+ImportFileDialog::ImportFileDialog(const QVector<const FileImporterClass*>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& dialogClass) :
+	HistoryFileDialog(dialogClass, parent, caption), _importerTypes(importerTypes)
 {
 	// Build filter string.
 	for(auto importerClass : _importerTypes) {

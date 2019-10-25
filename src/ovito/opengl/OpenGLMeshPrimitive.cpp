@@ -231,7 +231,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 ******************************************************************************/
 void OpenGLMeshPrimitive::setInstancedRendering(std::vector<AffineTransformation> perInstanceTMs, std::vector<ColorA> perInstanceColors)
 {
-	OVITO_ASSERT(_perInstanceTMs.size() == _perInstanceColors.size());
+	OVITO_ASSERT(perInstanceTMs.size() == perInstanceColors.size() || perInstanceColors.empty());
 	_alpha = std::any_of(perInstanceColors.begin(), perInstanceColors.end(), [](const ColorA& c) { return c.a() != FloatType(1); }) ? 0.5 : 1.0;
 	_perInstanceTMs = std::move(perInstanceTMs);
 	_perInstanceColors = std::move(perInstanceColors);
@@ -299,6 +299,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 				}
 			}
 			else {
+				OVITO_ASSERT(_perInstanceColors.size() == _perInstanceTMs.size());
 				auto instanceColor = _perInstanceColors.cbegin();
 				for(const AffineTransformation& instanceTM : _perInstanceTMs) {
 					_lineShader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(mvp_matrix * instanceTM));
@@ -366,7 +367,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		shader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(vpRenderer->projParams().projectionMatrix * mv_matrix));
 		if(!renderer->isPicking()) {
 			shader->setUniformValue("normal_matrix", (QMatrix3x3)(mv_matrix.linear().inverse().transposed()));
-			if(!_useInstancedRendering) {
+			if(!_useInstancedRendering || _perInstanceColors.empty()) {
 				_vertexBuffer.bindColors(vpRenderer, shader, 4, offsetof(ColoredVertexWithNormal, color));
 			}
 			else {
