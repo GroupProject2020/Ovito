@@ -1,21 +1,20 @@
 import sys
 
-# This is the ovito.plugins Python package. It hosts the native C++ plugin libraries of OVITO.
+# This is the ovito.plugins Python package. It hosts the C++ extension modules of OVITO.
 
-# Our C++ extension modules are, however, located in a different directory of the OVITO installation.
-# For the time being, we use hardcoded relative paths to find them.
-
+# The C++ extension modules are, however, located in a different directory when OVITO is installed
+# as an application. For the time being, we use hardcoded, relative paths to find them.
+#
 # Platform-dependent paths where this Python module is located:
-
-  # Linux:   lib/ovito/plugins/python/ovito/plugins/
-  # Windows: plugins/python/ovito/plugins/
-  # macOS:   Ovito.app/Contents/Resources/python/ovito/plugins/
-
+#   Linux:   lib/ovito/plugins/python/ovito/plugins/
+#   Windows: plugins/python/ovito/plugins/
+#   macOS:   Ovito.app/Contents/Resources/python/ovito/plugins/
+#
 # Platform-dependent paths where the native C++ shared libraries are located:
-
-  # Linux:   lib/ovito/plugins/
-  # Windows: plugins/
-  # macOS:   Ovito.app/Contents/PlugIns/
+#   Linux:   lib/ovito/plugins/
+#   Windows: plugins/
+#   macOS:   Ovito.app/Contents/PlugIns/
+#
 
 if not hasattr(sys, '__OVITO_BUILD_MONOLITHIC'):
     # If the OVITO plugins are present as shared libraries, we need to specify
@@ -51,3 +50,28 @@ else:
             return importlib.machinery.BuiltinImporter()
         raise ImportError()
     sys.path_hooks.insert(0, OVITOBuiltinPluginFinderHook)
+
+# Load all the PyQt5 modules first before the OVITO C++ modules get loaded.
+# This ensures that the right Qt5 shared libraries get loaded when
+# running in a system Python interpreter.
+#
+# Note: No need to load Qt5 modules that needed just by the OVITO desktop application.
+
+import PyQt5
+import PyQt5.QtCore
+import PyQt5.QtNetwork
+import PyQt5.QtGui
+import PyQt5.QtXml
+
+# Special handling for QtConcurrent module is required, because there is no corresponsing PyQt5 module.
+# We need to locate the QtConcurrent shared library in the PyQt5 directory and load it ourselves.
+if sys.platform.startswith('darwin'):  # macOS
+    _QtConcurrent_library_path = PyQt5.__path__[0] + "/Qt/lib/QtConcurrent.framework/Versions/5/QtConcurrent"
+else:
+    _QtConcurrent_library_path = None
+if _QtConcurrent_library_path is not None:
+    import os.path
+    if os.path.exists(_QtConcurrent_library_path):
+        import ctypes
+        ctypes.cdll.LoadLibrary(_QtConcurrent_library_path)
+del _QtConcurrent_library_path

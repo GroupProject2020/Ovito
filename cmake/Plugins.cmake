@@ -106,15 +106,21 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LINK_FLAGS "-headerpad_max_install_names")
 	ENDIF(APPLE)
 
-	IF(APPLE)
-		# Enable the use of @rpath on macOS.
+	IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
+		IF(APPLE)
+			# Enable the use of @rpath on macOS.
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
+			# The build tree target should have rpath of install tree target.
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+		ELSEIF(UNIX)
+			# Look for other shared libraries in the parent directory ("lib/ovito/") and in the plugins directory ("lib/ovito/plugins/")
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
+		ENDIF()
+	ELSE()
+		# Use @loader_path on macOS when building the Python modules only.
 		SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
-		SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
-	    # The build tree target should have rpath of install tree target.
-	    SET_TARGET_PROPERTIES(${target_name} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-	ELSEIF(UNIX)
-		# Look for other shared libraries in the parent directory ("lib/ovito/") and in the plugins directory ("lib/ovito/plugins/")
-        SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/")
 	ENDIF()
 
 	# Install Python wrapper files.

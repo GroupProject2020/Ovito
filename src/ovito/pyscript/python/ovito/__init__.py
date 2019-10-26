@@ -1,4 +1,4 @@
-""" 
+"""
 This root module contains the :py:class:`Scene` class, which serves as a "universe" for all actions
 performed by a script. The scene object is accessible through the module-level :py:data:`ovito.scene` variable.
 """
@@ -43,7 +43,7 @@ for _, _name, _ispkg in pkgutil.walk_packages(_package_source_path, __name__ + '
 def _Scene_pipelines(self):
     """ The list of :py:class:`~ovito.pipeline.Pipeline` objects that are currently part of the three-dimensional scene.
         Only pipelines in this list will display their output data in the viewports and in rendered images. You can add or remove a pipeline either by calling
-        its :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` and :py:meth:`~ovito.pipeline.Pipeline.remove_from_scene` methods or by directly manipulating this list using 
+        its :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` and :py:meth:`~ovito.pipeline.Pipeline.remove_from_scene` methods or by directly manipulating this list using
         standard Python ``append()`` and ``del`` statements:
 
         .. literalinclude:: ../example_snippets/scene_pipelines.py
@@ -52,7 +52,7 @@ def _Scene_pipelines(self):
 Scene.pipelines = property(_Scene_pipelines)
 
 def _get_Scene_selected_pipeline(self):
-    """ The :py:class:`~ovito.pipeline.Pipeline` that is currently selected in the graphical OVITO program, 
+    """ The :py:class:`~ovito.pipeline.Pipeline` that is currently selected in the graphical OVITO program,
         or ``None`` if no pipeline is selected. Typically, this is the last pipeline that was added to the scene using
         :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`.
     """
