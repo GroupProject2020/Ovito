@@ -129,6 +129,11 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} "-E" copy_directory "${python_wrappers}" "${OVITO_PYTHON_DIRECTORY}/"
 			COMMENT "Copying Python files for plugin ${target_name}")
+
+		# Also make them part of the installation package.
+		INSTALL(DIRECTORY "${python_wrappers}"
+			DESTINATION "${OVITO_RELATIVE_PYTHON_DIRECTORY}/"
+			REGEX "__pycache__" EXCLUDE)
 	ENDIF()
 
 	# Make this module part of the installation package.

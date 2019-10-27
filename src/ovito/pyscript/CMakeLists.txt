@@ -20,10 +20,6 @@
 #
 #######################################################################################
 
-# Locate the Python headers and library.
-SET(Python_ADDITIONAL_VERSIONS 3.4 3.5 3.6 3.7 3.8)
-FIND_PACKAGE(PythonInterp REQUIRED)
-FIND_PACKAGE(PythonLibs REQUIRED)
 
 IF(MSVC)
 	# Precompiled headers require more compiler memory.
@@ -48,24 +44,30 @@ OVITO_STANDARD_PLUGIN(PyScript
 		extensions/PythonViewportOverlay.cpp
 		extensions/PythonScriptModifier.cpp
 	LIB_DEPENDENCIES
-		${PYTHON_LIBRARIES}
 		OpenGLRenderer
 	PYTHON_WRAPPERS
 		"${CMAKE_CURRENT_SOURCE_DIR}/python/"
 )
 
-# Add Python include directory.
-TARGET_INCLUDE_DIRECTORIES(PyScript PUBLIC ${PYTHON_INCLUDE_PATH})
+IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
+	# Locate the Python headers and library.
+	SET(Python_ADDITIONAL_VERSIONS 3.4 3.5 3.6 3.7 3.8)
+	FIND_PACKAGE(PythonInterp REQUIRED)
+	FIND_PACKAGE(PythonLibs REQUIRED)
+
+	# Add Python library and include directory.
+	TARGET_INCLUDE_DIRECTORIES(PyScript PUBLIC ${PYTHON_INCLUDE_PATH})
+	TARGET_LINK_LIBRARIES(PyScript PUBLIC ${PYTHON_LIBRARIES})
+ELSE()
+	# Locate the Python headers and library.
+	FIND_PACKAGE(Python3 REQUIRED COMPONENTS Interpreter Development)
+	TARGET_LINK_LIBRARIES(PyScript PUBLIC Python3::Module)
+ENDIF()
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(PyScript ovito/pyscript/PyScript.h)
 ENDIF()
-
-# Install the Python source files that belong to the plugin and which provide the scripting interface.
-INSTALL(DIRECTORY "${OVITO_PYTHON_DIRECTORY}/"
-		DESTINATION "${OVITO_RELATIVE_PYTHON_DIRECTORY}/"
-		REGEX "__pycache__" EXCLUDE)
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
