@@ -59,9 +59,11 @@ else:
 
 import PyQt5
 import PyQt5.QtCore
-import PyQt5.QtNetwork
 import PyQt5.QtGui
-import PyQt5.QtXml
+try: import PyQt5.QtNetwork
+except: pass  # QtNetwork and QtXml PyQt5 modules are not included in current Ovito distributions.
+try: import PyQt5.QtXml
+except: pass
 
 # Special handling for QtConcurrent module is required, because there is no corresponsing PyQt5 module.
 # We need to locate the QtConcurrent shared library in the PyQt5 directory and load it ourselves.
