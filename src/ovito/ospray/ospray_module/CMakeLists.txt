@@ -60,7 +60,6 @@ OSPRAY_ADD_LIBRARY(ospray_module_ovito SHARED
 TARGET_LINK_LIBRARIES(ospray_module_ovito PRIVATE "${EMBREE_LIBRARY}")
 TARGET_LINK_LIBRARIES(ospray_module_ovito PRIVATE ospray::ospray ospray::ospray_module_ispc)
 SET_TARGET_PROPERTIES(ospray_module_ovito PROPERTIES MACOSX_RPATH TRUE)
-SET_TARGET_PROPERTIES(ospray_module_ovito PROPERTIES MACOSX_RPATH TRUE)
 IF(WIN32)
 	TARGET_COMPILE_DEFINITIONS(ospray_module_ovito PRIVATE "NOMINMAX=")
 ENDIF()
