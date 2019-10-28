@@ -29,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-template<typename T> inline gsd_type gsdDataType() { OVITO_ASSERT(false); }
+template<typename T> inline gsd_type gsdDataType() { OVITO_ASSERT(false); return GSD_TYPE_UINT8; }
 template<> inline gsd_type gsdDataType<uint8_t>() { return GSD_TYPE_UINT8; }
 template<> inline gsd_type gsdDataType<uint16_t>() { return GSD_TYPE_UINT16; }
 template<> inline gsd_type gsdDataType<uint32_t>() { return GSD_TYPE_UINT32; }

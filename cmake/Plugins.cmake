@@ -118,9 +118,14 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN:$ORIGIN/..")
 		ENDIF()
 	ELSE()
-		# Use @loader_path on macOS when building the Python modules only.
-		SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
-		SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/")
+		IF(APPLE)
+			# Use @loader_path on macOS when building the Python modules only.
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/")
+		ELSEIF(UNIX)
+			# Look for other shared libraries in the same directory.
+			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN")
+		ENDIF()
 	ENDIF()
 
 	# Install Python wrapper files.
