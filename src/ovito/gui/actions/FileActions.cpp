@@ -30,6 +30,7 @@
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
 #include <ovito/opengl/OpenGLSceneRenderer.h>
 #include <ovito/core/app/PluginManager.h>
+#include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/io/FileImporter.h>
 #include <ovito/core/dataset/io/FileExporter.h>
@@ -53,7 +54,7 @@ void ActionManager::on_HelpAbout_triggered()
 {
 	QMessageBox msgBox(QMessageBox::NoIcon, QCoreApplication::applicationName(),
 			tr("<h3>%1 (Open Visualization Tool)</h3>"
-				"<p>Version %2</p>").arg(QCoreApplication::applicationName()).arg(QCoreApplication::applicationVersion()),
+				"<p>Version %2</p>").arg(QCoreApplication::applicationName()).arg(Application::applicationVersionString()),
 			QMessageBox::Ok, mainWindow());
 	msgBox.setInformativeText(QStringLiteral(OVITO_COPYRIGHT_NOTICE));
 	msgBox.setDefaultButton(QMessageBox::Ok);

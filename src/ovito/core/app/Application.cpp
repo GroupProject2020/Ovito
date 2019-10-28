@@ -106,6 +106,24 @@ int Application::applicationVersionRevision()
 }
 
 /******************************************************************************
+* Returns the complete version string of the application release.
+******************************************************************************/
+QString Application::applicationVersionString()
+{
+	// This compile-time constant is defined by the CMake build script.
+	return QStringLiteral(OVITO_VERSION_STRING);
+}
+
+/******************************************************************************
+* Returns the human-readable name of the application.
+******************************************************************************/
+QString Application::applicationName()
+{
+	// This compile-time constant is defined by the CMake build script.
+	return QStringLiteral(OVITO_APPLICATION_NAME);
+}
+
+/******************************************************************************
 * This is called on program startup.
 ******************************************************************************/
 bool Application::initialize()

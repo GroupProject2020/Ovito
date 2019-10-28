@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/app/Application.h>
 #include "POSCARExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
@@ -48,7 +49,7 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 		throwException(tr("No simulation cell available. Cannot write POSCAR file."));
 
 	// Write POSCAR header including the simulation cell geometry.
-	textStream() << "POSCAR file written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
+	textStream() << "POSCAR file written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
 	textStream() << "1\n";
 	const SimulationCell& cell = simulationCell->data();
 	for(size_t i = 0; i < 3; i++)

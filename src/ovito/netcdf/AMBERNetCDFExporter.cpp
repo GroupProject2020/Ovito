@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/app/Application.h>
 #include "AMBERNetCDFExporter.h"
 
 #include <3rdparty/netcdf_integration/NetCDFIntegration.h>
@@ -101,7 +102,7 @@ bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFr
 	NCERR(nc_put_att_text(_ncid, NC_GLOBAL, "Conventions", 5, "AMBER"));
 	NCERR(nc_put_att_text(_ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0"));
 	NCERR(nc_put_att_text(_ncid, NC_GLOBAL, "program", 5, "OVITO"));
-	QByteArray programVersion = QCoreApplication::applicationVersion().toLocal8Bit();
+	QByteArray programVersion = Application::applicationVersionString().toLocal8Bit();
 	NCERR(nc_put_att_text(_ncid, NC_GLOBAL, "programVersion", programVersion.length(), programVersion.constData()));
 
 	NCERR(nc_put_att_text(_ncid, _cell_angles_var, NC_UNITS_STR, 6, "degree"));

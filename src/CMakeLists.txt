@@ -30,6 +30,11 @@ ADD_SUBDIRECTORY(3rdparty)
 # Build all plugin modules including the core module.
 ADD_SUBDIRECTORY(ovito)
 
+# This allows external CMake projects to inject their customization code into the OVITO project:
+IF(OVITO_CMAKE_FILE_INJECTION)
+	INCLUDE("${OVITO_CMAKE_FILE_INJECTION}")
+ENDIF()
+
 # Build the Python script interpreter 'ovitos'.
 IF(OVITO_BUILD_GUI AND OVITO_BUILD_PLUGIN_PYSCRIPT)
 	ADD_SUBDIRECTORY(ovitos_exe)

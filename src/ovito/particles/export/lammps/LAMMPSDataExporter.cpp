@@ -26,6 +26,7 @@
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/app/Application.h>
 #include "LAMMPSDataExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
@@ -97,7 +98,7 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	// Decide if we want to export bonds.
 	bool writeBonds = (bondTopologyProperty != nullptr) && (atomStyle() != LAMMPSDataImporter::AtomStyle_Atomic);
 
-	textStream() << "# LAMMPS data file written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
+	textStream() << "# LAMMPS data file written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
 	textStream() << posProperty->size() << " atoms\n";
 	if(writeBonds)
 		textStream() << bondTopologyProperty->size() << " bonds\n";

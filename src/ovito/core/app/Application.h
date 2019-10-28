@@ -95,6 +95,12 @@ public:
 	/// Returns the revision version number of the application.
 	static int applicationVersionRevision();
 
+	/// Returns the complete version string of the application release.
+	static QString applicationVersionString();
+
+	/// Returns the human-readable name of the application.
+	static QString applicationName();
+
 	/// Create the global instance of the right QCoreApplication derived class.
 	virtual void createQtApplication(int& argc, char** argv);
 

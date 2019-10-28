@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/app/Application.h>
 #include "FHIAimsExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
@@ -40,7 +41,7 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 
-	textStream() << "# FHI-aims file written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
+	textStream() << "# FHI-aims file written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
 
 	// Output simulation cell.
 	Point3 origin = Point3::Origin();

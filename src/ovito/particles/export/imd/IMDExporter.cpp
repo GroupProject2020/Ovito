@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/app/Application.h>
 #include "IMDExporter.h"
 #include "../OutputColumnMapping.h"
 
@@ -140,7 +141,7 @@ bool IMDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 	textStream() << "#Z " << simCell.column(2)[0] << " " << simCell.column(2)[1] << " " << simCell.column(2)[2] << "\n";
 
 	textStream() << "## Generated on " << QDateTime::currentDateTime().toString() << "\n";
-	textStream() << "## IMD file written by " << QCoreApplication::applicationName() << "\n";
+	textStream() << "## IMD file written by " << Application::applicationName() << "\n";
 	textStream() << "#E\n";
 
 	operation.setProgressMaximum(atomsCount);

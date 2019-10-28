@@ -52,7 +52,7 @@ LoadStream::LoadStream(QDataStream& source) : _is(source)
 	_isOpen = false;
 
 	if(magic1 != 0x0FACC5AB || magic2 != 0x0AFCCA5A)
-		throw Exception(tr("Unknown file format. This is not a valid state file written by %1.").arg(QCoreApplication::applicationName()));
+		throw Exception(tr("Unknown file format. This is not a valid state file written by OVITO."));
 
 	_is.setVersion(QDataStream::Qt_5_4);
 	_is.setFloatingPointPrecision(_fpPrecision == 4 ? QDataStream::SinglePrecision : QDataStream::DoublePrecision);

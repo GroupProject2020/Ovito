@@ -56,13 +56,13 @@ SaveStream::SaveStream(QDataStream& destination) : _os(destination), _isOpen(fal
 	*this << (quint32)sizeof(FloatType);
 
 	// Write application name.
-	*this << QCoreApplication::applicationName();
+	*this << Application::applicationName();
 
 	// Write application version.
 	*this << (quint32)Application::applicationVersionMajor();
 	*this << (quint32)Application::applicationVersionMinor();
 	*this << (quint32)Application::applicationVersionRevision();
-	*this << QCoreApplication::applicationVersion();
+	*this << Application::applicationVersionString();
 }
 
 /******************************************************************************

@@ -22,6 +22,7 @@
 
 #include <ovito/mesh/Mesh.h>
 #include <ovito/mesh/surface/RenderableSurfaceMesh.h>
+#include <ovito/core/app/Application.h>
 #include "VTKTriangleMeshExporter.h"
 
 namespace Ovito { namespace Mesh {
@@ -82,7 +83,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	const TriMesh& surfaceMesh = meshObj->surfaceMesh();
 	const TriMesh& capPolygonsMesh = meshObj->capPolygonsMesh();
 	textStream() << "# vtk DataFile Version 3.0\n";
-	textStream() << "# Triangle surface mesh written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
+	textStream() << "# Triangle surface mesh written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
 	textStream() << "ASCII\n";
 	textStream() << "DATASET UNSTRUCTURED_GRID\n";
 	textStream() << "POINTS " << (surfaceMesh.vertexCount() + capPolygonsMesh.vertexCount()) << " double\n";

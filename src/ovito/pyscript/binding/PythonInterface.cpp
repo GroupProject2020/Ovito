@@ -100,7 +100,7 @@ PYBIND11_MODULE(PyScript, m)
 
 	// Make Ovito program version number available to script.
 	m.attr("version") = py::make_tuple(Application::applicationVersionMajor(), Application::applicationVersionMinor(), Application::applicationVersionRevision());
-	m.attr("version_string") = py::cast(QCoreApplication::applicationVersion());
+	m.attr("version_string") = py::cast(Application::applicationVersionString());
 
 	// Make environment information available to the script.
 	m.attr("gui_mode") = py::cast(Application::instance()->guiMode());

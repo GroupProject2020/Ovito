@@ -25,6 +25,7 @@
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
+#include <ovito/core/app/Application.h>
 #include "VTKDislocationsExporter.h"
 
 namespace Ovito { namespace CrystalAnalysis {
@@ -102,7 +103,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 	size_t vertexCount = std::accumulate(polyVertexCounts.begin(), polyVertexCounts.end(), (size_t)0);
 
 	textStream() << "# vtk DataFile Version 3.0\n";
-	textStream() << "# Dislocation lines written by " << QCoreApplication::applicationName() << " " << QCoreApplication::applicationVersion() << "\n";
+	textStream() << "# Dislocation lines written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
 	textStream() << "ASCII\n";
 	textStream() << "DATASET UNSTRUCTURED_GRID\n";
 	textStream() << "POINTS " << vertexCount << " double\n";
