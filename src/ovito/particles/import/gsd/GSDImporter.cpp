@@ -484,13 +484,14 @@ void GSDImporter::FrameLoader::parsePolygonShape(int typeId, ParticleFrameData::
 
 	// Create triangulation of (convex or concave) polygon.
 	std::shared_ptr<TriMesh> triMesh = std::make_shared<TriMesh>();
-	CapPolygonTessellator tessellator(*triMesh, 2, true);
+	CapPolygonTessellator tessellator(*triMesh, 2, false, true);
 	tessellator.beginPolygon();
 	tessellator.beginContour();
 	for(const Point2& p : vertices)
 		tessellator.vertex(p);
 	tessellator.endContour();
 	tessellator.endPolygon();
+	triMesh->flipFaces();
 	triMesh->determineEdgeVisibility();
 
 	// Store shape geometry in internal cache to avoid parsing the JSON string again for other animation frames.

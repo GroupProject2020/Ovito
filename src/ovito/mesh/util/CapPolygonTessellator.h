@@ -39,7 +39,7 @@ class OVITO_MESH_EXPORT CapPolygonTessellator
 public:
 
 	/// Constructor.
-	CapPolygonTessellator(TriMesh& output, size_t dim, bool windingRuleNonzero = false) : mesh(output), dimz(dim) {
+	CapPolygonTessellator(TriMesh& output, size_t dim, bool createOppositePolygon = true, bool windingRuleNonzero = false) : mesh(output), dimz(dim), _createOppositePolygon(createOppositePolygon) {
 		dimx = (dimz + 1) % 3;
 		dimy = (dimz + 2) % 3;
 		tess = gluNewTess();
@@ -83,8 +83,10 @@ public:
 		p[dimy] = pos.y();
 		p[dimz] = 0;
 		intptr_t vindex = mesh.addVertex(p);
-		p[dimz] = 1;
-		mesh.addVertex(p);
+		if(_createOppositePolygon) {
+			p[dimz] = 1;
+			mesh.addVertex(p);
+		}
 		gluTessVertex(tess, vertexCoord, reinterpret_cast<void*>(vindex));
 	}
 
@@ -104,7 +106,8 @@ public:
 			for(auto v = tessellator->vertices.cbegin() + 2; v != tessellator->vertices.cend(); ++v) {
 				facetVertices[2] = *v;
 				tessellator->mesh.addFace().setVertices(facetVertices[2], facetVertices[1], facetVertices[0]);
-				tessellator->mesh.addFace().setVertices(facetVertices[0]+1, facetVertices[1]+1, facetVertices[2]+1);
+				if(tessellator->_createOppositePolygon)
+					tessellator->mesh.addFace().setVertices(facetVertices[0]+1, facetVertices[1]+1, facetVertices[2]+1);
 				facetVertices[1] = facetVertices[2];
 			}
 		}
@@ -117,7 +120,8 @@ public:
 			for(auto v = tessellator->vertices.cbegin() + 2; v != tessellator->vertices.cend(); ++v) {
 				facetVertices[2] = *v;
 				tessellator->mesh.addFace().setVertices(facetVertices[2], facetVertices[1], facetVertices[0]);
-				tessellator->mesh.addFace().setVertices(facetVertices[0]+1, facetVertices[1]+1, facetVertices[2]+1);
+				if(tessellator->_createOppositePolygon)
+					tessellator->mesh.addFace().setVertices(facetVertices[0]+1, facetVertices[1]+1, facetVertices[2]+1);
 				if(even)
 					facetVertices[0] = facetVertices[2];
 				else
@@ -128,7 +132,8 @@ public:
 		else if(tessellator->primitiveType == GL_TRIANGLES) {
 			for(auto v = tessellator->vertices.cbegin(); v != tessellator->vertices.cend(); v += 3) {
 				tessellator->mesh.addFace().setVertices(v[2], v[1], v[0]);
-				tessellator->mesh.addFace().setVertices(v[0]+1, v[1]+1, v[2]+1);
+				if(tessellator->_createOppositePolygon)
+					tessellator->mesh.addFace().setVertices(v[0]+1, v[1]+1, v[2]+1);
 			}
 		}
 		else OVITO_ASSERT(false);
@@ -147,8 +152,10 @@ public:
 		p[tessellator->dimz] = 0;
 		intptr_t vindex = tessellator->mesh.addVertex(p);
 		*outDatab = reinterpret_cast<void*>(vindex);
-		p[tessellator->dimz] = 1;
-		tessellator->mesh.addVertex(p);
+		if(tessellator->_createOppositePolygon) {
+			p[tessellator->dimz] = 1;
+			tessellator->mesh.addVertex(p);
+		}
 	}
 
 	static void errorData(int errnum, void* polygon_data) {
@@ -165,6 +172,7 @@ private:
 	TriMesh& mesh;
 	int primitiveType;
 	std::vector<int> vertices;
+	bool _createOppositePolygon;
 };
 
 OVITO_END_INLINE_NAMESPACE
