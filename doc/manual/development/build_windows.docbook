@@ -25,7 +25,7 @@
     <title>Downloading the source code</title>
     <para>
     To download OVITO's source code into a new subdirectory named <filename>ovito</filename>, install <link xlink:href="http://git-scm.com">Git</link> and run:
-<screen><command>git clone https://gitlab.com/stuko/ovito.git ovito</command></screen>
+<screen><command>git clone https://gitlab.com/stuko/ovito.git</command></screen>
     from the command line or go to <link xlink:href="https://gitlab.com/stuko/ovito">https://gitlab.com/stuko/ovito</link>
   </para>
   </simplesect>

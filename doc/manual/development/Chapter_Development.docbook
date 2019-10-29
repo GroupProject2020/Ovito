@@ -37,16 +37,6 @@
 		<entry>The XSLT processor for generating the user manual</entry></row>
 		<row><entry><link xlink:href="http://www.docbook.org/">DocBook</link></entry><entry>optional</entry>
 		<entry>The XSL stylesheets required to generate the user manual in HTML format</entry></row>
-		<row><entry><link xlink:href="">Doxygen</link></entry><entry>optional</entry>
-		<entry>Generates the C++ API documentation from OVITO's source code</entry></row>
-		<row><entry><link xlink:href="http://python.org/">Python</link></entry><entry>optional</entry>
-		<entry>Required by OVITO's Python script engine (<literal>PyScript</literal> plugin). Python 2.x and 3.x are supported.</entry></row>
-		<row><entry><link xlink:href="http://www.numpy.org/">NumPy</link></entry><entry>optional</entry>
-		<entry>Required by OVITO's Python script engine (<literal>PyScript</literal> plugin).</entry></row>
-		<row><entry><link xlink:href="http://www.riverbankcomputing.com/software/pyqt">PyQt5</link></entry><entry>optional</entry>
-		<entry>Required by OVITO's Python script engine (<literal>PyScript</literal> plugin).</entry></row>
-		<row><entry><link xlink:href="http://sphinx-doc.org/">Sphinx</link></entry><entry>optional</entry>
-		<entry>Tool for creating the Python scripting interface documentation</entry></row>
 	</tbody></tgroup>
 	</informaltable>
     The library dependencies are:
@@ -65,12 +55,6 @@
 		<entry>Audio and video processing libraries used by OVITO to write movie files.</entry></row>
 		<row><entry><link xlink:href="http://www.unidata.ucar.edu/software/netcdf/">libnetcdf</link></entry><entry>optional</entry>
 		<entry>Required by the <literal>NetCDF</literal> plugin to read NetCDF files</entry></row>
-		<row><entry><link xlink:href="http://www.riverbankcomputing.com/software/qscintilla/">QScintilla2</link></entry><entry>optional</entry>
-		<entry>Text editing widget required by the <literal>PyScript</literal> plugin.</entry></row>
-		<row><entry><link xlink:href="http://www.ospray.org">OSPRay</link></entry><entry>optional</entry>
-		<entry>Required to build the <link linkend="rendering.ospray_renderer">OSPRay renderer</link> plugin. </entry></row>
-		<row><entry><link xlink:href="https://embree.github.io">Embree</link></entry><entry>optional</entry>
-		<entry>Required to build the <link linkend="rendering.ospray_renderer">OSPRay renderer</link> plugin. </entry></row>
 	</tbody></tgroup>
 	</informaltable>
     The sources of the following third-party libraries are included in the OVITO source distribution
@@ -78,14 +62,10 @@
 	<informaltable>
     <tgroup cols="2"><thead><row><entry>Library</entry><entry>Notes</entry></row></thead>
     <tbody>
-		<row><entry><link xlink:href="https://github.com/pybind/pybind11">pybind11</link></entry>
-		<entry>Required by OVITO's Python script engine (<literal>PyScript</literal> plugin).</entry></row>
 		<row><entry><link xlink:href="http://beltoforion.de/article.php?a=muparser">muparser</link></entry>
 		<entry>A math expression parser library.</entry></row>
 		<row><entry><link xlink:href="http://sourceforge.net/projects/qwt/">Qwt</link></entry>
 		<entry>For plotting and data visualization.</entry></row>
-		<row><entry><link xlink:href="https://en.wikipedia.org/wiki/Tachyon_(software)">Tachyon</link></entry>
-		<entry>Required to build the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link> plugin.</entry></row>
 		<row><entry><link xlink:href="https://doi.org/10.1063/1.3215722">Voro++</link></entry>
 		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier.</entry></row>
 		<row><entry><link xlink:href="https://github.com/mborgerding/kissfft">KISS FFT</link></entry>

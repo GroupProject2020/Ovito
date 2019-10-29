@@ -17,41 +17,12 @@
     Apple's clang compiler shipping with Xcode.
     It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> for installing many of the required dependencies.
     After setting up MacPorts, run
-<screen><command>sudo port install netcdf python37 py37-sphinx py37-numpy py37-sip zlib libssh \
-                  boost cmake docbook-xml doxygen libxslt yasm
+<screen><command>sudo port install netcdf pzlib libssh boost cmake docbook-xml doxygen libxslt yasm
 </command></screen>
     from the terminal to install the dependencies of OVITO.
   </para>
   <para>
     Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.12.5 for Mac</link>.
-  </para>
-  <para>
-    Next, download and install <link xlink:href="http://www.riverbankcomputing.com/software/pyqt/download5">PyQt5</link>.
-    Adjust the path to Qt's <command>qmake</command> tool if needed:
-<screen><command>/opt/local/bin/python3.7 configure.py \
-	--qmake $HOME/Qt/5.*.*/clang_64/bin/qmake \
-	--confirm-license \
-	--no-designer-plugin \
-	--no-qml-plugin \
-	--assume-shared \
-	--sip=/opt/local/bin/sip-3.7 \
-	--concatenate \
-	--enable QtCore \
-	--enable QtGui \
-	--enable QtWidgets \
-	--enable QtMacExtras
-make
-sudo make install
-</command></screen>
-  </para>
-  <para>
-    Next, download and extract the source code of <link xlink:href="https://www.riverbankcomputing.com/software/qscintilla/download">QScintilla2</link>.
-    Adjust the path to Qt's <command>qmake</command> tool if needed:
-<screen><command>cd QScintilla_gpl-2.*.*/Qt4Qt5/
-$HOME/Qt/5.*.*/clang_64/bin/qmake qscintilla.pro
-make
-install_name_tool -id $PWD/libqscintilla2_qt5.*.*.*.dylib libqscintilla2_qt5.*.*.*.dylib
-</command></screen>
   </para>
   <para>
 Next, download the source code and build a static version of the <link xlink:href="https://libav.org/">Libav</link> video encoding library (optional):
@@ -75,7 +46,7 @@ make install
     <title>Downloading the source code</title>
     <para>
     To download OVITO's source code into a new directory named <filename>ovito</filename>, run:
-<screen><command>git clone https://gitlab.com/stuko/ovito.git ovito</command></screen>
+<screen><command>git clone https://gitlab.com/stuko/ovito.git</command></screen>
   </para>
   </simplesect>
 
@@ -87,16 +58,11 @@ make install
 <command>cd ovito
 mkdir build
 cd build
-cmake -DOVITO_BUILD_DOCUMENTATION=ON \
-      -DCMAKE_BUILD_TYPE=Release \
+cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=../install \
       -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/` \
-      -DPYTHON_INCLUDE_DIR=/opt/local/Library/Frameworks/Python.framework/Versions/3.7/include/python3.7m \
-      -DPYTHON_LIBRARY=/opt/local/Library/Frameworks/Python.framework/Versions/3.7/lib/libpython3.7.dylib \
       -DLIBAV_INCLUDE_DIR=$HOME/libav/include \
       -DLIBAV_LIBRARY_DIR=$HOME/libav/lib \
-      -DQSCINTILLA_INCLUDE_DIR=`echo $HOME/QScintilla_gpl-*/Qt4Qt5` \
-      -DQSCINTILLA_LIBRARY=`echo $HOME/QScintilla_gpl-*/Qt4Qt5/libqscintilla2_qt5.dylib` \
       ..
 </command></screen>
   </para>
