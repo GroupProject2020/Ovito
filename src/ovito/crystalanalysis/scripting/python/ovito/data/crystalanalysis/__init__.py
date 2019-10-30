@@ -1,5 +1,8 @@
 # Load dependencies
+import ovito.data.stdobj
 import ovito.data.mesh
+import ovito.data.grid
+import ovito.data.stdmod
 import ovito.data.particles
 import numpy
 

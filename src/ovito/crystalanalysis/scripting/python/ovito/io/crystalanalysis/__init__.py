@@ -1,4 +1,8 @@
 # Load dependencies
+import ovito.io.stdobj
+import ovito.io.mesh
+import ovito.io.grid
+import ovito.io.stdmod
 import ovito.io.particles
 
 # Load the native code modules

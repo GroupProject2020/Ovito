@@ -131,7 +131,7 @@ SET(OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE "
 	# Execute PIP uninstall via ovitos interpreter.
 	EXECUTE_PROCESS(COMMAND \"\${OVITOS_COMMAND}\" -m pip --disable-pip-version-check uninstall --yes Sphinx alabaster babel
 		Jinja2 imagesize docutils requests snowballstemmer packaging idna chardet urllib3 certifi
-		MarkupSafe sphinxcontrib-websupport)
+		MarkupSafe sphinxcontrib-websupport twine wheel sphinxcontrib)
 	# Remove __pycache__ files from installation bundle.
 	IF(NOT WIN32)
 		MESSAGE(\"Removing .pyc files.\")

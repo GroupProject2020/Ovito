@@ -197,11 +197,10 @@ void PythonViewportOverlay::render(const Viewport* viewport, TimePoint time, Fra
 		if(!operation.waitForFuture(execFuture))
 			return;
 	}
-	catch(const Exception& ex) {
+	catch(const Exception&) {
 		// Interrupt rendering process in console mode; swallow exception in GUI mode.
-		if(Application::instance()->consoleMode()) {
+		if(Application::instance()->consoleMode())
 			throw;
-		}
 	}
 }
 

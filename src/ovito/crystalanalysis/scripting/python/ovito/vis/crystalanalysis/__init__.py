@@ -1,5 +1,8 @@
 # Load dependencies
+import ovito.vis.stdobj
 import ovito.vis.mesh
+import ovito.vis.grid
+import ovito.vis.stdmod
 import ovito.vis.particles
 
 # Load the native code modules.
