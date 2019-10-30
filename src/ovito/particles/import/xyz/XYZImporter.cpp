@@ -322,9 +322,11 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 				cellVector3[k - 6] = (FloatType)list[k].toDouble();
 		}
 
-		if ((index = commentLine.toLower().indexOf("cell_origin=\"")) >= 0) {
-			QString cellOriginStr = commentLine.mid(index + 13);
-			cellOriginStr.truncate(cellOriginStr.indexOf("\""));
+		int origin_index1 = commentLine.toLower().indexOf(QStringLiteral("cell_origin=\""));
+		int origin_index2 = commentLine.toLower().indexOf(QStringLiteral("origin=\""));
+		if(origin_index1 >= 0 || origin_index2 >= 0) {
+			QString cellOriginStr = commentLine.mid((origin_index1 >= 0) ? (origin_index1+13) : (origin_index2+8));
+			cellOriginStr.truncate(cellOriginStr.indexOf(QStringLiteral("\"")));
 			QStringList list = cellOriginStr.split(ws_re, QString::SkipEmptyParts);
 			for(int k = 0; k < list.size() && k < 3; k++)
 				cellOrigin[k] = (FloatType)list[k].toDouble();
@@ -354,8 +356,9 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 				value_end++;
 			if(value_end > value_start) {
 				QString key = commentLine.mid(key_start, key_end - key_start);
+				QString keyLower = key.toLower();
 				QString value = commentLine.mid(value_start, value_end - value_start);
-				if(key != QStringLiteral("Lattice") && key != QStringLiteral("Properties")) {
+				if(keyLower != QStringLiteral("lattice") && keyLower != QStringLiteral("properties") && keyLower != QStringLiteral("cell_origin") && keyLower != QStringLiteral("origin")) {
 					bool ok;
 					int intValue = value.toInt(&ok);
 					if(ok)

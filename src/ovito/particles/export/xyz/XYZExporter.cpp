@@ -65,14 +65,19 @@ bool XYZExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 		if(simulationCell) {
 			const AffineTransformation& simCell = simulationCell->cellMatrix();
 			// Save cell information in extended XYZ format:
-			// see http://jrkermode.co.uk/quippy/io.html#extendedxyz for details
+			// see http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz for details
 			textStream() << QStringLiteral("Lattice=\"");
 			textStream() << simCell.column(0).x() << " " << simCell.column(0).y() << " " << simCell.column(0).z() << " ";
 			textStream() << simCell.column(1).x() << " " << simCell.column(1).y() << " " << simCell.column(1).z() << " ";
 			textStream() << simCell.column(2).x() << " " << simCell.column(2).y() << " " << simCell.column(2).z() << "\" ";
+
+			if(simCell.translation() != Vector3::Zero()) {
+				textStream() << QStringLiteral("Origin=\"");
+				textStream() << simCell.translation().x() << " " << simCell.translation().y() << " " << simCell.translation().z() << "\" ";
+			}
 		}
 		// Save column information in extended XYZ format:
-		// see http://jrkermode.co.uk/quippy/io.html#extendedxyz for details
+		// see http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz for details
 		textStream() << QStringLiteral("Properties=");
 		QString propertiesStr;
 		int i = 0;
