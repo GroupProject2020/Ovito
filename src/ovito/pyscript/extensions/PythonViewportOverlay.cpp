@@ -26,6 +26,7 @@
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PythonViewportOverlay.h"
 
 namespace PyScript {

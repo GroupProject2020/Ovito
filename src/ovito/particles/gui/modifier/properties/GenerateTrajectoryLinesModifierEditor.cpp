@@ -31,6 +31,7 @@
 #include <ovito/gui/properties/SubObjectParameterUI.h>
 #include <ovito/gui/widgets/general/ElidedTextLabel.h>
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "GenerateTrajectoryLinesModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)

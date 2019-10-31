@@ -25,6 +25,7 @@
 #include <ovito/pyscript/engine/ScriptEngine.h>
 #include <ovito/pyscript/binding/PythonBinding.h>
 #include <ovito/particles/scripting/PythonBinding.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/PluginManager.h>
 
 namespace Ovito { namespace VoroTop {

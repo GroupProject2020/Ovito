@@ -30,6 +30,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/io/FileManager.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PythonBinding.h"
 
 namespace PyScript {

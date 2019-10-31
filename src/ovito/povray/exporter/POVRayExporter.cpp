@@ -24,6 +24,7 @@
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/viewport/Viewport.h>

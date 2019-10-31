@@ -119,6 +119,7 @@ SET(SourceFiles
 	utilities/concurrent/TrackingTask.cpp
 	utilities/concurrent/TaskManager.cpp
 	utilities/concurrent/AsynchronousTask.cpp
+	utilities/concurrent/AsyncOperation.cpp
 	utilities/mesh/TriMesh.cpp
 	rendering/SceneRenderer.cpp
 	rendering/noninteractive/NonInteractiveSceneRenderer.cpp

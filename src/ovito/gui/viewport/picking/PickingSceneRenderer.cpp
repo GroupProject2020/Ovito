@@ -24,6 +24,7 @@
 #include <ovito/gui/viewport/ViewportWindow.h>
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/rendering/RenderSettings.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PickingSceneRenderer.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

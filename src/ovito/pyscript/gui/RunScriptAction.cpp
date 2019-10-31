@@ -22,6 +22,7 @@
 
 #include <ovito/pyscript/PyScript.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
 #include <ovito/gui/actions/ActionManager.h>
 #include <ovito/gui/dialogs/HistoryFileDialog.h>

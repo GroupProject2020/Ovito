@@ -36,6 +36,7 @@
 #include <ovito/core/dataset/io/FileExporter.h>
 #include <ovito/core/dataset/scene/SelectionSet.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 

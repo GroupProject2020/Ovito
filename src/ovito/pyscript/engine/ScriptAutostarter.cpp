@@ -24,6 +24,7 @@
 #include <ovito/core/app/Application.h>
 #include <ovito/core/app/StandaloneApplication.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ScriptAutostarter.h"
 #include "ScriptEngine.h"
 

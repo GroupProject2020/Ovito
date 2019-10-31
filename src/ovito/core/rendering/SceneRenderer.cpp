@@ -30,6 +30,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 

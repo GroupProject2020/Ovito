@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdobj/StdObj.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "DataSeriesExporter.h"
 
 namespace Ovito { namespace StdObj {

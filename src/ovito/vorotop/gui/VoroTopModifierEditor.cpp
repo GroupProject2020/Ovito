@@ -26,6 +26,7 @@
 #include <ovito/gui/properties/FilenameParameterUI.h>
 #include <ovito/gui/dialogs/HistoryFileDialog.h>
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VoroTopModifierEditor.h"
 
 namespace Ovito { namespace VoroTop {

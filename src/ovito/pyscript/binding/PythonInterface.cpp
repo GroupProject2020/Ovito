@@ -24,6 +24,7 @@
 #include <ovito/pyscript/engine/AdhocApplication.h>
 #include <ovito/pyscript/engine/ScriptEngine.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PythonBinding.h"
 
 namespace PyScript {

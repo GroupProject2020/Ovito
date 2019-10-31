@@ -26,6 +26,7 @@
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>

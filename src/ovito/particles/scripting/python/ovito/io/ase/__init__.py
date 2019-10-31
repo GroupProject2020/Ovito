@@ -12,8 +12,7 @@ OVITO and ASE:
     is not installed in the current Python interpreter. Note that the built-in
     Python interpreter of OVITO does *not* include the ASE package by default.
     You can install the ASE module by running ``ovitos -m pip install ase``.
-    Alternatively, you can build OVITO from source in order to
-    use the OVITO module with your :ref:`system's standard Python interpreter <use_ovito_with_system_interpreter>`.
+    Alternatively, you can install the ``ovito`` module in your :ref:`own Python interpreter <use_ovito_with_system_interpreter>`.
 
 """
 

@@ -26,6 +26,7 @@
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "UnwrapTrajectoriesModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)

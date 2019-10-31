@@ -273,62 +273,6 @@ protected:
 	friend class TaskManager;
 };
 
-/// Creates a child operation.
-/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-inline Promise<> PromiseBase::createSubTask() const
-{
-	return task()->createSubTask();
-}
-
-/**
- * Object passed to asynchronous functions.
- */
-class OVITO_CORE_EXPORT AsyncOperation : public Promise<>
-{
-public:
-
-	/// Constructor.
-	AsyncOperation(Promise<>&& promise) : Promise(std::move(promise)) {}
-
-	/// Constructor.
-	AsyncOperation(TaskManager& taskManager);
-
-	/// Destructor.
-	~AsyncOperation() {
-		// Automatically put the promise into the finished state.
-		if(isValid() && !isFinished()) {
-			setStarted();
-			setFinished();
-		}
-	}
-};
-
-/**
- * A promise that is used for signaling the completion of an operation, but which
- * doesn't provide access to the results of the operation nor does it report the progress.
- */
-class SignalPromise : public Promise<>
-{
-public:
-
-	/// Default constructor.
-#ifndef Q_CC_MSVC
-	SignalPromise() noexcept = default;
-#else
-	SignalPromise() noexcept {}
-#endif
-
-	/// Creates a signal promise.
-	static SignalPromise create(bool startedState) {
-		return std::make_shared<Task>(startedState ? Task::State(Task::Started) : Task::NoState);
-	}
-
-private:
-
-	/// Initialization constructor.
-	SignalPromise(TaskPtr p) noexcept : Promise(std::move(p)) {}
-};
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

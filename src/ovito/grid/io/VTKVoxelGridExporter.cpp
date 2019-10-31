@@ -22,6 +22,7 @@
 
 #include <ovito/grid/Grid.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VTKVoxelGridExporter.h"
 
 namespace Ovito { namespace Grid {

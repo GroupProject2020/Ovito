@@ -26,6 +26,7 @@
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VTKDislocationsExporter.h"
 
 namespace Ovito { namespace CrystalAnalysis {

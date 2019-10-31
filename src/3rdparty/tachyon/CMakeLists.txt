@@ -20,6 +20,10 @@
 #
 #######################################################################################
 
+IF(WIN32)
+	SET(BUILD_SHARED_LIBS OFF)
+ENDIF()
+
 # Build the library.
 SET(TACHYON_SOURCE_FILES
 	tachyon/api.c

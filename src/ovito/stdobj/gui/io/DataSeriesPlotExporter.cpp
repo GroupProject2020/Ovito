@@ -22,6 +22,7 @@
 
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "DataSeriesPlotExporter.h"
 
 #include <qwt/qwt_plot_renderer.h>

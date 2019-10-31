@@ -27,6 +27,7 @@
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/utilities/concurrent/Task.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "TachyonRenderer.h"
 

@@ -30,6 +30,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/rendering/RenderSettings.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "OpenGLSceneRenderer.h"
 #include "OpenGLLinePrimitive.h"
 #include "OpenGLParticlePrimitive.h"

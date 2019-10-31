@@ -24,6 +24,7 @@
 #include <ovito/core/dataset/io/AttributeFileExporter.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
 #include "AttributeFileExporterEditor.h"
 

@@ -28,6 +28,8 @@
 #include <ovito/core/viewport/ViewportSettings.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
+#include <ovito/core/utilities/concurrent/SignalPromise.h>
 #include "VRWindow.h"
 
 namespace VRPlugin {

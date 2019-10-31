@@ -20,6 +20,10 @@
 #
 #######################################################################################
 
+IF(WIN32)
+	SET(BUILD_SHARED_LIBS OFF)
+ENDIF()
+
 # Build library.
 ADD_LIBRARY(VoroPlusPlus
 	src/cell.cc

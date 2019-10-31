@@ -33,6 +33,7 @@
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PythonBinding.h"
 
 namespace PyScript {

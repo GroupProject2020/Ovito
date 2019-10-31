@@ -27,6 +27,7 @@
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 

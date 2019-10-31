@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2018 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,18 +20,36 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
+
 #include <ovito/core/Core.h>
 #include "Promise.h"
-#include "TaskManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-/// Creates a child operation.
-/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-Promise<> PromiseBase::createSubTask() const
+/**
+ * Object passed to asynchronous functions.
+ */
+class OVITO_CORE_EXPORT AsyncOperation : public Promise<>
 {
-	return task()->createSubTask();
-}
+public:
+
+	/// Constructor.
+	AsyncOperation(Promise<>&& promise) : Promise(std::move(promise)) {}
+
+	/// Constructor.
+	AsyncOperation(TaskManager& taskManager);
+
+	/// Destructor.
+	~AsyncOperation() {
+		// Automatically put the promise into the finished state.
+		if(isValid() && !isFinished()) {
+			setStarted();
+			setFinished();
+		}
+	}
+};
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

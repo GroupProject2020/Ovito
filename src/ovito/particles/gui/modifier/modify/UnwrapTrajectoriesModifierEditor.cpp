@@ -24,6 +24,7 @@
 #include <ovito/particles/modifier/modify/UnwrapTrajectoriesModifier.h>
 #include <ovito/gui/mainwin/MainWindow.h>
 #include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "UnwrapTrajectoriesModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)

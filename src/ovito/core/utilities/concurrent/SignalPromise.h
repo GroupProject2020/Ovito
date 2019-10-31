@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2018 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,18 +20,40 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
+
 #include <ovito/core/Core.h>
+#include "Task.h"
 #include "Promise.h"
-#include "TaskManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-/// Creates a child operation.
-/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-Promise<> PromiseBase::createSubTask() const
+/**
+ * A promise that is used for signaling the completion of an operation, but which
+ * doesn't provide access to the results of the operation nor does it report the progress.
+ */
+class SignalPromise : public Promise<>
 {
-	return task()->createSubTask();
-}
+public:
+
+	/// Default constructor.
+#ifndef Q_CC_MSVC
+	SignalPromise() noexcept = default;
+#else
+	SignalPromise() noexcept {}
+#endif
+
+	/// Creates a signal promise.
+	static SignalPromise create(bool startedState) {
+		return std::make_shared<Task>(startedState ? Task::State(Task::Started) : Task::NoState);
+	}
+
+private:
+
+	/// Initialization constructor.
+	SignalPromise(TaskPtr p) noexcept : Promise(std::move(p)) {}
+};
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

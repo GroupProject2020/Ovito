@@ -38,6 +38,7 @@
 #include <ovito/pyscript/binding/PythonBinding.h>
 #include <ovito/pyscript/engine/ScriptEngine.h>
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/app/PluginManager.h>
 #include "PythonBinding.h"

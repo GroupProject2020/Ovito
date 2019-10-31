@@ -34,6 +34,7 @@
 #include <ovito/gui/mainwin/MainWindow.h>
 #include <ovito/core/app/PluginManager.h>
 #include <ovito/core/dataset/io/FileSourceImporter.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ParticleTypeEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)

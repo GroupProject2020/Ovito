@@ -23,6 +23,7 @@
 #include <ovito/mesh/Mesh.h>
 #include <ovito/mesh/surface/RenderableSurfaceMesh.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VTKTriangleMeshExporter.h"
 
 namespace Ovito { namespace Mesh {

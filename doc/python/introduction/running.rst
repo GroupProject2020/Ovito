@@ -117,44 +117,20 @@ Number of CPU cores
 OVITO uses all available processor cores by default to perform some computations. To explicitly restrict the program
 to a certain maximum number of parallel threads, use the :command:`--nthreads` command line parameter, e.g. :command:`ovitos --nthreads 1 myscript.py`.
 
+.. _use_ovito_with_system_interpreter:
+
 Third-party Python modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The embedded script interpreter of OVITO is a preconfigured version of the standard `CPython <https://en.wikipedia.org/wiki/CPython>`__ interpreter with the
-:py:mod:`ovito` Python package included. This makes it possible to run scripts both within the graphical program OVITO as well as through the :program:`ovitos`
-command line interpreter. However, OVITO's Python interpreter only includes the `NumPy <http://www.numpy.org/>`__, `matplotlib <http://matplotlib.org/>`__,
-and `PyQt5 <https://www.riverbankcomputing.com/software/pyqt/>`__ packages as preinstalled extensions.
+:py:mod:`ovito` Python package built in. This makes it possible to run scripts both within the graphical program OVITO as well as through the :program:`ovitos`
+command line interpreter. However, OVITO's Python interpreter only ships with the `NumPy <http://www.numpy.org/>`__ and `matplotlib <http://matplotlib.org/>`__
+preinstalled packages.
 
-If you want to call other third-party Python modules from your OVITO scripts, it may be possible to install them in the
+If you want to call other third-party Python packages from your OVITO scripts, it may be possible to install them in the
 :program:`ovitos` interpreter using the normal *pip* or *setuptools* mechanisms
-(e.g., run :command:`ovitos -m pip install <package>` to install a module via *pip*).
+(e.g., run :command:`ovitos -m pip install <package>` to install a module from `PyPI <https://pypi.org>`__).
 
 Installing Python extensions that include native code may fail, however, because such extensions may not be compatible
-with the build-time configuration of the embedded interpreter. In this case, it is recommended to build OVITO from source on your local
-system. The graphical program as well as :program:`ovitos` will then make use of your system's standard Python installation.
-This makes all modules that are installed in your system interpreter also accessible within OVITO and :program:`ovitos`.
-Instructions how to build OVITO from the source code can be found in the :ovitoman:`user manual <../../development>`.
-
-.. _use_ovito_with_system_interpreter:
-
-Using the ovito package from other Python interpreters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The :py:mod:`ovito` Python package can also be imported by Python scripts running in a standard Python interpreter other than :program:`ovitos`.
-However, because the :py:mod:`ovito` module contains native extensions, it must be compiled specifically for the Python interpreter being used with.
-Since there is a chance that the binary extension module shipping with the prebuilt versions of OVITO is not compatible
-with your local Python interpreter, it may be necessary to :ovitoman:`build OVITO from source <../../development>`.
-In case you have multiple Python versions installed on your system, pay attention that OVITO is being built against the
-version that you will use for running scripts.
-
-Once the graphical program and the :py:mod:`ovito` Python module have been successfully built,
-you should add the following directories from the build path to the `PYTHONPATH <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH>`__
-environment variable, so that your Python interpreter can find the module:
-
-=============== ===========================================================
-Platform:        Location of ovito package relative to build path:
-=============== ===========================================================
-Windows         :file:`plugins/python/`
-Linux           :file:`lib/ovito/plugins/python/`
-macOS           :file:`Ovito.app/Contents/Resources/python/`
-=============== ===========================================================
+with the build-time configuration of the embedded CPython interpreter. In this case, it is recommend that you install
+the :py:mod:`ovito` module in your system's Python interpreter. Further instructions can be found `here <https://pypi.org/project/ovito/>`__.

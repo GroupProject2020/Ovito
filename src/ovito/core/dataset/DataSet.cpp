@@ -33,6 +33,7 @@
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/app/StandaloneApplication.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #ifdef OVITO_VIDEO_OUTPUT_SUPPORT
 	#include <ovito/core/utilities/io/video/VideoEncoder.h>
 #endif

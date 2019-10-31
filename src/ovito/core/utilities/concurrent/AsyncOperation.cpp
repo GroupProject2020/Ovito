@@ -21,16 +21,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/core/Core.h>
-#include "Promise.h"
+#include "AsyncOperation.h"
 #include "TaskManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-/// Creates a child operation.
-/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-Promise<> PromiseBase::createSubTask() const
+AsyncOperation::AsyncOperation(TaskManager& taskManager) : Promise(taskManager.createMainThreadOperation<>(true))
 {
-	return task()->createSubTask();
 }
 
 OVITO_END_INLINE_NAMESPACE

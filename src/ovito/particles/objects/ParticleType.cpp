@@ -24,6 +24,7 @@
 #include <ovito/core/dataset/io/FileSource.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ParticleType.h"
 
 namespace Ovito { namespace Particles {

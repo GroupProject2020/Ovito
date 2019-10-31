@@ -34,6 +34,14 @@ ADD_LIBRARY(muParser
 # Give our library file a new name to not confuse it with any system versions of the library.
 SET_TARGET_PROPERTIES(muParser PROPERTIES OUTPUT_NAME "ovito_muparser")
 
+# Define macro for symbol export from the shared library.
+IF(BUILD_SHARED_LIBS AND WIN32)
+	TARGET_COMPILE_DEFINITIONS(muParser PRIVATE "MUPARSER_EXPORT=__declspec(dllexport)")
+	TARGET_COMPILE_DEFINITIONS(muParser INTERFACE "MUPARSER_EXPORT=__declspec(dllimport)")
+ELSE()
+	TARGET_COMPILE_DEFINITIONS(muParser PUBLIC "MUPARSER_EXPORT=")
+ENDIF()
+
 # Make header files of this library available to dependent targets.
 TARGET_INCLUDE_DIRECTORIES(muParser INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 

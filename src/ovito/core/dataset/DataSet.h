@@ -37,6 +37,7 @@
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/TaskWatcher.h>
+#include <ovito/core/utilities/concurrent/SignalPromise.h>
 #include <ovito/core/utilities/MixedKeyCache.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
