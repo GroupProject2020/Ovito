@@ -65,6 +65,11 @@ IF(WIN32)
 	TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PUBLIC DLL_NETCDF)
 ENDIF()
 
+IF(NOT BUILD_SHARED_LIBS AND OVITO_BUILD_PYTHON_PACKAGE)
+	# Since we will link this library into the dynamically loaded Python extension module, we need to use the fPIC flag.
+	SET_PROPERTY(TARGET NetCDFIntegration PROPERTY POSITION_INDEPENDENT_CODE ON)
+ENDIF()
+
 # Export this target.
 INSTALL(TARGETS NetCDFIntegration EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"

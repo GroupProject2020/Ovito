@@ -126,6 +126,11 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 			# Look for other shared libraries in the same directory.
 			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "$ORIGIN")
 		ENDIF()
+
+		IF(NOT BUILD_SHARED_LIBS)
+			# Since we will link this library into the dynamically loaded Python extension module, we need to use the fPIC flag.
+			SET_PROPERTY(TARGET ${target_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
+		ENDIF()
 	ENDIF()
 
 	# Install Python wrapper files.
