@@ -50,7 +50,6 @@ bool PDBImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 	return false;
 }
 
-
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/
@@ -169,7 +168,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			// Count atoms.
 			numAtoms++;
 		}
-		else if(stream.lineStartsWithToken("TER") || stream.lineStartsWithToken("END")) {
+		else if(stream.lineStartsWithToken("TER") || stream.lineStartsWithToken("END") || stream.lineStartsWithToken("ENDMDL")) {
 			// Stop
 			break;
 		}
@@ -311,7 +310,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	// Detect if there are more simulation frames following in the file.
-	for(int i = 0; i < 10; i++) {
+	for(int i = 0; i < 18; i++) {
 		if(stream.eof()) break;
 		stream.readLine();
 		if(stream.lineStartsWithToken("MODEL") || stream.lineStartsWithToken("REMARK") || stream.lineStartsWithToken("TITLE")) {
