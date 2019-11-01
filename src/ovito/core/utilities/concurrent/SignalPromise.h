@@ -26,6 +26,7 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 #include "Promise.h"
+#include "Future.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -33,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
  * A promise that is used for signaling the completion of an operation, but which
  * doesn't provide access to the results of the operation nor does it report the progress.
  */
-class SignalPromise : public Promise<>
+class OVITO_CORE_EXPORT SignalPromise : public Promise<>
 {
 public:
 

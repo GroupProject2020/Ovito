@@ -25,6 +25,7 @@
 
 #include <ovito/core/Core.h>
 #include "Promise.h"
+#include "Future.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 

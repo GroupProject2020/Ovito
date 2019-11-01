@@ -47,7 +47,7 @@ protected:
 	using AsynchronousModifierDelegate::AsynchronousModifierDelegate;
 
 	/// Asynchronous compute engine that does the actual work in a separate thread.
-	class PropertyComputeEngine : public AsynchronousModifier::ComputeEngine
+	class OVITO_STDMOD_EXPORT PropertyComputeEngine : public AsynchronousModifier::ComputeEngine
 	{
 	public:
 

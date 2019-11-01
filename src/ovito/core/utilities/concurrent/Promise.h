@@ -168,7 +168,7 @@ protected:
 };
 
 template<typename... R>
-class Promise : public PromiseBase
+class OVITO_CORE_EXPORT Promise : public PromiseBase
 {
 public:
 

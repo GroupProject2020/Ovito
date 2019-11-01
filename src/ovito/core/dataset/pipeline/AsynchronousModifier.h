@@ -140,6 +140,9 @@ protected:
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
 };
 
+// Export this class template specialization from the DLL under Windows.
+template class OVITO_CORE_EXPORT Future<AsynchronousModifier::ComputeEnginePtr>;
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

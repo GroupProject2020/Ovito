@@ -42,6 +42,12 @@ ELSE()
 	TARGET_COMPILE_DEFINITIONS(muParser PUBLIC "MUPARSER_EXPORT=")
 ENDIF()
 
+# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+IF(NOT BUILD_SHARED_LIBS)
+	SET_TARGET_PROPERTIES(muParser PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+	SET_TARGET_PROPERTIES(muParser PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+ENDIF()
+
 # Make header files of this library available to dependent targets.
 TARGET_INCLUDE_DIRECTORIES(muParser INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 

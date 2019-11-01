@@ -296,7 +296,11 @@ protected:
  * The Task gets automatically configured to use the internal results storage provided by this class.
  */
 template <class TaskType, class Tuple>
+#ifndef Q_CC_MSVC
 class TaskWithResultStorage : public TaskType, private Tuple
+#else
+class TaskWithResultStorage : public TaskType
+#endif
 {
 public:
     /// A special tag parameter type used to differentiate the second TaskWithResultStorage constructor.
@@ -310,10 +314,19 @@ public:
     /// \param args The extra arguments which will be passed to the constructor of the Task derived class.
     template <typename... Args>
     TaskWithResultStorage(Tuple initialResult, Args&&... args)
-        : TaskType(std::forward<Args>(args)...), Tuple(std::move(initialResult))
+        : TaskType(std::forward<Args>(args)...),
+#ifndef Q_CC_MSVC
+        Tuple(std::move(initialResult))
+#else
+        _tuple(std::move(initialResult))
+#endif
     {
         // Inform the Task about the internal storage location for the task results.
+#ifndef Q_CC_MSVC
         this->_resultsTuple = static_cast<Tuple*>(this);
+#else
+        this->_resultsTuple = static_cast<Tuple*>(&_tuple);
+#endif
 #ifdef OVITO_DEBUG
         // This is used in debug builds to detect programming errors and explicitly keep track of whether a result has
         // been assigned to the task.
@@ -329,8 +342,18 @@ public:
     {
         // Inform the Task about the internal storage location for the task results,
         // unless this is a task not having any return value (i.e. empty tuple).
-        if(std::tuple_size<Tuple>::value != 0) this->_resultsTuple = static_cast<Tuple*>(this);
+        if(std::tuple_size<Tuple>::value != 0)
+#ifndef Q_CC_MSVC
+            this->_resultsTuple = static_cast<Tuple*>(this);
+#else
+            this->_resultsTuple = static_cast<Tuple*>(&_tuple);
+#endif
     }
+
+#ifdef Q_CC_MSVC
+private:
+    Tuple _tuple;
+#endif
 };
 
 /**

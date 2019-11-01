@@ -58,15 +58,34 @@ IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
 	# Add Python library and include directory.
 	TARGET_INCLUDE_DIRECTORIES(PyScript PUBLIC ${PYTHON_INCLUDE_PATH})
 	TARGET_LINK_LIBRARIES(PyScript PUBLIC ${PYTHON_LIBRARIES})
+
+	CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/python/ovito/plugins/__init__.embedded.py" "${OVITO_PYTHON_DIRECTORY}/ovito/plugins/__init__.py" COPYONLY)
 ELSE()
 	# Locate the Python headers and library.
 	FIND_PACKAGE(Python3 REQUIRED COMPONENTS Interpreter Development)
 	TARGET_LINK_LIBRARIES(PyScript PUBLIC Python3::Module)
+
+	CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/python/ovito/plugins/__init__.external.py" "${OVITO_PYTHON_DIRECTORY}/ovito/plugins/__init__.py" COPYONLY)
 ENDIF()
+INSTALL(FILES "${OVITO_PYTHON_DIRECTORY}/ovito/plugins/__init__.py" DESTINATION "${OVITO_RELATIVE_PYTHON_DIRECTORY}/ovito/plugins/")
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(PyScript ovito/pyscript/PyScript.h)
+ENDIF()
+
+# Build the monolithic Python extension module if requested.
+IF(OVITO_BUILD_MONOLITHIC AND OVITO_BUILD_PYTHON_PACKAGE)
+	Python3_add_library(ovito_bindings MODULE binding/MonolithicExtension.cpp)
+
+	# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+	SET_TARGET_PROPERTIES(ovito_bindings PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+	SET_TARGET_PROPERTIES(ovito_bindings PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
+	INSTALL(TARGETS ovito_bindings EXPORT OVITO
+		RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
+		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
+		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
 ENDIF()
 
 # Build corresponding GUI plugin.

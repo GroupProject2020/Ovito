@@ -33,8 +33,10 @@ static void registerQtResources()
 {
 #ifdef OVITO_BUILD_MONOLITHIC
 	Q_INIT_RESOURCE(core);
-	Q_INIT_RESOURCE(gui);
 	Q_INIT_RESOURCE(resources);
+	#ifdef OVITO_BUILD_GUI
+		Q_INIT_RESOURCE(gui);
+	#endif
 #endif
 }
 

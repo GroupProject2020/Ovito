@@ -183,6 +183,11 @@ ENDIF()
 IF(OVITO_BUILD_MONOLITHIC)
 	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_BUILD_MONOLITHIC")
 ENDIF()
+IF(OVITO_BUILD_GUI)
+SET_PROPERTY(SOURCE app/Application.cpp
+	APPEND PROPERTY COMPILE_DEFINITIONS
+	"OVITO_BUILD_GUI")
+ENDIF()
 
 # Inject program release version into the source code.
 SET_PROPERTY(SOURCE app/Application.cpp app/StandaloneApplication.cpp

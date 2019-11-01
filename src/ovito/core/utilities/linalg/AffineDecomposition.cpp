@@ -340,7 +340,6 @@ FloatType polar_decomp(Matrix4& M, Matrix4& Q, Matrix4& S)
  */
 Vector3 spect_decomp(Matrix4& S, Matrix4& U)
 {
-	Vector3 kv;
 	FloatType Diag[3],OffD[3]; // OffD is off-diag (by omitted index)
 	FloatType g,h,fabsh,fabsOffDi,t,theta,c,s,tau,ta,OffDq,a,b;
 	const int nxt[] = {Y,Z,X};

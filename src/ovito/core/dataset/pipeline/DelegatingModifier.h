@@ -37,7 +37,7 @@ class OVITO_CORE_EXPORT ModifierDelegate : public RefTarget
 public:
 
 	/// Give modifier delegates their own metaclass.
-	class ModifierDelegateClass : public RefTarget::OOMetaClass
+	class OVITO_CORE_EXPORT ModifierDelegateClass : public RefTarget::OOMetaClass
 	{
 	public:
 
@@ -108,7 +108,7 @@ public:
 	using DelegateBaseType = ModifierDelegate;
 
 	/// Give this modifier class its own metaclass.
-	class DelegatingModifierClass : public ModifierClass
+	class OVITO_CORE_EXPORT DelegatingModifierClass : public ModifierClass
 	{
 	public:
 
@@ -161,7 +161,7 @@ class OVITO_CORE_EXPORT MultiDelegatingModifier : public Modifier
 public:
 
 	/// Give this modifier class its own metaclass.
-	class MultiDelegatingModifierClass : public ModifierClass
+	class OVITO_CORE_EXPORT MultiDelegatingModifierClass : public ModifierClass
 	{
 	public:
 

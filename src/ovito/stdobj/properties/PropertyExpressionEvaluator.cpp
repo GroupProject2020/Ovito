@@ -25,9 +25,8 @@
 #include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "PropertyExpressionEvaluator.h"
-
-#include <QtConcurrent>
 
 namespace Ovito { namespace StdObj {
 
@@ -263,36 +262,16 @@ void PropertyExpressionEvaluator::evaluate(const std::function<void(size_t,size_
 			throw Exception(worker._errorMsg);
 	}
 	else if(nthreads > 1) {
-		std::vector<std::unique_ptr<Worker>> workers;
-		workers.reserve(nthreads);
-		for(size_t i = 0; i < nthreads; i++) {
-			workers.emplace_back(new Worker(*this));
-			if(i == 0) {
-				_variables = workers.back()->_variables;
+		parallelForChunks(elementCount(), [this, &callback, &filter](size_t startIndex, size_t chunkSize) {
+			Worker worker(*this);
+			if(startIndex == 0) {
+				_variables = worker._variables;
 				_referencedVariablesKnown = true;
 			}
-		}
-
-		// Spawn worker threads.
-		QFutureSynchronizer<void> synchronizer;
-		size_t chunkSize = elementCount() / nthreads;
-		OVITO_ASSERT(chunkSize > 0);
-		for(size_t i = 0; i < workers.size(); i++) {
-			// Setup data range.
-			size_t startIndex = chunkSize * i;
-			size_t endIndex = startIndex + chunkSize;
-			if(i == workers.size() - 1) endIndex = elementCount();
-			OVITO_ASSERT(endIndex > startIndex);
-			OVITO_ASSERT(endIndex <= elementCount());
-			synchronizer.addFuture(QtConcurrent::run(workers[i].get(), &Worker::run, startIndex, endIndex, callback, filter));
-		}
-		synchronizer.waitForFinished();
-
-		// Check for errors.
-		for(auto& worker : workers) {
-			if(worker->_errorMsg.isEmpty() == false)
-				throw Exception(worker->_errorMsg);
-		}
+			worker.run(startIndex, startIndex + chunkSize, callback, filter);
+			if(worker._errorMsg.isEmpty() == false)
+				throw Exception(worker._errorMsg);
+		});
 	}
 }
 

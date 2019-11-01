@@ -145,7 +145,7 @@ public:
 	void setContext(QObject* context) { _context = context; }
 
 	//////////////////////////////////////////////////////////////////////////////////////
-	// The following two functions are required by the base class QtConcurrent::Exception
+	// The following two functions are required by the base class QException
 
 	// Raises this exception object.
 	virtual void raise() const override { throw *this; }

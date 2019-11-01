@@ -57,7 +57,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	ENDIF()
 
 	# Link to Qt5.
-	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Core Qt5::Gui Qt5::Concurrent)
+	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Core Qt5::Gui)
 
 	# Link to other required libraries needed by this specific plugin.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC ${lib_dependencies})
@@ -143,7 +143,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 
 	# Make this module part of the installation package.
 	IF(WIN32 AND (${target_name} STREQUAL "Core" OR ${target_name} STREQUAL "Gui"))
-		# On Windows, the Core and Gui DLLs need to be plavced in the same directory
+		# On Windows, the Core and Gui DLLs need to be placed in the same directory
 		# as the Ovito executable, because Windows won't find them if they are in the
 		# plugins subdirectory.
 		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")

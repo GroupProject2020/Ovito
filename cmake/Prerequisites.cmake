@@ -26,9 +26,12 @@ SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # The set of required Qt modules:
-LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui Xml) # Note: Xml is a dependency of the Galamost plugin.
+# Note: QtXml is a dependency of the Galamost plugin.
+LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Network Gui Xml)
 IF(OVITO_BUILD_GUI)
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg DBus) # Note: PrintSupport is an indirect dependency of the Qwt library. DBus is an indirect dependency of the Xcb platform plugin under Linux.
+	# Note: QtConcurrent and QtPrintSupport are a dependency of the Qwt library.
+	# Note: QtDBus is an indirect dependency of the Xcb platform plugin under Linux.
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets Concurrent PrintSupport Svg DBus)
 ENDIF()
 
 # Find the required Qt5 modules.

@@ -37,7 +37,7 @@ class OVITO_CORE_EXPORT AsynchronousModifierDelegate : public RefTarget
 public:
 
 	/// Give asynchronous modifier delegates their own metaclass.
-	class AsynchronousModifierDelegateClass : public RefTarget::OOMetaClass
+	class OVITO_CORE_EXPORT AsynchronousModifierDelegateClass : public RefTarget::OOMetaClass
 	{
 	public:
 
@@ -102,7 +102,7 @@ public:
 	using DelegateBaseType = AsynchronousModifierDelegate;
 
 	/// Give this modifier class its own metaclass.
-	class DelegatingModifierClass : public ModifierClass
+	class OVITO_CORE_EXPORT DelegatingModifierClass : public ModifierClass
 	{
 	public:
 
