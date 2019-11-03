@@ -50,10 +50,5 @@ IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(StdObjGui ovito/stdobj/gui/StdObjGui.h)
 ENDIF()
 
-# Build corresponding Python binding plugin.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(scripting)
-ENDIF()
-
 # Propagate list of plugins to parent scope.
 SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

@@ -1,6 +1,6 @@
 image: registry.gitlab.com/stuko/ovito/linux_build:latest
 
-test_linux_python3:
+test_linux:
    stage: build
    tags:
       - linux
@@ -10,13 +10,10 @@ test_linux_python3:
       - cmake
            -DCMAKE_BUILD_TYPE=Debug
            -DOVITO_BUILD_DOCUMENTATION=ON
-           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON
-           -DPYTHON_EXECUTABLE=/usr/bin/python3m
-           -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m
-           -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so
            -DCMAKE_INSTALL_PREFIX=../install
            ..
       - make -j2 install
+      - ../install/bin/ovito --nogui
       - ctest --output-on-failure
       - linkchecker --check-extern ../install/share/ovito/doc/manual/html/index.html
            --ignore-url=https://dx.doi.org/10.1088/0965-0393/24/5/055007
@@ -26,22 +23,3 @@ test_linux_python3:
            --ignore-url=http://dx.doi.org/10.1038/nature04421
            --ignore-url=http://dx.doi.org/10.1088/0965-0393/20/8/085007
            --ignore-url=http://stacks.iop.org/0965-0393/20/085007
-
-test_linux_python2:
-   stage: build
-   tags:
-      - linux
-   script:
-      - mkdir build
-      - cd build
-      - cmake
-           -DCMAKE_BUILD_TYPE=Debug
-           -DOVITO_BUILD_DOCUMENTATION=ON
-           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON
-           -DPYTHON_EXECUTABLE=/usr/bin/python2
-           -DPYTHON_INCLUDE_DIR=/usr/include/python2.7
-           -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so
-           -DCMAKE_INSTALL_PREFIX=../install
-           ..
-      - make -j2 install
-      - ctest --output-on-failure

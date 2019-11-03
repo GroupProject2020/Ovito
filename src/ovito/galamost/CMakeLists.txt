@@ -28,10 +28,5 @@ OVITO_STANDARD_PLUGIN(Galamost
 	LIB_DEPENDENCIES Qt5::Xml
 )
 
-# Build corresponding Python binding plugin.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(scripting)
-ENDIF()
-
 # Propagate list of plugins to parent scope.
 SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

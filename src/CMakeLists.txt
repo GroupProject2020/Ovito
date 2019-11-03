@@ -35,28 +35,6 @@ IF(OVITO_CMAKE_FILE_INJECTION_PLUGINS)
 	INCLUDE("${OVITO_CMAKE_FILE_INJECTION_PLUGINS}")
 ENDIF()
 
-# When building the monolithic Python extension module,
-# link all plugins into the extension module.
-IF(OVITO_BUILD_MONOLITHIC AND OVITO_BUILD_PYTHON_PACKAGE)
-	FOREACH(plugin ${OVITO_PLUGIN_LIST})
-		IF(APPLE)
-			TARGET_LINK_LIBRARIES(ovito_bindings PRIVATE  -Wl,-force_load ${plugin})
-		ELSEIF(UNIX)
-			TARGET_LINK_LIBRARIES(ovito_bindings PRIVATE  -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
-		ELSE()
-			TARGET_LINK_LIBRARIES(ovito_bindings PRIVATE ${plugin})
-			IF(MSVC)
-				SET_PROPERTY(TARGET ovito_bindings APPEND_STRING PROPERTY LINK_FLAGS " /WHOLEARCHIVE:${plugin}")
-			ENDIF()
-		ENDIF()
-	ENDFOREACH()
-ENDIF()
-
-# Build the Python script interpreter 'ovitos'.
-IF(OVITO_BUILD_GUI AND OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(ovitos_exe)
-ENDIF()
-
 # Build the main application executable 'ovito'.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(ovito_exe)

@@ -29,10 +29,5 @@ OVITO_STANDARD_PLUGIN(MeshMod
 	PLUGIN_DEPENDENCIES Mesh StdMod
 )
 
-# Build corresponding Python binding plugin.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(scripting)
-ENDIF()
-
 # Propagate list of plugins to parent scope.
 SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

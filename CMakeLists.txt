@@ -76,12 +76,8 @@ OPTION(OVITO_BUILD_PLUGIN_STDMOD "Build the standard modifiers plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_PARTICLES "Build the plugin for particle and bond data." "ON")
 OPTION(OVITO_BUILD_PLUGIN_MESH "Build the Mesh plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_GRID "Build the Grid plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_TACHYON "Build the Tachyon renderer plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS "Build the CrystalAnalysis plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_PYSCRIPT "Build the Python scripting plugin." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_NETCDFPLUGIN "Build the NetCDF plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray renderer plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_OSPRAY "Build the OSPRay renderer plugin." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the spatial correlation function modifier plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop modifier plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_GALAMOST "Build the GALAMOST I/O plugin." "ON")
@@ -233,20 +229,11 @@ ADD_SUBDIRECTORY(src)
 # Generate user documentation.
 INCLUDE(cmake/Documentation.cmake)
 
-# Ship informational text files with the program.
-IF(APPLE OR WIN32)
-	INSTALL(FILES "${Ovito_SOURCE_DIR}/README.txt" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
-	INSTALL(FILES "${Ovito_SOURCE_DIR}/LICENSE.GPL.txt" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")
-ELSE()
-	INSTALL(FILES "${Ovito_SOURCE_DIR}/README.txt" DESTINATION "./")
-	INSTALL(FILES "${Ovito_SOURCE_DIR}/LICENSE.GPL.txt" DESTINATION "./")
-ENDIF()
-
 # Export our targets so that external plugins can use them.
 #CONFIGURE_FILE(cmake/OVITOConfig.cmake "${Ovito_BINARY_DIR}/" @ONLY)
 #EXPORT(EXPORT OVITO NAMESPACE "Ovito::" FILE OVITOTargets.cmake)
 
 # This allows external CMake projects to inject their customization code into the OVITO project:
-IF(OVITO_CMAKE_FILE_INJECTION)
-	INCLUDE("${OVITO_CMAKE_FILE_INJECTION}")
+IF(OVITO_CMAKE_FILE_INJECTION_PROJECT)
+	INCLUDE("${OVITO_CMAKE_FILE_INJECTION_PROJECT}")
 ENDIF()

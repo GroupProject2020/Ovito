@@ -23,9 +23,6 @@
 # This CMake script compiles the user manual for OVITO
 # by transforming the docbook files to HTML.
 
-# It also generates the scripting interface documentation using
-# Sphinx, and the C++ API documentation using Doxygen.
-
 # Controls the generation of the user manual.
 OPTION(OVITO_BUILD_DOCUMENTATION "Build the user manual" "OFF")
 
@@ -54,63 +51,11 @@ IF(XSLT_PROCESSOR AND OVITO_BUILD_GUI)
 					WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
 
-	# This CMake target generates the user manual which is put onto the www.ovito.org website.
-	# It consists of a set of PHP files that adopt the look and feel of the WordPress site.
-	ADD_CUSTOM_TARGET(wordpress_doc
-					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${Ovito_BINARY_DIR}/doc/wordpress/images/"
-					COMMAND ${XSLT_PROCESSOR} "${XSLT_PROCESSOR_OPTIONS}" --nonet
-						--stringparam base.dir "${Ovito_BINARY_DIR}/doc/wordpress/"
-						--stringparam ovito.version "${OVITO_VERSION_STRING}"
-						wordpress-customization-layer.xsl Manual.docbook
-					WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/manual/"
-					COMMENT "Generating user documentation (WordPress version)")
-
 	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/")
 	IF(OVITO_BUILD_DOCUMENTATION)
 		ADD_DEPENDENCIES(Ovito documentation)
 	ENDIF()
 ENDIf()
-
-# Generate documentation for OVITO's scripting interface.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT AND OVITO_BUILD_GUI)
-
-	IF(APPLE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-		# Workaround for an issue on the macOS platform, where the Qt framework ships with release and debug
-		# builds. Need to make sure the debug version of Qt gets loaded at runtime when running 'ovitos' below.
-		SET(DYLD_IMAGE_SUFFIX "_debug")
-	ENDIF()
-
-	# This CMake target uses the 'ovitos' Python interpreter to run the Sphinx doc program and
-	# generate the scripting documentation for OVITO's Python modules.
-	ADD_CUSTOM_TARGET(scripting_documentation
-		COMMAND "${CMAKE_COMMAND}" -E env DYLD_IMAGE_SUFFIX=${DYLD_IMAGE_SUFFIX}
-			"$<TARGET_FILE:ovitos>" "${Ovito_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
-			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
-			"-D" "release=${OVITO_VERSION_STRING}"
-			"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/"
-		WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/python/"
-		COMMENT "Generating scripting documentation")
-
-	# Run Sphinx only after OVITO and all of its plugins have been built.
-	ADD_DEPENDENCIES(scripting_documentation ovitos)
-
-	# This CMake target generates the online version of the scripting documentation, which
-	# is put onto the www.ovito.org website.
-	ADD_CUSTOM_TARGET(wordpress_doc_scripting
-		COMMAND "${CMAKE_COMMAND}" -E env DYLD_IMAGE_SUFFIX=${DYLD_IMAGE_SUFFIX}
-			"$<TARGET_FILE:ovitos>" "${Ovito_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E"
-			"-c" "${Ovito_SOURCE_DIR}/doc/python/wordpress"
-			"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}"
-			"-D" "release=${OVITO_VERSION_STRING}"
-			"-D" "html_short_title=Ovito ${OVITO_VERSION_STRING}"
-			"." "${Ovito_BINARY_DIR}/doc/wordpress/python/"
-		WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/python/"
-		COMMENT "Generating scripting documentation (WordPress version)")
-
-	IF(OVITO_BUILD_DOCUMENTATION)
-		ADD_DEPENDENCIES(Ovito scripting_documentation)
-	ENDIF()
-ENDIF()
 
 # Find the Doxygen program.
 FIND_PACKAGE(Doxygen QUIET)

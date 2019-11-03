@@ -120,6 +120,6 @@ ELSEIF(APPLE)
 ENDIF()
 
 IF(OVITO_REDISTRIBUTABLE_PACKAGE AND OVITO_BUILD_PLUGIN_PYSCRIPT AND UNIX AND NOT APPLE)
-	# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
+	# Uninstall Python packages from the embedded interpreter that should not be part of the official distribution.
 	INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
 ENDIF()
