@@ -125,16 +125,6 @@
             <entry></entry>
           </row>
           <row>
-            <entry><link xlink:href="https://www.riverbankcomputing.com/static/Docs/QScintilla/">QScintilla2</link></entry>
-            <entry>GPL v3</entry>
-            <entry></entry>
-          </row>
-          <row>
-            <entry><link xlink:href="https://www.scintilla.org/">Scintilla</link></entry>
-            <entry><link linkend="appendix.license.scintilla">license</link></entry>
-            <entry></entry>
-          </row>
-          <row>
             <entry><link xlink:href="https://www.numpy.org/">Numpy</link></entry>
             <entry><link linkend="appendix.license.numpy">license</link></entry>
             <entry></entry>
@@ -211,8 +201,6 @@
   <xi:include href="licenses/voroplusplus.docbook"/>
 
   <xi:include href="licenses/boost.docbook"/>
-
-  <xi:include href="licenses/scintilla.docbook"/>
 
   <xi:include href="licenses/qwt.docbook"/>
 
