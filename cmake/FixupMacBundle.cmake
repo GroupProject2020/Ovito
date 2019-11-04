@@ -95,11 +95,6 @@ INSTALL(CODE "
 			SET(\${type} \"system\" PARENT_SCOPE)
 		ENDIF()
 
-		# This is needed to correctly install PySide and Shiboken2 libraries:
-		IF(resolved_file MATCHES \"@rpath/libpyside2\" OR resolved_file MATCHES \"@rpath/libshiboken2\")
-			SET(\${type} \"system\" PARENT_SCOPE)
-		ENDIF()
-
 	ENDFUNCTION()
 
 	FILE(GLOB_RECURSE QTPLUGINS
@@ -118,10 +113,34 @@ INSTALL(CODE "
 		ENDIF()
 	ENDFOREACH()
 
+	# Include the Python interpreter executable in the IGNORE_ITEM list.
+	SET(IGNORE_ITEM_LIST \"Python\")
+
+	# Collect the filenames of the Shiboken2 and PySide2 libraries.
+	# These shared objects need to be preserved by adding them to the IGNORE_ITEM list of FIXUP_BUNDLE(). 
+	FILE(GLOB PYSIDE_DYNLIBS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/Versions/*.*/lib/python*/site-packages/PySide2/*.dylib\")
+	FILE(GLOB PYSIDE_SOLIBS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/Versions/*.*/lib/python*/site-packages/PySide2/*.so\")
+	FILE(GLOB SHIBOKEN_DYNLIBS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/Versions/*.*/lib/python*/site-packages/shiboken2/*.dylib\")
+	FILE(GLOB SHIBOKEN_SOLIBS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/Versions/*.*/lib/python*/site-packages/shiboken2/*.so\")
+	FOREACH(lib \${PYSIDE_DYNLIBS} \${PYSIDE_SOLIBS} \${SHIBOKEN_DYNLIBS} \${SHIBOKEN_SOLIBS})
+		GET_FILENAME_COMPONENT(lib_filename \"\${lib}\" NAME)
+		LIST(APPEND IGNORE_ITEM_LIST \"\${lib_filename}\")
+	ENDFOREACH()
+
 	MESSAGE(\"Bundle libs: \${BUNDLE_LIBS}\")
 	SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
 	INCLUDE(BundleUtilities)
-	FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
+	FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \${IGNORE_ITEM_LIST})
+
+	# Fix the rpath information of the PySide2/Shiboken2 libraries.
+	FOREACH(lib \${PYSIDE_DYNLIBS} \${PYSIDE_SOLIBS} \${SHIBOKEN_DYNLIBS} \${SHIBOKEN_SOLIBS})
+		MESSAGE(\"Adding @loader_path to rpath list of \${lib}\")
+		EXECUTE_PROCESS(COMMAND install_name_tool -add_rpath \"@loader_path/\" \"\${lib}\" RESULT_VARIABLE install_name_tool_result)
+		IF(install_name_tool_result)
+			MESSAGE(FATAL_ERROR \"install_name_tool returned error code \${install_name_tool_result}\")
+		ENDIF()
+	ENDFOREACH()
+
 ")
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
@@ -144,6 +163,6 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 		ENDFOREACH()
 	")
 
-	# Uninstall Python PIP packages from the embedded interpreter that should not be part of the official distribution.
+	# Uninstall PyPI packages from the embedded interpreter that should not be part of the official distribution.
 	INSTALL(CODE "${OVITO_UNINSTALL_UNUSED_PYTHON_MODULES_CODE}")
 ENDIF()
