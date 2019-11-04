@@ -26,7 +26,7 @@
     The <guibutton>Edit script</guibutton> button opens the code editor where you enter the code for the custom <literal>render()</literal> function.
 	This function is invoked by OVITO each time the viewport needs to be repainted or
     when an image or movie frame is being rendered. The function's first parameter is a
-    <link xlink:href="https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtgui/qpainter.html"><literal>QPainter</literal></link> object,
+    <link xlink:href="https://doc.qt.io/qtforpython/PySide2/QtGui/QPainter.html"><literal>QPainter</literal></link> object,
     which allows to issue arbitrary drawing command and paint over the picture of the three-dimensional scene rendered by OVITO.
     The second parameter, <literal>args</literal>, is a dictionary containing additional information
     such as the viewport being rendered, the general render settings, and the viewport's projection parameters.

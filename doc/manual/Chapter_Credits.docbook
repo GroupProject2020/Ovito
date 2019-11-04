@@ -120,8 +120,8 @@
             <entry></entry>
           </row>
           <row>
-            <entry><link xlink:href="https://www.riverbankcomputing.com/software/pyqt/">PyQt5</link></entry>
-            <entry>GPL v3</entry>
+            <entry><link xlink:href="https://pypi.org/project/PySide2/">PySide2</link></entry>
+            <entry>LGPL v3</entry>
             <entry></entry>
           </row>
           <row>

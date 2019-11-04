@@ -88,11 +88,18 @@ INSTALL(CODE "
 		ENDIF()
 	ENDFUNCTION()
 
-	# This is needed to correctly install Matplotlib's shared libraries in the .dylibs/ subdirectory:
 	FUNCTION(gp_resolved_file_type_override resolved_file type)
+
+		# This is needed to correctly install Matplotlib's shared libraries in the .dylibs/ subdirectory:
 		IF(resolved_file MATCHES \"@loader_path/\" AND resolved_file MATCHES \"/.dylibs/\")
 			SET(\${type} \"system\" PARENT_SCOPE)
 		ENDIF()
+
+		# This is needed to correctly install PySide and Shiboken2 libraries:
+		IF(resolved_file MATCHES \"@rpath/libpyside2\" OR resolved_file MATCHES \"@rpath/libshiboken2\")
+			SET(\${type} \"system\" PARENT_SCOPE)
+		ENDIF()
+
 	ENDFUNCTION()
 
 	FILE(GLOB_RECURSE QTPLUGINS
