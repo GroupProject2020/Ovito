@@ -14,7 +14,7 @@
     <para>
     See the <link linkend="development.requirements">list of requirements</link>
     and install the required build tools and third-party libraries. OVITO should be compiled with
-    Apple's clang compiler shipping with Xcode.
+    Apple's clang C++ compiler shipping with Xcode.
     It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> for installing many of the required dependencies.
     After setting up MacPorts, run
 <screen><command>sudo port install netcdf pzlib libssh boost cmake docbook-xml doxygen libxslt yasm

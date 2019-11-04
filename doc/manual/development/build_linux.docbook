@@ -10,7 +10,7 @@
   <title>Building OVITO on Linux</title>
 
   <para>
-  Note that the following instructions have been written for Ubuntu Linux 16.04 or later, or any compatible Debian-based distribution.
+  The following instructions have been written for Ubuntu Linux 16.04 or newer, or any compatible Debian-based distribution.
   Other Linux distributions may require slightly different build steps.
   </para>
 
@@ -66,15 +66,15 @@
  <simplesect>
     <title>Getting the source code</title>
     <para>
-    Then download OVITO's source code into a new subdirectory named <filename>ovito/</filename>:
-<screen><command>git clone https://gitlab.com/stuko/ovito.git ovito</command></screen>
+    Download the source repository of OVITO into a new subdirectory named <filename>ovito/</filename>:
+<screen><command>git clone https://gitlab.com/stuko/ovito.git</command></screen>
   </para>
   </simplesect>
 
   <simplesect>
     <title>Compiling OVITO</title>
     <para>
-    Within that directory, create a build directory and let <link xlink:href="http://www.cmake.org/">CMake</link> generate the Makefile:
+    Create a build directory and let <link xlink:href="http://www.cmake.org/">CMake</link> generate a Makefile:
 <screen>
 <command>cd ovito
 mkdir build
@@ -83,14 +83,14 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 </command></screen>
   </para>
   <para>
-    If this step fails, or if you want to disable certain components of OVITO, you can now run "<command>ccmake .</command>" to open the
-    <link xlink:href="http://www.cmake.org/">CMake</link> configuration program.
+    If this step fails, you can now run "<command>ccmake .</command>" to open the
+    <link xlink:href="http://www.cmake.org/">CMake</link> configuration program and adjust the build options as needed.
   </para>
   <para>
-    Finally, compile OVITO:
+    Finally, build OVITO:
 <screen>
 <command>make -j4</command></screen>
-After a successful build, the executable can be found in the <filename>ovito/build/bin</filename> directory.
+When successful, the executable can be found in the <filename>ovito/build/bin</filename> directory.
   </para>
   </simplesect>
 
