@@ -5,6 +5,12 @@ particle simulation data. Visit the official website for more information, the u
 
 <https://www.ovito.org/>
 
+## Building
+
+Build instructions for the source code in this repository can be found here:
+
+<https://www.ovito.org/docs/current/development.php>
+
 ## Contributing
 
 OVITO is an open source project and we are very happy to accept community contributions.

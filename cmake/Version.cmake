@@ -61,7 +61,7 @@ IF(NOT OVITO_COPYRIGHT_NOTICE)
 		 <p>Copyright (C) ${_CURRENT_YEAR}, Alexander Stukowski</p>\
 		 <p>\
 		 This is free, open-source software, and you are welcome to redistribute\
-		 it under certain conditions. See the source for copying conditions.</p>\
+		 it under certain conditions. See the user manual for copying conditions.</p>\
 		 <p><a href=\\\"https://www.ovito.org/\\\">https://www.ovito.org/</a></p>")
 ENDIF()
 

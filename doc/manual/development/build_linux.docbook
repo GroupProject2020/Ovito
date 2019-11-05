@@ -87,10 +87,10 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
     <link xlink:href="http://www.cmake.org/">CMake</link> configuration program and adjust the build options as needed.
   </para>
   <para>
-    Finally, build OVITO:
+    The build OVITO:
 <screen>
 <command>make -j4</command></screen>
-When successful, the executable can be found in the <filename>ovito/build/bin</filename> directory.
+If this step is successful, the executable can be found in the <filename>/ovito/build/bin/</filename> directory.
   </para>
   </simplesect>
 

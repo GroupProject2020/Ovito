@@ -10,7 +10,7 @@
 
   <para>
     The OVITO package includes a binary version of the Qt libraries licensed under the GNU Lesser General Public License (LGPLv3).
-    In accordance with the requirements of this license, this page provides instructions on how to rebuild compatible versions of these binaries from source.
+    In accordance with the requirements of this license, this page provides instructions on how to obtain or rebuild compatible versions of these binaries from source.
   </para>
 
   <simplesect>
@@ -83,7 +83,7 @@ make install
   <simplesect>
     <title>macOS</title>
     <para>
-      OVITO for macOS includes an original and unmodified copy of the Qt 5.12.5 framework distributed by the Qt Company.
+      OVITO for macOS uses an installation of the original Qt 5.12.5 framework distributed by the Qt Company.
     </para>
   </simplesect>
 

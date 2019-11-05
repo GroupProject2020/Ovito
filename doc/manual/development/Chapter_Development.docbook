@@ -10,10 +10,15 @@
   <title>Developer information</title>
 
    <para>
+
+	The source code of OVITO is available on <link xlink:href="https://gitlab.com/stuko/ovito/">GitLab.com</link>.
+	Note that the following build instructions pertain to the <emphasis>Basic</emphasis> edition of OVITO, which
+	is available under the GNU GPLv3 open source license and includes only a reduced set of program features.
+
    <itemizedlist>
-   	<listitem><link linkend="development.build_linux">Compiling OVITO on Linux</link></listitem>
-   	<listitem><link linkend="development.build_windows">Compiling OVITO on Windows</link></listitem>
-   	<listitem><link linkend="development.build_macosx">Compiling OVITO on macOS</link></listitem>
+   	<listitem><link linkend="development.build_linux">Building OVITO on Linux</link></listitem>
+   	<listitem><link linkend="development.build_windows">Building OVITO on Windows</link></listitem>
+   	<listitem><link linkend="development.build_macosx">Building OVITO on macOS</link></listitem>
    	<!--
    	<listitem><link xlink:href="http://ovito.org/apidoc/">OVITO C++ API documentation</link></listitem>
    	 -->
@@ -21,18 +26,18 @@
    </para>
 
   <simplesect xml:id="development.requirements">
-    <title>Build requirements</title>
+    <title>Requirements</title>
     <para>
-    The required tools to build OVITO from source are:
+    The prerequisites for building OVITO from source are:
     <informaltable>
     <tgroup cols="3"><thead><row><entry>Tool/Package</entry><entry>Requirement</entry><entry>Notes</entry></row></thead>
     <tbody>
 		<row><entry>C++ compiler</entry><entry>required</entry>
-		<entry>Compiler must support the C++14 standard (e.g. GNU g++ 4.8 or newer)</entry></row>
+		<entry>Compiler must support C++14 language standard (e.g. GNU g++ 4.8 or newer)</entry></row>
 		<row><entry><link xlink:href="http://cmake.org/">CMake</link></entry><entry>required</entry>
 		<entry>The build system used by OVITO (CMake 3.1 or newer required)</entry></row>
 		<row><entry><link xlink:href="http://git-scm.com/">Git</link></entry><entry>required</entry>
-		<entry>The distributed version control system needed to retrieve OVITO's source code</entry></row>
+		<entry>The distributed version control system needed to retrieve the source code</entry></row>
 		<row><entry><link xlink:href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</link></entry><entry>optional</entry>
 		<entry>The XSLT processor for generating the user manual</entry></row>
 		<row><entry><link xlink:href="http://www.docbook.org/">DocBook</link></entry><entry>optional</entry>
@@ -58,7 +63,7 @@
 	</tbody></tgroup>
 	</informaltable>
     The sources of the following third-party libraries are included in the OVITO source distribution
-	and will be automatically built and used if not present on the local system:
+	and get compiled automatically as part of the build process:
 	<informaltable>
     <tgroup cols="2"><thead><row><entry>Library</entry><entry>Notes</entry></row></thead>
     <tbody>

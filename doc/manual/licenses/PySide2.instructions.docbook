@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0" role="NotInToc"
+          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+          xml:id="appendix.license.pyside2.instructions" xmlns="http://docbook.org/ns/docbook"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Build instructions for PySide2</title>
+
+  <para>
+    The OVITO package includes a distribution of the PySide2 module and Shiboken2 module licensed under the GNU Lesser General Public License (LGPLv3).
+    In accordance with the requirements of this license, this page provides instructions on how to obtain or rebuild compatible versions of these binary modules from source.
+  </para>
+
+  <simplesect>
+    <title>Windows</title>
+    <para>
+      OVITO for Windows ships with a copy of the PySide2 module that has been built from the original sources provided by
+      the Qt Company, following the standard procedure described <link xlink:href="https://wiki.qt.io/Qt_for_Python/GettingStarted/Windows">here</link>.
+      PySide2 v5.12 has been compiled against Qt 5.12.5 (msvc2017 64-bit) and a standard <link xlink:href="https://www.python.org">CPython</link> 3.7 interpreter for Windows 64-bit:
+<programlisting>
+# Build platform: Windows 10 64-bit
+# Compiler: MSVC 2017
+git clone --recursive https://code.qt.io/pyside/pyside-setup
+cd pyside-setup
+git checkout 5.12
+python3.7 setup.py install \
+  --ignore-git \
+  --module-subset=Core,Gui,Widgets,Xml,Network,Svg \
+  --skip-docs
+</programlisting>
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Linux</title>
+    <para>
+      OVITO for Linux ships with a copy of the PySide2 module that has been built from the original sources provided by
+      the Qt Company, following the standard procedure described <link xlink:href="https://wiki.qt.io/Qt_for_Python_GettingStarted/X11">here</link>.
+      PySide2 v5.12 has been compiled against Qt 5.12.5 (see <link linkend="appendix.license.qt.instructions">here</link>) and a build of the standard <link xlink:href="https://www.python.org">CPython</link> 3.7 interpreter:
+<programlisting>
+# Build platform: CentOS 6.9
+# Compiler: g++ 7.1 (CentOS devtoolset-7)
+git clone --recursive https://code.qt.io/pyside/pyside-setup
+cd pyside-setup
+git checkout 5.12
+python3 setup.py install \
+  --qmake=$HOME/progs/qt5/bin/qmake \
+  --ignore-git \
+  --module-subset=Core,Gui,Widgets,Xml,Network,Svg \
+  --skip-docs
+</programlisting>
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>macOS</title>
+    <para>
+      OVITO for macOS ships with a copy of the PySide2 module that has been built from the original sources provided by
+      the Qt Company, following the standard procedure described <link xlink:href="https://wiki.qt.io/Qt_for_Python_GettingStarted/MacOS">here</link>.
+      PySide2 v5.12 has been compiled against Qt 5.12.5 () and a standard installation of the <link xlink:href="https://www.python.org">CPython</link> 3.7 interpreter for macOS (64-bit):
+<programlisting>
+git clone --recursive https://code.qt.io/pyside/pyside-setup
+cd pyside-setup
+git checkout 5.12
+sudo CLANG_INSTALL_DIR=$HOME/progs/libclang python3.7 setup.py install \
+  --qmake=`echo $HOME/Qt/5.*.*/clang_64/bin/qmake` \
+  --ignore-git \
+  --module-subset=Core,Gui,Widgets,Xml,Network,Svg \
+  --skip-docs
+</programlisting>
+    </para>
+  </simplesect>
+
+</section>

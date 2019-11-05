@@ -9,13 +9,19 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Credits and licensing information</title>
 
-  <para>OVITO has been developed by Alexander Stukowski and other contributors and is licensed under the terms of the <link
-  linkend="appendix.GPL">GNU General Public License (v3)</link>.</para>
+  <para>
+    OVITO has been developed by Alexander Stukowski and other contributors.
+  </para>
 
-  <para>This user manual has been written by Alexander Stukowski and is licensed under the terms of the <link
-  linkend="appendix.GFDL">GNU Free Documentation License</link>.</para>
+  <para>
+    The <emphasis>Pro</emphasis> edition of OVITO in binary form is licensed under <link linkend="appendix.license.ovito_pro">the terms found here</link>.
+    The <emphasis>Basic</emphasis> edition of OVITO in binary form is licensed under the terms of the <link linkend="appendix.GPL">GNU General Public License (v3)</link>.
+    The complete source code for the <emphasis>Basic</emphasis> edition can be found on <link xlink:href="https://gitlab.com/stuko/ovito/">GitLab.com</link>.
+  </para>
 
-  <para>The following third-party codes are part of OVITO:
+  <para>This user manual was written by Alexander Stukowski and is licensed under the terms of the <link linkend="appendix.GFDL">GNU Free Documentation License</link>.</para>
+
+  <para>The following third-party libraries are being used as parts of OVITO:
     <informaltable>
       <tgroup cols="3">
         <colspec colname='name'/>
@@ -122,7 +128,7 @@
           <row>
             <entry><link xlink:href="https://pypi.org/project/PySide2/">PySide2</link></entry>
             <entry>LGPL v3</entry>
-            <entry></entry>
+            <entry><link linkend="appendix.license.pyside2.instructions">Info</link></entry>
           </row>
           <row>
             <entry><link xlink:href="https://www.numpy.org/">Numpy</link></entry>
@@ -170,6 +176,8 @@
   </para>
 
 
+  <xi:include href="licenses/ovito_pro.docbook"/>
+
   <xi:include href="licenses/GPL.docbook"/>
 
   <xi:include href="licenses/FDL.docbook"/>
@@ -211,5 +219,7 @@
   <xi:include href="licenses/libav.instructions.docbook"/>
 
   <xi:include href="licenses/pegtl.docbook"/>
+
+  <xi:include href="licenses/PySide2.instructions.docbook"/>
 
 </chapter>
