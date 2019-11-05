@@ -46,7 +46,7 @@ TaskManager::TaskManager(DataSetContainer* datasetContainer) : _datasetContainer
 TaskManager::~TaskManager()
 {
     for(TaskWatcher* watcher : runningTasks()) {
-        OVITO_ASSERT_MSG(watcher->isFinished() || watcher->isCanceled(), "TaskManager destructor",
+        OVITO_ASSERT_MSG(watcher->task()->isFinished() || watcher->isCanceled(), "TaskManager destructor",
                         "Some tasks are still in progress while destroying the TaskManager.");
     }
 }
@@ -166,11 +166,13 @@ void TaskManager::cancelAllAndWait()
 void TaskManager::waitForAll()
 {
 	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
-	do {
-		QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-		QCoreApplication::sendPostedEvents(nullptr, OvitoObjectExecutor::workEventType());
+	if(!QCoreApplication::closingDown()) {
+		do {
+			QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+			QCoreApplication::sendPostedEvents(nullptr, OvitoObjectExecutor::workEventType());
+		}
+		while(!runningTasks().empty());
 	}
-	while(!runningTasks().empty());
 }
 
 /******************************************************************************

@@ -59,7 +59,7 @@ python3 setup.py install \
     <para>
       OVITO for macOS ships with a copy of the PySide2 module that has been built from the original sources provided by
       the Qt Company, following the standard procedure described <link xlink:href="https://wiki.qt.io/Qt_for_Python_GettingStarted/MacOS">here</link>.
-      PySide2 v5.12 has been compiled against Qt 5.12.5 () and a standard installation of the <link xlink:href="https://www.python.org">CPython</link> 3.7 interpreter for macOS (64-bit):
+      PySide2 v5.12 has been compiled against Qt 5.12.5 (macOS) and a standard installation of the <link xlink:href="https://www.python.org">CPython</link> 3.7 interpreter for macOS (64-bit):
 <programlisting>
 git clone --recursive https://code.qt.io/pyside/pyside-setup
 cd pyside-setup
