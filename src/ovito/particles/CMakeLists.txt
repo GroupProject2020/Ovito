@@ -103,7 +103,6 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 		modifier/modify/ParticlesAffineTransformationModifierDelegate.cpp
 		modifier/modify/ParticlesDeleteSelectedModifierDelegate.cpp
 		modifier/modify/ParticlesReplicateModifierDelegate.cpp
-		modifier/analysis/binning/ParticlesSpatialBinningModifierDelegate.cpp
 		modifier/properties/ParticlesComputePropertyModifierDelegate.cpp
 		modifier/properties/BondsComputePropertyModifierDelegate.cpp
 		modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp

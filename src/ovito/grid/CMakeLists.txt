@@ -25,7 +25,6 @@ SET(SourceFiles
 	objects/VoxelGridVis.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
-	modifier/SpatialBinningModifier.cpp
 	io/VTKVoxelGridExporter.cpp
 )
 

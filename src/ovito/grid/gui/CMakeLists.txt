@@ -24,7 +24,6 @@
 OVITO_STANDARD_PLUGIN(GridGui
 	SOURCES
 		modifier/CreateIsosurfaceModifierEditor.cpp
-		modifier/SpatialBinningModifierEditor.cpp
 		objects/VoxelGridVisEditor.cpp
 	PLUGIN_DEPENDENCIES Grid StdObjGui
 	GUI_PLUGIN
