@@ -183,6 +183,12 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 {
 	_framesListFuture.reset();
 
+	// If there are too many frames, time tick values may overflow. Warn the user in this case. 
+	if(frames.size() >= animationTimeToSourceFrame(TimePositiveInfinity())) {
+		qWarning() << "Warning: Number of frames in loaded trajectory exceeds the maximum supported by OVITO (" << (animationTimeToSourceFrame(TimePositiveInfinity())-1) << " frames). "
+			"Note: You can increase the limit by setting the animation frames-per-second parameter to a higher value.";
+	}
+
 	// Invalidate all cached frames that are no longer present.
 	for(int frameIndex = frames.size(); frameIndex < _frames.size(); frameIndex++)
 		invalidateFrameCache(frameIndex);
