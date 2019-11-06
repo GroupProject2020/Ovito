@@ -46,7 +46,7 @@
               <entry>Shows a color legend for a <link linkend="particles.modifiers.color_coding">Color coding</link> modifier</entry>
             </row>
             <row>
-              <entry><link linkend="viewport_overlays.python_script">Python&#xA0;script</link></entry>
+              <entry><link linkend="viewport_overlays.python_script">Python&#xA0;script</link><ovito-pro/></entry>
               <entry>Calls your own Python script function to draw arbitrary graphics on top of the rendered image</entry>
             </row>
             <row>

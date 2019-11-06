@@ -39,7 +39,7 @@
               <entry>Calculates local strain tensors based on the relative motion of neighboring particles. </entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.bin_and_reduce">Spatial&#xA0;binning</link></entry>
+              <entry><link linkend="particles.modifiers.bin_and_reduce">Spatial&#xA0;binning</link><ovito-pro/></entry>
               <entry>Aggregates a particle property over a one-, two- or three-dimensional bin grid.</entry>
             </row>
             <row>
@@ -133,8 +133,8 @@
               <entry>Loads time-dependent atomic positions from a separate trajectory file.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.python_script">Python&#xA0;script</link></entry>
-              <entry>Allows you to write your own modifier in Python.</entry>
+              <entry><link linkend="particles.modifiers.python_script">Python&#xA0;script</link><ovito-pro/></entry>
+              <entry>Lets you write your own modifier function in Python.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.show_periodic_images">Replicate</link></entry>

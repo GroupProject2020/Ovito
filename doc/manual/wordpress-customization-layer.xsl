@@ -62,6 +62,11 @@
     <xsl:value-of select="'inlinefigure'"/>
   </xsl:template>
 
+  <!-- Template for an element that generates a tag for marking program features of the PRO version -->
+  <xsl:template match="ovito-pro" name="ovito-pro">
+    <span class="ovito-pro-tag" data-tooltip="This program feature is only available in the Pro edition of OVITO" data-tooltip-position="bottom">pro</span>
+  </xsl:template>
+
   <!-- Template for an element that generates a link into the Sphinx-generated Python API documentation -->
   <xsl:template match="pydoc-link">
     <xsl:param name="href" select="@href" />
@@ -69,6 +74,7 @@
     <xsl:call-template name="link">
       <xsl:with-param name="xhref" select="concat('python/', @href, '.php', '#', @anchor)"/>
     </xsl:call-template>
+    <xsl:call-template name="ovito-pro" />
   </xsl:template>
 
   <xsl:template name="chunk-element-content">

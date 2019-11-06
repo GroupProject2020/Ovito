@@ -16,10 +16,10 @@
      OVITO currently has no built-in function to add a scale to an image, but it is possible to
      use an OVITO Python script to paint a custom scale bar on top of a viewport or a rendered image.
   </para>
-  
+
   <para>
-     For this you have to add a <link linkend="viewport_overlays.python_script">Python script overlay</link> to 
-     the viewport where you want to display a scale bar. You can then copy/paste the example Python script 
+     For this you have to add a <link linkend="viewport_overlays.python_script">Python script overlay</link><ovito-pro/> to
+     the viewport where you want to display a scale bar. You can then copy/paste the example Python script
      from <link linkend="viewport_overlays.python_script">this page</link> into the script field
      of the viewport overlay.
   </para>

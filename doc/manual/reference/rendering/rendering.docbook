@@ -45,15 +45,15 @@
               <entry>Hardware-accelerated renderer, which is also used for realtime display in the interactive viewports</entry>
             </row>
             <row>
-              <entry><link linkend="rendering.tachyon_renderer">Tachyon&#xA0;renderer</link></entry>
+              <entry><link linkend="rendering.tachyon_renderer">Tachyon&#xA0;renderer</link><ovito-pro/></entry>
               <entry>Software-based raytracing renderer, with support for ambient occlusion lighting, shadows and depth of field</entry>
             </row>
             <row>
-              <entry><link linkend="rendering.ospray_renderer">OSPRay&#xA0;renderer</link></entry>
+              <entry><link linkend="rendering.ospray_renderer">OSPRay&#xA0;renderer</link><ovito-pro/></entry>
               <entry>Another highly optimized software rendering engine with similar features as the Tachyon renderer but reduced memory requirements</entry>
             </row>
             <row>
-              <entry><link linkend="rendering.povray_renderer">POV-Ray&#xA0;renderer</link></entry>
+              <entry><link linkend="rendering.povray_renderer">POV-Ray&#xA0;renderer</link><ovito-pro/></entry>
               <entry>This engine automatically invokes the external POV-Ray software to render OVITO scenes</entry>
             </row>
           </tbody>

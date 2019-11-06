@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Spatial binning</title>
+  <title>Spatial binning<ovito-pro/></title>
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
@@ -71,14 +71,14 @@
       <varlistentry>
         <term>Binning direction(s)</term>
         <listitem>
-          <para>This selects along which axes of the simulation cell the bins are created and determines the dimensionality of
+          <para>This option selects the axes of the simulation cell along which the bins are created. It determines the dimensionality of
           the generated grid.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>Number of bins</term>
         <listitem>
-          <para>Number of bins in each active binning direction.</para>
+          <para>Number of bins in each of the active binning directions.</para>
         </listitem>
       </varlistentry>      <varlistentry>
         <term>Reduction operation</term>
