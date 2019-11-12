@@ -154,7 +154,7 @@ hr {
 }
 .navheader .ovito-pro-tag,.navfooter .ovito-pro-tag {
     display: none;
-};
+}
 
 [data-tooltip] {
     display: inline-block;
