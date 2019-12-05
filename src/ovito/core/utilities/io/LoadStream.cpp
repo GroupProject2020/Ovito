@@ -249,6 +249,31 @@ LoadStream& operator>>(LoadStream& stream, OvitoClassPtr& clazz)
 	return stream;
 }
 
+/******************************************************************************
+* Reads a URL from the input stream.
+******************************************************************************/
+LoadStream& operator>>(LoadStream& stream, QUrl& url)
+{
+	// Load original URL from stream.
+	stream.loadValue(url, std::false_type());
+	// Additionally load the relative path.
+	QString relativePath;
+	stream >> relativePath;
+	// Resolve relative path against path of current input file.
+	if(relativePath.isEmpty() == false && url.isLocalFile()) {
+		QFileInfo relativeFileInfo(relativePath);
+		OVITO_ASSERT(!relativeFileInfo.isAbsolute());
+		if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(stream.dataStream().device())) {
+			QFileInfo streamFile(fileDevice->fileName());
+			if(streamFile.isAbsolute()) {
+				url = QUrl::fromLocalFile(QFileInfo(streamFile.dir(), relativeFileInfo.filePath()).absoluteFilePath());
+			}
+		}
+	}
+
+	return stream;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

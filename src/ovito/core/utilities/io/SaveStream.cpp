@@ -170,6 +170,32 @@ SaveStream& operator<<(SaveStream& stream, const OvitoClassPtr& clazz)
 	return stream;
 }
 
+/******************************************************************************
+* Writes a URL to a SaveStream.
+******************************************************************************/
+SaveStream& operator<<(SaveStream& stream, const QUrl& url)
+{
+	// Write original URL to stream.
+	stream.writeValue(url, std::false_type());
+	// Additionally write the path relative to current output file to stream.
+	// Currently this only works if the file referenced by the URL is in the same directory as the stream destination file.
+	QString relativePath;
+	if(url.isLocalFile() && !url.isRelative()) {
+		// Extract relative portion of path (only if both the scene file path and the external file path are absolute).
+		if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(stream.dataStream().device())) {
+			QFileInfo streamFile(fileDevice->fileName());
+			if(streamFile.isAbsolute()) {
+				QFileInfo dataFile(url.toLocalFile());
+				if(dataFile.path() == streamFile.path()) {
+					relativePath = dataFile.fileName();
+				}
+			}
+		}
+	}
+	stream << relativePath;
+	return stream;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

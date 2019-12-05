@@ -629,9 +629,12 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 ******************************************************************************/
 void DataSet::saveToFile(const QString& filePath)
 {
-	QFile fileStream(filePath);
+	// Make path absolute.
+	QString absolutePath = QFileInfo(filePath).absoluteFilePath();
+
+	QFile fileStream(absolutePath);
     if(!fileStream.open(QIODevice::WriteOnly))
-    	throwException(tr("Failed to open output file '%1' for writing.").arg(filePath));
+    	throwException(tr("Failed to open output file '%1' for writing.").arg(absolutePath));
 
 	QDataStream dataStream(&fileStream);
 	ObjectSaveStream stream(dataStream);
@@ -639,7 +642,7 @@ void DataSet::saveToFile(const QString& filePath)
 	stream.close();
 
 	if(fileStream.error() != QFile::NoError)
-		throwException(tr("Failed to write output file '%1'.").arg(filePath));
+		throwException(tr("Failed to write output file '%1'.").arg(absolutePath));
 	fileStream.close();
 }
 

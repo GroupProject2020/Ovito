@@ -360,27 +360,7 @@ inline LoadStream& operator>>(LoadStream& stream, boost::dynamic_bitset<>& bs)
 /// \param url The object that the will receive the loaded data.
 /// \return The source stream.
 /// \throw Exception if an I/O error has occurred.
-inline LoadStream& operator>>(LoadStream& stream, QUrl& url)
-{
-	// Load original URL from stream.
-	stream.loadValue(url, std::false_type());
-	// Additionally load the relative path.
-	QString relativePath;
-	stream >> relativePath;
-	// Resolve relative path against path of current input file.
-	if(relativePath.isEmpty() == false && url.isLocalFile()) {
-		QFileInfo relativeFileInfo(relativePath);
-		OVITO_ASSERT(!relativeFileInfo.isAbsolute());
-		if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(stream.dataStream().device())) {
-			QFileInfo streamFile(fileDevice->fileName());
-			if(streamFile.isAbsolute()) {
-				url = QUrl::fromLocalFile(QFileInfo(streamFile.dir(), relativeFileInfo.filePath()).absoluteFilePath());
-			}
-		}
-	}
-
-	return stream;
-}
+extern OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, QUrl& url);
 
 /// \brief Reads a reference to an OvitoObject derived class type from the input stream.
 /// \relates LoadStream
