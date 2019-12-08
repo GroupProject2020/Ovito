@@ -32,7 +32,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 FrameBufferWindow::FrameBufferWindow(QWidget* parent) :
 	QMainWindow(parent, (Qt::WindowFlags)(Qt::Tool | Qt::CustomizeWindowHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint))
 {
-	setAttribute(Qt::WA_MacAlwaysShowToolWindow);
+	// Note: This line has been disabled, because it leads to sporadic program crashes (Qt 5.12.5).
+//	setAttribute(Qt::WA_MacAlwaysShowToolWindow);
 
 	class MyScrollArea : public QScrollArea {
 	public:
