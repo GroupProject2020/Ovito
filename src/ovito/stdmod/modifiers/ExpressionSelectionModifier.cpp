@@ -98,6 +98,8 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, Pi
 		state.intersectStateValidity(time);
 
 	// Report the total number of selected elements as a pipeline attribute.
+	state.addAttribute(QStringLiteral("ExpressionSelection.count"), QVariant::fromValue(nselected.load()), modApp);
+	// For backward compatibility with OVITO 2.9.0.
 	state.addAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()), modApp);
 
 	// Update status display in the UI.
