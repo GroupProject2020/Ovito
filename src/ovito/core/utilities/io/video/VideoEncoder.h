@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,7 +38,7 @@ extern "C" {
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * \brief Wrapper class for the FFmpeg video encoding library.
+ * \brief Wrapper class for the ffmpeg video encoding library.
  */
 class OVITO_CORE_EXPORT VideoEncoder : public QObject
 {
@@ -52,7 +52,6 @@ public:
 		QByteArray name;
 		QString longName;
 		QStringList extensions;
-
 		AVOutputFormat* avformat;
 	};
 
@@ -88,10 +87,10 @@ private:
 	std::unique_ptr<quint8[]> _pictureBuf;
 	std::vector<quint8> _outputBuf;
 	std::shared_ptr<AVFrame> _frame;
-	AVStream* _videoStream;
-	std::shared_ptr<AVCodecContext> _codecContext;
-	SwsContext* _imgConvertCtx;
-	bool _isOpen;
+	AVStream* _videoStream = nullptr;
+	SwsContext* _imgConvertCtx = nullptr;
+	bool _isOpen = false;
+	int _numFrames = 0;
 
 	/// The list of supported video formats.
 	static QList<Format> _supportedFormats;
@@ -103,5 +102,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

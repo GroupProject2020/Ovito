@@ -1,38 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0" role="NotInToc"
           xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-          xml:id="appendix.license.libav.instructions" xmlns="http://docbook.org/ns/docbook"
+          xml:id="appendix.license.ffmpeg.instructions" xmlns="http://docbook.org/ns/docbook"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xmlns:xs="http://www.w3.org/2001/XMLSchema"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Build instructions for Libav</title>
+  <title>Build instructions for ffmpeg</title>
 
   <para>
-    The OVITO package includes a binary version of the Libav library licensed under the GNU Lesser General Public License (LGPLv2.1).
-    In accordance with the requirements of this license, this page provides instructions on how to rebuild a compatible version of the library from source code.
+    The OVITO package includes binary versions of the ffmpeg libraries licensed under the GNU Lesser General Public License (LGPLv2.1).
+    In accordance with the requirements of this license, this page provides instructions on how to rebuild compatible versions of these libraries from source code.
   </para>
 
   <simplesect>
     <title>Windows</title>
     <para>
-      OVITO for Windows includes binaries that have been built from the unmodified sources of Libav 11.12.
+      OVITO for Windows includes binaries that have been built from the unmodified sources of ffmpeg 4.2.1.
       The following commands have been used to generate them:
 <programlisting>
 # Compiler: Microsoft Visual C++ 2019 (command line tools) + MSYS2 environment
 # Zlib version: 1.2.11
 ./configure \
    --toolchain=msvc \
+   --target-os=win64 \
+   --arch=x86_64 \
    --disable-programs \
    --disable-static \
    --enable-shared \
-   --prefix=../../libav \
+   --prefix=../../ffmpeg \
    --extra-cflags=-I$PWD/../zlib/include  \
-   --extra-ldflags=-L$PWD/../zlib/lib \
+   --extra-ldflags=-LIBPATH:$PWD/../zlib/lib \
    --enable-zlib \
    --disable-doc \
    --disable-network \
-   --disable-filters \
    --disable-debug
 make install
 </programlisting>
@@ -42,7 +43,7 @@ make install
   <simplesect>
     <title>Linux</title>
     <para>
-      OVITO for Linux includes shared libraries that have been built from the unmodified sources of Libav 11.12.
+      OVITO for Linux includes shared libraries that have been built from the unmodified sources of ffmpeg 4.2.1.
       The following commands have been used to generate them:
 <programlisting>
 # Build platform: CentOS 6.9
@@ -55,8 +56,7 @@ make install
   --disable-network \
   --disable-programs \
   --disable-debug \
-  --disable-filters \
-  --prefix=$HOME/progs/libav
+  --prefix=$HOME/progs/ffmpeg
 make install
 </programlisting>
     </para>
@@ -65,7 +65,7 @@ make install
   <simplesect>
     <title>macOS</title>
     <para>
-      OVITO for macOS includes shared libraries that have been built from the unmodified sources of Libav 11.12.
+      OVITO for macOS includes shared libraries that have been built from the unmodified sources of ffmpeg 4.2.1.
       The following commands have been used to generate them:
 <programlisting>
 export MACOSX_DEPLOYMENT_TARGET=10.12
@@ -74,10 +74,9 @@ export MACOSX_DEPLOYMENT_TARGET=10.12
   --disable-programs \
   --disable-debug \
   --disable-doc \
-  --disable-filters \
   --disable-static \
   --enable-shared \
-  --prefix=$HOME/progs/libav
+  --prefix=$HOME/progs/ffmpeg
 make install
 </programlisting>
     </para>

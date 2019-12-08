@@ -20,8 +20,8 @@
 #
 #######################################################################################
 
-# Find Libav libraries for video encoding support.
-FIND_PACKAGE(Libav)
+# Find ffmpeg libraries for video encoding support.
+FIND_PACKAGE(FFMPEG)
 
 # Find the zlib library. It is required for reading/writing compressed data files.
 FIND_PACKAGE(ZLIB REQUIRED)
@@ -141,10 +141,10 @@ SET(SourceFiles
 )
 
 # Include video encoder interface code.
-IF(LIBAV_FOUND)
+IF(FFMPEG_FOUND)
 	LIST(APPEND SourceFiles utilities/io/video/VideoEncoder.cpp)
 ELSE()
-	MESSAGE("Libav video encoding library not found. OVITO will be built without support for video output.")
+	MESSAGE("ffmpeg video encoding library not found. OVITO will be built without support for video output.")
 ENDIF()
 
 # Compile Qt resources, which will be linked into the executable.
@@ -158,10 +158,10 @@ OVITO_STANDARD_PLUGIN(Core
 )
 
 # Link to video encoding lib.
-IF(LIBAV_FOUND)
+IF(FFMPEG_FOUND)
 	TARGET_COMPILE_DEFINITIONS(Core PUBLIC OVITO_VIDEO_OUTPUT_SUPPORT)
-	TARGET_LINK_LIBRARIES(Core PRIVATE "${Libav_LIBRARIES}")
-	TARGET_INCLUDE_DIRECTORIES(Core BEFORE PRIVATE "${Libav_INCLUDE_DIRS}")
+	TARGET_LINK_LIBRARIES(Core PRIVATE "${FFMPEG_LIBRARIES}")
+	TARGET_INCLUDE_DIRECTORIES(Core BEFORE PRIVATE "${FFMPEG_INCLUDE_DIRS}")
 ENDIF()
 
 # Define the OVITO_DEBUG macro in debug builds.
@@ -211,15 +211,15 @@ IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(Core ovito/core/Core.h)
 ENDIF()
 
-# Install Libav video encoding libraries.
-IF(LIBAV_FOUND)
-	FOREACH(lib ${Libav_LIBRARIES})
+# Install ffmpeg video encoding libraries.
+IF(FFMPEG_FOUND)
+	FOREACH(lib ${FFMPEG_LIBRARIES})
 		GET_FILENAME_COMPONENT(base_name "${lib}" NAME_WE)
 		GET_FILENAME_COMPONENT(lib_path "${lib}" PATH)
 		IF(WIN32)
 			FILE(GLOB lib_dll "${lib_path}/${base_name}-*.dll")
 			IF(NOT lib_dll)
-				MESSAGE(FATAL_ERROR "Could not find corresponding DLL for Libav library '${lib}' in same directory.")
+				MESSAGE(FATAL_ERROR "Could not find corresponding DLL for ffmpeg library '${lib}' in same directory.")
 			ENDIF()
 			FOREACH(dll ${lib_dll})
 				OVITO_INSTALL_SHARED_LIB("${dll}" ".")
@@ -227,7 +227,6 @@ IF(LIBAV_FOUND)
 		ELSEIF(UNIX AND NOT APPLE AND (OVITO_REDISTRIBUTABLE_PACKAGE OR OVITO_BUILD_PYTHON_PACKAGE))
 			FILE(GLOB lib_versions "${lib}*")
 			FOREACH(lib_version ${lib_versions})
-#				INSTALL(FILES "${lib_version}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
 				OVITO_INSTALL_SHARED_LIB("${lib_version}" ".")
 			ENDFOREACH()
 		ENDIF()

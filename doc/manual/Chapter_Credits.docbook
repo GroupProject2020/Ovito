@@ -81,9 +81,9 @@
             <entry></entry>
           </row>
           <row>
-            <entry><link xlink:href="https://libav.org">Libav</link></entry>
+            <entry><link xlink:href="https://ffmpeg.org">ffmpeg</link></entry>
             <entry>LGPL v2.1</entry>
-            <entry><link linkend="appendix.license.libav.instructions">Info</link></entry>
+            <entry><link linkend="appendix.license.ffmpeg.instructions">Info</link></entry>
           </row>
           <row>
             <entry><link xlink:href="https://www.unidata.ucar.edu/software/netcdf/">netCDF</link></entry>
@@ -216,7 +216,7 @@
 
   <xi:include href="licenses/libssh.instructions.docbook"/>
 
-  <xi:include href="licenses/libav.instructions.docbook"/>
+  <xi:include href="licenses/ffmpeg.instructions.docbook"/>
 
   <xi:include href="licenses/pegtl.docbook"/>
 

@@ -25,18 +25,18 @@
     Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.12.5 for Mac</link>.
   </para>
   <para>
-Next, download the source code and build a static version of the <link xlink:href="https://libav.org/">Libav</link> video encoding library (optional):
-<screen><command>curl -O https://libav.org/releases/libav-11.12.tar.gz
-tar xzfv libav-11.12.tar.gz
-cd libav-11.12
+Next, download the source code and build the shared version of the <link xlink:href="https://ffmpeg.org/">ffmpeg</link> video encoding library (optional):
+<screen><command>curl -O https://ffmpeg.org/releases/ffmpeg-4.2.1.tar.gz
+tar xzfv ffmpeg-4.2.1.tar.gz
+cd ffmpeg-4.2.1
 ./configure \
 	--disable-network \
 	--disable-programs \
 	--disable-debug \
 	--disable-doc \
-	--disable-filters \
-	--enable-gpl \
-	--prefix=$HOME/libav
+  --disable-static \
+  --enable-shared \
+	--prefix=$HOME/ffmpeg
 make install
 </command></screen>
   </para>
@@ -61,8 +61,8 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=../install \
       -DCMAKE_PREFIX_PATH=`echo $HOME/Qt/5.*.*/clang_64/` \
-      -DLIBAV_INCLUDE_DIR=$HOME/libav/include \
-      -DLIBAV_LIBRARY_DIR=$HOME/libav/lib \
+      -DFFMPEG_INCLUDE_DIR=$HOME/ffmpeg/include \
+      -DFFMPEG_LIBRARY_DIR=$HOME/ffmpeg/lib \
       ..
 </command></screen>
   </para>

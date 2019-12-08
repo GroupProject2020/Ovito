@@ -56,7 +56,7 @@
 		<entry>OVITO uses some utility classes from this C++ library.</entry></row>
 		<row><entry><link xlink:href="http://www.libssh.org/">libssh</link></entry><entry>required</entry>
 		<entry>Used by OVITO's built-in SSH client for remote data access.</entry></row>
-		<row><entry><link xlink:href="http://libav.org/">Libav</link></entry><entry>optional</entry>
+		<row><entry><link xlink:href="http://ffmpeg.org/">ffmpeg</link></entry><entry>optional</entry>
 		<entry>Audio and video processing libraries used by OVITO to write movie files.</entry></row>
 		<row><entry><link xlink:href="http://www.unidata.ucar.edu/software/netcdf/">libnetcdf</link></entry><entry>optional</entry>
 		<entry>Required by the <literal>NetCDF</literal> plugin to read NetCDF files</entry></row>
