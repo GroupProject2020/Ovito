@@ -225,12 +225,16 @@ bool GuiDataSetContainer::fileNew()
 ******************************************************************************/
 bool GuiDataSetContainer::fileLoad(const QString& filename)
 {
+	// Make path absolute.
+	QString absoluteFilepath = QFileInfo(filename).absoluteFilePath();
+
 	// Load dataset from file.
 	OORef<DataSet> dataSet;
 	try {
-		QFile fileStream(filename);
+
+		QFile fileStream(absoluteFilepath);
 		if(!fileStream.open(QIODevice::ReadOnly))
-			throw Exception(tr("Failed to open state file '%1' for reading.").arg(filename), this);
+			throw Exception(tr("Failed to open state file '%1' for reading.").arg(absoluteFilepath), this);
 
 		QDataStream dataStream(&fileStream);
 		ObjectLoadStream stream(dataStream);
@@ -250,7 +254,7 @@ bool GuiDataSetContainer::fileLoad(const QString& filename)
 		stream.close();
 
 		if(!dataSet)
-			throw Exception(tr("State file '%1' does not contain a dataset.").arg(filename), this);
+			throw Exception(tr("State file '%1' does not contain a dataset.").arg(absoluteFilepath), this);
 	}
 	catch(Exception& ex) {
 		// Provide a local context for the error.
@@ -258,7 +262,7 @@ bool GuiDataSetContainer::fileLoad(const QString& filename)
 		throw ex;
 	}
 	OVITO_CHECK_OBJECT_POINTER(dataSet);
-	dataSet->setFilePath(filename);
+	dataSet->setFilePath(absoluteFilepath);
 	setCurrentSet(dataSet);
 	return true;
 }
