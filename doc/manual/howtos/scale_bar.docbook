@@ -19,9 +19,8 @@
 
   <para>
      For this you have to add a <link linkend="viewport_overlays.python_script">Python script overlay</link><ovito-pro/> to
-     the viewport where you want to display a scale bar. You can then copy/paste the example Python script
-     from <link linkend="viewport_overlays.python_script">this page</link> into the script field
-     of the viewport overlay.
+     the viewport where you want to display a scale bar. You can then copy/paste this
+     <pydoc-link href="introduction/examples/overlays/scale_bar">example Python script</pydoc-link> into the script editor of the viewport overlay.
   </para>
 
 </section>

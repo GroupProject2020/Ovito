@@ -53,6 +53,11 @@ public:
 				DelaunayTessellation::CellHandle cell) {}
 	};
 
+	// A no-op vertex-preparation functor.
+	struct DefaultPrepareMeshVertexFunc {
+		void operator()(HalfEdgeMesh::vertex_index vertex, size_t particleIndex) {}
+	};
+
 	// A no-op manifold cross-linking functor.
 	struct DefaultLinkManifoldsFunc {
 		void operator()(HalfEdgeMesh::edge_index edge1, HalfEdgeMesh::edge_index edge2) {}
@@ -65,9 +70,9 @@ public:
 			const PropertyStorage& positions) : _tessellation(tessellation), _mesh(outputMesh), _alpha(alpha), _positions(positions) {}
 
 	/// This is the main function, which constructs the manifold triangle mesh.
-	template<typename CellRegionFunc, typename PrepareMeshFaceFunc = DefaultPrepareMeshFaceFunc, typename LinkManifoldsFunc = DefaultLinkManifoldsFunc>
+	template<typename CellRegionFunc, typename PrepareMeshFaceFunc = DefaultPrepareMeshFaceFunc, typename PrepareMeshVertexFunc = DefaultPrepareMeshVertexFunc, typename LinkManifoldsFunc = DefaultLinkManifoldsFunc>
 	bool construct(CellRegionFunc&& determineCellRegion, Task& promise,
-			PrepareMeshFaceFunc&& prepareMeshFaceFunc = PrepareMeshFaceFunc(), LinkManifoldsFunc&& linkManifoldsFunc = LinkManifoldsFunc())
+			PrepareMeshFaceFunc&& prepareMeshFaceFunc = PrepareMeshFaceFunc(), PrepareMeshVertexFunc&& prepareMeshVertexFunc = PrepareMeshVertexFunc(), LinkManifoldsFunc&& linkManifoldsFunc = LinkManifoldsFunc())
 	{
 		// Create the empty spatial region in the output mesh.
 		if(_mesh.regionCount() == 0)
@@ -97,7 +102,7 @@ public:
 		}
 
 		// Create triangle facets at interfaces between two different regions.
-		if(!createInterfaceFacets(std::move(prepareMeshFaceFunc), promise))
+		if(!createInterfaceFacets(std::move(prepareMeshFaceFunc), std::move(prepareMeshVertexFunc), promise))
 			return false;
 
 		promise.nextProgressSubStep();
@@ -330,8 +335,8 @@ private:
 	}
 
 	/// Constructs the triangle facets that separate different regions in the tetrahedral mesh.
-	template<typename PrepareMeshFaceFunc>
-	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, Task& promise)
+	template<typename PrepareMeshFaceFunc, typename PrepareMeshVertexFunc>
+	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, PrepareMeshVertexFunc&& prepareMeshVertexFunc, Task& promise)
 	{
 		// Stores the triangle mesh vertices created for the vertices of the tetrahedral mesh.
 		std::vector<HalfEdgeMesh::vertex_index> vertexMap(_positions.size(), HalfEdgeMesh::InvalidIndex);
@@ -385,6 +390,7 @@ private:
 					OVITO_ASSERT(vertexIndex < vertexMap.size());
 					if(vertexMap[vertexIndex] == HalfEdgeMesh::InvalidIndex) {
 						vertexMap[vertexIndex] = _mesh.createVertex(_positions.getPoint3(vertexIndex));
+						prepareMeshVertexFunc(vertexMap[vertexIndex], vertexIndex);
 					}
 					facetVertices[v] = vertexMap[vertexIndex];
 				}

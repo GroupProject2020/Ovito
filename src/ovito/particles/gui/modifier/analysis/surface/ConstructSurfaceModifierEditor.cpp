@@ -76,26 +76,31 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	sublayout->addWidget(selectSurfaceParticlesUI->checkBox(), 3, 1, 1, 2);
 	connect(alphaShapeMethodBtn, &QRadioButton::toggled, selectSurfaceParticlesUI, &BooleanParameterUI::setEnabled);
 
+	BooleanParameterUI* transferParticlePropertiesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::transferParticleProperties));
+	transferParticlePropertiesUI->setEnabled(false);
+	sublayout->addWidget(transferParticlePropertiesUI->checkBox(), 4, 1, 1, 2);
+	connect(alphaShapeMethodBtn, &QRadioButton::toggled, transferParticlePropertiesUI, &BooleanParameterUI::setEnabled);
+
 	QRadioButton* gaussianDensityBtn = methodUI->addRadioButton(ConstructSurfaceModifier::GaussianDensity, tr("Gaussian density method (experimental):"));
-	sublayout->setRowMinimumHeight(4, 10);
-	sublayout->addWidget(gaussianDensityBtn, 5, 0, 1, 3);
+	sublayout->setRowMinimumHeight(5, 10);
+	sublayout->addWidget(gaussianDensityBtn, 6, 0, 1, 3);
 
 	IntegerParameterUI* gridResolutionUI = new IntegerParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::gridResolution));
 	gridResolutionUI->setEnabled(false);
-	sublayout->addWidget(gridResolutionUI->label(), 6, 1);
-	sublayout->addLayout(gridResolutionUI->createFieldLayout(), 6, 2);
+	sublayout->addWidget(gridResolutionUI->label(), 7, 1);
+	sublayout->addLayout(gridResolutionUI->createFieldLayout(), 7, 2);
 	connect(gaussianDensityBtn, &QRadioButton::toggled, gridResolutionUI, &IntegerParameterUI::setEnabled);
 
 	FloatParameterUI* radiusFactorUI = new FloatParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::radiusFactor));
 	radiusFactorUI->setEnabled(false);
-	sublayout->addWidget(radiusFactorUI->label(), 7, 1);
-	sublayout->addLayout(radiusFactorUI->createFieldLayout(), 7, 2);
+	sublayout->addWidget(radiusFactorUI->label(), 8, 1);
+	sublayout->addLayout(radiusFactorUI->createFieldLayout(), 8, 2);
 	connect(gaussianDensityBtn, &QRadioButton::toggled, radiusFactorUI, &FloatParameterUI::setEnabled);
 
 	FloatParameterUI* isoValueUI = new FloatParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::isoValue));
 	isoValueUI->setEnabled(false);
-	sublayout->addWidget(isoValueUI->label(), 8, 1);
-	sublayout->addLayout(isoValueUI->createFieldLayout(), 8, 2);
+	sublayout->addWidget(isoValueUI->label(), 9, 1);
+	sublayout->addLayout(isoValueUI->createFieldLayout(), 9, 2);
 	connect(gaussianDensityBtn, &QRadioButton::toggled, isoValueUI, &FloatParameterUI::setEnabled);
 
 	QGroupBox* generalGroupBox = new QGroupBox(tr("Options"));

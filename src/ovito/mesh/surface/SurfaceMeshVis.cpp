@@ -339,6 +339,7 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 	if(isCanceled()) return;
 
 	determineFaceColors();
+	determineVertexColors();
 
 	if(_generateCapPolygons) {
 		if(isCanceled()) return;
@@ -346,6 +347,27 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 	}
 
 	setResult(std::move(_surfaceMesh), std::move(_capPolygonsMesh), std::move(_materialColors), std::move(_originalFaceMap));
+}
+
+/******************************************************************************
+* Transfers face colors from the input to the output mesh.
+******************************************************************************/
+void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
+{
+	// To be implemented...
+}
+
+/******************************************************************************
+* Transfers vertex colors from the input to the output mesh.
+******************************************************************************/
+void SurfaceMeshVis::PrepareSurfaceEngine::determineVertexColors()
+{
+	if(PropertyPtr colorProperty = _inputMesh.vertexProperty(SurfaceMeshVertices::ColorProperty)) {
+		_surfaceMesh.setHasVertexColors(true);
+		OVITO_ASSERT(colorProperty->size() == _surfaceMesh.vertexColors().size());
+		std::transform(colorProperty->constDataColor(), colorProperty->constDataColor() + colorProperty->size(),
+			_surfaceMesh.vertexColors().begin(), [](const Color& c) { return ColorA(c); });
+	}
 }
 
 /******************************************************************************

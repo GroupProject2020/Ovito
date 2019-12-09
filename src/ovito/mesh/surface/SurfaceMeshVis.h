@@ -101,7 +101,10 @@ protected:
 		virtual void determineVisibleFaces() {}
 
 		/// This method can be overriden by subclasses to assign colors to invidual mesh faces.
-		virtual void determineFaceColors() {}
+		virtual void determineFaceColors();
+
+		/// This method can be overriden by subclasses to assign colors to invidual mesh vertices.
+		virtual void determineVertexColors();
 
 	private:
 

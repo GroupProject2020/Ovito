@@ -176,6 +176,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 		outputProperty = container->createProperty(destinationProperty().name(),
 			myModApp->property()->dataType(), myModApp->property()->componentCount(),
 			0, true);
+		outputProperty->modifiableStorage()->setComponentNames(myModApp->property()->componentNames());
 	}
 	OVITO_ASSERT(outputProperty->stride() == myModApp->property()->stride());
 

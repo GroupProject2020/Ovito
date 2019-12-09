@@ -142,6 +142,13 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 		textStream() << "0\n";
 	for(size_t i = 0; i < capPolygonsMesh.vertexCount(); i++)
 		textStream() << "1\n";
+	if(surfaceMesh.hasVertexColors()) {
+		textStream() << "COLOR_SCALARS color 4\n";
+		for(const ColorA& c : surfaceMesh.vertexColors())
+			textStream() << c.r() << " " << c.g() << " " << c.b() << " " << c.a() << "\n";
+		for(size_t i = 0; i < capPolygonsMesh.vertexCount(); i++)
+			textStream() << "1 1 1\n";
+	}
 
 	return !operation.isCanceled();
 }

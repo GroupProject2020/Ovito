@@ -60,7 +60,7 @@ JOM: Vol. 66, Issue 3 (2014), 399-407</link></literallayout>
 
   <para>
     The surface construction algorithm requires considerable memory, typically up to 1 kilobyte
-    per input particle. So make sure your system has enough RAM available when applying this modifier to large datasets.
+    per input particle. So make sure your system has enough RAM available when applying this modifier to a large dataset.
   </para>
 
   <para>
@@ -196,8 +196,19 @@ JOM: Vol. 66, Issue 3 (2014), 399-407</link></literallayout>
       <varlistentry>
         <term>Select particles on the surface</term>
         <listitem>
-          <para>This option activates the selection of particles that form the constructed surface.
-          Thus, it provides a way to identify surface atom/particles of a solid.</para>
+          <para>This option lets the modifier select those particles that were used to construct the surface mesh.
+          Thus, this option provides a way to identify the surface atoms of an atomistic structure.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Copy particle properties to surface</term>
+        <listitem>
+          <para>This option transfers the property values of the surface particles to the vertices of the constructed mesh.
+            In particular, the values of the <literal>Color</literal> particle property will be copied over to the surface mesh vertices,
+            giving you a way to control the local coloring of the surface mesh. For example, you can insert the <link linkend="particles.modifiers.color_coding">
+            Color Coding</link> modifier prior to the Construct Surface Mesh modifier to give particles a color.
+            The constructed surface mesh will then inherit the local colors of the input particles if this option is activated.
+          </para>
         </listitem>
       </varlistentry>
 	</variablelist>

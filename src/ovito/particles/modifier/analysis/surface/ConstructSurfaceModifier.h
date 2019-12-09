@@ -140,15 +140,22 @@ private:
 	public:
 
 		/// Constructor.
-		AlphaShapeEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType probeSphereRadius, int smoothingLevel, bool selectSurfaceParticles) :
+		AlphaShapeEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType probeSphereRadius, int smoothingLevel, bool selectSurfaceParticles, std::vector<ConstPropertyPtr> particleProperties) :
 			ConstructSurfaceEngineBase(std::move(positions), std::move(selection), simCell),
 			_probeSphereRadius(probeSphereRadius),
 			_smoothingLevel(smoothingLevel),
 			_totalVolume(std::abs(simCell.matrix().determinant())),
-			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(this->positions()->size(), ParticlesObject::SelectionProperty, true) : nullptr) {}
+			_surfaceParticleSelection(selectSurfaceParticles ? ParticlesObject::OOClass().createStandardStorage(this->positions()->size(), ParticlesObject::SelectionProperty, true) : nullptr),
+			_particleProperties(std::move(particleProperties)) {}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_particleProperties.clear();
+			ConstructSurfaceEngineBase::cleanup();
+		}
 
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
@@ -184,6 +191,9 @@ private:
 
 		/// The selection set containing the particles right on the constructed surfaces.
 		PropertyPtr _surfaceParticleSelection;
+
+		/// The list of particle properties to copy over to the generated mesh.
+		std::vector<ConstPropertyPtr> _particleProperties;
 	};
 
 	/// Compute engine building the surface mesh using the Gaussian density method.
@@ -232,6 +242,9 @@ private:
 
 	/// Controls whether the modifier should select surface particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, selectSurfaceParticles, setSelectSurfaceParticles);
+
+	/// Controls whether property values should be copied over from the input particles to the generated surface vertices.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, transferParticleProperties, setTransferParticleProperties);
 
 	/// The vis element for rendering the surface.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, surfaceMeshVis, setSurfaceMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);

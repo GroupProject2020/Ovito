@@ -43,6 +43,7 @@ DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, probeSphereRadius);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, onlySelectedParticles);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, selectSurfaceParticles);
+DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, transferParticleProperties);
 DEFINE_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshVis);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, method);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, gridResolution);
@@ -52,6 +53,7 @@ SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, smoothingLevel, "Smoothing le
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, probeSphereRadius, "Probe sphere radius");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, onlySelectedParticles, "Use only selected input particles");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, selectSurfaceParticles, "Select particles on the surface");
+SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, transferParticleProperties, "Copy particle properties to surface");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, method, "Construction method");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, gridResolution, "Resolution");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, radiusFactor, "Radius scaling");
@@ -69,6 +71,7 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 	_probeSphereRadius(4),
 	_onlySelectedParticles(false),
 	_selectSurfaceParticles(false),
+	_transferParticleProperties(false),
 	_method(AlphaShape),
 	_gridResolution(50),
 	_radiusFactor(1.0),
@@ -102,16 +105,31 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 	if(simCell->is2D())
 		throwException(tr("The construct surface mesh modifier does not support 2d simulation cells."));
 
-	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(method() == AlphaShape) {
+
+		// Collect the set of particle properties that should be transferred over to the surface mesh vertices.
+		std::vector<ConstPropertyPtr> particleProperties;
+		if(transferParticleProperties()) {
+			for(const PropertyObject* property : particles->properties()) {
+				// Certain properties should not be transferred to the mesh vertices.
+				if(property->type() == ParticlesObject::SelectionProperty) continue;
+				if(property->type() == ParticlesObject::PositionProperty) continue;
+				if(property->type() == ParticlesObject::IdentifierProperty) continue;
+				particleProperties.push_back(property->storage());
+			}
+		}
+
+		// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 		return std::make_shared<AlphaShapeEngine>(posProperty->storage(),
 				std::move(selProperty),
 				simCell->data(),
 				probeSphereRadius(),
 				smoothingLevel(),
-				selectSurfaceParticles());
+				selectSurfaceParticles(),
+				std::move(particleProperties));
 	}
 	else {
+		// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 		return std::make_shared<GaussianDensityEngine>(posProperty->storage(),
 				std::move(selProperty),
 				simCell->data(),
@@ -169,6 +187,30 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 
 	task()->nextProgressSubStep();
 
+	// Create the vertex properties in the output mesh which will receive the values from the input particles.
+	std::vector<PropertyStorage*> meshVertexProperties;
+	meshVertexProperties.reserve(_particleProperties.size());
+	for(const ConstPropertyPtr& particleProperty : _particleProperties) {
+		PropertyStorage* vertexProperty;
+		if(SurfaceMeshVertices::OOClass().isValidStandardPropertyId(particleProperty->type())) {
+			// Input property is also a standard property for mesh vertices.
+			vertexProperty = mesh().createVertexProperty(static_cast<SurfaceMeshVertices::Type>(particleProperty->type())).get();
+			OVITO_ASSERT(vertexProperty->dataType() == particleProperty->dataType());
+			OVITO_ASSERT(vertexProperty->stride() == particleProperty->stride());
+		}
+		else if(SurfaceMeshVertices::OOClass().standardPropertyTypeId(particleProperty->name()) != 0) {
+			// Input property name is that of a standard property for mesh vertices.
+			// Must rename the property to avoid conflict, because user properties may not have a standard property name.
+			QString newPropertyName = particleProperty->name() + tr("_particles");
+			vertexProperty = mesh().createVertexProperty(particleProperty->dataType(), particleProperty->componentCount(), particleProperty->stride(), newPropertyName, false, particleProperty->componentNames()).get();
+		}
+		else {
+			// Input property is a user property for mesh vertices.
+			vertexProperty = mesh().createVertexProperty(particleProperty->dataType(), particleProperty->componentCount(), particleProperty->stride(), particleProperty->name(), false, particleProperty->componentNames()).get();
+		}
+		meshVertexProperties.push_back(vertexProperty);
+	}
+
 	// Determines the region a solid Delaunay cell belongs to.
 	// We use this callback function to compute the total volume of the solid region.
 	auto tetrahedronRegion = [this, &tessellation](DelaunayTessellation::CellHandle cell) {
@@ -193,12 +235,23 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		}
 	};
 
+	// This callback function is called for every surface vertex created by the manifold construction helper.
+	auto prepareMeshVertex = [&](HalfEdgeMesh::vertex_index vertex, size_t particleIndex) {
+		auto particleProperty = _particleProperties.cbegin();
+		for(PropertyStorage* vertexProperty : meshVertexProperties) {
+			OVITO_ASSERT(vertexProperty->stride() == (*particleProperty)->stride());
+			std::memcpy(vertexProperty->dataAt(vertex), (*particleProperty)->constDataAt(particleIndex), vertexProperty->stride());
+			++particleProperty;
+		}
+		OVITO_ASSERT(particleProperty == _particleProperties.cend());
+	};
+
 	// Create the empty region in the output mesh.
 	mesh().createRegion();
 	OVITO_ASSERT(mesh().regionCount() == 1);
 
 	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, mesh(), alpha, *positions());
-	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), prepareMeshFace))
+	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), std::move(prepareMeshFace), std::move(prepareMeshVertex)))
 		return;
 
 	task()->nextProgressSubStep();

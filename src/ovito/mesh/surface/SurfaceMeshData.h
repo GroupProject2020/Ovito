@@ -392,6 +392,7 @@ public:
 
     /// Adds a new standard vertex property to the mesh.
     PropertyPtr createVertexProperty(SurfaceMeshVertices::Type ptype, bool initialize = false) {
+        OVITO_ASSERT(ptype != SurfaceMeshVertices::UserProperty);
         // Check if already exists.
         PropertyPtr prop = vertexProperty(ptype);
         if(!prop) {
@@ -401,8 +402,16 @@ public:
         return prop;
     }
 
+	/// Adds a new user property to the mesh vertices.
+	PropertyPtr createVertexProperty(int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory, QStringList componentNames = QStringList(), SurfaceMeshVertices::Type type = SurfaceMeshVertices::UserProperty) {
+        PropertyPtr prop = std::make_shared<PropertyStorage>(vertexCount(), dataType, componentCount, stride, name, initializeMemory, type, std::move(componentNames));
+        addVertexProperty(prop);
+        return prop;
+    }
+
     /// Adds a new standard face property to the mesh.
     PropertyPtr createFaceProperty(SurfaceMeshFaces::Type ptype, bool initialize = false) {
+        OVITO_ASSERT(ptype != SurfaceMeshFaces::UserProperty);
         // Check if already exists.
         PropertyPtr prop = faceProperty(ptype);
         if(!prop) {
@@ -414,6 +423,7 @@ public:
 
     /// Adds a new standard property to the spatial regions of the mesh.
     PropertyPtr createRegionProperty(SurfaceMeshRegions::Type ptype, bool initialize = false) {
+        OVITO_ASSERT(ptype != SurfaceMeshRegions::UserProperty);
         // Check if already exists.
         PropertyPtr prop = regionProperty(ptype);
         if(!prop) {

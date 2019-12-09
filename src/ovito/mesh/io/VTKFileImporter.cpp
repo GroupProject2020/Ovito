@@ -173,32 +173,60 @@ FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& f
 		// Look for color information.
 		for(; !stream.eof() && !stream.lineStartsWith("CELL_DATA"); )
 			stream.readLine();
-		for(; !stream.eof() && !stream.lineStartsWith("COLOR_SCALARS"); )
+		bool isPointData = false;
+		for(; !stream.eof() && !stream.lineStartsWith("COLOR_SCALARS"); ) {
+			if(stream.lineStartsWith("POINT_DATA"))
+				isPointData = true;
 			stream.readLine();
+		}
 		if(!stream.eof()) {
 			int componentCount = 0;
 			if(sscanf(stream.line(), "COLOR_SCALARS %*s %i", &componentCount) != 1 || (componentCount != 3 && componentCount != 4))
 				throw Exception(tr("Invalid COLOR_SCALARS property in line %1 of VTK file. Component count must be 3 or 4.").arg(stream.lineNumber()));
-			frameData->mesh().setHasFaceColors(true);
-			auto& faceColors = frameData->mesh().faceColors();
-			std::fill(faceColors.begin(), faceColors.end(), ColorA(1,1,1,1));
-			component = 0;
-			for(int i = 0; i < polygonCount;) {
-				if(stream.eof())
-					throw Exception(tr("Unexpected end of VTK file in line %1.").arg(stream.lineNumber()));
-				const char* s = stream.readLine();
-				for(; ;) {
-					while(*s <= ' ' && *s != '\0') ++s;			// Skip whitespace in front of token
-					if(!*s || i >= polygonCount) break;
-					faceColors[i][component++] = (FloatType)std::atof(s);
-					if(component == componentCount) {
-						component = 0;
-						++i;
+			if(!isPointData) {
+				frameData->mesh().setHasFaceColors(true);
+				auto& faceColors = frameData->mesh().faceColors();
+				std::fill(faceColors.begin(), faceColors.end(), ColorA(1,1,1,1));
+				component = 0;
+				for(int i = 0; i < polygonCount;) {
+					if(stream.eof())
+						throw Exception(tr("Unexpected end of VTK file in line %1.").arg(stream.lineNumber()));
+					const char* s = stream.readLine();
+					for(; ;) {
+						while(*s <= ' ' && *s != '\0') ++s;			// Skip whitespace in front of token
+						if(!*s || i >= polygonCount) break;
+						faceColors[i][component++] = (FloatType)std::atof(s);
+						if(component == componentCount) {
+							component = 0;
+							++i;
+						}
+						while(*s > ' ') ++s;						// Proceed to end of token
 					}
-					while(*s > ' ') ++s;						// Proceed to end of token
 				}
+				frameData->mesh().invalidateFaces();
 			}
-			frameData->mesh().invalidateFaces();
+			else {
+				frameData->mesh().setHasVertexColors(true);
+				auto& vertexColors = frameData->mesh().vertexColors();
+				std::fill(vertexColors.begin(), vertexColors.end(), ColorA(1,1,1,1));
+				component = 0;
+				for(int i = 0; i < pointCount;) {
+					if(stream.eof())
+						throw Exception(tr("Unexpected end of VTK file in line %1.").arg(stream.lineNumber()));
+					const char* s = stream.readLine();
+					for(; ;) {
+						while(*s <= ' ' && *s != '\0') ++s;			// Skip whitespace in front of token
+						if(!*s || i >= pointCount) break;
+						vertexColors[i][component++] = (FloatType)std::atof(s);
+						if(component == componentCount) {
+							component = 0;
+							++i;
+						}
+						while(*s > ' ') ++s;						// Proceed to end of token
+					}
+				}
+				frameData->mesh().invalidateVertices();
+			}
 		}
 	}
 	else {
