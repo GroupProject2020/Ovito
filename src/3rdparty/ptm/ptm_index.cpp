@@ -179,9 +179,11 @@ int ptm_remap_template(	int type, bool output_conventional_orientation, int inpu
 	int8_t temp[PTM_MAX_POINTS];
 	memset(temp, -1, PTM_MAX_POINTS * sizeof(int8_t));
 
-	int ret = ptm_undo_conventional_orientation(type, input_template_index, q, mapping);
-	if (ret != 0)
-		return -1;
+	if (input_template_index != 0) {
+		int ret = ptm_undo_conventional_orientation(type, input_template_index, q, mapping);
+		if (ret != 0)
+			return -1;
+	}
 
 	int bi = 0;
 	if (qtarget != NULL)
@@ -238,14 +240,14 @@ int ptm_remap_template(	int type, bool output_conventional_orientation, int inpu
 	return template_index;
 }
 
-static void output_data(ptm::result_t *res, ptm::atomicenv_t* env,
+static void output_data(ptm::result_t *res, ptm_atomicenv_t* env,
 			bool output_conventional_orientation, int32_t *p_type,
 			int32_t *p_alloy_type, double *p_scale, double *p_rmsd,
 			double *q, double *F, double *F_res, double *U,
 			double *P, double *p_interatomic_distance,
 			double *p_lattice_constant,
 			int* p_best_template_index, const double (**p_best_template)[3],
-			int8_t *output_indices) {
+			ptm_atomicenv_t* output_env) {
 	const ptm::refdata_t *ref = res->ref_struct;
 	if (ref == NULL)
 		return;
@@ -300,9 +302,14 @@ static void output_data(ptm::result_t *res, ptm::atomicenv_t* env,
 			ptm::polar_decomposition_3x3(F, false, U, P);
 	}
 
-	if (output_indices != NULL)
-		for (int i = 0; i < ref->num_nbrs + 1; i++)
-			output_indices[i] = env->ordering[res->mapping[i]];
+	if (output_env != NULL) {
+		for (int i = 0; i < ref->num_nbrs + 1; i++) {
+			output_env->correspondences[i] = env->correspondences[res->mapping[i]];
+			output_env->atom_indices[i] = env->atom_indices[res->mapping[i]];
+
+			memcpy(output_env->points[i], env->points[res->mapping[i]], 3 * sizeof(double));
+		}
+	}
 
 	double interatomic_distance = calculate_interatomic_distance(ref->type, res->scale);
 	double lattice_constant = calculate_lattice_constant(ref->type, interatomic_distance);
@@ -321,14 +328,13 @@ static void output_data(ptm::result_t *res, ptm::atomicenv_t* env,
 extern bool ptm_initialized;
 
 int ptm_index(ptm_local_handle_t local_handle,
-              size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, int* ordering, size_t* nbr_indices, int32_t* numbers, double (*nbr_pos)[3]), void* nbrlist,
+              size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, ptm_atomicenv_t* env), void* nbrlist,
 	      int32_t flags,
 	      bool output_conventional_orientation, int32_t *p_type,
 	      int32_t *p_alloy_type, double *p_scale, double *p_rmsd, double *q,
 	      double *F, double *F_res, double *U, double *P,
 	      double *p_interatomic_distance, double *p_lattice_constant,
-	      int* p_best_template_index, const double (**p_best_template)[3],
-	      int8_t *output_indices)
+	      int* p_best_template_index, const double (**p_best_template)[3], ptm_atomicenv_t* output_env)
 {
 	int ret = 0;
 	assert(ptm_initialized);
@@ -340,15 +346,12 @@ int ptm_index(ptm_local_handle_t local_handle,
 	res.ref_struct = NULL;
 	res.rmsd = INFINITY;
 
-	if (output_indices != NULL)
-		memset(output_indices, -1, PTM_MAX_INPUT_POINTS * sizeof(int8_t));
-
 	*p_type = PTM_MATCH_NONE;
 	if (p_alloy_type != NULL)
 		*p_alloy_type = PTM_ALLOY_NONE;
 	//------------------------------------------------------------
 
-	ptm::atomicenv_t env, dmn_env, grp_env;
+	ptm_atomicenv_t env, dmn_env, grp_env;
 
 	ptm::convexhull_t ch;
 	double ch_points[PTM_MAX_INPUT_POINTS][3];
@@ -361,7 +364,7 @@ int ptm_index(ptm_local_handle_t local_handle,
 		if (flags & PTM_CHECK_BCC)
 			min_points = PTM_NUM_POINTS_BCC;
 
-		int num_points = get_neighbours(nbrlist, -1, atom_index, PTM_MAX_INPUT_POINTS, env.ordering, env.nbr_indices, env.numbers, env.points);
+		int num_points = get_neighbours(nbrlist, -1, atom_index, PTM_MAX_INPUT_POINTS, &env);
 		if (num_points < min_points)
 			return -1;
 
@@ -405,7 +408,7 @@ int ptm_index(ptm_local_handle_t local_handle,
 	if (res.ref_struct == NULL)
 		return PTM_NO_ERROR;
 
-	ptm::atomicenv_t* res_env = &env;
+	ptm_atomicenv_t* res_env = &env;
 	if (res.ref_struct->type == PTM_MATCH_DCUB || res.ref_struct->type == PTM_MATCH_DHEX)
 		res_env = &dmn_env;
 	else if (res.ref_struct->type == PTM_MATCH_GRAPHENE)
@@ -413,7 +416,7 @@ int ptm_index(ptm_local_handle_t local_handle,
 
 	output_data(	&res, res_env, output_conventional_orientation, p_type, p_alloy_type, p_scale,
 			p_rmsd, q, F, F_res, U, P, p_interatomic_distance,
-			p_lattice_constant, p_best_template_index, p_best_template, output_indices);
+			p_lattice_constant, p_best_template_index, p_best_template, output_env);
 
 	return PTM_NO_ERROR;
 }

@@ -14,18 +14,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 namespace ptm {
 
-typedef struct
-{
-	int ordering[PTM_MAX_INPUT_POINTS];
-	size_t nbr_indices[PTM_MAX_INPUT_POINTS];
-	int32_t numbers[PTM_MAX_INPUT_POINTS];
-	double points[PTM_MAX_INPUT_POINTS][3];
-} atomicenv_t;
-
-
 int calculate_two_shell_neighbour_ordering(	int num_inner, int num_outer,
-						size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, int* ordering, size_t* nbr_indices, int32_t* numbers, double (*nbr_pos)[3]), void* nbrlist,
-						ptm::atomicenv_t* output);
+						size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, ptm_atomicenv_t* env), void* nbrlist,
+						ptm_atomicenv_t* output);
 }
 
 #endif
