@@ -25,10 +25,10 @@ extern "C" {
 
 
 int ptm_index(	ptm_local_handle_t local_handle,
-		size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, int* ordering, size_t* nbr_indices, int32_t* numbers, double (*nbr_pos)[3]), void* nbrlist,
+		size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, ptm_atomicenv_t* env), void* nbrlist,
 		int32_t flags, bool output_conventional_orientation, //inputs
 		int32_t* p_type, int32_t* p_alloy_type, double* p_scale, double* p_rmsd, double* q, double* F, double* F_res, double* U, double* P, double* p_interatomic_distance, double* p_lattice_constant,
-		int* p_best_template_index, const double (**p_best_template)[3], int8_t* output_indices);	//outputs
+		int* p_best_template_index, const double (**p_best_template)[3], ptm_atomicenv_t* output_env);	//outputs
 
 
 int ptm_remap_template(	int type, bool output_conventional_orientation, int input_template_index, double* qtarget, double* q,

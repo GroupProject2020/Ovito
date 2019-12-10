@@ -26,6 +26,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/particles/util/NearestNeighborFinder.h>
+#include <3rdparty/ptm/ptm_functions.h>
 
 extern "C" {
     typedef struct ptm_local_handle* ptm_local_handle_t;
@@ -52,9 +53,9 @@ public:
         HCP,				//< Hexagonal close-packed
         BCC,				//< Body-centered cubic
         ICO,				//< Icosahedral structure
-        SC,					//< Simple cubic structure
-        CUBIC_DIAMOND,		//< Cubic diamond structure
-        HEX_DIAMOND,		//< Hexagonal diamond structure
+        SC,				//< Simple cubic structure
+        CUBIC_DIAMOND,			//< Cubic diamond structure
+        HEX_DIAMOND,			//< Hexagonal diamond structure
         GRAPHENE,			//< Graphene structure
 
         NUM_STRUCTURE_TYPES //< This counts the number of defined structure types.
@@ -200,6 +201,9 @@ public:
         /// identified for the current particle.
         const Vector_3<double>& getIdealNeighborVector(int index) const;
 
+//TODO: don't leave this public
+    	ptm_atomicenv_t _env;
+
     private:
         /// Reference to the parent algorithm object.
         const PTMAlgorithm& _algo;
@@ -217,8 +221,8 @@ public:
     	int32_t _orderingType = ORDERING_NONE;
     	int _bestTemplateIndex;
     	const double (*_bestTemplate)[3] = nullptr;
-    	int8_t _correspondences[MAX_INPUT_NEIGHBORS+1];
-	    std::vector<uint64_t> _cachedNeighbors;
+    	//int8_t _correspondences[MAX_INPUT_NEIGHBORS+1];
+	std::vector<uint64_t> _cachedNeighbors;
     };
 
 private:

@@ -170,6 +170,9 @@ int map_quaternion_hcp(double* q, int i);
 int map_quaternion_hcp_conventional(double* q, int i);
 int map_quaternion_diamond_hexagonal(double* q, int i);
 
+double quat_disorientation_cubic(double* q0, double* q1);
+double quat_disorientation_hcp_conventional(double* q0, double* q1);
+
 }
 
 #endif
