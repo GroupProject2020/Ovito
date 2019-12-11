@@ -28,10 +28,10 @@ typedef struct
 {
 	int rank;
 	int inner;
-	int ordering;
+	int correspondences;
 	size_t atom_index;
 	int32_t number;
-	double offset[3];
+	double delta[3];
 } atomorder_t;
 
 static bool atomorder_compare(atomorder_t const& a, atomorder_t const& b)
@@ -42,39 +42,39 @@ static bool atomorder_compare(atomorder_t const& a, atomorder_t const& b)
 #define MAX_INNER 4
 
 int calculate_two_shell_neighbour_ordering(	int num_inner, int num_outer,
-						size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, int* ordering, size_t* nbr_indices, int32_t* numbers, double (*nbr_pos)[3]), void* nbrlist,
-						ptm::atomicenv_t* output)
+						size_t atom_index, int (get_neighbours)(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num, ptm_atomicenv_t* env), void* nbrlist,
+						ptm_atomicenv_t* output)
 {
 	assert(num_inner <= MAX_INNER);
 
-	ptm::atomicenv_t central;
-	int num_input_points = get_neighbours(nbrlist, -1, atom_index, PTM_MAX_INPUT_POINTS, central.ordering, central.nbr_indices, central.numbers, central.points);
+	ptm_atomicenv_t central;
+	int num_input_points = get_neighbours(nbrlist, -1, atom_index, PTM_MAX_INPUT_POINTS, &central);
 	if (num_input_points < num_inner + 1)
 		return -1;
 
 	std::unordered_set<size_t> claimed;
 	for (int i=0;i<num_inner+1;i++)
 	{
-		output->ordering[i] = central.ordering[i];
-		output->nbr_indices[i] = central.nbr_indices[i];
+		output->correspondences[i] = central.correspondences[i];
+		output->atom_indices[i] = central.atom_indices[i];
 		output->numbers[i] = central.numbers[i];
 		memcpy(output->points[i], central.points[i], 3 * sizeof(double));
 
-		claimed.insert(central.nbr_indices[i]);
+		claimed.insert(central.atom_indices[i]);
 	}
 
 	int num_inserted = 0;
 	atomorder_t data[MAX_INNER * PTM_MAX_INPUT_POINTS];
 	for (int i=0;i<num_inner;i++)
 	{
-		ptm::atomicenv_t inner;
-		int num_points = get_neighbours(nbrlist, -1, central.nbr_indices[1 + i], PTM_MAX_INPUT_POINTS, inner.ordering, inner.nbr_indices, inner.numbers, inner.points);
+		ptm_atomicenv_t inner;
+		int num_points = get_neighbours(nbrlist, -1, central.atom_indices[1 + i], PTM_MAX_INPUT_POINTS, &inner);
 		if (num_points < num_inner + 1)
 			return -1;
 
 		for (int j=0;j<num_points;j++)
 		{
-			size_t key = inner.nbr_indices[j];
+			size_t key = inner.atom_indices[j];
 
 			bool already_claimed = claimed.find(key) != claimed.end();
 			if (already_claimed)
@@ -82,13 +82,13 @@ int calculate_two_shell_neighbour_ordering(	int num_inner, int num_outer,
 
 			data[num_inserted].inner = i;
 			data[num_inserted].rank = j;
-			data[num_inserted].ordering = inner.ordering[j];
-			data[num_inserted].atom_index = inner.nbr_indices[j];
+			data[num_inserted].correspondences = inner.correspondences[j];
+			data[num_inserted].atom_index = inner.atom_indices[j];
 			data[num_inserted].number = inner.numbers[j];
 
-			memcpy(data[num_inserted].offset, inner.points[j], 3 * sizeof(double));
+			memcpy(data[num_inserted].delta, inner.points[j], 3 * sizeof(double));
 			for (int k=0;k<3;k++)
-				data[num_inserted].offset[k] += central.points[1 + i][k];
+				data[num_inserted].delta[k] += central.points[1 + i][k];
 
 			num_inserted++;
 		}
@@ -107,11 +107,11 @@ int calculate_two_shell_neighbour_ordering(	int num_inner, int num_outer,
 		if (counts[inner] >= num_outer || already_claimed)
 			continue;
 
-		output->ordering[1 + num_inner + num_outer * inner + counts[inner]] = data[i].ordering;
+		output->correspondences[1 + num_inner + num_outer * inner + counts[inner]] = data[i].correspondences;
 
-		output->nbr_indices[1 + num_inner + num_outer * inner + counts[inner]] = nbr_atom_index;
+		output->atom_indices[1 + num_inner + num_outer * inner + counts[inner]] = nbr_atom_index;
 		output->numbers[1 + num_inner + num_outer * inner + counts[inner]] = data[i].number;
-		memcpy(output->points[1 + num_inner + num_outer * inner + counts[inner]], &data[i].offset, 3 * sizeof(double));
+		memcpy(output->points[1 + num_inner + num_outer * inner + counts[inner]], &data[i].delta, 3 * sizeof(double));
 		claimed.insert(nbr_atom_index);
 
 		counts[inner]++;

@@ -11,6 +11,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #define PTM_CONSTANTS_H
 
 #include <cmath>
+#include <cstdlib>
 
 //------------------------------------
 //    definitions
@@ -213,6 +214,15 @@ const double ptm_template_graphene[PTM_NUM_POINTS_GRAPHENE][3] = {
                                                                 {  -9./11+3*sqrt(3)/22,  -9*sqrt(3)/11+9./22,                    0 },
                                                                 { -18./11+3*sqrt(3)/11,                    0,                    0 },
 };
+
+typedef struct
+{
+	int num;
+	int8_t correspondences[PTM_MAX_INPUT_POINTS];
+	size_t atom_indices[PTM_MAX_INPUT_POINTS];
+	int32_t numbers[PTM_MAX_INPUT_POINTS];
+	double points[PTM_MAX_INPUT_POINTS][3];
+} ptm_atomicenv_t;
 
 #endif
 

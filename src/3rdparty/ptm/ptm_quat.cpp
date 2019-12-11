@@ -390,5 +390,40 @@ double quat_misorientation(double* q1, double* q2)
         return acos(quat_quick_misorientation(q1, q2));
 }
 
+double quat_quick_disorientation_cubic(double* q0, double* q1)
+{
+	double qrot[4];
+	double qinv[4] = {q0[0], -q0[1], -q0[2], -q0[3]};
+	quat_rot(qinv, q1, qrot);
+
+	rotate_quaternion_into_cubic_fundamental_zone(qrot);
+	double t = qrot[0];
+	t = std::min(1., std::max(-1., t));
+	return 2 * t * t - 1;
+}
+
+double quat_disorientation_cubic(double* q0, double* q1)
+{
+	return acos(quat_quick_disorientation_cubic(q0, q1));
+}
+
+double quat_quick_disorientation_hcp_conventional(double* q0, double* q1)
+{
+	double qrot[4];
+	double qinv[4] = {q0[0], -q0[1], -q0[2], -q0[3]};
+	quat_rot(qinv, q1, qrot);
+
+	rotate_quaternion_into_hcp_conventional_fundamental_zone(qrot);
+	double t = qrot[0];
+	t = std::min(1., std::max(-1., t));
+	return 2 * t * t - 1;
+}
+
+double quat_disorientation_hcp_conventional(double* q0, double* q1)
+{
+	return acos(quat_quick_disorientation_hcp_conventional(q0, q1));
+}
+
+
 }
 

@@ -63,7 +63,7 @@ typedef struct
 
 } ptmnbrdata_t;
 
-static int get_neighbours(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num_requested, int* ordering, size_t* nbr_indices, int32_t* numbers, double (*nbr_pos)[3])
+static int get_neighbours(void* vdata, size_t _unused_lammps_variable, size_t atom_index, int num_requested, ptm_atomicenv_t* env)
 {
 	ptmnbrdata_t* nbrdata = (ptmnbrdata_t*)vdata;
 	const NearestNeighborFinder* neighFinder = nbrdata->neighFinder;
@@ -80,31 +80,34 @@ static int get_neighbours(void* vdata, size_t _unused_lammps_variable, size_t at
 	ptm_index_to_permutation(numNeighbors, precachedNeighbors[atom_index], permutation);
 
 	// Bring neighbor coordinates into a form suitable for the PTM library.
-	ordering[0] = 0;
-	nbr_indices[0] = atom_index;
-	nbr_pos[0][0] = nbr_pos[0][1] = nbr_pos[0][2] = 0;
+	env->correspondences[0] = 0;
+	env->atom_indices[0] = atom_index;
+	env->points[0][0] = 0;
+	env->points[0][1] = 0;
+	env->points[0][2] = 0;
 	for(int i = 0; i < numNeighbors; i++) {
 
-		//ordering[index] = permutation[i] + 1;
-		nbr_indices[i+1] = neighQuery.results()[permutation[i]].index;
-		nbr_pos[i+1][0] = neighQuery.results()[permutation[i]].delta.x();
-		nbr_pos[i+1][1] = neighQuery.results()[permutation[i]].delta.y();
-		nbr_pos[i+1][2] = neighQuery.results()[permutation[i]].delta.z();
+		//env->correspondences[index] = permutation[i] + 1;
+		env->atom_indices[i+1] = neighQuery.results()[permutation[i]].index;
+		env->points[i+1][0] = neighQuery.results()[permutation[i]].delta.x();
+		env->points[i+1][1] = neighQuery.results()[permutation[i]].delta.y();
+		env->points[i+1][2] = neighQuery.results()[permutation[i]].delta.z();
 	}
 
 	// Build list of particle types for ordering identification.
 	if(particleTypes != nullptr) {
-		numbers[0] = particleTypes->getInt(atom_index);
+		env->numbers[0] = particleTypes->getInt(atom_index);
 		for(int i = 0; i < numNeighbors; i++) {
-			numbers[i+1] = particleTypes->getInt(neighQuery.results()[permutation[i]].index);
+			env->numbers[i+1] = particleTypes->getInt(neighQuery.results()[permutation[i]].index);
 		}
 	}
 	else {
 		for(int i = 0; i < numNeighbors + 1; i++) {
-			numbers[i] = 0;
+			env->numbers[i] = 0;
 		}
 	}
 
+	env->num = numNeighbors + 1;
 	return numNeighbors + 1;
 }
 
@@ -160,7 +163,7 @@ PTMAlgorithm::StructureType PTMAlgorithm::Kernel::identifyStructure(size_t parti
 			nullptr,
 			&_bestTemplateIndex,
 			&_bestTemplate,
-			_correspondences);
+			&_env);
 
 	// Convert PTM classification back to our own scheme.
 	if(type == PTM_MATCH_NONE || (_algo._rmsdCutoff != 0 && _rmsd > _algo._rmsdCutoff)) {
@@ -188,18 +191,20 @@ PTMAlgorithm::StructureType PTMAlgorithm::Kernel::identifyStructure(size_t parti
 		}
 	}
 
+#if 0
 	if (_structureType != OTHER && qtarget != nullptr) {
 
 		//arrange orientation in PTM format
 		double qtarget_ptm[4] = { qtarget->w(), qtarget->x(), qtarget->y(), qtarget->z() };
 
 		double disorientation = 0;	//TODO: this is probably not needed
-		int template_index = ptm_remap_template(type, true, _bestTemplateIndex, qtarget_ptm, _q, &disorientation, _correspondences, &_bestTemplate);
+		int template_index = ptm_remap_template(type, true, _bestTemplateIndex, qtarget_ptm, _q, &disorientation, _env.correspondences, &_bestTemplate);
 		if (template_index < 0)
 			return _structureType;
 
 		_bestTemplateIndex = template_index;
 	}
+#endif
 
 	return _structureType;
 
@@ -295,7 +300,7 @@ const NearestNeighborFinder::Neighbor& PTMAlgorithm::Kernel::getNeighborInfo(int
 {
 	OVITO_ASSERT(_structureType != OTHER);
 	OVITO_ASSERT(index >= 0 && index < numStructureNeighbors());
-	int mappedIndex = _correspondences[index + 1] - 1;
+	int mappedIndex = _env.correspondences[index + 1] - 1;
 	OVITO_ASSERT(mappedIndex >= 0 && mappedIndex < results().size());
 	return results()[mappedIndex];
 }
