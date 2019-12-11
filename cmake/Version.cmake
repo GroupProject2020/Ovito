@@ -48,15 +48,26 @@ IF(GIT_FOUND)
 	ELSE()
 		# If there is no tag in this branch, count the number of commits since the very beginning.
 		# This is the case for the ovito-pro repository, which has no tags yet.
-		EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} "rev-list" "--count" "HEAD"
-			WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-			RESULT_VARIABLE GIT_RESULT_VAR
-			OUTPUT_VARIABLE GIT_REVISION_NUMBER
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		IF("${GIT_VERSION_STRING}" VERSION_LESS "1.7.3")
+			# Workaround for old git versions which don't support the --count option.
+			# We use "wc -l" instead to count the number of commits.
+			EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} "rev-list" "HEAD"
+				COMMAND  "wc" "-l"
+				WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+				RESULT_VARIABLE GIT_RESULT_VAR
+				OUTPUT_VARIABLE GIT_REVISION_NUMBER
+				OUTPUT_STRIP_TRAILING_WHITESPACE)
+		ELSE()
+			EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} "rev-list" "--count" "HEAD"
+				WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+				RESULT_VARIABLE GIT_RESULT_VAR
+				OUTPUT_VARIABLE GIT_REVISION_NUMBER
+				OUTPUT_STRIP_TRAILING_WHITESPACE)
+		ENDIF()
 		IF(NOT GIT_RESULT_VAR STREQUAL "0")
 			MESSAGE(FATAL "Failed to run git rev-list: ${GIT_RESULT_VAR}")
 		ENDIF()
-		# Add offset of 520 to the commit number to maintain continuous numbering.
+		# Add offset of 530 to the commit number to maintain continuous numbering sequence.
 		MATH(EXPR GIT_REVISION_NUMBER "${GIT_REVISION_NUMBER}+530")
 		SET(OVITO_VERSION_STRING "${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}-dev${GIT_REVISION_NUMBER}")
 	ENDIF()
