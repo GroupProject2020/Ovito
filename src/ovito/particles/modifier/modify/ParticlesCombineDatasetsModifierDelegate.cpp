@@ -143,18 +143,20 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 	// Merge bonds if present.
 	if(primaryBondTopology || secondaryBondTopology) {
 
-		size_t primaryBondCount = primaryBonds ? primaryBonds->elementCount() : 0;
+		// Create the primary bonds object if it doesn't exist yet.
+		if(!primaryBonds) {
+			primaryBonds = new BondsObject(dataset());
+			particles->setBonds(primaryBonds);
+			OVITO_ASSERT(secondaryBonds);
+			particles->bonds()->setVisElement(secondaryBonds->visElement());
+		}
+
+		size_t primaryBondCount = primaryBonds->elementCount();
 		size_t secondaryBondCount = secondaryBonds ? secondaryBonds->elementCount() : 0;
 		size_t totalBondCount = primaryBondCount + secondaryBondCount;
 
 		// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
 		if(secondaryBondCount != 0) {
-			// Create the primary bonds object if it doesn't exist yet.
-			if(!primaryBonds) {
-				primaryBonds = new BondsObject(dataset());
-				particles->setBonds(primaryBonds);
-				particles->bonds()->setVisElement(secondaryBonds->visElement());
-			}
 			BondsObject* primaryMutableBonds = particles->makeBondsMutable();
 			primaryMutableBonds->makePropertiesMutable();
 			primaryMutableBonds->setElementCount(totalBondCount);
@@ -174,14 +176,6 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 				// Combine bond type lists.
 				mergeElementTypes(prop, secondProp, cloneHelper);
-
-				// Shift particle indices.
-				if(prop->type() == BondsObject::TopologyProperty && primaryParticleCount != 0) {
-					for(size_t i = primaryBondCount; i < totalBondCount; i++) {
-						prop->setInt64Component(i, 0, prop->getInt64Component(i, 0) + primaryParticleCount);
-						prop->setInt64Component(i, 1, prop->getInt64Component(i, 1) + primaryParticleCount);
-					}
-				}
 			}
 		}
 
@@ -210,6 +204,16 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				if(primaryBondCount != 0) {
 					std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->constData(), clonedProperty->stride() * secondaryBondCount);
 					std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryBondCount);
+				}
+			}
+
+			// Shift particle indices stored in the topology array of the second bonds object.
+			const PropertyObject* topologyProperty = primaryMutableBonds->getProperty(BondsObject::TopologyProperty);
+			if(topologyProperty && primaryParticleCount != 0) {
+				PropertyObject* mutableTopologyProperty = primaryMutableBonds->makeMutable(topologyProperty);
+				for(size_t i = primaryBondCount; i < totalBondCount; i++) {
+					mutableTopologyProperty->setInt64Component(i, 0, mutableTopologyProperty->getInt64Component(i, 0) + primaryParticleCount);
+					mutableTopologyProperty->setInt64Component(i, 1, mutableTopologyProperty->getInt64Component(i, 1) + primaryParticleCount);
 				}
 			}
 		}
