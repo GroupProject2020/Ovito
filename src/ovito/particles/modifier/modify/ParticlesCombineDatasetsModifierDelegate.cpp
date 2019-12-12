@@ -92,36 +92,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->constData(), prop->stride() * secondaryParticleCount);
 			}
 
-			// Combine particle types based on their names.
-			if(secondProp && secondProp->elementTypes().empty() == false && prop->componentCount() == 1 && prop->dataType() == PropertyStorage::Int) {
-				std::map<int,int> typeMap;
-				for(const ElementType* type2 : secondProp->elementTypes()) {
-					if(!type2->name().isEmpty()) {
-						const ElementType* type1 = prop->elementType(type2->name());
-						if(type1 == nullptr) {
-							OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
-							type2clone->setNumericId(prop->generateUniqueElementTypeId());
-							prop->addElementType(type2clone);
-							typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
-						}
-						else if(type1->numericId() != type2->numericId()) {
-							typeMap.insert(std::make_pair(type2->numericId(), type1->numericId()));
-						}
-					}
-					else if(!prop->elementType(type2->numericId())) {
-						OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
-						prop->addElementType(type2clone);
-						OVITO_ASSERT(type2clone->numericId() == type2->numericId());
-					}
-				}
-				// Remap particle property values.
-				if(typeMap.empty() == false) {
-					for(int* p = prop->dataInt() + primaryParticleCount; p != prop->dataInt() + totalParticleCount; ++p) {
-						auto iter = typeMap.find(*p);
-						if(iter != typeMap.end()) *p = iter->second;
-					}
-				}
-			}
+			// Combine particle types lists.
+			mergeElementTypes(prop, secondProp, cloneHelper);
 
 			// Assign unique particle and molecule IDs.
 			if(prop->type() == ParticlesObject::IdentifierProperty && primaryParticleCount != 0) {
@@ -177,6 +149,12 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 		// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
 		if(secondaryBondCount != 0) {
+			// Create the primary bonds object if it doesn't exist yet.
+			if(!primaryBonds) {
+				primaryBonds = new BondsObject(dataset());
+				particles->setBonds(primaryBonds);
+				particles->bonds()->setVisElement(secondaryBonds->visElement());
+			}
 			BondsObject* primaryMutableBonds = particles->makeBondsMutable();
 			primaryMutableBonds->makePropertiesMutable();
 			primaryMutableBonds->setElementCount(totalBondCount);
@@ -194,36 +172,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 					std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->constData(), prop->stride() * secondaryBondCount);
 				}
 
-				// Combine bond types based on their names.
-				if(secondProp && secondProp->elementTypes().empty() == false && prop->componentCount() == 1 && prop->dataType() == PropertyStorage::Int) {
-					std::map<int,int> typeMap;
-					for(const ElementType* type2 : secondProp->elementTypes()) {
-						if(!type2->name().isEmpty()) {
-							const ElementType* type1 = prop->elementType(type2->name());
-							if(type1 == nullptr) {
-								OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
-								type2clone->setNumericId(prop->generateUniqueElementTypeId());
-								prop->addElementType(type2clone);
-								typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
-							}
-							else if(type1->numericId() != type2->numericId()) {
-								typeMap.insert(std::make_pair(type2->numericId(), type1->numericId()));
-							}
-						}
-						else if(!prop->elementType(type2->numericId())) {
-							OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
-							prop->addElementType(type2clone);
-							OVITO_ASSERT(type2clone->numericId() == type2->numericId());
-						}
-					}
-					// Remap bond property values.
-					if(typeMap.empty() == false) {
-						for(int* p = prop->dataInt() + primaryBondCount; p != prop->dataInt() + totalBondCount; ++p) {
-							auto iter = typeMap.find(*p);
-							if(iter != typeMap.end()) *p = iter->second;
-						}
-					}
-				}
+				// Combine bond type lists.
+				mergeElementTypes(prop, secondProp, cloneHelper);
 
 				// Shift particle indices.
 				if(prop->type() == BondsObject::TopologyProperty && primaryParticleCount != 0) {

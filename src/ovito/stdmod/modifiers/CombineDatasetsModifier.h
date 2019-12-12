@@ -41,6 +41,9 @@ protected:
 
 	/// Abstract class constructor.
 	using ModifierDelegate::ModifierDelegate;
+
+	/// Helper method that merges the set of element types defined for a property.
+	void mergeElementTypes(PropertyObject* property1, const PropertyObject* property2, CloneHelper& cloneHelper);
 };
 
 /**

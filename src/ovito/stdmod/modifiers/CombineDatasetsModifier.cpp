@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdmod/StdMod.h>
+#include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/data/AttributeDataObject.h>
 #include <ovito/core/dataset/io/FileSource.h>
@@ -153,6 +154,57 @@ void CombineDatasetsModifier::referenceReplaced(const PropertyFieldDescriptor& f
 		notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 	MultiDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
+}
+
+/******************************************************************************
+* Helper method that merges the set of element types defined for a property.
+******************************************************************************/
+void CombineDatasetsModifierDelegate::mergeElementTypes(PropertyObject* property1, const PropertyObject* property2, CloneHelper& cloneHelper)
+{
+	// Check if input properties have the right format.
+	if(!property2) return;
+	if(property2->elementTypes().empty()) return;
+	if(property1->componentCount() != 1 || property2->componentCount() != 1) return;
+	if(property1->dataType() != PropertyStorage::Int || property2->dataType() != PropertyStorage::Int) return;
+
+	std::map<int,int> typeMap;
+	for(const ElementType* type2 : property2->elementTypes()) {
+		if(!type2->name().isEmpty()) {
+			const ElementType* type1 = property1->elementType(type2->name());
+			if(type1 == nullptr) {
+				OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+				type2clone->setNumericId(property1->generateUniqueElementTypeId());
+				property1->addElementType(type2clone);
+				typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
+			}
+			else if(type1->numericId() != type2->numericId()) {
+				typeMap.insert(std::make_pair(type2->numericId(), type1->numericId()));
+			}
+		}
+		else {
+			const ElementType* type1 = property1->elementType(type2->numericId());
+			if(!type1) {
+				OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+				property1->addElementType(type2clone);
+				OVITO_ASSERT(type2clone->numericId() == type2->numericId());
+			}
+			else if(!type1->name().isEmpty()) {
+				OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+				type2clone->setNumericId(property1->generateUniqueElementTypeId());
+				property1->addElementType(type2clone);
+				typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
+			}
+		}
+	}
+	// Remap particle property values.
+	if(typeMap.empty() == false) {
+		int* p = property1->dataInt() + (property1->size() - property2->size());
+		int* p_end = property1->dataInt() + property1->size();
+		for(; p != p_end; ++p) {
+			auto iter = typeMap.find(*p);
+			if(iter != typeMap.end()) *p = iter->second;
+		}
+	}
 }
 
 }	// End of namespace
