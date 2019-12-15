@@ -49,7 +49,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 
 	// Allocate render vertex buffer.
 	_vertexBuffer.create(QOpenGLBuffer::StaticDraw, mesh.faceCount(), 3);
-	if(mesh.hasVertexColors() || mesh.hasFaceColors())
+	if((mesh.hasVertexColors() || mesh.hasFaceColors()) && meshColor.a() == 1.0)
 		_alpha = 1.0;
 	else {
 		if(materialColors().empty()) {
@@ -107,10 +107,12 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 				if(mesh.hasVertexColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.vertexColor(face->vertex(v)));
 					if(rv->color.a() != 1) _alpha = rv->color.a();
+					else if(meshColor.a() != 1) rv->color.a() = meshColor.a();
 				}
 				else if(mesh.hasFaceColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
 					if(rv->color.a() != 1) _alpha = rv->color.a();
+					else if(meshColor.a() != 1) rv->color.a() = meshColor.a();
 				}
 				else if(face->materialIndex() < materialColors().size() && face->materialIndex() >= 0) {
 					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);
@@ -167,10 +169,12 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 				if(mesh.hasVertexColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.vertexColor(face->vertex(v)));
 					if(rv->color.a() != 1) _alpha = rv->color.a();
+					else if(meshColor.a() != 1) rv->color.a() = meshColor.a();
 				}
 				else if(mesh.hasFaceColors()) {
 					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
 					if(rv->color.a() != 1) _alpha = rv->color.a();
+					else if(meshColor.a() != 1) rv->color.a() = meshColor.a();
 				}
 				else if(face->materialIndex() >= 0 && face->materialIndex() < materialColors().size()) {
 					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);

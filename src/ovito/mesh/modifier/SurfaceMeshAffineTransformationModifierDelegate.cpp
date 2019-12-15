@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,8 +36,6 @@ IMPLEMENT_OVITO_CLASS(SurfaceMeshAffineTransformationModifierDelegate);
 PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
-	if(mod->selectionOnly())
-		return PipelineStatus::Success;
 
 	AffineTransformation tm;
 	if(mod->relativeMode())
@@ -53,9 +51,23 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 			SurfaceMeshVertices* newVertices = newSurface->makeVerticesMutable();
 			// Create a copy of the vertex coordinates array.
 			PropertyObject* positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
-			// Apply transformation to the vertices coordinates.
-			for(Point3& p : positionProperty->point3Range())
-				p = tm * p;
+
+			if(!mod->selectionOnly()) {
+				// Apply transformation to the vertices coordinates.
+				for(Point3& p : positionProperty->point3Range())
+					p = tm * p;
+			}
+			else {
+				if(const PropertyObject* selectionProperty = newVertices->getProperty(SurfaceMeshVertices::SelectionProperty)) {
+					// Apply transformation only to the selected vertices.
+					const int* s = selectionProperty->constDataInt();
+					for(Point3& p : positionProperty->point3Range()) {
+						if(*s++)
+							p = tm * p;
+					}
+				}
+			}
+
 			// Apply transformation to the cutting planes attached to the surface mesh.
 			QVector<Plane3> cuttingPlanes = newSurface->cuttingPlanes();
 			for(Plane3& plane : cuttingPlanes)

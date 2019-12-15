@@ -295,12 +295,16 @@ void TriMesh::saveToOBJ(CompressedTextWriter& stream)
 void TriMesh::clipAtPlane(const Plane3& plane)
 {
 	TriMesh clippedMesh;
+	clippedMesh.setHasVertexColors(hasVertexColors());
+	clippedMesh.setHasFaceColors(hasFaceColors());
 
 	// Clip vertices.
 	std::vector<int> existingVertexMapping(vertexCount(), -1);
 	for(int vindex = 0; vindex < vertexCount(); vindex++) {
 		if(plane.classifyPoint(vertex(vindex)) != 1) {
 			existingVertexMapping[vindex] = clippedMesh.addVertex(vertex(vindex));
+			if(hasVertexColors())
+				clippedMesh.vertexColors().back() = vertexColor(vindex);
 		}
 	}
 
@@ -321,6 +325,15 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 					FloatType t = z1 / (z1 - z2);
 					Point3 intersection = v1 + (v2 - v1) * t;
 					newVertexMapping.emplace(vindices, std::make_pair(clippedMesh.addVertex(intersection), t));
+					if(hasVertexColors()) {
+						const ColorA& color1 = vertexColor(vindices.first);
+						const ColorA& color2 = vertexColor(vindices.second);
+						ColorA& newColor = clippedMesh.vertexColors().back();
+						newColor.r() = color1.r() + (color2.r() - color1.r()) * t;
+						newColor.g() = color1.g() + (color2.g() - color1.g()) * t;
+						newColor.b() = color1.b() + (color2.b() - color1.b()) * t;
+						newColor.a() = color1.a() + (color2.a() - color1.a()) * t;
+					}
 				}
 			}
 		}
@@ -381,6 +394,9 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 						*n++ = newface_normals[1];
 						*n = newface_normals[2];
 					}
+					if(hasFaceColors()) {
+						clippedMesh.faceColors().back() = faceColor(faceIndex);
+					}
 					if(newface_vcount == 4) {
 						OVITO_ASSERT(newface[3] >= 0 && newface[3] < clippedMesh.vertexCount());
 						OVITO_ASSERT(newface[3] != newface[0]);
@@ -393,6 +409,9 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 							*n++ = newface_normals[0];
 							*n++ = newface_normals[2];
 							*n = newface_normals[3];
+						}
+						if(hasFaceColors()) {
+							clippedMesh.faceColors().back() = faceColor(faceIndex);
 						}
 					}
 				}

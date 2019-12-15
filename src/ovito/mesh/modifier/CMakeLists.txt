@@ -26,6 +26,8 @@ OVITO_STANDARD_PLUGIN(MeshMod
 		SurfaceMeshSliceModifierDelegate.cpp
 		SurfaceMeshAffineTransformationModifierDelegate.cpp
 		SurfaceMeshReplicateModifierDelegate.cpp
+		SurfaceMeshColorCodingModifierDelegate.cpp
+		SurfaceMeshAssignColorModifierDelegate.cpp
 	PLUGIN_DEPENDENCIES Mesh StdMod
 )
 

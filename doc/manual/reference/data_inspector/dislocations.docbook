@@ -18,8 +18,8 @@
       </imageobject></mediaobject>
     </informalfigure>
 
-    This page of the <link linkend="data_inspector">data inspector</link> lists all dislocation lines
-    found in a crystal by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link> modifier.
+    This page of the <link linkend="data_inspector">data inspector</link> shows a table of all <link linkend="scene_objects.dislocations">dislocation lines</link> in the current dataset.
+    Dislocation lines may extracted from an atomistic crystal by applying the <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link> modifier.
   </para>
   <para>
     The crosshair button above the table activates a mouse input mode which lets you pick individual dislocation lines in the viewports.

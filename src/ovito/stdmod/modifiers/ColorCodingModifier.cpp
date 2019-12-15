@@ -327,7 +327,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 
 	// Get the selection property if enabled by the user.
 	ConstPropertyPtr selProperty;
-	if(mod->colorOnlySelected()) {
+	if(mod->colorOnlySelected() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)) {
 		if(const PropertyObject* selPropertyObj = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
 			selProperty = selPropertyObj->storage();
 

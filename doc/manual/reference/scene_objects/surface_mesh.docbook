@@ -16,7 +16,7 @@
 		<link linkend="particles.modifiers.create_isosurface">Create isosurface</link> and <link linkend="particles.modifiers.coordination_polyhedra">Coordination polyhedra</link>.
   </para>
   <para>
-		The appearance of a surface mesh in rendered images can be controlled through the parameters of the <link linkend="display_objects.surface_mesh">Surface mesh</link> visual element,
+		The appearance of a surface mesh in rendered images can be controlled through the parameters of the <link linkend="display_objects.surface_mesh">Surface mesh visual element</link>,
     which is found in the top section of the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
   </para>
   <simplesect>

@@ -59,6 +59,7 @@ public:
 	/// \brief The list of standard vertex properties.
 	enum Type {
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
+		SelectionProperty = PropertyStorage::GenericSelectionProperty,
 		ColorProperty = PropertyStorage::GenericColorProperty,
 		PositionProperty = PropertyStorage::FirstSpecificProperty
 	};

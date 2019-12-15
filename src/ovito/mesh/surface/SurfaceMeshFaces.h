@@ -59,6 +59,7 @@ public:
 	/// \brief The list of standard face properties.
 	enum Type {
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
+		SelectionProperty = PropertyStorage::GenericSelectionProperty,
 		ColorProperty = PropertyStorage::GenericColorProperty,
 		FaceTypeProperty = PropertyStorage::GenericTypeProperty,
 		RegionProperty = PropertyStorage::FirstSpecificProperty,

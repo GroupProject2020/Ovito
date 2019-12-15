@@ -15,15 +15,14 @@
        <imagedata fileref="images/modifiers/assign_color_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier assigns a given uniform color to all selected elements (particles, bonds, etc.) by setting their
+    This modifier assigns a uniform color to all selected elements (particles, bonds, etc.) by setting their
     <literal>Color</literal> property. Which elements are currently selected is determined by the value of their
-    <literal>Selection</literal> property. If no selection is defined, i.e. if the <literal>Selection</literal> property
+    <literal>Selection</literal> property. If no selection is defined, i.e. the <literal>Selection</literal> property
     does not exist, the color is assigned to all elements by the modifier.
   </para>
 
   <para>
-    The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should act on.
-    Depending on this choice, the modifier does the following:
+    The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should assign the color to:
     <informaltable>
       <tgroup cols="2">
         <thead>
@@ -35,15 +34,23 @@
         <tbody>
           <row>
             <entry>Particles</entry>
-            <entry><para>The color is assigned to selected particles by setting their <literal>Color</literal> property.</para></entry>
+            <entry><para>Selected particles are colored by setting their <literal>Color</literal> property.</para></entry>
           </row>
           <row>
             <entry>Bonds</entry>
-            <entry><para>The color is assigned to selected bonds by setting their <literal>Color</literal> property.</para></entry>
+            <entry><para>Selected bonds are colored by setting their <literal>Color</literal> property.</para></entry>
           </row>
           <row>
-            <entry>Particle vectors</entry>
-            <entry><para>The color is assigned to <link linkend="display_objects.vectors">vector arrows</link> associated with selected particles by setting their <literal>Vector Color</literal> property.</para></entry>
+            <entry>Particle&#xA0;vectors</entry>
+            <entry><para>The <link linkend="display_objects.vectors">vector glyphs</link> of selected particles are colored by setting their <literal>Vector Color</literal> property.</para></entry>
+          </row>
+          <row>
+            <entry>Mesh&#xA0;faces</entry>
+            <entry><para>Selected facets of a <link linkend="scene_objects.surface_mesh">surface mesh</link> are colored by setting their <literal>Color</literal> property.</para></entry>
+          </row>
+          <row>
+            <entry>Mesh&#xA0;vertices</entry>
+            <entry><para>Selected vertices of a <link linkend="scene_objects.surface_mesh">surface mesh</link> are colored by setting their <literal>Color</literal> property.</para></entry>
           </row>
         </tbody>
       </tgroup>

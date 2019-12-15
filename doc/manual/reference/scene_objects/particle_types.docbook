@@ -43,8 +43,7 @@
   <title>See also</title>
   <para>
     <simplelist>
-    <member><pydoc-link href="modules/ovito_data" anchor="ovito.data.ParticleProperty.types"><classname>ParticleProperty.types</classname> (Python API)</pydoc-link></member>
-    <member><pydoc-link href="modules/ovito_data" anchor="ovito.data.BondProperty.types"><classname>BondProperty.types</classname> (Python API)</pydoc-link></member>
+    <member><pydoc-link href="modules/ovito_data" anchor="ovito.data.Property.types"><classname>Property.types</classname> (Python API)</pydoc-link></member>
     </simplelist>
   </para>
   </simplesect>

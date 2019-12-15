@@ -342,7 +342,15 @@ bool DataCollection::getObjectImpl(const DataObject::OOMetaClass& objectClass, Q
 	else {
 		int separatorPos = pathString.indexOf(QChar('/'));
 		if(separatorPos == -1) {
-			return objectClass.isMember(object) && object->identifier() == pathString;
+			if(object->identifier() != pathString) return false;
+			if(objectClass.isMember(object)) return true;
+			return object->visitSubObjects([&](const DataObject* subObject) {
+				path.push_back(subObject);
+				if(getObjectImpl(objectClass, {}, path))
+					return true;
+				path.pop_back();
+				return false;
+			});
 		}
 		else if(object->identifier() == pathString.left(separatorPos)) {
 			QStringRef subPath = pathString.mid(separatorPos + 1);

@@ -22,6 +22,7 @@
 
 #include <ovito/mesh/Mesh.h>
 #include "SurfaceMeshFaces.h"
+#include "SurfaceMeshVis.h"
 
 namespace Ovito { namespace Mesh {
 
@@ -37,6 +38,7 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 	size_t stride;
 
 	switch(type) {
+	case SelectionProperty:
 	case RegionProperty:
 	case FaceTypeProperty:
 		dataType = PropertyStorage::Int;
@@ -68,6 +70,19 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 	PropertyPtr property = std::make_shared<PropertyStorage>(faceCount, dataType, componentCount, stride,
 								propertyName, false, type, componentNames);
 
+	// Initialize memory if requested.
+	if(initializeMemory && containerPath.size() >= 2) {
+		// Certain standard properties need to be initialized with default values determined by the attached visual elements.
+		if(type == ColorProperty) {
+			if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(containerPath[containerPath.size()-2])) {
+				if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
+					std::fill(property->dataColor(), property->dataColor() + property->size(), vis->surfaceColor());
+				}
+				initializeMemory = false;
+			}
+		}
+	}
+
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
 		std::memset(property->data(), 0, property->size() * property->stride());
@@ -91,6 +106,7 @@ void SurfaceMeshFaces::OOMetaClass::initialize()
 	const QStringList xyzList = QStringList() << "X" << "Y" << "Z";
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
 
+	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Face colors"));
 	registerStandardProperty(FaceTypeProperty, tr("Type"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(RegionProperty, tr("Region"), PropertyStorage::Int, emptyList);

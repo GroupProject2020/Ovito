@@ -15,14 +15,12 @@
        <imagedata fileref="images/modifiers/color_coding_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier assigns colors to particles, bonds, or vector glyphs according to a selected input property.
-    It thus provides a simple method to visualize the values of a per-particle or a per-bond quantity by means of a coloring
-    scheme.
+    This modifier assigns colors to particles, bonds, vector glyphs, <link linkend="scene_objects.voxel_grid">voxels</link> or <link linkend="scene_objects.surface_mesh">surfaces</link> according to a selected input property.
+    It thus provides a simple way of visualizing local property values by means of a coloring scheme.
   </para>
 
   <para>
-    The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should assign color to.
-    Depending on this choice, the modifier does the following:
+    The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should assign the colors to:
     <informaltable>
       <tgroup cols="2">
         <thead>
@@ -34,16 +32,28 @@
         <tbody>
           <row>
             <entry>Particles</entry>
-            <entry><para>Particles are colored by setting their <literal>Color</literal> particle property.</para></entry>
+            <entry><para>Colors particles according to a local property.</para></entry>
           </row>
           <row>
             <entry>Bonds</entry>
-            <entry><para>Bonds are colored by setting their <literal>Color</literal> bond property.</para></entry>
+            <entry><para>Colors bonds according to a local bond property.</para></entry>
           </row>
           <row>
-            <entry>Particle vectors</entry>
-            <entry><para><link linkend="display_objects.vectors">Vector glyphs</link> are colored by setting the <literal>Vector Color</literal>
+            <entry>Particle&#xA0;vectors</entry>
+            <entry><para>Colors <link linkend="display_objects.vectors">vector glyphs</link> by setting the <literal>Vector Color</literal>
               property of the associated particles.</para></entry>
+          </row>
+          <row>
+            <entry>Voxel&#xA0;grids</entry>
+            <entry><para>Colors the cells of a <link linkend="scene_objects.voxel_grid">voxel grid</link> according to a local property.</para></entry>
+          </row>
+          <row>
+            <entry>Mesh&#xA0;faces</entry>
+            <entry><para>Colors the facets of a <link linkend="scene_objects.surface_mesh">surface mesh</link> according to a local property.</para></entry>
+          </row>
+          <row>
+            <entry>Mesh&#xA0;vertices</entry>
+            <entry><para>Colors the vertices of a <link linkend="scene_objects.surface_mesh">surface mesh</link> according to a local property.</para></entry>
           </row>
         </tbody>
       </tgroup>
@@ -51,11 +61,10 @@
   </para>
 
   <para>
-    The color to be assigned to a given element (e.g. particle) is determined as follows by the modifier:
+    The color getting assigned to an element (e.g. a particle) is determined as follows by the modifier:
     First, the value of the selected input property of the element is linearly mapped (and clamped) to the unit interval [0,1] according to the
     <emphasis>Start value</emphasis> and <emphasis>End value</emphasis>
-    parameters of the modifier. This normalized value is then mapped to an RGB color value based on the selected
-    color gradient type.
+    parameters of the modifier. This normalized value is then mapped to an RGB color based on the selected color gradient type.
   </para>
 
   <para>
@@ -103,7 +112,7 @@
       <varlistentry>
         <term>Operate on</term>
         <listitem>
-          <para>Controls whether the modifier assigns colors to particles, bonds or vector arrows.</para>
+          <para>Selects the kind of data elements to be colored by the modifier.</para>
         </listitem>
       </varlistentry>
 

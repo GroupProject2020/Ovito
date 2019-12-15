@@ -120,7 +120,7 @@ protected:
 	private:
 
 		/// Splits a triangle face at a periodic boundary.
-		bool splitFace(int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices, std::map<std::pair<int,int>,std::tuple<int,int,FloatType>>& newVertexLookupMap, size_t dim);
+		bool splitFace(int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices, std::vector<ColorA>& newVertexColors, std::map<std::pair<int,int>,std::tuple<int,int,FloatType>>& newVertexLookupMap, size_t dim);
 
 		/// Traces the closed contour of the surface-boundary intersection.
 		std::vector<Point2> traceContour(HalfEdgeMesh::edge_index firstEdge, const std::vector<Point3>& reducedPos, std::vector<bool>& visitedFaces, size_t dim) const;

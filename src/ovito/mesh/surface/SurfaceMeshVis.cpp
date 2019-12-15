@@ -339,7 +339,6 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 	if(isCanceled()) return;
 
 	determineFaceColors();
-	determineVertexColors();
 
 	if(_generateCapPolygons) {
 		if(isCanceled()) return;
@@ -354,7 +353,14 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 ******************************************************************************/
 void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
 {
-	// To be implemented...
+	if(PropertyPtr colorProperty = _inputMesh.faceProperty(SurfaceMeshFaces::ColorProperty)) {
+		_surfaceMesh.setHasFaceColors(true);
+		auto meshFaceColor = _surfaceMesh.faceColors().begin();
+		for(size_t originalFace : _originalFaceMap) {
+			OVITO_ASSERT(originalFace < colorProperty->size());
+			*meshFaceColor++ = ColorA(colorProperty->getColor(originalFace));
+		}
+	}
 }
 
 /******************************************************************************
@@ -363,10 +369,12 @@ void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
 void SurfaceMeshVis::PrepareSurfaceEngine::determineVertexColors()
 {
 	if(PropertyPtr colorProperty = _inputMesh.vertexProperty(SurfaceMeshVertices::ColorProperty)) {
-		_surfaceMesh.setHasVertexColors(true);
-		OVITO_ASSERT(colorProperty->size() == _surfaceMesh.vertexColors().size());
-		std::transform(colorProperty->constDataColor(), colorProperty->constDataColor() + colorProperty->size(),
-			_surfaceMesh.vertexColors().begin(), [](const Color& c) { return ColorA(c); });
+		OVITO_ASSERT(colorProperty->size() == _surfaceMesh.vertexCount());
+		if(colorProperty->size() == _surfaceMesh.vertexCount()) {
+			_surfaceMesh.setHasVertexColors(true);
+			std::transform(colorProperty->constDataColor(), colorProperty->constDataColor() + colorProperty->size(),
+				_surfaceMesh.vertexColors().begin(), [](const Color& c) { return ColorA(c); });
+		}
 	}
 }
 
@@ -384,6 +392,9 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 	// Check for early abortion.
 	if(isCanceled())
 		return false;
+
+	// Assign mesh vertex colors if available.
+	determineVertexColors();
 
 	// Flip orientation of mesh faces if requested.
 	if(_reverseOrientation)
@@ -418,9 +429,10 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 		int oldFaceCount = _surfaceMesh.faceCount();
 		int oldVertexCount = _surfaceMesh.vertexCount();
 		std::vector<Point3> newVertices;
+		std::vector<ColorA> newVertexColors;
 		std::map<std::pair<int,int>,std::tuple<int,int,FloatType>> newVertexLookupMap;
 		for(int findex = 0; findex < oldFaceCount; findex++) {
-			if(!splitFace(findex, oldVertexCount, newVertices, newVertexLookupMap, dim)) {
+			if(!splitFace(findex, oldVertexCount, newVertices, newVertexColors, newVertexLookupMap, dim)) {
 				return false;
 			}
 		}
@@ -428,6 +440,10 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 		// Insert newly created vertices into mesh.
 		_surfaceMesh.setVertexCount(oldVertexCount + newVertices.size());
 		std::copy(newVertices.cbegin(), newVertices.cend(), _surfaceMesh.vertices().begin() + oldVertexCount);
+		if(_surfaceMesh.hasVertexColors()) {
+			OVITO_ASSERT(newVertexColors.size() == newVertices.size());
+			std::copy(newVertexColors.cbegin(), newVertexColors.cend(), _surfaceMesh.vertexColors().begin() + oldVertexCount);
+		}
 	}
 	if(isCanceled())
 		return false;
@@ -466,7 +482,7 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 /******************************************************************************
 * Splits a triangle face at a periodic boundary.
 ******************************************************************************/
-bool SurfaceMeshVis::PrepareSurfaceEngine::splitFace(int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices,
+bool SurfaceMeshVis::PrepareSurfaceEngine::splitFace(int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices, std::vector<ColorA>& newVertexColors,
 		std::map<std::pair<int,int>,std::tuple<int,int,FloatType>>& newVertexLookupMap, size_t dim)
 {
     TriMeshFace& face = _surfaceMesh.face(faceIndex);
@@ -532,6 +548,17 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::splitFace(int faceIndex, int oldVerte
 			newVertices.push_back(p);
 			p[dim] += FloatType(1);
 			newVertices.push_back(p);
+			// Compute the color at the intersection point by interpolating the colors of the two existing vertices.
+			if(_surfaceMesh.hasVertexColors()) {
+				const ColorA& color1 = _surfaceMesh.vertexColor(vi1);
+				const ColorA& color2 = _surfaceMesh.vertexColor(vi2);
+				ColorA interp_color(color1.r() + (color2.r() - color1.r()) * t,
+									color1.g() + (color2.g() - color1.g()) * t,
+									color1.b() + (color2.b() - color1.b()) * t,
+									color1.a() + (color2.a() - color1.a()) * t);
+				newVertexColors.push_back(interp_color);
+				newVertexColors.push_back(interp_color);
+			}
 		}
 		// Compute interpolated normal vector at intersection point.
 		if(_smoothShading) {
