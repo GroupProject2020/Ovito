@@ -29,6 +29,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "FileExporter.h"
 
@@ -170,12 +171,11 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 		throwException(tr("The scene object to be exported is not a data pipeline."));
 
 	// Evaluate pipeline.
-	auto evalFuture = requestRenderState ?
-		pipeline->evaluateRenderingPipeline(time, !ignorePipelineErrors()) :
-		pipeline->evaluatePipeline(time, !ignorePipelineErrors());
-	if(!operation.waitForFuture(evalFuture))
+	PipelineEvaluationFuture future(time, !ignorePipelineErrors());
+	future.execute(pipeline, requestRenderState);
+	if(!operation.waitForFuture(future))
 		return {};
-	PipelineFlowState state = evalFuture.result();
+	PipelineFlowState state = future.result();
 
 	if(!ignorePipelineErrors() && state.status().type() == PipelineStatus::Error)
 		throwException(tr("Export of frame %1 failed, because data pipeline evaluation did not succeed. Status message: %2")

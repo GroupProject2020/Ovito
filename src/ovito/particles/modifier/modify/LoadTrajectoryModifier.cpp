@@ -59,7 +59,7 @@ bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const DataCollection& i
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	OVITO_ASSERT(!input.isEmpty());
 
@@ -68,7 +68,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		throwException(tr("No trajectory data has been provided."));
 
 	// Get the trajectory frame.
-	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(time);
+	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(request);
 
 	// Wait for the data to become available.
 	return trajStateFuture.then(modApp->executor(), [state = input, modApp](const PipelineFlowState& trajState) mutable {

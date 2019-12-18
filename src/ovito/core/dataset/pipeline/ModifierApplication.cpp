@@ -158,31 +158,31 @@ PipelineStatus ModifierApplication::status() const
 /******************************************************************************
 * Asks the object for the result of the upstream data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(TimePoint time, bool breakOnError)
+SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(const PipelineEvaluationRequest& request)
 {
 	// Without a data source, this ModifierApplication doesn't produce any data.
 	if(!input())
 		return PipelineFlowState();
 
 	// Request the input data.
-	return input()->evaluate(time, breakOnError);
+	return input()->evaluate(request);
 }
 
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, bool breakOnError)
+Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEvaluationRequest& request)
 {
 	// Obtain input data and pass it on to the modifier.
-	return evaluateInput(time, breakOnError)
-		.then(executor(), [this, time, breakOnError](PipelineFlowState inputData) -> Future<PipelineFlowState> {
+	return evaluateInput(request)
+		.then(executor(), [this, request](PipelineFlowState inputData) -> Future<PipelineFlowState> {
 
 			// Clear the status of the input unless it is an error.
 			if(inputData.status().type() != PipelineStatus::Error) {
 				OVITO_ASSERT(inputData.status().type() != PipelineStatus::Pending);
 				inputData.setStatus(PipelineStatus());
 			}
-			else if(breakOnError) {
+			else if(request.breakOnError()) {
 				// Skip all following modifiers once an error has occured along the pipeline.
 				return inputData;
 			}
@@ -198,7 +198,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, 
 			Future<PipelineFlowState> future;
 			try {
 				// Let the modifier do its job.
-				future = modifier()->evaluate(time, this, inputData);
+				future = modifier()->evaluate(request, this, inputData);
 			}
 			catch(...) {
 				future = Future<PipelineFlowState>::createFailed(std::current_exception());
@@ -223,7 +223,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, 
 			//
 			//  - Restrict the validity interval of the returned state to the validity interval of the modifier.
 			//
-			return future.then_future(executor(), [this, time, inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
+			return future.then_future(executor(), [this, time = request.time(), inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {

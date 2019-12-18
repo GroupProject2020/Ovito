@@ -127,6 +127,8 @@ namespace Ovito {
 			class DataCollection;
 			class PipelineObject;
 			class PipelineCache;
+			class PipelineEvaluationRequest;
+			class PipelineEvaluationFuture;
 			class CachingPipelineObject;
 			class DataVis;
 			class TransformingDataVis;

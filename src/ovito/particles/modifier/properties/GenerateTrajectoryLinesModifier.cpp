@@ -25,6 +25,7 @@
 #include <ovito/particles/objects/TrajectoryObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
@@ -106,7 +107,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		if(!myModApp) continue;
 
 		// Get input particles.
-		SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(currentTime);
+		SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(PipelineEvaluationRequest(currentTime));
 		if(!operation.waitForFuture(stateFuture))
 			return false;
 
@@ -166,7 +167,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		for(TimePoint time : sampleTimes) {
 			operation.setProgressText(tr("Generating trajectory lines (frame %1 of %2)").arg(operation.progressValue()+1).arg(operation.progressMaximum()));
 
-			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(time);
+			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(PipelineEvaluationRequest(time));
 			if(!operation.waitForFuture(stateFuture))
 				return false;
 

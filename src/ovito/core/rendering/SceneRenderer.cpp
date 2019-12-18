@@ -26,6 +26,7 @@
 #include <ovito/core/dataset/scene/SceneNode.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/pipeline/PipelineObject.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
@@ -126,18 +127,18 @@ bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
 		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != node && viewport()->viewNode()->lookatTargetNode() != node)) {
 
 			// Evaluate data pipeline of object node and render the results.
-			SharedFuture<PipelineFlowState> pipelineStateFuture;
+			PipelineEvaluationFuture pipelineEvaluation(time());
 			if(waitForLongOperationsEnabled()) {
-				pipelineStateFuture = pipeline->evaluateRenderingPipeline(time());
-				if(!operation.waitForFuture(pipelineStateFuture))
+				pipelineEvaluation.execute(pipeline, true);
+				if(!operation.waitForFuture(pipelineEvaluation))
 					return false;
 
 				// After the rendering process has been temporarily interrupted above, rendering is resumed now.
 				// Give the renderer the opportunity to restore any state that must be active (e.g. the active OpenGL context).
 				resumeRendering();
 			}
-			const PipelineFlowState& state = pipelineStateFuture.isValid() ?
-												pipelineStateFuture.result() :
+			const PipelineFlowState& state = pipelineEvaluation.isValid() ?
+												pipelineEvaluation.result() :
 												pipeline->evaluatePipelinePreliminary(true);
 
 			// Invoke all vis elements of all data objects in the pipeline state.

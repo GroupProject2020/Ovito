@@ -72,11 +72,11 @@ OORef<ModifierApplication> Modifier::createModifierApplication()
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> Modifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> Modifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
 	if(!output.isEmpty())
-		evaluatePreliminary(time, modApp, output);
+		evaluatePreliminary(request.time(), modApp, output);
 	return Future<PipelineFlowState>::createImmediate(std::move(output));
 }
 

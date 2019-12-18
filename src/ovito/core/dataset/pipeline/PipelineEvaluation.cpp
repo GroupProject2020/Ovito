@@ -21,43 +21,37 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/core/Core.h>
-#include <ovito/core/dataset/pipeline/StaticSource.h>
-#include <ovito/core/utilities/concurrent/SharedFuture.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
+#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
-IMPLEMENT_OVITO_CLASS(StaticSource);
-DEFINE_REFERENCE_FIELD(StaticSource, dataCollection);
-SET_PROPERTY_FIELD_LABEL(StaticSource, dataCollection, "Data");
-
 /******************************************************************************
-* Constructor.
+* Starts executing the pipeline evaluation.
 ******************************************************************************/
-StaticSource::StaticSource(DataSet* dataset, DataCollection* data) : PipelineObject(dataset)
+void PipelineEvaluationFuture::execute(PipelineSceneNode* pipeline, bool generateVisualElements)
 {
-    setDataCollection(data);
+    // The pipeline evaluation can not be started again while still in progress.
+    OVITO_ASSERT(!isValid() || isFinished());
+    // Need a valid pipeline as input.
+    OVITO_ASSERT(pipeline != nullptr);
+
+    // Let the pipeline do the heavy work.
+    _pipeline = pipeline;
+    if(!generateVisualElements)
+        static_cast<SharedFuture<PipelineFlowState>&>(*this) = pipeline->evaluatePipeline(_request);
+    else
+        static_cast<SharedFuture<PipelineFlowState>&>(*this) = pipeline->evaluateRenderingPipeline(_request);
 }
 
 /******************************************************************************
-* Asks the object for the result of the data pipeline.
+* Starts executing the pipeline evaluation.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> StaticSource::evaluate(const PipelineEvaluationRequest& request)
+void PipelineEvaluationFuture::reset(TimePoint time)
 {
-    // Note that the PipelineFlowState constructor creates deep copy of the data collection.
-    // We always pass a copy of the data to the pipeline to avoid unexpected side effects when
-    // modifying the objects in this source's data collection.
-    return Future<PipelineFlowState>::createImmediateEmplace(dataCollection(), PipelineStatus::Success);
-}
-
-/******************************************************************************
-* Asks the object for the result of the data pipeline.
-******************************************************************************/
-PipelineFlowState StaticSource::evaluatePreliminary()
-{
-    // Note that the PipelineFlowState constructor creates deep copy of the data collection.
-    // We always pass a copy of the data to the pipeline to avoid unexpected side effects when
-    // modifying the objects in this source's data collection.
-    return PipelineFlowState(dataCollection(), PipelineStatus::Success);
+    SharedFuture<PipelineFlowState>::reset();
+    _request = PipelineEvaluationRequest(time);
+    _pipeline.clear();
 }
 
 OVITO_END_INLINE_NAMESPACE

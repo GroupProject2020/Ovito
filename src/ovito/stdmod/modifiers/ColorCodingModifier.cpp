@@ -270,7 +270,7 @@ bool ColorCodingModifier::adjustRangeGlobal(Task& operation)
 		for(ModifierApplication* modApp : modifierApplications()) {
 
 			// Evaluate data pipeline up to this color coding modifier.
-			SharedFuture<PipelineFlowState> stateFuture = modApp->evaluateInput(time);
+			SharedFuture<PipelineFlowState> stateFuture = modApp->evaluateInput(PipelineEvaluationRequest(time));
 			if(!operation.waitForFuture(stateFuture))
 				break;
 

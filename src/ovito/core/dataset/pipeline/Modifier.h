@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -48,13 +48,6 @@ protected:
 	Modifier(DataSet* dataset);
 
 public:
-
-	/// \brief Modifies the input data.
-	/// \param time The animation at which the modifier is applied.
-	/// \param modApp The application object for this modifier. It describes this particular usage of the
-	///               modifier in the data pipeline.
-	/// \param input The upstream data flowing down the pipeline.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input);
 
 	/// \brief Modifies the input data in an immediate, preliminary way.
 	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}
@@ -130,6 +123,15 @@ public:
 	/// \brief Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
 	virtual QMap<int, QString> animationFrameLabels(QMap<int, QString> inputLabels) const { return std::move(inputLabels); }
 
+protected:
+
+	/// \brief Modifies the input data.
+	/// \param request The pipeline request the triggered the modifier evaluation.
+	/// \param modApp The application object for this modifier. It describes this particular usage of the
+	///               modifier in the data pipeline.
+	/// \param input The upstream data flowing down the pipeline.
+	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input);
+
 private:
 
 	/// Flag that indicates whether the modifier is enabled.
@@ -137,6 +139,8 @@ private:
 
 	/// The user-defined title of this modifier.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
+
+	friend ModifierApplication;
 };
 
 OVITO_END_INLINE_NAMESPACE

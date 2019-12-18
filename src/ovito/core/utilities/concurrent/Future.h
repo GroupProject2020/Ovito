@@ -86,7 +86,7 @@ public:
 
 protected:
 
-	/// Default constructor, which creates a Future without a shared state.
+	/// Default constructor creating a future without a shared state.
 #ifndef Q_CC_MSVC
 	FutureBase() noexcept = default;
 #else

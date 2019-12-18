@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -44,10 +44,16 @@ class OVITO_CORE_EXPORT PipelineSceneNode : public SceneNode
 public:
 
 	/// \brief Constructs an object node.
-	Q_INVOKABLE PipelineSceneNode(DataSet* dataset);
+	Q_INVOKABLE explicit PipelineSceneNode(DataSet* dataset);
 
 	/// \brief Destructor.
 	virtual ~PipelineSceneNode();
+
+	/// \brief Asks the node for the results of its data pipeline.
+	SharedFuture<PipelineFlowState> evaluatePipeline(const PipelineEvaluationRequest& request) const;
+
+	/// \brief Asks the node for the results of its data pipeline including the output of asynchronous visualization elements.
+	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(const PipelineEvaluationRequest& request) const;
 
 	/// Traverses the node's pipeline until the end and returns the object that generates the
 	/// input data for the pipeline.
@@ -56,16 +62,6 @@ public:
 	/// Sets the data source of this node's pipeline, i.e., the object that provides the
 	/// input data entering the pipeline.
 	void setPipelineSource(PipelineObject* sourceObject);
-
-	/// \brief Asks the node for the results of its data pipeline.
-	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
-	SharedFuture<PipelineFlowState> evaluatePipeline(TimePoint time, bool breakOnError = false) const;
-
-	/// \brief Asks the node for the results of its data pipeline including the output of asynchronous visualization elements.
-	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
-	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(TimePoint time, bool breakOnError = false) const;
 
 	/// \brief Requests preliminary results from the data pipeline.
 	const PipelineFlowState& evaluatePipelinePreliminary(bool includeVisElements) const;

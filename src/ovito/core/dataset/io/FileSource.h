@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -47,9 +47,7 @@ public:
 	Q_INVOKABLE FileSource(DataSet* dataset);
 
 	/// \brief Asks the object for the result of the data pipeline.
-	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
+	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
@@ -91,9 +89,6 @@ public:
 	/// \brief Returns the human-readable labels associated with the animation frames (e.g. the simulation timestep numbers).
 	virtual QMap<int, QString> animationFrameLabels() const override;
 
-	/// \brief Requests a source frame from the input sequence.
-	SharedFuture<PipelineFlowState> requestFrame(int frame);
-
 	/// Returns the title of this object.
 	virtual QString objectTitle() const override;
 
@@ -107,7 +102,7 @@ public:
 protected:
 
 	/// Asks the object for the results of the data pipeline.
-	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) override;
+	virtual Future<PipelineFlowState> evaluateInternal(const PipelineEvaluationRequest& request) override;
 
 	/// Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;

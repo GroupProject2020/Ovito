@@ -78,7 +78,7 @@ public:
 	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Modifies the input data.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Returns the number of animation frames this modifier can provide.
 	virtual int numberOfSourceFrames(int inputFrames) const override {

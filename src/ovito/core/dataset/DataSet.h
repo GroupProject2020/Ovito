@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,6 +31,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/scene/SelectionSet.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
@@ -43,11 +44,11 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
 /**
- * \brief Stores the current state including the three-dimensional scene, viewport configuration,
+ * \brief Stores the current program state including the three-dimensional scene, viewport configuration,
  *        render settings etc.
  *
- * A DataSet represents the current document being edited by the user.
- * It can be completely saved to a file (.ovito extension) and loaded again at a later time.
+ * A DataSet represents the state of the current user session.
+ * It can be completely saved to a file (.ovito suffix) and loaded again at a later time.
  *
  * The DataSet class consists of various sub-objects that store different aspects. The
  * ViewportConfiguration object returned by viewportConfig(), for example, stores the list
@@ -256,17 +257,11 @@ private:
 	/// The last animation time at which the scene was made ready.
 	TimePoint _sceneReadyTime;
 
+	/// The current pipeline evaluation that is in progress.
+	PipelineEvaluationFuture _pipelineEvaluation;
+
 	/// The watcher object that is used to monitor the evaluation of data pipelines in the scene.
 	TaskWatcher _pipelineEvaluationWatcher;
-
-	/// The future for the results of the pipeline evaluation being in progress.
-	SharedFuture<PipelineFlowState> _pipelineEvaluationFuture;
-
-	/// The animation time at which the scene's pipelines are currently being evaluated.
-	TimePoint _pipelineEvaluationTime;
-
-	/// The current scene node whose pipeline is being evaluated.
-	QPointer<PipelineSceneNode> _currentEvaluationNode;
 
 	/// The DataSetContainer which currently hosts this DataSet.
 	QPointer<DataSetContainer> _container;

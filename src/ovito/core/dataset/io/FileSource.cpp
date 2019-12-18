@@ -183,7 +183,7 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 {
 	_framesListFuture.reset();
 
-	// If there are too many frames, time tick values may overflow. Warn the user in this case. 
+	// If there are too many frames, time tick values may overflow. Warn the user in this case.
 	if(frames.size() >= animationTimeToSourceFrame(TimePositiveInfinity())) {
 		qWarning() << "Warning: Number of frames in loaded trajectory exceeds the maximum supported by OVITO (" << (animationTimeToSourceFrame(TimePositiveInfinity())-1) << " frames). "
 			"Note: You can increase the limit by setting the animation frames-per-second parameter to a higher value.";
@@ -285,12 +285,12 @@ PipelineStatus FileSource::status() const
 }
 
 /******************************************************************************
-* Asks the object for the result of the data pipeline at the given time.
+* Asks the object for the result of the data pipeline.
 ******************************************************************************/
-Future<PipelineFlowState> FileSource::evaluateInternal(TimePoint time, bool breakOnError)
+Future<PipelineFlowState> FileSource::evaluateInternal(const PipelineEvaluationRequest& request)
 {
 	// Convert the animation time to a frame number.
-	int frame = animationTimeToSourceFrame(time);
+	int frame = animationTimeToSourceFrame(request.time());
 	int frameCount = numberOfSourceFrames();
 
 	// Clamp to frame range.
@@ -356,14 +356,6 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 /******************************************************************************
 * Requests a source frame from the input sequence.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> FileSource::requestFrame(int frame)
-{
-	return evaluate(sourceFrameToAnimationTime(frame));
-}
-
-/******************************************************************************
-* Requests a source frame from the input sequence.
-******************************************************************************/
 Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 {
 	// First request the list of source frames and wait until it becomes available.
@@ -372,11 +364,11 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 			// Is the requested frame out of range?
 			if(frame >= sourceFrames.size()) {
-
 				TimeInterval interval = TimeInterval::infinite();
-				if(frame < 0) interval.setEnd(sourceFrameToAnimationTime(0) - 1);
-				else if(frame >= sourceFrames.size() && !sourceFrames.empty()) interval.setStart(sourceFrameToAnimationTime(sourceFrames.size()));
-
+				if(frame < 0)
+					interval.setEnd(sourceFrameToAnimationTime(0) - 1);
+				else if(frame >= sourceFrames.size() && !sourceFrames.empty())
+					interval.setStart(sourceFrameToAnimationTime(sourceFrames.size()));
 				return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, tr("The file source path is empty or has not been set (no files found).")), interval);
 			}
 			else if(frame < 0) {
@@ -613,17 +605,17 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> FileSource::evaluate(TimePoint time, bool breakOnError)
+SharedFuture<PipelineFlowState> FileSource::evaluate(const PipelineEvaluationRequest& request)
 {
 	if(_updateCacheWithDataCollection) {
 		_updateCacheWithDataCollection = false;
-		if(pipelineCache().contains(time)) {
+		if(pipelineCache().contains(request.time())) {
 			UndoSuspender noUndo(this);
-			const PipelineFlowState& oldCachedState = pipelineCache().getAt(time);
+			const PipelineFlowState& oldCachedState = pipelineCache().getAt(request.time());
 			pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
 		}
 	}
-	return CachingPipelineObject::evaluate(time, breakOnError);
+	return CachingPipelineObject::evaluate(request);
 }
 
 /******************************************************************************

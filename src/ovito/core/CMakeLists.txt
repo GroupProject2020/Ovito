@@ -87,6 +87,7 @@ SET(SourceFiles
 	dataset/data/AttributeDataObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp
 	dataset/pipeline/PipelineCache.cpp
+	dataset/pipeline/PipelineEvaluation.cpp
 	dataset/pipeline/PipelineObject.cpp
 	dataset/pipeline/CachingPipelineObject.cpp
 	dataset/pipeline/AsynchronousModifier.cpp

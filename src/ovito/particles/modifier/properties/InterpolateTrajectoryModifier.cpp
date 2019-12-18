@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include "InterpolateTrajectoryModifier.h"
 
@@ -54,7 +55,7 @@ bool InterpolateTrajectoryModifier::OOMetaClass::isApplicableTo(const DataCollec
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	int nextFrame;
 	SharedFuture<PipelineFlowState> nextStateFuture;
@@ -63,10 +64,10 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 	// If the source frame attribute is not present, fall back to inferring it from the current animation time.
 	int currentFrame = input.data() ? input.data()->sourceFrame() : -1;
 	if(currentFrame < 0)
-		currentFrame = modApp->animationTimeToSourceFrame(time);
+		currentFrame = modApp->animationTimeToSourceFrame(request.time());
 
 	// If we are exactly on a source frame, there is no need to interpolate between two frames.
-	if(modApp->sourceFrameToAnimationTime(currentFrame) == time) {
+	if(modApp->sourceFrameToAnimationTime(currentFrame) == request.time()) {
 		nextFrame = currentFrame;
 		nextStateFuture = input;
 	}
@@ -83,12 +84,12 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 
 		// Need to request next frame from the pipeline if not in cache.
 		if(!nextStateFuture.isValid()) {
-			nextStateFuture = modApp->evaluateInput(modApp->sourceFrameToAnimationTime(nextFrame));
+			nextStateFuture = modApp->evaluateInput(PipelineEvaluationRequest(modApp->sourceFrameToAnimationTime(nextFrame)));
 		}
 	}
 
 	// Wait for the reference configuration to become available.
-	return nextStateFuture.then(executor(), [this, time, modApp, state = input, nextFrame](const PipelineFlowState& nextState) mutable {
+	return nextStateFuture.then(executor(), [this, time = request.time(), modApp, state = input, nextFrame](const PipelineFlowState& nextState) mutable {
 		if(InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp)) {
 			UndoSuspender noUndo(this);
 

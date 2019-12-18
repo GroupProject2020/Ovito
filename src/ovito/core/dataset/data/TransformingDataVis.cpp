@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,7 +41,7 @@ TransformingDataVis::TransformingDataVis(DataSet* dataset) : DataVis(dataset)
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode, bool breakOnError)
+Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState)
 {
 	// Check if the cache state already contains a transformed data object that we have
 	// created earlier for the same input object. If yes, we can immediately return it.
@@ -65,7 +65,7 @@ Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, con
 		OVITO_ASSERT(flowState.status().type() != PipelineStatus::Pending);
 		flowState.setStatus(PipelineStatus());
 	}
-	else if(breakOnError) {
+	else if(request.breakOnError()) {
 		// Skip all following vis transformations once an error has occured along the pipeline.
 		return std::move(flowState);
 	}
@@ -76,7 +76,7 @@ Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, con
 	Future<PipelineFlowState> future;
 	try {
 		// Let the transforming vis element do its job.
-		future = transformDataImpl(time, dataObject, std::move(flowState), cachedState, contextNode);
+		future = transformDataImpl(request, dataObject, std::move(flowState), cachedState);
 	}
 	catch(...) {
 		future = Future<PipelineFlowState>::createFailed(std::current_exception());

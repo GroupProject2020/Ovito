@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <ovito/core/dataset/data/DataObject.h>
 #include <ovito/core/dataset/data/TransformingDataVis.h>
 #include <ovito/core/dataset/pipeline/PipelineObject.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
@@ -109,19 +110,19 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 /******************************************************************************
 * Asks the node for the results of its data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint time, bool breakOnError) const
+SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(const PipelineEvaluationRequest& request) const
 {
 	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineCache.contains(time))
-		return _pipelineCache.getAt(time);
+	if(_pipelineCache.contains(request.time()))
+		return _pipelineCache.getAt(request.time());
 
 	// Without a data provider, we cannot serve any requests.
 	if(!dataProvider())
 		return Future<PipelineFlowState>::createImmediateEmplace();
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
-	return dataProvider()->evaluate(time, breakOnError)
-		.then(executor(), [this, time](PipelineFlowState state) {
+	return dataProvider()->evaluate(request)
+		.then(executor(), [this, time=request.time()](PipelineFlowState state) {
 			UndoSuspender noUndo(this);
 
 			// The pipeline should never return a state without proper validity interval.
@@ -141,15 +142,15 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 * Asks the node for the results of its data pipeline including the output of
 * asynchronous visualization elements.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(TimePoint time, bool breakOnError) const
+SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(const PipelineEvaluationRequest& request) const
 {
 	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineRenderingCache.contains(time))
-		return _pipelineRenderingCache.getAt(time);
+	if(_pipelineRenderingCache.contains(request.time()))
+		return _pipelineRenderingCache.getAt(request.time());
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
-	return evaluatePipeline(time, breakOnError)
-		.then(executor(), [this, time, breakOnError](const PipelineFlowState& state) {
+	return evaluatePipeline(request)
+		.then(executor(), [this, request](const PipelineFlowState& state) {
 			UndoSuspender noUndo(this);
 
 			// Holds the results to be returned to the caller.
@@ -159,19 +160,19 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 			if(!state.isEmpty()) {
 				for(const auto& dataObj : state.data()->objects()) {
 					for(DataVis* vis : dataObj->visElements()) {
-						if(!vis || !vis->isEnabled()) continue;
 						if(TransformingDataVis* transformingVis = dynamic_object_cast<TransformingDataVis>(vis)) {
-							if(!results.isValid()) {
-								results = transformingVis->transformData(time, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents(), this, breakOnError);
+							if(transformingVis->isEnabled()) {
+								if(!results.isValid()) {
+									results = transformingVis->transformData(request, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents());
+								}
+								else {
+									results = results.then(transformingVis->executor(), [request, transformingVis, dataObj, pipeline = OORef<PipelineSceneNode>(this)](PipelineFlowState&& state) {
+										UndoSuspender noUndo(transformingVis);
+										return transformingVis->transformData(request, dataObj, std::move(state), pipeline->_pipelineRenderingCache.getStaleContents());
+									});
+								}
+								OVITO_ASSERT(results.isValid());
 							}
-							else {
-								OORef<PipelineSceneNode> thisNode = this;
-								results = results.then(transformingVis->executor(), [node = std::move(thisNode), time, transformingVis, dataObj, breakOnError](PipelineFlowState&& state) {
-									UndoSuspender noUndo(transformingVis);
-									return transformingVis->transformData(time, dataObj, std::move(state), node->_pipelineRenderingCache.getStaleContents(), node, breakOnError);
-								});
-							}
-							OVITO_ASSERT(results.isValid());
 						}
 					}
 				}

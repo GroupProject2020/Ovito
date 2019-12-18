@@ -94,21 +94,21 @@ void FreezePropertyModifier::propertyChanged(const PropertyFieldDescriptor& fiel
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> FreezePropertyModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Check if we already have the frozen property available.
 	if(FreezePropertyModifierApplication* myModApp = dynamic_object_cast<FreezePropertyModifierApplication>(modApp)) {
 		if(myModApp->hasFrozenState(freezeTime())) {
 			// Perform replacement of the property in the input pipeline state.
 			PipelineFlowState output = input;
-			evaluatePreliminary(time, modApp, output);
+			evaluatePreliminary(request.time(), modApp, output);
 			return std::move(output);
 		}
 	}
 
 	// Request the frozen state from the pipeline.
-	return modApp->evaluateInput(freezeTime())
-		.then(executor(), [this, time, modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
+	return modApp->evaluateInput(PipelineEvaluationRequest(freezeTime(), request))
+		.then(executor(), [this, time = request.time(), modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
 			UndoSuspender noUndo(this);
 
 			// Extract the input property.

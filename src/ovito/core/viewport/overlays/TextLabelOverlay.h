@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
-#include <ovito/core/utilities/concurrent/SharedFuture.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/rendering/FrameBuffer.h>
 #include "ViewportOverlay.h"
@@ -50,11 +50,12 @@ public:
 	/// This method asks the overlay to paint its contents over the rendered image.
 	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
 		if(sourceNode()) {
-			SharedFuture<PipelineFlowState> stateFuture =  sourceNode()->evaluatePipeline(time);
-			if(!operation.waitForFuture(stateFuture))
+			PipelineEvaluationFuture pipelineEvaluation(time);
+			pipelineEvaluation.execute(sourceNode());
+			if(!operation.waitForFuture(pipelineEvaluation))
 				return;
 			QPainter painter(&frameBuffer->image());
-			renderImplementation(painter, renderSettings, stateFuture.result());
+			renderImplementation(painter, renderSettings, pipelineEvaluation.result());
 		}
 		else {
 			QPainter painter(&frameBuffer->image());

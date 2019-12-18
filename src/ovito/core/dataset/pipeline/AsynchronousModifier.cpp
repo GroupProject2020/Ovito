@@ -44,24 +44,24 @@ AsynchronousModifier::AsynchronousModifier(DataSet* dataset) : Modifier(dataset)
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Check if there are existing computation results stored in the ModifierApplication that can be re-used.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
 		const AsynchronousModifier::ComputeEnginePtr& lastResults = asyncModApp->lastComputeResults();
-		if(lastResults && lastResults->validityInterval().contains(time)) {
+		if(lastResults && lastResults->validityInterval().contains(request.time())) {
 			// Re-use the computation results and apply them to the input data.
 			UndoSuspender noUndo(this);
 			PipelineFlowState output = input;
-			lastResults->emitResults(time, modApp, output);
+			lastResults->emitResults(request.time(), modApp, output);
 			output.intersectStateValidity(lastResults->validityInterval());
 			return output;
 		}
 	}
 
 	// Let the subclass create the computation engine based on the input data.
-	Future<ComputeEnginePtr> engineFuture = createEngine(time, modApp, input);
-	return engineFuture.then(executor(), [this, time, input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
+	Future<ComputeEnginePtr> engineFuture = createEngine(request.time(), modApp, input);
+	return engineFuture.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
 
 			// Explicitly create a local copy of the shared_ptr to keep the task object alive for some time.
 			auto task = engine->task();

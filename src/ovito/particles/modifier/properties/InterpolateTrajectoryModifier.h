@@ -59,7 +59,7 @@ public:
 	Q_INVOKABLE InterpolateTrajectoryModifier(DataSet* dataset);
 
 	/// Modifies the input data.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;

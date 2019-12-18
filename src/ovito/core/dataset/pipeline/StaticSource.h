@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 /**
- * \brief This is a PipelineObject that returns a static data collection.
+ * \brief A source PipelineObject returning a static data collection.
  */
 class OVITO_CORE_EXPORT StaticSource : public PipelineObject
 {
@@ -41,10 +41,10 @@ class OVITO_CORE_EXPORT StaticSource : public PipelineObject
 public:
 
 	/// \brief Standard constructor.
-	Q_INVOKABLE StaticSource(DataSet* dataset, DataCollection* data = nullptr);
+	Q_INVOKABLE explicit StaticSource(DataSet* dataset, DataCollection* data = nullptr);
 
 	/// \brief Asks the object for the result of the data pipeline.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
+	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
@@ -62,5 +62,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

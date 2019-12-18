@@ -47,6 +47,13 @@ public:
 #else
 	SharedFuture() noexcept {}
 #endif
+
+	/// Move constructor.
+	SharedFuture(SharedFuture&& other) noexcept = default;
+
+	/// Copy constructor.
+	SharedFuture(const SharedFuture& other) noexcept = default;
+
 	/// Constructor that constructs a shared future from a normal future.
 	SharedFuture(Future<R...>&& other) noexcept : FutureBase(std::move(other)) {}
 
@@ -59,10 +66,16 @@ public:
 	SharedFuture(R2&&... val) noexcept : FutureBase(std::move(promise_type::createImmediate(std::forward<R2>(val)...)._task)) {}
 
 	/// Cancels the shared state associated with this Future.
-	/// The Future is no longer valid after calling this function.
+	/// The SharedFuture is no longer valid after calling this function.
 	void cancelRequest() {
 		reset();
 	}
+
+	/// Move assignment operator.
+	SharedFuture& operator=(SharedFuture&& other) noexcept = default;
+
+	/// Copy assignment operator.
+	SharedFuture& operator=(const SharedFuture& other) noexcept = default;
 
 	/// Returns the results computed by the associated Promise.
 	/// This function may only be called after the Promise was fulfilled (and not canceled).

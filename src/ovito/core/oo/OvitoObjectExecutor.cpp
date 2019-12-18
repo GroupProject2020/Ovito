@@ -27,6 +27,36 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
 /******************************************************************************
+* Event class constructor.
+******************************************************************************/
+OvitoObjectExecutor::WorkEventBase::WorkEventBase(const OvitoObject* obj) :
+    QEvent(workEventType()),
+    _obj(const_cast<OvitoObject*>(obj)),
+    _executionContext(static_cast<int>(Application::instance()->executionContext()))
+{
+}
+
+/******************************************************************************
+* Activates the original execution context under which the work was submitted.
+******************************************************************************/
+void OvitoObjectExecutor::WorkEventBase::activateExecutionContext()
+{
+    Application::ExecutionContext previousContext = Application::instance()->executionContext();
+    Application::instance()->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
+    _executionContext = static_cast<int>(previousContext);
+}
+
+/******************************************************************************
+* Restores the execution context as it was before the work was executed.
+******************************************************************************/
+void OvitoObjectExecutor::WorkEventBase::restoreExecutionContext()
+{
+    Application::ExecutionContext previousContext = Application::instance()->executionContext();
+    Application::instance()->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
+    _executionContext = static_cast<int>(previousContext);
+}
+
+/******************************************************************************
 * Submits the work for execution.
 ******************************************************************************/
 void OvitoObjectExecutor::Work::operator()()

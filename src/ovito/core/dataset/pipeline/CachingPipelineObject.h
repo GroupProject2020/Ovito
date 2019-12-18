@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -44,9 +44,7 @@ public:
 	CachingPipelineObject(DataSet* dataset);
 
 	/// \brief Asks the object for the result of the data pipeline.
-	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
+	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override { return _pipelineCache.getStaleContents(); }
@@ -64,9 +62,7 @@ public:
 protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
-	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs and throw an exception.
-	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) = 0;
+	virtual Future<PipelineFlowState> evaluateInternal(const PipelineEvaluationRequest& request) = 0;
 
 	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been
 	///        evaluated but before the rest of the pipeline is complete.
@@ -80,12 +76,10 @@ private:
 	/// A weak reference to the future results of an ongoing evaluation of the pipeline.
 	WeakSharedFuture<PipelineFlowState> _inProgressEvalFuture;
 
-	/// The animation time at which the current evaluation is in progress.
+	/// The animation time of the evaluation that is currently in progress.
 	TimePoint _inProgressEvalTime = TimeNegativeInfinity();
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

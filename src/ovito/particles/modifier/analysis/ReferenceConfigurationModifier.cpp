@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "ReferenceConfigurationModifier.h"
@@ -107,7 +108,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 	if(!refState.isValid()) {
 		if(!referenceConfiguration()) {
 			// Convert frame to animation time.
-			refState = modApp->evaluateInput(modApp->sourceFrameToAnimationTime(referenceFrame));
+			refState = modApp->evaluateInput(PipelineEvaluationRequest(modApp->sourceFrameToAnimationTime(referenceFrame)));
 		}
 		else {
 			if(referenceConfiguration()->numberOfSourceFrames() > 0) {
@@ -118,7 +119,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 					else
 						throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
 				}
-				refState = referenceConfiguration()->evaluate(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame));
+				refState = referenceConfiguration()->evaluate(PipelineEvaluationRequest(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame)));
 			}
 			else {
 				// Create an empty state for the reference configuration if it is yet to be specified by the user.

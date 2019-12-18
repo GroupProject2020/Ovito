@@ -50,11 +50,11 @@ bool UnwrapTrajectoriesModifier::OOMetaClass::isApplicableTo(const DataCollectio
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> UnwrapTrajectoriesModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> UnwrapTrajectoriesModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
 	if(!output.isEmpty())
-		unwrapParticleCoordinates(time, modApp, output);
+		unwrapParticleCoordinates(request.time(), modApp, output);
 	return Future<PipelineFlowState>::createImmediate(std::move(output));
 }
 
@@ -247,7 +247,7 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 			TimePoint time = modApp->sourceFrameToAnimationTime(frame);
 			operation.setProgressText(tr("Unwrapping particle trajectories (frame %1 of %2)").arg(frame+1).arg(num_frames));
 
-			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(time);
+			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(PipelineEvaluationRequest(time));
 			if(!operation.waitForFuture(stateFuture))
 				return false;
 

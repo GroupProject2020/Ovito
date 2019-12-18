@@ -41,12 +41,10 @@ class OVITO_CORE_EXPORT PipelineObject : public RefTarget
 public:
 
 	/// \brief Constructor.
-	PipelineObject(DataSet* dataset);
+	explicit PipelineObject(DataSet* dataset);
 
 	/// \brief Asks the object for the result of the data pipeline.
-	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) = 0;
+	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) = 0;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() { return {}; }
@@ -93,5 +91,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

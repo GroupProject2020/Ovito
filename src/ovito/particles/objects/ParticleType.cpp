@@ -80,7 +80,7 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 	// Create a temporary FileSource for loading the geometry data from the file.
 	OORef<FileSource> fileSource = new FileSource(dataset());
 	fileSource->setSource({ QUrl::fromLocalFile(filepath) }, importer, false);
-	SharedFuture<PipelineFlowState> stateFuture = fileSource->evaluate(0);
+	SharedFuture<PipelineFlowState> stateFuture = fileSource->evaluate(PipelineEvaluationRequest(0));
 	if(!operation.waitForFuture(stateFuture))
 		return false;
 

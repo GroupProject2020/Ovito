@@ -54,17 +54,17 @@ CombineDatasetsModifier::CombineDatasetsModifier(DataSet* dataset) : MultiDelega
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-Future<PipelineFlowState> CombineDatasetsModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> CombineDatasetsModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the secondary data source.
 	if(!secondaryDataSource())
 		throwException(tr("No dataset to be merged has been provided."));
 
 	// Get the state.
-	SharedFuture<PipelineFlowState> secondaryStateFuture = secondaryDataSource()->evaluate(time);
+	SharedFuture<PipelineFlowState> secondaryStateFuture = secondaryDataSource()->evaluate(request);
 
 	// Wait for the data to become available.
-	return secondaryStateFuture.then(executor(), [this, state = input, time, modApp = OORef<ModifierApplication>(modApp)](const PipelineFlowState& secondaryState) mutable {
+	return secondaryStateFuture.then(executor(), [this, state = input, time = request.time(), modApp = OORef<ModifierApplication>(modApp)](const PipelineFlowState& secondaryState) mutable {
 
 		UndoSuspender noUndo(this);
 

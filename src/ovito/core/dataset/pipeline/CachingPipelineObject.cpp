@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -55,17 +55,17 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time, bool breakOnError)
+SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEvaluationRequest& request)
 {
 	// Check if we can immediately serve the request from the internal cache.
 	//
 	// Workaround for bug #150: Force FileSource to reload the frame data after the current
 	// animation frame has changed, even if it the data is available in the cache.
-	if(_pipelineCache.contains(time, time == dataset()->animationSettings()->time()))
-		return _pipelineCache.getAt(time);
+	if(_pipelineCache.contains(request.time(), request.time() == dataset()->animationSettings()->time()))
+		return _pipelineCache.getAt(request.time());
 
 	// Check if there is already an evaluation in progress whose shared future we can return to the caller.
-	if(_inProgressEvalTime == time) {
+	if(_inProgressEvalTime == request.time()) {
 		SharedFuture<PipelineFlowState> sharedFuture = _inProgressEvalFuture.lock();
 		if(sharedFuture.isValid() && !sharedFuture.isCanceled()) {
 			return sharedFuture;
@@ -73,13 +73,13 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time, 
 	}
 
 	// Let the subclass perform the actual pipeline evaluation.
-	Future<PipelineFlowState> stateFuture = evaluateInternal(time, breakOnError);
+	Future<PipelineFlowState> stateFuture = evaluateInternal(request);
 
 	// Cache the results in our local pipeline cache.
-	if(_pipelineCache.insert(stateFuture, time, this)) {
+	if(_pipelineCache.insert(stateFuture, request.time(), this)) {
 		// If the cache was updated, we also have a new preliminary state.
 		// Inform the pipeline about it.
-		if(performPreliminaryUpdateAfterEvaluation() && time == dataset()->animationSettings()->time()) {
+		if(performPreliminaryUpdateAfterEvaluation() && request.time() == dataset()->animationSettings()->time()) {
 			stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
 				notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 				return std::move(state);
@@ -91,7 +91,7 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time, 
 	// Keep a weak reference to the future to be able to serve several simultaneous requests.
 	SharedFuture<PipelineFlowState> sharedFuture(std::move(stateFuture));
 	_inProgressEvalFuture = sharedFuture;
-	_inProgressEvalTime = time;
+	_inProgressEvalTime = request.time();
 
 	return sharedFuture;
 }
