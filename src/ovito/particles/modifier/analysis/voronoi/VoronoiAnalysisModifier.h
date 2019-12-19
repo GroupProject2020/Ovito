@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,6 +30,8 @@
 #include <ovito/particles/util/ParticleOrderingFingerprint.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
+#include <ovito/mesh/surface/SurfaceMeshData.h>
+#include <ovito/mesh/surface/SurfaceMeshVis.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -127,6 +129,12 @@ private:
 		/// Returns the generated nearest neighbor bonds.
 		std::vector<Bond>& bonds() { return _bonds; }
 
+		/// Returns the generated surface mesh representing the Voronoi polyhedra.
+		const SurfaceMeshData& polyhedraMesh() const { return _polyhedraMesh; }
+
+		/// Returns the generated surface mesh representing the Voronoi polyhedra.
+		SurfaceMeshData& polyhedraMesh() { return _polyhedraMesh; }
+
 		const SimulationCell& simCell() const { return _simCell; }
 		const ConstPropertyPtr& positions() const { return _positions; }
 		const ConstPropertyPtr selection() const { return _selection; }
@@ -155,6 +163,9 @@ private:
 		/// The maximum number of edges of a Voronoi face.
 		std::atomic<int> _maxFaceOrder{0};
 
+		/// The computed polyhedral Voronoi cells output as a surface mesh structure.
+		SurfaceMeshData _polyhedraMesh;
+
 		/// Maximum length of Voronoi index vectors produced by this modifier.
 		constexpr static int FaceOrderStorageLimit = 32;
 	};
@@ -177,11 +188,17 @@ private:
 	/// The minimum area for a face to be counted relative to the total polyhedron surface.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, relativeFaceThreshold, setRelativeFaceThreshold);
 
-	/// Controls whether the modifier output nearest neighbor bonds.
+	/// Controls whether the modifier outputs nearest neighbor bonds.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, computeBonds, setComputeBonds);
+
+	/// Controls whether the modifier outputs Voronoi polyhedra.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputPolyhedra, setOutputPolyhedra);
 
 	/// The vis element for rendering the bonds.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
+
+	/// The vis element for rendering the polyhedral Voronoi cells.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, polyhedraVis, setPolyhedraVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -15,7 +15,7 @@
             <imagedata fileref="images/howtos/semitransparent_particles.png" format="png" />
        </imageobject></mediaobject></screenshot>
     </informalfigure> 
-    Particles can be made semi-transparent by setting their <literal>Transparency</literal> particle property.
+    Particles can be made semi-transparent by setting their <link linkend="usage.particle_properties.special"><literal>Transparency</literal></link> particle property.
     A <literal>Transparency</literal> value of 0.0 lets a particle appear fully opaque, while any value 
     in the range 0.0-1.0 renders the particle translucent.
   </para>

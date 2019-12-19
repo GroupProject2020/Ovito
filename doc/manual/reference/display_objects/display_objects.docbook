@@ -15,7 +15,7 @@
        <imagedata fileref="images/display_objects/visual_elements_panel.svg" format="SVG" scale="65" />
     </imageobject></mediaobject></screenshot></informalfigure>
     OVITO distinguishes between the underlying data and the visual representations produced from that data.
-    One typical example for this separation between <link linkend="pipelines.data_objects"><emphasis>data objects</emphasis></link>
+    One typical example for this separation between <link linkend="scene_objects"><emphasis>data objects</emphasis></link>
     and their visual representation is the <literal>Position</literal> particle
     property, which holds the XYZ coordinates of a set of point-like particles. To visualize this data, OVITO automatically creates
     a <emphasis>visual element</emphasis> of the <link linkend="display_objects.particles">Particles</link> type, which is responsible for rendering a

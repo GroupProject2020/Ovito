@@ -14,7 +14,7 @@
     which let you animate the virtual camera, modifiers or visual parameters. The following sections explain OVITO's
     animation system in more detail.
     <figure>
-    	<title>The animation panel of the <link linkend="scene_objects.file_source">External File Source</link>.</title>
+    	<title>The animation panel of the <link linkend="scene_objects.file_source">External File</link> data source.</title>
         <screenshot><mediaobject><imageobject>
         <imagedata fileref="images/usage/animation/file_source_animation_panel.png" format="PNG"/>
         </imageobject></mediaobject></screenshot>
@@ -40,7 +40,7 @@
        number of imported simulation frames, you will get additional still images at the end of the rendered animation.
     </para>
     <para>
-       The <guilabel>Animation panel</guilabel> of the <link linkend="scene_objects.file_source">External file source</link> panel (see screenshot)
+       The <guilabel>Animation panel</guilabel> of the <link linkend="scene_objects.file_source">External file</link> data source (see screenshot)
        provides two options controlling how the frames of the simulation trajectory
        get mapped to animation frames. The <guilabel>Playback rate</guilabel>
        setting allows you to specify a mapping that is not one to one. For example, a playback rate of

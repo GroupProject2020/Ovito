@@ -83,7 +83,7 @@
 	  </para>
   </simplesect>
 
-  <simplesect>
+  <simplesect xml:id="usage.particle_properties.special">
     <title>Special particle properties</title>
 	  <para>
 			As mentioned above, certain particle properties play a special role in OVITO, because their values control the visual

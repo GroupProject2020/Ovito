@@ -16,10 +16,10 @@
        <imagedata fileref="images/scene_objects/simulation_cell_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This kind of <link linkend="pipelines.data_objects">data object</link> represents the simulation box information loaded from the
-    input file. You can access this information by selecting the corresponding entry in the pipeline editor (see screenshot).
-    Note that a corresponding <link linkend="display_objects.simulation_cell">visual element</link> for the simulation cell exists in OVITO,
-    which controls the visualization of the cell as a wireframe box (separation of data and visual representation).
+    This <link linkend="scene_objects">data object</link> represents the simulation cell geometry and boundary conditions read from the
+    input simulation file. You can access this information by selecting the corresponding entry in the pipeline editor (see screenshot).
+    Note that an separate <link linkend="display_objects.simulation_cell">visual element</link> for the simulation cell exists,
+    which controls the visualization of the cell as a wireframe box (i.e. a separation of data and visual representation).
   </para>
 
   <para>

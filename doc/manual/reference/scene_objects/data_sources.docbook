@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="data_sources"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Data source</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/scene_objects/data_source_and_data_objects.svg" format="SVG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
+    A <emphasis>data source</emphasis> is an essential part of every <link linkend="usage.modification_pipeline">pipeline</link> as it provides the input data that is passed to the modifiers. 
+    The data source of the current pipeline appears under the "Data source" section of the pipeline editor as depicted in this screenshot.
+    Most of the time you will work with the <emphasis>External File</emphasis> data
+    source type, which imports the input data for the pipeline from one or more files stored on your local computer or a remote machine.
+  </para>
+
+  <para>
+    <informaltable>
+      <tgroup cols="2">
+        <colspec colname='name'/>
+        <colspec colname='descr'/>
+        <thead>
+          <row>
+            <entry>Data&#xA0;source</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry><link linkend="scene_objects.file_source">External&#xA0;file</link></entry>
+            <entry>Reads the simulation data from an external file.</entry>
+          </row>
+          <row>
+            <entry>Static&#xA0;source</entry>
+            <entry>Feeds a static dataset that is held in memory to the data pipeline.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+  </para>
+
+  <simplesect xml:id="scene_objects.file_source">
+    <title>External file</title>
+    <para>
+
+      <informalfigure><screenshot><mediaobject><imageobject>
+        <imagedata fileref="images/scene_objects/file_source_panel.png" format="PNG" scale="50" />
+      </imageobject></mediaobject></screenshot></informalfigure>
+
+      The "External file" panel lets you configure the parameters of the data source, in particular from which external file(s) the input data for the current data pipeline should be read. 
+      The panel is automatically displayed after you <link linkend="usage.import">imported a data file</link>
+      via OVITO's <menuchoice><guimenuitem>Load File</guimenuitem></menuchoice> or <menuchoice><guimenuitem>Load Remote File</guimenuitem></menuchoice> menu functions.
+      You can return to the panel at any time by selecting the topmost entry under the "Data source" section of the
+      <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Toolbar functions</title>
+
+    <para>
+    <informalfigure role="inline"><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/scene_objects/file_source_toolbar.svg" format="SVG" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
+    <variablelist>
+    <varlistentry>
+      <term>Pick new file</term>
+
+        <listitem>
+          <para>
+            Selects a different data file on disk, which will subsequently serve as new input for the current
+            data pipeline. All modifiers in the pipeline are retained but the data they operate on gets replaced.
+          </para>
+          <para>
+            Note that OVITO will <emphasis>not</emphasis> automatically detect whether the file you picked is part of a numbered sequence of files in the same directory. 
+            In order to load a series of files as a new animation, you need to manually enter a search pattern into the "File pattern" input field.
+            Furthermore, note that OVITO will automatically adjust the viewports to fully show the newly loaded input dataset. If you would like to preserve the current view configuration,
+            first use the <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function from the <link linkend="usage.viewports.menu">viewport menu</link> before loading the new data file.
+          </para>
+          </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Pick new remote file</term>
+        <listitem>
+          <para>
+            Same as above, but allows you to load data from a new remote URL instead of picking a file from the local filesystem.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Reload data</term>
+        <listitem>
+          <para>
+            Reloads the data for the current animation frame from the external file. This is useful
+            if the file contents have been updated or replaced, for example after re-running a simulation.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Update time series</term>
+        <listitem>
+          <para>
+             Searches the directory for new files that match the current file search pattern or rescans the selected input file
+             to discover any new animation frames that have been appended to the file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+     </para>
+
+   </simplesect>
+
+   <simplesect>
+     <title>Animation panel</title>
+     <para>
+        This sub-panel lets you control how simulation frames found in the input data file(s) are mapped to
+        OVITO's animation timeline. <link linkend="usage.animation">This page</link>
+        provides further information on this advanced topic.
+     </para>
+   </simplesect>
+
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <simplelist>
+      <member><pydoc-link href="modules/ovito_pipeline" anchor="ovito.pipeline.FileSource"><classname>FileSource</classname> (Python API)</pydoc-link></member>
+      <member><pydoc-link href="modules/ovito_pipeline" anchor="ovito.pipeline.StaticSource"><classname>StaticSource</classname> (Python API)</pydoc-link></member>
+      </simplelist>
+    </para>
+   </simplesect>
+
+</section>

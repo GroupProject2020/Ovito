@@ -21,7 +21,7 @@
 
   <para>This user manual was written by Alexander Stukowski and is licensed under the terms of the <link linkend="appendix.GFDL">GNU Free Documentation License</link>.</para>
 
-  <para>The following third-party libraries are being used as parts of OVITO:
+  <para>The following third-party libraries are used within OVITO:
     <informaltable>
       <tgroup cols="3">
         <colspec colname='name'/>
@@ -156,7 +156,7 @@
             <entry></entry>
           </row>
           <row>
-            <entry><link xlink:href="https://www.threadingbuildingblocks.org/">Intel Threading Building Blocks</link></entry>
+            <entry><link xlink:href="https://www.threadingbuildingblocks.org/">Threading Building Blocks</link></entry>
             <entry>Apache 2.0</entry>
             <entry></entry>
           </row>

@@ -112,11 +112,6 @@ private:
 
 	private:
 
-		/// Constructs the convex hull from a set of points and adds the resulting polyhedron to the mesh.
-		void constructConvexHull(std::vector<Point3>& vecs);
-
-	private:
-
 		ConstPropertyPtr _positions;
 		ConstPropertyPtr _selection;
 		ConstPropertyPtr _particleTypes;

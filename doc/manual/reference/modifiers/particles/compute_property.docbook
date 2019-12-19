@@ -14,16 +14,14 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/compute_property_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    This modifier assigns values to a particle or bond property by computing them through
-    a user-defined mathematical formula.
-    The modifier may be used to assign new properties to particles or bonds or modify existing properties.
+    This modifier assigns new values to a per-particle or per-bond property by computing them according to a user-defined mathematical formula.
+    The modifier may also be used to create new <link linkend="usage.particle_properties">particles or bonds properties</link>.
   </para>
   <para>
-    The user-defined formula for computing the output values can include references to existing per-particle or per-bond data as well as
+    The user-defined formula for computing the property values can include references to existing per-particle or per-bond data as well as
     global parameters such as the simulation box dimensions or the current animation time. You can find a list of
     all available input variables in the user interface of the modifier. Furthermore, the <emphasis>Compute property</emphasis> modifier
-    can be used to perform mathematical computations that involve other neighboring particles within a spherical volume
-    around each particle.
+    supports performing computations that involve neighboring particles within a spherical volume around each particle.
   </para>
 
   <simplesect>

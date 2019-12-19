@@ -48,7 +48,7 @@ SET_OVITO_OBJECT_EDITOR(FileSource, FileSourceEditor);
 void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("External file"), rolloutParams, "scene_objects.file_source.html");
+	QWidget* rollout = createRollout(tr("External file"), rolloutParams, "data_sources.html");
 
 	// Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
@@ -126,7 +126,7 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	sublayout->addWidget(_statusLabel);
 
 	// Create another rollout for animation control.
-	rollout = createRollout(tr("Animation"), rolloutParams.after(rollout).collapse(), "scene_objects.file_source.html");
+	rollout = createRollout(tr("Animation"), rolloutParams.after(rollout).collapse(), "data_sources.html");
 
 	// Create the rollout contents.
 	layout = new QVBoxLayout(rollout);

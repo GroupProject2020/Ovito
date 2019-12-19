@@ -11,13 +11,11 @@
 
   <para>
 
-  Modifiers are the basic building blocks that you use to create <link
-  linkend="usage.modification_pipeline">data pipelines</link> in OVITO.
-  Each type of modifier fulfills a specific function and often they are
-  combined in sequences to accomplish certain data analysis and visualization
-  tasks.
+    Modifiers are your basic building blocks for creating a <link linkend="usage.modification_pipeline">data pipeline</link> in OVITO.
+    Like tools in a toolbox, each modifier implements a specific, well-defined type of operation or computation, and typically one needs to
+    combine several modifiers in a sequence to accomplish more complex tasks.
 
-  <informaltable>
+    <informaltable>
         <tgroup cols="2">
           <colspec colname='name'/>
           <colspec colname='descr'/>

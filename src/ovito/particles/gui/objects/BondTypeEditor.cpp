@@ -39,7 +39,7 @@ SET_OVITO_OBJECT_EDITOR(BondType, BondTypeEditor);
 void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Bond Type"), rolloutParams, "scene_objects.particle_types.html");
+	QWidget* rollout = createRollout(tr("Bond Type"), rolloutParams, "scene_objects.particles.html");
 
     // Create the rollout contents.
 	QGridLayout* layout1 = new QGridLayout(rollout);
