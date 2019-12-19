@@ -435,8 +435,8 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 
 				videoEncoderPtr.reset(new VideoEncoder());
 				videoEncoder = videoEncoderPtr.data();
-				int fps = settings->framesPerSecond() > 0 ? settings->framesPerSecond() : animationSettings()->framesPerSecond();
-				videoEncoder->openFile(settings->imageFilename(), settings->outputImageWidth(), settings->outputImageHeight(), fps);
+				int ticksPerFrame = (settings->framesPerSecond() > 0) ? (TICKS_PER_SECOND / settings->framesPerSecond()) : animationSettings()->ticksPerFrame();
+				videoEncoder->openFile(settings->imageFilename(), settings->outputImageWidth(), settings->outputImageHeight(), ticksPerFrame);
 			}
 #endif
 

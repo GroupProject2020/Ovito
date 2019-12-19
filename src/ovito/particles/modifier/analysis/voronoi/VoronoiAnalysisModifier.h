@@ -192,13 +192,13 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, computeBonds, setComputeBonds);
 
 	/// Controls whether the modifier outputs Voronoi polyhedra.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputPolyhedra, setOutputPolyhedra);
+//	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputPolyhedra, setOutputPolyhedra);
 
 	/// The vis element for rendering the bonds.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 
 	/// The vis element for rendering the polyhedral Voronoi cells.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, polyhedraVis, setPolyhedraVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
+//	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, polyhedraVis, setPolyhedraVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
 
 OVITO_END_INLINE_NAMESPACE

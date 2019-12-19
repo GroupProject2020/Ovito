@@ -64,7 +64,7 @@ public:
 	virtual ~VideoEncoder() { closeFile(); }
 
 	/// Opens a video file for writing.
-	void openFile(const QString& filename, int width, int height, int fps, VideoEncoder::Format* format = nullptr);
+	void openFile(const QString& filename, int width, int height, int ticksPerFrame, VideoEncoder::Format* format = nullptr);
 
 	/// Writes a single frame into the video file.
 	void writeFrame(const QImage& image);
@@ -88,9 +88,12 @@ private:
 	std::vector<quint8> _outputBuf;
 	std::shared_ptr<AVFrame> _frame;
 	AVStream* _videoStream = nullptr;
+	AVCodec* _codec = nullptr;
+	std::shared_ptr<AVCodecContext> _codecContext;
 	SwsContext* _imgConvertCtx = nullptr;
 	bool _isOpen = false;
 	int _numFrames = 0;
+	int _frameDuplication = 1;
 
 	/// The list of supported video formats.
 	static QList<Format> _supportedFormats;
