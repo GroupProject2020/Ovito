@@ -166,7 +166,8 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(con
 									results = transformingVis->transformData(request, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents());
 								}
 								else {
-									results = results.then(transformingVis->executor(), [request, transformingVis, dataObj, pipeline = OORef<PipelineSceneNode>(this)](PipelineFlowState&& state) {
+									OORef<PipelineSceneNode> pipeline{this};
+									results = results.then(transformingVis->executor(), [request, transformingVis, dataObj, pipeline = std::move(pipeline)](PipelineFlowState&& state) {
 										UndoSuspender noUndo(transformingVis);
 										return transformingVis->transformData(request, dataObj, std::move(state), pipeline->_pipelineRenderingCache.getStaleContents());
 									});
