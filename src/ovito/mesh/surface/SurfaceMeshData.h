@@ -433,6 +433,13 @@ public:
         return prop;
     }
 
+	/// Adds a new user property to the mesh regions.
+	PropertyPtr createRegionProperty(int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory, QStringList componentNames = QStringList(), SurfaceMeshRegions::Type type = SurfaceMeshRegions::UserProperty) {
+        PropertyPtr prop = std::make_shared<PropertyStorage>(regionCount(), dataType, componentCount, stride, name, initializeMemory, type, std::move(componentNames));
+        addRegionProperty(prop);
+        return prop;
+    }
+
     /// Adds a mesh vertex property array to the list of vertex properties.
     void addVertexProperty(PropertyPtr property) {
         OVITO_ASSERT(property);

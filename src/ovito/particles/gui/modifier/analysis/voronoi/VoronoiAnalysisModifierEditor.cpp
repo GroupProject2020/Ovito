@@ -80,11 +80,9 @@ void VoronoiAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	BooleanParameterUI* computeBondsPUI = new BooleanParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::computeBonds));
 	gridlayout->addWidget(computeBondsPUI->checkBox(), row++, 0, 1, 2);
 
-#if 0
 	// Generate polyhedral mesh.
 	BooleanParameterUI* outputPolyhedraPUI = new BooleanParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::outputPolyhedra));
 	gridlayout->addWidget(outputPolyhedraPUI->checkBox(), row++, 0, 1, 2);
-#endif
 
 	// Atomic radii.
 	BooleanParameterUI* useRadiiPUI = new BooleanParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::useRadii));

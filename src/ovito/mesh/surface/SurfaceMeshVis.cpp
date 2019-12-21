@@ -500,7 +500,7 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::splitFace(int faceIndex, int oldVerte
 	OVITO_ASSERT(z[0] - z[2] == -(z[2] - z[0]));
 
 	if(std::abs(zd[0]) < FloatType(0.5) && std::abs(zd[1]) < FloatType(0.5) && std::abs(zd[2]) < FloatType(0.5))
-		return true;	// Face is not crossing the periodic boundary.
+		return true;	// Face does not cross the periodic boundary.
 
 	// Create four new vertices (or use existing ones created during splitting of adjacent faces).
 	int properEdge = -1;
@@ -573,9 +573,11 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::splitFace(int faceIndex, int oldVerte
 
 	// Build output triangles.
 	int originalVertices[3] = { face.vertex(0), face.vertex(1), face.vertex(2) };
+	bool originalEdgeVisibility[3] = { face.edgeVisible(0), face.edgeVisible(1), face.edgeVisible(2) };
 	int pe1 = (properEdge+1)%3;
 	int pe2 = (properEdge+2)%3;
 	face.setVertices(originalVertices[properEdge], originalVertices[pe1], newVertexIndices[pe2][1]);
+	face.setEdgeVisibility(originalEdgeVisibility[properEdge], false, originalEdgeVisibility[pe2]);
 
     int materialIndex = face.materialIndex();
 	OVITO_ASSERT(_originalFaceMap.size() == _surfaceMesh.faceCount());
@@ -587,6 +589,8 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::splitFace(int faceIndex, int oldVerte
 	newFace2.setVertices(newVertexIndices[pe1][1], originalVertices[pe2], newVertexIndices[pe2][0]);
     newFace1.setMaterialIndex(materialIndex);
     newFace2.setMaterialIndex(materialIndex);
+	newFace1.setEdgeVisibility(originalEdgeVisibility[pe1], false, false);
+	newFace2.setEdgeVisibility(originalEdgeVisibility[pe1], originalEdgeVisibility[pe2], false);
 	if(_smoothShading) {
 		auto n = _surfaceMesh.normals().end() - 6;
 		*n++ = _surfaceMesh.faceVertexNormal(faceIndex, pe1);

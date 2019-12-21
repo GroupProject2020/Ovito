@@ -136,7 +136,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 	}
 
 	// Create the "Center particle" region property, which indicates the ID of the particle that is at the center of each coordination polyhedron.
-	PropertyPtr centerProperty = std::make_shared<PropertyStorage>(mesh().regionCount(), PropertyStorage::Int64, 1, 0, QStringLiteral("Center particle"), false);
+	PropertyPtr centerProperty = mesh().createRegionProperty(PropertyStorage::Int64, 1, 0, QStringLiteral("Center Particle"), false);
 	auto centerParticle = centerProperty->dataInt64();
 	*centerParticle++ = 0;
 	for(size_t i = 0; i < _positions->size(); i++) {
@@ -146,7 +146,6 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 		else
 			*centerParticle++ = i;
 	}
-	mesh().addRegionProperty(std::move(centerProperty));
 }
 
 /******************************************************************************

@@ -41,7 +41,7 @@ IMPLEMENT_OVITO_CLASS(SlipSurfacePickInfo);
 ******************************************************************************/
 SlipSurfaceVis::SlipSurfaceVis(DataSet* dataset) : SurfaceMeshVis(dataset)
 {
-    // Slip surfaces consist of pairs of opposite faces. Rendere them as one-sided triangles.
+    // Slip surfaces consist of pairs of opposite faces. Render them as one-sided triangles.
     setCullFaces(true);
 
     // Do not interpolate facet normals by default.

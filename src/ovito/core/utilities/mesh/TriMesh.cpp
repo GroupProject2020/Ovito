@@ -348,39 +348,44 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 			if(current_classification == -1) {
 				int newface[4];
 				Vector3 newface_normals[4];
-				int newface_vcount = 0;
+				bool newface_edge_visibility[4];
+				int vout = 0;
 				int next_classification;
 				for(int v = v0; v < v0 + 3; v++, current_classification = next_classification) {
+					int vwrapped = v % 3;
 					next_classification = plane.classifyPoint(vertex(face.vertex((v+1)%3)));
 					if((next_classification <= 0 && current_classification <= 0) || (next_classification == 1 && current_classification == 0)) {
-						OVITO_ASSERT(existingVertexMapping[face.vertex(v%3)] >= 0);
-						OVITO_ASSERT(newface_vcount <= 3);
+						OVITO_ASSERT(existingVertexMapping[face.vertex(vwrapped)] >= 0);
+						OVITO_ASSERT(vout <= 3);
 						if(hasNormals())
-							newface_normals[newface_vcount] = faceVertexNormal(faceIndex, v%3);
-						newface[newface_vcount++] = existingVertexMapping[face.vertex(v%3)];
+							newface_normals[vout] = faceVertexNormal(faceIndex, vwrapped);
+						newface_edge_visibility[vout] = face.edgeVisible(vwrapped);
+						newface[vout++] = existingVertexMapping[face.vertex(vwrapped)];
 					}
 					else if((current_classification == +1 && next_classification == -1) || (current_classification == -1 && next_classification == +1)) {
-						auto vindices = std::make_pair(face.vertex(v%3), face.vertex((v+1)%3));
+						auto vindices = std::make_pair(face.vertex(vwrapped), face.vertex((v+1)%3));
 						if(vindices.first > vindices.second) std::swap(vindices.first, vindices.second);
 						auto ve = newVertexMapping.find(vindices);
 						OVITO_ASSERT(ve != newVertexMapping.end());
+						newface_edge_visibility[vout] = face.edgeVisible(vwrapped); 
 						if(current_classification == -1) {
-							OVITO_ASSERT(newface_vcount <= 3);
+							OVITO_ASSERT(vout <= 3);
 							if(hasNormals())
-								newface_normals[newface_vcount] = faceVertexNormal(faceIndex, v%3);
-							newface[newface_vcount++] = existingVertexMapping[face.vertex(v%3)];
+								newface_normals[vout] = faceVertexNormal(faceIndex, vwrapped);
+							newface[vout++] = existingVertexMapping[face.vertex(vwrapped)];
+							newface_edge_visibility[vout] = false;
 						}
-						OVITO_ASSERT(newface_vcount <= 3);
+						OVITO_ASSERT(vout <= 3);
 						if(hasNormals()) {
 							FloatType t = ve->second.second;
-							if(vindices.first != face.vertex(v%3)) t = FloatType(1)-t;
-							newface_normals[newface_vcount] = faceVertexNormal(faceIndex, v%3) * t + faceVertexNormal(faceIndex, (v+1)%3) * (FloatType(1) - t);
-							newface_normals[newface_vcount].normalizeSafely();
+							if(vindices.first != face.vertex(vwrapped)) t = FloatType(1)-t;
+							newface_normals[vout] = faceVertexNormal(faceIndex, v%3) * t + faceVertexNormal(faceIndex, (v+1)%3) * (FloatType(1) - t);
+							newface_normals[vout].normalizeSafely();
 						}
-						newface[newface_vcount++] = ve->second.first;
+						newface[vout++] = ve->second.first;
 					}
 				}
-				if(newface_vcount >= 3) {
+				if(vout >= 3) {
 					OVITO_ASSERT(newface[0] >= 0 && newface[0] < clippedMesh.vertexCount());
 					OVITO_ASSERT(newface[1] >= 0 && newface[1] < clippedMesh.vertexCount());
 					OVITO_ASSERT(newface[2] >= 0 && newface[2] < clippedMesh.vertexCount());
@@ -397,13 +402,15 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 					if(hasFaceColors()) {
 						clippedMesh.faceColors().back() = faceColor(faceIndex);
 					}
-					if(newface_vcount == 4) {
+					if(vout == 4) {
 						OVITO_ASSERT(newface[3] >= 0 && newface[3] < clippedMesh.vertexCount());
 						OVITO_ASSERT(newface[3] != newface[0]);
+						face1.setEdgeVisibility(newface_edge_visibility[0], newface_edge_visibility[1], false);
 						TriMeshFace& face2 = clippedMesh.addFace();
 						face2.setVertices(newface[0], newface[2], newface[3]);
 						face2.setSmoothingGroups(face.smoothingGroups());
 						face2.setMaterialIndex(face.materialIndex());
+						face2.setEdgeVisibility(false, newface_edge_visibility[2], newface_edge_visibility[3]);
 						if(hasNormals()) {
 							auto n = clippedMesh.normals().end() - 3;
 							*n++ = newface_normals[0];
@@ -413,6 +420,9 @@ void TriMesh::clipAtPlane(const Plane3& plane)
 						if(hasFaceColors()) {
 							clippedMesh.faceColors().back() = faceColor(faceIndex);
 						}
+					}
+					else {
+						face1.setEdgeVisibility(newface_edge_visibility[0], newface_edge_visibility[1], newface_edge_visibility[2]);
 					}
 				}
 				break;

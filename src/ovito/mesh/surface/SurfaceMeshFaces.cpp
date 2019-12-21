@@ -110,8 +110,8 @@ void SurfaceMeshFaces::OOMetaClass::initialize()
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Face colors"));
 	registerStandardProperty(FaceTypeProperty, tr("Type"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(RegionProperty, tr("Region"), PropertyStorage::Int, emptyList);
-	registerStandardProperty(BurgersVectorProperty, tr("Burgers vector"), PropertyStorage::Float, xyzList, tr("Burgers vectors"));
-	registerStandardProperty(CrystallographicNormalProperty, tr("Crystallographic normal"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(BurgersVectorProperty, tr("Burgers Vector"), PropertyStorage::Float, xyzList, tr("Burgers vectors"));
+	registerStandardProperty(CrystallographicNormalProperty, tr("Crystallographic Normal"), PropertyStorage::Float, xyzList);
 }
 
 }	// End of namespace

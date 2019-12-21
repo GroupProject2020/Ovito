@@ -77,18 +77,20 @@ private:
 	public:
 
 		/// Constructor.
-		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, ConstPropertyPtr selection, std::vector<FloatType> radii,
+		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, ConstPropertyPtr selection, ConstPropertyPtr particleIdentifiers, std::vector<FloatType> radii,
 							const SimulationCell& simCell,
-							bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
+							bool computeIndices, bool computeBonds, bool outputPolyhedra, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
 			ComputeEngine(validityInterval),
 			_positions(positions),
 			_selection(std::move(selection)),
+			_particleIdentifiers(std::move(particleIdentifiers)),
 			_radii(std::move(radii)),
 			_simCell(simCell),
 			_edgeThreshold(edgeThreshold),
 			_faceThreshold(faceThreshold),
 			_relativeFaceThreshold(relativeFaceThreshold),
 			_computeBonds(computeBonds),
+			_outputPolyhedra(outputPolyhedra),
 			_coordinationNumbers(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::CoordinationProperty, true)),
 			_atomicVolumes(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
 			_maxFaceOrders(computeIndices ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Int, 1, 0, QStringLiteral("Max Face Order"), true) : nullptr),
@@ -98,6 +100,7 @@ private:
 		virtual void cleanup() override {
 			_positions.reset();
 			_selection.reset();
+			_particleIdentifiers.reset();
 			decltype(_radii){}.swap(_radii);
 			ComputeEngine::cleanup();
 		}
@@ -148,7 +151,9 @@ private:
 		std::vector<FloatType> _radii;
 		ConstPropertyPtr _positions;
 		ConstPropertyPtr _selection;
+		ConstPropertyPtr _particleIdentifiers;
 		bool _computeBonds;
+		bool _outputPolyhedra;
 
 		const PropertyPtr _coordinationNumbers;
 		const PropertyPtr _atomicVolumes;
@@ -165,6 +170,15 @@ private:
 
 		/// The computed polyhedral Voronoi cells output as a surface mesh structure.
 		SurfaceMeshData _polyhedraMesh;
+
+		/// The mesh region property storing the indices or identifiers of the particles to which each Voronoi cell belongs. 
+		PropertyStorage* _centerParticleProperty;
+
+		/// The mesh region property storing the volume of each Voronoi cell. 
+		PropertyStorage* _cellVolumeProperty;
+
+		/// The mesh region property storing the surface area of each Voronoi cell. 
+		PropertyStorage* _surfaceAreaProperty;
 
 		/// Maximum length of Voronoi index vectors produced by this modifier.
 		constexpr static int FaceOrderStorageLimit = 32;
@@ -192,13 +206,13 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, computeBonds, setComputeBonds);
 
 	/// Controls whether the modifier outputs Voronoi polyhedra.
-//	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputPolyhedra, setOutputPolyhedra);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputPolyhedra, setOutputPolyhedra);
 
 	/// The vis element for rendering the bonds.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 
 	/// The vis element for rendering the polyhedral Voronoi cells.
-//	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, polyhedraVis, setPolyhedraVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, polyhedraVis, setPolyhedraVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -97,7 +97,7 @@ void SurfaceMeshRegions::OOMetaClass::initialize()
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Region colors"));
 	registerStandardProperty(PhaseProperty, tr("Phase"), PropertyStorage::Int, emptyList, tr("Phases"));
 	registerStandardProperty(VolumeProperty, tr("Volume"), PropertyStorage::Float, emptyList);
-	registerStandardProperty(SurfaceAreaProperty, tr("Surface area"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(SurfaceAreaProperty, tr("Surface Area"), PropertyStorage::Float, emptyList);
 	registerStandardProperty(LatticeCorrespondenceProperty, tr("Lattice Correspondence"), PropertyStorage::Float, tensorList);
 }
 
