@@ -75,10 +75,19 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 		// Certain standard properties need to be initialized with default values determined by the attached visual elements.
 		if(type == ColorProperty) {
 			if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(containerPath[containerPath.size()-2])) {
-				if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
-					std::fill(property->dataColor(), property->dataColor() + property->size(), vis->surfaceColor());
+				const PropertyObject* regionColorProperty = surfaceMesh->regions()->getProperty(SurfaceMeshRegions::ColorProperty);
+				const PropertyObject* faceRegionProperty = surfaceMesh->faces()->getProperty(SurfaceMeshFaces::RegionProperty);
+				if(regionColorProperty && faceRegionProperty && faceRegionProperty->size() == faceCount) {
+					// Inherit face colors from regions.
+					std::transform(faceRegionProperty->constDataInt(), faceRegionProperty->constDataInt() + faceCount, property->dataColor(), 
+						[&](int region) { return (region >= 0 && region) < regionColorProperty->size() ? regionColorProperty->getColor(region) : Color(1,1,1); });
+					initializeMemory = false;
 				}
-				initializeMemory = false;
+				else if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
+					// Initialize face colors from uniform color set in SurfaceMeshVis.
+					std::fill(property->dataColor(), property->dataColor() + property->size(), vis->surfaceColor());
+					initializeMemory = false;
+				}
 			}
 		}
 	}

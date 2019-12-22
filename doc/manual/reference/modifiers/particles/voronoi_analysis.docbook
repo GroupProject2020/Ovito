@@ -165,7 +165,7 @@
       </varlistentry>
 
       <varlistentry>
-        <term>Generate nearest neighbor bonds</term>
+        <term>Generate neighbor bonds</term>
         <listitem>
           <para>
              If this option is enabled, the modifier generates bonds between neighboring particles that share a Voronoi face.

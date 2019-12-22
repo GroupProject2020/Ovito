@@ -169,7 +169,7 @@ void TriMesh::flipFaces()
 {
 	for(TriMeshFace& face : faces()) {
 		face.setVertices(face.vertex(2), face.vertex(1), face.vertex(0));
-		face.setEdgeVisibility(face.edgeVisible(2), face.edgeVisible(1), face.edgeVisible(0));
+		face.setEdgeVisibility(face.edgeVisible(1), face.edgeVisible(0), face.edgeVisible(2));
 	}
 	if(hasNormals()) {
 		// Negate normal vectors and swap normals of first and third face vertex.

@@ -59,6 +59,7 @@ public:
 	/// \brief The list of standard region properties.
 	enum Type {
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
+		SelectionProperty = PropertyStorage::GenericSelectionProperty,
 		ColorProperty = PropertyStorage::GenericColorProperty,
 		PhaseProperty = PropertyStorage::FirstSpecificProperty,
 		VolumeProperty,

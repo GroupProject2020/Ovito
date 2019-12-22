@@ -497,13 +497,13 @@ HalfEdgeMesh::edge_index HalfEdgeMesh::deleteEdge(edge_index edge)
 		// Update next and prev pointers.
 		edge_index nextEdge = nextFaceEdge(movedEdge);
 		OVITO_ASSERT(nextEdge != movedEdge);
-		if(nextEdge != InvalidIndex) {
+		if(nextEdge != InvalidIndex && nextEdge != edge) {
 			OVITO_ASSERT(_prevFaceEdges[nextEdge] == movedEdge);
 			_prevFaceEdges[nextEdge] = edge;
 		}
 		edge_index prevEdge = prevFaceEdge(movedEdge);
 		OVITO_ASSERT(prevEdge != movedEdge);
-		if(prevEdge != InvalidIndex) {
+		if(prevEdge != InvalidIndex && prevEdge != edge) {
 			OVITO_ASSERT(_nextFaceEdges[prevEdge] == movedEdge);
 			_nextFaceEdges[prevEdge] = edge;
 		}

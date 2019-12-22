@@ -46,6 +46,9 @@ class ParticlesExpressionSelectionModifierDelegate : public ExpressionSelectionM
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
+		/// Indicates which class of data objects the modifier delegate is able to operate on.
+		virtual const DataObject::OOMetaClass& getApplicableObjectClass() const override { return ParticlesObject::OOClass(); }
+
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};
@@ -59,11 +62,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ParticlesExpressionSelectionModifierDelegate(DataSet* dataset) : ExpressionSelectionModifierDelegate(dataset) {}
 
-	/// Looks up the container for the properties in the output pipeline state.
-	virtual PropertyContainer* getOutputPropertyContainer(PipelineFlowState& outputState) const override;
-
 	/// Creates and initializes the expression evaluator object.
-	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame) override;
+	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, const DataObjectPath& objectPath, int animationFrame) override;
 };
 
 /**
@@ -82,6 +82,9 @@ class BondsExpressionSelectionModifierDelegate : public ExpressionSelectionModif
 		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
 		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
 
+		/// Indicates which class of data objects the modifier delegate is able to operate on.
+		virtual const DataObject::OOMetaClass& getApplicableObjectClass() const override { return BondsObject::OOClass(); }
+
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("bonds"); }
 	};
@@ -95,11 +98,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE BondsExpressionSelectionModifierDelegate(DataSet* dataset) : ExpressionSelectionModifierDelegate(dataset) {}
 
-	/// Looks up the container for the properties in the output pipeline state.
-	virtual PropertyContainer* getOutputPropertyContainer(PipelineFlowState& outputState) const override;
-
 	/// Creates and initializes the expression evaluator object.
-	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame) override;
+	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, const DataObjectPath& objectPath, int animationFrame) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

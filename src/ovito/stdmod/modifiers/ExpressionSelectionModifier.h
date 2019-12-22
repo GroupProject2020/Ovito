@@ -25,6 +25,8 @@
 
 #include <ovito/stdmod/StdMod.h>
 #include <ovito/core/dataset/pipeline/DelegatingModifier.h>
+#include <ovito/stdobj/properties/PropertyReference.h>
+#include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
 
 namespace Ovito { namespace StdMod {
@@ -42,16 +44,23 @@ public:
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 
+	/// Returns the type of input property container that this delegate can process.
+	PropertyContainerClassPtr inputContainerClass() const {
+		return static_class_cast<PropertyContainer>(&getOOMetaClass().getApplicableObjectClass());
+	}
+
+	/// Returns the reference to the selected input property container for this delegate.
+	PropertyContainerReference inputContainerRef() const {
+		return PropertyContainerReference(inputContainerClass(), inputDataObject().dataPath(), inputDataObject().dataTitle());
+	}
+
 protected:
 
 	/// Abstract class constructor.
 	using ModifierDelegate::ModifierDelegate;
 
-	/// Looks up the container for the properties in the output pipeline state.
-	virtual PropertyContainer* getOutputPropertyContainer(PipelineFlowState& outputState) const = 0;
-
 	/// Creates and initializes the expression evaluator object.
-	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame) = 0;
+	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, const DataObjectPath& objectPath, int animationFrame) = 0;
 };
 
 /**

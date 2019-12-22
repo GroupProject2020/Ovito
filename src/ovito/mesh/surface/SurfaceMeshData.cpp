@@ -478,7 +478,7 @@ void SurfaceMeshData::constructConvexHull(std::vector<Point3> vecs)
 /******************************************************************************
 * Triangulates the polygonal faces of this mesh and outputs the results as a TriMesh object.
 ******************************************************************************/
-void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, const boost::dynamic_bitset<>& faceSubset, std::vector<size_t>* originalFaceMap) const
+void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, const boost::dynamic_bitset<>& faceSubset, std::vector<size_t>* originalFaceMap, bool autoGenerateOppositeFaces) const
 {
 	const HalfEdgeMesh& topology = *this->topology();
 	HalfEdgeMesh::size_type faceCount = topology.faceCount();
@@ -494,11 +494,12 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 	for(HalfEdgeMesh::face_index face = 0; face < faceCount; face++) {
 		if(!faceSubset.empty() && !faceSubset[face]) continue;
 
-		// Go around the edges of the face to triangulate the general polygon.
+		// Go around the edges of the face to triangulate the general polygon (assuming it is convex).
 		HalfEdgeMesh::edge_index faceEdge = topology.firstFaceEdge(face);
 		HalfEdgeMesh::vertex_index baseVertex = topology.vertex2(faceEdge);
 		HalfEdgeMesh::edge_index edge1 = topology.nextFaceEdge(faceEdge);
 		HalfEdgeMesh::edge_index edge2 = topology.nextFaceEdge(edge1);
+		bool createOppositeFace = autoGenerateOppositeFaces && (!topology.hasOppositeFace(face) || (!faceSubset.empty() && !faceSubset[topology.oppositeFace(face)])) ;
 		while(edge2 != faceEdge) {
 			TriMeshFace& outputFace = outputMesh.addFace();
 			outputFace.setVertices(baseVertex, topology.vertex2(edge1), topology.vertex2(edge2));
@@ -509,6 +510,14 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 			edge2 = topology.nextFaceEdge(edge2);
 			if(edge2 == faceEdge)
 				outputFace.setEdgeVisible(2);
+			if(createOppositeFace) {
+				TriMeshFace& oppositeFace = outputMesh.addFace();
+				const TriMeshFace& thisFace = outputMesh.face(outputMesh.faceCount()-2);
+				oppositeFace.setVertices(thisFace.vertex(2), thisFace.vertex(1), thisFace.vertex(0));
+				oppositeFace.setEdgeVisibility(thisFace.edgeVisible(1), thisFace.edgeVisible(0), thisFace.edgeVisible(2));
+				if(originalFaceMap)
+					originalFaceMap->push_back(face);
+			}
 		}
 	}
 

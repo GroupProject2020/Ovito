@@ -45,6 +45,8 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 
 	for(const DataObject* obj : state.data()->objects()) {
 		if(const SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
+			// Make sure the input mesh data structure is valid. 
+			existingSurface->verifyMeshIntegrity();
 			// Create a copy of the SurfaceMesh.
 			SurfaceMesh* newSurface = state.makeMutable(existingSurface);
 			// Create a copy of the vertices sub-object (no need to copy the topology when only moving vertices).

@@ -28,6 +28,7 @@ namespace Ovito { namespace Mesh {
 
 IMPLEMENT_OVITO_CLASS(SurfaceMeshVerticesColorCodingModifierDelegate);
 IMPLEMENT_OVITO_CLASS(SurfaceMeshFacesColorCodingModifierDelegate);
+IMPLEMENT_OVITO_CLASS(SurfaceMeshRegionsColorCodingModifierDelegate);
 
 /******************************************************************************
 * Indicates which data objects in the given input data collection the modifier
@@ -49,9 +50,23 @@ QVector<DataObjectReference> SurfaceMeshVerticesColorCodingModifierDelegate::OOM
 ******************************************************************************/
 QVector<DataObjectReference> SurfaceMeshFacesColorCodingModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
 {
-	// Gather list of all surface mesh vertices in the input data collection.
+	// Gather list of all surface mesh faces in the input data collection.
 	QVector<DataObjectReference> objects;
 	for(const ConstDataObjectPath& path : input.getObjectsRecursive(SurfaceMeshFaces::OOClass())) {
+		objects.push_back(path);
+	}
+	return objects;
+}
+
+/******************************************************************************
+* Indicates which data objects in the given input data collection the modifier
+* delegate is able to operate on.
+******************************************************************************/
+QVector<DataObjectReference> SurfaceMeshRegionsColorCodingModifierDelegate::OOMetaClass::getApplicableObjects(const DataCollection& input) const
+{
+	// Gather list of all surface mesh regions in the input data collection.
+	QVector<DataObjectReference> objects;
+	for(const ConstDataObjectPath& path : input.getObjectsRecursive(SurfaceMeshRegions::OOClass())) {
 		objects.push_back(path);
 	}
 	return objects;

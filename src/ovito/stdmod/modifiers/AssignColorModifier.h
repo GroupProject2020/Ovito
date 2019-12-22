@@ -50,7 +50,7 @@ public:
 	}
 
 	/// \brief Returns a reference to the property container being modified by this delegate.
-	PropertyContainerReference subject() const {
+	PropertyContainerReference inputContainerRef() const {
 		return PropertyContainerReference(inputContainerClass(), inputDataObject().dataPath(), inputDataObject().dataTitle());
 	}
 

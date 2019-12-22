@@ -109,5 +109,43 @@ protected:
 	virtual int outputColorPropertyId() const override { return SurfaceMeshFaces::ColorProperty; }
 };
 
+/**
+ * \brief Delegate function for the AssignColorModifier that operates on surface mesh regions.
+ */
+class OVITO_MESHMOD_EXPORT SurfaceMeshRegionsAssignColorModifierDelegate : public AssignColorModifierDelegate
+{
+	/// Give the modifier delegate its own metaclass.
+	class OOMetaClass : public AssignColorModifierDelegate::OOMetaClass
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using AssignColorModifierDelegate::OOMetaClass::OOMetaClass;
+
+		/// Indicates which data objects in the given input data collection the modifier delegate is able to operate on.
+		virtual QVector<DataObjectReference> getApplicableObjects(const DataCollection& input) const override;
+
+		/// Indicates which class of data objects the modifier delegate is able to operate on.
+		virtual const DataObject::OOMetaClass& getApplicableObjectClass() const override { return SurfaceMeshRegions::OOClass(); }
+
+		/// The name by which Python scripts can refer to this modifier delegate.
+		virtual QString pythonDataName() const override { return QStringLiteral("surface_regions"); }
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(SurfaceMeshRegionsAssignColorModifierDelegate, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Mesh Regions");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE SurfaceMeshRegionsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
+
+protected:
+
+	/// \brief returns the ID of the standard property that will receive the computed colors.
+	virtual int outputColorPropertyId() const override { return SurfaceMeshRegions::ColorProperty; }
+};
 }	// End of namespace
 }	// End of namespace

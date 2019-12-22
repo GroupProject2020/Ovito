@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,10 +41,10 @@ class OVITO_MESH_EXPORT RenderableSurfaceMesh : public TransformedDataObject
 public:
 
 	/// \brief Standard constructor.
-	Q_INVOKABLE RenderableSurfaceMesh(DataSet* dataset) : TransformedDataObject(dataset) {}
+	Q_INVOKABLE RenderableSurfaceMesh(DataSet* dataset) : TransformedDataObject(dataset), _backfaceCulling(false) {}
 
 	/// \brief Initialization constructor.
-	RenderableSurfaceMesh(TransformingDataVis* creator, const DataObject* sourceData, TriMesh surfaceMesh, TriMesh capPolygonsMesh);
+	RenderableSurfaceMesh(TransformingDataVis* creator, const DataObject* sourceData, TriMesh surfaceMesh, TriMesh capPolygonsMesh, bool backfaceCulling);
 
 private:
 
@@ -59,6 +59,9 @@ private:
 
 	/// The mapping of triangles of the renderable surface mesh to the original mesh (optional).
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::vector<size_t>, originalFaceMap, setOriginalFaceMap);
+
+	/// Indicates whether triangles of the surface mesh should be rendered with active backface culling.
+	DECLARE_RUNTIME_PROPERTY_FIELD(bool, backfaceCulling, setBackfaceCulling);
 };
 
 }	// End of namespace

@@ -41,9 +41,6 @@ IMPLEMENT_OVITO_CLASS(SlipSurfacePickInfo);
 ******************************************************************************/
 SlipSurfaceVis::SlipSurfaceVis(DataSet* dataset) : SurfaceMeshVis(dataset)
 {
-    // Slip surfaces consist of pairs of opposite faces. Render them as one-sided triangles.
-    setCullFaces(true);
-
     // Do not interpolate facet normals by default.
     setSmoothShading(false);
 }
@@ -52,7 +49,7 @@ SlipSurfaceVis::SlipSurfaceVis(DataSet* dataset) : SurfaceMeshVis(dataset)
 * Constructor.
 ******************************************************************************/
 SlipSurfaceVis::PrepareMeshEngine::PrepareMeshEngine(const SurfaceMesh* microstructure, QVector<Plane3> cuttingPlanes, bool smoothShading) :
-        SurfaceMeshVis::PrepareSurfaceEngine(microstructure, false, std::move(cuttingPlanes), smoothShading, false),
+        SurfaceMeshVis::PrepareSurfaceEngine(microstructure, false, std::move(cuttingPlanes), smoothShading, Color(1,1,1), false),
         _microstructure(microstructure)
 {
     if(const PropertyObject* phaseProperty = microstructure->regions()->getProperty(SurfaceMeshRegions::PhaseProperty)) {

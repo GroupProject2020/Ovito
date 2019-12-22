@@ -42,19 +42,10 @@ QVector<DataObjectReference> ParticlesExpressionSelectionModifierDelegate::OOMet
 	return {};
 }
 
-
-/******************************************************************************
-* Looks up the container for the properties in the input pipeline state.
-******************************************************************************/
-PropertyContainer* ParticlesExpressionSelectionModifierDelegate::getOutputPropertyContainer(PipelineFlowState& outputState) const
-{
-	return outputState.expectMutableObject<ParticlesObject>();
-}
-
 /******************************************************************************
 * Creates and initializes the expression evaluator object.
 ******************************************************************************/
-std::unique_ptr<PropertyExpressionEvaluator> ParticlesExpressionSelectionModifierDelegate::initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame)
+std::unique_ptr<PropertyExpressionEvaluator> ParticlesExpressionSelectionModifierDelegate::initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, const DataObjectPath& objectPath, int animationFrame)
 {
 	std::unique_ptr<ParticleExpressionEvaluator> evaluator = std::make_unique<ParticleExpressionEvaluator>();
 	evaluator->initialize(expressions, inputState, animationFrame);
@@ -75,19 +66,9 @@ QVector<DataObjectReference> BondsExpressionSelectionModifierDelegate::OOMetaCla
 }
 
 /******************************************************************************
-* Looks up the container for the properties in the output pipeline state.
-******************************************************************************/
-PropertyContainer* BondsExpressionSelectionModifierDelegate::getOutputPropertyContainer(PipelineFlowState& outputState) const
-{
-	ParticlesObject* particles = outputState.expectMutableObject<ParticlesObject>();
-	particles->expectBonds();
-	return particles->makeBondsMutable();
-}
-
-/******************************************************************************
 * Creates and initializes the expression evaluator object.
 ******************************************************************************/
-std::unique_ptr<PropertyExpressionEvaluator> BondsExpressionSelectionModifierDelegate::initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame)
+std::unique_ptr<PropertyExpressionEvaluator> BondsExpressionSelectionModifierDelegate::initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, const DataObjectPath& objectPath, int animationFrame)
 {
 	std::unique_ptr<BondExpressionEvaluator> evaluator = std::make_unique<BondExpressionEvaluator>();
 	evaluator->initialize(expressions, inputState, animationFrame);

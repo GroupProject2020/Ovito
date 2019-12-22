@@ -74,8 +74,8 @@ PropertyPtr SurfaceMeshVertices::OOMetaClass::createStandardStorage(size_t verte
 			if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(containerPath[containerPath.size()-2])) {
 				if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
 					std::fill(property->dataColor(), property->dataColor() + property->size(), vis->surfaceColor());
+					initializeMemory = false;
 				}
-				initializeMemory = false;
 			}
 		}
 	}

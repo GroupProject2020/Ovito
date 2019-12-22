@@ -86,7 +86,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, PipelineFl
 		return PipelineStatus::Success;
 
 	// Look up the property container object and make sure we can safely modify it.
-   	DataObjectPath objectPath = state.expectMutableObject(subject());
+   	DataObjectPath objectPath = state.expectMutableObject(inputContainerRef());
 	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
 
 	// Get the input selection property.

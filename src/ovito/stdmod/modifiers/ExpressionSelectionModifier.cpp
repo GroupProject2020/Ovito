@@ -58,8 +58,12 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, Pi
 	// The current animation frame number.
 	int currentFrame = dataset()->animationSettings()->timeToFrame(time);
 
+	// Look up the input property container.
+   	DataObjectPath objectPath = state.expectMutableObject(inputContainerRef());
+	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+
 	// Initialize the evaluator class.
-	std::unique_ptr<PropertyExpressionEvaluator> evaluator = initializeExpressionEvaluator(QStringList(expressionMod->expression()), state, currentFrame);
+	std::unique_ptr<PropertyExpressionEvaluator> evaluator = initializeExpressionEvaluator(QStringList(expressionMod->expression()), state, objectPath, currentFrame);
 
 	// Save list of available input variables, which will be displayed in the modifier's UI.
 	expressionMod->setVariablesInfo(evaluator->inputVariableNames(), evaluator->inputVariableTable());
@@ -69,17 +73,16 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, Pi
 	if(expressionMod->expression().isEmpty())
 		return PipelineStatus(PipelineStatus::Warning, tr("Please enter a Boolean expression."));
 
-	// Check if expression contain an assignment ('=' operator).
-	// This should be considered an error, because the user is probably referring the comparison operator '=='.
+	// Check if expression contains an assignment ('=' operator).
+	// This should be considered a user's mistake, because the user is probably referring the comparison operator '=='.
 	if(expressionMod->expression().contains(QRegExp("[^=!><]=(?!=)")))
-		throwException("The expression contains the assignment operator '='. Please use the comparison operator '==' instead.");
+		throwException(tr("The expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
 
 	// The number of selected elements.
 	std::atomic_size_t nselected(0);
 
 	// Generate the output selection property.
-	PropertyContainer* propertyContainer = getOutputPropertyContainer(state);
-	const PropertyPtr& selProperty = propertyContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
+	const PropertyPtr& selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 
 	// Evaluate Boolean expression for every input data element.
 	evaluator->evaluate([&selProperty, &nselected](size_t elementIndex, size_t componentIndex, double value) {

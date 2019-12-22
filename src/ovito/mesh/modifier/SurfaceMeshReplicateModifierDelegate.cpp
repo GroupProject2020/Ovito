@@ -59,10 +59,10 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 			if(!simCell.inverse(inverseSimCell))
 				continue;
 
-			// Make sure surface mesh is in a good state.
+			// Make sure input mesh data structure is in a good state.
 			existingSurface->verifyMeshIntegrity();
 
-			// Create a copy of the input surface.
+			// Create a copy of the input mesh.
 			SurfaceMesh* newSurface = state.makeMutable(existingSurface);
 
 			// Create a copy of the mesh topology.

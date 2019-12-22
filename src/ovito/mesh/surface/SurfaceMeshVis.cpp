@@ -42,7 +42,6 @@ DEFINE_PROPERTY_FIELD(SurfaceMeshVis, capColor);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, showCap);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, smoothShading);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, reverseOrientation);
-DEFINE_PROPERTY_FIELD(SurfaceMeshVis, cullFaces);
 DEFINE_PROPERTY_FIELD(SurfaceMeshVis, highlightEdges);
 DEFINE_REFERENCE_FIELD(SurfaceMeshVis, surfaceTransparencyController);
 DEFINE_REFERENCE_FIELD(SurfaceMeshVis, capTransparencyController);
@@ -53,7 +52,6 @@ SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, smoothShading, "Smooth shading");
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, surfaceTransparencyController, "Surface transparency");
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, capTransparencyController, "Cap transparency");
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, reverseOrientation, "Inside out");
-SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, cullFaces, "Cull faces");
 SET_PROPERTY_FIELD_LABEL(SurfaceMeshVis, highlightEdges, "Highlight edges");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, surfaceTransparencyController, PercentParameterUnit, 0, 1);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshVis, capTransparencyController, PercentParameterUnit, 0, 1);
@@ -69,7 +67,6 @@ SurfaceMeshVis::SurfaceMeshVis(DataSet* dataset) : TransformingDataVis(dataset),
 	_showCap(true),
 	_smoothShading(true),
 	_reverseOrientation(false),
-	_cullFaces(false),
 	_highlightEdges(false)
 {
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
@@ -106,11 +103,11 @@ Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(const PipelineEvalua
 
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(std::move(engine))
-		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh, std::vector<ColorA>&& materialColors, std::vector<size_t>&& originalFaceMap) mutable {
+		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh, std::vector<ColorA>&& materialColors, std::vector<size_t>&& originalFaceMap, bool renderFacesTwoSided) mutable {
 			UndoSuspender noUndo(this);
 
 			// Output the computed mesh as a RenderableSurfaceMesh.
-			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), std::move(capPolygonsMesh));
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), std::move(capPolygonsMesh), !renderFacesTwoSided);
             renderableMesh->setMaterialColors(std::move(materialColors));
             renderableMesh->setOriginalFaceMap(std::move(originalFaceMap));
 			flowState.addObject(renderableMesh);
@@ -193,6 +190,7 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 		}
 		visCache.surfacePrimitive->setMaterialColors(std::move(materialColors));
 		visCache.surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface, highlightEdges());
+		visCache.surfacePrimitive->setCullFaces(renderableMesh->backfaceCulling());
 
         // Get the original surface mesh.
         const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(renderableMesh->sourceDataObject().get());
@@ -212,7 +210,6 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 	// Handle picking of triangles.
 	renderer->beginPickObject(contextNode, visCache.pickInfo);
 	if(visCache.surfacePrimitive) {
-		visCache.surfacePrimitive->setCullFaces(cullFaces());
 		visCache.surfacePrimitive->render(renderer);
 	}
 	if(showCap()) {
@@ -246,7 +243,7 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 	if(surfaceMesh()->faces() && facetIndex >= 0 && facetIndex < surfaceMesh()->faces()->elementCount()) {
 		for(const PropertyObject* property : surfaceMesh()->faces()->properties()) {
 	        if(facetIndex >= property->size()) continue;
-//			if(property->type() == SurfaceMeshFaces::SelectionProperty) continue;
+			if(property->type() == SurfaceMeshFaces::SelectionProperty) continue;
 			if(property->type() == SurfaceMeshFaces::ColorProperty) continue;
 			if(property->type() == SurfaceMeshFaces::RegionProperty) continue;
 			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
@@ -320,7 +317,9 @@ std::shared_ptr<SurfaceMeshVis::PrepareSurfaceEngine> SurfaceMeshVis::createSurf
 		mesh,
 		reverseOrientation(),
 		mesh->cuttingPlanes(),
-		smoothShading());
+		smoothShading(),
+		surfaceColor(),
+		true);
 }
 
 /******************************************************************************
@@ -332,6 +331,18 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 
 	determineVisibleFaces();
 	if(isCanceled()) return;
+
+	// Determine wheter we can simply use two-sided rendering to display faces.
+	// This will be the case case if there is no visible mesh face that has a 
+	// corresponding opposite face.
+	if(_faceSubset.empty()) {
+		_renderFacesTwoSided = std::none_of(inputMesh().topology()->begin_faces(), inputMesh().topology()->end_faces(),
+			std::bind(&HalfEdgeMesh::hasOppositeFace, inputMesh().topology().get(), std::placeholders::_1));
+	}
+	else {
+		_renderFacesTwoSided = std::none_of(inputMesh().topology()->begin_faces(), inputMesh().topology()->end_faces(),
+			[this](SurfaceMeshData::face_index face) { return _faceSubset[face] && inputMesh().hasOppositeFace(face) && _faceSubset[inputMesh().oppositeFace(face)]; });
+	}
 
 	if(!buildSurfaceTriangleMesh() && !isCanceled())
 		throw Exception(tr("Failed to build non-periodic representation of periodic surface mesh. Periodic domain might be too small."));
@@ -345,7 +356,12 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 		buildCapTriangleMesh();
 	}
 
-	setResult(std::move(_surfaceMesh), std::move(_capPolygonsMesh), std::move(_materialColors), std::move(_originalFaceMap));
+	setResult(
+		std::move(_surfaceMesh), 
+		std::move(_capPolygonsMesh), 
+		std::move(_materialColors), 
+		std::move(_originalFaceMap), 
+		_renderFacesTwoSided);
 }
 
 /******************************************************************************
@@ -353,12 +369,69 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 ******************************************************************************/
 void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
 {
+	ColorA defaultFaceColor(_surfaceColor);
+	ColorA selectionColor(1,0,0,1);
+
 	if(PropertyPtr colorProperty = _inputMesh.faceProperty(SurfaceMeshFaces::ColorProperty)) {
+		// The "Color" property of mesh faces has the highest priority.
+		// If it is present, use its information to color the triangle faces.
 		_surfaceMesh.setHasFaceColors(true);
 		auto meshFaceColor = _surfaceMesh.faceColors().begin();
 		for(size_t originalFace : _originalFaceMap) {
 			OVITO_ASSERT(originalFace < colorProperty->size());
 			*meshFaceColor++ = ColorA(colorProperty->getColor(originalFace));
+		}
+	}
+	else if(PropertyPtr colorProperty = _inputMesh.regionProperty(SurfaceMeshRegions::ColorProperty)) {
+		// If the "Color" property of mesh regions is present, use it information to color the 
+		// mesh faces according to the region they belong to.
+		if(PropertyPtr regionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::RegionProperty)) {
+			_surfaceMesh.setHasFaceColors(true);
+			size_t regionCount = colorProperty->size();
+			auto meshFaceColor = _surfaceMesh.faceColors().begin();
+			for(size_t originalFace : _originalFaceMap) {
+				OVITO_ASSERT(originalFace < regionProperty->size());
+				SurfaceMeshData::region_index regionIndex = regionProperty->getInt(originalFace);
+				if(regionIndex >= 0 && regionIndex < regionCount)
+					*meshFaceColor++ = ColorA(colorProperty->getColor(regionIndex));
+				else
+					*meshFaceColor++ = defaultFaceColor;
+			}
+		}
+	}
+
+	if(PropertyPtr selectionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::SelectionProperty)) {
+		// The "Selection" property of mesh faces has the highest priority.
+		// If it is present, use it to highlight selected mesh faces.
+		if(!_surfaceMesh.hasFaceColors()) {
+			_surfaceMesh.setHasFaceColors(true);
+			std::fill(_surfaceMesh.faceColors().begin(), _surfaceMesh.faceColors().end(), defaultFaceColor);
+		}
+		auto meshFaceColor = _surfaceMesh.faceColors().begin();
+		for(size_t originalFace : _originalFaceMap) {
+			OVITO_ASSERT(originalFace < selectionProperty->size());
+			if(selectionProperty->getInt(originalFace))
+				*meshFaceColor = selectionColor;
+			++meshFaceColor;
+		}
+	}
+	else if(PropertyPtr selectionProperty = _inputMesh.regionProperty(SurfaceMeshRegions::SelectionProperty)) {
+		// If the "Selection" property of mesh regions is present, use it information to highlight the 
+		// mesh faces that belong to selected regions.
+		if(PropertyPtr regionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::RegionProperty)) {
+			if(!_surfaceMesh.hasFaceColors()) {
+				_surfaceMesh.setHasFaceColors(true);
+				std::fill(_surfaceMesh.faceColors().begin(), _surfaceMesh.faceColors().end(), defaultFaceColor);
+			}
+			size_t regionCount = selectionProperty->size();
+			auto meshFaceColor = _surfaceMesh.faceColors().begin();
+			for(size_t originalFace : _originalFaceMap) {
+				OVITO_ASSERT(originalFace < regionProperty->size());
+				SurfaceMeshData::region_index regionIndex = regionProperty->getInt(originalFace);
+				if(regionIndex >= 0 && regionIndex < regionCount && selectionProperty->getInt(regionIndex))
+					*meshFaceColor = selectionColor;
+				++meshFaceColor;
+			}
 		}
 	}
 }
@@ -387,7 +460,7 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 		throw Exception(tr("Cannot generate surface triangle mesh when domain is two-dimensional."));
 
 	// Transfer vertices and faces from half-edge mesh structure to triangle mesh structure.
-	_inputMesh.convertToTriMesh(_surfaceMesh, _smoothShading, _faceSubset, &_originalFaceMap);
+	_inputMesh.convertToTriMesh(_surfaceMesh, _smoothShading, _faceSubset, &_originalFaceMap, !_renderFacesTwoSided);
 
 	// Check for early abortion.
 	if(isCanceled())
