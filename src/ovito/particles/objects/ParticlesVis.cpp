@@ -492,12 +492,12 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			VersionedDataObjectRef		// Particle type property + revision number
 		>;
 		// The data structure stored in the vis cache.
-		struct CacheValue {
+		struct ParticleCacheValue {
 			std::shared_ptr<ParticlePrimitive> particlePrimitive;
-			OORef<ObjectPickInfo> pickInfo;
+			OORef<ParticlePickInfo> pickInfo;
 		};
 		// Look up the rendering primitive in the vis cache.
-		auto& visCache = dataset()->visCache().get<CacheValue>(ParticleCacheKey(
+		auto& visCache = dataset()->visCache().get<ParticleCacheValue>(ParticleCacheKey(
 			renderer,
 			const_cast<PipelineSceneNode*>(contextNode),
 			positionProperty,
@@ -690,6 +690,10 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				colorsUpToDate = true;
 			}
 			visCache.pickInfo = new ParticlePickInfo(this, flowState, std::move(visibleParticleIndices));
+		}
+		else {
+			// Update the pipeline state stored in te picking object info.
+			visCache.pickInfo->setPipelineState(flowState);
 		}
 
 		// Make sure that the particle positions, orientations and aspherical shapes stored in the rendering primitive are up to date.

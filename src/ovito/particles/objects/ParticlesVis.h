@@ -129,6 +129,9 @@ public:
 	/// The pipeline flow state containing the particle properties.
 	const PipelineFlowState& pipelineState() const { return _pipelineState; }
 
+	/// Replaces the stored pipeline flow state with a new version.
+	void setPipelineState(const PipelineFlowState& pipelineState) { _pipelineState = pipelineState; }
+
 	/// Returns a human-readable string describing the picked object, which will be displayed in the status bar by OVITO.
 	virtual QString infoString(PipelineSceneNode* objectNode, quint32 subobjectId) override;
 
