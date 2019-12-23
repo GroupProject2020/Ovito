@@ -221,7 +221,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 			Vector3 cd = tessellation.vertexPosition(tessellation.cellVertex(cell, 3)) - p0;
 			addSolidVolume(std::abs(ad.dot(cd.cross(bd))) / FloatType(6));
 		}
-		return 1;
+		return 0;
 	};
 
 	// This callback function is called for every surface facet created by the manifold construction helper.
@@ -245,10 +245,6 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		}
 		OVITO_ASSERT(particleProperty == _particleProperties.cend());
 	};
-
-	// Create the empty region in the output mesh.
-	mesh().createRegion();
-	OVITO_ASSERT(mesh().regionCount() == 1);
 
 	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, mesh(), alpha, *positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), std::move(prepareMeshFace), std::move(prepareMeshVertex)))
@@ -380,10 +376,6 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 
 	task()->nextProgressSubStep();
 
-	// Create the empty region in the output mesh.
-	mesh().createRegion();
-	OVITO_ASSERT(mesh().regionCount() == 1);
-
 	// Construct isosurface of the density field.
 	mesh().cell().setMatrix(gridBoundaries);
 	MarchingCubes mc(mesh(), gridDims[0], gridDims[1], gridDims[2], densityData.data(), 1, false);
@@ -444,8 +436,12 @@ void ConstructSurfaceModifier::AlphaShapeEngine::emitResults(TimePoint time, Mod
 	state.addAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()), modApp);
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nSimulation cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
-			.arg(surfaceArea()).arg(solidVolume()).arg(totalVolume())
-			.arg(solidVolume() / totalVolume()).arg(surfaceArea() / solidVolume()).arg(surfaceArea() / totalVolume())));
+			.arg(surfaceArea())
+			.arg(solidVolume())
+			.arg(totalVolume())
+			.arg(totalVolume() > 0 ? (solidVolume() / totalVolume()) : 0)
+			.arg(solidVolume() > 0 ? (surfaceArea() / solidVolume()) : 0)
+			.arg(totalVolume() > 0 ? (surfaceArea() / totalVolume()) : 0)));
 }
 
 /******************************************************************************

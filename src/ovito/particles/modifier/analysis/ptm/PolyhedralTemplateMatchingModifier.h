@@ -29,8 +29,6 @@
 #include <ovito/stdobj/series/DataSeriesObject.h>
 #include "PTMAlgorithm.h"
 
-#include <boost/optional/optional.hpp>
-
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**

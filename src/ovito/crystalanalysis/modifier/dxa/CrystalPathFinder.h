@@ -28,8 +28,6 @@
 #include <ovito/crystalanalysis/data/ClusterVector.h>
 #include "StructureAnalysis.h"
 
-#include <boost/optional.hpp>
-
 namespace Ovito { namespace CrystalAnalysis {
 
 /**

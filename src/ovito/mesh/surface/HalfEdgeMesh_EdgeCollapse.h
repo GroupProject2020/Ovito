@@ -27,7 +27,6 @@
 #include "HalfEdgeMesh.h"
 
 #include <boost/heap/fibonacci_heap.hpp>
-#include <boost/optional.hpp>
 
 namespace Ovito { namespace Mesh {
 

@@ -219,14 +219,14 @@ public:
 
     /// Creates a new face, and optionally also the half-edges surrounding it.
     /// Returns the index of the new face.
-    face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion = 1) {
+    face_index createFace(std::initializer_list<vertex_index> vertices, region_index faceRegion = HalfEdgeMesh::InvalidIndex) {
         return createFace(vertices.begin(), vertices.end(), faceRegion);
     }
 
     /// Creates a new face, and optionally also the half-edges surrounding it.
     /// Returns the index of the new face.
     template<typename VertexIterator>
-    face_index createFace(VertexIterator begin, VertexIterator end, region_index faceRegion = 1) {
+    face_index createFace(VertexIterator begin, VertexIterator end, region_index faceRegion = HalfEdgeMesh::InvalidIndex) {
         OVITO_ASSERT(isTopologyMutable());
         OVITO_ASSERT(areFacePropertiesMutable());
         face_index fidx = (begin == end) ? topology()->createFace() : topology()->createFaceAndEdges(begin, end);
@@ -401,8 +401,8 @@ public:
 	bool smoothMesh(int numIterations, Task& task, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
 
 	/// Determines which spatial region contains the given point in space.
-	/// Returns -1 if the point is exactly on a region boundary.
-	int locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON, const boost::dynamic_bitset<>& faceSubset = boost::dynamic_bitset<>());
+	/// Returns no result if the point is exactly on a region boundary.
+	boost::optional<region_index> locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON, const boost::dynamic_bitset<>& faceSubset = boost::dynamic_bitset<>()) const;
 
     /// Returns one of the standard vertex properties (or null if the property is not defined).
     PropertyPtr vertexProperty(SurfaceMeshVertices::Type ptype) const {
@@ -673,21 +673,21 @@ protected:
 
 private:
 
-    HalfEdgeMeshPtr _topology;		///< Holds the mesh topology of the surface mesh.
-    SimulationCell _cell;			///< The simulation cell the microstructure is embedded in.
+    HalfEdgeMeshPtr _topology;                  ///< Holds the mesh topology of the surface mesh.
+    SimulationCell _cell;                       ///< The simulation cell the microstructure is embedded in.
     std::vector<PropertyPtr> _vertexProperties;	///< List of all property arrays associated with the vertices of the mesh.
-    std::vector<PropertyPtr> _faceProperties;	///< List of all property arrays associated with the faces of the mesh.
-    std::vector<PropertyPtr> _regionProperties;	///< List of all property arrays associated with the volumetric domains of the mesh.
-    size_type _regionCount = 0;             ///< The number of sptial regions that have been defined.
-    region_index _spaceFillingRegion = 0;	///< The index of the space-filling spatial region.
-    Point3* _vertexCoords = nullptr;	        ///< Pointer to the per-vertex mesh coordinates.
-    int* _faceRegions = nullptr;	            ///< Pointer to the per-face region information.
-	Vector3* _burgersVectors = nullptr;	        ///< Pointer to the per-face Burgers vector information.
+    std::vector<PropertyPtr> _faceProperties;   ///< List of all property arrays associated with the faces of the mesh.
+    std::vector<PropertyPtr> _regionProperties; ///< List of all property arrays associated with the volumetric domains of the mesh.
+    size_type _regionCount = 0;                 ///< The number of spatial regions that have been defined.
+    region_index _spaceFillingRegion = HalfEdgeMesh::InvalidIndex;      ///< The index of the space-filling spatial region.
+    Point3* _vertexCoords = nullptr;            ///< Pointer to the per-vertex mesh coordinates.
+    int* _faceRegions = nullptr;                ///< Pointer to the per-face region information.
+	Vector3* _burgersVectors = nullptr;         ///< Pointer to the per-face Burgers vector information.
 	Vector3* _crystallographicNormals = nullptr;///< Pointer to the per-face crystallographic normal information.
-	int* _faceTypes = nullptr;			        ///< Pointer to the per-face type information.
-	int* _regionPhases = nullptr;			    ///< Pointer to the per-region phase information.
-	FloatType* _regionVolumes = nullptr;	    ///< Pointer to the per-region volume information.
-	FloatType* _regionSurfaceAreas = nullptr;	///< Pointer to the per-region surface area information.
+	int* _faceTypes = nullptr;                  ///< Pointer to the per-face type information.
+	int* _regionPhases = nullptr;               ///< Pointer to the per-region phase information.
+	FloatType* _regionVolumes = nullptr;        ///< Pointer to the per-region volume information.
+	FloatType* _regionSurfaceAreas = nullptr;   ///< Pointer to the per-region surface area information.
 };
 
 }	// End of namespace

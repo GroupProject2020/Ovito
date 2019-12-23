@@ -27,8 +27,6 @@
 #include <ovito/core/oo/RefTargetListener.h>
 #include "ViewportInputMode.h"
 
-#include <boost/optional/optional.hpp>
-
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /******************************************************************************

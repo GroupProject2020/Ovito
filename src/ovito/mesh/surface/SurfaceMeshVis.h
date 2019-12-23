@@ -216,7 +216,7 @@ public:
 
 	/// \brief Given an sub-object ID returned by the Viewport::pick() method, looks up the
 	/// corresponding surface face.
-	int slipFacetIndexFromSubObjectID(quint32 subobjID) const {
+	int faceIndexFromSubObjectID(quint32 subobjID) const {
 		if(subobjID < renderableMesh()->originalFaceMap().size())
 			return renderableMesh()->originalFaceMap()[subobjID];
 		else

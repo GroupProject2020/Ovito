@@ -97,6 +97,7 @@
 * Boost Library
 ******************************************************************************/
 #include <boost/dynamic_bitset.hpp>
+#include <boost/optional/optional.hpp>
 
 /*! \namespace Ovito
     \brief The root namespace of OVITO.

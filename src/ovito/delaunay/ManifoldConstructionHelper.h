@@ -37,8 +37,8 @@ namespace Ovito { namespace Delaunay {
 using namespace Ovito::Mesh;
 
 /**
- * Constructs a closed manifold which separates different regions
- * in a tetrahedral mesh.
+ * Constructs a SurfaceMesh structure from a DelaunayTessellation representing the separating surface manifold
+ * between different spatial regions of the tessellation.
  */
 template<bool FlipOrientation = false, bool CreateTwoSidedMesh = false, bool CreateDisconnectedRegions = false>
 class ManifoldConstructionHelper
@@ -74,10 +74,6 @@ public:
 	bool construct(CellRegionFunc&& determineCellRegion, Task& promise,
 			PrepareMeshFaceFunc&& prepareMeshFaceFunc = PrepareMeshFaceFunc(), PrepareMeshVertexFunc&& prepareMeshVertexFunc = PrepareMeshVertexFunc(), LinkManifoldsFunc&& linkManifoldsFunc = LinkManifoldsFunc())
 	{
-		// Create the empty spatial region in the output mesh.
-		if(_mesh.regionCount() == 0)
-			_mesh.createRegion();
-
 		// Algorithm is divided into several sub-steps.
 		if(CreateDisconnectedRegions)
 			promise.beginProgressSubStepsWithWeights({1,8,2,1});
@@ -90,7 +86,7 @@ public:
 
 		promise.nextProgressSubStep();
 
-		// Aggregate tetrahedra into disconnected regions.
+		// Aggregate connected tetrahedra into regions.
 		if(CreateDisconnectedRegions) {
 
 			// Create the "Region" face property in the output mesh.
@@ -125,9 +121,11 @@ private:
 		promise.setProgressValue(0);
 		promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
 
-		_numSolidCells = 0;
-		_mesh.setSpaceFillingRegion(-1);
+		_numInteriorCells = 0;
 		size_t progressCounter = 0;
+		_mesh.setSpaceFillingRegion(HalfEdgeMesh::InvalidIndex);
+		bool spaceFillingRegionUndetermined = true;
+		bool isSpaceFilling = true;
 		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
@@ -136,31 +134,37 @@ private:
 				return false;
 
 			// Alpha shape criterion: This determines whether the Delaunay tetrahedron is part of the solid region.
-			bool isSolid = _tessellation.isValidCell(cell) && _tessellation.alphaTest(cell, _alpha);
+			bool isInterior = _tessellation.isValidCell(cell) && _tessellation.alphaTest(cell, _alpha);
 
-			int region = 0;
-			if(isSolid) {
+			int region = HalfEdgeMesh::InvalidIndex;
+			if(isInterior) {
 				region = determineCellRegion(cell);
-				OVITO_ASSERT(region >= 0);
-				OVITO_ASSERT(!CreateDisconnectedRegions || region <= 1);
+				OVITO_ASSERT(region >= 0 || region == HalfEdgeMesh::InvalidIndex);
+				OVITO_ASSERT(!CreateDisconnectedRegions || region <= 0);
 				OVITO_ASSERT(CreateDisconnectedRegions || region < _mesh.regionCount());
 			}
 			_tessellation.setUserField(cell, region);
 
 			if(!_tessellation.isGhostCell(cell)) {
-				if(_mesh.spaceFillingRegion() == -1) _mesh.setSpaceFillingRegion(region);
-				else if(_mesh.spaceFillingRegion() != region) _mesh.setSpaceFillingRegion(0);
+				if(spaceFillingRegionUndetermined) {
+					_mesh.setSpaceFillingRegion(region);
+					spaceFillingRegionUndetermined = false;
+				}
+				else {
+					if(isSpaceFilling && _mesh.spaceFillingRegion() != region) {
+						_mesh.setSpaceFillingRegion(HalfEdgeMesh::InvalidIndex);
+						isSpaceFilling = false;
+					}
+				}
 			}
 
-			if(region != 0 && !_tessellation.isGhostCell(cell)) {
-				_tessellation.setCellIndex(cell, _numSolidCells++);
+			if(region != HalfEdgeMesh::InvalidIndex && !_tessellation.isGhostCell(cell)) {
+				_tessellation.setCellIndex(cell, _numInteriorCells++);
 			}
 			else {
 				_tessellation.setCellIndex(cell, -1);
 			}
 		}
-		if(_mesh.spaceFillingRegion() == -1)
-			_mesh.setSpaceFillingRegion(0);
 
 		return !promise.isCanceled();
 	}
@@ -175,17 +179,17 @@ private:
 		return std::abs(ad.dot(cd.cross(bd))) / FloatType(6);
 	}
 
-	/// Aggregates adjacent Delaunay tetrahedra into disconnected regions.
+	/// Aggregates adjacent Delaunay tetrahedra into spatial regions.
 	bool formRegions(Task& promise)
 	{
 		promise.beginProgressSubStepsWithWeights({2,3,1});
 
-		// Create a lookup map that allows to retreive the primary Delaunay cell image that belongs to a triangular face formed by three particles.
+		// Create a lookup map that allows retreiving the primary image of a Delaunay cell for a triangular face formed by three particles.
 		if(!createCellMap(promise))
 			return false;
 
-		// Make sure the empty region has been defined.
-		OVITO_ASSERT(_mesh.regionCount() == 1);
+		// Make sure no regions have been defined so far.
+		OVITO_ASSERT(_mesh.regionCount() == 0);
 
 		// Create the output property arrays for the identified regions.
  		_mesh.createRegionProperty(SurfaceMeshRegions::VolumeProperty, true);
@@ -199,7 +203,7 @@ private:
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Skip outside cells and cells that have already been assigned to a cluster.
-			if(_tessellation.getUserField(cell) != 1)
+			if(_tessellation.getUserField(cell) != 0)
 				continue;
 
 			// Skip ghost cells.
@@ -208,7 +212,7 @@ private:
 
 			// Start a new cluster.
 			int currentCluster = _mesh.regionCount() + 1;
-			OVITO_ASSERT(currentCluster >= 2);
+			OVITO_ASSERT(currentCluster >= 1);
 			double regionVolume = 0;
 
 			// Now recursively iterate over all neighbors of the seed cell and add them to the current cluster.
@@ -242,7 +246,7 @@ private:
 					auto neighborCell = _cellLookupMap.find(vertices);
 					if(neighborCell != _cellLookupMap.end()) {
 						// Add adjecent cell to the deque if it has not been processed yet.
-						if(_tessellation.getUserField(neighborCell->second) == 1) {
+						if(_tessellation.getUserField(neighborCell->second) == 0) {
 							toProcess.push_back(neighborCell->second);
 							_tessellation.setUserField(neighborCell->second, currentCluster);
 						}
@@ -256,11 +260,11 @@ private:
 		}
 		promise.nextProgressSubStep();
 
-		if(_mesh.regionCount() > 1) {
-			// Shift interior region IDs to start at index 1.
+		if(_mesh.regionCount() > 0) {
+			// Shift interior region IDs to start at index 0.
 			for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 				int region = _tessellation.getUserField(*cellIter);
-				if(region > 1)
+				if(region > 0)
 					_tessellation.setUserField(*cellIter, region - 1);
 			}
 
@@ -268,7 +272,7 @@ private:
 			promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
 			for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 				DelaunayTessellation::CellHandle cell = *cellIter;
-				if(_tessellation.getUserField(cell) == 1 && _tessellation.isGhostCell(cell)) {
+				if(_tessellation.isGhostCell(cell) && _tessellation.getUserField(cell) == 0) {
 					if(!promise.setProgressValueIntermittent(cell))
 						break;
 
@@ -302,7 +306,7 @@ private:
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Skip cells that belong to the exterior region.
-			if(_tessellation.getUserField(cell) <= 0)
+			if(_tessellation.getUserField(cell) == HalfEdgeMesh::InvalidIndex)
 				continue;
 
 			// Skip ghost cells.
@@ -344,15 +348,15 @@ private:
 		_faceLookupMap.clear();
 
 		promise.setProgressValue(0);
-		promise.setProgressMaximum(_numSolidCells);
+		promise.setProgressMaximum(_numInteriorCells);
 
 		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
-			// Look for solid and local tetrahedra.
+			// Look for interior and local tetrahedra.
 			if(_tessellation.getCellIndex(cell) == -1) continue;
-			int solidRegion = _tessellation.getUserField(cell);
-			OVITO_ASSERT(solidRegion != 0);
+			int interiorRegion = _tessellation.getUserField(cell);
+			OVITO_ASSERT(interiorRegion != HalfEdgeMesh::InvalidIndex);
 
 			// Update progress indicator.
 			if(!promise.setProgressValueIntermittent(_tessellation.getCellIndex(cell)))
@@ -376,7 +380,7 @@ private:
 				// Check if the adjacent tetrahedron belongs to a different region.
 				std::pair<DelaunayTessellation::CellHandle,int> mirrorFacet = _tessellation.mirrorFacet(cell, f);
 				DelaunayTessellation::CellHandle adjacentCell = mirrorFacet.first;
-				if(_tessellation.getUserField(adjacentCell) == solidRegion) {
+				if(_tessellation.getUserField(adjacentCell) == interiorRegion) {
 					continue;
 				}
 
@@ -396,13 +400,13 @@ private:
 				}
 
 				// Create a new triangle facet.
-				HalfEdgeMesh::face_index face = _mesh.createFace(facetVertices.begin(), facetVertices.end(), solidRegion);
+				HalfEdgeMesh::face_index face = _mesh.createFace(facetVertices.begin(), facetVertices.end(), interiorRegion);
 
 				// Tell client code about the new facet.
 				prepareMeshFaceFunc(face, vertexIndices, vertexHandles, cell);
 
 				// Create additional face for exterior region if requested.
-				if(CreateTwoSidedMesh && _tessellation.getUserField(adjacentCell) == 0) {
+				if(CreateTwoSidedMesh && _tessellation.getUserField(adjacentCell) == HalfEdgeMesh::InvalidIndex) {
 
 					// Build face vertex list.
 					std::reverse(std::begin(vertexHandles), std::end(vertexHandles));
@@ -416,7 +420,7 @@ private:
 					}
 
 					// Create a new triangle facet.
-					HalfEdgeMesh::face_index oppositeFace = _mesh.createFace(facetVertices.begin(), facetVertices.end(), 0);
+					HalfEdgeMesh::face_index oppositeFace = _mesh.createFace(facetVertices.begin(), facetVertices.end(), HalfEdgeMesh::InvalidIndex);
 
 					// Tell client code about the new facet.
 					prepareMeshFaceFunc(oppositeFace, reverseVertexIndices, vertexHandles, adjacentCell);
@@ -598,7 +602,7 @@ private:
 	FloatType _alpha;
 
 	/// Counts the number of tetrehedral cells that belong to the solid region.
-	size_t _numSolidCells = 0;
+	size_t _numInteriorCells = 0;
 
 	/// The input particle positions.
 	const PropertyStorage& _positions;

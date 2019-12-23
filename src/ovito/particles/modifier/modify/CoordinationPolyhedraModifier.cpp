@@ -96,10 +96,6 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 {
 	task()->setProgressText(tr("Generating coordination polyhedra"));
 
-	// Create the exterior spatial region.
-	mesh().createRegion();
-	OVITO_ASSERT(mesh().regionCount() == 1);
-
 	// Create the "Region" face property.
 	mesh().createFaceProperty(SurfaceMeshFaces::RegionProperty);
 
@@ -138,7 +134,6 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 	// Create the "Center particle" region property, which indicates the ID of the particle that is at the center of each coordination polyhedron.
 	PropertyPtr centerProperty = mesh().createRegionProperty(PropertyStorage::Int64, 1, 0, QStringLiteral("Center Particle"), false);
 	auto centerParticle = centerProperty->dataInt64();
-	*centerParticle++ = 0;
 	for(size_t i = 0; i < _positions->size(); i++) {
 		if(_selection->getInt(i) == 0) continue;
 		if(_particleIdentifiers)
@@ -146,6 +141,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 		else
 			*centerParticle++ = i;
 	}
+	OVITO_ASSERT(centerParticle == centerProperty->dataInt64() + centerProperty->size());
 }
 
 /******************************************************************************

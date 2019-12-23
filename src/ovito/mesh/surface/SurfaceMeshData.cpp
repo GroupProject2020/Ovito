@@ -167,16 +167,14 @@ bool SurfaceMeshData::smoothMesh(int numIterations, Task& task, FloatType k_PB, 
 * Signed Distance Computation Using the Angle Weighted Pseudonormal
 * IEEE Transactions on Visualization and Computer Graphics 11 (2005), Page 243
 ******************************************************************************/
-int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, const boost::dynamic_bitset<>& faceSubset)
+boost::optional<SurfaceMeshData::region_index> SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, const boost::dynamic_bitset<>& faceSubset) const
 {
-	OVITO_ASSERT(spaceFillingRegion() >= 0);
-
 	// Determine which vertex is closest to the test point.
 	FloatType closestDistanceSq = FLOATTYPE_MAX;
 	vertex_index closestVertex = HalfEdgeMesh::InvalidIndex;
 	edge_index closestVertexFirstEdge = HalfEdgeMesh::InvalidIndex;
 	Vector3 closestNormal, closestVector;
-	int closestRegion = spaceFillingRegion();
+	region_index closestRegion = spaceFillingRegion();
     size_type vcount = vertexCount();
 	for(vertex_index vindex = 0; vindex < vcount; vindex++) {
 		edge_index firstEdge = firstVertexEdge(vindex);
@@ -203,7 +201,7 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 	size_type edgeCount = this->edgeCount();
 	for(edge_index edge = 0; edge < edgeCount; edge++) {
 		if(!faceSubset.empty() && !faceSubset[adjacentFace(edge)]) continue;
-		OVITO_ASSERT_MSG(hasOppositeEdge(edge), "SurfaceMeshData::locatePoint", "Surface mesh is not fully closed. This should not happen.");
+		OVITO_ASSERT_MSG(hasOppositeEdge(edge), "SurfaceMeshData::locatePoint()", "Surface mesh is not fully closed. This should not happen.");
 		const Point3& p1 = vertexPosition(vertex1(edge));
 		const Point3& p2 = vertexPosition(vertex2(edge));
 		Vector3 edgeDir = cell().wrapVector(p2 - p1);
@@ -224,10 +222,7 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 			Vector3 e1 = cell().wrapVector(p1a - p1);
 			Vector3 e2 = cell().wrapVector(p1b - p1);
 			closestNormal = edgeDir.cross(e1).safelyNormalized() + e2.cross(edgeDir).safelyNormalized();
-			if(_faceRegions) {
-				closestRegion = _faceRegions[adjacentFace(edge)];
-			}
-			else closestRegion = 1;
+			closestRegion = _faceRegions ? _faceRegions[adjacentFace(edge)] : 0;
 		}
 	}
 
@@ -266,10 +261,7 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 				closestVector = normal * planeDist;
 				closestVertex = HalfEdgeMesh::InvalidIndex;
 				closestNormal = normal;
-				if(_faceRegions) {
-					closestRegion = _faceRegions[face];
-				}
-				else closestRegion = 1;
+				closestRegion = _faceRegions ? _faceRegions[face] : 0;
 			}
 		}
 	}
@@ -294,17 +286,13 @@ int SurfaceMeshData::locatePoint(const Point3& location, FloatType epsilon, cons
 			edge1v = edge2v;
 		}
 		while(edge != closestVertexFirstEdge);
-		if(_faceRegions) {
-			closestRegion = _faceRegions[adjacentFace(edge)];
-		}
-		else closestRegion = 1;
+		closestRegion = _faceRegions ? _faceRegions[adjacentFace(edge)] : 0;
 	}
-	OVITO_ASSERT(closestRegion >= 0);
 
 	FloatType dot = closestNormal.dot(closestVector);
 	if(dot >= epsilon) return closestRegion;
 	if(dot <= -epsilon) return spaceFillingRegion();
-	return -1;
+	return {};
 }
 
 /******************************************************************************

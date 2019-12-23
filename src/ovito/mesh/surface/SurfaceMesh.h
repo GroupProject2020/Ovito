@@ -26,7 +26,7 @@
 #include <ovito/mesh/Mesh.h>
 #include <ovito/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
-#include <ovito/mesh/surface/HalfEdgeMesh.h>
+#include <ovito/mesh/surface/SurfaceMeshData.h>
 #include "SurfaceMeshVertices.h"
 #include "SurfaceMeshFaces.h"
 #include "SurfaceMeshRegions.h"
@@ -85,8 +85,7 @@ public:
 	}
 
 	/// Determines which spatial region contains the given location in space.
-	/// Returns -1 if the point is exactly on the boundary between two regions.
-	int locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON) const;
+	boost::optional<SurfaceMeshData::region_index> locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON) const;
 
 private:
 

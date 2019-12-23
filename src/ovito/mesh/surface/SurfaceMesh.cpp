@@ -84,7 +84,7 @@ void SurfaceMesh::verifyMeshIntegrity() const
 	if(!regions())
 		throwException(tr("Surface mesh has no region properties container attached."));
 
-	if(spaceFillingRegion() < 0)
+	if(spaceFillingRegion() != HalfEdgeMesh::InvalidIndex && spaceFillingRegion() < 0)
 		throwException(tr("Space filling region ID set for surface mesh must not be negative."));
 
 	vertices()->verifyIntegrity();
@@ -110,7 +110,7 @@ const HalfEdgeMeshPtr& SurfaceMesh::modifiableTopology()
 * Determines which spatial region contains the given point in space.
 * Returns -1 if the point is exactly on a region boundary.
 ******************************************************************************/
-int SurfaceMesh::locatePoint(const Point3& location, FloatType epsilon) const
+boost::optional<SurfaceMeshData::region_index> SurfaceMesh::locatePoint(const Point3& location, FloatType epsilon) const
 {
 	verifyMeshIntegrity();
 	return SurfaceMeshData(this).locatePoint(location, epsilon);

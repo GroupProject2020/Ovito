@@ -238,8 +238,8 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 {
     QString str = surfaceMesh()->objectTitle();
 
-	// List all the properties of the face.
-    auto facetIndex = slipFacetIndexFromSubObjectID(subobjectId);
+	// Display all the properties of the face and also the properties of the mesh region to which the face belongs.
+    auto facetIndex = faceIndexFromSubObjectID(subobjectId);
 	if(surfaceMesh()->faces() && facetIndex >= 0 && facetIndex < surfaceMesh()->faces()->elementCount()) {
 		for(const PropertyObject* property : surfaceMesh()->faces()->properties()) {
 	        if(facetIndex >= property->size()) continue;
@@ -278,6 +278,8 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 				str += QStringLiteral("Region %1").arg(regionIndex);
 				for(const PropertyObject* property : surfaceMesh()->regions()->properties()) {
 					if(regionIndex < 0 || regionIndex >= property->size()) continue;
+					if(property->type() == SurfaceMeshRegions::SelectionProperty) continue;
+					if(property->type() == SurfaceMeshRegions::ColorProperty) continue;
 					if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 					str += QStringLiteral(" | ");
 					str += property->name();
@@ -828,7 +830,8 @@ void SurfaceMeshVis::PrepareSurfaceEngine::buildCapTriangleMesh()
 		else {
 			if(isBoxCornerInside3DRegion == -1) {
 				if(closedContours.empty()) {
-					isBoxCornerInside3DRegion = (_inputMesh.locatePoint(Point3::Origin() + cell().matrix().translation(), 0, _faceSubset) > 0);
+					boost::optional<SurfaceMeshData::region_index> location = _inputMesh.locatePoint(Point3::Origin() + cell().matrix().translation(), 0, _faceSubset);
+					isBoxCornerInside3DRegion = (location && *location != HalfEdgeMesh::InvalidIndex);
 				}
 				else {
 					isBoxCornerInside3DRegion = isCornerInside2DRegion(closedContours);

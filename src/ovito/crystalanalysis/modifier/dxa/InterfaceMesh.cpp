@@ -68,24 +68,19 @@ bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const Property
 
 	promise.beginProgressSubSteps(2);
 
-	setSpaceFillingRegion(1);
-
 	// Determines if a tetrahedron belongs to the good or bad crystal region.
 	auto tetrahedronRegion = [this,crystalClusters](DelaunayTessellation::CellHandle cell) {
 		if(elasticMapping().isElasticMappingCompatible(cell)) {
-			setSpaceFillingRegion(0);
 			if(crystalClusters) {
 				std::array<int,4> clusters;
 				for(int v = 0; v < 4; v++)
 					clusters[v] = crystalClusters->getInt64(tessellation().vertexIndex(tessellation().cellVertex(cell, v)));
 				std::sort(std::begin(clusters), std::end(clusters));
-				return (*most_common(std::begin(clusters), std::end(clusters)) + 1);
+				return *most_common(std::begin(clusters), std::end(clusters));
 			}
-			else return 1;
+			else return 0;
 		}
-		else {
-			return 0;
-		}
+		else return HalfEdgeMesh::InvalidIndex;
 	};
 
 	// Transfer cluster vectors from tessellation edges to mesh edges.
@@ -116,10 +111,9 @@ bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const Property
 	// Threshold for filtering out elements at the surface.
 	double alpha = 5.0 * maximumNeighborDistance;
 
-	// Create the good and the bad region.
+	// Create the good region.
 	createRegion();
-	createRegion();
-	OVITO_ASSERT(regionCount() == 2);
+	OVITO_ASSERT(regionCount() == 1);
 
 	ManifoldConstructionHelper<> manifoldConstructor(tessellation(), *this, alpha, *structureAnalysis().positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, promise, prepareMeshFace))
@@ -228,7 +222,7 @@ bool InterfaceMesh::generateDefectMesh(const DislocationTracer& tracer, SurfaceM
 		while(edge_o != firstFaceEdge(face_o_idx));
 
 		// Create a copy of the face in the output mesh.
-		*faceMapIter++ = defectMesh.createFace(faceVertices.begin(), faceVertices.end());
+		*faceMapIter++ = defectMesh.createFace(faceVertices.begin(), faceVertices.end(), 0);
 		face_o_idx++;
 	}
 
@@ -268,7 +262,7 @@ bool InterfaceMesh::generateDefectMesh(const DislocationTracer& tracer, SurfaceM
 		for(Edge* meshEdge : circuit->segmentMeshCap) {
 			vertex_index v1 = vertexIndex(meshEdge->vertex2());
 			vertex_index v2 = vertexIndex(meshEdge->vertex1());
-			defectMesh.createFace({v1, v2, capVertex});
+			defectMesh.createFace({v1, v2, capVertex}, 0);
 		}
 	}
 

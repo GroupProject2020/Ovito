@@ -46,6 +46,8 @@ MarchingCubes::MarchingCubes(SurfaceMeshData& outputMesh, int size_x, int size_y
     OVITO_ASSERT(stride >= 1);
     OVITO_ASSERT(outputMesh.vertexCount() == 0);
     OVITO_ASSERT(outputMesh.faceCount() == 0);
+    OVITO_ASSERT(outputMesh.regionCount() == 0);
+    OVITO_ASSERT(outputMesh.spaceFillingRegion() == HalfEdgeMesh::InvalidIndex);
 }
 
 /******************************************************************************
@@ -80,7 +82,7 @@ bool MarchingCubes::generateIsosurface(FloatType isolevel, Task& task)
 void MarchingCubes::computeIntersectionPoints(FloatType isolevel, Task& task)
 {
     if(_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2])
-        _outputMesh.setSpaceFillingRegion(1);
+        _outputMesh.setSpaceFillingRegion(0);
     for(int k = 0; k < _size_z && !task.isCanceled(); k++, task.incrementProgressValue()) {
         for(int j = 0; j < _size_y; j++) {
             for(int i = 0; i < _size_x; i++) {
@@ -96,10 +98,10 @@ void MarchingCubes::computeIntersectionPoints(FloatType isolevel, Task& task)
                 if(std::abs(cube[4]) < _epsilon) cube[4] = _epsilon;
 
                 if(_lowerIsSolid) {
-                    if(cube[0] > 0) _outputMesh.setSpaceFillingRegion(0);
+                    if(cube[0] > 0) _outputMesh.setSpaceFillingRegion(HalfEdgeMesh::InvalidIndex);
                 }
                 else {
-                    if(cube[0] < 0) _outputMesh.setSpaceFillingRegion(0);
+                    if(cube[0] < 0) _outputMesh.setSpaceFillingRegion(HalfEdgeMesh::InvalidIndex);
                 }
                 if(cube[1]*cube[0] < 0) createEdgeVertexX(i,j,k, cube[0] / (cube[0] - cube[1]));
                 if(cube[3]*cube[0] < 0) createEdgeVertexY(i,j,k, cube[0] / (cube[0] - cube[3]));
@@ -634,9 +636,9 @@ void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, H
 
         if(t%3 == 2) {
             if(_lowerIsSolid)
-                _outputMesh.createFace({tv[0], tv[1], tv[2]});
+                _outputMesh.createFace({tv[0], tv[1], tv[2]}, 0);
             else
-                _outputMesh.createFace({tv[2], tv[1], tv[0]});
+                _outputMesh.createFace({tv[2], tv[1], tv[0]}, 0);
         }
     }
 }
