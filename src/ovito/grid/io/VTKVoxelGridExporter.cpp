@@ -124,9 +124,9 @@ bool VTKVoxelGridExporter::exportFrame(int frameNumber, TimePoint time, const QS
 			// Write payload data.
 			size_t cmpnts = prop->componentCount();
 			OVITO_ASSERT(prop->stride() == prop->dataTypeSize() * cmpnts);
-			auto data_f = (prop->dataType() == PropertyStorage::Float) ? prop->constDataFloat() : nullptr;
-			auto data_i = (prop->dataType() == PropertyStorage::Int) ? prop->constDataInt() : nullptr;
-			auto data_i64 = (prop->dataType() == PropertyStorage::Int64) ? prop->constDataInt64() : nullptr;
+			auto data_f = (prop->dataType() == PropertyStorage::Float) ? prop->cdata<FloatType>() : nullptr;
+			auto data_i = (prop->dataType() == PropertyStorage::Int) ? prop->cdata<int>() : nullptr;
+			auto data_i64 = (prop->dataType() == PropertyStorage::Int64) ? prop->cdata<qlonglong>() : nullptr;
 			for(size_t row = 0; row < dims[1]*dims[2]; row++) {
 				if(operation.isCanceled())
 					return false;

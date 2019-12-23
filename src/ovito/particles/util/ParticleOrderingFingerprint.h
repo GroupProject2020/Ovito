@@ -56,8 +56,7 @@ public:
 			if(!_particleIdentifiers)
 				return true;
 			if(prop->storage() != _particleIdentifiers) {
-				if(!std::equal(prop->constDataInt64(), prop->constDataInt64() + prop->size(),
-						_particleIdentifiers->constDataInt64(), _particleIdentifiers->constDataInt64() + _particleIdentifiers->size()))
+				if(!boost::equal(prop->crange<qlonglong>(), _particleIdentifiers->crange<qlonglong>()))
 					return true;
 			}
 		}

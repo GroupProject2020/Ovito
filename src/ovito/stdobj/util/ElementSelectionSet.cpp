@@ -137,8 +137,8 @@ void ElementSelectionSet::resetSelection(const PropertyContainer* container)
 		if(identifierProperty && selProperty->size() == identifierProperty->size() && useIdentifiers()) {
 			_selectedIdentifiers.clear();
 			_selection.clear();
-			auto s = selProperty->constDataInt();
-			for(auto id : identifierProperty->constInt64Range()) {
+			auto s = selProperty->cdata<int>();
+			for(auto id : identifierProperty->crange<qlonglong>()) {
 				if(*s++)
 					_selectedIdentifiers.insert(id);
 			}
@@ -147,10 +147,9 @@ void ElementSelectionSet::resetSelection(const PropertyContainer* container)
 			// Take a snapshot of the selection state.
 			_selectedIdentifiers.clear();
 			_selection.resize(selProperty->size());
-			auto s = selProperty->constDataInt();
-			auto s_end = s + selProperty->size();
-			for(size_t index = 0; s != s_end; ++s, index++) {
-				_selection.set(index, *s);
+			size_t index = 0;
+			for(auto s : selProperty->crange<int>()) {
+				_selection.set(index++, s);
 			}
 		}
 
@@ -201,19 +200,19 @@ void ElementSelectionSet::setSelection(const PropertyContainer* container, const
 		size_t index = 0;
 		if(mode == SelectionReplace) {
 			_selectedIdentifiers.clear();
-			for(auto id : identifierProperty->constInt64Range()) {
+			for(auto id : identifierProperty->crange<qlonglong>()) {
 				if(selection.test(index++))
 					_selectedIdentifiers.insert(id);
 			}
 		}
 		else if(mode == SelectionAdd) {
-			for(auto id : identifierProperty->constInt64Range()) {
+			for(auto id : identifierProperty->crange<qlonglong>()) {
 				if(selection.test(index++))
 					_selectedIdentifiers.insert(id);
 			}
 		}
 		else if(mode == SelectionSubtract) {
-			for(auto id : identifierProperty->constInt64Range()) {
+			for(auto id : identifierProperty->crange<qlonglong>()) {
 				if(selection.test(index++))
 					_selectedIdentifiers.remove(id);
 			}
@@ -248,7 +247,7 @@ void ElementSelectionSet::toggleElement(const PropertyContainer* container, size
 		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
 	if(useIdentifiers() && identifiers) {
 		_selection.clear();
-		toggleElementById(identifiers->getInt64(elementIndex));
+		toggleElementById(identifiers->get<qlonglong>(elementIndex));
 	}
 	else if(elementIndex < _selection.size()) {
 		_selectedIdentifiers.clear();
@@ -299,7 +298,7 @@ void ElementSelectionSet::selectAll(const PropertyContainer* container)
 	if(useIdentifiers() && identifiers != nullptr) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
-		for(auto id : identifiers->constInt64Range())
+		for(auto id : identifiers->crange<qlonglong>())
 			_selectedIdentifiers.insert(id);
 	}
 	else {
@@ -332,7 +331,7 @@ PipelineStatus ElementSelectionSet::applySelection(PropertyObject* outputSelecti
 	else {
 		OVITO_ASSERT(outputSelectionProperty->size() == identifierProperty->size());
 
-		auto id = identifierProperty->constDataInt64();
+		auto id = identifierProperty->cdata<qlonglong>();
 		for(auto& s : outputSelectionProperty->intRange()) {
 			if((s = _selectedIdentifiers.contains(*id++)))
 				nselected++;

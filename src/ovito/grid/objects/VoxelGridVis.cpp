@@ -178,7 +178,7 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 										if(pbcFlags[dim1]) coords[dim1] = 0; else continue;
 									}
 									else coords[dim1] = nix;
-									interpolatedColor += colorArray->getColor(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
+									interpolatedColor += colorArray->get<Color>(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
 									numNeighbors++;
 								}
 							}
@@ -195,7 +195,7 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 							if(faceColor) {
 								coords[dim1] = ix;
 								coords[dim2] = iy;
-								const Color& c = colorArray->getColor(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
+								const Color& c = colorArray->get<Color>(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
 								*faceColor++ = ColorA(c, alpha);
 								*faceColor++ = ColorA(c, alpha);
 							}

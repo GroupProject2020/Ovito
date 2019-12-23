@@ -163,11 +163,11 @@ void PropertyExpressionEvaluator::registerPropertyVariables(const std::vector<Co
 
 			// Initialize data pointer into property storage.
 			if(property->dataType() == PropertyStorage::Int)
-				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt() + k);
+				v.dataPointer = reinterpret_cast<const char*>(property->cdata<int>(0, k));
 			else if(property->dataType() == PropertyStorage::Int64)
-				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt64() + k);
+				v.dataPointer = reinterpret_cast<const char*>(property->cdata<qlonglong>(0, k));
 			else if(property->dataType() == PropertyStorage::Float)
-				v.dataPointer = reinterpret_cast<const char*>(property->constDataFloat() + k);
+				v.dataPointer = reinterpret_cast<const char*>(property->cdata<FloatType>(0, k));
 			else
 				continue;
 			v.stride = property->stride();

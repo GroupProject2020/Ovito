@@ -61,7 +61,7 @@ PipelineStatus SurfaceMeshRegionsDeleteSelectedModifierDelegate::apply(Modifier*
 			if(!selectionProperty) continue; // Nothing to do if there is no selection.
 
 			// Check if at least one mesh region is currently selected.
-			if(std::all_of(selectionProperty->constDataInt(), selectionProperty->constDataInt() + selectionProperty->size(), [](auto s) { return s == 0; }))
+			if(boost::algorithm::all_of(selectionProperty->crange<int>(), [](auto s) { return s == 0; }))
 				continue;
 
 			// Mesh faces must have the "Region" property.
@@ -81,7 +81,7 @@ PipelineStatus SurfaceMeshRegionsDeleteSelectedModifierDelegate::apply(Modifier*
 			// Delete all faces that belong to one of the selected mesh regions.
 			for(SurfaceMeshData::face_index face = mesh.faceCount() - 1; face >= 0; face--) {
 				SurfaceMeshData::region_index region = mesh.faceRegion(face);
-				if(region >= 0 && region < mesh.regionCount() && selectionProperty->getInt(region)) {
+				if(region >= 0 && region < mesh.regionCount() && selectionProperty->get<int>(region)) {
 					if(mesh.hasOppositeFace(face))
 						mesh.topology()->unlinkFromOppositeFace(face);
 					mesh.deleteFace(face);
@@ -90,7 +90,7 @@ PipelineStatus SurfaceMeshRegionsDeleteSelectedModifierDelegate::apply(Modifier*
 
 			// Delete the selected regions.
 			for(SurfaceMeshData::region_index region = mesh.regionCount() - 1; region >= 0; region--) {
-				if(selectionProperty->getInt(region)) {
+				if(selectionProperty->get<int>(region)) {
 					mesh.deleteRegion(region);
 					numSelected++;
 				}

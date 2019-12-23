@@ -167,7 +167,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 					do {
 						HalfEdgeMesh::vertex_index v2 = mesh->vertex2(edge);
 						HalfEdgeMesh::vertex_index v2wrapped = v2 % oldVertexCount;
-						Vector3 delta = inverseSimCell * (vertexCoords->getPoint3(v2wrapped) - vertexCoords->getPoint3(v1wrapped));
+						Vector3 delta = inverseSimCell * (vertexCoords->get<Point3>(v2wrapped) - vertexCoords->get<Point3>(v1wrapped));
 						for(size_t dim = 0; dim < 3; dim++) {
 							if(pbcFlags[dim])
 								imageShift[dim] -= (int)std::floor(delta[dim] + FloatType(0.5));

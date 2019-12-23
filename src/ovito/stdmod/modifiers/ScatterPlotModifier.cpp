@@ -230,7 +230,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 		OVITO_ASSERT(outputSelection->size() == out_x->size());
 		int* s = outputSelection->dataInt();
 		int* s_end = s + outputSelection->size();
-		for(FloatType x : out_x->constFloatRange()) {
+		for(FloatType x : out_x->crange<FloatType>()) {
 			if(x < selectionXAxisRangeStart || x > selectionXAxisRangeEnd) {
 				*s = 0;
 				numSelected--;
@@ -243,7 +243,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 		OVITO_ASSERT(outputSelection->size() == out_y->size());
 		int* s = outputSelection->dataInt();
 		int* s_end = s + outputSelection->size();
-		for(FloatType y : out_y->constFloatRange()) {
+		for(FloatType y : out_y->crange<FloatType>()) {
 			if(y < selectionYAxisRangeStart || y > selectionYAxisRangeEnd) {
 				if(*s) {
 					*s = 0;

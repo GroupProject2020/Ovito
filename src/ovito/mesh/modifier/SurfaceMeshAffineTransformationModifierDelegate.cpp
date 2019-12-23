@@ -62,7 +62,7 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 			else {
 				if(const PropertyObject* selectionProperty = newVertices->getProperty(SurfaceMeshVertices::SelectionProperty)) {
 					// Apply transformation only to the selected vertices.
-					const int* s = selectionProperty->constDataInt();
+					const int* s = selectionProperty->cdata<int>();
 					for(Point3& p : positionProperty->point3Range()) {
 						if(*s++)
 							p = tm * p;

@@ -97,7 +97,7 @@ public:
 
 		/// Returns the number of identified particles of the given structure type.
 		qlonglong getTypeCount(int typeIndex) const {
-			if(_typeCounts && _typeCounts->size() > typeIndex) return _typeCounts->getInt64(typeIndex);
+			if(_typeCounts && _typeCounts->size() > typeIndex) return _typeCounts->get<qlonglong>(typeIndex);
 			return 0;
 		}
 

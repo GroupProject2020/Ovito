@@ -240,7 +240,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		auto particleProperty = _particleProperties.cbegin();
 		for(PropertyStorage* vertexProperty : meshVertexProperties) {
 			OVITO_ASSERT(vertexProperty->stride() == (*particleProperty)->stride());
-			std::memcpy(vertexProperty->dataAt(vertex), (*particleProperty)->constDataAt(particleIndex), vertexProperty->stride());
+			std::memcpy(vertexProperty->dataAt(vertex), (*particleProperty)->cdata<void>(particleIndex), vertexProperty->stride());
 			++particleProperty;
 		}
 		OVITO_ASSERT(particleProperty == _particleProperties.cend());

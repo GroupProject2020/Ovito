@@ -132,7 +132,7 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 	}
 
 	OVITO_ASSERT(selProperty->size() == typeProperty->size());
-	const int* t = typeProperty->constDataInt();
+	const int* t = typeProperty->cdata<int>();
 	for(int& s : selProperty->intRange()) {
 		if(idsToSelect.contains(*t++)) {
 			s = 1;

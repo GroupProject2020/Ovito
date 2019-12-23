@@ -83,13 +83,13 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				secondProp = secondaryParticles->getProperty(prop->name());
 			if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 				OVITO_ASSERT(prop->stride() == secondProp->stride());
-				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->constData(), prop->stride() * secondaryParticleCount);
+				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->cdata<void>(), prop->stride() * secondaryParticleCount);
 			}
 			else if(prop->type() != ParticlesObject::UserProperty) {
 				ConstDataObjectPath containerPath = { secondaryParticles };
 				PropertyPtr temporaryProp = ParticlesObject::OOClass().createStandardStorage(secondaryParticles->elementCount(), prop->type(), true, containerPath);
 				OVITO_ASSERT(temporaryProp->stride() == prop->stride());
-				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->constData(), prop->stride() * secondaryParticleCount);
+				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->cdata<void>(), prop->stride() * secondaryParticleCount);
 			}
 
 			// Combine particle types lists.
@@ -129,7 +129,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 		// Shift values of second dataset and reset values of first dataset to zero:
 		if(primaryParticleCount != 0) {
-			std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryParticleCount, clonedProperty->constData(), clonedProperty->stride() * secondaryParticleCount);
+			std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryParticleCount, clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryParticleCount);
 			std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryParticleCount);
 		}
 	}
@@ -171,7 +171,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 					secondProp = secondaryBonds->getProperty(prop->name());
 				if(secondProp && secondProp->size() == secondaryBondCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 					OVITO_ASSERT(prop->stride() == secondProp->stride());
-					std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->constData(), prop->stride() * secondaryBondCount);
+					std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->cdata<void>(), prop->stride() * secondaryBondCount);
 				}
 
 				// Combine bond type lists.
@@ -202,7 +202,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 				// Shift values of second dataset and reset values of first dataset to zero:
 				if(primaryBondCount != 0) {
-					std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->constData(), clonedProperty->stride() * secondaryBondCount);
+					std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryBondCount);
 					std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryBondCount);
 				}
 			}

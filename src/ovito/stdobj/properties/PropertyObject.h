@@ -109,119 +109,40 @@ public:
 		notifyTargetChanged();
 	}
 
-	/// \brief Returns a read-only pointer to the raw elements stored in this property object.
-	const void* constData() const {
-		return storage()->constData();
+	/// \brief Returns a read-only pointer to the elements stored in this property object.
+	template<typename T>
+	const T* cdata() const {
+		return storage()->cdata<T>();
 	}
 
-	/// \brief Returns a read-only pointer to the first integer element stored in this object.
-	/// \note This method may only be used if this property is of data type integer.
-	const int* constDataInt() const {
-		return storage()->constDataInt();
+	/// \brief Returns a read-only pointer to the i-th element stored in this property object.
+	template<typename T>
+	const T* cdata(size_t i) const {
+		return storage()->cdata<T>(i);
 	}
 
-	/// \brief Returns a read-only pointer to the first integer element stored in this object.
-	/// \note This method may only be used if this property is of data type 64-bit integer.
-	const qlonglong* constDataInt64() const {
-		return storage()->constDataInt64();
+	/// Returns a read-only pointer to the j-components of the i-th element in the property array.
+	template<typename T>
+	const T* cdata(size_t i, size_t j) const {
+		return storage()->cdata<T>(i, j);
 	}
 
-	/// \brief Returns a read-only pointer to the first float element in the property storage.
-	/// \note This method may only be used if this property is of data type float.
-	const FloatType* constDataFloat() const {
-		return storage()->constDataFloat();
+	/// \brief Returns the value of the i-th element from the array.
+	template<typename T>
+	const T& get(size_t i) const {
+		return storage()->get<T>(i);
 	}
 
-	/// \brief Returns a read-only pointer to the first vector element in the property storage.
-	/// \note This method may only be used if this property is of data type Vector3 or a FloatType channel with 3 components.
-	const Vector3* constDataVector3() const {
-		return storage()->constDataVector3();
+	/// \brief Returns the value of the j-th component of the i-th element from the array.
+	template<typename T>
+	const T& get(size_t i, size_t j) const {
+		return storage()->get<T>(i, j);
 	}
 
-	/// \brief Returns a read-only pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point3 or a FloatType channel with 3 components.
-	const Point3* constDataPoint3() const {
-		return storage()->constDataPoint3();
-	}
-
-	/// \brief Returns a read-only pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
-	const Vector3I* constDataVector3I() const {
-		return storage()->constDataVector3I();
-	}
-
-	/// \brief Returns a read-only pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
-	const Point3I* constDataPoint3I() const {
-		return storage()->constDataPoint3I();
-	}
-
-	/// \brief Returns a read-only pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Color or a FloatType channel with 3 components.
-	const Color* constDataColor() const {
-		return storage()->constDataColor();
-	}
-
-	/// \brief Returns a read-only pointer to the first symmetric tensor element in the property storage.
-	/// \note This method may only be used if this property is of data type SymmetricTensor2 or a FloatType channel with 6 components.
-	const SymmetricTensor2* constDataSymmetricTensor2() const {
-		return storage()->constDataSymmetricTensor2();
-	}
-
-	/// \brief Returns a read-only pointer to the first quaternion element in the property storage.
-	/// \note This method may only be used if this property is of data type Quaternion or a FloatType channel with 4 components.
-	const Quaternion* constDataQuaternion() const {
-		return storage()->constDataQuaternion();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const int*> constIntRange() const {
-		return storage()->constIntRange();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const qlonglong*> constInt64Range() const {
-		return storage()->constInt64Range();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const FloatType*> constFloatRange() const {
-		return storage()->constFloatRange();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const Point3*> constPoint3Range() const {
-		return storage()->constPoint3Range();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const Vector3*> constVector3Range() const {
-		return storage()->constVector3Range();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const Color*> constColorRange() const {
-		return storage()->constColorRange();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const Vector3I*> constVector3IRange() const {
-		return storage()->constVector3IRange();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const Point3I*> constPoint3IRange() const {
-		return storage()->constPoint3IRange();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const SymmetricTensor2*> constSymmetricTensor2Range() const {
-		return storage()->constSymmetricTensor2Range();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<const Quaternion*> constQuaternionRange() const {
-		return storage()->constQuaternionRange();
+	/// \brief Returns a range of const iterators over the elements stored in this array.
+	template<typename T>
+	boost::iterator_range<const T*> crange() const {
+		return storage()->crange<T>();
 	}
 
 	/// Returns a read-write pointer to the raw elements in the property storage.
@@ -338,77 +259,7 @@ public:
 	boost::iterator_range<Quaternion*> quaternionRange() {
 		return modifiableStorage()->quaternionRange();
 	}
-
-	/// \brief Returns an integer element at the given index (if this is an integer property).
-	int getInt(size_t index) const {
-		return storage()->getInt(index);
-	}
-
-	/// \brief Returns an integer element at the given index (if this is a 64-bit integer property).
-	qlonglong getInt64(size_t index) const {
-		return storage()->getInt64(index);
-	}
-
-	/// Returns a float element at the given index (if this is a float property).
-	FloatType getFloat(size_t index) const {
-		return storage()->getFloat(index);
-	}
-
-	/// Returns an integer element at the given index (if this is an integer property).
-	int getIntComponent(size_t index, size_t componentIndex) const {
-		return storage()->getIntComponent(index, componentIndex);
-	}
-
-	/// Returns an integer element at the given index (if this is a 64-bit integer property).
-	qlonglong getInt64Component(size_t index, size_t componentIndex) const {
-		return storage()->getInt64Component(index, componentIndex);
-	}
-
-	/// Returns a float element at the given index (if this is a float property).
-	FloatType getFloatComponent(size_t index, size_t componentIndex) const {
-		return storage()->getFloatComponent(index, componentIndex);
-	}
-
-	/// Returns a Vector3 element at the given index (if this is a vector property).
-	const Vector3& getVector3(size_t index) const {
-		return storage()->getVector3(index);
-	}
-
-	/// Returns a Point3 element at the given index (if this is a point property).
-	const Point3& getPoint3(size_t index) const {
-		return storage()->getPoint3(index);
-	}
-
-	/// Returns a Vector3I element at the given index (if this is a point property).
-	const Vector3I& getVector3I(size_t index) const {
-		return storage()->getVector3I(index);
-	}
-
-	/// Returns a Point3I element at the given index (if this is a point property).
-	const Point3I& getPoint3I(size_t index) const {
-		return storage()->getPoint3I(index);
-	}
-
-	/// Returns a Color element at the given index (if this is a point property).
-	const Color& getColor(size_t index) const {
-		return storage()->getColor(index);
-	}
-
-	/// Returns the given element's value of a SymmetricTensor2 property.
-	const SymmetricTensor2& getSymmetricTensor2(size_t index) const {
-		return storage()->getSymmetricTensor2(index);
-	}
-
-	/// Returns the given element's value of a Matrix3 property.
-	const Matrix3& getMatrix3(size_t index) const {
-		return storage()->getMatrix3(index);
-	}
-
-	/// Returns the given element's value of a Quaternion property.
-	const Quaternion& getQuaternion(size_t index) const {
-		return storage()->getQuaternion(index);
-	}
-
+	
 	/// Sets the value of an integer element at the given index (if this is an integer property).
 	void setInt(size_t index, int newValue) {
 		modifiableStorage()->setInt(index, newValue);
@@ -477,6 +328,16 @@ public:
 	/// Sets the given element's value of a Quaternion property.
 	void setQuaternion(size_t index, const Quaternion& newValue) {
 		modifiableStorage()->setQuaternion(index, newValue);
+	}
+
+	/// Copies the elements from the given source into this property array using a element mapping.
+	void mappedCopyFrom(const PropertyObject* source, const std::vector<size_t>& mapping) {
+		modifiableStorage()->mappedCopy(*source->storage(), mapping);
+	}
+
+	/// Copies the elements from this property array into the given destination array using an index mapping.
+	void mappedCopyTo(PropertyObject* destination, const std::vector<size_t>& mapping) const {
+		storage()->mappedCopyTo(*destination->modifiableStorage(), mapping);
 	}
 
 	//////////////////////////////// Element types //////////////////////////////

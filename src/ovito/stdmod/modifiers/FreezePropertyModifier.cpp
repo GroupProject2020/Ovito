@@ -187,21 +187,21 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 		: nullptr;
 	if(myModApp->identifiers() && idProperty &&
 			(idProperty->size() != myModApp->identifiers()->size() ||
-			!std::equal(idProperty->constDataInt64(), idProperty->constDataInt64() + idProperty->size(), myModApp->identifiers()->constDataInt64()))) {
+			!boost::equal(idProperty->crange<qlonglong>(), myModApp->identifiers()->crange<qlonglong>()))) {
 
 		// Build ID-to-index map.
 		std::unordered_map<qlonglong,size_t> idmap;
 		size_t index = 0;
-		for(auto id : myModApp->identifiers()->constInt64Range()) {
+		for(auto id : myModApp->identifiers()->crange<qlonglong>()) {
 			if(!idmap.insert(std::make_pair(id,index)).second)
 				throwException(tr("Detected duplicate element ID %1 in saved snapshot. Cannot apply saved property values.").arg(id));
 			index++;
 		}
 
 		// Copy and reorder property data.
-		auto id = idProperty->constDataInt64();
+		auto id = idProperty->cdata<qlonglong>();
 		char* dest = static_cast<char*>(outputProperty->data());
-		const char* src = static_cast<const char*>(myModApp->property()->constData());
+		const char* src = static_cast<const char*>(myModApp->property()->cdata<void>());
 		size_t stride = outputProperty->stride();
 		for(size_t index = 0; index < outputProperty->size(); index++, ++id, dest += stride) {
 			auto mapEntry = idmap.find(*id);
@@ -226,7 +226,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 			OVITO_ASSERT(outputProperty->dataType() == myModApp->property()->dataType());
 			OVITO_ASSERT(outputProperty->stride() == myModApp->property()->stride());
 			OVITO_ASSERT(outputProperty->size() == myModApp->property()->size());
-			std::memcpy(outputProperty->data(), myModApp->property()->constData(), outputProperty->stride() * outputProperty->size());
+			std::memcpy(outputProperty->data(), myModApp->property()->cdata<void>(), outputProperty->stride() * outputProperty->size());
 		}
 	}
 

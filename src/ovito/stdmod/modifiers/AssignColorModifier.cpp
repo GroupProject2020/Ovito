@@ -112,7 +112,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, PipelineFl
 	}
 	else {
 		// Assign color only to selected elements.
-		const int* sel = selProperty->constDataInt();
+		const int* sel = selProperty->cdata<int>();
 		for(Color& c : colorProperty->colorRange()) {
 			if(*sel++) c = color;
 		}

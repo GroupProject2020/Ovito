@@ -116,19 +116,19 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 		}
 		else {
 			if(xDataType == PropertyStorage::Int)
-				textStream() << x->getIntComponent(row, 0) << " ";
+				textStream() << x->get<int>(row, 0) << " ";
 			else if(xDataType == PropertyStorage::Int64)
-				textStream() << x->getInt64Component(row, 0) << " ";
+				textStream() << x->get<qlonglong>(row, 0) << " ";
 			else if(xDataType == PropertyStorage::Float)
-				textStream() << x->getFloatComponent(row, 0) << " ";
+				textStream() << x->get<FloatType>(row, 0) << " ";
 		}
 		for(size_t col = 0; col < col_count; col++) {
 			if(yDataType == PropertyStorage::Int)
-				textStream() << y->getIntComponent(row, col) << " ";
+				textStream() << y->get<int>(row, col) << " ";
 			else if(yDataType == PropertyStorage::Int64)
-				textStream() << y->getInt64Component(row, col) << " ";
+				textStream() << y->get<qlonglong>(row, col) << " ";
 			else if(yDataType == PropertyStorage::Float)
-				textStream() << y->getFloatComponent(row, col) << " ";
+				textStream() << y->get<FloatType>(row, col) << " ";
 		}
 		textStream() << "\n";
 	}

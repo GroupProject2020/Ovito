@@ -174,44 +174,27 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 	const PropertyStorage* property = propertyObj->storage().get();
 	if(sourceProperty().vectorComponent() >= (int)property->componentCount())
 		return false;
+	if(property->size() == 0)
+		return false;
 	int vecComponent = std::max(0, sourceProperty().vectorComponent());
 
 	int stride = property->stride() / property->dataTypeSize();
 
-	// Iterate over all particles/bonds.
-	FloatType maxValue = FLOATTYPE_MIN;
-	FloatType minValue = FLOATTYPE_MAX;
-	if(property->dataType() == PropertyStorage::Float) {
-		auto v = property->constDataFloat() + vecComponent;
-		auto vend = v + (property->size() * stride);
-		for(; v != vend; v += stride) {
-			if(*v > maxValue) maxValue = *v;
-			if(*v < minValue) minValue = *v;
-		}
-	}
-	else if(property->dataType() == PropertyStorage::Int) {
-		auto v = property->constDataInt() + vecComponent;
-		auto vend = v + (property->size() * stride);
-		for(; v != vend; v += stride) {
-			if(*v > maxValue) maxValue = *v;
-			if(*v < minValue) minValue = *v;
-		}
-	}
-	else if(property->dataType() == PropertyStorage::Int64) {
-		auto v = property->constDataInt64() + vecComponent;
-		auto vend = v + (property->size() * stride);
-		for(; v != vend; v += stride) {
-			if(*v > maxValue) maxValue = *v;
-			if(*v < minValue) minValue = *v;
-		}
-	}
-	if(minValue == FLOATTYPE_MAX)
+	// Iterate over the property array to find the lowest/highest value.
+	FloatType maxValue = std::numeric_limits<FloatType>::lowest();
+	FloatType minValue = std::numeric_limits<FloatType>::max();
+	property->forEach(vecComponent, [&](size_t i, auto v) {
+			if(v > maxValue) maxValue = v;
+			if(v < minValue) minValue = v;
+		});
+	if(minValue == std::numeric_limits<FloatType>::max())
 		return false;
 
 	// Clamp to finite range.
 	if(!std::isfinite(minValue)) minValue = std::numeric_limits<FloatType>::lowest();
 	if(!std::isfinite(maxValue)) maxValue = std::numeric_limits<FloatType>::max();
 
+	// Determine global min/max values over all animation frames.
 	if(minValue < min) min = minValue;
 	if(maxValue > max) max = maxValue;
 
@@ -351,88 +334,37 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	if(!std::isfinite(endValue)) endValue = std::numeric_limits<FloatType>::max();
 
 	// Get the particle selection property if enabled by the user.
-	const int* sel = selProperty ? selProperty->constDataInt() : nullptr;
+	const int* sel = selProperty ? selProperty->cdata<int>() : nullptr;
 
 	OVITO_ASSERT(colorProperty->size() == property->size());
 	Color* c_begin = colorProperty->dataColor();
 	Color* c_end = c_begin + colorProperty->size();
 	Color* c = c_begin;
-	int stride = property->stride() / property->dataTypeSize();
 
-	if(property->dataType() == PropertyStorage::Float) {
-		auto v = property->constDataFloat() + vecComponent;
-		for(; c != c_end; ++c, v += stride) {
-			if(sel && !(*sel++))
-				continue;
+	bool result = property->forEach(vecComponent, [&](size_t i, auto v) {
+		if(sel && !(*sel++))
+			return;
 
-			// Compute linear interpolation.
-			FloatType t;
-			if(startValue == endValue) {
-				if((*v) == startValue) t = FloatType(0.5);
-				else if((*v) > startValue) t = 1;
-				else t = 0;
-			}
-			else t = ((*v) - startValue) / (endValue - startValue);
-
-			// Clamp values.
-			if(std::isnan(t)) t = 0;
-			else if(t == std::numeric_limits<FloatType>::infinity()) t = 1;
-			else if(t == -std::numeric_limits<FloatType>::infinity()) t = 0;
-			else if(t < 0) t = 0;
-			else if(t > 1) t = 1;
-
-			*c = mod->colorGradient()->valueToColor(t);
+		// Compute linear interpolation.
+		FloatType t;
+		if(startValue == endValue) {
+			if(v == startValue) t = FloatType(0.5);
+			else if(v > startValue) t = 1;
+			else t = 0;
 		}
-	}
-	else if(property->dataType() == PropertyStorage::Int) {
-		auto v = property->constDataInt() + vecComponent;
-		for(; c != c_end; ++c, v += stride) {
+		else t = (v - startValue) / (endValue - startValue);
 
-			if(sel && !(*sel++))
-				continue;
+		// Clamp values.
+		if(std::isnan(t)) t = 0;
+		else if(t == std::numeric_limits<FloatType>::infinity()) t = 1;
+		else if(t == -std::numeric_limits<FloatType>::infinity()) t = 0;
+		else if(t < 0) t = 0;
+		else if(t > 1) t = 1;
 
-			// Compute linear interpolation.
-			FloatType t;
-			if(startValue == endValue) {
-				if((*v) == startValue) t = FloatType(0.5);
-				else if((*v) > startValue) t = 1;
-				else t = 0;
-			}
-			else t = ((*v) - startValue) / (endValue - startValue);
-
-			// Clamp values.
-			if(t < 0) t = 0;
-			else if(t > 1) t = 1;
-
-			*c = mod->colorGradient()->valueToColor(t);
-		}
-	}
-	else if(property->dataType() == PropertyStorage::Int64) {
-		auto v = property->constDataInt64() + vecComponent;
-		for(; c != c_end; ++c, v += stride) {
-
-			if(sel && !(*sel++))
-				continue;
-
-			// Compute linear interpolation.
-			FloatType t;
-			if(startValue == endValue) {
-				if((*v) == startValue) t = FloatType(0.5);
-				else if((*v) > startValue) t = 1;
-				else t = 0;
-			}
-			else t = ((*v) - startValue) / (endValue - startValue);
-
-			// Clamp values.
-			if(t < 0) t = 0;
-			else if(t > 1) t = 1;
-
-			*c = mod->colorGradient()->valueToColor(t);
-		}
-	}
-	else {
+		*c = mod->colorGradient()->valueToColor(t);
+	});
+	if(!result)
 		throwException(tr("The property '%1' has an invalid or non-numeric data type.").arg(property->name()));
-	}
 
 	return PipelineStatus::Success;
 }

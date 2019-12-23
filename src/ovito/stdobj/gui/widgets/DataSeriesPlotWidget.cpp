@@ -158,8 +158,8 @@ void DataSeriesPlotWidget::updateDataPlot()
 
 		QVector<QwtPoint3D> coords(y->size());
 		for(size_t cmpnt = 0; cmpnt < seriesCount; cmpnt++) {
-			x->storage()->forEach([&coords](size_t i, auto v) { coords[i].rx() = v; }, cmpnt);
-			y->storage()->forEach([&coords](size_t i, auto v) { coords[i].ry() = v; }, cmpnt);
+			x->storage()->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].rx() = v; });
+			y->storage()->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].ry() = v; });
 			_spectroCurves[cmpnt]->setSamples(coords);
 		}
 
@@ -260,11 +260,11 @@ void DataSeriesPlotWidget::updateDataPlot()
 			if(!type && x) type = x->elementType(i);
 			if(type) {
 				if(y->dataType() == PropertyStorage::Int)
-					ycoords.push_back(y->getInt(i));
+					ycoords.push_back(y->get<int>(i));
 				else if(y->dataType() == PropertyStorage::Int64)
-					ycoords.push_back(y->getInt64(i));
+					ycoords.push_back(y->get<qlonglong>(i));
 				else if(y->dataType() == PropertyStorage::Float)
-					ycoords.push_back(y->getFloat(i));
+					ycoords.push_back(y->get<FloatType>(i));
 				else
 					continue;
 				labels.push_back(type->name());

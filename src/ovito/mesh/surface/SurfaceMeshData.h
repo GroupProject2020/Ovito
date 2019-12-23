@@ -207,7 +207,7 @@ public:
             // Move the last vertex to the index of the vertex being deleted.
             for(const auto& prop : _vertexProperties) {
                 OVITO_ASSERT(prop->size() == vertexCount());
-                std::memcpy(prop->dataAt(vertex), prop->constDataAt(prop->size() - 1), prop->stride());
+                std::memcpy(prop->dataAt(vertex), prop->cdata<void>(prop->size() - 1), prop->stride());
             }
         }
         // Truncate the vertex property arrays.
@@ -253,7 +253,7 @@ public:
             // Move the last face to the index of the face being deleted.
             for(const auto& prop : _faceProperties) {
                 OVITO_ASSERT(prop->size() == faceCount());
-                std::memcpy(prop->dataAt(face), prop->constDataAt(prop->size() - 1), prop->stride());
+                std::memcpy(prop->dataAt(face), prop->cdata<void>(prop->size() - 1), prop->stride());
             }
         }
         // Truncate the face property arrays.
@@ -329,7 +329,7 @@ public:
             // Move the last region to the index of the region being deleted.
             for(const auto& prop : _regionProperties) {
                 OVITO_ASSERT(prop->size() == regionCount());
-                std::memcpy(prop->dataAt(region), prop->constDataAt(prop->size() - 1), prop->stride());
+                std::memcpy(prop->dataAt(region), prop->cdata<void>(prop->size() - 1), prop->stride());
             }
             // Update the faces that belong to the moved region.
             if(hasFaceRegions())
@@ -392,7 +392,7 @@ public:
             for(const auto& prop : _vertexProperties) {
                 if(prop->grow(1))
                     updateVertexPropertyPointers(prop);
-                std::memcpy(prop->dataAt(prop->size() - 1), prop->constDataAt(copiedVertex), prop->stride());
+                std::memcpy(prop->dataAt(prop->size() - 1), prop->cdata<void>(copiedVertex), prop->stride());
             }
         });
     }

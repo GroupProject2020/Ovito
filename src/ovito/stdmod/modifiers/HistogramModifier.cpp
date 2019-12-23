@@ -174,13 +174,13 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 
 	if(property->size() > 0) {
 		if(property->dataType() == PropertyStorage::Float) {
-			auto v_begin = property->constDataFloat() + vecComponent;
+			auto v_begin = property->cdata<FloatType>(0, vecComponent);
 			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
 				intervalEnd = std::numeric_limits<FloatType>::lowest();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart) intervalStart = *v;
@@ -190,7 +190,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
 				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
@@ -202,13 +202,13 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 				if(!inputSelection)
 					histogramData[0] = property->size();
 				else
-					histogramData[0] = property->size() - std::count(inputSelection->constDataInt(), inputSelection->constDataInt() + inputSelection->size(), 0);
+					histogramData[0] = property->size() - boost::count(inputSelection->crange<int>(), 0);
 			}
 			if(outputSelection) {
 				OVITO_ASSERT(outputSelection->size() == property->size());
 				int* s = outputSelection->dataInt();
 				int* s_end = s + outputSelection->size();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
 					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
 						*s = 1;
@@ -219,13 +219,13 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Int) {
-			auto v_begin = property->constDataInt() + vecComponent;
+			auto v_begin = property->cdata<int>(0, vecComponent);
 			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
 				intervalEnd = std::numeric_limits<FloatType>::lowest();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart) intervalStart = *v;
@@ -235,7 +235,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
 				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
@@ -247,13 +247,13 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 				if(!inputSelection)
 					histogramData[0] = property->size();
 				else
-					histogramData[0] = property->size() - std::count(inputSelection->constDataInt(), inputSelection->constDataInt() + inputSelection->size(), 0);
+					histogramData[0] = property->size() - boost::count(inputSelection->crange<int>(), 0);
 			}
 			if(outputSelection) {
 				OVITO_ASSERT(outputSelection->size() == property->size());
 				int* s = outputSelection->dataInt();
 				int* s_end = s + outputSelection->size();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
 					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
 						*s = 1;
@@ -264,13 +264,13 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Int64) {
-			auto v_begin = property->constDataInt64() + vecComponent;
+			auto v_begin = property->cdata<qlonglong>(0, vecComponent);
 			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
 				intervalEnd = std::numeric_limits<FloatType>::lowest();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart) intervalStart = *v;
@@ -280,7 +280,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
 				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
@@ -292,13 +292,13 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 				if(!inputSelection)
 					histogramData[0] = property->size();
 				else
-					histogramData[0] = property->size() - std::count(inputSelection->constDataInt(), inputSelection->constDataInt() + inputSelection->size(), 0);
+					histogramData[0] = property->size() - boost::count(inputSelection->crange<int>(), 0);
 			}
 			if(outputSelection) {
 				OVITO_ASSERT(outputSelection->size() == property->size());
 				int* s = outputSelection->dataInt();
 				int* s_end = s + outputSelection->size();
-				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
 					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
 						*s = 1;

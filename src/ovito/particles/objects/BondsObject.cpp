@@ -187,32 +187,32 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 				// If unique IDs are available try to use them to look up the bond in the other data collection.
 				if(const PropertyObject* sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
 					if(const PropertyObject* destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
-						size_t index_a = sourceTopology->getInt64Component(elementIndex, 0);
-						size_t index_b = sourceTopology->getInt64Component(elementIndex, 1);
+						size_t index_a = sourceTopology->get<qlonglong>(elementIndex, 0);
+						size_t index_b = sourceTopology->get<qlonglong>(elementIndex, 1);
 						if(index_a < sourceIdentifiers->size() && index_b < sourceIdentifiers->size()) {
-							qlonglong id_a = sourceIdentifiers->getInt64(index_a);
-							qlonglong id_b = sourceIdentifiers->getInt64(index_b);
+							qlonglong id_a = sourceIdentifiers->get<qlonglong>(index_a);
+							qlonglong id_b = sourceIdentifiers->get<qlonglong>(index_b);
 
 							// Quick test if the bond storage order is the same.
 							if(elementIndex < destTopology->size()) {
-								size_t index2_a = destTopology->getInt64Component(elementIndex, 0);
-								size_t index2_b = destTopology->getInt64Component(elementIndex, 1);
+								size_t index2_a = destTopology->get<qlonglong>(elementIndex, 0);
+								size_t index2_b = destTopology->get<qlonglong>(elementIndex, 1);
 								if(index2_a < destIdentifiers->size() && index2_b < destIdentifiers->size()) {
-									if(destIdentifiers->getInt64(index2_a) == id_a && destIdentifiers->getInt64(index2_b) == id_b) {
+									if(destIdentifiers->get<qlonglong>(index2_a) == id_a && destIdentifiers->get<qlonglong>(index2_b) == id_b) {
 										return elementIndex;
 									}
 								}
 							}
 
 							// Determine the indices of the two particles connected by the bond.
-							size_t index2_a = std::find(destIdentifiers->constDataInt64(), destIdentifiers->constDataInt64() + destIdentifiers->size(), id_a) - destIdentifiers->constDataInt64();
-							size_t index2_b = std::find(destIdentifiers->constDataInt64(), destIdentifiers->constDataInt64() + destIdentifiers->size(), id_b) - destIdentifiers->constDataInt64();
+							size_t index2_a = boost::find(destIdentifiers->crange<qlonglong>(), id_a) - destIdentifiers->cdata<qlonglong>();
+							size_t index2_b = boost::find(destIdentifiers->crange<qlonglong>(), id_b) - destIdentifiers->cdata<qlonglong>();
 							if(index2_a < destIdentifiers->size() && index2_b < destIdentifiers->size()) {
 								// Go through the whole bonds list to see if there is a bond connecting the particles with
 								// the same IDs.
-								for(auto bond = destTopology->constDataInt64(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
+								for(auto bond = destTopology->cdata<qlonglong>(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
 									if((bond[0] == index2_a && bond[1] == index2_b) || (bond[0] == index2_b && bond[1] == index2_a)) {
-										return (bond - destTopology->constDataInt64()) / 2;
+										return (bond - destTopology->cdata<qlonglong>()) / 2;
 									}
 								}
 							}

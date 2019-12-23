@@ -66,7 +66,7 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, Pipel
 					const PropertyObject* vertexPositionProperty = outputVertices->expectProperty(SurfaceMeshVertices::PositionProperty);
 					PropertyObject* vertexSelectionProperty = outputVertices->createProperty(SurfaceMeshVertices::SelectionProperty, false);
 					size_t numSelectedVertices = 0;
-					const Point3* pos = vertexPositionProperty->constDataPoint3();
+					const Point3* pos = vertexPositionProperty->cdata<Point3>();
 					for(int& selected : vertexSelectionProperty->intRange()) {
 						if(sliceWidth <= 0)
 							selected = (plane.pointDistance(*pos) > 0) ? 1 : 0;
@@ -92,7 +92,7 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, Pipel
 							selected = 1;
 							do {
 								HalfEdgeMesh::vertex_index ev = topology->vertex2(e);
-								if(ev < 0 || ev >= vertexSelectionProperty->size() || !vertexSelectionProperty->getInt(ev)) {
+								if(ev < 0 || ev >= vertexSelectionProperty->size() || !vertexSelectionProperty->get<int>(ev)) {
 									selected = 0;
 									break;
 								}

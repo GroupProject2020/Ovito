@@ -105,7 +105,7 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 
 	Box3 bbox;
 	if(positionProperty) {
-		bbox.addPoints(positionProperty->constDataPoint3(), positionProperty->size());
+		bbox.addPoints(positionProperty->cdata<Point3>(), positionProperty->size());
 	}
 	if(!includeParticleRadius)
 		return bbox;
@@ -138,13 +138,13 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 		if(maxAtomRadius == 0)
 			maxAtomRadius = defaultParticleRadius();
 		if(shapeProperty) {
-			for(const Vector3& s : shapeProperty->constVector3Range())
+			for(const Vector3& s : shapeProperty->crange<Vector3>())
 				maxAtomRadius = std::max(maxAtomRadius, std::max(s.x(), std::max(s.y(), s.z())));
 			if(particleShape() == Spherocylinder)
 				maxAtomRadius *= 2;
 		}
 		if(radiusProperty && radiusProperty->size() > 0) {
-			auto minmax = std::minmax_element(radiusProperty->constDataFloat(), radiusProperty->constDataFloat() + radiusProperty->size());
+			auto minmax = boost::minmax_element(radiusProperty->crange<FloatType>());
 			if(*minmax.first <= 0)
 				maxAtomRadius = std::max(maxAtomRadius, *minmax.second);
 			else
@@ -155,8 +155,8 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 		// Non-standard case - at least one user-defined particle shape assigned:
 		std::map<int,FloatType> typeRadiusMap = ParticleType::typeRadiusMap(typeProperty);
 		if(radiusProperty && radiusProperty->size() == typeProperty->size()) {
-			const FloatType* r = radiusProperty->constDataFloat();
-			for(int t : typeProperty->constIntRange()) {
+			const FloatType* r = radiusProperty->cdata<FloatType>();
+			for(int t : typeProperty->crange<int>()) {
 				// Determine effective radius of the current particle.
 				FloatType radius = *r++;
 				if(radius <= 0) radius = typeRadiusMap[t];
@@ -210,7 +210,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 	ColorA defaultColor = defaultParticleColor();
 	if(colorProperty && colorProperty->size() == output.size()) {
 		// Take particle colors directly from the color property.
-		std::copy(colorProperty->constDataColor(), colorProperty->constDataColor() + output.size(), output.begin());
+		boost::copy(colorProperty->crange<Color>(), output);
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign colors based on particle types.
@@ -225,7 +225,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 			for(const auto& entry : colorMap)
 				colorArray[entry.first] = entry.second;
 			// Fill color array.
-			const int* t = typeProperty->constDataInt();
+			const int* t = typeProperty->cdata<int>();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				if(*t >= 0 && *t < (int)colorArray.size())
 					*c = colorArray[*t];
@@ -235,7 +235,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 		}
 		else {
 			// Fill color array.
-			const int* t = typeProperty->constDataInt();
+			const int* t = typeProperty->cdata<int>();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				auto it = colorMap.find(*t);
 				if(it != colorMap.end())
@@ -252,7 +252,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 
 	// Set color alpha values based on transparency particle property.
 	if(transparencyProperty && transparencyProperty->size() == output.size()) {
-		const FloatType* t = transparencyProperty->constDataFloat();
+		const FloatType* t = transparencyProperty->cdata<FloatType>();
 		for(ColorA& c : output) {
 			c.a() = qBound(FloatType(0), FloatType(1) - (*t++), FloatType(1));
 		}
@@ -261,7 +261,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 	// Highlight selected particles.
 	if(selectionProperty && selectionProperty->size() == output.size()) {
 		const Color selColor = selectionParticleColor();
-		const int* t = selectionProperty->constDataInt();
+		const int* t = selectionProperty->cdata<int>();
 		for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 			if(*t)
 				*c = selColor;
@@ -323,12 +323,12 @@ FloatType ParticlesVis::particleRadius(size_t particleIndex, const PropertyObjec
 
 	if(radiusProperty && radiusProperty->size() > particleIndex) {
 		// Take particle radius directly from the radius property.
-		FloatType r = radiusProperty->getFloat(particleIndex);
+		FloatType r = radiusProperty->get<FloatType>(particleIndex);
 		if(r > 0) return r;
 	}
 	else if(typeProperty && typeProperty->size() > particleIndex) {
 		// Assign radius based on particle types.
-		const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(typeProperty->getInt(particleIndex)));
+		const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(typeProperty->get<int>(particleIndex)));
 		if(ptype && ptype->radius() > 0)
 			return ptype->radius();
 	}
@@ -348,18 +348,18 @@ ColorA ParticlesVis::particleColor(size_t particleIndex, const PropertyObject* c
 
 	// Check if particle is selected.
 	if(selectionProperty && selectionProperty->size() > particleIndex) {
-		if(selectionProperty->getInt(particleIndex))
+		if(selectionProperty->get<int>(particleIndex))
 			return selectionParticleColor();
 	}
 
 	ColorA c = defaultParticleColor();
 	if(colorProperty && colorProperty->size() > particleIndex) {
 		// Take particle color directly from the color property.
-		c = colorProperty->getColor(particleIndex);
+		c = colorProperty->get<Color>(particleIndex);
 	}
 	else if(typeProperty && typeProperty->size() > particleIndex) {
 		// Return color based on particle types.
-		const ElementType* ptype = typeProperty->elementType(typeProperty->getInt(particleIndex));
+		const ElementType* ptype = typeProperty->elementType(typeProperty->get<int>(particleIndex));
 		if(ptype)
 			c = ptype->color();
 	}

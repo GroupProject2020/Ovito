@@ -167,13 +167,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 			OVITO_ASSERT(outputProperty->stride() == property->stride());
 
 			// Copy and reorder property data.
-			std::vector<size_t>::const_iterator idx = indexToIndexMap.cbegin();
-			char* dest = static_cast<char*>(outputProperty->data());
-			const char* src = static_cast<const char*>(property->constData());
-			size_t stride = outputProperty->stride();
-			for(size_t index = 0; index < outputProperty->size(); index++, ++idx, dest += stride) {
-				std::memcpy(dest, src + stride * (*idx), stride);
-			}
+			property->mappedCopyTo(outputProperty, indexToIndexMap);
 		}
 
 		// Transfer box geometry.

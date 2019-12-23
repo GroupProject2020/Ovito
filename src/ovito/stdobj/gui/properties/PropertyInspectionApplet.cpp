@@ -310,19 +310,19 @@ QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& i
 			for(size_t component = 0; component < property->componentCount(); component++) {
 				if(component != 0) str += QStringLiteral(" ");
 				if(property->dataType() == PropertyStorage::Int) {
-					str += QString::number(property->getIntComponent(elementIndex, component));
+					str += QString::number(property->get<int>(elementIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(ElementType* ptype = property->elementType(property->getIntComponent(elementIndex, component))) {
+						if(ElementType* ptype = property->elementType(property->get<int>(elementIndex, component))) {
 							if(!ptype->name().isEmpty())
 								str += QStringLiteral(" (%1)").arg(ptype->name());
 						}
 					}
 				}
 				else if(property->dataType() == PropertyStorage::Int64) {
-					str += QString::number(property->getInt64Component(elementIndex, component));
+					str += QString::number(property->get<qlonglong>(elementIndex, component));
 				}
 				else if(property->dataType() == PropertyStorage::Float) {
-					str += QString::number(property->getFloatComponent(elementIndex, component));
+					str += QString::number(property->get<FloatType>(elementIndex, component));
 				}
 			}
 			return str;
@@ -334,10 +334,10 @@ QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& i
 		size_t elementIndex = index.row();
 		if(elementIndex < property->size()) {
 			if(_applet->isColorProperty(property)) {
-				return (QColor)property->getColor(elementIndex);
+				return (QColor)property->get<Color>(elementIndex);
 			}
 			else if(property->dataType() == PropertyStorage::Int && property->componentCount() == 1 && property->elementTypes().empty() == false) {
-				if(ElementType* ptype = property->elementType(property->getInt(elementIndex)))
+				if(ElementType* ptype = property->elementType(property->get<int>(elementIndex)))
 					return (QColor)ptype->color();
 			}
 		}
