@@ -564,7 +564,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					countp[1] = std::min(countp[1], remaining);
 					remaining -= countp[1];
 					OVITO_ASSERT(countp[1] >= 1);
-					NCERRI( nc_get_vara_int(_ncid, varId, startp, countp, property->dataInt() + property->componentCount() * chunk), tr("(While reading variable '%1'.)").arg(columnName) );
+					NCERRI( nc_get_vara_int(_ncid, varId, startp, countp, property->data<int>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
 					if(!incrementProgressValue()) {
 						closeNetCDF();
 						return {};
@@ -578,7 +578,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(property);
 
 					// Create particle types.
-					for(int ptype : property->constIntRange()) {
+					for(int ptype : property->crange<int>()) {
 						typeList->addTypeId(ptype);
 					}
 
@@ -599,7 +599,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					countp[1] = std::min(countp[1], remaining);
 					remaining -= countp[1];
 					OVITO_ASSERT(countp[1] >= 1);
-					NCERRI( nc_get_vara_longlong(_ncid, varId, startp, countp, property->dataInt64() + property->componentCount() * chunk), tr("(While reading variable '%1'.)").arg(columnName) );
+					NCERRI( nc_get_vara_longlong(_ncid, varId, startp, countp, property->data<qlonglong>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
 					if(!incrementProgressValue()) {
 						closeNetCDF();
 						return {};
@@ -617,7 +617,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 #else
 					NCERRI( nc_get_vara_double(_ncid, varId, startp, countp, data.get()), tr("(While reading variable '%1'.)").arg(columnName) );
 #endif
-					fullToVoigt(particleCount, data.get(), property->dataFloat());
+					fullToVoigt(particleCount, data.get(), property->data<FloatType>());
 				}
 				else {
 
@@ -631,9 +631,9 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 						remaining -= countp[1];
 						OVITO_ASSERT(countp[1] >= 1);
 #ifdef FLOATTYPE_FLOAT
-						NCERRI( nc_get_vara_float(_ncid, varId, startp, countp, property->dataFloat() + property->componentCount() * chunk), tr("(While reading variable '%1'.)").arg(columnName) );
+						NCERRI( nc_get_vara_float(_ncid, varId, startp, countp, property->data<FloatType>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
 #else
-						NCERRI( nc_get_vara_double(_ncid, varId, startp, countp, property->dataFloat() + property->componentCount() * chunk), tr("(While reading variable '%1'.)").arg(columnName) );
+						NCERRI( nc_get_vara_double(_ncid, varId, startp, countp, property->data<FloatType>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
 #endif
 						if(!incrementProgressValue()) {
 							closeNetCDF();
@@ -655,7 +655,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 			if(posProperty && posProperty->size() != 0) {
 				Box3 boundingBox;
-				boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
+				boundingBox.addPoints(posProperty->crange<Point3>());
 
 				AffineTransformation cell = frameData->simulationCell().matrix();
 				for(size_t dim = 0; dim < 3; dim++) {

@@ -174,11 +174,11 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 	// Create the particle properties.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
-	std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
+	boost::copy(coords, posProperty->data<Point3>());
 
 	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
-	std::copy(types.begin(), types.end(), typeProperty->dataInt());
+	boost::copy(types, typeProperty->data<int>());
 
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
@@ -189,12 +189,12 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 	if(velocities.size() == coords.size()) {
 		PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
 		frameData->addParticleProperty(velocityProperty);
-		std::copy(velocities.begin(), velocities.end(), velocityProperty->dataVector3());
+		boost::copy(velocities, velocityProperty->data<Vector3>());
 	}
 	if(forces.size() == coords.size()) {
 		PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(forces.size(), ParticlesObject::ForceProperty, false);
 		frameData->addParticleProperty(forceProperty);
-		std::copy(forces.begin(), forces.end(), forceProperty->dataVector3());
+		boost::copy(forces, forceProperty->data<Vector3>());
 	}
 
 	frameData->setStatus(tr("%1 atoms").arg(coords.size()));

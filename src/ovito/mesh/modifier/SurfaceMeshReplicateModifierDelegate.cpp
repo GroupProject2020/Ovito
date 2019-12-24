@@ -78,7 +78,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 
 			// Shift vertex positions by the periodicity vector.
 			PropertyObject* positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
-			Point3* p = positionProperty->dataPoint3();
+			Point3* p = positionProperty->data<Point3>();
 			for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
 				for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
 					for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {

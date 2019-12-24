@@ -116,19 +116,17 @@ Box3 VectorVis::arrowBoundingBox(const PropertyObject* vectorProperty, const Pro
 
 	// Compute bounding box of particle positions (only those with non-zero vector).
 	Box3 bbox;
-	const Point3* p = positionProperty->constDataPoint3();
-	const Point3* p_end = p + positionProperty->size();
-	const Vector3* v = vectorProperty->constDataVector3();
-	for(; p != p_end; ++p, ++v) {
-		if((*v) != Vector3::Zero())
+	const Point3* p = positionProperty->cdata<Point3>();
+	for(const Vector3& v : vectorProperty->crange<Vector3>()) {
+		if(v != Vector3::Zero())
 			bbox.addPoint(*p);
+		++p;
 	}
 
 	// Find largest vector magnitude.
 	FloatType maxMagnitude = 0;
-	const Vector3* v_end = vectorProperty->constDataVector3() + vectorProperty->size();
-	for(v = vectorProperty->constDataVector3(); v != v_end; ++v) {
-		FloatType m = v->squaredLength();
+	for(const Vector3& v : vectorProperty->crange<Vector3>()) {
+		FloatType m = v.squaredLength();
 		if(m > maxMagnitude) maxMagnitude = m;
 	}
 
@@ -199,7 +197,7 @@ void VectorVis::render(TimePoint time, const std::vector<const DataObject*>& obj
 		// Determine number of non-zero vectors.
 		int vectorCount = 0;
 		if(vectorProperty && positionProperty) {
-			for(const Vector3& v : vectorProperty->constVector3Range()) {
+			for(const Vector3& v : vectorProperty->crange<Vector3>()) {
 				if(v != Vector3::Zero())
 					vectorCount++;
 			}
@@ -213,10 +211,10 @@ void VectorVis::render(TimePoint time, const std::vector<const DataObject*>& obj
 			ColorA color(arrowColor());
 			FloatType width = arrowWidth();
 			ArrowPrimitive* buffer = arrowPrimitive.get();
-			const Point3* pos = positionProperty->constDataPoint3();
-			const Color* pcol = vectorColorProperty ? vectorColorProperty->constDataColor() : nullptr;
+			const Point3* pos = positionProperty->cdata<Point3>();
+			const Color* pcol = vectorColorProperty ? vectorColorProperty->cdata<Color>() : nullptr;
 			int index = 0;
-			for(const Vector3& vec : vectorProperty->constVector3Range()) {
+			for(const Vector3& vec : vectorProperty->crange<Vector3>()) {
 				if(vec != Vector3::Zero()) {
 					Vector3 v = vec * scalingFac;
 					Point3 base = *pos;
@@ -231,8 +229,8 @@ void VectorVis::render(TimePoint time, const std::vector<const DataObject*>& obj
 				++pos;
 				if(pcol) ++pcol;
 			}
-			OVITO_ASSERT(pos == positionProperty->constDataPoint3() + positionProperty->size());
-			OVITO_ASSERT(!pcol || pcol == vectorColorProperty->constDataColor() + vectorColorProperty->size());
+			OVITO_ASSERT(pos == positionProperty->cdata<Point3>() + positionProperty->size());
+			OVITO_ASSERT(!pcol || pcol == vectorColorProperty->cdata<Color>() + vectorColorProperty->size());
 			OVITO_ASSERT(index == vectorCount);
 		}
 		arrowPrimitive->endSetElements();
@@ -256,7 +254,7 @@ size_t VectorPickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 {
 	if(_vectorProperty) {
 		size_t particleIndex = 0;
-		for(const Vector3& v : _vectorProperty->constVector3Range()) {
+		for(const Vector3& v : _vectorProperty->crange<Vector3>()) {
 			if(v != Vector3::Zero()) {
 				if(subobjID == 0) return particleIndex;
 				subobjID--;

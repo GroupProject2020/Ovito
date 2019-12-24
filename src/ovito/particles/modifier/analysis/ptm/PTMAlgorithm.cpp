@@ -96,9 +96,9 @@ static int get_neighbours(void* vdata, size_t _unused_lammps_variable, size_t at
 
 	// Build list of particle types for ordering identification.
 	if(particleTypes != nullptr) {
-		env->numbers[0] = particleTypes->getInt(atom_index);
+		env->numbers[0] = particleTypes->get<int>(atom_index);
 		for(int i = 0; i < numNeighbors; i++) {
-			env->numbers[i+1] = particleTypes->getInt(neighQuery.results()[permutation[i]].index);
+			env->numbers[i+1] = particleTypes->get<int>(neighQuery.results()[permutation[i]].index);
 		}
 	}
 	else {

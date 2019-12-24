@@ -126,13 +126,13 @@ void VoxelGridComputePropertyModifierDelegate::ComputeEngine::perform()
 
 				// Store results in output property.
 				if(outputProperty()->dataType() == PropertyStorage::Int) {
-					outputProperty()->setIntComponent(voxelIndex, component, (int)value);
+					outputProperty()->set<int>(voxelIndex, component, (int)value);
 				}
 				else if(outputProperty()->dataType() == PropertyStorage::Int64) {
-					outputProperty()->setInt64Component(voxelIndex, component, (qlonglong)value);
+					outputProperty()->set<qlonglong>(voxelIndex, component, (qlonglong)value);
 				}
 				else if(outputProperty()->dataType() == PropertyStorage::Float) {
-					outputProperty()->setFloatComponent(voxelIndex, component, value);
+					outputProperty()->set<FloatType>(voxelIndex, component, value);
 				}
 			}
 		}

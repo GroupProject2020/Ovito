@@ -59,7 +59,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 			// Generate filter mask.
 			boost::dynamic_bitset<> mask(selProperty->size());
 			boost::dynamic_bitset<>::size_type i = 0;
-			for(int s : selProperty->constIntRange()) {
+			for(int s : selProperty->crange<int>()) {
 				if(s != 0) {
 					mask.set(i++);
 					numSelected++;
@@ -118,7 +118,7 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, Pi
 				// Generate filter mask.
 				boost::dynamic_bitset<> mask(selProperty->size());
 				boost::dynamic_bitset<>::size_type i = 0;
-				for(int s : selProperty->constIntRange()) {
+				for(int s : selProperty->crange<int>()) {
 					if(s != 0) {
 						mask.set(i++);
 						numSelected++;

@@ -149,7 +149,7 @@ void ParticleInspectionApplet::updateDistanceTable()
 			size_t j_index = visibleElementAt(j);
 			_distanceTable->setItem(row, 0, new QTableWidgetItem(QStringLiteral("%1 - %2").arg(i_index).arg(j_index)));
 			if(posProperty && i_index < posProperty->size() && j_index < posProperty->size()) {
-				Vector3 delta = posProperty->getPoint3(j_index) - posProperty->getPoint3(i_index);
+				Vector3 delta = posProperty->get<Point3>(j_index) - posProperty->get<Point3>(i_index);
 				_distanceTable->setItem(row, 1, new QTableWidgetItem(QString::number(delta.length())));
 				_distanceTable->setItem(row, 2, new QTableWidgetItem(QString::number(delta.x()) + QChar(' ') + QString::number(delta.y()) + QChar(' ') + QString::number(delta.z())));
 			}
@@ -188,8 +188,8 @@ void ParticleInspectionApplet::updateAngleTable()
 				size_t k_index = visibleElementAt(k);
 				_angleTable->setItem(row, 0, new QTableWidgetItem(QStringLiteral("%1 - %2 - %3").arg(j_index).arg(i_index).arg(k_index)));
 				if(posProperty && i_index < posProperty->size() && j_index < posProperty->size() && k_index < posProperty->size()) {
-					Vector3 delta1 = posProperty->getPoint3(j_index) - posProperty->getPoint3(i_index);
-					Vector3 delta2 = posProperty->getPoint3(k_index) - posProperty->getPoint3(i_index);
+					Vector3 delta1 = posProperty->get<Point3>(j_index) - posProperty->get<Point3>(i_index);
+					Vector3 delta2 = posProperty->get<Point3>(k_index) - posProperty->get<Point3>(i_index);
 					if(!delta1.isZero() && !delta2.isZero()) {
 						FloatType angle = std::acos(delta1.dot(delta2) / delta1.length() / delta2.length());
 						_angleTable->setItem(row, 1, new QTableWidgetItem(QString::number(qRadiansToDegrees(angle))));
@@ -295,8 +295,8 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Viewpo
 				size_t particleIndex = element.particleIndex;
 				if(element.particleId >= 0) {
 					if(const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
-						if(particleIndex >= identifierProperty->size() || identifierProperty->getInt64(particleIndex) != element.particleId) {
-							auto begin = identifierProperty->constDataInt64();
+						if(particleIndex >= identifierProperty->size() || identifierProperty->get<qlonglong>(particleIndex) != element.particleId) {
+							auto begin = identifierProperty->cdata<qlonglong>();
 							auto end = begin + identifierProperty->size();
 							auto iter = std::find(begin, end, element.particleId);
 							if(iter == end) continue;
@@ -306,7 +306,7 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Viewpo
 				}
 				if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
 					if(particleIndex < posProperty->size())
-						*outVertex++ = posProperty->getPoint3(particleIndex);
+						*outVertex++ = posProperty->get<Point3>(particleIndex);
 				}
 			}
 			if(outVertex == vertices.end())

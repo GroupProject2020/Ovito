@@ -43,13 +43,13 @@ void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 			ConstPropertyPtr posProperty = *iter;
 			SimulationCell cellData = *simCell;
 			registerComputedVariable("ReducedPosition.X", [posProperty,cellData](size_t particleIndex) -> double {
-				return cellData.inverseMatrix().prodrow(posProperty->getPoint3(particleIndex), 0);
+				return cellData.inverseMatrix().prodrow(posProperty->get<Point3>(particleIndex), 0);
 			});
 			registerComputedVariable("ReducedPosition.Y", [posProperty,cellData](size_t particleIndex) -> double {
-				return cellData.inverseMatrix().prodrow(posProperty->getPoint3(particleIndex), 1);
+				return cellData.inverseMatrix().prodrow(posProperty->get<Point3>(particleIndex), 1);
 			});
 			registerComputedVariable("ReducedPosition.Z", [posProperty,cellData](size_t particleIndex) -> double {
-				return cellData.inverseMatrix().prodrow(posProperty->getPoint3(particleIndex), 2);
+				return cellData.inverseMatrix().prodrow(posProperty->get<Point3>(particleIndex), 2);
 			});
 		}
 	}

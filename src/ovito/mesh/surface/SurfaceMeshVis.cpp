@@ -447,7 +447,7 @@ void SurfaceMeshVis::PrepareSurfaceEngine::determineVertexColors()
 		OVITO_ASSERT(colorProperty->size() == _surfaceMesh.vertexCount());
 		if(colorProperty->size() == _surfaceMesh.vertexCount()) {
 			_surfaceMesh.setHasVertexColors(true);
-			boost::transform(colorProperty->crange<Color>(), _surfaceMesh.vertexColors().begin(), [](const Color& c) { return ColorA(c); });
+			boost::copy(colorProperty->crange<Color>(), _surfaceMesh.vertexColors().begin());
 		}
 	}
 }

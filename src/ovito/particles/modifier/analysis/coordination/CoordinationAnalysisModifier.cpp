@@ -131,15 +131,15 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		FloatType rdfBinSize = cutoff() / binCount;
 		std::vector<size_t> threadLocalRDF(rdfY()->size() * rdfY()->componentCount(), 0);
 		for(size_t i = startIndex, endIndex = startIndex + chunkSize; i < endIndex; ) {
-			int& coordination = coordinationNumbers()->dataInt()[i];
+			int& coordination = coordinationNumbers()->data<int>()[i];
 			OVITO_ASSERT(coordination == 0);
 
-			size_t typeIndex1 = _computePartialRdfs ? uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->getInt(i))) : 0;
+			size_t typeIndex1 = _computePartialRdfs ? uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->get<int>(i))) : 0;
 			if(typeIndex1 < typeCount) {
 				for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
 					coordination++;
 					if(_computePartialRdfs) {
-						size_t typeIndex2 = uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->getInt(neighQuery.current())));
+						size_t typeIndex2 = uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->get<int>(neighQuery.current())));
 						if(typeIndex2 < typeCount) {
 							size_t lowerIndex = std::min(typeIndex1, typeIndex2);
 							size_t upperIndex = std::max(typeIndex1, typeIndex2);
@@ -166,7 +166,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		}
 		// Combine per-thread RDFs into a set of master histograms.
 		std::lock_guard<std::mutex> lock(mutex);
-		auto bin = rdfY()->dataFloat();
+		auto bin = rdfY()->data<FloatType>(0,0);
 		for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
 			*bin++ += *iter;
 	});
@@ -187,7 +187,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		FloatType r1 = 0;
 		size_t cmpntCount = rdfY()->componentCount();
 		OVITO_ASSERT(component < cmpntCount);
-		for(FloatType* y = rdfY()->dataFloat() + component, *y_end = y + rdfY()->size()*cmpntCount; y != y_end; y += cmpntCount) {
+		for(FloatType* y = rdfY()->data<FloatType>(0, component), *y_end = y + rdfY()->size()*cmpntCount; y != y_end; y += cmpntCount) {
 			double r2 = r1 + stepSize;
 			FloatType vol = cell().is2D() ? (r2*r2 - r1*r1) : (r2*r2*r2 - r1*r1*r1);
 			*y /= prefactor * vol;
@@ -201,7 +201,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 	else {
 		// Count particle type occurrences.
 		std::vector<size_t> particleCounts(uniqueTypeIds().size(), 0);
-		for(int t : particleTypes()->constIntRange()) {
+		for(int t : particleTypes()->crange<int>()) {
 			size_t typeIndex = uniqueTypeIds().index_of(uniqueTypeIds().find(t));
 			if(typeIndex < particleCounts.size())
 				particleCounts[typeIndex]++;

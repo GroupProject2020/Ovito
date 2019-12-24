@@ -231,7 +231,7 @@ void CreateBondsModifier::BondsEngine::perform()
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
 				if(neighborQuery.distanceSquared() < minCutoffSquared)
 					continue;
-				if(_moleculeIDs && _moleculeIDs->getInt64(particleIndex) != _moleculeIDs->getInt64(neighborQuery.current()))
+				if(_moleculeIDs && _moleculeIDs->get<qlonglong>(particleIndex) != _moleculeIDs->get<qlonglong>(neighborQuery.current()))
 					continue;
 
 				Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
@@ -250,10 +250,10 @@ void CreateBondsModifier::BondsEngine::perform()
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
 				if(neighborQuery.distanceSquared() < minCutoffSquared)
 					continue;
-				if(_moleculeIDs && _moleculeIDs->getInt64(particleIndex) != _moleculeIDs->getInt64(neighborQuery.current()))
+				if(_moleculeIDs && _moleculeIDs->get<qlonglong>(particleIndex) != _moleculeIDs->get<qlonglong>(neighborQuery.current()))
 					continue;
-				int type1 = _particleTypes->getInt(particleIndex);
-				int type2 = _particleTypes->getInt(neighborQuery.current());
+				int type1 = _particleTypes->get<int>(particleIndex);
+				int type2 = _particleTypes->get<int>(neighborQuery.current());
 				if(type1 >= 0 && type1 < (int)_pairCutoffsSquared.size() && type2 >= 0 && type2 < (int)_pairCutoffsSquared[type1].size()) {
 					if(neighborQuery.distanceSquared() <= _pairCutoffsSquared[type1][type2]) {
 						Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };

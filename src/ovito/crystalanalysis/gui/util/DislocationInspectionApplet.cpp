@@ -158,16 +158,16 @@ QVariant DislocationInspectionApplet::DislocationTableModel::data(const QModelIn
 			const PropertyObject* phaseProperty = _microstructure->regions()->getProperty(SurfaceMeshRegions::PhaseProperty);
 			if(burgersVectorProperty && faceRegionProperty && phaseProperty && index.row() < burgersVectorProperty->size()) {
 				const MicrostructurePhase* phase = nullptr;
-				int region = faceRegionProperty->getInt(index.row());
+				int region = faceRegionProperty->get<int>(index.row());
 				if(region >= 0 && region < phaseProperty->size()) {
-					int phaseId = phaseProperty->getInt(region);
+					int phaseId = phaseProperty->get<int>(region);
 					if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
 						switch(index.column()) {
 						case 0: return index.row();
-						case 1: return DislocationVis::formatBurgersVector(burgersVectorProperty->getVector3(index.row()), phase);
+						case 1: return DislocationVis::formatBurgersVector(burgersVectorProperty->get<Vector3>(index.row()), phase);
 						case 2:
 							if(const PropertyObject* correspondenceProperty = _microstructure->regions()->getProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty)) {
-								Vector3 transformedVector = correspondenceProperty->getMatrix3(region) * burgersVectorProperty->getVector3(index.row());
+								Vector3 transformedVector = correspondenceProperty->get<Matrix3>(region) * burgersVectorProperty->get<Vector3>(index.row());
 								return QStringLiteral("%1 %2 %3")
 										.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
 										.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)

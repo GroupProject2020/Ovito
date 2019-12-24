@@ -198,8 +198,8 @@ void CombineDatasetsModifierDelegate::mergeElementTypes(PropertyObject* property
 	}
 	// Remap particle property values.
 	if(typeMap.empty() == false) {
-		int* p = property1->dataInt() + (property1->size() - property2->size());
-		int* p_end = property1->dataInt() + property1->size();
+		int* p = property1->data<int>() + (property1->size() - property2->size());
+		int* p_end = property1->data<int>() + property1->size();
 		for(; p != p_end; ++p) {
 			auto iter = typeMap.find(*p);
 			if(iter != typeMap.end()) *p = iter->second;

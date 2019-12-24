@@ -84,7 +84,7 @@ PropertyPtr VoxelGrid::OOMetaClass::createStandardStorage(size_t voxelCount, int
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data(), 0, property->size() * property->stride());
+		std::memset(property->data<void>(), 0, property->size() * property->stride());
 	}
 
 	return property;

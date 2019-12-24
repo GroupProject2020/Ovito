@@ -256,7 +256,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Point3 pos;
 				stream >> pos.x() >> pos.y() >> pos.z();
-				_currentProperty->setPoint3(i, pos);
+				_currentProperty->set<Point3>(i, pos);
 			}
 		}
 		else if(localName == "velocity") {
@@ -264,7 +264,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Vector3 vel;
 				stream >> vel.x() >> vel.y() >> vel.z();
-				_currentProperty->setVector3(i, vel);
+				_currentProperty->set<Vector3>(i, vel);
 			}
 		}
 		else if(localName == "image") {
@@ -272,7 +272,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Point3I image;
 				stream >> image.x() >> image.y() >> image.z();
-				_currentProperty->setPoint3I(i, image);
+				_currentProperty->set<Point3I>(i, image);
 			}
 		}
 		else if(localName == "mass") {
@@ -280,7 +280,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				FloatType mass;
 				stream >> mass;
-				_currentProperty->setFloat(i, mass);
+				_currentProperty->set<FloatType>(i, mass);
 			}
 		}
 		else if(localName == "diameter") {
@@ -288,7 +288,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				FloatType diameter;
 				stream >> diameter;
-				_currentProperty->setFloat(i, diameter / 2);
+				_currentProperty->set<FloatType>(i, diameter / 2);
 			}
 		}
 		else if(localName == "charge") {
@@ -296,7 +296,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				FloatType charge;
 				stream >> charge;
-				_currentProperty->setFloat(i, charge);
+				_currentProperty->set<FloatType>(i, charge);
 			}
 		}
 		else if(localName == "quaternion") {
@@ -304,7 +304,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Quaternion q;
 				stream >> q.w() >> q.x() >> q.y() >> q.z();
-				_currentProperty->setQuaternion(i, q);
+				_currentProperty->set<Quaternion>(i, q);
 			}
 		}
 		else if(localName == "orientation") {
@@ -314,10 +314,10 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 				stream >> dir.x() >> dir.y() >> dir.z();
 				if(!dir.isZero()) {
 					Rotation r(Vector3(0,0,1), dir);
-					_currentProperty->setQuaternion(i, Quaternion(r));
+					_currentProperty->set<Quaternion>(i, Quaternion(r));
 				}
 				else {
-					_currentProperty->setQuaternion(i, Quaternion::Identity());
+					_currentProperty->set<Quaternion>(i, Quaternion::Identity());
 				}
 			}
 		}
@@ -326,7 +326,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				qlonglong molecule;
 				stream >> molecule;
-				_currentProperty->setInt64(i, molecule);
+				_currentProperty->set<qlonglong>(i, molecule);
 			}
 		}
 		else if(localName == "body") {
@@ -334,7 +334,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				qlonglong body;
 				stream >> body;
-				_currentProperty->setInt64(i, body);
+				_currentProperty->set<qlonglong>(i, body);
 			}
 		}
 		else if(localName == "rotation") {
@@ -342,7 +342,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Vector3 rot_vel;
 				stream >> rot_vel.x() >> rot_vel.y() >> rot_vel.z();
-				_currentProperty->setVector3(i, rot_vel);
+				_currentProperty->set<Vector3>(i, rot_vel);
 			}
 		}
 		else if(localName == "inert") {
@@ -350,7 +350,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Vector3 ang_moment;
 				stream >> ang_moment.x() >> ang_moment.y() >> ang_moment.z();
-				_currentProperty->setVector3(i, ang_moment);
+				_currentProperty->set<Vector3>(i, ang_moment);
 			}
 		}
 		else if(localName == "type") {
@@ -359,7 +359,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
 			for(size_t i = 0; i < _natoms; i++) {
 				stream >> typeName;
-				_currentProperty->setInt(i, typeList->addTypeName(typeName));
+				_currentProperty->set<int>(i, typeList->addTypeName(typeName));
 			}
 			typeList->sortTypesByName(_currentProperty);
 			_frameData->setPropertyTypesList(_currentProperty, std::move(typeList));
@@ -386,9 +386,9 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 					}
 				}
 				for(size_t i = 0; i < _natoms; i++) {
-					int typeIndex = typeProperty->getInt(i);
+					int typeIndex = typeProperty->get<int>(i);
 					if(typeIndex < typesAsphericalShape.size())
-						_currentProperty->setVector3(i, typesAsphericalShape[typeIndex]);
+						_currentProperty->set<Vector3>(i, typesAsphericalShape[typeIndex]);
 				}
 			}
 		}
@@ -407,10 +407,10 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 				stream.skipWhiteSpace();
 			}
 			_currentProperty = BondsObject::OOClass().createStandardStorage(topology.size() / 2, BondsObject::TopologyProperty, false);
-			std::copy(topology.begin(), topology.end(), _currentProperty->dataInt64());
+			boost::copy(topology, _currentProperty->data<qlonglong>(0,0));
 			_frameData->addBondProperty(std::move(_currentProperty));
 			_currentProperty = BondsObject::OOClass().createStandardStorage(bondTypes.size(), BondsObject::TypeProperty, false);
-			std::copy(bondTypes.begin(), bondTypes.end(), _currentProperty->dataInt());
+			boost::copy(bondTypes, _currentProperty->data<int>());
 			typeList->sortTypesByName(_currentProperty);
 			_frameData->setPropertyTypesList(_currentProperty, std::move(typeList));
 			_frameData->addBondProperty(std::move(_currentProperty));

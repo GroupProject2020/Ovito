@@ -320,38 +320,38 @@ FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& fi
 	// Create particle properties.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(positions.size(), ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
-	std::copy(positions.cbegin(), positions.cend(), posProperty->dataPoint3());
+	boost::copy(positions, posProperty->data<Point3>());
 	typeProperty->resize(atom_types.size(), false);
-	std::copy(atom_types.cbegin(), atom_types.cend(), typeProperty->dataInt());
+	boost::copy(atom_types, typeProperty->data<int>());
 	if(identifiers.size() == positions.size()) {
 		PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(identifiers.size(), ParticlesObject::IdentifierProperty, false);
 		frameData->addParticleProperty(identifierProperty);
-		std::copy(identifiers.cbegin(), identifiers.cend(), identifierProperty->dataInt64());
+		boost::copy(identifiers, identifierProperty->data<qlonglong>());
 	}
 	if(levcfg > 0) {
 		PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
 		frameData->addParticleProperty(velocityProperty);
-		std::copy(velocities.cbegin(), velocities.cend(), velocityProperty->dataVector3());
+		boost::copy(velocities, velocityProperty->data<Vector3>());
 	}
 	if(levcfg > 1) {
 		PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(forces.size(), ParticlesObject::ForceProperty, false);
 		frameData->addParticleProperty(forceProperty);
-		std::copy(forces.cbegin(), forces.cend(), forceProperty->dataVector3());
+		boost::copy(forces, forceProperty->data<Vector3>());
 	}
 	if(masses.size() == positions.size()) {
 		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(masses.size(), ParticlesObject::MassProperty, false);
 		frameData->addParticleProperty(massProperty);
-		std::copy(masses.cbegin(), masses.cend(), massProperty->dataFloat());
+		boost::copy(masses, massProperty->data<FloatType>());
 	}
 	if(charges.size() == positions.size()) {
 		PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(charges.size(), ParticlesObject::ChargeProperty, false);
 		frameData->addParticleProperty(chargeProperty);
-		std::copy(charges.cbegin(), charges.cend(), chargeProperty->dataFloat());
+		boost::copy(charges, chargeProperty->data<FloatType>());
 	}
 	if(displacementMagnitudes.size() == positions.size()) {
 		PropertyPtr displProperty = ParticlesObject::OOClass().createStandardStorage(displacementMagnitudes.size(), ParticlesObject::DisplacementMagnitudeProperty, false);
 		frameData->addParticleProperty(displProperty);
-		std::copy(displacementMagnitudes.cbegin(), displacementMagnitudes.cend(), displProperty->dataFloat());
+		boost::copy(displacementMagnitudes, displProperty->data<FloatType>());
 	}
 
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs

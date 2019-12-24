@@ -248,8 +248,8 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Read atom coordinates.
-	Point3* p = posProperty->dataPoint3();
-	int* a = typeProperty->dataInt();
+	Point3* p = posProperty->data<Point3>();
+	int* a = typeProperty->data<int>();
 	for(int atype = 1; atype <= atomCounts.size(); atype++) {
 		int typeId = atype;
 		if(atomTypeNames.size() == atomCounts.size() && atomTypeNames[atype-1].isEmpty() == false)
@@ -283,7 +283,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 			// Read atomic velocities.
 			PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::VelocityProperty, false);
 			frameData->addParticleProperty(velocityProperty);
-			Vector3* v = velocityProperty->dataVector3();
+			Vector3* v = velocityProperty->data<Vector3>();
 			for(int atype = 1; atype <= atomCounts.size(); atype++) {
 				for(int i = 0; i < atomCounts[atype-1]; i++, ++v) {
 					if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
@@ -301,7 +301,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				auto parseFieldData = [this, &stream, &frameData](size_t nx, size_t ny, size_t nz, const QString& name) -> PropertyPtr {
 					PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 1, 0, name, false);
 					const char* s = stream.readLine();
-					FloatType* data = fieldQuantity->dataFloat();
+					FloatType* data = fieldQuantity->data<FloatType>();
 					setProgressMaximum(fieldQuantity->size());
 					FloatType cellVolume = frameData->simulationCell().volume3D();
 					for(size_t i = 0; i < fieldQuantity->size(); i++, ++data) {
@@ -373,7 +373,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 					PropertyPtr vectorMagnetization = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 3, 0, tr("Magnetization density"), false);
 					vectorMagnetization->setComponentNames(QStringList() << "X" << "Y" << "Z");
 					for(size_t i = 0; i < vectorMagnetization->size(); i++)
-						vectorMagnetization->setVector3(i, { magnetizationDensity->getFloat(i), magnetizationDensityY->getFloat(i), magnetizationDensityZ->getFloat(i) });
+						vectorMagnetization->set<Vector3>(i, { magnetizationDensity->get<FloatType>(i), magnetizationDensityY->get<FloatType>(i), magnetizationDensityZ->get<FloatType>(i) });
 					frameData->addVoxelProperty(std::move(vectorMagnetization));
 				}
 				else if(magnetizationDensity) {

@@ -110,10 +110,10 @@ void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 	// Perform analysis on each particle.
 	parallelFor(positions()->size(), *task(), [this, &neighFinder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
-		if(!selection() || selection()->getInt(index))
-			output.setInt(index, determineStructureAdaptive(neighFinder, index, typesToIdentify()));
+		if(!selection() || selection()->get<int>(index))
+			output.set<int>(index, determineStructureAdaptive(neighFinder, index, typesToIdentify()));
 		else
-			output.setInt(index, OTHER);
+			output.set<int>(index, OTHER);
 	});
 }
 
@@ -135,10 +135,10 @@ void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 	// Perform analysis on each particle.
 	parallelFor(positions()->size(), *task(), [this, &neighborListBuilder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
-		if(!selection() || selection()->getInt(index))
-			output.setInt(index, determineStructureFixed(neighborListBuilder, index, typesToIdentify()));
+		if(!selection() || selection()->get<int>(index))
+			output.set<int>(index, determineStructureFixed(neighborListBuilder, index, typesToIdentify()));
 		else
-			output.setInt(index, OTHER);
+			output.set<int>(index, OTHER);
 	});
 }
 
@@ -156,11 +156,11 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 	bool maxNeighborLimitExceeded = false;
 	bool maxCommonNeighborBondLimitExceeded = false;
 	parallelFor(bondTopology()->size(), *task(), [this, &bondMap, &maxNeighborLimitExceeded, &maxCommonNeighborBondLimitExceeded](size_t bondIndex) {
-		size_t currentBondParticle1 = bondTopology()->getInt64Component(bondIndex, 0);
-		size_t currentBondParticle2 = bondTopology()->getInt64Component(bondIndex, 1);
+		size_t currentBondParticle1 = bondTopology()->get<qlonglong>(bondIndex, 0);
+		size_t currentBondParticle2 = bondTopology()->get<qlonglong>(bondIndex, 1);
 		if(currentBondParticle1 >= positions()->size()) return;
 		if(currentBondParticle2 >= positions()->size()) return;
-		Vector3I currentBondPbcShift = bondPeriodicImages() ? bondPeriodicImages()->getVector3I(bondIndex) : Vector3I::Zero();
+		Vector3I currentBondPbcShift = bondPeriodicImages() ? bondPeriodicImages()->get<Vector3I>(bondIndex) : Vector3I::Zero();
 
 		// Determine common neighbors shared by both particles.
 		int numCommonNeighbors = 0;
@@ -204,9 +204,9 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		int maxChainLength = calcMaxChainLength(commonNeighborBonds.data(), numCommonNeighborBonds);
 
 		// Store results in bond property.
-		cnaIndices()->setIntComponent(bondIndex, 0, numCommonNeighbors);
-		cnaIndices()->setIntComponent(bondIndex, 1, numCommonNeighborBonds);
-		cnaIndices()->setIntComponent(bondIndex, 2, maxChainLength);
+		cnaIndices()->set<int>(bondIndex, 0, numCommonNeighbors);
+		cnaIndices()->set<int>(bondIndex, 1, numCommonNeighborBonds);
+		cnaIndices()->set<int>(bondIndex, 2, maxChainLength);
 	});
 	if(task()->isCanceled())
 		return;
@@ -228,7 +228,7 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		int n666 = 0;
 		int ntotal = 0;
 		for(size_t neighborBondIndex : bondMap.bondIndicesOfParticle(particleIndex)) {
-			const Point3I& indices = cnaIndices()->getPoint3I(neighborBondIndex);
+			const Point3I& indices = cnaIndices()->get<Point3I>(neighborBondIndex);
 			if(indices[0] == 4) {
 				if(indices[1] == 2) {
 					if(indices[2] == 1) n421++;
@@ -239,22 +239,22 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 			else if(indices[0] == 5 && indices[1] == 5 && indices[2] == 5) n555++;
 			else if(indices[0] == 6 && indices[1] == 6 && indices[2] == 6) n666++;
 			else {
-				output.setInt(particleIndex, OTHER);
+				output.set<int>(particleIndex, OTHER);
 				return;
 			}
 			ntotal++;
 		}
 
 		if(n421 == 12 && ntotal == 12 && typesToIdentify()[FCC])
-			output.setInt(particleIndex, FCC);
+			output.set<int>(particleIndex, FCC);
 		else if(n421 == 6 && n422 == 6 && ntotal == 12 && typesToIdentify()[HCP])
-			output.setInt(particleIndex, HCP);
+			output.set<int>(particleIndex, HCP);
 		else if(n444 == 6 && n666 == 8 && ntotal == 14 && typesToIdentify()[BCC])
-			output.setInt(particleIndex, BCC);
+			output.set<int>(particleIndex, BCC);
 		else if(n555 == 12 && ntotal == 12 && typesToIdentify()[ICO])
-			output.setInt(particleIndex, ICO);
+			output.set<int>(particleIndex, ICO);
 		else
-			output.setInt(particleIndex, OTHER);
+			output.set<int>(particleIndex, OTHER);
 	});
 }
 

@@ -74,7 +74,7 @@ bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const Property
 			if(crystalClusters) {
 				std::array<int,4> clusters;
 				for(int v = 0; v < 4; v++)
-					clusters[v] = crystalClusters->getInt64(tessellation().vertexIndex(tessellation().cellVertex(cell, v)));
+					clusters[v] = crystalClusters->get<qlonglong>(tessellation().vertexIndex(tessellation().cellVertex(cell, v)));
 				std::sort(std::begin(clusters), std::end(clusters));
 				return *most_common(std::begin(clusters), std::end(clusters));
 			}

@@ -56,14 +56,14 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 
 			if(!mod->selectionOnly()) {
 				// Apply transformation to the vertices coordinates.
-				for(Point3& p : positionProperty->point3Range())
+				for(Point3& p : positionProperty->range<Point3>())
 					p = tm * p;
 			}
 			else {
 				if(const PropertyObject* selectionProperty = newVertices->getProperty(SurfaceMeshVertices::SelectionProperty)) {
 					// Apply transformation only to the selected vertices.
 					const int* s = selectionProperty->cdata<int>();
-					for(Point3& p : positionProperty->point3Range()) {
+					for(Point3& p : positionProperty->range<Point3>()) {
 						if(*s++)
 							p = tm * p;
 					}

@@ -274,7 +274,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 				return;
 
 			// Skip unselected particles if requested.
-			if(selection() && !selection()->getInt(particleIndex))
+			if(selection() && !selection()->get<int>(particleIndex))
 				continue;
 
 			if(selfNumNeighbors != nullptr) {
@@ -308,13 +308,13 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 
 				// Store results in output property.
 				if(outputProperty()->dataType() == PropertyStorage::Int) {
-					outputProperty()->setIntComponent(particleIndex, component, (int)value);
+					outputProperty()->set<int>(particleIndex, component, (int)value);
 				}
 				else if(outputProperty()->dataType() == PropertyStorage::Int64) {
-					outputProperty()->setInt64Component(particleIndex, component, (qlonglong)value);
+					outputProperty()->set<qlonglong>(particleIndex, component, (qlonglong)value);
 				}
 				else if(outputProperty()->dataType() == PropertyStorage::Float) {
-					outputProperty()->setFloatComponent(particleIndex, component, value);
+					outputProperty()->set<FloatType>(particleIndex, component, value);
 				}
 			}
 		}

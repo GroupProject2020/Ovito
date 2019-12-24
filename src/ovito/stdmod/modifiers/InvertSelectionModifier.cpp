@@ -48,7 +48,7 @@ void InvertSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplic
 
    	PropertyContainer* container = state.expectMutableLeafObject(subject());
 	PropertyObject* selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty, true);
-	for(int& s : selProperty->intRange())
+	for(int& s : selProperty->range<int>())
 		s = !s;
 }
 

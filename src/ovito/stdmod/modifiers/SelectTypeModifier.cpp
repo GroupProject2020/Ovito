@@ -132,14 +132,13 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 	}
 
 	OVITO_ASSERT(selProperty->size() == typeProperty->size());
-	const int* t = typeProperty->cdata<int>();
-	for(int& s : selProperty->intRange()) {
-		if(idsToSelect.contains(*t++)) {
-			s = 1;
+	boost::transform(typeProperty->crange<int>(), selProperty->data<int>(), [&](int type) {
+		if(idsToSelect.contains(type)) {
 			nSelected++;
+			return 1;
 		}
-		else s = 0;
-	}
+		return 0;
+	});
 
 	state.addAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected), modApp);
 

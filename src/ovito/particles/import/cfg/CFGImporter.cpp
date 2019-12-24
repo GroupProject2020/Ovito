@@ -221,10 +221,10 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 		typeProperty = ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::TypeProperty, false);
 		frameData->addParticleProperty(typeProperty);
 		typeList = frameData->propertyTypesList(typeProperty);
-		atomTypePointer = typeProperty->dataInt();
+		atomTypePointer = typeProperty->data<int>();
 		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::MassProperty, false);
 		frameData->addParticleProperty(massProperty);
-		massPointer = massProperty->dataFloat();
+		massPointer = massProperty->data<FloatType>();
 	}
 
 	// Read per-particle data.
@@ -295,10 +295,8 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 	// However, do this only if no absolute coordinates have been read from the extra data columns in the CFG file.
 	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(posProperty && header.numParticles > 0) {
-		Point3* p = posProperty->dataPoint3();
-		Point3* pend = p + posProperty->size();
-		for(; p != pend; ++p)
-			*p = H * (*p);
+		for(Point3& p : posProperty->range<Point3>())
+			p = H * p;
 	}
 
 	// Sort particles by ID if requested.

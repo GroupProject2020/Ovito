@@ -96,8 +96,8 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 
 		// Make a modifiable copy of the particle position property.
 		PropertyPtr posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty)->modifiableStorage();
-		const Vector3I* pbcShift = particlePeriodicImageProperty->constDataVector3I();
-		for(Point3& p : posProperty->point3Range()) {
+		const Vector3I* pbcShift = particlePeriodicImageProperty->cdata<Vector3I>();
+		for(Point3& p : posProperty->range<Point3>()) {
 			p += cell.matrix() * Vector3(*pbcShift++);
 		}
 
@@ -107,13 +107,13 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 				outputParticles->makeBondsMutable();
 				PropertyObject* periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
 				for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
-					size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
-					size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+					size_t particleIndex1 = topologyProperty->get<qlonglong>(bondIndex, 0);
+					size_t particleIndex2 = topologyProperty->get<qlonglong>(bondIndex, 1);
 					if(particleIndex1 >= particlePeriodicImageProperty->size() || particleIndex2 >= particlePeriodicImageProperty->size())
 						continue;
-					const Vector3I& particleShift1 = particlePeriodicImageProperty->getVector3I(particleIndex1);
-					const Vector3I& particleShift2 = particlePeriodicImageProperty->getVector3I(particleIndex2);
-					periodicImageProperty->dataVector3I()[bondIndex] += particleShift1 - particleShift2;
+					const Vector3I& particleShift1 = particlePeriodicImageProperty->get<Vector3I>(particleIndex1);
+					const Vector3I& particleShift2 = particlePeriodicImageProperty->get<Vector3I>(particleIndex2);
+					periodicImageProperty->data<Vector3I>()[bondIndex] += particleShift1 - particleShift2;
 				}
 			}
 		}
@@ -180,8 +180,8 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 
 	// Compute unwrapped particle coordinates.
 	qlonglong index = 0;
-	for(Point3& p : posProperty->point3Range()) {
-		auto range = unwrapRecords.equal_range(identifierProperty ? identifierProperty->getInt64(index) : index);
+	for(Point3& p : posProperty->range<Point3>()) {
+		auto range = unwrapRecords.equal_range(identifierProperty ? identifierProperty->get<qlonglong>(index) : index);
 		bool shifted = false;
 		Vector3 pbcShift = Vector3::Zero();
 		for(auto iter = range.first; iter != range.second; ++iter) {
@@ -202,14 +202,14 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 			outputParticles->makeBondsMutable();
 			PropertyObject* periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
 			for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
-				size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
-				size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+				size_t particleIndex1 = topologyProperty->get<qlonglong>(bondIndex, 0);
+				size_t particleIndex2 = topologyProperty->get<qlonglong>(bondIndex, 1);
 				if(particleIndex1 >= posProperty->size() || particleIndex2 >= posProperty->size())
 					continue;
 
-				Vector3I& pbcShift = periodicImageProperty->dataVector3I()[bondIndex];
-				auto range1 = unwrapRecords.equal_range(identifierProperty ? identifierProperty->getInt64(particleIndex1) : particleIndex1);
-				auto range2 = unwrapRecords.equal_range(identifierProperty ? identifierProperty->getInt64(particleIndex2) : particleIndex2);
+				Vector3I& pbcShift = periodicImageProperty->data<Vector3I>()[bondIndex];
+				auto range1 = unwrapRecords.equal_range(identifierProperty ? identifierProperty->get<qlonglong>(particleIndex1) : particleIndex1);
+				auto range2 = unwrapRecords.equal_range(identifierProperty ? identifierProperty->get<qlonglong>(particleIndex2) : particleIndex2);
 				for(auto iter = range1.first; iter != range1.second; ++iter) {
 					if(std::get<0>(iter->second) <= time) {
 						pbcShift[std::get<1>(iter->second)] += std::get<2>(iter->second);
@@ -306,12 +306,12 @@ bool UnwrapTrajectoriesModifier::detectPeriodicCrossings(AsyncOperation&& operat
 			}
 
 			qlonglong index = 0;
-			for(const Point3& p : posProperty->constPoint3Range()) {
+			for(const Point3& p : posProperty->crange<Point3>()) {
 				Point3 rp = cell.absoluteToReduced(p);
 				// Try to insert new position of particle into map.
 				// If an old position already exists, insertion will fail and we can
 				// test if the particle has crossed a periodic cell boundary.
-				auto result = previousPositions.insert(std::make_pair(identifierProperty ? identifierProperty->getInt64(index) : index, rp));
+				auto result = previousPositions.insert(std::make_pair(identifierProperty ? identifierProperty->get<qlonglong>(index) : index, rp));
 				if(!result.second) {
 					Vector3 delta = result.first->second - rp;
 					for(size_t dim = 0; dim < 3; dim++) {

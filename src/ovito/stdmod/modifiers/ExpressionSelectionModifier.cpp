@@ -85,13 +85,13 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, Pi
 	const PropertyPtr& selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 
 	// Evaluate Boolean expression for every input data element.
-	evaluator->evaluate([&selProperty, &nselected](size_t elementIndex, size_t componentIndex, double value) {
+	evaluator->evaluate([selection=selProperty.get(), &nselected](size_t elementIndex, size_t componentIndex, double value) {
 		if(value) {
-			selProperty->setInt(elementIndex, 1);
+			selection->set<int>(elementIndex, 1);
 			++nselected;
 		}
 		else {
-			selProperty->setInt(elementIndex, 0);
+			selection->set<int>(elementIndex, 0);
 		}
 	});
 

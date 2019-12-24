@@ -78,7 +78,7 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 		// Shift particle positions by the periodicity vector.
 		if(property->type() == ParticlesObject::PositionProperty) {
-			Point3* p = property->dataPoint3();
+			Point3* p = property->data<Point3>();
 			for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
 				for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
 					for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
@@ -97,12 +97,12 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 		// Assign unique IDs to duplicated particles.
 		if(mod->uniqueIdentifiers() && (property->type() == ParticlesObject::IdentifierProperty || property->type() == ParticlesObject::MoleculeProperty)) {
-			auto minmax = std::minmax_element(property->constDataInt64(), property->constDataInt64() + oldParticleCount);
+			auto minmax = std::minmax_element(property->cdata<qlonglong>(), property->cdata<qlonglong>() + oldParticleCount);
 			auto minID = *minmax.first;
 			auto maxID = *minmax.second;
 			for(size_t c = 1; c < numCopies; c++) {
 				auto offset = (maxID - minID + 1) * c;
-				for(auto id = property->dataInt64() + c * oldParticleCount, id_end = id + oldParticleCount; id != id_end; ++id)
+				for(auto id = property->data<qlonglong>() + c * oldParticleCount, id_end = id + oldParticleCount; id != id_end; ++id)
 					*id += offset;
 			}
 		}
@@ -135,7 +135,7 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 								for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
 									Point3I newImage;
 									for(size_t dim = 0; dim < 3; dim++) {
-										int i = image[dim] + (oldPeriodicImages ? oldPeriodicImages->getIntComponent(bindex, dim) : 0) - newImages.minc[dim];
+										int i = image[dim] + (oldPeriodicImages ? oldPeriodicImages->get<int>(bindex, dim) : 0) - newImages.minc[dim];
 										newImage[dim] = SimulationCell::modulo(i, nPBC[dim]) + newImages.minc[dim];
 									}
 									OVITO_ASSERT(newImage.x() >= newImages.minc.x() && newImage.x() <= newImages.maxc.x());
@@ -147,10 +147,10 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 									size_t imageIndex2 =   ((newImage.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
 														+ ((newImage.y()-newImages.minc.y()) * nPBC[2])
 														+  (newImage.z()-newImages.minc.z());
-									property->setInt64Component(destinationIndex, 0, property->getInt64Component(destinationIndex, 0) + imageIndex1 * oldParticleCount);
-									property->setInt64Component(destinationIndex, 1, property->getInt64Component(destinationIndex, 1) + imageIndex2 * oldParticleCount);
-									OVITO_ASSERT(property->getInt64Component(destinationIndex, 0) < newParticleCount);
-									OVITO_ASSERT(property->getInt64Component(destinationIndex, 1) < newParticleCount);
+									property->set<qlonglong>(destinationIndex, 0, property->get<qlonglong>(destinationIndex, 0) + imageIndex1 * oldParticleCount);
+									property->set<qlonglong>(destinationIndex, 1, property->get<qlonglong>(destinationIndex, 1) + imageIndex2 * oldParticleCount);
+									OVITO_ASSERT(property->get<qlonglong>(destinationIndex, 0) < newParticleCount);
+									OVITO_ASSERT(property->get<qlonglong>(destinationIndex, 1) < newParticleCount);
 								}
 							}
 						}
@@ -165,12 +165,12 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 								for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
 									Vector3I newShift;
 									for(size_t dim = 0; dim < 3; dim++) {
-										int i = image[dim] + oldPeriodicImages->getIntComponent(bindex, dim) - newImages.minc[dim];
+										int i = image[dim] + oldPeriodicImages->get<int>(bindex, dim) - newImages.minc[dim];
 										newShift[dim] = i >= 0 ? (i / nPBC[dim]) : ((i-nPBC[dim]+1) / nPBC[dim]);
 										if(!mod->adjustBoxSize())
 											newShift[dim] *= nPBC[dim];
 									}
-									property->setVector3I(destinationIndex, newShift);
+									property->set<Vector3I>(destinationIndex, newShift);
 								}
 							}
 						}

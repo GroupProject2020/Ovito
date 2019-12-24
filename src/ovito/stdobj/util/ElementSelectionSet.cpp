@@ -323,7 +323,7 @@ PipelineStatus ElementSelectionSet::applySelection(PropertyObject* outputSelecti
 
 		// Restore selection simply by placing the snapshot into the pipeline.
 		size_t index = 0;
-		for(auto& s : outputSelectionProperty->intRange()) {
+		for(auto& s : outputSelectionProperty->range<int>()) {
 			if((s = _selection.test(index++)))
 				nselected++;
 		}
@@ -332,7 +332,7 @@ PipelineStatus ElementSelectionSet::applySelection(PropertyObject* outputSelecti
 		OVITO_ASSERT(outputSelectionProperty->size() == identifierProperty->size());
 
 		auto id = identifierProperty->cdata<qlonglong>();
-		for(auto& s : outputSelectionProperty->intRange()) {
+		for(auto& s : outputSelectionProperty->range<int>()) {
 			if((s = _selectedIdentifiers.contains(*id++)))
 				nselected++;
 		}

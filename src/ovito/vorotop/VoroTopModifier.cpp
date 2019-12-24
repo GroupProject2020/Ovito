@@ -155,7 +155,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neigh
        vertex_count >= max_vpc                  ||
        edge_count   >= max_epc)
     {
-        structures.setInt(particleIndex, 0); // structureType OTHER
+        structures.set<int>(particleIndex, 0); // structureType OTHER
         return;
     }
 
@@ -359,7 +359,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neigh
     canonical_code.push_back(1);
 
     int structureType = filter()->findType(canonical_code);
-    structures.setInt(particleIndex, structureType);
+    structures.set<int>(particleIndex, structureType);
 }
 
 /******************************************************************************
@@ -413,11 +413,11 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             size_t count = 0;
             for(size_t index = 0; index < positions()->size(); index++) {
                 // Skip unselected particles (if requested).
-                if(selection() && selection()->getInt(index) == 0) {
-                    structures()->setInt(index, 0);
+                if(selection() && selection()->get<int>(index) == 0) {
+                    structures()->set<int>(index, 0);
                     continue;
                 }
-                const Point3& p = positions()->getPoint3(index);
+                const Point3& p = positions()->get<Point3>(index);
                 voroContainer.put(index, p.x(), p.y(), p.z());
                 count++;
             }
@@ -448,12 +448,12 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             // Insert particles into Voro++ container.
             size_t count = 0;
             for(size_t index = 0; index < positions()->size(); index++) {
-                structures()->setInt(index, 0);
+                structures()->set<int>(index, 0);
                 // Skip unselected particles (if requested).
-                if(selection() && selection()->getInt(index) == 0) {
+                if(selection() && selection()->get<int>(index) == 0) {
                     continue;
                 }
-                const Point3& p = positions()->getPoint3(index);
+                const Point3& p = positions()->get<Point3>(index);
                 voroContainer.put(index, p.x(), p.y(), p.z(), _radii[index]);
                 count++;
             }
@@ -511,10 +511,10 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                      planeNormals, corner1, corner2, &mutex](size_t index) {
 
                         // Reset structure type.
-                        structures()->setInt(index, 0);
+                        structures()->set<int>(index, 0);
 
                         // Skip unselected particles (if requested).
-                        if(selection() && selection()->getInt(index) == 0)
+                        if(selection() && selection()->get<int>(index) == 0)
                             return;
 
                         // Build Voronoi cell.
@@ -528,10 +528,10 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         for(size_t dim = 0; dim < 3; dim++) {
                             if(!cell().pbcFlags()[dim]) {
                                 double r;
-                                r = 2 * planeNormals[dim].dot(corner2 - positions()->getPoint3(index));
+                                r = 2 * planeNormals[dim].dot(corner2 - positions()->get<Point3>(index));
                                 if(r <= 0) skipParticle = true;
                                 v.nplane(planeNormals[dim].x() * r, planeNormals[dim].y() * r, planeNormals[dim].z() * r, r*r, -1);
-                                r = 2 * planeNormals[dim].dot(positions()->getPoint3(index) - corner1);
+                                r = 2 * planeNormals[dim].dot(positions()->get<Point3>(index) - corner1);
                                 if(r <= 0) skipParticle = true;
                                 v.nplane(-planeNormals[dim].x() * r, -planeNormals[dim].y() * r, -planeNormals[dim].z() * r, r*r, -1);
                             }
@@ -544,7 +544,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         int nvisits = 0;
                         auto visitFunc = [this, &v, &nvisits, index](const NearestNeighborFinder::Neighbor& n, FloatType& mrs) {
                             // Skip unselected particles (if requested).
-                            OVITO_ASSERT(!selection() || selection()->getInt(n.index));
+                            OVITO_ASSERT(!selection() || selection()->get<int>(n.index));
                             FloatType rs = n.distanceSq;
                             if(!_radii.empty())
                                 rs += _radii[index] - _radii[n.index];

@@ -96,7 +96,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, Pip
 				// First, copy the original property data to a temporary buffer so that
 				// it doesn't get destroyed while we are rewriting it to the replicated property array.
 				size_t stride = property->stride();
-				char* dst = (char*)property->data();
+				char* dst = static_cast<char*>(property->data<void>());
 				std::vector<char> buffer(dst, dst + stride * existingVoxelGrid->elementCount());
 				const char* src = buffer.data();
 				for(size_t z = 0; z < shape[2]; z++) {
@@ -111,7 +111,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, Pip
 						}
 					}
 				}
-				OVITO_ASSERT(dst == (char*)property->data() + property->size()*property->stride());
+				OVITO_ASSERT(dst == static_cast<char*>(property->data<void>()) + property->size()*property->stride());
 			}
 		}
 	}

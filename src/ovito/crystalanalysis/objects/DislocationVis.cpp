@@ -353,10 +353,10 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 					normalizedBurgersVector.normalizeSafely();
 				}
 				else if(phaseProperty && lineSegment.region >= 0 && lineSegment.region < phaseProperty->size()) {
-					int phaseId = phaseProperty->getInt(lineSegment.region);
+					int phaseId = phaseProperty->get<int>(lineSegment.region);
 					phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId));
 					if(correspondenceProperty) {
-						normalizedBurgersVector = correspondenceProperty->getMatrix3(lineSegment.region) * lineSegment.burgersVector;
+						normalizedBurgersVector = correspondenceProperty->get<Matrix3>(lineSegment.region) * lineSegment.burgersVector;
 						normalizedBurgersVector.normalizeSafely();
 					}
 					else {
@@ -754,16 +754,16 @@ QString DislocationPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 		const PropertyObject* phaseProperty = microstructureObj()->regions()->getProperty(SurfaceMeshRegions::PhaseProperty);
 		if(burgersVectorProperty && faceRegionProperty && phaseProperty && segmentIndex >= 0 && segmentIndex < burgersVectorProperty->size()) {
 			const MicrostructurePhase* phase = nullptr;
-			int region = faceRegionProperty->getInt(segmentIndex);
+			int region = faceRegionProperty->get<int>(segmentIndex);
 			if(region >= 0 && region < phaseProperty->size()) {
-				int phaseId = phaseProperty->getInt(region);
+				int phaseId = phaseProperty->get<int>(region);
 				if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
-					const Vector3& burgersVector = burgersVectorProperty->getVector3(segmentIndex);
+					const Vector3& burgersVector = burgersVectorProperty->get<Vector3>(segmentIndex);
 					QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVector, phase);
 					str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
 					const PropertyObject* correspondenceProperty = microstructureObj()->regions()->getProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
 					if(correspondenceProperty) {
-						Vector3 transformedVector = correspondenceProperty->getMatrix3(region) * burgersVector;
+						Vector3 transformedVector = correspondenceProperty->get<Matrix3>(region) * burgersVector;
 						str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
 								.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
 								.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)

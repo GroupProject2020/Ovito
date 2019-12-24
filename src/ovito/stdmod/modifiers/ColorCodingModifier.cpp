@@ -300,6 +300,9 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 		throwException(tr("Color coding modifier was set to operate on '%1', but the selected input is a '%2' property.")
 			.arg(getOOMetaClass().pythonDataName()).arg(sourceProperty.containerClass()->propertyClassDisplayName()));
 
+	// Make sure input data structure is ok.
+	container->verifyIntegrity();
+
 	const PropertyObject* propertyObj = sourceProperty.findInContainer(container);
 	if(!propertyObj)
 		throwException(tr("The property with the name '%1' does not exist.").arg(sourceProperty.name()));
@@ -333,16 +336,8 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	if(!std::isfinite(startValue)) startValue = std::numeric_limits<FloatType>::lowest();
 	if(!std::isfinite(endValue)) endValue = std::numeric_limits<FloatType>::max();
 
-	// Get the particle selection property if enabled by the user.
-	const int* sel = selProperty ? selProperty->cdata<int>() : nullptr;
-
-	OVITO_ASSERT(colorProperty->size() == property->size());
-	Color* c_begin = colorProperty->dataColor();
-	Color* c_end = c_begin + colorProperty->size();
-	Color* c = c_begin;
-
 	bool result = property->forEach(vecComponent, [&](size_t i, auto v) {
-		if(sel && !(*sel++))
+		if(selProperty && !selProperty->get<int>(i))
 			return;
 
 		// Compute linear interpolation.
@@ -361,7 +356,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 		else if(t < 0) t = 0;
 		else if(t > 1) t = 1;
 
-		*c = mod->colorGradient()->valueToColor(t);
+		colorProperty->set<Color>(i, mod->colorGradient()->valueToColor(t));
 	});
 	if(!result)
 		throwException(tr("The property '%1' has an invalid or non-numeric data type.").arg(property->name()));

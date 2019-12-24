@@ -174,7 +174,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	// Read particle positions.
 	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
-	gsd.readFloatArray("particles/position", frameNumber, posProperty->dataPoint3(), numParticles, posProperty->componentCount());
+	gsd.readFloatArray("particles/position", frameNumber, posProperty->data<Point3>(), numParticles, posProperty->componentCount());
 	if(isCanceled()) return {};
 
 	// Create particle types.
@@ -186,9 +186,9 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 
 	// Read particle types.
 	if(gsd.hasChunk("particles/typeid", frameNumber))
-		gsd.readIntArray("particles/typeid", frameNumber, typeProperty->dataInt(), numParticles);
+		gsd.readIntArray("particles/typeid", frameNumber, typeProperty->data<int>(), numParticles);
 	else
-		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
+		typeProperty->fill<int>(0);
 	if(isCanceled()) return {};
 
 	// Parse particle shape information.
@@ -207,15 +207,15 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	PropertyStorage* radiusProperty = readOptionalProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, false, frameData);
 	if(radiusProperty) {
 		// Convert particle diameters to radii.
-		std::for_each(radiusProperty->dataFloat(), radiusProperty->dataFloat() + radiusProperty->size(), [](FloatType& r) { r /= 2; });
+		for(FloatType& r : radiusProperty->range<FloatType>())
+			r /= 2;
 	}
 	PropertyStorage* orientationProperty = readOptionalProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticlesObject::OrientationProperty, false, frameData);
 	if(orientationProperty) {
 		// Convert quaternion representation from GSD format to OVITO's internal format.
 		// Left-shift all quaternion components by one: (W,X,Y,Z) -> (X,Y,Z,W).
-		std::for_each(orientationProperty->dataQuaternion(), orientationProperty->dataQuaternion() + orientationProperty->size(), [](Quaternion& q) {
+		for(Quaternion& q : orientationProperty->range<Quaternion>())
 			std::rotate(q.begin(), q.begin() + 1, q.end());
-		});
 	}
 	if(isCanceled()) return {};
 
@@ -249,7 +249,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		// Convert to OVITO format.
 		PropertyPtr bondTopologyProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TopologyProperty, false);
 		frameData->addBondProperty(bondTopologyProperty);
-		auto bondTopoPtr = bondTopologyProperty->dataInt64();
+		auto bondTopoPtr = bondTopologyProperty->data<qlonglong>(0,0);
 		for(auto b = bondList.cbegin(); b != bondList.cend(); ++b, ++bondTopoPtr) {
 			if(*b >= numParticles)
 				throw Exception(tr("Nonexistent atom tag in bond list in GSD file."));
@@ -275,10 +275,10 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 
 			// Read bond types.
 			if(gsd.hasChunk("bonds/typeid", frameNumber)) {
-				gsd.readIntArray("bonds/typeid", frameNumber, bondTypeProperty->dataInt(), numBonds);
+				gsd.readIntArray("bonds/typeid", frameNumber, bondTypeProperty->data<int>(), numBonds);
 			}
 			else {
-				std::fill(bondTypeProperty->dataInt(), bondTypeProperty->dataInt() + bondTypeProperty->size(), 0);
+				bondTypeProperty->fill<int>(0);
 			}
 			if(isCanceled()) return {};
 		}
@@ -324,11 +324,11 @@ PropertyStorage* GSDImporter::FrameLoader::readOptionalProperty(GSDFile& gsd, co
 		else
 			frameData->addBondProperty(prop);
 		if(prop->dataType() == PropertyStorage::Float)
-			gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numElements, prop->componentCount());
+			gsd.readFloatArray(chunkName, frameNumber, prop->data<FloatType>(0,0), numElements, prop->componentCount());
 		else if(prop->dataType() == PropertyStorage::Int)
-			gsd.readIntArray(chunkName, frameNumber, prop->dataInt(), numElements, prop->componentCount());
+			gsd.readIntArray(chunkName, frameNumber, prop->data<int>(0,0), numElements, prop->componentCount());
 		else if(prop->dataType() == PropertyStorage::Int64)
-			gsd.readIntArray(chunkName, frameNumber, prop->dataInt64(), numElements, prop->componentCount());
+			gsd.readIntArray(chunkName, frameNumber, prop->data<qlonglong>(0,0), numElements, prop->componentCount());
 		else
 			throw Exception(tr("Property '%1' cannot be read from GSD file, because its data type is not supported by OVITO.").arg(prop->name()));
 		return prop.get();
@@ -421,8 +421,8 @@ void GSDImporter::FrameLoader::parseEllipsoidShape(int typeId, ParticleFrameData
 	// Assigns the [a,b,c] values to those particles which are of the given type.
 	PropertyPtr typeProperty = frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
 	for(size_t i = 0; i < numParticles; i++) {
-		if(typeProperty->getInt(i) == typeId)
-			ashapeProperty->setVector3(i, abc);
+		if(typeProperty->get<int>(i) == typeId)
+			ashapeProperty->set<Vector3>(i, abc);
 	}
 }
 

@@ -532,8 +532,8 @@ OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollec
 	// Store lattice orientation information.
 	OVITO_ASSERT(microstructureObj->regions()->elementCount() == 2);
 	PropertyObject* correspondenceProperty = microstructureObj->regions()->createProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
-	correspondenceProperty->setMatrix3(0, Matrix3::Zero());		// The "empty" region.
-	correspondenceProperty->setMatrix3(1, _latticeOrientation);	// The "crystal" region.
+	correspondenceProperty->set<Matrix3>(0, Matrix3::Zero());		// The "empty" region.
+	correspondenceProperty->set<Matrix3>(1, _latticeOrientation);	// The "crystal" region.
 
 	return output;
 }

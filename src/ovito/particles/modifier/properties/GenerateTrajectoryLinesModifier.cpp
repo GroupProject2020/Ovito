@@ -125,12 +125,12 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		if(onlySelectedParticles()) {
 			if(selectionProperty) {
 				if(identifierProperty && identifierProperty->size() == selectionProperty->size()) {
-					const int* s = selectionProperty->constDataInt();
-					for(auto id : identifierProperty->constInt64Range())
+					const int* s = selectionProperty->cdata<int>();
+					for(auto id : identifierProperty->crange<qlonglong>())
 						if(*s++) selectedIdentifiers.insert(id);
 				}
 				else {
-					const int* s = selectionProperty->constDataInt();
+					const int* s = selectionProperty->cdata<int>();
 					for(size_t index = 0; index < selectionProperty->size(); index++)
 						if(*s++) selectedIndices.push_back(index);
 				}
@@ -186,13 +186,13 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 					// Create a mapping from IDs to indices.
 					std::map<qlonglong,size_t> idmap;
 					size_t index = 0;
-					for(auto id : identifierProperty->constInt64Range())
+					for(auto id : identifierProperty->crange<qlonglong>())
 						idmap.insert(std::make_pair(id, index++));
 
 					for(auto id : selectedIdentifiers) {
 						auto entry = idmap.find(id);
 						if(entry != idmap.end()) {
-							pointData.push_back(posProperty->getPoint3(entry->second));
+							pointData.push_back(posProperty->get<Point3>(entry->second));
 							timeData.push_back(timeIndex);
 							idData.push_back(id);
 						}
@@ -202,7 +202,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 					// Add coordinates of selected particles by index.
 					for(auto index : selectedIndices) {
 						if(index < posProperty->size()) {
-							pointData.push_back(posProperty->getPoint3(index));
+							pointData.push_back(posProperty->get<Point3>(index));
 							timeData.push_back(timeIndex);
 							idData.push_back(index);
 						}
@@ -214,13 +214,13 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 				const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 				if(identifierProperty && identifierProperty->size() == posProperty->size()) {
 					// Particles with IDs.
-					pointData.insert(pointData.end(), posProperty->constDataPoint3(), posProperty->constDataPoint3() + posProperty->size());
-					idData.insert(idData.end(), identifierProperty->constDataInt64(), identifierProperty->constDataInt64() + identifierProperty->size());
+					pointData.insert(pointData.end(), posProperty->cdata<Point3>(), posProperty->cdata<Point3>() + posProperty->size());
+					idData.insert(idData.end(), identifierProperty->cdata<qlonglong>(), identifierProperty->cdata<qlonglong>() + identifierProperty->size());
 					timeData.resize(timeData.size() + posProperty->size(), timeIndex);
 				}
 				else {
 					// Particles without IDs.
-					pointData.insert(pointData.end(), posProperty->constDataPoint3(), posProperty->constDataPoint3() + posProperty->size());
+					pointData.insert(pointData.end(), posProperty->cdata<Point3>(), posProperty->cdata<Point3>() + posProperty->size());
 					idData.resize(idData.size() + posProperty->size());
 					std::iota(idData.begin() + timeData.size(), idData.end(), 0);
 					timeData.resize(timeData.size() + posProperty->size(), timeIndex);
@@ -265,21 +265,21 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		// Copy re-ordered trajectory points.
 		PropertyObject* trajPosProperty = trajObj->createProperty(TrajectoryObject::PositionProperty, false, {}, pointData.size());
 		auto piter = permutation.cbegin();
-		for(Point3& p : trajPosProperty->point3Range()) {
+		for(Point3& p : trajPosProperty->range<Point3>()) {
 			p = pointData[*piter++];
 		}
 
 		// Copy re-ordered trajectory time stamps.
 		PropertyObject* trajTimeProperty = trajObj->createProperty(TrajectoryObject::SampleTimeProperty, false);
 		piter = permutation.cbegin();
-		for(int& t : trajTimeProperty->intRange()) {
+		for(int& t : trajTimeProperty->range<int>()) {
 			t = sampleFrames[timeData[*piter++]];
 		}
 
 		// Copy re-ordered trajectory ids.
 		PropertyObject* trajIdProperty = trajObj->createProperty(TrajectoryObject::ParticleIdentifierProperty, false);
 		piter = permutation.cbegin();
-		for(qlonglong& id : trajIdProperty->int64Range()) {
+		for(qlonglong& id : trajIdProperty->range<qlonglong>()) {
 			id = idData[*piter++];
 		}
 
@@ -290,9 +290,9 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		if(unwrapTrajectories() && pointData.size() >= 2 && !cells.empty() && cells.front().pbcFlags() != std::array<bool,3>{false, false, false}) {
 			operation.setProgressText(tr("Unwrapping trajectory lines"));
 			operation.setProgressMaximum(trajPosProperty->size() - 1);
-			Point3* pos = trajPosProperty->dataPoint3();
+			Point3* pos = trajPosProperty->data<Point3>();
 			piter = permutation.cbegin();
-			const qlonglong* id = trajIdProperty->constDataInt64();
+			const qlonglong* id = trajIdProperty->cdata<qlonglong>();
 			for(auto pos_end = pos + trajPosProperty->size() - 1; pos != pos_end; ++pos, ++piter, ++id) {
 				if(!operation.incrementProgressValue())
 					return false;

@@ -88,10 +88,10 @@ void AcklandJonesModifier::AcklandJonesAnalysisEngine::perform()
 	// Perform analysis on each particle.
 	parallelFor(positions()->size(), *task(), [this, &neighborFinder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
-		if(!selection() || selection()->getInt(index))
-			output.setInt(index, determineStructure(neighborFinder, index, typesToIdentify()));
+		if(!selection() || selection()->get<int>(index))
+			output.set<int>(index, determineStructure(neighborFinder, index, typesToIdentify()));
 		else
-			output.setInt(index, OTHER);
+			output.set<int>(index, OTHER);
 	});
 }
 

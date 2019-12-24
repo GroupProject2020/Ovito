@@ -154,8 +154,8 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 	frameData->addParticleProperty(typeProperty);
 
 	// Read atomic coordinates.
-	Point3* p = posProperty->dataPoint3();
-	int* a = typeProperty->dataInt();
+	Point3* p = posProperty->data<Point3>();
+	int* a = typeProperty->data<int>();
 	setProgressMaximum(numAtoms + gridSize[0]*gridSize[1]*gridSize[2]);
 	for(unsigned long long i = 0; i < numAtoms; i++, ++p, ++a) {
 		if(!setProgressValueIntermittent(i)) return {};
@@ -170,7 +170,7 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 
 	// Translate atomic numbers into element names.
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-	for(int a : typeProperty->constIntRange()) {
+	for(int a : typeProperty->crange<int>()) {
 		if(a >= 0 && a < sizeof(chemical_symbols)/sizeof(chemical_symbols[0]))
 			typeList->addTypeId(a, chemical_symbols[a]);
 		else
@@ -232,7 +232,7 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 					FloatType value;
 					if(!parseFloatType(token, s, value))
 						throw Exception(tr("Invalid value in line %1 of Cube file: \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
-					fieldQuantity->setFloatComponent(z * gridSize[0] * gridSize[1] + y * gridSize[0] + x, compnt, value);
+					fieldQuantity->set<FloatType>(z * gridSize[0] * gridSize[1] + y * gridSize[0] + x, compnt, value);
 					if(*s != '\0')
 						s++;
 				}

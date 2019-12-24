@@ -73,7 +73,7 @@ bool NearestNeighborFinder::prepare(const PropertyStorage& posProperty, const Si
 	// Compute bounding box of all particles (only for non-periodic directions).
 	Box3 boundingBox(Point3(0,0,0), Point3(1,1,1));
 	if(simCell.pbcFlags()[0] == false || simCell.pbcFlags()[1] == false || simCell.pbcFlags()[2] == false) {
-		for(const Point3& p : posProperty.constPoint3Range()) {
+		for(const Point3& p : posProperty.crange<Point3>()) {
 			Point3 reducedp = simCell.absoluteToReduced(p);
 			if(simCell.pbcFlags()[0] == false) {
 				if(reducedp.x() < boundingBox.minc.x()) boundingBox.minc.x() = reducedp.x();
@@ -109,8 +109,8 @@ bool NearestNeighborFinder::prepare(const PropertyStorage& posProperty, const Si
 	splitLeafNode(root->children[1]->children[1], 2);
 
 	// Insert particles into tree structure. Refine tree as needed.
-	const Point3* p = posProperty.constDataPoint3();
-	const int* sel = selectionProperty ? selectionProperty->constDataInt() : nullptr;
+	const Point3* p = posProperty.cdata<Point3>();
+	const int* sel = selectionProperty ? selectionProperty->cdata<int>() : nullptr;
 	atoms.resize(posProperty.size());
 	for(NeighborListAtom& a : atoms) {
 		if(promise && promise->isCanceled())

@@ -100,20 +100,20 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 	mesh().createFaceProperty(SurfaceMeshFaces::RegionProperty);
 
 	// Determine number of selected particles.
-	size_t npoly = std::count_if(_selection->constDataInt(), _selection->constDataInt() + _selection->size(), [](int s) { return s != 0; });
+	size_t npoly = boost::count_if(_selection->crange<int>(), [](int s) { return s != 0; });
 	task()->setProgressMaximum(npoly);
 
 	ParticleBondMap bondMap(_bondTopology, _bondPeriodicImages);
 
 	for(size_t i = 0; i < _positions->size(); i++) {
-		if(_selection->getInt(i) == 0) continue;
+		if(_selection->get<int>(i) == 0) continue;
 
 		// Collect the bonds that are part of the coordination polyhedron.
 		std::vector<Point3> bondVectors;
-		const Point3& p1 = _positions->getPoint3(i);
+		const Point3& p1 = _positions->get<Point3>(i);
 		for(Bond bond : bondMap.bondsOfParticle(i)) {
 			if(bond.index2 < _positions->size()) {
-				Vector3 delta = _positions->getPoint3(bond.index2) - p1;
+				Vector3 delta = _positions->get<Point3>(bond.index2) - p1;
 				if(bond.pbcShift.x()) delta += cell().matrix().column(0) * (FloatType)bond.pbcShift.x();
 				if(bond.pbcShift.y()) delta += cell().matrix().column(1) * (FloatType)bond.pbcShift.y();
 				if(bond.pbcShift.z()) delta += cell().matrix().column(2) * (FloatType)bond.pbcShift.z();
@@ -133,15 +133,15 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 
 	// Create the "Center particle" region property, which indicates the ID of the particle that is at the center of each coordination polyhedron.
 	PropertyPtr centerProperty = mesh().createRegionProperty(PropertyStorage::Int64, 1, 0, QStringLiteral("Center Particle"), false);
-	auto centerParticle = centerProperty->dataInt64();
+	auto centerParticle = centerProperty->data<qlonglong>();
 	for(size_t i = 0; i < _positions->size(); i++) {
-		if(_selection->getInt(i) == 0) continue;
+		if(_selection->get<int>(i) == 0) continue;
 		if(_particleIdentifiers)
-			*centerParticle++ = _particleIdentifiers->getInt64(i);
+			*centerParticle++ = _particleIdentifiers->get<qlonglong>(i);
 		else
 			*centerParticle++ = i;
 	}
-	OVITO_ASSERT(centerParticle == centerProperty->dataInt64() + centerProperty->size());
+	OVITO_ASSERT(centerParticle == centerProperty->data<qlonglong>() + centerProperty->size());
 }
 
 /******************************************************************************

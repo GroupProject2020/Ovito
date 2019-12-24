@@ -162,7 +162,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage
 
 	// Sort particles into bins.
 	particles.resize(positions.size());
-	const Point3* p = positions.constDataPoint3();
+	const Point3* p = positions.cdata<Point3>();
 	for(size_t pindex = 0; pindex < particles.size(); pindex++, ++p) {
 
 		if(promise && promise->isCanceled())
@@ -172,7 +172,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage
 		a.pos = *p;
 		a.pbcShift.setZero();
 
-		if(selectionProperty && selectionProperty->getInt(pindex) == 0)
+		if(selectionProperty && selectionProperty->get<int>(pindex) == 0)
 			continue;
 
 		// Determine the bin the atom is located in.

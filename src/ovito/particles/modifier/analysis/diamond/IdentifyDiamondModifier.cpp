@@ -95,14 +95,14 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 	// Determine four nearest neighbors of each atom and store vectors in the working array.
 	parallelFor(positions()->size(), *task(), [this, &neighborFinder, &neighLists](size_t index) {
 		// Skip particles that are not included in the analysis.
-		if(selection() && selection()->getInt(index) == 0)
+		if(selection() && selection()->get<int>(index) == 0)
 			return;
 		NearestNeighborFinder::Query<4> neighQuery(neighborFinder);
 		neighQuery.findNeighbors(index);
 		for(int i = 0; i < neighQuery.results().size(); i++) {
 			neighLists[index][i].vec = neighQuery.results()[i].delta;
 			neighLists[index][i].index = neighQuery.results()[i].index;
-			OVITO_ASSERT(!selection() || selection()->getInt(neighLists[index][i].index));
+			OVITO_ASSERT(!selection() || selection()->get<int>(neighLists[index][i].index));
 		}
 		for(int i = neighQuery.results().size(); i < 4; i++) {
 			neighLists[index][i].vec.setZero();
@@ -117,10 +117,10 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 	task()->setProgressText(tr("Identifying diamond structures"));
 	parallelFor(positions()->size(), *task(), [&neighLists, &output, this](size_t index) {
 		// Mark atom as 'other' by default.
-		output.setInt(index, OTHER);
+		output.set<int>(index, OTHER);
 
 		// Skip particles that are not included in the analysis.
-		if(selection() && selection()->getInt(index) == 0)
+		if(selection() && selection()->get<int>(index) == 0)
 			return;
 
 		const std::array<NeighborInfo,4>& nlist = neighLists[index];
@@ -179,45 +179,45 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 			else if(maxChainLength == 2) n422++;
 			else return;
 		}
-		if(n421 == 12 && typesToIdentify()[CUBIC_DIAMOND]) output.setInt(index, CUBIC_DIAMOND);
-		else if(n421 == 6 && n422 == 6 && typesToIdentify()[HEX_DIAMOND]) output.setInt(index, HEX_DIAMOND);
+		if(n421 == 12 && typesToIdentify()[CUBIC_DIAMOND]) output.set<int>(index, CUBIC_DIAMOND);
+		else if(n421 == 6 && n422 == 6 && typesToIdentify()[HEX_DIAMOND]) output.set<int>(index, HEX_DIAMOND);
 	});
 
 	// Mark first neighbors of crystalline atoms.
 	for(size_t index = 0; index < output.size(); index++) {
-		int ctype = output.getInt(index);
+		int ctype = output.get<int>(index);
 		if(ctype != CUBIC_DIAMOND && ctype != HEX_DIAMOND)
 			continue;
-		if(selection() && selection()->getInt(index) == 0)
+		if(selection() && selection()->get<int>(index) == 0)
 			continue;
 
 		const std::array<NeighborInfo,4>& nlist = neighLists[index];
 		for(size_t i = 0; i < 4; i++) {
 			OVITO_ASSERT(nlist[i].index != -1);
-			if(output.getInt(nlist[i].index) == OTHER) {
+			if(output.get<int>(nlist[i].index) == OTHER) {
 				if(ctype == CUBIC_DIAMOND)
-					output.setInt(nlist[i].index, CUBIC_DIAMOND_FIRST_NEIGH);
+					output.set<int>(nlist[i].index, CUBIC_DIAMOND_FIRST_NEIGH);
 				else
-					output.setInt(nlist[i].index, HEX_DIAMOND_FIRST_NEIGH);
+					output.set<int>(nlist[i].index, HEX_DIAMOND_FIRST_NEIGH);
 			}
 		}
 	}
 
 	// Mark second neighbors of crystalline atoms.
 	for(size_t index = 0; index < output.size(); index++) {
-		int ctype = output.getInt(index);
+		int ctype = output.get<int>(index);
 		if(ctype != CUBIC_DIAMOND_FIRST_NEIGH && ctype != HEX_DIAMOND_FIRST_NEIGH)
 			continue;
-		if(selection() && selection()->getInt(index) == 0)
+		if(selection() && selection()->get<int>(index) == 0)
 			continue;
 
 		const std::array<NeighborInfo,4>& nlist = neighLists[index];
 		for(size_t i = 0; i < 4; i++) {
-			if(nlist[i].index != -1 && output.getInt(nlist[i].index) == OTHER) {
+			if(nlist[i].index != -1 && output.get<int>(nlist[i].index) == OTHER) {
 				if(ctype == CUBIC_DIAMOND_FIRST_NEIGH)
-					output.setInt(nlist[i].index, CUBIC_DIAMOND_SECOND_NEIGH);
+					output.set<int>(nlist[i].index, CUBIC_DIAMOND_SECOND_NEIGH);
 				else
-					output.setInt(nlist[i].index, HEX_DIAMOND_SECOND_NEIGH);
+					output.set<int>(nlist[i].index, HEX_DIAMOND_SECOND_NEIGH);
 			}
 		}
 	}

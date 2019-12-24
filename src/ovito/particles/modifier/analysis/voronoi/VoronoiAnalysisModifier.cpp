@@ -162,10 +162,10 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		_centerParticleProperty = _polyhedraMesh.createRegionProperty(PropertyStorage::Int64, 1, 0, QStringLiteral("Particle Identifier"), true).get();
 		if(_particleIdentifiers) {
 			OVITO_ASSERT(_centerParticleProperty->size() == _particleIdentifiers->size());
-			std::copy(_particleIdentifiers->constDataInt64(), _particleIdentifiers->constDataInt64() + _centerParticleProperty->size(), _centerParticleProperty->dataInt64());
+			boost::copy(_particleIdentifiers->crange<qlonglong>(), _centerParticleProperty->data<qlonglong>());
 		}
 		else {
-			std::iota(_centerParticleProperty->dataInt64(), _centerParticleProperty->dataInt64() + _centerParticleProperty->size(), (qlonglong)1);
+			boost::algorithm::iota_n(_centerParticleProperty->data<qlonglong>(), (qlonglong)1, _centerParticleProperty->size());
 		}
 
 		// Create the "Volume" region property, which stores the volume of each Voronoi cell.
@@ -200,7 +200,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	{
 		// Compute cell volume.
 		double vol = v.volume();
-		atomicVolumes()->setFloat(index, (FloatType)vol);
+		atomicVolumes()->set<FloatType>(index, (FloatType)vol);
 
 		// Accumulate total volume of Voronoi cells.
 		// Loop is for lock-free write access to shared max counter.
@@ -222,9 +222,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		SurfaceMeshData::vertex_index meshVertexBaseIndex;
 		SurfaceMeshData::region_index meshRegionIndex = index;
 		if(_computePolyhedra) {
-			const Point3& center = _positions->getPoint3(index);
+			const Point3& center = _positions->get<Point3>(index);
 			QMutexLocker locker(bondMutex);
-			_cellVolumeProperty->setFloat(meshRegionIndex, vol);
+			_cellVolumeProperty->set<FloatType>(meshRegionIndex, vol);
 			meshVertexBaseIndex = _polyhedraMesh.vertexCount();
 			const double* ptsp = v.pts;
 			for(int i = 0; i < v.p; i++, ptsp += 3) {
@@ -249,7 +249,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 					if(_computePolyhedra) {
 						QMutexLocker locker(bondMutex);
 						meshFace = _polyhedraMesh.createFace({}, meshRegionIndex);
-						_adjacentCellProperty->setInt(meshFace, neighbor_id);
+						_adjacentCellProperty->set<int>(meshFace, neighbor_id);
 						_polyhedraMesh.createEdge(meshVertexBaseIndex + i, meshVertexBaseIndex + k, meshFace);
 					}
 
@@ -293,7 +293,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 							localVoronoiIndex[faceOrder]++;
 						if(_computeBonds && neighbor_id >= 0 && neighbor_id != index) {
 							OVITO_ASSERT(neighbor_id < _positions->size());
-							Vector3 delta = _positions->getPoint3(index) - _positions->getPoint3(neighbor_id);
+							Vector3 delta = _positions->get<Point3>(index) - _positions->get<Point3>(neighbor_id);
 							Vector3I pbcShift = Vector3I::Zero();
 							for(size_t dim = 0; dim < 3; dim++) {
 								if(_simCell.pbcFlags()[dim])
@@ -311,15 +311,15 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		}
 
 		// Store computed result.
-		coordinationNumbers()->setInt(index, coordNumber);
+		coordinationNumbers()->set<int>(index, coordNumber);
 		if(maxFaceOrders()) {
-			maxFaceOrders()->setInt(index, localMaxFaceOrder);
+			maxFaceOrders()->set<int>(index, localMaxFaceOrder);
 			voronoiBufferIndex.push_back(index);
 			voronoiBuffer.insert(voronoiBuffer.end(), localVoronoiIndex, localVoronoiIndex + std::min(localMaxFaceOrder, FaceOrderStorageLimit));
 		}
 		if(_computePolyhedra) {
-			_surfaceAreaProperty->setFloat(meshRegionIndex, cellFaceArea);
-			_cellCoordinationProperty->setInt(meshRegionIndex, coordNumber);
+			_surfaceAreaProperty->set<FloatType>(meshRegionIndex, cellFaceArea);
+			_cellCoordinationProperty->set<int>(meshRegionIndex, coordNumber);
 		}
 
 		// Keep track of the maximum number of edges per face.
@@ -358,9 +358,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			// Insert particles into Voro++ container.
 			for(size_t index = 0; index < _positions->size(); index++) {
 				// Skip unselected particles (if requested).
-				if(_selection && _selection->getInt(index) == 0)
+				if(_selection && _selection->get<int>(index) == 0)
 					continue;
-				const Point3& p = _positions->getPoint3(index);
+				const Point3& p = _positions->get<Point3>(index);
 				voroContainer.put(index, p.x(), p.y(), p.z());
 				count++;
 			}
@@ -394,9 +394,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			// Insert particles into Voro++ container.
 			for(size_t index = 0; index < _positions->size(); index++) {
 				// Skip unselected particles (if requested).
-				if(_selection && _selection->getInt(index) == 0)
+				if(_selection && _selection->get<int>(index) == 0)
 					continue;
-				const Point3& p = _positions->getPoint3(index);
+				const Point3& p = _positions->get<Point3>(index);
 				voroContainer.put(index, p.x(), p.y(), p.z(), _radii[index]);
 				count++;
 			}
@@ -462,7 +462,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 				if((index % 256) == 0) promise.incrementProgressValue(256);
 
 				// Skip unselected particles (if requested).
-				if(_selection && _selection->getInt(index) == 0)
+				if(_selection && _selection->get<int>(index) == 0)
 					continue;
 
 				// Build Voronoi cell.
@@ -476,10 +476,10 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 				for(size_t dim = 0; dim < 3; dim++) {
 					if(!_simCell.pbcFlags()[dim]) {
 						double r;
-						r = 2 * planeNormals[dim].dot(corner2 - _positions->getPoint3(index));
+						r = 2 * planeNormals[dim].dot(corner2 - _positions->get<Point3>(index));
 						if(r <= 0) skipParticle = true;
 						v.nplane(planeNormals[dim].x() * r, planeNormals[dim].y() * r, planeNormals[dim].z() * r, r*r, -1);
-						r = 2 * planeNormals[dim].dot(_positions->getPoint3(index) - corner1);
+						r = 2 * planeNormals[dim].dot(_positions->get<Point3>(index) - corner1);
 						if(r <= 0) skipParticle = true;
 						v.nplane(-planeNormals[dim].x() * r, -planeNormals[dim].y() * r, -planeNormals[dim].z() * r, r*r, -1);
 					}
@@ -492,7 +492,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 				int nvisits = 0;
 				auto visitFunc = [this, &v, &nvisits, index](const NearestNeighborFinder::Neighbor& n, FloatType& mrs) {
 					// Skip unselected particles (if requested).
-					OVITO_ASSERT(!_selection || _selection->getInt(n.index));
+					OVITO_ASSERT(!_selection || _selection->get<int>(n.index));
 					FloatType rs = n.distanceSq;
 					if(!_radii.empty())
 						rs += _radii[index] - _radii[n.index];
@@ -522,9 +522,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		_voronoiIndices = std::make_shared<PropertyStorage>(_positions->size(), PropertyStorage::Int, componentCount, 0, QStringLiteral("Voronoi Index"), true);
 		auto indexData = voronoiBuffer.cbegin();
 		for(size_t particleIndex : voronoiBufferIndex) {
-			int c = std::min(maxFaceOrders()->getInt(particleIndex), FaceOrderStorageLimit);
+			int c = std::min(maxFaceOrders()->get<int>(particleIndex), FaceOrderStorageLimit);
 			for(int i = 0; i < c; i++) {
-				_voronoiIndices->setIntComponent(particleIndex, i, *indexData++);
+				_voronoiIndices->set<int>(particleIndex, i, *indexData++);
 			}
 		}
 		OVITO_ASSERT(indexData == voronoiBuffer.cend());
@@ -557,7 +557,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			SurfaceMeshData::region_index region = _polyhedraMesh.faceRegion(face);
 
 			// We know for each Voronoi face which Voronoi polyhedron is on the other side. 
-			SurfaceMeshData::region_index adjacentRegion = _adjacentCellProperty->getInt(face);
+			SurfaceMeshData::region_index adjacentRegion = _adjacentCellProperty->get<int>(face);
 			// Skip faces that are at the outer surface.
 			if(adjacentRegion < 0) continue;
 			// Skip faces that belong to a periodic polyhedron.	
@@ -580,7 +580,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 					// Check if vertex has an adjacent face leading back to the current Voronoi cell.
 					bool isCandidateVertex = false;
 					for(SurfaceMeshData::edge_index adj_edge = _polyhedraMesh.firstVertexEdge(other_vertex); adj_edge != HalfEdgeMesh::InvalidIndex; adj_edge = _polyhedraMesh.nextVertexEdge(adj_edge)) {
-						if(_adjacentCellProperty->getInt(_polyhedraMesh.adjacentFace(adj_edge)) == region) {
+						if(_adjacentCellProperty->get<int>(_polyhedraMesh.adjacentFace(adj_edge)) == region) {
 							isCandidateVertex = true;
 							break;
 						}
@@ -657,7 +657,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			if(task()->isCanceled()) return;
 
 			// We know for each Voronoi face which Voronoi polyhedron is on the other side.
-			SurfaceMeshData::region_index adjacentRegion = _adjacentCellProperty->getInt(face);
+			SurfaceMeshData::region_index adjacentRegion = _adjacentCellProperty->get<int>(face);
 			// Skip faces that belong to the outer surface.
 			if(adjacentRegion < 0) continue;
 			// Skip faces that belong to a periodic polyhedron.	

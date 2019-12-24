@@ -296,8 +296,8 @@ std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotDat
 	// Normalize function values.
 	if(normalization) {
 		OVITO_ASSERT(normalization->size() == clonedSeries->elementCount());
-		auto pf = normalization->constDataFloat();
-		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->floatRange()) {
+		auto pf = normalization->cdata<FloatType>();
+		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->range<FloatType>()) {
 			FloatType factor = *pf++;
 			v = (factor > FloatType(1e-12)) ? (v / factor) : FloatType(0);
 		}
@@ -305,12 +305,12 @@ std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotDat
 
 	// Scale and shift function values.
 	if(fac != 1 || offset != 0) {
-		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->floatRange())
+		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->range<FloatType>())
 			v = fac * (v - offset);
 	}
 
 	// Determine value range.
-	auto minmax = std::minmax_element(clonedSeries->getY()->constDataFloat(), clonedSeries->getY()->constDataFloat() + clonedSeries->getY()->size());
+	auto minmax = std::minmax_element(clonedSeries->getY()->cdata<FloatType>(), clonedSeries->getY()->cdata<FloatType>() + clonedSeries->getY()->size());
 
 	// Hand data series over to plot widget.
 	plotWidget->setSeries(std::move(clonedSeries));
@@ -396,10 +396,10 @@ void SpatialCorrelationFunctionModifierEditor::plotAllData()
 		QVector<QPointF> plotData(numberOfDataPoints);
 		bool normByRDF = modifier->normalizeRealSpaceByRDF();
 		for(size_t i = 0; i < numberOfDataPoints; i++) {
-			FloatType xValue = xData->getFloat(i);
-			FloatType yValue = yData->getFloat(i);
+			FloatType xValue = xData->get<FloatType>(i);
+			FloatType yValue = yData->get<FloatType>(i);
 			if(normByRDF)
-				yValue = rdfData->getFloat(i) > 1e-12 ? (yValue / rdfData->getFloat(i)) : 0.0;
+				yValue = rdfData->get<FloatType>(i) > 1e-12 ? (yValue / rdfData->get<FloatType>(i)) : 0.0;
 			yValue = uniformFactor * (yValue - offset);
 			plotData[i].rx() = xValue;
 			plotData[i].ry() = yValue;

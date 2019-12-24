@@ -95,15 +95,15 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 	// Compute displacement vectors.
 	if(affineMapping() != NO_MAPPING) {
 		parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
-			Vector3* u = displacements()->dataVector3() + startIndex;
-			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
-			const Point3* p = positions()->constDataPoint3() + startIndex;
+			Vector3* u = displacements()->data<Vector3>(startIndex);
+			FloatType* umag = displacementMagnitudes()->data<FloatType>(startIndex);
+			const Point3* p = positions()->cdata<Point3>(startIndex);
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			const AffineTransformation& reduced_to_absolute = (affineMapping() == TO_REFERENCE_CELL) ? refCell().matrix() : cell().matrix();
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
 				if(promise.isCanceled()) return;
 				Point3 reduced_current_pos = cell().inverseMatrix() * (*p);
-				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositions()->getPoint3(*index);
+				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositions()->get<Point3>(*index);
 				Vector3 delta = reduced_current_pos - reduced_reference_pos;
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
@@ -118,13 +118,13 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 	}
 	else {
 		parallelForChunks(displacements()->size(), *task(), [this] (size_t startIndex, size_t count, Task& promise) {
-			Vector3* u = displacements()->dataVector3() + startIndex;
-			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
-			const Point3* p = positions()->constDataPoint3() + startIndex;
+			Vector3* u = displacements()->data<Vector3>(startIndex);
+			FloatType* umag = displacementMagnitudes()->data<FloatType>(startIndex);
+			const Point3* p = positions()->cdata<Point3>(startIndex);
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
 				if(promise.isCanceled()) return;
-				*u = *p - refPositions()->getPoint3(*index);
+				*u = *p - refPositions()->get<Point3>(*index);
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
 						if(refCell().pbcFlags()[k]) {

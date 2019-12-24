@@ -54,7 +54,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 		ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 
 		// Create a modifiable copy of the particle position.
-		PropertyObject* posProperty = outputParticles->createProperty(ParticlesObject::PositionProperty, true);
+		PropertyObject* posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty);
 
 		// Determine transformation matrix.
 		AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
@@ -66,8 +66,8 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 
 		if(mod->selectionOnly()) {
 			if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
-				const int* s = selProperty->constDataInt();
-				for(Point3& p : posProperty->point3Range()) {
+				const int* s = selProperty->cdata<int>();
+				for(Point3& p : posProperty->range<Point3>()) {
 					if(*s++)
 						p = tm * p;
 				}
@@ -78,11 +78,11 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 			// simply add vectors instead of computing full matrix products.
 			Vector3 translation = tm.translation();
 			if(tm == AffineTransformation::translation(translation)) {
-				for(Point3& p : posProperty->point3Range())
+				for(Point3& p : posProperty->range<Point3>())
 					p += translation;
 			}
 			else {
-				for(Point3& p : posProperty->point3Range())
+				for(Point3& p : posProperty->range<Point3>())
 					p = tm * p;
 			}
 		}
@@ -141,13 +141,13 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 				OVITO_ASSERT(property->dataType() == PropertyStorage::Float);
 				OVITO_ASSERT(property->componentCount() == 3);
 				if(!mod->selectionOnly()) {
-					for(Vector3& v : property->vector3Range())
+					for(Vector3& v : property->range<Vector3>())
 						v = tm * v;
 				}
 				else {
 					if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
-						const int* s = selProperty->constDataInt();
-						for(Vector3& v : property->vector3Range()) {
+						const int* s = selProperty->cdata<int>();
+						for(Vector3& v : property->range<Vector3>()) {
 							if(*s++)
 								v = tm * v;
 						}

@@ -125,12 +125,12 @@ void PropertyObject::replicate(size_t n, bool replicateValues)
 		// Replicate data values N times.
 		size_t chunkSize = stride() * oldData->size();
 		for(size_t i = 0; i < n; i++) {
-			std::memcpy((char*)data() + i * chunkSize, oldData->cdata<void>(), chunkSize);
+			std::memcpy((char*)data<void>() + i * chunkSize, oldData->cdata<void>(), chunkSize);
 		}
 	}
 	else {
 		// Copy just one replica of the data from the old memory buffer to the new one.
-		std::memcpy((char*)data(), oldData->cdata<void>(), stride() * oldData->size());
+		std::memcpy((char*)data<void>(), oldData->cdata<void>(), stride() * oldData->size());
 	}
 }
 
@@ -179,7 +179,7 @@ std::tuple<std::map<int,int>, ConstPropertyPtr> PropertyObject::generateContiguo
 	PropertyPtr remappedArray;
 	if(remappingRequired) {
 		remappedArray = std::make_shared<PropertyStorage>(*storage());
-		for(int& id : remappedArray->intRange())
+		for(int& id : remappedArray->range<int>())
 			id = oldToNewMap[id];
 	}
 	else {

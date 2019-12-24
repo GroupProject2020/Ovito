@@ -88,8 +88,8 @@ public:
 		Bond dereference() const {
 			OVITO_ASSERT(_currentIndex < _bondMap->_nextBond.size());
 			size_t bindex = _currentIndex / 2;
-			Bond bond = { (size_t)_bondMap->_bondTopology->getInt64Component(bindex, 0), (size_t)_bondMap->_bondTopology->getInt64Component(bindex, 1),
-								_bondMap->_bondPeriodicImages ? _bondMap->_bondPeriodicImages->getVector3I(bindex) : Vector3I::Zero() };
+			Bond bond = { (size_t)_bondMap->_bondTopology->get<qlonglong>(bindex, 0), (size_t)_bondMap->_bondTopology->get<qlonglong>(bindex, 1),
+								_bondMap->_bondPeriodicImages ? _bondMap->_bondPeriodicImages->get<Vector3I>(bindex) : Vector3I::Zero() };
 			if(_currentIndex & 1) {
 				std::swap(bond.index1, bond.index2);
 				bond.pbcShift = -bond.pbcShift;
@@ -132,13 +132,13 @@ public:
 		size_t index = (bond.index1 < _startIndices.size()) ? _startIndices[bond.index1] : endOfListValue();
 		for(; index != endOfListValue(); index = _nextBond[index]) {
 			if((index & 1) == 0) {
-				OVITO_ASSERT(_bondTopology->getInt64Component(index/2, 0) == bond.index1);
-				if(_bondTopology->getInt64Component(index/2, 1) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->getVector3I(index/2) == bond.pbcShift))
+				OVITO_ASSERT(_bondTopology->get<qlonglong>(index/2, 0) == bond.index1);
+				if(_bondTopology->get<qlonglong>(index/2, 1) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->get<Vector3I>(index/2) == bond.pbcShift))
 					return index/2;
 			}
 			else {
-				OVITO_ASSERT(_bondTopology->getInt64Component(index/2, 1) == bond.index1);
-				if(_bondTopology->getInt64Component(index/2, 0) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->getVector3I(index/2) == -bond.pbcShift))
+				OVITO_ASSERT(_bondTopology->get<qlonglong>(index/2, 1) == bond.index1);
+				if(_bondTopology->get<qlonglong>(index/2, 0) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->get<Vector3I>(index/2) == -bond.pbcShift))
 					return index/2;
 			}
 		}

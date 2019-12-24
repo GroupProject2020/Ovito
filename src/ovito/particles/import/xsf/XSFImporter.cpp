@@ -181,17 +181,17 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 
 			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
 			frameData->addParticleProperty(posProperty);
-			std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
+			boost::copy(coords, posProperty->data<Point3>());
 
 			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
 			frameData->addParticleProperty(typeProperty);
-			std::copy(types.begin(), types.end(), typeProperty->dataInt());
+			boost::copy(types, typeProperty->data<int>());
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
 			if(forces.size() != 0) {
 				PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::ForceProperty, false);
 				frameData->addParticleProperty(forceProperty);
-				std::copy(forces.begin(), forces.end(), forceProperty->dataVector3());
+				boost::copy(forces, forceProperty->data<Vector3>());
 			}
 
 			frameData->setStatus(tr("%1 atoms").arg(coords.size()));
@@ -199,7 +199,7 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			// If the input file does not contain simulation cell info,
 			// Use bounding box of particles as simulation cell.
 			Box3 boundingBox;
-			boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
+			boundingBox.addPoints(posProperty->crange<Point3>());
 			frameData->simulationCell().setMatrix(AffineTransformation(
 					Vector3(boundingBox.sizeX(), 0, 0),
 					Vector3(0, boundingBox.sizeY(), 0),
@@ -319,7 +319,7 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			frameData->simulationCell().setMatrix(cell);
 
 			PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 1, 0, name, false);
-			FloatType* data = fieldQuantity->dataFloat();
+			FloatType* data = fieldQuantity->data<FloatType>();
 			setProgressMaximum(fieldQuantity->size());
 			const char* s = "";
 			for(size_t i = 0; i < fieldQuantity->size(); i++, ++data) {

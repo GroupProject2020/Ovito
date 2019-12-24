@@ -113,7 +113,7 @@ void ChillPlusModifier::ChillPlusEngine::perform()
 
     // For each particle, count the bonds and determine structure
     parallelFor(particleCount, *task(), [this, &neighborListBuilder, &output](size_t index) {
-        output.setInt(index, determineStructure(neighborListBuilder, index, typesToIdentify()));
+        output.set<int>(index, determineStructure(neighborListBuilder, index, typesToIdentify()));
     });
 }
 

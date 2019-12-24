@@ -108,8 +108,8 @@ void CoordinationAnalysisModifierEditor::plotRDF()
 			double minX = 0;
 			for(size_t i = 0; i < rdfY->size(); i++) {
 				for(size_t cmpnt = 0; cmpnt < rdfY->componentCount(); cmpnt++) {
-					if(rdfY->getFloatComponent(i, cmpnt) != 0) {
-						minX = series->getXStorage()->getFloat(i);
+					if(rdfY->get<FloatType>(i, cmpnt) != 0) {
+						minX = series->getXStorage()->get<FloatType>(i);
 						break;
 					}
 				}

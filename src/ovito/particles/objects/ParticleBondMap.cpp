@@ -35,8 +35,8 @@ ParticleBondMap::ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr
 	_nextBond(_bondTopology->size()*2, _bondTopology->size()*2)
 {
 	for(size_t bondIndex = _bondTopology->size(); bondIndex-- != 0; ) {
-		size_t index1 = _bondTopology->getInt64Component(bondIndex, 0);
-		size_t index2 = _bondTopology->getInt64Component(bondIndex, 1);
+		size_t index1 = _bondTopology->get<qlonglong>(bondIndex, 0);
+		size_t index2 = _bondTopology->get<qlonglong>(bondIndex, 1);
 		if(index1 >= _startIndices.size())
 			_startIndices.resize(index1 + 1, endOfListValue());
 		if(index2 >= _startIndices.size())

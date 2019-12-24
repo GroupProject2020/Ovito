@@ -428,7 +428,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(posProperty && posProperty->size() > 0) {
 		Box3 boundingBox;
-		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
+		boundingBox.addPoints(posProperty->crange<Point3>());
 
 		// Find out if coordinates are given in reduced format and need to be rescaled to absolute format.
 		// Check if all atom coordinates are within the [0,1] interval.
@@ -437,7 +437,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 		if(Box3(Point3(-0.01f), Point3(1.01f)).containsBox(boundingBox)) {
 			// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 			const AffineTransformation simCell = frameData->simulationCell().matrix();
-			for(Point3& p : posProperty->point3Range())
+			for(Point3& p : posProperty->range<Point3>())
 				p = simCell * p;
 		}
 	}

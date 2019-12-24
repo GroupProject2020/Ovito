@@ -127,7 +127,7 @@ ConstPropertyPtr DataSeriesObject::getXStorage() const
 		auto xdata = OOClass().createStandardStorage(elementCount(), XProperty, false);
 		FloatType binSize = (intervalEnd() - intervalStart()) / xdata->size();
 		FloatType x = intervalStart() + binSize * FloatType(0.5);
-		for(FloatType& v : xdata->floatRange()) {
+		for(FloatType& v : xdata->range<FloatType>()) {
 			v = x;
 			x += binSize;
 		}

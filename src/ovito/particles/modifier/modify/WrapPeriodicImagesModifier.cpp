@@ -70,15 +70,15 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 			outputParticles->makeBondsMutable();
 			PropertyObject* periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
 			for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
-				size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
-				size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+				size_t particleIndex1 = topologyProperty->get<qlonglong>(bondIndex, 0);
+				size_t particleIndex2 = topologyProperty->get<qlonglong>(bondIndex, 1);
 				if(particleIndex1 >= posProperty->size() || particleIndex2 >= posProperty->size())
 					continue;
-				const Point3& p1 = posProperty->getPoint3(particleIndex1);
-				const Point3& p2 = posProperty->getPoint3(particleIndex2);
+				const Point3& p1 = posProperty->get<Point3>(particleIndex1);
+				const Point3& p2 = posProperty->get<Point3>(particleIndex2);
 				for(size_t dim = 0; dim < 3; dim++) {
 					if(pbc[dim]) {
-						periodicImageProperty->setIntComponent(bondIndex, dim, periodicImageProperty->getIntComponent(bondIndex, dim)
+						periodicImageProperty->set<int>(bondIndex, dim, periodicImageProperty->get<int>(bondIndex, dim)
 							- (int)std::floor(inverseSimCell.prodrow(p1, dim))
 							+ (int)std::floor(inverseSimCell.prodrow(p2, dim)));
 					}
@@ -90,7 +90,7 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 	// Wrap particles coordinates.
 	for(size_t dim = 0; dim < 3; dim++) {
 		if(pbc[dim]) {
-			for(Point3& p : posProperty->point3Range()) {
+			for(Point3& p : posProperty->range<Point3>()) {
 				if(FloatType n = std::floor(inverseSimCell.prodrow(p, dim)))
 					p -= simCell.column(dim) * n;
 			}

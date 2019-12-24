@@ -393,7 +393,7 @@ private:
 					size_t vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 					OVITO_ASSERT(vertexIndex < vertexMap.size());
 					if(vertexMap[vertexIndex] == HalfEdgeMesh::InvalidIndex) {
-						vertexMap[vertexIndex] = _mesh.createVertex(_positions.getPoint3(vertexIndex));
+						vertexMap[vertexIndex] = _mesh.createVertex(_positions.get<Point3>(vertexIndex));
 						prepareMeshVertexFunc(vertexMap[vertexIndex], vertexIndex);
 					}
 					facetVertices[v] = vertexMap[vertexIndex];

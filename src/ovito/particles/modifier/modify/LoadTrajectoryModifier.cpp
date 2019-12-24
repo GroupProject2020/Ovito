@@ -111,7 +111,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 			// Build map of particle identifiers in trajectory dataset.
 			std::map<qlonglong, size_t> refMap;
 			size_t index = 0;
-			auto id = trajIdentifierProperty->constDataInt64();
+			auto id = trajIdentifierProperty->cdata<qlonglong>();
 			auto id_end = id + trajIdentifierProperty->size();
 			for(; id != id_end; ++id, ++index) {
 				if(refMap.insert(std::make_pair(*id, index)).second == false)
@@ -119,20 +119,18 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 			}
 
 			// Check for duplicate identifiers in topology dataset.
-			std::vector<size_t> idSet(identifierProperty->constDataInt64(), identifierProperty->constDataInt64() + identifierProperty->size());
+			std::vector<size_t> idSet(identifierProperty->cdata<qlonglong>(), identifierProperty->cdata<qlonglong>() + identifierProperty->size());
 			std::sort(idSet.begin(), idSet.end());
 			if(std::adjacent_find(idSet.begin(), idSet.end()) != idSet.end())
 				modApp->throwException(tr("Particles with duplicate identifiers detected in topology dataset."));
 
 			// Build index map.
-			index = 0;
-			id = identifierProperty->constDataInt64();
+			id = identifierProperty->cdata<qlonglong>();
 			for(auto& mappedIndex : indexToIndexMap) {
 				auto iter = refMap.find(*id);
 				if(iter == refMap.end())
 					modApp->throwException(tr("Particle id %1 from topology dataset not found in trajectory dataset.").arg(*id));
 				mappedIndex = iter->second;
-				index++;
 				++id;
 			}
 		}
@@ -192,16 +190,16 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 					// Wrap bonds crossing a periodic boundary by resetting their PBC shift vectors.
 					SimulationCell cell = trajectoryCell->data();
 					for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
-						size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
-						size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+						size_t particleIndex1 = topologyProperty->get<qlonglong>(bondIndex, 0);
+						size_t particleIndex2 = topologyProperty->get<qlonglong>(bondIndex, 1);
 						if(particleIndex1 >= outputPosProperty->size() || particleIndex2 >= outputPosProperty->size())
 							continue;
-						const Point3& p1 = outputPosProperty->getPoint3(particleIndex1);
-						const Point3& p2 = outputPosProperty->getPoint3(particleIndex2);
+						const Point3& p1 = outputPosProperty->get<Point3>(particleIndex1);
+						const Point3& p2 = outputPosProperty->get<Point3>(particleIndex2);
 						Vector3 delta = p1 - p2;
 						for(int dim = 0; dim < 3; dim++) {
 							if(pbc[dim]) {
-								periodicImageProperty->setIntComponent(bondIndex, dim, (int)floor(inverseSimCell.prodrow(delta, dim) + FloatType(0.5)));
+								periodicImageProperty->set<int>(bondIndex, dim, (int)floor(inverseSimCell.prodrow(delta, dim) + FloatType(0.5)));
 							}
 						}
 					}

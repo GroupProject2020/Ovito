@@ -326,9 +326,9 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 	count[1] = atomsCount;
 	count[2] = 3;
 #ifdef FLOATTYPE_FLOAT
-	NCERR(nc_put_vara_float(_ncid, _coords_var, start, count, posProperty->constDataFloat()));
+	NCERR(nc_put_vara_float(_ncid, _coords_var, start, count, posProperty->cdata<FloatType>(0,0)));
 #else
-	NCERR(nc_put_vara_double(_ncid, _coords_var, start, count, posProperty->constDataFloat()));
+	NCERR(nc_put_vara_double(_ncid, _coords_var, start, count, posProperty->cdata<FloatType>(0,0)));
 #endif
 
 	// Write out other particle properties.
@@ -347,16 +347,16 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 		// Write property data to file.
 		count[2] = outColumn.componentCount;
 		if(outColumn.dataType == PropertyStorage::Int) {
-			NCERR(nc_put_vara_int(_ncid, outColumn.ncvar, start, count, prop->constDataInt()));
+			NCERR(nc_put_vara_int(_ncid, outColumn.ncvar, start, count, prop->cdata<int>(0,0)));
 		}
 		else if(outColumn.dataType == PropertyStorage::Int64) {
-			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, prop->constDataInt64()));
+			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, prop->cdata<qlonglong>(0,0)));
 		}
 		else if(outColumn.dataType == PropertyStorage::Float) {
 #ifdef FLOATTYPE_FLOAT
-			NCERR(nc_put_vara_float(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));
+			NCERR(nc_put_vara_float(_ncid, outColumn.ncvar, start, count, prop->cdata<FloatType>(0,0)));
 #else
-			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));
+			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, prop->cdata<FloatType>(0,0)));
 #endif
 		}
 

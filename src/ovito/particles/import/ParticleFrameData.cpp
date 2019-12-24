@@ -72,7 +72,7 @@ void ParticleFrameData::TypeList::sortTypesByName(const PropertyPtr& typePropert
 
 	// Remap particle/bond type IDs.
 	if(typeProperty) {
-		for(int& t : typeProperty->intRange()) {
+		for(int& t : typeProperty->range<int>()) {
 			OVITO_ASSERT(t >= 1 && t < mapping.size());
 			t = mapping[t];
 		}
@@ -106,13 +106,13 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 		return;
 
 	for(size_t bondIndex = 0; bondIndex < bondTopologyProperty->size(); bondIndex++) {
-		size_t index1 = bondTopologyProperty->getInt64Component(bondIndex, 0);
-		size_t index2 = bondTopologyProperty->getInt64Component(bondIndex, 1);
+		size_t index1 = bondTopologyProperty->get<qlonglong>(bondIndex, 0);
+		size_t index2 = bondTopologyProperty->get<qlonglong>(bondIndex, 1);
 		OVITO_ASSERT(index1 < posProperty->size() && index2 < posProperty->size());
-		Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(index2) - posProperty->getPoint3(index1));
+		Vector3 delta = simulationCell().absoluteToReduced(posProperty->get<Point3>(index2) - posProperty->get<Point3>(index1));
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(simulationCell().pbcFlags()[dim])
-				bondPeriodicImageProperty->setIntComponent(bondIndex, dim, -(int)std::floor(delta[dim] + FloatType(0.5)));
+				bondPeriodicImageProperty->set<int>(bondIndex, dim, -(int)std::floor(delta[dim] + FloatType(0.5)));
 		}
 	}
 }
@@ -433,7 +433,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 
 	// Remap particle types.
 	if(!typeRemapping.empty()) {
-		for(int& t : typeProperty->intRange()) {
+		for(int& t : typeProperty->range<int>()) {
 			for(const auto& mapping : typeRemapping) {
 				if(t == mapping.first) {
 					t = mapping.second;
@@ -456,7 +456,7 @@ void ParticleFrameData::sortParticlesById()
 	// Determine new permutation of particles where they are sorted by ascending ID.
 	std::vector<size_t> permutation(ids->size());
 	std::iota(permutation.begin(), permutation.end(), (size_t)0);
-	std::sort(permutation.begin(), permutation.end(), [id = ids->constDataInt64()](size_t a, size_t b) { return id[a] < id[b]; });
+	std::sort(permutation.begin(), permutation.end(), [id = ids->cdata<qlonglong>()](size_t a, size_t b) { return id[a] < id[b]; });
 	std::vector<size_t> invertedPermutation(ids->size());
 	bool isAlreadySorted = true;
 	for(size_t i = 0; i < permutation.size(); i++) {
@@ -473,7 +473,7 @@ void ParticleFrameData::sortParticlesById()
 
 	// Update bond topology data to match new particle ordering.
 	if(PropertyPtr bondTopology = findStandardBondProperty(BondsObject::TopologyProperty)) {
-		auto particleIndex = bondTopology->dataInt64();
+		auto particleIndex = bondTopology->data<qlonglong>(0,0);
 		auto particleIndexEnd = particleIndex + bondTopology->size() * 2;
 		for(; particleIndex != particleIndexEnd; ++particleIndex) {
 			if(*particleIndex >= 0 && (size_t)*particleIndex < invertedPermutation.size())

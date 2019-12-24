@@ -116,7 +116,7 @@ void ElasticStrainEngine::perform()
 					int neighborAtomIndex = _structureAnalysis->getNeighbor(particleIndex, n);
 					// Add vector pair to matrices for computing the elastic deformation gradient.
 					Vector3 latticeVector = idealUnitCellTM * _structureAnalysis->neighborLatticeVector(particleIndex, n);
-					const Vector3& spatialVector = cell().wrapVector(positions()->getPoint3(neighborAtomIndex) - positions()->getPoint3(particleIndex));
+					const Vector3& spatialVector = cell().wrapVector(positions()->get<Point3>(neighborAtomIndex) - positions()->get<Point3>(particleIndex));
 					for(size_t i = 0; i < 3; i++) {
 						for(size_t j = 0; j < 3; j++) {
 							orientationV(i,j) += (double)(latticeVector[j] * latticeVector[i]);
@@ -130,7 +130,7 @@ void ElasticStrainEngine::perform()
 				if(deformationGradients()) {
 					for(size_t col = 0; col < 3; col++) {
 						for(size_t row = 0; row < 3; row++) {
-							deformationGradients()->setFloatComponent(particleIndex, col*3+row, (FloatType)elasticF(row,col));
+							deformationGradients()->set<FloatType>(particleIndex, col*3+row, (FloatType)elasticF(row,col));
 						}
 					}
 				}
@@ -151,27 +151,27 @@ void ElasticStrainEngine::perform()
 
 				// Store strain tensor in output property.
 				if(strainTensors()) {
-					strainTensors()->setSymmetricTensor2(particleIndex, (SymmetricTensor2)elasticStrain);
+					strainTensors()->set<SymmetricTensor2>(particleIndex, (SymmetricTensor2)elasticStrain);
 				}
 
 				// Calculate volumetric strain component.
 				double volumetricStrain = (elasticStrain(0,0) + elasticStrain(1,1) + elasticStrain(2,2)) / 3.0;
 				OVITO_ASSERT(std::isfinite(volumetricStrain));
-				volumetricStrains()->setFloat(particleIndex, (FloatType)volumetricStrain);
+				volumetricStrains()->set<FloatType>(particleIndex, (FloatType)volumetricStrain);
 
 				return;
 			}
 		}
 
 		// Mark atom as invalid.
-		volumetricStrains()->setFloat(particleIndex, 0);
+		volumetricStrains()->set<FloatType>(particleIndex, 0);
 		if(strainTensors()) {
 			for(size_t component = 0; component < 6; component++)
-				strainTensors()->setFloatComponent(particleIndex, component, 0);
+				strainTensors()->set<FloatType>(particleIndex, component, 0);
 		}
 		if(deformationGradients()) {
 			for(size_t component = 0; component < 9; component++)
-				deformationGradients()->setFloatComponent(particleIndex, component, 0);
+				deformationGradients()->set<FloatType>(particleIndex, component, 0);
 		}
 	});
 

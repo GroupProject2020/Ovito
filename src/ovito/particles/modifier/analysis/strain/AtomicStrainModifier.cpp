@@ -114,8 +114,8 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 
 	// Compute displacement vectors of particles in the reference configuration.
 	parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
-		Vector3* u = displacements()->dataVector3() + startIndex;
-		const Point3* p0 = refPositions()->constDataPoint3() + startIndex;
+		Vector3* u = displacements()->data<Vector3>(startIndex);
+		const Point3* p0 = refPositions()->cdata<Point3>(startIndex);
 		auto index = refToCurrentIndexMap().cbegin() + startIndex;
 		for(; count; --count, ++u, ++p0, ++index) {
 			if(promise.isCanceled()) return;
@@ -124,7 +124,7 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 				continue;
 			}
 			Point3 reduced_reference_pos = refCell().inverseMatrix() * (*p0);
-			Point3 reduced_current_pos = cell().inverseMatrix() * positions()->getPoint3(*index);
+			Point3 reduced_current_pos = cell().inverseMatrix() * positions()->get<Point3>(*index);
 			Vector3 delta = reduced_current_pos - reduced_reference_pos;
 			if(useMinimumImageConvention()) {
 				for(size_t k = 0; k < 3; k++) {
@@ -168,11 +168,11 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	size_t particleIndexReference = currentToRefIndexMap()[particleIndex];
 	FloatType sumSquaredDistance = 0;
 	if(particleIndexReference != std::numeric_limits<size_t>::max()) {
-		const Vector3& center_displacement = displacements()->getVector3(particleIndexReference);
+		const Vector3& center_displacement = displacements()->get<Vector3>(particleIndexReference);
 		for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
 			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
 			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
-			const Vector3& neigh_displacement = displacements()->getVector3(neighQuery.current());
+			const Vector3& neigh_displacement = displacements()->get<Vector3>(neighQuery.current());
 			Vector3 delta_ref = neighQuery.delta();
 			Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
 			if(affineMapping() == TO_CURRENT_CELL) {
@@ -206,24 +206,24 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	double detThreshold = (double)sumSquaredDistance * 1e-12;
 	if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, detThreshold) || std::abs(W.determinant()) <= detThreshold) {
 		if(invalidParticles())
-			invalidParticles()->setInt(particleIndex, 1);
+			invalidParticles()->set<int>(particleIndex, 1);
 		if(deformationGradients()) {
 			for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
 				for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
-					deformationGradients()->setFloatComponent(particleIndex, col*3+row, FloatType(0));
+					deformationGradients()->set<FloatType>(particleIndex, col*3+row, FloatType(0));
 				}
 			}
 		}
 		if(strainTensors())
-			strainTensors()->setSymmetricTensor2(particleIndex, SymmetricTensor2::Zero());
+			strainTensors()->set<SymmetricTensor2>(particleIndex, SymmetricTensor2::Zero());
         if(nonaffineSquaredDisplacements())
-            nonaffineSquaredDisplacements()->setFloat(particleIndex, 0);
-		shearStrains()->setFloat(particleIndex, 0);
-		volumetricStrains()->setFloat(particleIndex, 0);
+            nonaffineSquaredDisplacements()->set<FloatType>(particleIndex, 0);
+		shearStrains()->set<FloatType>(particleIndex, 0);
+		volumetricStrains()->set<FloatType>(particleIndex, 0);
 		if(rotations())
-			rotations()->setQuaternion(particleIndex, Quaternion(0,0,0,0));
+			rotations()->set<Quaternion>(particleIndex, Quaternion(0,0,0,0));
 		if(stretchTensors())
-			stretchTensors()->setSymmetricTensor2(particleIndex, SymmetricTensor2::Zero());
+			stretchTensors()->set<SymmetricTensor2>(particleIndex, SymmetricTensor2::Zero());
 		addInvalidParticle();
 		return;
 	}
@@ -233,7 +233,7 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	if(deformationGradients()) {
 		for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
 			for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
-				deformationGradients()->setFloatComponent(particleIndex, col*3+row, (FloatType)F(row,col));
+				deformationGradients()->set<FloatType>(particleIndex, col*3+row, (FloatType)F(row,col));
 			}
 		}
 	}
@@ -252,10 +252,10 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 					for(size_t j = 0; j < 3; j++)
 						R(i,j) = -R(i,j);
 			}
-			rotations()->setQuaternion(particleIndex, (Quaternion)QuaternionT<double>(R));
+			rotations()->set<Quaternion>(particleIndex, (Quaternion)QuaternionT<double>(R));
 		}
 		if(stretchTensors()) {
-			stretchTensors()->setSymmetricTensor2(particleIndex,
+			stretchTensors()->set<SymmetricTensor2>(particleIndex,
 					SymmetricTensor2(U(0,0), U(1,1), U(2,2), U(0,1), U(0,2), U(1,2)));
 		}
 	}
@@ -263,7 +263,7 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	// Calculate strain tensor.
 	SymmetricTensor2T<double> strain = (Product_AtA(F) - SymmetricTensor2T<double>::Identity()) * 0.5;
 	if(strainTensors())
-		strainTensors()->setSymmetricTensor2(particleIndex, (SymmetricTensor2)strain);
+		strainTensors()->set<SymmetricTensor2>(particleIndex, (SymmetricTensor2)strain);
 
     // Calculate nonaffine displacement.
     if(nonaffineSquaredDisplacements()) {
@@ -272,11 +272,11 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 
         // Again iterate over neighbor vectors of central particle.
         numNeighbors = 0;
-        const Vector3& center_displacement = displacements()->getVector3(particleIndexReference);
+        const Vector3& center_displacement = displacements()->get<Vector3>(particleIndexReference);
         for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
 			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
 			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
-			const Vector3& neigh_displacement = displacements()->getVector3(neighQuery.current());
+			const Vector3& neigh_displacement = displacements()->get<Vector3>(neighQuery.current());
 			Vector3 delta_ref = neighQuery.delta();
 			Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
 			if(affineMapping() == TO_CURRENT_CELL) {
@@ -289,7 +289,7 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 			D2min += (Fftype * delta_ref - delta_cur).squaredLength();
 		}
 
-        nonaffineSquaredDisplacements()->setFloat(particleIndex, D2min);
+        nonaffineSquaredDisplacements()->set<FloatType>(particleIndex, D2min);
 	}
 
 	// Calculate von Mises shear strain.
@@ -305,7 +305,7 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 		shearStrain = sqrt(strain.xy()*strain.xy() + (xydiff*xydiff) / 2.0);
 	}
 	OVITO_ASSERT(std::isfinite(shearStrain));
-	shearStrains()->setFloat(particleIndex, (FloatType)shearStrain);
+	shearStrains()->set<FloatType>(particleIndex, (FloatType)shearStrain);
 
 	// Calculate volumetric component.
 	double volumetricStrain;
@@ -316,10 +316,10 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 		volumetricStrain = (strain(0,0) + strain(1,1)) / 2.0;
 	}
 	OVITO_ASSERT(std::isfinite(volumetricStrain));
-	volumetricStrains()->setFloat(particleIndex, (FloatType)volumetricStrain);
+	volumetricStrains()->set<FloatType>(particleIndex, (FloatType)volumetricStrain);
 
 	if(invalidParticles())
-		invalidParticles()->setInt(particleIndex, 0);
+		invalidParticles()->set<int>(particleIndex, 0);
 }
 
 /******************************************************************************

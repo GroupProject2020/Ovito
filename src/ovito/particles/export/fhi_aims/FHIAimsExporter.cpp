@@ -59,8 +59,8 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 	// Output atoms.
 	operation.setProgressMaximum(posProperty->size());
 	for(size_t i = 0; i < posProperty->size(); i++) {
-		const Point3& p = posProperty->getPoint3(i);
-		const ElementType* type = particleTypeProperty ? particleTypeProperty->elementType(particleTypeProperty->getInt(i)) : nullptr;
+		const Point3& p = posProperty->get<Point3>(i);
+		const ElementType* type = particleTypeProperty ? particleTypeProperty->elementType(particleTypeProperty->get<int>(i)) : nullptr;
 
 		textStream() << "atom " << (p.x() - origin.x()) << ' ' << (p.y() - origin.y()) << ' ' << (p.z() - origin.z());
 		if(type && !type->name().isEmpty()) {
@@ -68,7 +68,7 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 			textStream() << ' ' << s.replace(QChar(' '), QChar('_')) << '\n';
 		}
 		else if(particleTypeProperty) {
-			textStream() << ' ' << particleTypeProperty->getInt(i) << '\n';
+			textStream() << ' ' << particleTypeProperty->get<int>(i) << '\n';
 		}
 		else {
 			textStream() << " 1\n";

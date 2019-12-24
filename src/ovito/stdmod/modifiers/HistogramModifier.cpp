@@ -169,7 +169,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 
 	// Allocate output data array.
 	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
-	auto histogramData = histogram->dataInt64();
+	auto histogramData = histogram->data<qlonglong>();
 	int histogramSizeMin1 = histogram->size() - 1;
 
 	if(property->size() > 0) {
@@ -206,8 +206,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			}
 			if(outputSelection) {
 				OVITO_ASSERT(outputSelection->size() == property->size());
-				int* s = outputSelection->dataInt();
-				int* s_end = s + outputSelection->size();
+				int* s = outputSelection->data<int>();
 				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
 					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
@@ -251,8 +250,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			}
 			if(outputSelection) {
 				OVITO_ASSERT(outputSelection->size() == property->size());
-				int* s = outputSelection->dataInt();
-				int* s_end = s + outputSelection->size();
+				int* s = outputSelection->data<int>();
 				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
 					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
@@ -296,8 +294,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 			}
 			if(outputSelection) {
 				OVITO_ASSERT(outputSelection->size() == property->size());
-				int* s = outputSelection->dataInt();
-				int* s_end = s + outputSelection->size();
+				int* s = outputSelection->data<int>();
 				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
 					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {

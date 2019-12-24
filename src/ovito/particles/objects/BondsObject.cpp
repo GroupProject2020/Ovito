@@ -107,7 +107,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath[containerPath.size()-2])) {
 				const std::vector<ColorA>& colors = particles->inputBondColors();
 				OVITO_ASSERT(colors.size() == property->size());
-				std::transform(colors.cbegin(), colors.cend(), property->dataColor(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
+				boost::transform(colors, property->data<Color>(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 				initializeMemory = false;
 			}
 		}
@@ -115,7 +115,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data(), 0, property->size() * property->stride());
+		std::memset(property->data<void>(), 0, property->size() * property->stride());
 	}
 
 	return property;
@@ -226,30 +226,30 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 				// Try to find matching bond based on particle indices alone.
 				if(const PropertyObject* sourcePos = sourceParticles->getProperty(ParticlesObject::PositionProperty)) {
 					if(const PropertyObject* destPos = destParticles->getProperty(ParticlesObject::PositionProperty)) {
-						size_t index_a = sourceTopology->getInt64Component(elementIndex, 0);
-						size_t index_b = sourceTopology->getInt64Component(elementIndex, 1);
+						size_t index_a = sourceTopology->get<qlonglong>(elementIndex, 0);
+						size_t index_b = sourceTopology->get<qlonglong>(elementIndex, 1);
 						if(index_a < sourcePos->size() && index_b < sourcePos->size()) {
 
 							// Quick check if number of particles and bonds didn't change.
 							if(sourcePos->size() == destPos->size() && sourceTopology->size() == destTopology->size()) {
-								size_t index2_a = destTopology->getInt64Component(elementIndex, 0);
-								size_t index2_b = destTopology->getInt64Component(elementIndex, 1);
+								size_t index2_a = destTopology->get<qlonglong>(elementIndex, 0);
+								size_t index2_b = destTopology->get<qlonglong>(elementIndex, 1);
 								if(index_a == index2_a && index_b == index2_b) {
 									return elementIndex;
 								}
 							}
 
 							// Find matching bond by means of particle positions.
-							const Point3& pos_a = sourcePos->getPoint3(index_a);
-							const Point3& pos_b = sourcePos->getPoint3(index_b);
-							size_t index2_a = std::find(destPos->constDataPoint3(), destPos->constDataPoint3() + destPos->size(), pos_a) - destPos->constDataPoint3();
-							size_t index2_b = std::find(destPos->constDataPoint3(), destPos->constDataPoint3() + destPos->size(), pos_b) - destPos->constDataPoint3();
+							const Point3& pos_a = sourcePos->get<Point3>(index_a);
+							const Point3& pos_b = sourcePos->get<Point3>(index_b);
+							size_t index2_a = boost::find(destPos->crange<Point3>(), pos_a) - destPos->cdata<Point3>();
+							size_t index2_b = boost::find(destPos->crange<Point3>(), pos_b) - destPos->cdata<Point3>();
 							if(index2_a < destPos->size() && index2_b < destPos->size()) {
 								// Go through the whole bonds list to see if there is a bond connecting the particles with
 								// the same positions.
-								for(auto bond = destTopology->constDataInt64(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
+								for(auto bond = destTopology->cdata<qlonglong>(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
 									if((bond[0] == index2_a && bond[1] == index2_b) || (bond[0] == index2_b && bond[1] == index2_a)) {
-										return (bond - destTopology->constDataInt64()) / 2;
+										return (bond - destTopology->cdata<qlonglong>()) / 2;
 									}
 								}
 							}
@@ -282,14 +282,14 @@ boost::dynamic_bitset<> BondsObject::OOMetaClass::viewportFenceSelection(const Q
 
 				boost::dynamic_bitset<> fullSelection(topologyProperty->size());
 				QMutex mutex;
-				parallelForChunks(topologyProperty->size(), [topo = topologyProperty->constDataInt64(), posProperty, &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
+				parallelForChunks(topologyProperty->size(), [topo = topologyProperty->cdata<qlonglong>(), posProperty, &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
 					boost::dynamic_bitset<> selection(fullSelection.size());
 					auto t = topo + startIndex * 2;
 					for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++, t += 2) {
 						int insideCount = 0;
 						for(int i = 0; i < 2; i++) {
 							if(t[i] >= posProperty->size()) continue;
-							const Point3& p = posProperty->getPoint3(t[i]);
+							const Point3& p = posProperty->get<Point3>(t[i]);
 
 							// Project particle center to screen coordinates.
 							Point3 projPos = projectionTM * p;

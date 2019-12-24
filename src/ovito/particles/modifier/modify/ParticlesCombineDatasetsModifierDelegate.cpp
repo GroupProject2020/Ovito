@@ -83,13 +83,13 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				secondProp = secondaryParticles->getProperty(prop->name());
 			if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 				OVITO_ASSERT(prop->stride() == secondProp->stride());
-				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->cdata<void>(), prop->stride() * secondaryParticleCount);
+				std::memcpy(static_cast<char*>(prop->data<void>(primaryParticleCount)), secondProp->cdata<void>(), prop->stride() * secondaryParticleCount);
 			}
 			else if(prop->type() != ParticlesObject::UserProperty) {
 				ConstDataObjectPath containerPath = { secondaryParticles };
 				PropertyPtr temporaryProp = ParticlesObject::OOClass().createStandardStorage(secondaryParticles->elementCount(), prop->type(), true, containerPath);
 				OVITO_ASSERT(temporaryProp->stride() == prop->stride());
-				std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->cdata<void>(), prop->stride() * secondaryParticleCount);
+				std::memcpy(static_cast<char*>(prop->data<void>(primaryParticleCount)), temporaryProp->cdata<void>(), prop->stride() * secondaryParticleCount);
 			}
 
 			// Combine particle types lists.
@@ -97,12 +97,12 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 			// Assign unique particle and molecule IDs.
 			if(prop->type() == ParticlesObject::IdentifierProperty && primaryParticleCount != 0) {
-				qlonglong maxId = *std::max_element(prop->constDataInt64(), prop->constDataInt64() + primaryParticleCount);
-				std::iota(prop->dataInt64() + primaryParticleCount, prop->dataInt64() + totalParticleCount, maxId+1);
+				qlonglong maxId = *std::max_element(prop->cdata<qlonglong>(), prop->cdata<qlonglong>() + primaryParticleCount);
+				std::iota(prop->data<qlonglong>() + primaryParticleCount, prop->data<qlonglong>() + totalParticleCount, maxId+1);
 			}
 			else if(prop->type() == ParticlesObject::MoleculeProperty && primaryParticleCount != 0) {
-				qlonglong maxId = *std::max_element(prop->constDataInt64(), prop->constDataInt64() + primaryParticleCount);
-				for(qlonglong* mol_id = prop->dataInt64() + primaryParticleCount; mol_id != prop->dataInt64() + totalParticleCount; ++mol_id)
+				qlonglong maxId = *std::max_element(prop->cdata<qlonglong>(), prop->cdata<qlonglong>() + primaryParticleCount);
+				for(qlonglong* mol_id = prop->data<qlonglong>() + primaryParticleCount; mol_id != prop->data<qlonglong>() + totalParticleCount; ++mol_id)
 					*mol_id += maxId;
 			}
 		}
@@ -129,8 +129,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 		// Shift values of second dataset and reset values of first dataset to zero:
 		if(primaryParticleCount != 0) {
-			std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryParticleCount, clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryParticleCount);
-			std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryParticleCount);
+			std::memmove(static_cast<char*>(clonedProperty->data<void>(primaryParticleCount)), clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryParticleCount);
+			std::memset(clonedProperty->data<void>(), 0, clonedProperty->stride() * primaryParticleCount);
 		}
 	}
 
@@ -171,7 +171,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 					secondProp = secondaryBonds->getProperty(prop->name());
 				if(secondProp && secondProp->size() == secondaryBondCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 					OVITO_ASSERT(prop->stride() == secondProp->stride());
-					std::memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->cdata<void>(), prop->stride() * secondaryBondCount);
+					std::memcpy(static_cast<char*>(prop->data<void>(primaryBondCount)), secondProp->cdata<void>(), prop->stride() * secondaryBondCount);
 				}
 
 				// Combine bond type lists.
@@ -202,8 +202,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 				// Shift values of second dataset and reset values of first dataset to zero:
 				if(primaryBondCount != 0) {
-					std::memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryBondCount);
-					std::memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryBondCount);
+					std::memmove(static_cast<char*>(clonedProperty->data<void>(primaryBondCount)), clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryBondCount);
+					std::memset(clonedProperty->data<void>(), 0, clonedProperty->stride() * primaryBondCount);
 				}
 			}
 
@@ -212,8 +212,8 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 			if(topologyProperty && primaryParticleCount != 0) {
 				PropertyObject* mutableTopologyProperty = primaryMutableBonds->makeMutable(topologyProperty);
 				for(size_t i = primaryBondCount; i < totalBondCount; i++) {
-					mutableTopologyProperty->setInt64Component(i, 0, mutableTopologyProperty->getInt64Component(i, 0) + primaryParticleCount);
-					mutableTopologyProperty->setInt64Component(i, 1, mutableTopologyProperty->getInt64Component(i, 1) + primaryParticleCount);
+					mutableTopologyProperty->set<qlonglong>(i, 0, mutableTopologyProperty->get<qlonglong>(i, 0) + primaryParticleCount);
+					mutableTopologyProperty->set<qlonglong>(i, 1, mutableTopologyProperty->get<qlonglong>(i, 1) + primaryParticleCount);
 				}
 			}
 		}

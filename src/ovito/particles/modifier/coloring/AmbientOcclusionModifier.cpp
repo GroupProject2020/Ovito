@@ -178,7 +178,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 				if(!particleBuffer || !particleBuffer->isValid(_renderer)) {
 					particleBuffer = _renderer->createParticlePrimitive(ParticlePrimitive::FlatShading, ParticlePrimitive::LowQuality, ParticlePrimitive::SphericalShape, false);
 					particleBuffer->setSize(positions()->size());
-					particleBuffer->setParticlePositions(positions()->constDataPoint3());
+					particleBuffer->setParticlePositions(positions()->cdata<Point3>());
 					particleBuffer->setParticleRadii(_particleRadii.data());
 				}
 				particleBuffer->render(_renderer);
@@ -191,7 +191,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 			// Extract brightness values from rendered image.
 			const QImage image = _renderer->image();
-			FloatType* brightnessValues = brightness()->dataFloat();
+			FloatType* brightnessValues = brightness()->data<FloatType>();
 			for(int y = 0; y < _resolution; y++) {
 				const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
 				for(int x = 0; x < _resolution; x++, ++pixel) {
@@ -219,15 +219,15 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 		task()->setProgressValue(_samplingCount);
 		// Normalize brightness values by particle area.
 		auto r = _particleRadii.cbegin();
-		for(FloatType& b : brightness()->floatRange()) {
+		for(FloatType& b : brightness()->range<FloatType>()) {
 			if(*r != 0)
 				b /= (*r) * (*r);
 			++r;
 		}
 		// Normalize brightness values by global maximum.
-		FloatType maxBrightness = *std::max_element(brightness()->constDataFloat(), brightness()->constDataFloat() + brightness()->size());
+		FloatType maxBrightness = *boost::max_element(brightness()->crange<FloatType>());
 		if(maxBrightness != 0) {
-			for(FloatType& b : brightness()->floatRange()) {
+			for(FloatType& b : brightness()->range<FloatType>()) {
 				b /= maxBrightness;
 			}
 		}
@@ -252,13 +252,12 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint tim
 
 	// Get output property object.
 	PropertyObject* colorProperty = particles->createProperty(ParticlesObject::ColorProperty, true, {particles});
-	const FloatType* b = brightness()->constDataFloat();
-	Color* c = colorProperty->dataColor();
-	Color* c_end = c + colorProperty->size();
-	for(; c != c_end; ++b, ++c) {
+	const FloatType* b = brightness()->cdata<FloatType>();
+	for(Color& c : colorProperty->range<Color>()) {
 		FloatType factor = FloatType(1) - intens + (*b);
 		if(factor < FloatType(1))
-			*c = (*c) * factor;
+			c = c * factor;
+		++b;
 	}
 }
 

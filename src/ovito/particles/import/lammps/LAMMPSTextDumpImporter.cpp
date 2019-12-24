@@ -323,7 +323,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 					// If yes, we assume reduced coordinate format.
 					if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
 						Box3 boundingBox;
-						boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
+						boundingBox.addPoints(posProperty->crange<Point3>());
 						if(Box3(Point3(FloatType(-0.02)), Point3(FloatType(1.02))).containsBox(boundingBox))
 							reducedCoordinates = true;
 					}
@@ -333,7 +333,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 					// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 					if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
 						const AffineTransformation simCell = frameData->simulationCell().matrix();
-						Point3* p = posProperty->dataPoint3();
+						Point3* p = posProperty->data<Point3>();
 						Point3* p_end = p + posProperty->size();
 						for(; p != p_end; ++p)
 							*p = simCell * (*p);

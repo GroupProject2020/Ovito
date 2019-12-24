@@ -265,7 +265,7 @@ void SceneRenderer::renderNodeTrajectory(SceneNode* node)
 		}
 		else {
 			Box3 bb;
-			bb.addPoints(trajectory.data(), trajectory.size());
+			bb.addPoints(trajectory);
 			addToLocalBoundingBox(bb);
 		}
 	}

@@ -219,7 +219,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 		// Build map of particle identifiers in reference configuration.
 		std::map<qlonglong, size_t> refMap;
 		size_t index = 0;
-		for(auto id : refIdentifiers()->constInt64Range()) {
+		for(auto id : refIdentifiers()->crange<qlonglong>()) {
 			if(refMap.insert(std::make_pair(id, index)).second == false)
 				throw Exception(tr("Particles with duplicate identifiers detected in reference configuration."));
 			index++;
@@ -231,7 +231,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 		// Check for duplicate identifiers in current configuration
 		std::map<qlonglong, size_t> currentMap;
 		index = 0;
-		for(auto id : identifiers()->constInt64Range()) {
+		for(auto id : identifiers()->crange<qlonglong>()) {
 			if(currentMap.insert(std::make_pair(id, index)).second == false)
 				throw Exception(tr("Particles with duplicate identifiers detected in current configuration."));
 			index++;
@@ -241,7 +241,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			return false;
 
 		// Build index maps.
-		auto id = identifiers()->constDataInt64();
+		auto id = identifiers()->cdata<qlonglong>();
 		for(auto& mappedIndex : _currentToRefIndexMap) {
 			auto iter = refMap.find(*id);
 			if(iter != refMap.end())
@@ -256,7 +256,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 		if(task()->isCanceled())
 			return false;
 
-		id = refIdentifiers()->constDataInt64();
+		id = refIdentifiers()->cdata<qlonglong>();
 		for(auto& mappedIndex : _refToCurrentIndexMap) {
 			auto iter = currentMap.find(*id);
 			if(iter != currentMap.end())

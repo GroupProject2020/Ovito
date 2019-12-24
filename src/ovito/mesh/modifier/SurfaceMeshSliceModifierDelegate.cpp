@@ -66,16 +66,15 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, Pipel
 					const PropertyObject* vertexPositionProperty = outputVertices->expectProperty(SurfaceMeshVertices::PositionProperty);
 					PropertyObject* vertexSelectionProperty = outputVertices->createProperty(SurfaceMeshVertices::SelectionProperty, false);
 					size_t numSelectedVertices = 0;
-					const Point3* pos = vertexPositionProperty->cdata<Point3>();
-					for(int& selected : vertexSelectionProperty->intRange()) {
-						if(sliceWidth <= 0)
-							selected = (plane.pointDistance(*pos) > 0) ? 1 : 0;
-						else
-							selected = (invert == (plane.classifyPoint(*pos, sliceWidth) == 0)) ? 1 : 0;
-						if(selected)
+					boost::transform(vertexPositionProperty->crange<Point3>(), vertexSelectionProperty->data<int>(), [&](const Point3& pos) {
+						bool selectionState = 
+							(sliceWidth <= 0) ?
+								(plane.pointDistance(pos) > 0) :
+								(invert == (plane.classifyPoint(pos, sliceWidth) == 0));
+						if(selectionState)
 							numSelectedVertices++;
-						++pos;
-					}
+						return selectionState ? 1 : 0;
+					});
 					if(!statusMessage.isEmpty()) statusMessage += QChar('\n');
 					statusMessage += tr("%1 of %2 mesh vertices selected").arg(numSelectedVertices).arg(outputVertices->elementCount());
 
@@ -86,7 +85,7 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, Pipel
 						HalfEdgeMeshPtr topology = outputMesh->topology();
 						auto firstFaceEdge = topology->firstFaceEdges().cbegin();
 						OVITO_ASSERT(topology->firstFaceEdges().size() == faceSelectionProperty->size());
-						for(int& selected : faceSelectionProperty->intRange()) {
+						for(int& selected : faceSelectionProperty->range<int>()) {
 							HalfEdgeMesh::edge_index ffe = *firstFaceEdge++;
 							HalfEdgeMesh::edge_index e = ffe;
 							selected = 1;

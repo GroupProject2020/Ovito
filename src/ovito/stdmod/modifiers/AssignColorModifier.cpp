@@ -106,17 +106,8 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, PipelineFl
 
 	// Create the color output property.
     PropertyObject* colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath);
-	if(!selProperty) {
-		// Assign color to all elements.
-		std::fill(colorProperty->dataColor(), colorProperty->dataColor() + colorProperty->size(), color);
-	}
-	else {
-		// Assign color only to selected elements.
-		const int* sel = selProperty->cdata<int>();
-		for(Color& c : colorProperty->colorRange()) {
-			if(*sel++) c = color;
-		}
-	}
+	// Assign color to selected elements (or all elements if there is no selection).
+	colorProperty->modifiableStorage()->fillSelected(color, selProperty);
 
 	return PipelineStatus::Success;
 }

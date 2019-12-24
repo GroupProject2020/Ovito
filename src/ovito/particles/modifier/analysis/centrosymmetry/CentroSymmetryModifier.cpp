@@ -90,7 +90,7 @@ void CentroSymmetryModifier::CentroSymmetryEngine::perform()
 
 	// Perform analysis on each particle.
 	parallelFor(positions()->size(), *task(), [&neighFinder, &output](size_t index) {
-		output.setFloat(index, computeCSP(neighFinder, index));
+		output.set<FloatType>(index, computeCSP(neighFinder, index));
 	});
 }
 

@@ -169,7 +169,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 	// It is going to be invalid anyway.
 	size_t numInputParticles = positions()->size();
 	if(selection()) {
-		numInputParticles = positions()->size() - std::count(selection()->constDataInt(), selection()->constDataInt() + selection()->size(), 0);
+		numInputParticles = positions()->size() - boost::count(selection()->crange<int>(), 0);
 	}
 	if(numInputParticles <= 3) {
 		return;
@@ -181,8 +181,8 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 
 	// Generate Delaunay tessellation.
 	DelaunayTessellation tessellation;
-	if(!tessellation.generateTessellation(mesh().cell(), positions()->constDataPoint3(), positions()->size(), ghostLayerSize,
-			selection() ? selection()->constDataInt() : nullptr, *task()))
+	if(!tessellation.generateTessellation(mesh().cell(), positions()->cdata<Point3>(), positions()->size(), ghostLayerSize,
+			selection() ? selection()->cdata<int>() : nullptr, *task()))
 		return;
 
 	task()->nextProgressSubStep();
@@ -230,7 +230,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		if(surfaceParticleSelection()) {
 			for(size_t vi : vertexIndices) {
 				OVITO_ASSERT(vi < surfaceParticleSelection()->size());
-				surfaceParticleSelection()->setInt(vi, 1);
+				surfaceParticleSelection()->set<int>(vi, 1);
 			}
 		}
 	};
@@ -240,7 +240,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		auto particleProperty = _particleProperties.cbegin();
 		for(PropertyStorage* vertexProperty : meshVertexProperties) {
 			OVITO_ASSERT(vertexProperty->stride() == (*particleProperty)->stride());
-			std::memcpy(vertexProperty->dataAt(vertex), (*particleProperty)->cdata<void>(particleIndex), vertexProperty->stride());
+			std::memcpy(vertexProperty->data<void>(vertex), (*particleProperty)->cdata<void>(particleIndex), vertexProperty->stride());
 			++particleProperty;
 		}
 		OVITO_ASSERT(particleProperty == _particleProperties.cend());
@@ -261,7 +261,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 
 	// Create the 'Surface area' region property.
 	PropertyPtr surfaceAreaProperty = mesh().createRegionProperty(SurfaceMeshRegions::SurfaceAreaProperty, true);
-	FloatType* surfaceAreaData = surfaceAreaProperty->dataFloat();
+	FloatType* surfaceAreaData = surfaceAreaProperty->data<FloatType>();
 
 	// Compute surface area (total and per-region) by summing up the triangle face areas.
 	task()->nextProgressSubStep();
@@ -311,7 +311,7 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 			// Compute range of relative atomic coordinates in the current direction.
 			FloatType xmin =  FLOATTYPE_MAX;
 			FloatType xmax = -FLOATTYPE_MAX;
-			for(const Point3& p : positions()->constPoint3Range()) {
+			for(const Point3& p : positions()->crange<Point3>()) {
 				FloatType rp = mesh().cell().inverseMatrix().prodrow(p, dim);
 				if(rp < xmin) xmin = rp;
 				if(rp > xmax) xmax = rp;

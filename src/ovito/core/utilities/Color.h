@@ -343,12 +343,22 @@ public:
 	ColorAT(const QColor& c)
 		{ this->r() = T(c.redF()); this->g() = T(c.greenF()); this->b() = T(c.blueF()); this->a() = T(c.alphaF()); }
 #endif
-	/// Converts a color without alpha component to a color with alpha component.
+
+	/// Converts a color without alpha component to a color with alpha component set to 1.0.
 #if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
-	Q_DECL_CONSTEXPR ColorAT(const ColorT<T>& c, T alpha = T(1))
+	Q_DECL_CONSTEXPR ColorAT(const ColorT<T>& c)
+		: std::array<T, 4>{{c.r(), c.g(), c.b(), T(1)}} {}
+#else
+	ColorAT(const ColorT<T>& c)
+		{ this->r() = c.r(); this->g() = c.g(); this->b() = c.b(); this->a() = T(1); }
+#endif
+
+	/// Converts a color without alpha component to a color with given alpha component.
+#if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
+	Q_DECL_CONSTEXPR ColorAT(const ColorT<T>& c, T alpha)
 		: std::array<T, 4>{{c.r(), c.g(), c.b(), alpha}} {}
 #else
-	ColorAT(const ColorT<T>& c, T alpha = T(1))
+	ColorAT(const ColorT<T>& c, T alpha)
 		{ this->r() = c.r(); this->g() = c.g(); this->b() = c.b(); this->a() = alpha; }
 #endif
 

@@ -81,7 +81,7 @@ Box3 TrajectoryVis::boundingBox(TimePoint time, const std::vector<const DataObje
 		if(trajObj) {
 			if(const PropertyObject* posProperty = trajObj->getProperty(TrajectoryObject::PositionProperty)) {
 				if(!simulationCell) {
-					bbox.addPoints(posProperty->constDataPoint3(), posProperty->size());
+					bbox.addPoints(posProperty->crange<Point3>());
 				}
 				else {
 					bbox = Box3(Point3(0,0,0), Point3(1,1,1)).transformed(simulationCell->cellMatrix());
@@ -163,9 +163,9 @@ void TrajectoryVis::render(TimePoint time, const std::vector<const DataObject*>&
 				// Determine the number of line segments and corner points to render.
 				size_t lineSegmentCount = 0;
 				std::vector<Point3> cornerPoints;
-				const Point3* pos = posProperty->constDataPoint3();
-				const int* sampleTime = timeProperty->constDataInt();
-				const qlonglong* id = idProperty->constDataInt64();
+				const Point3* pos = posProperty->cdata<Point3>();
+				const int* sampleTime = timeProperty->cdata<int>();
+				const qlonglong* id = idProperty->cdata<qlonglong>();
 				if(!simulationCell) {
 					for(auto pos_end = pos + posProperty->size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
 						if(id[0] == id[1] && sampleTime[1] <= endFrame) {
@@ -196,9 +196,9 @@ void TrajectoryVis::render(TimePoint time, const std::vector<const DataObject*>&
 				int lineSegmentIndex = 0;
 
 				// Create the line segment geometry.
-				pos = posProperty->constDataPoint3();
-				sampleTime = timeProperty->constDataInt();
-				id = idProperty->constDataInt64();
+				pos = posProperty->cdata<Point3>();
+				sampleTime = timeProperty->cdata<int>();
+				id = idProperty->cdata<qlonglong>();
 				ColorA color = lineColor();
 				if(!simulationCell) {
 					for(auto pos_end = pos + posProperty->size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {

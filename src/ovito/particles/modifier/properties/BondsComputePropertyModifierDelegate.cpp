@@ -107,16 +107,16 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 		else
 			periodicImages.reset();
 		_evaluator->registerComputedVariable("BondLength", [positions,topology=_topology,periodicImages,simCell](size_t bondIndex) -> double {
-			size_t index1 = topology->getInt64Component(bondIndex, 0);
-			size_t index2 = topology->getInt64Component(bondIndex, 1);
+			size_t index1 = topology->get<qlonglong>(bondIndex, 0);
+			size_t index2 = topology->get<qlonglong>(bondIndex, 1);
 			if(positions->size() > index1 && positions->size() > index2) {
-				const Point3& p1 = positions->getPoint3(index1);
-				const Point3& p2 = positions->getPoint3(index2);
+				const Point3& p1 = positions->get<Point3>(index1);
+				const Point3& p2 = positions->get<Point3>(index2);
 				Vector3 delta = p2 - p1;
 				if(periodicImages) {
-					if(int dx = periodicImages->getIntComponent(bondIndex, 0)) delta += simCell.matrix().column(0) * (FloatType)dx;
-					if(int dy = periodicImages->getIntComponent(bondIndex, 1)) delta += simCell.matrix().column(1) * (FloatType)dy;
-					if(int dz = periodicImages->getIntComponent(bondIndex, 2)) delta += simCell.matrix().column(2) * (FloatType)dz;
+					if(int dx = periodicImages->get<int>(bondIndex, 0)) delta += simCell.matrix().column(0) * (FloatType)dx;
+					if(int dy = periodicImages->get<int>(bondIndex, 1)) delta += simCell.matrix().column(1) * (FloatType)dy;
+					if(int dz = periodicImages->get<int>(bondIndex, 2)) delta += simCell.matrix().column(2) * (FloatType)dz;
 				}
 				return delta.length();
 			}
@@ -174,13 +174,13 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 				return;
 
 			// Skip unselected bonds if requested.
-			if(selection() && !selection()->getInt(bondIndex))
+			if(selection() && !selection()->get<int>(bondIndex))
 				continue;
 
 			// Update values of particle property variables.
 			if(_topology) {
-				size_t particleIndex1 = _topology->getInt64Component(bondIndex, 0);
-				size_t particleIndex2 = _topology->getInt64Component(bondIndex, 1);
+				size_t particleIndex1 = _topology->get<qlonglong>(bondIndex, 0);
+				size_t particleIndex2 = _topology->get<qlonglong>(bondIndex, 1);
 				worker.updateVariables(1, particleIndex1);
 				worker.updateVariables(2, particleIndex2);
 			}
@@ -192,13 +192,13 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 
 				// Store results in output property.
 				if(outputProperty()->dataType() == PropertyStorage::Int) {
-					outputProperty()->setIntComponent(bondIndex, component, (int)value);
+					outputProperty()->set<int>(bondIndex, component, (int)value);
 				}
 				else if(outputProperty()->dataType() == PropertyStorage::Int64) {
-					outputProperty()->setInt64Component(bondIndex, component, (qlonglong)value);
+					outputProperty()->set<qlonglong>(bondIndex, component, (qlonglong)value);
 				}
 				else if(outputProperty()->dataType() == PropertyStorage::Float) {
-					outputProperty()->setFloatComponent(bondIndex, component, value);
+					outputProperty()->set<FloatType>(bondIndex, component, value);
 				}
 			}
 		}

@@ -83,7 +83,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 		if(type == ColorProperty) {
 			if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(containerPath[containerPath.size()-2])) {
 				if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
-					std::fill(property->dataColor(), property->dataColor() + property->size(), vis->surfaceColor());
+					boost::fill(property->range<Color>(), vis->surfaceColor());
 					initializeMemory = false;
 				}
 			}
@@ -92,7 +92,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data(), 0, property->size() * property->stride());
+		std::memset(property->data<void>(), 0, property->size() * property->stride());
 	}
 
 	return property;

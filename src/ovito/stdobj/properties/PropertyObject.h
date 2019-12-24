@@ -145,189 +145,75 @@ public:
 		return storage()->crange<T>();
 	}
 
-	/// Returns a read-write pointer to the raw elements in the property storage.
-	void* data() {
-		return modifiableStorage()->data();
+	/// \brief Returns a read-write typed pointer to the elements stored in this property object.
+	template<typename T>
+	T* data() {
+		return modifiableStorage()->data<T>();
 	}
 
-	/// \brief Returns a read-write pointer to the first integer element stored in this object.
-	/// \note This method may only be used if this property is of data type integer.
-	int* dataInt() {
-		return modifiableStorage()->dataInt();
+	/// \brief Returns a read-write pointer to the raw element data stored in this property array.
+	template<>
+	void* data<void>() {
+		return modifiableStorage()->data<void>();
 	}
 
-	/// \brief Returns a read-write pointer to the first integer element stored in this object.
-	/// \note This method may only be used if this property is of data type 64-bit integer.
-	qlonglong* dataInt64() {
-		return modifiableStorage()->dataInt64();
+	/// Returns a read-write pointer to the i-th element in the property array.
+	template<typename T>
+	T* data(size_t i) {
+		return modifiableStorage()->data<T>(i);
 	}
 
-	/// \brief Returns a read-only pointer to the first float element in the property storage.
-	/// \note This method may only be used if this property is of data type float.
-	FloatType* dataFloat() {
-		return modifiableStorage()->dataFloat();
+	/// Returns a read-write pointer to the i-th element in the property storage.
+	template<>
+	void* data<void>(size_t i) {
+		return modifiableStorage()->data<void>(i);
 	}
 
-	/// \brief Returns a read-write pointer to the first vector element in the property storage.
-	/// \note This method may only be used if this property is of data type Vector3 or a FloatType channel with 3 components.
-	Vector3* dataVector3() {
-		return modifiableStorage()->dataVector3();
+	/// Returns a read-write pointer to the j-components of the i-th element in the property array.
+	template<typename T>
+	T* data(size_t i, size_t j) {
+		return modifiableStorage()->data<T>(i, j);
 	}
 
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point3 or a FloatType channel with 3 components.
-	Point3* dataPoint3() {
-		return modifiableStorage()->dataPoint3();
+	/// \brief Sets the value of the i-th element in the array.
+	template<typename T>
+	void set(size_t i, const T& v) {
+		modifiableStorage()->set<T>(i, v);
 	}
 
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
-	Vector3I* dataVector3I() {
-		return modifiableStorage()->dataVector3I();
+	/// \brief Sets the value of the j-th component of the i-th element in the array.
+	template<typename T>
+	void set(size_t i, size_t j, const T& v) {
+		modifiableStorage()->set<T>(i, j, v);
 	}
 
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
-	Point3I* dataPoint3I() {
-		return modifiableStorage()->dataPoint3I();
+	/// \brief Returns a range of iterators over the elements stored in this array.
+	template<typename T>
+	boost::iterator_range<T*> range() {
+		return modifiableStorage()->range<T>();
 	}
 
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Color or a FloatType channel with 3 components.
-	Color* dataColor() {
-		return modifiableStorage()->dataColor();
+	/// \brief Sets all array elements to the given uniform value.
+	template<typename T>
+	void fill(const T& value) {
+		modifiableStorage()->fill(value);
 	}
 
-	/// \brief Returns a read-write pointer to the first symmetric tensor element in the property storage.
-	/// \note This method may only be used if this property is of data type SymmetricTensor2 or a FloatType channel with 6 components.
-	SymmetricTensor2* dataSymmetricTensor2() {
-		return modifiableStorage()->dataSymmetricTensor2();
+	/// \brief Sets all array elements for which the corresponding entries in the 
+	///        selection array are non-zero to the given uniform value.
+	template<typename T>
+	void fillSelected(const T& value, const PropertyStorage& selectionProperty) {
+		modifiableStorage()->fillSelected(value, selectionProperty);
 	}
 
-	/// \brief Returns a read-write pointer to the first quaternion element in the property storage.
-	/// \note This method may only be used if this property is of data type Quaternion or a FloatType channel with 4 components.
-	Quaternion* dataQuaternion() {
-		return modifiableStorage()->dataQuaternion();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<int*> intRange() {
-		return modifiableStorage()->intRange();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<qlonglong*> int64Range() {
-		return modifiableStorage()->int64Range();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<FloatType*> floatRange() {
-		return modifiableStorage()->floatRange();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Point3*> point3Range() {
-		return modifiableStorage()->point3Range();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Vector3*> vector3Range() {
-		return modifiableStorage()->vector3Range();
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<Color*> colorRange() {
-		return modifiableStorage()->colorRange();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Vector3I*> vector3IRange() {
-		return modifiableStorage()->vector3IRange();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Point3I*> point3IRange() {
-		return modifiableStorage()->point3IRange();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<SymmetricTensor2*> symmetricTensor2Range() {
-		return modifiableStorage()->symmetricTensor2Range();
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Quaternion*> quaternionRange() {
-		return modifiableStorage()->quaternionRange();
-	}
-	
-	/// Sets the value of an integer element at the given index (if this is an integer property).
-	void setInt(size_t index, int newValue) {
-		modifiableStorage()->setInt(index, newValue);
-	}
-
-	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
-	void setInt64(size_t index, qlonglong newValue) {
-		modifiableStorage()->setInt64(index, newValue);
-	}
-
-	/// Sets the value of a float element at the given index (if this is a float property).
-	void setFloat(size_t index, FloatType newValue) {
-		modifiableStorage()->setFloat(index, newValue);
-	}
-
-	/// Sets the value of an integer element at the given index (if this is an integer property).
-	void setIntComponent(size_t index, size_t componentIndex, int newValue) {
-		modifiableStorage()->setIntComponent(index, componentIndex, newValue);
-	}
-
-	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
-	void setInt64Component(size_t index, size_t componentIndex, qlonglong newValue) {
-		modifiableStorage()->setInt64Component(index, componentIndex, newValue);
-	}
-
-	/// Sets the value of a float element at the given index (if this is a float property).
-	void setFloatComponent(size_t index, size_t componentIndex, FloatType newValue) {
-		modifiableStorage()->setFloatComponent(index, componentIndex, newValue);
-	}
-
-	/// Sets the value of a Vector3 element at the given index (if this is a vector property).
-	void setVector3(size_t index, const Vector3& newValue) {
-		modifiableStorage()->setVector3(index, newValue);
-	}
-
-	/// Sets the value of a Point3 element at the given index (if this is a point property).
-	void setPoint3(size_t index, const Point3& newValue) {
-		modifiableStorage()->setPoint3(index, newValue);
-	}
-
-	/// Sets the value of a Vector3I element at the given index (if this is a point property).
-	void setVector3I(size_t index, const Vector3I& newValue) {
-		modifiableStorage()->setVector3I(index, newValue);
-	}
-
-	/// Sets the value of a Point3I element at the given index (if this is a point property).
-	void setPoint3I(size_t index, const Point3I& newValue) {
-		modifiableStorage()->setPoint3I(index, newValue);
-	}
-
-	/// Sets the value of a Color element at the given index (if this is a point property).
-	void setColor(size_t index, const Color& newValue) {
-		modifiableStorage()->setColor(index, newValue);
-	}
-
-	/// Sets the given element's value of a SymmetricTensor2 property.
-	void setSymmetricTensor2(size_t index, const SymmetricTensor2& newValue) {
-		modifiableStorage()->setSymmetricTensor2(index, newValue);
-	}
-
-	/// Sets the given element's value of a Matrix3 property.
-	void setMatrix3(size_t index, const Matrix3& newValue) {
-		modifiableStorage()->setMatrix3(index, newValue);
-	}
-
-	/// Sets the given element's value of a Quaternion property.
-	void setQuaternion(size_t index, const Quaternion& newValue) {
-		modifiableStorage()->setQuaternion(index, newValue);
+	/// \brief Sets all array elements for which the corresponding entries in the 
+	///        selection array are non-zero to the given uniform value.
+	template<typename T>
+	void fillSelected(const T& value, const PropertyObject* selectionProperty) {
+		if(selectionProperty)
+			modifiableStorage()->fillSelected(value, *selectionProperty->storage());
+		else
+			modifiableStorage()->fill(value);
 	}
 
 	/// Copies the elements from the given source into this property array using a element mapping.

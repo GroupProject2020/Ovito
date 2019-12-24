@@ -181,6 +181,10 @@ public:
 		_componentNames = std::move(names);
 	}
 
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////// Read access to data ////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////
+
 	/// \brief Returns a read-only typed pointer to the elements stored in this property object.
 	template<typename T>
 	const T* cdata() const {
@@ -239,268 +243,101 @@ public:
 		return boost::make_iterator_range(cdata<T>(), cdata<T>() + size());
 	}
 
-	/// Returns a read-write pointer to the raw elements in the property storage.
-	void* data() {
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////// Write access to data ///////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////
+
+	/// \brief Returns a read-write typed pointer to the elements stored in this property object.
+	template<typename T>
+	T* data() {
+		OVITO_ASSERT(dataType() == primitiveDataType<T>());
+		OVITO_ASSERT(stride() == sizeof(T));
+		return reinterpret_cast<T*>(_data.get());
+	}
+
+	/// \brief Returns a read-write pointer to the raw element data stored in this property array.
+	template<>
+	void* data<void>() {
 		return _data.get();
 	}
 
-	/// Returns a read-write pointer to the i-th element in the property storage.
-	void* dataAt(size_t i) {
+	/// Returns a read-write pointer to the i-th element in the property array.
+	template<typename T>
+	T* data(size_t i) {
+		OVITO_ASSERT(dataType() == primitiveDataType<T>());
+		OVITO_ASSERT(stride() == sizeof(T));
 		OVITO_ASSERT(i < size());
-		return reinterpret_cast<char*>(data()) + (i * stride());
+		return reinterpret_cast<T*>(_data.get() + (i * stride()));
 	}
 
-	/// \brief Returns a read-write pointer to the first element stored in this object.
+	/// Returns a read-write pointer to the i-th element in the property storage.
+	template<>
+	void* data<void>(size_t i) {
+		OVITO_ASSERT(i < size());
+		return _data.get() + (i * stride());
+	}
+
+	/// Returns a read-write pointer to the j-components of the i-th element in the property array.
 	template<typename T>
-	T* dataGeneric() {
+	T* data(size_t i, size_t j) {
 		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
-		return reinterpret_cast<T*>(data());
+		OVITO_ASSERT(stride() == sizeof(T) * componentCount());
+		OVITO_ASSERT(i < size());
+		OVITO_ASSERT(j < componentCount());
+		return reinterpret_cast<T*>(_data.get() + (i * stride())) + j;
 	}
 
-	/// \brief Returns a read-write pointer to the first integer element stored in this object.
-	/// \note This method may only be used if this property is of data type integer.
-	int* dataInt() {
-		OVITO_ASSERT(dataType() == Int);
-		return reinterpret_cast<int*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first integer element stored in this object.
-	/// \note This method may only be used if this property is of data type 64-bit integer.
-	qlonglong* dataInt64() {
-		OVITO_ASSERT(dataType() == Int64);
-		return reinterpret_cast<qlonglong*>(data());
-	}
-
-	/// \brief Returns a read-only pointer to the first float element in the property storage.
-	/// \note This method may only be used if this property is of data type float.
-	FloatType* dataFloat() {
-		OVITO_ASSERT(dataType() == Float);
-		return reinterpret_cast<FloatType*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first vector element in the property storage.
-	/// \note This method may only be used if this property is of data type Vector3 or a FloatType channel with 3 components.
-	Vector3* dataVector3() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3>() || (dataType() == Float && componentCount() == 3));
-		return reinterpret_cast<Vector3*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
-	Vector3I* dataVector3I() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3I>() || (dataType() == Int && componentCount() == 3));
-		OVITO_STATIC_ASSERT(sizeof(Vector3I) == sizeof(int) * 3);
-		return reinterpret_cast<Vector3I*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point3 or a FloatType channel with 3 components.
-	Point3* dataPoint3() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point3>() || (dataType() == Float && componentCount() == 3));
-		return reinterpret_cast<Point3*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point2 or a FloatType channel with 2 components.
-	Point2* dataPoint2() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point2>() || (dataType() == Float && componentCount() == 2));
-		return reinterpret_cast<Point2*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
-	Point3I* dataPoint3I() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == Int && componentCount() == 3));
-		OVITO_STATIC_ASSERT(sizeof(Point3I) == sizeof(int) * 3);
-		return reinterpret_cast<Point3I*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first point element in the property storage.
-	/// \note This method may only be used if this property is of data type Color or a FloatType channel with 3 components.
-	Color* dataColor() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Color>() || (dataType() == Float && componentCount() == 3));
-		return reinterpret_cast<Color*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first symmetric tensor element in the property storage.
-	/// \note This method may only be used if this property is of data type SymmetricTensor2 or a FloatType channel with 6 components.
-	SymmetricTensor2* dataSymmetricTensor2() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<SymmetricTensor2>() || (dataType() == Float && componentCount() == 6));
-		return reinterpret_cast<SymmetricTensor2*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first Matrix3 element in the property storage.
-	/// \note This method may only be used if this property is of data type Matrix3 or a FloatType channel with 9 components.
-	Matrix3* dataMatrix3() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Matrix3>() || (dataType() == Float && componentCount() == 9));
-		return reinterpret_cast<Matrix3*>(data());
-	}
-
-	/// \brief Returns a read-write pointer to the first quaternion element in the property storage.
-	/// \note This method may only be used if this property is of data type Quaternion or a FloatType channel with 4 components.
-	Quaternion* dataQuaternion() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Quaternion>() || (dataType() == Float && componentCount() == 4));
-		return reinterpret_cast<Quaternion*>(data());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<int*> intRange() {
-		OVITO_ASSERT(componentCount() == 1);
-		return boost::make_iterator_range(dataInt(), dataInt() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<qlonglong*> int64Range() {
-		OVITO_ASSERT(componentCount() == 1);
-		return boost::make_iterator_range(dataInt64(), dataInt64() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<FloatType*> floatRange() {
-		OVITO_ASSERT(componentCount() == 1);
-		return boost::make_iterator_range(dataFloat(), dataFloat() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Point3*> point3Range() {
-		return boost::make_iterator_range(dataPoint3(), dataPoint3() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Point2*> point2Range() {
-		return boost::make_iterator_range(dataPoint2(), dataPoint2() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Vector3*> vector3Range() {
-		return boost::make_iterator_range(dataVector3(), dataVector3() + size());
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this object.
-	boost::iterator_range<Color*> colorRange() {
-		return boost::make_iterator_range(dataColor(), dataColor() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Vector3I*> vector3IRange() {
-		return boost::make_iterator_range(dataVector3I(), dataVector3I() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Point3I*> point3IRange() {
-		return boost::make_iterator_range(dataPoint3I(), dataPoint3I() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<SymmetricTensor2*> symmetricTensor2Range() {
-		return boost::make_iterator_range(dataSymmetricTensor2(), dataSymmetricTensor2() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Matrix3*> matrix3Range() {
-		return boost::make_iterator_range(dataMatrix3(), dataMatrix3() + size());
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this object.
-	boost::iterator_range<Quaternion*> quaternionRange() {
-		return boost::make_iterator_range(dataQuaternion(), dataQuaternion() + size());
-	}
-
-	/// Sets the value of an element at the given index.
+	/// \brief Sets the value of the i-th element in the array.
 	template<typename T>
-	void setValue(size_t index, const T& newValue) {
-		OVITO_ASSERT(index < size());
-		dataGeneric<T>()[index] = newValue;
+	void set(size_t i, const T& v) {
+		*data<T>(i) = v;
 	}
 
-	/// Sets the value of an integer element at the given index (if this is an integer property).
-	void setInt(size_t index, int newValue) {
-		OVITO_ASSERT(index < size());
-		dataInt()[index] = newValue;
+	/// \brief Sets the value of the j-th component of the i-th element in the array.
+	template<typename T>
+	void set(size_t i, size_t j, const T& v) {
+		*data<T>(i, j) = v;
 	}
 
-	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
-	void setInt64(size_t index, qlonglong newValue) {
-		OVITO_ASSERT(index < size());
-		dataInt64()[index] = newValue;
+	/// \brief Returns a range of iterators over the elements stored in this array.
+	template<typename T>
+	boost::iterator_range<T*> range() {
+		return boost::make_iterator_range(data<T>(), data<T>() + size());
 	}
 
-	/// Sets the value of a float element at the given index (if this is a float property).
-	void setFloat(size_t index, FloatType newValue) {
-		OVITO_ASSERT(index < size());
-		dataFloat()[index] = newValue;
+	/// \brief Sets all array elements to the given uniform value.
+	template<typename T>
+	void fill(const T value) {
+		boost::fill(range<T>(), value);
 	}
 
-	/// Sets the value of an integer element at the given index (if this is an integer property).
-	void setIntComponent(size_t index, size_t componentIndex, int newValue) {
-		OVITO_ASSERT(index < size() && componentIndex < componentCount());
-		dataInt()[index*componentCount() + componentIndex] = newValue;
+	/// \brief Sets all array elements for which the corresponding entries in the 
+	///        selection array are non-zero to the given uniform value.
+	template<typename T>
+	void fillSelected(const T value, const PropertyStorage& selectionProperty) {
+		OVITO_ASSERT(selectionProperty.size() == this->size());
+		OVITO_ASSERT(selectionProperty.dataType() == Int);
+		OVITO_ASSERT(selectionProperty.componentCount() == 1);
+		auto selectionIter = selectionProperty.cdata<int>();
+		for(T& v : range<T>())
+			if(*selectionIter++) v = value;
 	}
 
-	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
-	void setInt64Component(size_t index, size_t componentIndex, qlonglong newValue) {
-		OVITO_ASSERT(index < size() && componentIndex < componentCount());
-		dataInt64()[index*componentCount() + componentIndex] = newValue;
+	/// \brief Sets all array elements for which the corresponding entries in the 
+	///        selection array are non-zero to the given uniform value.
+	template<typename T>
+	void fillSelected(const T& value, const PropertyStorage* selectionProperty) {
+		if(selectionProperty)
+			fillSelected(value, *selectionProperty);
+		else
+			fill(value);
 	}
 
-	/// Sets the value of a float element at the given index (if this is a float property).
-	void setFloatComponent(size_t index, size_t componentIndex, FloatType newValue) {
-		OVITO_ASSERT(index < size() && componentIndex < componentCount());
-		dataFloat()[index*componentCount() + componentIndex] = newValue;
-	}
-
-	/// Sets the value of a Vector3 element at the given index (if this is a vector property).
-	void setVector3(size_t index, const Vector3& newValue) {
-		OVITO_ASSERT(index < size());
-		dataVector3()[index] = newValue;
-	}
-
-	/// Sets the value of a Point3 element at the given index (if this is a point property).
-	void setPoint3(size_t index, const Point3& newValue) {
-		OVITO_ASSERT(index < size());
-		dataPoint3()[index] = newValue;
-	}
-
-	/// Sets the value of a Point2 element at the given index (if this is a point property).
-	void setPoint2(size_t index, const Point2& newValue) {
-		OVITO_ASSERT(index < size());
-		dataPoint2()[index] = newValue;
-	}
-
-	/// Sets the value of a Vector3I element at the given index (if this is an integer vector property).
-	void setVector3I(size_t index, const Vector3I& newValue) {
-		OVITO_ASSERT(index < size());
-		dataVector3I()[index] = newValue;
-	}
-
-	/// Sets the value of a Point3I element at the given index (if this is a point property).
-	void setPoint3I(size_t index, const Point3I& newValue) {
-		OVITO_ASSERT(index < size());
-		dataPoint3I()[index] = newValue;
-	}
-
-	/// Sets the value of a Color element at the given index (if this is a color property).
-	void setColor(size_t index, const Color& newValue) {
-		OVITO_ASSERT(index < size());
-		dataColor()[index] = newValue;
-	}
-
-	/// Sets the value of a SymmetricTensor2 element.
-	void setSymmetricTensor2(size_t particleIndex, const SymmetricTensor2& newValue) {
-		OVITO_ASSERT(particleIndex < size());
-		dataSymmetricTensor2()[particleIndex] = newValue;
-	}
-
-	/// Sets the value of a Matrix3 element.
-	void setMatrix3(size_t index, const Matrix3& newValue) {
-		OVITO_ASSERT(index < size());
-		dataMatrix3()[index] = newValue;
-	}
-
-	/// Sets the value of a Quaternion element.
-	void setQuaternion(size_t index, const Quaternion& newValue) {
-		OVITO_ASSERT(index < size());
-		dataQuaternion()[index] = newValue;
+	/// \brief Sets all array elements for which the corresponding entries in the 
+	///        selection array are non-zero to the given uniform value.
+	template<typename T>
+	void fillSelected(const T& value, const ConstPropertyPtr& selectionProperty) {
+		fillSelected(value, selectionProperty.get());
 	}
 
 	/// Reduces the size of the storage array, removing elements for which

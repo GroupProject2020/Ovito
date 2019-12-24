@@ -203,13 +203,13 @@ QVariant DislocationTypeListParameterUI::getItemData(RefTarget* target, const QM
 			else if(index.column() == 2 && _dislocationCounts) {
 				if(const PropertyObject* yprop = _dislocationCounts->getY()) {
 					if(yprop->size() > family->numericId() && yprop->dataType() == PropertyStorage::Int)
-						return yprop->getInt(family->numericId());
+						return yprop->get<int>(family->numericId());
 				}
 			}
 			else if(index.column() == 3 && _dislocationLengths) {
 				if(const PropertyObject* yprop = _dislocationLengths->getY()) {
 					if(yprop->size() > family->numericId() && yprop->dataType() == PropertyStorage::Float)
-						return QString::number(yprop->getFloat(family->numericId()));
+						return QString::number(yprop->get<FloatType>(family->numericId()));
 				}
 			}
 		}

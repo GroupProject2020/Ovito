@@ -185,7 +185,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 		PropertyContainer* mutableContainer = state.expectMutableLeafObject(subject());
 		// Add the selection property to the output container.
 		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
-		std::fill(outputSelection->dataInt(), outputSelection->dataInt() + outputSelection->size(), 1);
+		boost::fill(outputSelection->range<int>(), 1);
 		numSelected = outputSelection->size();
 	}
 
@@ -201,11 +201,11 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	auto out_y = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::YProperty, false);
 
 	// Collect X coordinates.
-	if(!xProperty->copyTo(out_x->dataFloat(), xVecComponent))
+	if(!xProperty->copyTo(out_x->data<FloatType>(), xVecComponent))
 		throwException(tr("Failed to extract coordinate values from input property for x-axis."));
 
 	// Collect Y coordinates.
-	if(!yProperty->copyTo(out_y->dataFloat(), yVecComponent))
+	if(!yProperty->copyTo(out_y->data<FloatType>(), yVecComponent))
 		throwException(tr("Failed to extract coordinate values from input property for y-axis."));
 
 #if 0
@@ -228,8 +228,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 
 	if(outputSelection && selectXAxisInRange()) {
 		OVITO_ASSERT(outputSelection->size() == out_x->size());
-		int* s = outputSelection->dataInt();
-		int* s_end = s + outputSelection->size();
+		int* s = outputSelection->data<int>();
 		for(FloatType x : out_x->crange<FloatType>()) {
 			if(x < selectionXAxisRangeStart || x > selectionXAxisRangeEnd) {
 				*s = 0;
@@ -241,8 +240,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 
 	if(outputSelection && selectYAxisInRange()) {
 		OVITO_ASSERT(outputSelection->size() == out_y->size());
-		int* s = outputSelection->dataInt();
-		int* s_end = s + outputSelection->size();
+		int* s = outputSelection->data<int>();
 		for(FloatType y : out_y->crange<FloatType>()) {
 			if(y < selectionYAxisRangeStart || y > selectionYAxisRangeEnd) {
 				if(*s) {

@@ -178,9 +178,9 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				break;
 
 			// Skip particles that are not included in the analysis.
-			if(selection() && !selection()->getInt(index)) {
-				structures()->setInt(index, PTMAlgorithm::OTHER);
-				rmsd()->setFloat(index, 0);
+			if(selection() && !selection()->get<int>(index)) {
+				structures()->set<int>(index, PTMAlgorithm::OTHER);
+				rmsd()->set<FloatType>(index, 0);
 				continue;
 			}
 
@@ -214,9 +214,9 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				break;
 
 			// Skip particles that are not included in the analysis.
-			if(selection() && !selection()->getInt(index)) {
-				structures()->setInt(index, PTMAlgorithm::OTHER);
-				rmsd()->setFloat(index, 0);
+			if(selection() && !selection()->get<int>(index)) {
+				structures()->set<int>(index, PTMAlgorithm::OTHER);
+				rmsd()->set<FloatType>(index, 0);
 				continue;
 			}
 
@@ -224,13 +224,13 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			PTMAlgorithm::StructureType type = kernel.identifyStructure(index, cachedNeighbors, nullptr);
 
 			// Store results in the output arrays.
-			structures()->setInt(index, type);
-			rmsd()->setFloat(index, kernel.rmsd());
+			structures()->set<int>(index, type);
+			rmsd()->set<FloatType>(index, kernel.rmsd());
 			if(type != PTMAlgorithm::OTHER) {
-				if(interatomicDistances()) interatomicDistances()->setFloat(index, kernel.interatomicDistance());
-				if(orientations()) orientations()->setQuaternion(index, kernel.orientation());
-				if(deformationGradients()) deformationGradients()->setMatrix3(index, kernel.deformationGradient());
-				if(orderingTypes()) orderingTypes()->setInt(index, kernel.orderingType());
+				if(interatomicDistances()) interatomicDistances()->set<FloatType>(index, kernel.interatomicDistance());
+				if(orientations()) orientations()->set<Quaternion>(index, kernel.orientation());
+				if(deformationGradients()) deformationGradients()->set<Matrix3>(index, kernel.deformationGradient());
+				if(orderingTypes()) orderingTypes()->set<int>(index, kernel.orderingType());
 			}
 		}
 	});
@@ -240,17 +240,17 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 	// Determine histogram bin size based on maximum RMSD value.
 	const size_t numHistogramBins = 100;
 	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
-	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size()) / numHistogramBins;
+	FloatType rmsdHistogramBinSize = FloatType(1.01) * *boost::max_element(rmsd()->crange<FloatType>()) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
 
 	// Perform binning of RMSD values.
 	for(size_t index = 0; index < structures()->size(); index++) {
-		if(structures()->getInt(index) != PTMAlgorithm::OTHER) {
-			OVITO_ASSERT(rmsd()->getFloat(index) >= 0);
-			int binIndex = rmsd()->getFloat(index) / rmsdHistogramBinSize;
+		if(structures()->get<int>(index) != PTMAlgorithm::OTHER) {
+			OVITO_ASSERT(rmsd()->get<FloatType>(index) >= 0);
+			int binIndex = rmsd()->get<FloatType>(index) / rmsdHistogramBinSize;
 			if(binIndex < numHistogramBins)
-				_rmsdHistogram->dataInt64()[binIndex]++;
+				_rmsdHistogram->data<qlonglong>()[binIndex]++;
 		}
 	}
 }
@@ -271,8 +271,8 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 
 		// Mark those particles whose RMSD exceeds the cutoff as 'OTHER'.
 		for(size_t i = 0; i < rmsd()->size(); i++) {
-			if(rmsd()->getFloat(i) > modifier->rmsdCutoff())
-				finalStructureTypes->setInt(i, PTMAlgorithm::OTHER);
+			if(rmsd()->get<FloatType>(i) > modifier->rmsdCutoff())
+				finalStructureTypes->set<int>(i, PTMAlgorithm::OTHER);
 		}
 
 		// Replace old classifications with updated ones.

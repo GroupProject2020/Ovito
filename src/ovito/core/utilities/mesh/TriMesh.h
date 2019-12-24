@@ -197,7 +197,7 @@ public:
 	/// Calling this method multiple times is cheap as long as the vertices of the mesh are not changed.
 	const Box3& boundingBox() const {
 		if(_boundingBox.isEmpty())
-			_boundingBox.addPoints(vertices().constData(), vertexCount());
+			_boundingBox.addPoints(vertices());
 		return _boundingBox;
 	}
 

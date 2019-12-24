@@ -266,12 +266,12 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 	for(size_t i = 0; i < numAtoms; i++) {
 
 		// Parse atom id.
-		identifierProperty->setInt64(i, stream.get_int64());
+		identifierProperty->set<qlonglong>(i, stream.get_int64());
 
 		// Parse atom type.
 		int32_t atomType = std::abs(stream.get_int32());
 		OVITO_ASSERT(atomType >= mintype && atomType <= maxtype);
-		typeProperty->setInt(i, atomType);
+		typeProperty->set<int>(i, atomType);
 
 		// Parse atom coordinates.
 		Point3 pos;
@@ -283,16 +283,16 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 			for(int k = 0; k < 3; k++)
 				pos[k] = (FloatType)stream.get_real64();
 		}
-		posProperty->setPoint3(i, pos);
+		posProperty->set<Point3>(i, pos);
 
 		// Parse extra fields.
 		if(realsize == 4) {
 			for(PropertyStorage* prop : properties)
-				prop->setFloat(i, (FloatType)stream.get_real32());
+				prop->set<FloatType>(i, (FloatType)stream.get_real32());
 		}
 		else {
 			for(PropertyStorage* prop : properties)
-				prop->setFloat(i, (FloatType)stream.get_real64());
+				prop->set<FloatType>(i, (FloatType)stream.get_real64());
 		}
 
 		// Update progress indicator.

@@ -86,7 +86,7 @@ void SlipSurfaceVis::PrepareMeshEngine::determineFaceColors()
     for(TriMeshFace& face : _surfaceMesh.faces()) {
         int materialIndex = 0;
         int region = _microstructure.faceRegion(*originalFace);
-        int phaseId = phaseProperty->getInt(region);
+        int phaseId = phaseProperty->get<int>(region);
         const Vector3& b = _microstructure.burgersVector(*originalFace);
         auto entry = _phaseStructureTypes.find(phaseId);
         ColorA c = MicrostructurePhase::getBurgersVectorColor(entry != _phaseStructureTypes.end() ? entry->second : ParticleType::PredefinedStructureType::OTHER, b);
@@ -131,15 +131,15 @@ QString SlipSurfacePickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
     if(const PropertyObject* regionProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::RegionProperty)) {
         if(facetIndex >= 0 && facetIndex < regionProperty->size()) {
             if(const PropertyObject* burgersVectorProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::BurgersVectorProperty)) {
-                int region = regionProperty->getInt(facetIndex);
+                int region = regionProperty->get<int>(facetIndex);
                 if(const PropertyObject* phaseProperty = surfaceMesh()->regions()->getProperty(SurfaceMeshRegions::PhaseProperty)) {
                     if(region >= 0 && region < phaseProperty->size()) {
-                        int phaseId = phaseProperty->getInt(region);
+                        int phaseId = phaseProperty->get<int>(region);
                         if(const MicrostructurePhase* phase = dynamic_object_cast<MicrostructurePhase>(phaseProperty->elementType(phaseId))) {
-                            QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVectorProperty->getVector3(facetIndex), phase);
+                            QString formattedBurgersVector = DislocationVis::formatBurgersVector(burgersVectorProperty->get<Vector3>(facetIndex), phase);
                             str = tr("Slip vector: %1").arg(formattedBurgersVector);
                             if(const PropertyObject* crystallographicNormalProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::CrystallographicNormalProperty)) {
-                                QString formattedNormalVector = DislocationVis::formatBurgersVector(crystallographicNormalProperty->getVector3(facetIndex), phase);
+                                QString formattedNormalVector = DislocationVis::formatBurgersVector(crystallographicNormalProperty->get<Vector3>(facetIndex), phase);
                                 str += tr(" | Crystallographic normal: %1").arg(formattedNormalVector);
                             }
                             str += tr(" | Crystal region: %1").arg(region);

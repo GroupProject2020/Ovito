@@ -119,12 +119,12 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 		if(*property) {
 			if((*property)->dataType() == PropertyStorage::Int) {
 				if(!_writeTypeNames || (*property)->type() != ParticlesObject::TypeProperty) {
-					stream << (*property)->getIntComponent(particleIndex, *vcomp);
+					stream << (*property)->get<int>(particleIndex, *vcomp);
 				}
 				else {
 					// Write type name instead of type number.
 					// Replace spaces in the name with underscores.
-					int particleTypeId = (*property)->getIntComponent(particleIndex, *vcomp);
+					int particleTypeId = (*property)->get<int>(particleIndex, *vcomp);
 					const ElementType* type = (*property)->elementType(particleTypeId);
 					if(type && !type->name().isEmpty()) {
 						QString s = type->name();
@@ -136,10 +136,10 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 				}
 			}
 			else if((*property)->dataType() == PropertyStorage::Int64) {
-				stream << (*property)->getInt64Component(particleIndex, *vcomp);
+				stream << (*property)->get<qlonglong>(particleIndex, *vcomp);
 			}
 			else if((*property)->dataType() == PropertyStorage::Float) {
-				stream << (*property)->getFloatComponent(particleIndex, *vcomp);
+				stream << (*property)->get<FloatType>(particleIndex, *vcomp);
 			}
 		}
 		else {

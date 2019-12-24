@@ -190,7 +190,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	}
 
 	// Compute a histogram of the input field values.
-	auto histogramData = histogram()->dataInt64();
+	auto histogramData = histogram()->data<qlonglong>();
 	FloatType binSize = (maxValue() - minValue()) / histogram()->size();
 	int histogramSizeMin1 = histogram()->size() - 1;
 	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {

@@ -52,13 +52,13 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 					TimeInterval iv;
 					result.objNode = vpPickResult.pipelineNode();
 					result.particleIndex = particleIndex;
-					result.localPos = posProperty->getPoint3(result.particleIndex);
+					result.localPos = posProperty->get<Point3>(result.particleIndex);
 					result.worldPos = result.objNode->getWorldTransform(vpwin->viewport()->dataset()->animationSettings()->time(), iv) * result.localPos;
 
 					// Determine particle ID.
 					const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 					if(identifierProperty && result.particleIndex < identifierProperty->size()) {
-						result.particleId = identifierProperty->getInt64(result.particleIndex);
+						result.particleId = identifierProperty->get<qlonglong>(result.particleIndex);
 					}
 					else result.particleId = -1;
 
@@ -91,8 +91,8 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	size_t particleIndex = pickRecord.particleIndex;
 	if(pickRecord.particleId >= 0) {
 		if(const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
-			if(particleIndex >= identifierProperty->size() || identifierProperty->getInt64(particleIndex) != pickRecord.particleId) {
-				auto begin = identifierProperty->constDataInt64();
+			if(particleIndex >= identifierProperty->size() || identifierProperty->get<qlonglong>(particleIndex) != pickRecord.particleId) {
+				auto begin = identifierProperty->cdata<qlonglong>();
 				auto end = begin + identifierProperty->size();
 				auto iter = std::find(begin, end, pickRecord.particleId);
 				if(iter == end) return;

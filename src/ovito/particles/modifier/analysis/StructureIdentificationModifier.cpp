@@ -138,14 +138,12 @@ void StructureIdentificationModifier::StructureIdentificationEngine::emitResults
 
 		// Assign colors to particles based on their structure type.
 		PropertyObject* colorProperty = particles->createProperty(ParticlesObject::ColorProperty, false);
-		const int* s = structureProperty->constDataInt();
-		for(Color& c : colorProperty->colorRange()) {
-			if(*s >= 0 && *s < structureTypeColors.size()) {
-				c = structureTypeColors[*s];
-			}
-			else c.setWhite();
-			++s;
-		}
+		boost::transform(structureProperty->crange<int>(), colorProperty->data<Color>(), [&](int s) {
+			if(s >= 0 && s < structureTypeColors.size())
+				return structureTypeColors[s];
+			else 
+				return Color(1,1,1);
+		});
 	}
 
 	// Count the number of particles of each identified type.
@@ -155,13 +153,13 @@ void StructureIdentificationModifier::StructureIdentificationEngine::emitResults
 		maxTypeId = std::max(maxTypeId, stype->numericId());
 	}
 	_typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
-	auto typeCountsData = _typeCounts->dataInt64();
-	for(int t : structureProperty->constIntRange()) {
+	auto typeCountsData = _typeCounts->data<qlonglong>();
+	for(int t : structureProperty->crange<int>()) {
 		if(t >= 0 && t <= maxTypeId)
 			typeCountsData[t]++;
 	}
 	PropertyPtr typeIds = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int, 1, 0, tr("Structure type"), false, DataSeriesObject::XProperty);
-	std::iota(typeIds->dataInt(), typeIds->dataInt() + typeIds->size(), 0);
+	boost::algorithm::iota_n(typeIds->data<int>(), 0, typeIds->size());
 
 	// Output a data series object with the type counts.
 	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts, std::move(typeIds));

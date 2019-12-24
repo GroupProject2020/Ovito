@@ -61,10 +61,8 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 	QMap<int,int> particleCounts;
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 	if(particleTypeProperty) {
-		const int* ptype = particleTypeProperty->constDataInt();
-		const int* ptype_end = ptype + particleTypeProperty->size();
-		for(; ptype != ptype_end; ++ptype) {
-			particleCounts[*ptype]++;
+		for(int ptype : particleTypeProperty->crange<int>()) {
+			particleCounts[ptype]++;
 		}
 
 		// Write line with particle type names.
@@ -102,9 +100,9 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 	textStream() << (writeReducedCoordinates() ? "Direct\n" : "Cartesian\n");
 	for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
 		int ptype = c.key();
-		const Point3* p = posProperty->constDataPoint3();
+		const Point3* p = posProperty->cdata<Point3>();
 		for(size_t i = 0; i < posProperty->size(); i++, ++p) {
-			if(particleTypeProperty && particleTypeProperty->getInt(i) != ptype)
+			if(particleTypeProperty && particleTypeProperty->get<int>(i) != ptype)
 				continue;
 			if(writeReducedCoordinates()) {
 				Point3 rp = cell.absoluteToReduced(*p);
@@ -124,9 +122,9 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 		textStream() << (writeReducedCoordinates() ? "Direct\n" : "Cartesian\n");
 		for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
 			int ptype = c.key();
-			const Vector3* v = velocityProperty->constDataVector3();
+			const Vector3* v = velocityProperty->cdata<Vector3>();
 			for(size_t i = 0; i < velocityProperty->size(); i++, ++v) {
-				if(particleTypeProperty && particleTypeProperty->getInt(i) != ptype)
+				if(particleTypeProperty && particleTypeProperty->get<int>(i) != ptype)
 					continue;
 
 				if(writeReducedCoordinates()) {

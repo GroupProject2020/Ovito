@@ -103,14 +103,14 @@ QVariant StructureListParameterUI::getItemData(RefTarget* target, const QModelIn
 			}
 			else if(index.column() == 2) {
 				if(_structureCounts && stype->numericId() >= 0 && stype->numericId() < _structureCounts->size())
-					return _structureCounts->getInt64(stype->numericId());
+					return _structureCounts->get<qlonglong>(stype->numericId());
 			}
 			else if(index.column() == 3) {
 				if(_structureCounts && stype->numericId() >= 0 && stype->numericId() < _structureCounts->size()) {
 					size_t totalCount = 0;
-					for(auto c : _structureCounts->constInt64Range())
+					for(auto c : _structureCounts->crange<qlonglong>())
 						totalCount += c;
-					return QString("%1%").arg((double)_structureCounts->getInt64(stype->numericId()) * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
+					return QString("%1%").arg((double)_structureCounts->get<qlonglong>(stype->numericId()) * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
 				}
 			}
 			else if(index.column() == 4) {

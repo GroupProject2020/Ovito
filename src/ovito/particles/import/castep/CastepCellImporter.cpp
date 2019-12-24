@@ -199,11 +199,11 @@ FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile
 
 			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
 			frameData->addParticleProperty(posProperty);
-			std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
+			boost::copy(coords, posProperty->data<Point3>());
 
 			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
 			frameData->addParticleProperty(typeProperty);
-			std::copy(types.begin(), types.end(), typeProperty->dataInt());
+			boost::copy(types, typeProperty->data<int>());
 			typeList->sortTypesByName(typeProperty);
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
@@ -222,7 +222,7 @@ FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile
 
 			PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
 			frameData->addParticleProperty(velocityProperty);
-			std::copy(velocities.begin(), velocities.end(), velocityProperty->dataVector3());
+			boost::copy(velocities, velocityProperty->data<Vector3>());
 		}
 	}
 	return frameData;

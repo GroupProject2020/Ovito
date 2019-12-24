@@ -84,10 +84,10 @@ StructureAnalysis::StructureAnalysis(ConstPropertyPtr positions, const Simulatio
 	// Allocate memory for neighbor lists.
 	_neighborLists = std::make_shared<PropertyStorage>(_positions->size(), PropertyStorage::Int,
 			latticeStructure(inputCrystalType).maxNeighbors, 0, QStringLiteral("Neighbors"), false);
-	std::fill(_neighborLists->dataInt(), _neighborLists->dataInt() + _neighborLists->size() * _neighborLists->componentCount(), -1);
+	std::fill(_neighborLists->data<int>(0,0), _neighborLists->data<int>(0,0) + _neighborLists->size() * _neighborLists->componentCount(), -1);
 
 	// Reset atomic structure types.
-	std::fill(_structureTypes->dataInt(), _structureTypes->dataInt() + _structureTypes->size(), LATTICE_OTHER);
+	std::fill(_structureTypes->data<int>(0,0), _structureTypes->data<int>(0,0) + _structureTypes->size(), LATTICE_OTHER);
 }
 
 /******************************************************************************
@@ -470,10 +470,10 @@ bool StructureAnalysis::identifyStructures(Task& promise)
 ******************************************************************************/
 void StructureAnalysis::determineLocalStructure(NearestNeighborFinder& neighList, size_t particleIndex)
 {
-	OVITO_ASSERT(_structureTypes->getInt(particleIndex) == COORD_OTHER);
+	OVITO_ASSERT(_structureTypes->get<int>(particleIndex) == COORD_OTHER);
 
 	// Skip atoms that are not included in the analysis.
-	if(_particleSelection && _particleSelection->getInt(particleIndex) == 0)
+	if(_particleSelection && _particleSelection->get<int>(particleIndex) == 0)
 		return;
 
 	// Construct local neighbor list builder.
@@ -723,7 +723,7 @@ void StructureAnalysis::determineLocalStructure(NearestNeighborFinder& neighList
 		}
 		if(ni1 == nn) {
 			// Assign coordination structure type to atom.
-			_structureTypes->setInt(particleIndex, coordinationType);
+			_structureTypes->set<int>(particleIndex, coordinationType);
 
 			// Save the atom's neighbor list.
 			for(int i = 0; i < nn; i++) {
@@ -765,8 +765,8 @@ bool StructureAnalysis::buildClusters(Task& promise)
 
 	// Iterate over atoms, looking for those that have not been visited yet.
 	for(size_t seedAtomIndex = 0; seedAtomIndex < positions()->size(); seedAtomIndex++) {
-		if(_atomClusters->getInt64(seedAtomIndex) != 0) continue;
-		int coordStructureType = _structureTypes->getInt(seedAtomIndex);
+		if(_atomClusters->get<qlonglong>(seedAtomIndex) != 0) continue;
+		int coordStructureType = _structureTypes->get<int>(seedAtomIndex);
 
 		if(coordStructureType == COORD_OTHER) {
 			progressCounter++;
@@ -778,8 +778,8 @@ bool StructureAnalysis::buildClusters(Task& promise)
 		Cluster* cluster = clusterGraph()->createCluster(latticeStructureType);
 		OVITO_ASSERT(cluster->id > 0);
 		cluster->atomCount = 1;
-		_atomClusters->setInt64(seedAtomIndex, cluster->id);
-		_atomSymmetryPermutations->setInt(seedAtomIndex, 0);
+		_atomClusters->set<qlonglong>(seedAtomIndex, cluster->id);
+		_atomSymmetryPermutations->set<int>(seedAtomIndex, 0);
 		const CoordinationStructure& coordStructure = _coordinationStructures[coordStructureType];
 		const LatticeStructure& latticeStructure = _latticeStructures[latticeStructureType];
 
@@ -798,7 +798,7 @@ bool StructureAnalysis::buildClusters(Task& promise)
 				return false;
 
 			// Look up symmetry permutation of current atom.
-			int symmetryPermutationIndex = _atomSymmetryPermutations->getInt(currentAtomIndex);
+			int symmetryPermutationIndex = _atomSymmetryPermutations->get<int>(currentAtomIndex);
 			const auto& permutation = latticeStructure.permutations[symmetryPermutationIndex].permutation;
 
 			// Visit neighbors of the current atom.
@@ -811,7 +811,7 @@ bool StructureAnalysis::buildClusters(Task& promise)
 
 				// Add vector pair to matrices for computing the cluster orientation.
 				const Vector3& latticeVector = latticeStructure.latticeVectors[permutation[neighborIndex]];
-				const Vector3& spatialVector = cell().wrapVector(positions()->getPoint3(neighborAtomIndex) - positions()->getPoint3(currentAtomIndex));
+				const Vector3& spatialVector = cell().wrapVector(positions()->get<Point3>(neighborAtomIndex) - positions()->get<Point3>(currentAtomIndex));
 				for(size_t i = 0; i < 3; i++) {
 					for(size_t j = 0; j < 3; j++) {
 						orientationV(i,j) += (double)(latticeVector[j] * latticeVector[i]);
@@ -820,8 +820,8 @@ bool StructureAnalysis::buildClusters(Task& promise)
 				}
 
 				// Skip neighbors which are already part of the cluster, or which have a different coordination structure type.
-				if(_atomClusters->getInt64(neighborAtomIndex) != 0) continue;
-				if(_structureTypes->getInt(neighborAtomIndex) != coordStructureType) continue;
+				if(_atomClusters->get<qlonglong>(neighborAtomIndex) != 0) continue;
+				if(_structureTypes->get<int>(neighborAtomIndex) != coordStructureType) continue;
 
 				// Select three non-coplanar atoms, which are all neighbors of the current neighbor.
 				// One of them is the current central atom, two are common neighbors.
@@ -860,11 +860,11 @@ bool StructureAnalysis::buildClusters(Task& promise)
 					if(transition.equals(latticeStructure.permutations[i].transformation, CA_TRANSITION_MATRIX_EPSILON)) {
 
 						// Make the neighbor atom part of the current cluster.
-						_atomClusters->setInt64(neighborAtomIndex, cluster->id);
+						_atomClusters->set<qlonglong>(neighborAtomIndex, cluster->id);
 						cluster->atomCount++;
 
 						// Save the permutation index.
-						_atomSymmetryPermutations->setInt(neighborAtomIndex, i);
+						_atomSymmetryPermutations->set<int>(neighborAtomIndex, i);
 
 						// Recursively continue with the neighbor.
 						atomsToVisit.push_back(neighborAtomIndex);
@@ -908,15 +908,15 @@ bool StructureAnalysis::buildClusters(Task& promise)
 
 	// Reorient atoms to align clusters with global coordinate system.
 	for(size_t atomIndex = 0; atomIndex < positions()->size(); atomIndex++) {
-		int clusterId = _atomClusters->getInt64(atomIndex);
+		int clusterId = _atomClusters->get<qlonglong>(atomIndex);
 		if(clusterId == 0) continue;
 		Cluster* cluster = clusterGraph()->findCluster(clusterId);
 		OVITO_ASSERT(cluster);
 		if(cluster->symmetryTransformation == 0) continue;
 		const LatticeStructure& latticeStructure = _latticeStructures[cluster->structure];
-		int oldSymmetryPermutation = _atomSymmetryPermutations->getInt(atomIndex);
+		int oldSymmetryPermutation = _atomSymmetryPermutations->get<int>(atomIndex);
 		int newSymmetryPermutation = latticeStructure.permutations[oldSymmetryPermutation].inverseProduct[cluster->symmetryTransformation];
-		_atomSymmetryPermutations->setInt(atomIndex, newSymmetryPermutation);
+		_atomSymmetryPermutations->set<int>(atomIndex, newSymmetryPermutation);
 	}
 
 //	qInfo() << "Number of clusters:" << (clusterGraph()->clusters().size() - 1);
@@ -933,7 +933,7 @@ bool StructureAnalysis::connectClusters(Task& promise)
 	promise.setProgressMaximum(positions()->size());
 
 	for(size_t atomIndex = 0; atomIndex < positions()->size(); atomIndex++) {
-		int clusterId = _atomClusters->getInt64(atomIndex);
+		int clusterId = _atomClusters->get<qlonglong>(atomIndex);
 		if(clusterId == 0) continue;
 		Cluster* cluster1 = clusterGraph()->findCluster(clusterId);
 		OVITO_ASSERT(cluster1);
@@ -943,10 +943,10 @@ bool StructureAnalysis::connectClusters(Task& promise)
 			return false;
 
 		// Look up symmetry permutation of current atom.
-		int structureType = _structureTypes->getInt(atomIndex);
+		int structureType = _structureTypes->get<int>(atomIndex);
 		const LatticeStructure& latticeStructure = _latticeStructures[structureType];
 		const CoordinationStructure& coordStructure = _coordinationStructures[structureType];
-		int symmetryPermutationIndex = _atomSymmetryPermutations->getInt(atomIndex);
+		int symmetryPermutationIndex = _atomSymmetryPermutations->get<int>(atomIndex);
 		const auto& permutation = latticeStructure.permutations[symmetryPermutationIndex].permutation;
 
 		// Visit neighbors of the current atom.
@@ -954,7 +954,7 @@ bool StructureAnalysis::connectClusters(Task& promise)
 			int neighbor = getNeighbor(atomIndex, ni);
 
 			// Skip neighbor atoms belonging to the same cluster or to no cluster at all.
-			int neighborClusterId = _atomClusters->getInt64(neighbor);
+			int neighborClusterId = _atomClusters->get<qlonglong>(neighbor);
 			if(neighborClusterId == 0 || neighborClusterId == clusterId) {
 
 				// Add this atom to the neighbor's list of neighbors.
@@ -998,9 +998,9 @@ bool StructureAnalysis::connectClusters(Task& promise)
 				}
 
 				// Look up symmetry permutation of neighbor atom.
-				int neighborStructureType = _structureTypes->getInt(neighbor);
+				int neighborStructureType = _structureTypes->get<int>(neighbor);
 				const LatticeStructure& neighborLatticeStructure = _latticeStructures[neighborStructureType];
-				int neighborSymmetryPermutationIndex = _atomSymmetryPermutations->getInt(neighbor);
+				int neighborSymmetryPermutationIndex = _atomSymmetryPermutations->get<int>(neighbor);
 				const auto& neighborPermutation = neighborLatticeStructure.permutations[neighborSymmetryPermutationIndex].permutation;
 
 				tm2.column(i) = neighborLatticeStructure.latticeVectors[neighborPermutation[j]];

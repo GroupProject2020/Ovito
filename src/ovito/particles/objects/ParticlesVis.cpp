@@ -105,7 +105,7 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 
 	Box3 bbox;
 	if(positionProperty) {
-		bbox.addPoints(positionProperty->cdata<Point3>(), positionProperty->size());
+		bbox.addPoints(positionProperty->crange<Point3>());
 	}
 	if(!includeParticleRadius)
 		return bbox;
@@ -143,8 +143,8 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 			if(particleShape() == Spherocylinder)
 				maxAtomRadius *= 2;
 		}
-		if(radiusProperty && radiusProperty->size() > 0) {
-			auto minmax = boost::minmax_element(radiusProperty->crange<FloatType>());
+		if(radiusProperty && radiusProperty->size() != 0) {
+			auto minmax = std::minmax_element(radiusProperty->cdata<FloatType>(), radiusProperty->cdata<FloatType>() + radiusProperty->size());
 			if(*minmax.first <= 0)
 				maxAtomRadius = std::max(maxAtomRadius, *minmax.second);
 			else
@@ -210,7 +210,7 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 	ColorA defaultColor = defaultParticleColor();
 	if(colorProperty && colorProperty->size() == output.size()) {
 		// Take particle colors directly from the color property.
-		boost::copy(colorProperty->crange<Color>(), output);
+		boost::copy(colorProperty->crange<Color>(), output.begin());
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign colors based on particle types.
@@ -282,34 +282,32 @@ void ParticlesVis::particleRadii(std::vector<FloatType>& output, const PropertyO
 	FloatType defaultRadius = defaultParticleRadius();
 	if(radiusProperty && radiusProperty->size() == output.size()) {
 		// Take particle radii directly from the radius property.
-		std::transform(radiusProperty->constDataFloat(), radiusProperty->constDataFloat() + output.size(),
-			output.begin(), [defaultRadius](FloatType r) { return r > 0 ? r : defaultRadius; } );
+		boost::transform(radiusProperty->crange<FloatType>(), output.begin(), [defaultRadius](FloatType r) { return r > 0 ? r : defaultRadius; } );
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign radii based on particle types.
 		// Build a lookup map for particle type radii.
 		const std::map<int,FloatType> radiusMap = ParticleType::typeRadiusMap(typeProperty);
 		// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.
-		if(std::any_of(radiusMap.cbegin(), radiusMap.cend(), [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
+		if(boost::algorithm::any_of(radiusMap, [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
 			// Fill radius array.
-			const int* t = typeProperty->constDataInt();
-			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
-				auto it = radiusMap.find(*t);
+			boost::transform(typeProperty->crange<int>(), output.begin(), [&](int t) {
+				auto it = radiusMap.find(t);
 				// Set particle radius only if the type's radius is non-zero.
 				if(it != radiusMap.end() && it->second != 0)
-					*c = it->second;
+					return it->second;
 				else
-					*c = defaultRadius;
-			}
+					return defaultRadius;
+			});
 		}
 		else {
 			// Assign a uniform radius to all particles.
-			std::fill(output.begin(), output.end(), defaultRadius);
+			boost::fill(output, defaultRadius);
 		}
 	}
 	else {
 		// Assign a uniform radius to all particles.
-		std::fill(output.begin(), output.end(), defaultRadius);
+		boost::fill(output, defaultRadius);
 	}
 }
 
@@ -366,7 +364,7 @@ ColorA ParticlesVis::particleColor(size_t particleIndex, const PropertyObject* c
 
 	// Apply alpha component.
 	if(transparencyProperty && transparencyProperty->size() > particleIndex) {
-		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty->getFloat(particleIndex), FloatType(1));
+		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty->get<FloatType>(particleIndex), FloatType(1));
 	}
 
 	return c;
@@ -625,15 +623,15 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				std::vector<FloatType> radii(particleCount);
 				particleRadii(radii, radiusProperty, typeProperty);
 				for(size_t i = 0; i < particleCount; i++) {
-					auto iter = std::find(userShapeParticleTypes.begin(), userShapeParticleTypes.end(), typeProperty->getInt(i));
+					auto iter = boost::find(userShapeParticleTypes, typeProperty->get<int>(i));
 					if(iter == userShapeParticleTypes.end()) continue;
 					if(radii[i] <= 0) continue;
 					size_t typeIndex = iter - userShapeParticleTypes.begin();
 					AffineTransformation tm = AffineTransformation::scaling(radii[i]);
 					if(positionArray)
-						tm.translation() = positionArray->getPoint3(i) - Point3::Origin();
+						tm.translation() = positionArray->get<Point3>(i) - Point3::Origin();
 					if(orientationArray) {
-						Quaternion quat = orientationArray->getQuaternion(i);
+						Quaternion quat = orientationArray->get<Quaternion>(i);
 						// Normalize quaternion.
 						FloatType c = sqrt(quat.dot(quat));
 						if(c <= FLOATTYPE_EPSILON)
@@ -670,8 +668,8 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				// instead of the built-in primitives.
 				hiddenParticlesMask.resize(typeProperty->size());
 				size_t index = 0;
-				for(int t : typeProperty->constIntRange()) {
-					if(std::find(userShapeParticleTypes.cbegin(), userShapeParticleTypes.cend(), t) != userShapeParticleTypes.cend()) {
+				for(int t : typeProperty->crange<int>()) {
+					if(boost::find(userShapeParticleTypes, t) != userShapeParticleTypes.cend()) {
 						hiddenParticlesMask.set(index);
 						visibleStandardParticles--;
 					}
@@ -706,21 +704,21 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				if(visibleStandardParticles != particleCount)
 					positionArray = positionArray->filterCopy(hiddenParticlesMask);
 				// Fill in the position data.
-				visCache.particlePrimitive->setParticlePositions(positionArray->constDataPoint3());
+				visCache.particlePrimitive->setParticlePositions(positionArray->cdata<Point3>());
 			}
 			if(asphericalShapeArray) {
 				// Filter the property array to include only the visible particles.
 				if(visibleStandardParticles != particleCount)
 					asphericalShapeArray = asphericalShapeArray->filterCopy(hiddenParticlesMask);
 				// Fill in aspherical shape data.
-				visCache.particlePrimitive->setParticleShapes(asphericalShapeArray->constDataVector3());
+				visCache.particlePrimitive->setParticleShapes(asphericalShapeArray->cdata<Vector3>());
 			}
 			if(orientationArray) {
 				// Filter the property array to include only the visible particles.
 				if(visibleStandardParticles != particleCount)
 					orientationArray = orientationArray->filterCopy(hiddenParticlesMask);
 				// Fill in orientation data.
-				visCache.particlePrimitive->setParticleOrientations(orientationArray->constDataQuaternion());
+				visCache.particlePrimitive->setParticleOrientations(orientationArray->cdata<Quaternion>());
 			}
 		}
 
@@ -738,23 +736,23 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					positiveRadiusArray = std::make_shared<PropertyStorage>(*radiusArray);
 				// Replace null entries in the per-particle radius array with the default radius.
 				FloatType defaultRadius = defaultParticleRadius();
-				for(FloatType& r : positiveRadiusArray->floatRange())
+				for(FloatType& r : positiveRadiusArray->range<FloatType>())
 					if(r <= 0) r = defaultRadius;
 				// Fill in radius data.
-				visCache.particlePrimitive->setParticleRadii(positiveRadiusArray->constDataFloat());
+				visCache.particlePrimitive->setParticleRadii(positiveRadiusArray->cdata<FloatType>());
 			}
 			else if(typeProperty) {
 				// Assign radii based on particle types.
 				// Build a lookup map for particle type radii.
 				const std::map<int,FloatType> radiusMap = ParticleType::typeRadiusMap(typeProperty);
 				// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.
-				if(std::any_of(radiusMap.cbegin(), radiusMap.cend(), [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
+				if(boost::algorithm::any_of(radiusMap, [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
 					// Allocate value buffer.
 					std::vector<FloatType> particleRadii(visibleStandardParticles, defaultParticleRadius());
 					// Fill radius array.
 					auto c = particleRadii.begin();
 					size_t index = 0;
-					for(int t : typeProperty->constIntRange()) {
+					for(int t : typeProperty->crange<int>()) {
 						if(hiddenParticlesMask.empty() || !hiddenParticlesMask.test(index)) {
 							auto it = radiusMap.find(t);
 							// Set particle radius only if the type's radius is non-zero.
@@ -788,7 +786,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				if(visibleStandardParticles != particleCount)
 					colorArray = colorArray->filterCopy(hiddenParticlesMask);
 				// Directly use particle colors.
-				visCache.particlePrimitive->setParticleColors(colorArray->constDataColor());
+				visCache.particlePrimitive->setParticleColors(colorArray->cdata<Color>());
 			}
 			else {
 				std::vector<ColorA> colors(particleCount);
@@ -897,11 +895,11 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			// Fill cylinder buffer.
 			visCache.cylinderPrimitive->startSetElements(particleCount);
 			for(int index = 0; index < particleCount; index++) {
-				const Point3& center = positionProperty->getPoint3(index);
+				const Point3& center = positionProperty->get<Point3>(index);
 				FloatType radius, length;
 				if(asphericalShapeProperty) {
-					radius = std::abs(asphericalShapeProperty->getVector3(index).x());
-					length = asphericalShapeProperty->getVector3(index).z();
+					radius = std::abs(asphericalShapeProperty->get<Vector3>(index).x());
+					length = asphericalShapeProperty->get<Vector3>(index).z();
 				}
 				else {
 					radius = defaultParticleRadius();
@@ -909,7 +907,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				}
 				Vector3 dir = Vector3(0, 0, length);
 				if(orientationProperty) {
-					const Quaternion& q = orientationProperty->getQuaternion(index);
+					const Quaternion& q = orientationProperty->get<Quaternion>(index);
 					dir = q * dir;
 				}
 				Point3 p = center - (dir * FloatType(0.5));
@@ -997,14 +995,14 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 
 		// Check if the particle must be rendered using a custom shape.
 		if(typeProperty && particleIndex < typeProperty->size()) {
-			if(ParticleType* ptype = dynamic_object_cast<ParticleType>(typeProperty->elementType(typeProperty->getInt(particleIndex)))) {
+			if(ParticleType* ptype = dynamic_object_cast<ParticleType>(typeProperty->elementType(typeProperty->get<int>(particleIndex)))) {
 				if(ptype->shapeMesh())
 					return;	// Note: Highlighting of particles with user-defined shapes is not implemented yet.
 			}
 		}
 
 		// Determine position of selected particle.
-		Point3 pos = posProperty->getPoint3(particleIndex);
+		Point3 pos = posProperty->get<Point3>(particleIndex);
 
 		// Determine radius of selected particle.
 		FloatType radius = particleRadius(particleIndex, radiusProperty, typeProperty);
@@ -1034,9 +1032,9 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			particleBuffer->setParticlePositions(&pos);
 			particleBuffer->setParticleRadius(radius);
 			if(shapeProperty)
-				particleBuffer->setParticleShapes(shapeProperty->constDataVector3() + particleIndex);
+				particleBuffer->setParticleShapes(shapeProperty->cdata<Vector3>(particleIndex));
 			if(orientationProperty)
-				particleBuffer->setParticleOrientations(orientationProperty->constDataQuaternion() + particleIndex);
+				particleBuffer->setParticleOrientations(orientationProperty->cdata<Quaternion>(particleIndex));
 
 			// Prepare marker geometry buffer.
 			highlightParticleBuffer = renderer->createParticlePrimitive(primitiveShadingMode, renderQuality, primitiveParticleShape, false);
@@ -1045,18 +1043,18 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			highlightParticleBuffer->setParticlePositions(&pos);
 			highlightParticleBuffer->setParticleRadius(radius + renderer->viewport()->nonScalingSize(renderer->worldTransform() * pos) * FloatType(1e-1));
 			if(shapeProperty) {
-				Vector3 shape = shapeProperty->getVector3(particleIndex);
+				Vector3 shape = shapeProperty->get<Vector3>(particleIndex);
 				shape += Vector3(renderer->viewport()->nonScalingSize(renderer->worldTransform() * pos) * FloatType(1e-1));
 				highlightParticleBuffer->setParticleShapes(&shape);
 			}
 			if(orientationProperty)
-				highlightParticleBuffer->setParticleOrientations(orientationProperty->constDataQuaternion() + particleIndex);
+				highlightParticleBuffer->setParticleOrientations(orientationProperty->cdata<Quaternion>(particleIndex));
 		}
 		else {
 			FloatType radius, length;
 			if(shapeProperty) {
-				radius = std::abs(shapeProperty->getVector3(particleIndex).x());
-				length = shapeProperty->getVector3(particleIndex).z();
+				radius = std::abs(shapeProperty->get<Vector3>(particleIndex).x());
+				length = shapeProperty->get<Vector3>(particleIndex).z();
 			}
 			else {
 				radius = defaultParticleRadius();
@@ -1064,7 +1062,7 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			}
 			Vector3 dir = Vector3(0, 0, length);
 			if(orientationProperty) {
-				const Quaternion& q = orientationProperty->getQuaternion(particleIndex);
+				const Quaternion& q = orientationProperty->get<Quaternion>(particleIndex);
 				dir = q * dir;
 			}
 			Point3 p = pos - (dir * FloatType(0.5));
@@ -1127,14 +1125,14 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			return;
 
 		// Determine position of selected particle.
-		Point3 pos = posProperty->getPoint3(particleIndex);
+		Point3 pos = posProperty->get<Point3>(particleIndex);
 
 		// Determine radius of selected particle.
 		FloatType radius = particleRadius(particleIndex, radiusProperty, typeProperty);
 		if(shapeProperty) {
-			radius = std::max(radius, shapeProperty->getVector3(particleIndex).x());
-			radius = std::max(radius, shapeProperty->getVector3(particleIndex).y());
-			radius = std::max(radius, shapeProperty->getVector3(particleIndex).z());
+			radius = std::max(radius, shapeProperty->get<Vector3>(particleIndex).x());
+			radius = std::max(radius, shapeProperty->get<Vector3>(particleIndex).y());
+			radius = std::max(radius, shapeProperty->get<Vector3>(particleIndex).z());
 			radius *= 2;
 		}
 
@@ -1185,19 +1183,19 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 			for(size_t component = 0; component < property->componentCount(); component++) {
 				if(component != 0) str += QStringLiteral(", ");
 				if(property->dataType() == PropertyStorage::Int) {
-					str += QString::number(property->getIntComponent(particleIndex, component));
+					str += QString::number(property->get<int>(particleIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(const ElementType* ptype = property->elementType(property->getIntComponent(particleIndex, component))) {
+						if(const ElementType* ptype = property->elementType(property->get<int>(particleIndex, component))) {
 							if(!ptype->name().isEmpty())
 								str += QString(" (%1)").arg(ptype->name());
 						}
 					}
 				}
 				else if(property->dataType() == PropertyStorage::Int64) {
-					str += QString::number(property->getInt64Component(particleIndex, component));
+					str += QString::number(property->get<qlonglong>(particleIndex, component));
 				}
 				else if(property->dataType() == PropertyStorage::Float) {
-					str += QString::number(property->getFloatComponent(particleIndex, component));
+					str += QString::number(property->get<FloatType>(particleIndex, component));
 				}
 			}
 		}

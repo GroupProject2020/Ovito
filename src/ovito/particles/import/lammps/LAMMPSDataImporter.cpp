@@ -286,8 +286,8 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				// Parse data in the Atoms section line by line:
 				InputColumnReader columnParser(columnMapping, *frameData, natoms);
 				try {
-					const int* atomType = typeProperty->constDataInt();
-					const qlonglong* atomId = identifierProperty->constDataInt64();
+					const int* atomType = typeProperty->cdata<int>();
+					const qlonglong* atomId = identifierProperty->cdata<qlonglong>();
 					for(size_t i = 0; i < (size_t)natoms; i++, ++atomType, ++atomId) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
@@ -304,7 +304,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				// Some LAMMPS data files contain per-particle diameter information.
 				// OVITO only knows the "Radius" particle property, which is means we have to divide by 2.
 				if(PropertyPtr radiusProperty = frameData->findStandardParticleProperty(ParticlesObject::RadiusProperty)) {
-					for(FloatType& r : radiusProperty->floatRange())
+					for(FloatType& r : radiusProperty->range<FloatType>())
 						r /= FloatType(2);
 				}
 			}
@@ -332,14 +332,14 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					throw Exception(tr("Invalid velocity specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
     			size_t atomIndex = i;
-    			if(atomId != identifierProperty->getInt64(i)) {
+    			if(atomId != identifierProperty->get<qlonglong>(i)) {
 					auto iter = atomIdMap.find(atomId);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
 					atomIndex = iter->second;
     			}
 
-				velocityProperty->setVector3(atomIndex, v);
+				velocityProperty->set<Vector3>(atomIndex, v);
 			}
 		}
 		else if(keyword.startsWith("Masses")) {
@@ -402,13 +402,13 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 			// Create bonds storage.
 			PropertyPtr bondTopologyProperty = BondsObject::OOClass().createStandardStorage(nbonds, BondsObject::TopologyProperty, false);
 			frameData->addBondProperty(bondTopologyProperty);
-			qlonglong* atomIndex = bondTopologyProperty->dataInt64();
+			qlonglong* atomIndex = bondTopologyProperty->data<qlonglong>(0,0);
 
 			// Create bond type property.
 			PropertyPtr typeProperty = BondsObject::OOClass().createStandardStorage(nbonds, BondsObject::TypeProperty, true);
 			frameData->addBondProperty(typeProperty);
 			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(typeProperty);
-			int* bondType = typeProperty->dataInt();
+			int* bondType = typeProperty->data<int>();
 
 			// Create bond types.
 			for(int i = 1; i <= nbondtypes; i++)
@@ -423,7 +423,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     			if(sscanf(stream.line(), "%llu %u %llu %llu", &bondId, bondType, &atomId1, &atomId2) != 4)
 					throw Exception(tr("Invalid bond specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-    			if(atomId1 < 0 || atomId1 >= (qlonglong)identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomId1)) {
+    			if(atomId1 < 0 || atomId1 >= (qlonglong)identifierProperty->size() || atomId1 != identifierProperty->get<qlonglong>(atomId1)) {
 					auto iter = atomIdMap.find(atomId1);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
@@ -432,7 +432,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				else *atomIndex = atomId1;
 				++atomIndex;
 
-				if(atomId2 < 0 || atomId2 >= (qlonglong)identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomId2)) {
+				if(atomId2 < 0 || atomId2 >= (qlonglong)identifierProperty->size() || atomId2 != identifierProperty->get<qlonglong>(atomId2)) {
 					auto iter = atomIdMap.find(atomId2);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
@@ -466,10 +466,9 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	if(!massTable.empty() && !frameData->findStandardParticleProperty(ParticlesObject::MassProperty)) {
 		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, false);
 		frameData->addParticleProperty(massProperty);
-		const int* atomType = typeProperty->constDataInt();
-		for(FloatType& mass : massProperty->floatRange()) {
-			mass = massTable[*atomType++];
-		}
+		boost::transform(typeProperty->crange<int>(), massProperty->data<FloatType>(), [&](int atomType) {
+			return massTable[atomType];
+		});
 	}
 
 	// Sort particles by ID.

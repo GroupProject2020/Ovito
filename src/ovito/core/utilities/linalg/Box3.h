@@ -217,6 +217,15 @@ public:
 			addPoint(*points);
 	}
 
+	/// \brief Extends the box to include the given set of points.
+	/// \param range An iterable range of points.
+	/// \sa addPoint()
+	template<class Range>
+	void addPoints(const Range& points) {
+		for(const Point_3<T>& p : points)
+			addPoint(p);
+	}
+
 	/// \brief Extends this box to include the given box.
 	/// \param b The other box.
 	/// \sa addPoint()

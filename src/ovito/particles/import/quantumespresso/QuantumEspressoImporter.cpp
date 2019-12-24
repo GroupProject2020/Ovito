@@ -218,15 +218,15 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 				const char* token_end = line;
 				while(*token_end > ' ') ++token_end;
 				int typeId = typeList->addTypeName(line, token_end);
-				typeProperty->setInt(i, typeId);
+				typeProperty->set<int>(i, typeId);
 				if(typeId >= 1 && typeId <= type_masses.size())
-					massProperty->setFloat(i, type_masses[typeId-1]);
+					massProperty->set<FloatType>(i, type_masses[typeId-1]);
 
 				// Parse atomic coordinates.
 				Point3 pos;
 				if(sscanf(token_end, FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &pos.x(), &pos.y(), &pos.z()) != 3)
 					throw Exception(tr("Invalid atomic coordinates in line %1 of QE file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				posProperty->setPoint3(i, pos * scaling);
+				posProperty->set<Point3>(i, pos * scaling);
 			}
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 		}
@@ -298,7 +298,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 	if(convertToAbsoluteCoordinates) {
 		// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 		const AffineTransformation simCell = frameData->simulationCell().matrix();
-		for(Point3& p : posProperty->point3Range())
+		for(Point3& p : posProperty->range<Point3>())
 			p = simCell * p;
 	}
 

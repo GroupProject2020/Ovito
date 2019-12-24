@@ -199,13 +199,13 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 			rec.numericParticleTypes = true;
 			rec.dataType = rec.property->dataType();
 			if(rec.dataType == PropertyStorage::Float) {
-				rec.data = reinterpret_cast<uint8_t*>(rec.property->dataFloat() + rec.vectorComponent);
+				rec.data = reinterpret_cast<uint8_t*>(rec.property->data<FloatType>(0, rec.vectorComponent));
 			}
 			else if(rec.dataType == PropertyStorage::Int) {
-				rec.data = reinterpret_cast<uint8_t*>(rec.property->dataInt() + rec.vectorComponent);
+				rec.data = reinterpret_cast<uint8_t*>(rec.property->data<int>(0, rec.vectorComponent));
 			}
 			else if(rec.dataType == PropertyStorage::Int64) {
-				rec.data = reinterpret_cast<uint8_t*>(rec.property->dataInt64() + rec.vectorComponent);
+				rec.data = reinterpret_cast<uint8_t*>(rec.property->data<qlonglong>(0, rec.vectorComponent));
 			}
 			else rec.data = nullptr;
 			rec.stride = rec.property->stride();

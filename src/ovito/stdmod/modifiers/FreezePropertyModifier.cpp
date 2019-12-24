@@ -200,7 +200,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 
 		// Copy and reorder property data.
 		auto id = idProperty->cdata<qlonglong>();
-		char* dest = static_cast<char*>(outputProperty->data());
+		char* dest = static_cast<char*>(outputProperty->data<void>());
 		const char* src = static_cast<const char*>(myModApp->property()->cdata<void>());
 		size_t stride = outputProperty->stride();
 		for(size_t index = 0; index < outputProperty->size(); index++, ++id, dest += stride) {
@@ -226,7 +226,7 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 			OVITO_ASSERT(outputProperty->dataType() == myModApp->property()->dataType());
 			OVITO_ASSERT(outputProperty->stride() == myModApp->property()->stride());
 			OVITO_ASSERT(outputProperty->size() == myModApp->property()->size());
-			std::memcpy(outputProperty->data(), myModApp->property()->cdata<void>(), outputProperty->stride() * outputProperty->size());
+			std::memcpy(outputProperty->data<void>(), myModApp->property()->cdata<void>(), outputProperty->stride() * outputProperty->size());
 		}
 	}
 

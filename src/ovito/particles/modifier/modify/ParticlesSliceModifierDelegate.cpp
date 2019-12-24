@@ -66,12 +66,12 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	sliceWidth /= 2;
 
 	boost::dynamic_bitset<>::size_type i = 0;
-	const Point3* p = posProperty->constDataPoint3();
+	const Point3* p = posProperty->cdata<Point3>();
 	const Point3* p_end = p + posProperty->size();
 
 	if(sliceWidth <= 0) {
 		if(selProperty) {
-			const int* s = selProperty->constDataInt();
+			const int* s = selProperty->cdata<int>();
 			for(; p != p_end; ++p, ++s, ++i) {
 				if(*s && plane.pointDistance(*p) > 0) {
 					mask.set(i);
@@ -89,7 +89,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	else {
 		bool invert = mod->inverse();
 		if(selProperty) {
-			const int* s = selProperty->constDataInt();
+			const int* s = selProperty->cdata<int>();
 			for(; p != p_end; ++p, ++s, ++i) {
 				if(*s && invert == (plane.classifyPoint(*p, sliceWidth) == 0)) {
 					mask.set(i);
@@ -119,7 +119,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 		PropertyObject* newSelProperty = outputParticles->createProperty(ParticlesObject::SelectionProperty);
 		OVITO_ASSERT(mask.size() == newSelProperty->size());
 		boost::dynamic_bitset<>::size_type i = 0;
-		for(int& s : newSelProperty->intRange()) {
+		for(int& s : newSelProperty->range<int>()) {
 			if(mask.test(i++)) {
 				s = 1;
 				numSelected++;
