@@ -82,7 +82,7 @@ public:
 
 	/// Version of the function above, which uses the default inline executor.
 	template<typename FC>
-	void finally(FC&& cont) { finally(detail::InlineExecutor(), std::forward<FC>(cont)); }
+	void finally(FC&& cont) { finally(Ovito::detail::InlineExecutor(), std::forward<FC>(cont)); }
 
 protected:
 
@@ -194,18 +194,18 @@ public:
 	/// Returns a new future that, upon the fulfillment of this future, will
     /// be fulfilled by the specified continuation function.
 	template<typename FC, class Executor>
-	typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<tuple_type>>::type then(Executor&& executor, FC&& cont);
+	typename Ovito::detail::resulting_future_type<FC,std::add_rvalue_reference_t<tuple_type>>::type then(Executor&& executor, FC&& cont);
 
 	/// Version of the function above, which uses the default inline executor.
 	template<typename FC>
-	typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<tuple_type>>::type then(FC&& cont) {
-		return then(detail::InlineExecutor(), std::forward<FC>(cont));
+	typename Ovito::detail::resulting_future_type<FC,std::add_rvalue_reference_t<tuple_type>>::type then(FC&& cont) {
+		return then(Ovito::detail::InlineExecutor(), std::forward<FC>(cont));
 	}
 
 	/// Returns a new future that, upon the fulfillment of this future, will
     /// be fulfilled by the specified continuation function.
 	template<typename FC, class Executor>
-	typename detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, FC&& cont);
+	typename Ovito::detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, FC&& cont);
 
 	/// Runs the given function once this future has reached the 'finished' state.
 	/// The function is always run, even if the future was canceled or set to an error state.
@@ -214,7 +214,7 @@ public:
 
 	/// Version of the function above, which uses the default inline executor.
 	template<typename FC>
-	void finally_future(FC&& cont) { finally_future(detail::InlineExecutor(), std::forward<FC>(cont)); }
+	void finally_future(FC&& cont) { finally_future(Ovito::detail::InlineExecutor(), std::forward<FC>(cont)); }
 
 #ifndef Q_CC_GNU
 protected:
@@ -241,11 +241,11 @@ public:
 /// be fulfilled by the specified continuation function.
 template<typename... R>
 template<typename FC, class Executor>
-typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename Future<R...>::tuple_type>>::type Future<R...>::then(Executor&& executor, FC&& cont)
+typename Ovito::detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename Future<R...>::tuple_type>>::type Future<R...>::then(Executor&& executor, FC&& cont)
 {
 	// The future type returned by then():
-	using ResultFutureType = typename detail::resulting_future_type<FC,tuple_type>::type;
-	using ContinuationStateType = typename detail::continuation_state_type<FC,tuple_type>::type;
+	using ResultFutureType = typename Ovito::detail::resulting_future_type<FC,tuple_type>::type;
+	using ContinuationStateType = typename Ovito::detail::continuation_state_type<FC,tuple_type>::type;
 
 	// This future must be valid for then() to work.
 	OVITO_ASSERT_MSG(isValid(), "Future::then()", "Future must be valid.");
@@ -290,11 +290,11 @@ typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename F
 /// be fulfilled by the specified continuation function.
 template<typename... R>
 template<typename FC, class Executor>
-typename detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future<R...>::then_future(Executor&& executor, FC&& cont)
+typename Ovito::detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future<R...>::then_future(Executor&& executor, FC&& cont)
 {
 	// The future type returned by then_future():
-	using ResultFutureType = typename detail::resulting_future_type<FC,std::tuple<this_type>>::type;
-	using ContinuationStateType = typename detail::continuation_state_type<FC,std::tuple<this_type>>::type;
+	using ResultFutureType = typename Ovito::detail::resulting_future_type<FC,std::tuple<this_type>>::type;
+	using ContinuationStateType = typename Ovito::detail::continuation_state_type<FC,std::tuple<this_type>>::type;
 
 	// This future must be valid for then() to work.
 	OVITO_ASSERT_MSG(isValid(), "Future::then_future()", "Future must be valid.");

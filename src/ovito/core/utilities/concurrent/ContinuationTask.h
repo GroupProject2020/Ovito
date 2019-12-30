@@ -63,12 +63,12 @@ public:
 
 	template<typename FC, typename Args>
 	auto fulfillWith(FC&& cont, Args&& params) noexcept
-		-> std::enable_if_t<detail::is_void_continuation_func<FC,Args>::value>
+		-> std::enable_if_t<Ovito::detail::is_void_continuation_func<FC,Args>::value>
 	{
 		try {
 			// Call the continuation function with the results of the fulfilled promise.
 			this->setStarted();
-			detail::apply(std::forward<FC>(cont), std::forward<Args>(params));
+			Ovito::detail::apply(std::forward<FC>(cont), std::forward<Args>(params));
 			this->setFinished();
 		}
 		catch(...) {
@@ -79,12 +79,12 @@ public:
 
 	template<typename FC, typename Args>
 	auto fulfillWith(FC&& cont, Args&& params) noexcept
-		-> std::enable_if_t<!detail::is_void_continuation_func<FC,Args>::value>
+		-> std::enable_if_t<!Ovito::detail::is_void_continuation_func<FC,Args>::value>
 	{
 		try {
 			// Call the continuation function with the results of the fulfilled promise.
 			this->setStarted();
-			setResultsDirect(detail::apply(std::forward<FC>(cont), std::forward<Args>(params)));
+			setResultsDirect(Ovito::detail::apply(std::forward<FC>(cont), std::forward<Args>(params)));
 			this->setFinished();
 		}
 		catch(...) {

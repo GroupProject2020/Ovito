@@ -68,7 +68,7 @@ public:
 		try {
 			// Call the continuation function with the results of the fulfilled promise.
 			// Assign the returned future to this tracking promise state.
-			auto future = detail::apply(std::forward<FC>(closure), std::forward<FunctionParams>(params));
+			auto future = Ovito::detail::apply(std::forward<FC>(closure), std::forward<FunctionParams>(params));
 			setTrackedState(std::move(future._task));
 		}
 		catch(...) {

@@ -235,14 +235,14 @@ public:
 
 	/// Sets the result value of the promise to the return value of the given function.
 	template<typename FC>
-	std::enable_if_t<detail::is_void_continuation_func<FC,std::tuple<>>::value> setResultsWith(FC&& func)
+	std::enable_if_t<Ovito::detail::is_void_continuation_func<FC,std::tuple<>>::value> setResultsWith(FC&& func)
 	{
 		std::forward<FC>(func)();
 	}
 
 	/// Sets the result value of the promise to the return value of the given function.
 	template<typename FC>
-	std::enable_if_t<!detail::is_void_continuation_func<FC,std::tuple<>>::value> setResultsWith(FC&& func)
+	std::enable_if_t<!Ovito::detail::is_void_continuation_func<FC,std::tuple<>>::value> setResultsWith(FC&& func)
 	{
 		setResultsDirect(std::forward<FC>(func)());
 	}
