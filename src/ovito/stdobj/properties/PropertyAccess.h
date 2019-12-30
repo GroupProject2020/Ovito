@@ -289,25 +289,24 @@ public:
 
 	/// \brief Sets all array elements to the given uniform value.
 	void fill(const T& value) {
-		OVITO_ASSERT(this->_storage);
+		OVITO_ASSERT(this->storage());
 		this->_storage->template fill<T>(value);
 	}
 
 	/// \brief Sets all array elements for which the corresponding entries in the 
 	///        selection array are non-zero to the given uniform value.
-	template<class PointerType2>
-	void fillSelected(const T& value, const ReadOnlyPropertyAccessBase<int,PointerType2>& selectionProperty) {
-		OVITO_ASSERT(this->_storage);
-		this->_storage->template fillSelected<T>(value, std::addressof(*selectionProperty.storage()));
+	void fillSelected(const T& value, const PropertyStorage* selectionProperty) {
+		OVITO_ASSERT(this->storage());
+		this->_storage->template fillSelected<T>(value, selectionProperty);
 	}
 
 	/// Copies the data from the given source array to this array. 
 	/// The array size and data type of source and destination must match.
 	template<class PointerType2>
 	void copyFrom(const ReadOnlyPropertyAccessBase<T, PointerType2>& source) {
-		OVITO_ASSERT(this->_storage);
-		OVITO_ASSERT(source._storage);
-		this->_storage->copyFrom(*source._storage);
+		OVITO_ASSERT(this->storage());
+		OVITO_ASSERT(source.storage());
+		this->_storage->copyFrom(*source.storage());
 	}
 
 protected:

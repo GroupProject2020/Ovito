@@ -109,7 +109,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, PipelineFl
 	// Create the color output property.
     PropertyAccess<Color> colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath);
 	// Assign color to selected elements (or all elements if there is no selection).
-	colorProperty.fillSelected(color, selProperty);
+	colorProperty.fillSelected(color, selProperty.storage().get());
 
 	return PipelineStatus::Success;
 }
