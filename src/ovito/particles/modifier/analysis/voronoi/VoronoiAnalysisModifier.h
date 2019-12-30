@@ -173,19 +173,19 @@ private:
 		SurfaceMeshData _polyhedraMesh;
 
 		/// Output mesh face property storing the index of the neighboring Voronoi cell for each face.
-		PropertyStorage* _adjacentCellProperty;
+		PropertyStorage* _adjacentCellProperty = nullptr;
 
 		/// Output mesh region property storing the indices or identifiers of the particles to which each Voronoi cell belongs. 
-		PropertyStorage* _centerParticleProperty;
+		PropertyStorage* _centerParticleProperty = nullptr;
 
 		/// Output mesh region property storing the volume of each Voronoi cell. 
-		PropertyStorage* _cellVolumeProperty;
+		PropertyStorage* _cellVolumeProperty = nullptr;
 
 		/// Output mesh region property storing the number of faces of each Voronoi cell. 
-		PropertyStorage* _cellCoordinationProperty;
+		PropertyStorage* _cellCoordinationProperty = nullptr;
 
 		/// Output mesh region property storing the surface area of each Voronoi cell. 
-		PropertyStorage* _surfaceAreaProperty;
+		PropertyStorage* _surfaceAreaProperty = nullptr;
 
 		/// Maximum length of Voronoi index vectors produced by this modifier.
 		constexpr static int FaceOrderStorageLimit = 32;

@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
@@ -39,8 +40,10 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 {
 	// Get particle positions and types.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
-	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	particles->verifyIntegrity();
+	ConstPropertyAccess<Point3> posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	ConstPropertyAccess<int> particleTypeArray(particleTypeProperty);
 
 	textStream() << "# FHI-aims file written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
 
@@ -57,18 +60,18 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 	}
 
 	// Output atoms.
-	operation.setProgressMaximum(posProperty->size());
-	for(size_t i = 0; i < posProperty->size(); i++) {
-		const Point3& p = posProperty->get<Point3>(i);
-		const ElementType* type = particleTypeProperty ? particleTypeProperty->elementType(particleTypeProperty->get<int>(i)) : nullptr;
+	operation.setProgressMaximum(posProperty.size());
+	for(size_t i = 0; i < posProperty.size(); i++) {
+		const Point3& p = posProperty[i];
+		const ElementType* type = particleTypeArray ? particleTypeProperty->elementType(particleTypeArray[i]) : nullptr;
 
 		textStream() << "atom " << (p.x() - origin.x()) << ' ' << (p.y() - origin.y()) << ' ' << (p.z() - origin.z());
 		if(type && !type->name().isEmpty()) {
 			QString s = type->name();
 			textStream() << ' ' << s.replace(QChar(' '), QChar('_')) << '\n';
 		}
-		else if(particleTypeProperty) {
-			textStream() << ' ' << particleTypeProperty->get<int>(i) << '\n';
+		else if(particleTypeArray) {
+			textStream() << ' ' << particleTypeArray[i] << '\n';
 		}
 		else {
 			textStream() << " 1\n";

@@ -23,6 +23,7 @@
 #include <ovito/mesh/Mesh.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "SurfaceMeshReplicateModifierDelegate.h"
@@ -77,8 +78,8 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 			newVertices->replicate(numCopies);
 
 			// Shift vertex positions by the periodicity vector.
-			PropertyObject* positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
-			Point3* p = positionProperty->data<Point3>();
+			PropertyAccess<Point3> positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
+			Point3* p = positionProperty.begin();
 			for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
 				for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
 					for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
@@ -157,7 +158,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 			OVITO_ASSERT(mesh->faceCount() == newFaceCount);
 
 			if(pbcFlags[0] || pbcFlags[1] || pbcFlags[2]) {
-				ConstPropertyPtr vertexCoords = newVertices->getPropertyStorage(SurfaceMeshVertices::PositionProperty);
+				ConstPropertyAccess<Point3> vertexCoords = newVertices->getPropertyStorage(SurfaceMeshVertices::PositionProperty);
 				// Unwrap faces that crossed a periodic boundary in the original cell.
 				for(HalfEdgeMesh::face_index face = 0; face < newFaceCount; face++) {
 					HalfEdgeMesh::edge_index edge = mesh->firstFaceEdge(face);
@@ -167,7 +168,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 					do {
 						HalfEdgeMesh::vertex_index v2 = mesh->vertex2(edge);
 						HalfEdgeMesh::vertex_index v2wrapped = v2 % oldVertexCount;
-						Vector3 delta = inverseSimCell * (vertexCoords->get<Point3>(v2wrapped) - vertexCoords->get<Point3>(v1wrapped));
+						Vector3 delta = inverseSimCell * (vertexCoords[v2wrapped] - vertexCoords[v1wrapped]);
 						for(size_t dim = 0; dim < 3; dim++) {
 							if(pbcFlags[dim])
 								imageShift[dim] -= (int)std::floor(delta[dim] + FloatType(0.5));

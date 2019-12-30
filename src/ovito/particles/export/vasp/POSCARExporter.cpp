@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
@@ -41,8 +42,10 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 {
 	// Get particle positions and velocities.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
-	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
-	const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
+	particles->verifyIntegrity();
+	ConstPropertyAccess<Point3> posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	ConstPropertyAccess<Vector3> velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
+	size_t particleCount = particles->elementCount();
 
 	// Get simulation cell info.
 	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
@@ -60,10 +63,10 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 	// Count number of particles per particle type.
 	QMap<int,int> particleCounts;
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	ConstPropertyAccess<int> particleTypeArray(particleTypeProperty);
 	if(particleTypeProperty) {
-		for(int ptype : particleTypeProperty->crange<int>()) {
+		for(int ptype : particleTypeArray)
 			particleCounts[ptype]++;
-		}
 
 		// Write line with particle type names.
 		for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
@@ -87,12 +90,12 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 		// Write line with particle type name.
 		textStream() << "A\n";
 		// Write line with particle count.
-		textStream() << posProperty->size() << '\n';
-		particleCounts[0] = posProperty->size();
+		textStream() << particleCount << '\n';
+		particleCounts[0] = particleCount;
 	}
 
-	qlonglong totalProgressCount = posProperty->size();
-	if(velocityProperty) totalProgressCount += posProperty->size();
+	qlonglong totalProgressCount = particleCount;
+	if(velocityProperty) totalProgressCount += particleCount;
 	qlonglong currentProgress = 0;
 	operation.setProgressMaximum(totalProgressCount);
 
@@ -100,9 +103,9 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 	textStream() << (writeReducedCoordinates() ? "Direct\n" : "Cartesian\n");
 	for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
 		int ptype = c.key();
-		const Point3* p = posProperty->cdata<Point3>();
-		for(size_t i = 0; i < posProperty->size(); i++, ++p) {
-			if(particleTypeProperty && particleTypeProperty->get<int>(i) != ptype)
+		const Point3* p = posProperty.cbegin();
+		for(size_t i = 0; i < particleCount; i++, ++p) {
+			if(particleTypeArray && particleTypeArray[i] != ptype)
 				continue;
 			if(writeReducedCoordinates()) {
 				Point3 rp = cell.absoluteToReduced(*p);
@@ -122,9 +125,9 @@ bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber,
 		textStream() << (writeReducedCoordinates() ? "Direct\n" : "Cartesian\n");
 		for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
 			int ptype = c.key();
-			const Vector3* v = velocityProperty->cdata<Vector3>();
-			for(size_t i = 0; i < velocityProperty->size(); i++, ++v) {
-				if(particleTypeProperty && particleTypeProperty->get<int>(i) != ptype)
+			const Vector3* v = velocityProperty.cbegin();
+			for(size_t i = 0; i < particleCount; i++, ++v) {
+				if(particleTypeArray && particleTypeArray[i] != ptype)
 					continue;
 
 				if(writeReducedCoordinates()) {

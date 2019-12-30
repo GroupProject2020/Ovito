@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "XYZExporter.h"
@@ -40,6 +41,7 @@ bool XYZExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 {
 	// Get particle positions.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 
 	size_t atomsCount = particles->elementCount();
 	textStream() << atomsCount << '\n';

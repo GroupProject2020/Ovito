@@ -50,9 +50,9 @@ void PropertyContainerClass::registerStandardProperty(int typeId, QString name, 
 /******************************************************************************
 * Factory function that creates a property object based on an existing storage.
 ******************************************************************************/
-OORef<PropertyObject> PropertyContainerClass::createFromStorage(DataSet* dataset, const PropertyPtr& storage) const
+OORef<PropertyObject> PropertyContainerClass::createFromStorage(DataSet* dataset, PropertyPtr storage) const
 {
-	OORef<PropertyObject> property = new PropertyObject(dataset, storage);
+	OORef<PropertyObject> property = new PropertyObject(dataset, std::move(storage));
 	if(property->type() != 0)
 		property->setTitle(standardPropertyTitle(property->type()));
 	prepareNewProperty(property);

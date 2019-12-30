@@ -22,6 +22,7 @@
 
 #include <ovito/mesh/Mesh.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "SurfaceMeshAffineTransformationModifierDelegate.h"
@@ -52,18 +53,18 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 			// Create a copy of the vertices sub-object (no need to copy the topology when only moving vertices).
 			SurfaceMeshVertices* newVertices = newSurface->makeVerticesMutable();
 			// Create a copy of the vertex coordinates array.
-			PropertyObject* positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
+			PropertyAccess<Point3> positionProperty = newVertices->expectMutableProperty(SurfaceMeshVertices::PositionProperty);
 
 			if(!mod->selectionOnly()) {
 				// Apply transformation to the vertices coordinates.
-				for(Point3& p : positionProperty->range<Point3>())
+				for(Point3& p : positionProperty)
 					p = tm * p;
 			}
 			else {
-				if(const PropertyObject* selectionProperty = newVertices->getProperty(SurfaceMeshVertices::SelectionProperty)) {
+				if(ConstPropertyAccess<int> selectionProperty = newVertices->getProperty(SurfaceMeshVertices::SelectionProperty)) {
 					// Apply transformation only to the selected vertices.
-					const int* s = selectionProperty->cdata<int>();
-					for(Point3& p : positionProperty->range<Point3>()) {
+					const int* s = selectionProperty.cbegin();
+					for(Point3& p : positionProperty) {
 						if(*s++)
 							p = tm * p;
 					}

@@ -24,6 +24,7 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/correlation/SpatialCorrelationFunctionModifier.h>
 #include <ovito/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/gui/mainwin/MainWindow.h>
 #include <ovito/gui/properties/BooleanParameterUI.h>
@@ -285,7 +286,7 @@ std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotDat
 												DataSeriesPlotWidget* plotWidget,
 												FloatType offset,
 												FloatType fac,
-												const ConstPropertyPtr& normalization)
+												ConstPropertyAccess<FloatType> normalization)
 {
 	// Duplicate the data series, then modify the stored values.
 	UndoSuspender noUndo(series);
@@ -295,9 +296,10 @@ std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotDat
 
 	// Normalize function values.
 	if(normalization) {
-		OVITO_ASSERT(normalization->size() == clonedSeries->elementCount());
-		auto pf = normalization->cdata<FloatType>();
-		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->range<FloatType>()) {
+		OVITO_ASSERT(normalization.size() == clonedSeries->elementCount());
+		auto pf = normalization.cbegin();
+		PropertyAccess<FloatType> valueArray = clonedSeries->expectMutableProperty(DataSeriesObject::YProperty);
+		for(FloatType& v : valueArray) {
 			FloatType factor = *pf++;
 			v = (factor > FloatType(1e-12)) ? (v / factor) : FloatType(0);
 		}
@@ -305,12 +307,14 @@ std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotDat
 
 	// Scale and shift function values.
 	if(fac != 1 || offset != 0) {
-		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->range<FloatType>())
+		PropertyAccess<FloatType> valueArray = clonedSeries->expectMutableProperty(DataSeriesObject::YProperty);
+		for(FloatType& v :valueArray)
 			v = fac * (v - offset);
 	}
 
 	// Determine value range.
-	auto minmax = std::minmax_element(clonedSeries->getY()->cdata<FloatType>(), clonedSeries->getY()->cdata<FloatType>() + clonedSeries->getY()->size());
+	ConstPropertyAccess<FloatType> yarray = clonedSeries->getY();
+	auto minmax = std::minmax_element(yarray.cbegin(), yarray.cend());
 
 	// Hand data series over to plot widget.
 	plotWidget->setSeries(std::move(clonedSeries));
@@ -389,17 +393,20 @@ void SpatialCorrelationFunctionModifierEditor::plotAllData()
 	const DataSeriesObject* neighCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-neighbor"));
 	const DataSeriesObject* neighRDF = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-neighbor-rdf"));
 	if(modifier && modifierApplication() && modifier->doComputeNeighCorrelation() && neighCorrelation && neighRDF) {
-		ConstPropertyPtr xData = neighCorrelation->getXStorage();
-		const auto& yData = neighCorrelation->getYStorage();
-		const auto& rdfData = neighRDF->getYStorage();
-		size_t numberOfDataPoints = yData->size();
+		const auto& xStorage = neighCorrelation->getXStorage();
+		ConstPropertyAccess<FloatType> xData(xStorage);
+		const auto& yStorage = neighCorrelation->getYStorage();
+		ConstPropertyAccess<FloatType> yData(yStorage);
+		const auto& rdfStorage = neighRDF->getYStorage();
+		ConstPropertyAccess<FloatType> rdfData(rdfStorage);
+		size_t numberOfDataPoints = yData.size();
 		QVector<QPointF> plotData(numberOfDataPoints);
 		bool normByRDF = modifier->normalizeRealSpaceByRDF();
 		for(size_t i = 0; i < numberOfDataPoints; i++) {
-			FloatType xValue = xData->get<FloatType>(i);
-			FloatType yValue = yData->get<FloatType>(i);
+			FloatType xValue = xData[i];
+			FloatType yValue = yData[i];
 			if(normByRDF)
-				yValue = rdfData->get<FloatType>(i) > 1e-12 ? (yValue / rdfData->get<FloatType>(i)) : 0.0;
+				yValue = rdfData[i] > 1e-12 ? (yValue / rdfData[i]) : 0.0;
 			yValue = uniformFactor * (yValue - offset);
 			plotData[i].rx() = xValue;
 			plotData[i].ry() = yValue;

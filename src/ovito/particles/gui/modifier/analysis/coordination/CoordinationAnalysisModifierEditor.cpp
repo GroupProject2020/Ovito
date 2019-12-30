@@ -104,12 +104,15 @@ void CoordinationAnalysisModifierEditor::plotRDF()
 
 		// Determine X plotting range.
 		if(series) {
-			const auto& rdfY = series->getYStorage();
+			ConstPropertyPtr rdfX = series->getXStorage();
+			ConstPropertyPtr rdfY = series->getYStorage();
+			ConstPropertyAccess<FloatType,false> rdfXArray(rdfX);
+			ConstPropertyAccess<FloatType,true>  rdfYArray(rdfY);
 			double minX = 0;
-			for(size_t i = 0; i < rdfY->size(); i++) {
-				for(size_t cmpnt = 0; cmpnt < rdfY->componentCount(); cmpnt++) {
-					if(rdfY->get<FloatType>(i, cmpnt) != 0) {
-						minX = series->getXStorage()->get<FloatType>(i);
+			for(size_t i = 0; i < rdfYArray.size(); i++) {
+				for(size_t cmpnt = 0; cmpnt < rdfYArray.componentCount(); cmpnt++) {
+					if(rdfYArray.get(i, cmpnt) != 0) {
+						minX = rdfXArray[i];
 						break;
 					}
 				}

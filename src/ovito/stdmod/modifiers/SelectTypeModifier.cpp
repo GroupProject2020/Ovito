@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,6 +26,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include "SelectTypeModifier.h"
 
@@ -107,32 +108,42 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 	container->verifyIntegrity();
 
 	// Get the input property.
-	const PropertyObject* typeProperty = sourceProperty().findInContainer(container);
-	if(!typeProperty)
+	const PropertyObject* typePropertyObject = sourceProperty().findInContainer(container);
+	if(!typePropertyObject)
 		throwException(tr("The selected input property '%1' is not present.").arg(sourceProperty().name()));
-	if(typeProperty->componentCount() != 1)
-		throwException(tr("The input property '%1' has the wrong number of components. Must be a scalar property.").arg(typeProperty->name()));
-	if(typeProperty->dataType() != PropertyStorage::Int)
-		throwException(tr("The input property '%1' has the wrong data type. Must be an integer property.").arg(typeProperty->name()));
+	if(typePropertyObject->componentCount() != 1)
+		throwException(tr("The input property '%1' has the wrong number of components. Must be a scalar property.").arg(typePropertyObject->name()));
+	if(typePropertyObject->dataType() != PropertyStorage::Int)
+		throwException(tr("The input property '%1' has the wrong data type. Must be an integer property.").arg(typePropertyObject->name()));
+	ConstPropertyAccess<int> typeProperty = typePropertyObject;
 
 	// Create the selection property.
-	PropertyPtr selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
+	PropertyAccess<int> selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty);
 
 	// Counts the number of selected elements.
 	size_t nSelected = 0;
 
 	// Generate set of numeric type IDs to select.
 	QSet<int> idsToSelect = selectedTypeIDs();
-	// Convert type names to IDs.
+	// Convert type names to numeric IDs.
 	for(const QString& typeName : selectedTypeNames()) {
-		if(ElementType* t = typeProperty->elementType(typeName))
+		if(const ElementType* t = typePropertyObject->elementType(typeName))
 			idsToSelect.insert(t->numericId());
-		else
-			throwException(tr("Type '%1' does not exist in the type list of property '%2'.").arg(typeName).arg(typeProperty->name()));
+		else {
+			bool found = false;
+			for(const ElementType* t : typePropertyObject->elementTypes()) {
+				if(t->nameOrNumericId() == typeName) {
+					found = true;
+					idsToSelect.insert(t->numericId());
+					break;
+				}
+			}
+			if(!found)
+				throwException(tr("Type '%1' does not exist in the type list of property '%2'.").arg(typeName).arg(typePropertyObject->name()));
+		}
 	}
 
-	OVITO_ASSERT(selProperty->size() == typeProperty->size());
-	boost::transform(typeProperty->crange<int>(), selProperty->data<int>(), [&](int type) {
+	boost::transform(typeProperty, selProperty.begin(), [&](int type) {
 		if(idsToSelect.contains(type)) {
 			nSelected++;
 			return 1;
@@ -144,9 +155,9 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 
 	QString statusMessage = tr("%1 out of %2 %3 selected (%4%)")
 		.arg(nSelected)
-		.arg(typeProperty->size())
+		.arg(typeProperty.size())
 		.arg(container->getOOMetaClass().elementDescriptionName())
-		.arg((FloatType)nSelected * 100 / std::max((size_t)1,typeProperty->size()), 0, 'f', 1);
+		.arg((FloatType)nSelected * 100 / std::max((size_t)1,typeProperty.size()), 0, 'f', 1);
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 }

@@ -72,28 +72,6 @@ public:
 				PropertyPtr outputProperty,
 				ConstPropertyPtr selectionProperty,
 				QStringList expressions) override;
-
-private:
-
-	/// Asynchronous compute engine that does the actual work in a separate thread.
-	class ComputeEngine : public ComputePropertyModifierDelegate::PropertyComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		ComputeEngine(
-				const TimeInterval& validityInterval,
-				TimePoint time,
-				PropertyPtr outputProperty,
-				const PropertyContainer* container,
-				ConstPropertyPtr selectionProperty,
-				QStringList expressions,
-				int frameNumber,
-				const PipelineFlowState& input);
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-	};
 };
 
 }	// End of namespace

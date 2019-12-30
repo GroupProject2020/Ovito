@@ -34,6 +34,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifier);
 
+// Export this class template specialization from the DLL under Windows.
+template class Future<AsynchronousModifier::ComputeEnginePtr>;
+
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/

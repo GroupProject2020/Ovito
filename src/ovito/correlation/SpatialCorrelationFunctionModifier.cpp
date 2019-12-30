@@ -221,12 +221,10 @@ std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEn
 	const std::array<bool, 3> pbc = cell().pbcFlags();
 
 	if(!property || property->size() > 0) {
-		const Point3* pos = positions()->cdata<Point3>();
-		const Point3* pos_end = pos + positions()->size();
-
+		ConstPropertyAccess<Point3> positionsArray(positions());
 		if(!property) {
-			for(; pos != pos_end; ++pos) {
-				Point3 fractionalPos = reciprocalCellMatrix*(*pos);
+			for(const Point3& pos : positionsArray) {
+				Point3 fractionalPos = reciprocalCellMatrix * pos;
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
@@ -246,11 +244,11 @@ std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEn
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Float) {
-			auto v = property->cdata<FloatType>(0, vecComponent);
-			auto v_end = v + (property->size() * vecComponentCount);
-			for(; v != v_end; v += vecComponentCount, ++pos) {
-				if(!std::isnan(*v)) {
-					Point3 fractionalPos = reciprocalCellMatrix*(*pos);
+			ConstPropertyAccess<FloatType,true> propertyArray(*property);
+			const Point3* pos = positionsArray.cbegin();
+			for(FloatType v : propertyArray.componentRange(vecComponent)) {
+				if(!std::isnan(v)) {
+					Point3 fractionalPos = reciprocalCellMatrix * (*pos);
 					int binIndexX = int( fractionalPos.x() * nX );
 					int binIndexY = int( fractionalPos.y() * nY );
 					int binIndexZ = int( fractionalPos.z() * nZ );
@@ -265,16 +263,17 @@ std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEn
 					if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 						// Store in row-major format.
 						size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-						gridData[binIndex] += window*(*v);
+						gridData[binIndex] += window*(v);
 					}
 				}
+				++pos;
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Int) {
-			auto v = property->cdata<int>(0, vecComponent);
-			auto v_end = v + (property->size() * vecComponentCount);
-			for(; v != v_end; v += vecComponentCount, ++pos) {
-				Point3 fractionalPos = reciprocalCellMatrix*(*pos);
+			ConstPropertyAccess<int,true> propertyArray(*property);
+			const Point3* pos = positionsArray.cbegin();
+			for(int v : propertyArray.componentRange(vecComponent)) {
+				Point3 fractionalPos = reciprocalCellMatrix * (*pos);
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
@@ -289,15 +288,16 @@ std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEn
 				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 					// Store in row-major format.
 					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-					gridData[binIndex] += window*(*v);
+					gridData[binIndex] += window*(v);
 				}
+				++pos;
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Int64) {
-			auto v = property->cdata<qlonglong>(0, vecComponent);
-			auto v_end = v + (property->size() * vecComponentCount);
-			for(; v != v_end; v += vecComponentCount, ++pos) {
-				Point3 fractionalPos = reciprocalCellMatrix*(*pos);
+			ConstPropertyAccess<qlonglong,true> propertyArray(*property);
+			const Point3* pos = positionsArray.cbegin();
+			for(qlonglong v : propertyArray.componentRange(vecComponent)) {
+				Point3 fractionalPos = reciprocalCellMatrix * (*pos);
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
@@ -312,8 +312,9 @@ std::vector<FloatType> SpatialCorrelationFunctionModifier::CorrelationAnalysisEn
 				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 					// Store in row-major format.
 					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-					gridData[binIndex] += window*(*v);
+					gridData[binIndex] += window*(v);
 				}
+				++pos;
 			}
 		}
 	}
@@ -462,7 +463,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 	_reciprocalSpaceCorrelationRange = 2 * FLOATTYPE_PI * minReciprocalSpaceVector * numberOfWavevectorBins;
 
 	std::vector<int> numberOfValues(numberOfWavevectorBins, 0);
-	FloatType* reciprocalSpaceCorrelationData = reciprocalSpaceCorrelation()->data<FloatType>();
+	PropertyAccess<FloatType> reciprocalSpaceCorrelationData(_reciprocalSpaceCorrelation);
 
 	// Compute Fourier-transformed correlation function and put it on a radial grid.
 	int binIndex = 0;
@@ -544,8 +545,8 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true, DataSeriesObject::YProperty);
 
 	numberOfValues = std::vector<int>(numberOfDistanceBins, 0);
-	FloatType* realSpaceCorrelationData = realSpaceCorrelation()->data<FloatType>();
-	FloatType* realSpaceRDFData = realSpaceRDF()->data<FloatType>();
+	PropertyAccess<FloatType> realSpaceCorrelationData(_realSpaceCorrelation);
+	PropertyAccess<FloatType> realSpaceRDFData(_realSpaceRDF);
 
 	// Put real-space correlation function on a radial grid.
 	binIndex = 0;
@@ -598,31 +599,29 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 	size_t particleCount = positions()->size();
 
 	// Get pointers to data.
-	const FloatType* floatData1 = nullptr;
-	const FloatType* floatData2 = nullptr;
-	const int* intData1 = nullptr;
-	const int* intData2 = nullptr;
-	const qlonglong* int64Data1 = nullptr;
-	const qlonglong* int64Data2 = nullptr;
-	size_t componentCount1 = sourceProperty1()->componentCount();
-	size_t componentCount2 = sourceProperty2()->componentCount();
+	ConstPropertyAccess<FloatType,true> floatData1;
+	ConstPropertyAccess<FloatType,true> floatData2;
+	ConstPropertyAccess<int,true> intData1;
+	ConstPropertyAccess<int,true> intData2;
+	ConstPropertyAccess<qlonglong,true> int64Data1;
+	ConstPropertyAccess<qlonglong,true> int64Data2;
 	if(sourceProperty1()->dataType() == PropertyStorage::Float) {
-		floatData1 = sourceProperty1()->cdata<FloatType>(0,0);
+		floatData1 = sourceProperty1();
 	}
 	else if(sourceProperty1()->dataType() == PropertyStorage::Int) {
-		intData1 = sourceProperty1()->cdata<int>(0,0);
+		intData1 = sourceProperty1();
 	}
 	else if(sourceProperty1()->dataType() == PropertyStorage::Int64) {
-		int64Data1 = sourceProperty1()->cdata<qlonglong>(0,0);
+		int64Data1 = sourceProperty1();
 	}
 	if(sourceProperty2()->dataType() == PropertyStorage::Float) {
-		floatData2 = sourceProperty2()->cdata<FloatType>(0,0);
+		floatData2 = sourceProperty2();
 	}
 	else if(sourceProperty2()->dataType() == PropertyStorage::Int) {
-		intData2 = sourceProperty2()->cdata<int>(0,0);
+		intData2 = sourceProperty2();
 	}
 	else if(sourceProperty2()->dataType() == PropertyStorage::Int64) {
-		int64Data2 = sourceProperty2()->cdata<qlonglong>(0,0);
+		int64Data2 = sourceProperty2();
 	}
 
 	// Allocate neighbor RDF.
@@ -630,7 +629,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(neighCutoff(), *positions(), cell(), nullptr, task().get()))
+	if(!neighborListBuilder.prepare(neighCutoff(), positions(), cell(), {}, task().get()))
 		return;
 
 	// Perform analysis on each particle in parallel.
@@ -646,17 +645,17 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 		size_t endIndex = startIndex + chunkSize;
 		for(size_t i = startIndex; i < endIndex; i++) {
 			FloatType data1;
-			if(floatData1) data1 = floatData1[i*componentCount1 + vecComponent1];
-			else if(intData1) data1 = intData1[i*componentCount1 + vecComponent1];
-			else if(int64Data1) data1 = int64Data1[i*componentCount1 + vecComponent1];
+			if(floatData1) data1 = floatData1.get(i, vecComponent1);
+			else if(intData1) data1 = intData1.get(i, vecComponent1);
+			else if(int64Data1) data1 = int64Data1.get(i, vecComponent1);
 			else data1 = 0;
 			for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
 				size_t distanceBinIndex = (size_t)(sqrt(neighQuery.distanceSquared()) / gridSpacing);
 				distanceBinIndex = std::min(distanceBinIndex, threadLocalCorrelation.size() - 1);
 				FloatType data2;
-				if(floatData2) data2 = floatData2[neighQuery.current() * componentCount2 + vecComponent2];
-				else if(intData2) data2 = intData2[neighQuery.current() * componentCount2 + vecComponent2];
-				else if(int64Data2) data2 = int64Data2[neighQuery.current() * componentCount2 + vecComponent2];
+				if(floatData2) data2 = floatData2.get(neighQuery.current(), vecComponent2);
+				else if(intData2) data2 = intData2.get(neighQuery.current(), vecComponent2);
+				else if(int64Data2) data2 = int64Data2.get(neighQuery.current(), vecComponent2);
 				else data2 = 0;
 				threadLocalCorrelation[distanceBinIndex] += data1 * data2;
 				threadLocalRDF[distanceBinIndex]++;
@@ -669,10 +668,12 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 				return;
 		}
 		std::lock_guard<std::mutex> lock(mutex);
-		auto iter_corr_out = neighCorrelation()->data<FloatType>();
+		PropertyAccess<FloatType> neighCorrelationArray(neighCorrelation());
+		auto iter_corr_out = neighCorrelationArray.begin();
 		for(auto iter_corr = threadLocalCorrelation.cbegin(); iter_corr != threadLocalCorrelation.cend(); ++iter_corr, ++iter_corr_out)
 			*iter_corr_out += *iter_corr;
-		auto iter_rdf_out = neighRDF()->data<FloatType>();
+		PropertyAccess<FloatType> neighRDFArray(neighRDF());
+		auto iter_rdf_out = neighRDFArray.begin();
 		for(auto iter_rdf = threadLocalRDF.cbegin(); iter_rdf != threadLocalRDF.cend(); ++iter_rdf, ++iter_rdf_out)
 			*iter_rdf_out += *iter_rdf;
 	});
@@ -683,11 +684,13 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 	// Normalize short-ranged real-space correlation function.
 	FloatType gridSpacing = (neighCutoff() + FLOATTYPE_EPSILON) / neighCorrelation()->size();
 	FloatType normalizationFactor = 3 * cell().volume3D() / (4 * FLOATTYPE_PI * sourceProperty1()->size() * sourceProperty2()->size());
-	for(int distanceBinIndex = 0; distanceBinIndex < neighCorrelation()->size(); distanceBinIndex++) {
+	PropertyAccess<FloatType> neighCorrelationArray(neighCorrelation());
+	PropertyAccess<FloatType> neighRDFArray(neighRDF());
+	for(size_t distanceBinIndex = 0; distanceBinIndex < neighCorrelation()->size(); distanceBinIndex++) {
 		FloatType distance = distanceBinIndex * gridSpacing;
 		FloatType distance2 = distance + gridSpacing;
-		neighCorrelation()->data<FloatType>()[distanceBinIndex] *= normalizationFactor / (distance2*distance2*distance2 - distance*distance*distance);
-		neighRDF()->data<FloatType>()[distanceBinIndex] *= normalizationFactor / (distance2*distance2*distance2 - distance*distance*distance);
+		neighCorrelationArray[distanceBinIndex] *= normalizationFactor / (distance2*distance2*distance2 - distance*distance*distance);
+		neighRDFArray[distanceBinIndex] *= normalizationFactor / (distance2*distance2*distance2 - distance*distance*distance);
 	}
 
 	task()->nextProgressSubStep();
@@ -699,31 +702,29 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 {
 	// Get pointers to data.
-	const FloatType* floatData1 = nullptr;
-	const FloatType* floatData2 = nullptr;
-	const int* intData1 = nullptr;
-	const int* intData2 = nullptr;
-	const qlonglong* int64Data1 = nullptr;
-	const qlonglong* int64Data2 = nullptr;
-	size_t componentCount1 = sourceProperty1()->componentCount();
-	size_t componentCount2 = sourceProperty2()->componentCount();
+	ConstPropertyAccess<FloatType,true> floatData1;
+	ConstPropertyAccess<FloatType,true> floatData2;
+	ConstPropertyAccess<int,true> intData1;
+	ConstPropertyAccess<int,true> intData2;
+	ConstPropertyAccess<qlonglong,true> int64Data1;
+	ConstPropertyAccess<qlonglong,true> int64Data2;
 	if(sourceProperty1()->dataType() == PropertyStorage::Float) {
-		floatData1 = sourceProperty1()->cdata<FloatType>(0,0);
+		floatData1 = sourceProperty1();
 	}
 	else if(sourceProperty1()->dataType() == PropertyStorage::Int) {
-		intData1 = sourceProperty1()->cdata<int>(0,0);
+		intData1 = sourceProperty1();
 	}
 	else if(sourceProperty1()->dataType() == PropertyStorage::Int64) {
-		int64Data1 = sourceProperty1()->cdata<qlonglong>(0,0);
+		int64Data1 = sourceProperty1();
 	}
 	if(sourceProperty2()->dataType() == PropertyStorage::Float) {
-		floatData2 = sourceProperty2()->cdata<FloatType>(0,0);
+		floatData2 = sourceProperty2();
 	}
 	else if(sourceProperty2()->dataType() == PropertyStorage::Int) {
-		intData2 = sourceProperty2()->cdata<int>(0,0);
+		intData2 = sourceProperty2();
 	}
 	else if(sourceProperty2()->dataType() == PropertyStorage::Int64) {
-		int64Data2 = sourceProperty2()->cdata<qlonglong>(0,0);
+		int64Data2 = sourceProperty2();
 	}
 
 	// Compute mean and covariance values.
@@ -735,13 +736,13 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimit
 	size_t particleCount = sourceProperty1()->size();
 	for(size_t particleIndex = 0; particleIndex < particleCount; particleIndex++) {
 		FloatType data1, data2;
-		if(floatData1) data1 = floatData1[particleIndex*componentCount1 + _vecComponent1];
-		else if(intData1) data1 = intData1[particleIndex*componentCount1 + _vecComponent1];
-		else if(int64Data1) data1 = int64Data1[particleIndex*componentCount1 + _vecComponent1];
+		if(floatData1) data1 = floatData1.get(particleIndex, _vecComponent1);
+		else if(intData1) data1 = intData1.get(particleIndex, _vecComponent1);
+		else if(int64Data1) data1 = int64Data1.get(particleIndex, _vecComponent1);
 		else data1 = 0;
-		if(floatData2) data2 = floatData2[particleIndex*componentCount2 + _vecComponent2];
-		else if(intData2) data2 = intData2[particleIndex*componentCount2 + _vecComponent2];
-		else if(int64Data2) data2 = int64Data2[particleIndex*componentCount2 + _vecComponent2];
+		if(floatData2) data2 = floatData2.get(particleIndex, _vecComponent2);
+		else if(intData2) data2 = intData2.get(particleIndex, _vecComponent2);
+		else if(int64Data2) data2 = int64Data2.get(particleIndex, _vecComponent2);
 		else data2 = 0;
 		mean1 += data1;
 		mean2 += data2;

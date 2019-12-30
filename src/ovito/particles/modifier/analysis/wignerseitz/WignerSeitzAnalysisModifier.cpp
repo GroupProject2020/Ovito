@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/data/AttributeDataObject.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
@@ -130,14 +131,15 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 
 	// Prepare the closest-point query structure.
 	NearestNeighborFinder neighborTree(0);
-	if(!neighborTree.prepare(*refPositions(), refCell(), nullptr, task().get()))
+	if(!neighborTree.prepare(refPositions(), refCell(), {}, task().get()))
 		return;
 
 	// Determine the number of components of the occupancy property.
 	int ncomponents = 1;
 	int typemin, typemax;
 	if(particleTypes()) {
-		auto minmax = std::minmax_element(particleTypes()->cdata<int>(), particleTypes()->cdata<int>() + particleTypes()->size());
+		ConstPropertyAccess<int> particleTypesArray(particleTypes());
+		auto minmax = std::minmax_element(particleTypesArray.cbegin(), particleTypesArray.cend());
 		typemin = std::min(_ptypeMinId, *minmax.first);
 		typemax = std::max(_ptypeMaxId, *minmax.second);
 		if(typemin < 0)
@@ -164,10 +166,11 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	}
 
 	// Assign particles to reference sites.
+	ConstPropertyAccess<Point3> positionsArray(positions());
 	if(ncomponents == 1) {
 		// Without per-type occupancies:
-		parallelFor(positions()->size(), *task(), [this, &neighborTree, tm, &occupancyArray, &atomsToSites](size_t index) {
-			const Point3& p = positions()->get<Point3>(index);
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			const Point3& p = positionsArray[index];
 			FloatType closestDistanceSq;
 			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
 			OVITO_ASSERT(closestIndex < occupancyArray.size());
@@ -178,11 +181,12 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	}
 	else {
 		// With per-type occupancies:
-		parallelFor(positions()->size(), *task(), [this, &neighborTree, typemin, ncomponents, tm, &occupancyArray, &atomsToSites](size_t index) {
-			const Point3& p = positions()->get<Point3>(index);
+		ConstPropertyAccess<int> particleTypesArray(particleTypes());
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			const Point3& p = positionsArray[index];
 			FloatType closestDistanceSq;
 			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
-			int offset = particleTypes()->get<int>(index) - typemin;
+			int offset = particleTypesArray[index] - typemin;
 			OVITO_ASSERT(closestIndex * ncomponents + offset < occupancyArray.size());
 			occupancyArray[closestIndex * ncomponents + offset].fetch_add(1, std::memory_order_relaxed);
 			if(!atomsToSites.empty())
@@ -203,24 +207,29 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	}
 
 	// Copy data from atomic array to output buffer.
+	PropertyAccess<int,true> occupancyNumbersArray(occupancyNumbers());
 	if(!siteTypes()) {
-		boost::copy(occupancyArray, occupancyNumbers()->data<int>(0,0));
+		boost::copy(occupancyArray, occupancyNumbersArray.begin());
 	}
 	else {
 		// Map occupancy numbers from sites to atoms.
-		int* occ = occupancyNumbers()->data<int>(0,0);
-		int* st = siteTypes()->data<int>();
-		auto sidx = siteIndices()->data<qlonglong>();
-		auto sid = siteIdentifiers() ? siteIdentifiers()->data<qlonglong>() : nullptr;
+		PropertyAccess<int> siteTypesArray(siteTypes());
+		PropertyAccess<qlonglong> siteIndicesArray(siteIndices());
+		PropertyAccess<qlonglong> siteIdentifiersArray(siteIdentifiers());
+		ConstPropertyAccess<int> referenceTypeArray(_referenceTypeProperty);
+		ConstPropertyAccess<qlonglong> referenceIdentifierArray(_referenceIdentifierProperty);
+		int* occ = occupancyNumbersArray.begin();
+		int* st = siteTypesArray.begin();
+		auto sidx = siteIndicesArray.begin();
+		auto sid = siteIdentifiersArray ? siteIdentifiersArray.begin() : nullptr;
 		for(size_t siteIndex : atomsToSites) {
 			for(int j = 0; j < ncomponents; j++) {
 				*occ++ = occupancyArray[siteIndex * ncomponents + j];
 			}
-			*st++ = _referenceTypeProperty ? _referenceTypeProperty->get<int>(siteIndex) : 0;
+			*st++ = referenceTypeArray ? referenceTypeArray[siteIndex] : 0;
 			*sidx++ = siteIndex;
-			if(sid) *sid++ = _referenceIdentifierProperty->get<qlonglong>(siteIndex);
+			if(sid) *sid++ = referenceIdentifierArray[siteIndex];
 		}
-		OVITO_ASSERT(occ == occupancyNumbers()->data<int>(0,0) + occupancyNumbers()->size() * occupancyNumbers()->componentCount());
 	}
 
 	// Count defects.

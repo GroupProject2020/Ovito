@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -56,7 +57,7 @@ public:
 			if(!_particleIdentifiers)
 				return true;
 			if(prop->storage() != _particleIdentifiers) {
-				if(!boost::equal(prop->crange<qlonglong>(), _particleIdentifiers->crange<qlonglong>()))
+				if(!boost::equal(ConstPropertyAccess<qlonglong>(prop), ConstPropertyAccess<qlonglong>(_particleIdentifiers)))
 					return true;
 			}
 		}

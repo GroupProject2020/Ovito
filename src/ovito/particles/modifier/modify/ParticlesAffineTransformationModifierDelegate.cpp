@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesAffineTransformationModifierDelegate.h"
@@ -54,7 +55,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 		ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 
 		// Create a modifiable copy of the particle position.
-		PropertyObject* posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty);
+		PropertyAccess<Point3> posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty);
 
 		// Determine transformation matrix.
 		AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
@@ -65,9 +66,9 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 			tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 
 		if(mod->selectionOnly()) {
-			if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
-				const int* s = selProperty->cdata<int>();
-				for(Point3& p : posProperty->range<Point3>()) {
+			if(ConstPropertyAccess<int> selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
+				const int* s = selProperty.cbegin();
+				for(Point3& p : posProperty) {
 					if(*s++)
 						p = tm * p;
 				}
@@ -78,11 +79,11 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 			// simply add vectors instead of computing full matrix products.
 			Vector3 translation = tm.translation();
 			if(tm == AffineTransformation::translation(translation)) {
-				for(Point3& p : posProperty->range<Point3>())
+				for(Point3& p : posProperty)
 					p += translation;
 			}
 			else {
-				for(Point3& p : posProperty->range<Point3>())
+				for(Point3& p : posProperty)
 					p = tm * p;
 			}
 		}
@@ -137,17 +138,15 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 				// Make sure we can safely modify the particles object.
 				ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
 
-				PropertyStorage* property = outputParticles->makeMutable(inputProperty)->modifiableStorage().get();
-				OVITO_ASSERT(property->dataType() == PropertyStorage::Float);
-				OVITO_ASSERT(property->componentCount() == 3);
+				PropertyAccess<Vector3> property = outputParticles->makeMutable(inputProperty);
 				if(!mod->selectionOnly()) {
-					for(Vector3& v : property->range<Vector3>())
+					for(Vector3& v : property)
 						v = tm * v;
 				}
 				else {
-					if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
-						const int* s = selProperty->cdata<int>();
-						for(Vector3& v : property->range<Vector3>()) {
+					if(ConstPropertyAccess<int> selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
+						const int* s = selProperty.cbegin();
+						for(Vector3& v : property) {
 							if(*s++)
 								v = tm * v;
 						}

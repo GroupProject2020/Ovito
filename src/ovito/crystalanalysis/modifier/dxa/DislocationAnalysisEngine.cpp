@@ -117,8 +117,12 @@ void DislocationAnalysisEngine::perform()
 
 	task()->nextProgressSubStep();
 	FloatType ghostLayerSize = FloatType(3.0) * _structureAnalysis->maximumNeighborDistance();
-	if(!_tessellation->generateTessellation(_structureAnalysis->cell(), positions()->cdata<Point3>(),
-			_structureAnalysis->atomCount(), ghostLayerSize, selection() ? selection()->cdata<int>() : nullptr, *task()))
+	if(!_tessellation->generateTessellation(_structureAnalysis->cell(), 
+			ConstPropertyAccess<Point3>(positions()).cbegin(),
+			_structureAnalysis->atomCount(), 
+			ghostLayerSize, 
+			selection() ? ConstPropertyAccess<int>(selection()).cbegin() : nullptr, 
+			*task()))
 		return;
 
 	// Build list of edges in the tessellation.
@@ -141,7 +145,7 @@ void DislocationAnalysisEngine::perform()
 
 	// Create the mesh facets.
 	task()->nextProgressSubStep();
-	if(!_interfaceMesh->createMesh(_structureAnalysis->maximumNeighborDistance(), crystalClusters().get(), *task()))
+	if(!_interfaceMesh->createMesh(_structureAnalysis->maximumNeighborDistance(), crystalClusters(), *task()))
 		return;
 
 	// Trace dislocation lines.
@@ -337,21 +341,21 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 	int maxId = 0;
 	for(const auto& entry : dislocationLengths)
 		maxId = std::max(maxId, entry.first->numericId());
-	PropertyPtr dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataSeriesObject::YProperty);
+	PropertyAccessAndRef<FloatType> dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : dislocationLengths)
-		dislocationLengthsProperty->set<FloatType>(entry.first->numericId(), entry.second);
-	PropertyPtr dislocationTypeIds = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation type"), false, DataSeriesObject::XProperty);
-	boost::algorithm::iota_n(dislocationTypeIds->data<int>(), 0, dislocationTypeIds->size());
-	DataSeriesObject* lengthSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-lengths"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"), dislocationLengthsProperty, dislocationTypeIds);
+		dislocationLengthsProperty[entry.first->numericId()] = entry.second;
+	PropertyAccessAndRef<int> dislocationTypeIds = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation type"), false, DataSeriesObject::XProperty);
+	boost::algorithm::iota_n(dislocationTypeIds.begin(), 0, dislocationTypeIds.size());
+	DataSeriesObject* lengthSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-lengths"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"), dislocationLengthsProperty.takeStorage(), dislocationTypeIds.takeStorage());
 	PropertyObject* xProperty = lengthSeriesObj->expectMutableProperty(DataSeriesObject::XProperty);
 	for(const auto& entry : dislocationLengths)
 		xProperty->addElementType(entry.first);
 
 	// Output a data series object with the dislocation segment counts.
-	PropertyPtr dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation count"), true, DataSeriesObject::YProperty);
+	PropertyAccessAndRef<int> dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation count"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : segmentCounts)
-		dislocationCountsProperty->set<int>(entry.first->numericId(), entry.second);
-	DataSeriesObject* countSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"), dislocationCountsProperty);
+		dislocationCountsProperty[entry.first->numericId()] = entry.second;
+	DataSeriesObject* countSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"), dislocationCountsProperty.takeStorage());
 	countSeriesObj->insertProperty(0, xProperty);
 
 	// Output particle properties.

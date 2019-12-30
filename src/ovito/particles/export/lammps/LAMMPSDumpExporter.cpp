@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "LAMMPSDumpExporter.h"
@@ -38,6 +39,7 @@ bool LAMMPSDumpExporter::exportData(const PipelineFlowState& state, int frameNum
 {
 	// Get particles.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 
 	// Get simulation cell info.
 	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();

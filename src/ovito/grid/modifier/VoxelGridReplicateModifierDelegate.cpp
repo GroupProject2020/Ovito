@@ -23,6 +23,7 @@
 #include <ovito/grid/Grid.h>
 #include <ovito/grid/objects/VoxelGrid.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "VoxelGridReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Grid {
@@ -91,14 +92,15 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 			// We cannot rely on the replicate() method above to duplicate the data in the property
 			// arrays, because for three-dimensional voxel grids, the storage order of voxel data matters.
-			// The following loop takes care of replicating the the property values the right way.
+			// The following loop takes care of replicating the property values the right way.
 			for(PropertyObject* property : newVoxelGrid->properties()) {
 				// First, copy the original property data to a temporary buffer so that
 				// it doesn't get destroyed while we are rewriting it to the replicated property array.
-				size_t stride = property->stride();
-				char* dst = static_cast<char*>(property->data<void>());
-				std::vector<char> buffer(dst, dst + stride * existingVoxelGrid->elementCount());
-				const char* src = buffer.data();
+				PropertyAccess<void,true> array(property);
+				size_t stride = array.stride();
+				uint8_t* dst = array.data();
+				std::vector<uint8_t> buffer(dst, dst + stride * existingVoxelGrid->elementCount());
+				const uint8_t* src = buffer.data();
 				for(size_t z = 0; z < shape[2]; z++) {
 					size_t zs = z % oldShape[2];
 					for(size_t y = 0; y < shape[1]; y++) {
@@ -111,7 +113,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, Pip
 						}
 					}
 				}
-				OVITO_ASSERT(dst == static_cast<char*>(property->data<void>()) + property->size()*property->stride());
+				OVITO_ASSERT(dst == array.data() + property->size() * property->stride());
 			}
 		}
 	}

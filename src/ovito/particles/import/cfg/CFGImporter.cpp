@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -213,18 +213,13 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 	// Create particle mass and type properties.
 	int currentAtomType = 0;
 	FloatType currentMass = 0;
-	FloatType* massPointer = nullptr;
-	int* atomTypePointer = nullptr;
-	PropertyPtr typeProperty;
+	PropertyAccess<int> typeProperty;
+	PropertyAccess<FloatType> massProperty;
 	ParticleFrameData::TypeList* typeList = nullptr;
 	if(header.isExtendedFormat) {
-		typeProperty = ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::TypeProperty, false);
-		frameData->addParticleProperty(typeProperty);
+		typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::TypeProperty, false));
 		typeList = frameData->propertyTypesList(typeProperty);
-		atomTypePointer = typeProperty->data<int>();
-		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::MassProperty, false);
-		frameData->addParticleProperty(massProperty);
-		massPointer = massProperty->data<FloatType>();
+		massProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::MassProperty, false));
 	}
 
 	// Read per-particle data.
@@ -266,8 +261,8 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 				continue;
 			}
 
-			*atomTypePointer++ = currentAtomType;
-			*massPointer++ = currentMass;
+			typeProperty[particleIndex] = currentAtomType;
+			massProperty[particleIndex] = currentMass;
 		}
 
 		try {
@@ -293,9 +288,8 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 	// The CFG file stores particle positions in reduced coordinates.
 	// Rescale them now to absolute (Cartesian) coordinates.
 	// However, do this only if no absolute coordinates have been read from the extra data columns in the CFG file.
-	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
-	if(posProperty && header.numParticles > 0) {
-		for(Point3& p : posProperty->range<Point3>())
+	if(PropertyAccess<Point3> posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
+		for(Point3& p : posProperty)
 			p = H * p;
 	}
 

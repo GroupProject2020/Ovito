@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/rendering/ParticlePrimitive.h>
 #include <ovito/core/dataset/data/DataVis.h>
@@ -77,19 +78,19 @@ public:
 	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, const ParticlesObject* particles) const;
 
 	/// Determines the display particle colors.
-	void particleColors(std::vector<ColorA>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty = nullptr, const PropertyObject* transparencyProperty = nullptr) const;
+	void particleColors(std::vector<ColorA>& output, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty = {}, ConstPropertyAccess<FloatType> transparencyProperty = {}) const;
 
 	/// Determines the display particle radii.
-	void particleRadii(std::vector<FloatType>& output, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const;
+	void particleRadii(std::vector<FloatType>& output, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const;
 
 	/// Determines the display radius of a single particle.
-	FloatType particleRadius(size_t particleIndex, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const;
+	FloatType particleRadius(size_t particleIndex, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const;
 
 	/// s the display color of a single particle.
-	ColorA particleColor(size_t particleIndex, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty, const PropertyObject* transparencyProperty) const;
+	ColorA particleColor(size_t particleIndex, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty, ConstPropertyAccess<FloatType> transparencyProperty) const;
 
 	/// Computes the bounding box of the particles.
-	Box3 particleBoundingBox(const PropertyObject* positionProperty, const PropertyObject* typeProperty, const PropertyObject* radiusProperty, const PropertyObject* shapeProperty, bool includeParticleRadius) const;
+	Box3 particleBoundingBox(ConstPropertyAccess<Point3> positionProperty, const PropertyObject* typeProperty, ConstPropertyAccess<FloatType> radiusProperty, ConstPropertyAccess<Vector3> shapeProperty, bool includeParticleRadius) const;
 
 	/// Render a marker around a particle to highlight it in the viewports.
 	void highlightParticle(size_t particleIndex, const ParticlesObject* particles, SceneRenderer* renderer) const;

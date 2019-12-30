@@ -68,7 +68,7 @@ public:
 	}
 
 	/// Creates a new instace of the property object type.
-	OORef<PropertyObject> createFromStorage(DataSet* dataset, const PropertyPtr& storage) const;
+	OORef<PropertyObject> createFromStorage(DataSet* dataset, PropertyPtr storage) const;
 
 	/// Determines whether a standard property ID is defined for this property class.
 	bool isValidStandardPropertyId(int id) const {

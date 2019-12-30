@@ -137,7 +137,7 @@ size_t PropertyContainer::deleteElements(const boost::dynamic_bitset<>& mask)
 * Creates a property and adds it to the container.
 * In case the property already exists, it is made sure that it's safe to modify it.
 ******************************************************************************/
-PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath, size_t elementCountHint)
+PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath)
 {
 	// Undo recording should never be active during pipeline evaluation.
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
@@ -165,8 +165,7 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 	}
 	else {
 		// Create a new property object.
-		size_t count = !properties().empty() ? elementCount() : elementCountHint;
-		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), getOOMetaClass().createStandardStorage(count, typeId, initializeMemory, containerPath));
+		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), getOOMetaClass().createStandardStorage(elementCount(), typeId, initializeMemory, containerPath));
 		addProperty(newProperty);
 		return newProperty;
 	}
@@ -176,7 +175,7 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 * Creates a user-defined property and adds it to the container.
 * In case the property already exists, it is made sure that it's safe to modify it.
 ******************************************************************************/
-PropertyObject* PropertyContainer::createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory, size_t elementCountHint)
+PropertyObject* PropertyContainer::createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory)
 {
 	// Undo recording should never be active during pipeline evaluation.
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
@@ -205,8 +204,7 @@ PropertyObject* PropertyContainer::createProperty(const QString& name, int dataT
 	}
 	else {
 		// Create a new property object.
-		size_t count = !properties().empty() ? elementCount() : elementCountHint;
-		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), std::make_shared<PropertyStorage>(count, dataType, componentCount, stride, name, initializeMemory));
+		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), std::make_shared<PropertyStorage>(elementCount(), dataType, componentCount, stride, name, initializeMemory));
 		addProperty(newProperty);
 		return newProperty;
 	}
@@ -215,7 +213,7 @@ PropertyObject* PropertyContainer::createProperty(const QString& name, int dataT
 /******************************************************************************
 * Creates a new particle property and adds it to the container.
 ******************************************************************************/
-PropertyObject* PropertyContainer::createProperty(const PropertyPtr& storage)
+PropertyObject* PropertyContainer::createProperty(PropertyPtr storage)
 {
 	OVITO_CHECK_POINTER(storage);
 
@@ -256,12 +254,12 @@ PropertyObject* PropertyContainer::createProperty(const PropertyPtr& storage)
 	if(existingProperty) {
 		PropertyObject* newProperty = makeMutable(existingProperty);
 		OVITO_ASSERT(storage->stride() == newProperty->stride());
-		newProperty->setStorage(storage);
+		newProperty->setStorage(std::move(storage));
 		return newProperty;
 	}
 	else {
 		// Create a new property in the output.
-		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), storage);
+		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), std::move(storage));
 		addProperty(newProperty);
 		OVITO_ASSERT(newProperty->size() == elementCount());
 		return newProperty;
@@ -279,7 +277,7 @@ void PropertyContainer::setContent(size_t newElementCount, const std::vector<Pro
 	// Removal phase:
 	for(int i = properties().size() - 1; i >= 0; i--) {
 		PropertyObject* property = properties()[i];
-		if(std::none_of(newProperties.cbegin(), newProperties.cend(), [property](const auto& newProperty) {
+		if(boost::algorithm::none_of(newProperties, [property](const auto& newProperty) {
 				return (newProperty->type() == property->type() && newProperty->name() == property->name());
 			}))
 		{

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -98,12 +98,13 @@ OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const
 			if((int)property->componentCount() <= std::max(0, pref.vectorComponent()))
 				throw Exception(tr("The output vector component selected for column %1 is out of range. The particle property '%2' has only %3 component(s).").arg(i+1).arg(pref.name()).arg(property->componentCount()));
 			if(property->dataType() == QMetaType::Void)
-				throw Exception(tr("The particle property '%1' cannot be written to the output file because it is empty.").arg(pref.name()));
+				throw Exception(tr("The particle property '%1' cannot be written to the output file, because it is empty.").arg(pref.name()));
 		}
 
 		// Build internal list of property objects for fast look up during writing.
 		_properties.push_back(property);
 		_vectorComponents.push_back(std::max(0, pref.vectorComponent()));
+		_propertyArrays.push_back(ConstPropertyAccess<void,true>(property));
 	}
 }
 
@@ -114,17 +115,18 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 {
 	QVector<const PropertyObject*>::const_iterator property = _properties.constBegin();
 	QVector<int>::const_iterator vcomp = _vectorComponents.constBegin();
-	for(; property != _properties.constEnd(); ++property, ++vcomp) {
+	QVector<ConstPropertyAccess<void,true>>::const_iterator array = _propertyArrays.constBegin();
+	for(; property != _properties.constEnd(); ++property, ++vcomp, ++array) {
 		if(property != _properties.constBegin()) stream << ' ';
 		if(*property) {
 			if((*property)->dataType() == PropertyStorage::Int) {
 				if(!_writeTypeNames || (*property)->type() != ParticlesObject::TypeProperty) {
-					stream << (*property)->get<int>(particleIndex, *vcomp);
+					stream << *reinterpret_cast<const int*>(array->cdata(particleIndex, *vcomp));
 				}
 				else {
 					// Write type name instead of type number.
 					// Replace spaces in the name with underscores.
-					int particleTypeId = (*property)->get<int>(particleIndex, *vcomp);
+					int particleTypeId = *reinterpret_cast<const int*>(array->cdata(particleIndex, *vcomp));
 					const ElementType* type = (*property)->elementType(particleTypeId);
 					if(type && !type->name().isEmpty()) {
 						QString s = type->name();
@@ -136,10 +138,13 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 				}
 			}
 			else if((*property)->dataType() == PropertyStorage::Int64) {
-				stream << (*property)->get<qlonglong>(particleIndex, *vcomp);
+				stream << *reinterpret_cast<const qlonglong*>(array->cdata(particleIndex, *vcomp));
 			}
 			else if((*property)->dataType() == PropertyStorage::Float) {
-				stream << (*property)->get<FloatType>(particleIndex, *vcomp);
+				stream << *reinterpret_cast<const FloatType*>(array->cdata(particleIndex, *vcomp));
+			}
+			else {
+				throw Exception(tr("The property '%1' cannot be written to the output file, because it has a non-standard data type.").arg((*property)->name()));
 			}
 		}
 		else {

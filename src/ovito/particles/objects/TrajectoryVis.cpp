@@ -22,6 +22,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/data/VersionedDataObjectRef.h>
@@ -79,15 +80,15 @@ Box3 TrajectoryVis::boundingBox(TimePoint time, const std::vector<const DataObje
 	if(bbox.isEmpty()) {
 		// If not, recompute bounding box from trajectory data.
 		if(trajObj) {
-			if(const PropertyObject* posProperty = trajObj->getProperty(TrajectoryObject::PositionProperty)) {
-				if(!simulationCell) {
-					bbox.addPoints(posProperty->crange<Point3>());
+			if(!simulationCell) {
+				if(ConstPropertyAccess<Point3> posProperty = trajObj->getProperty(TrajectoryObject::PositionProperty)) {
+					bbox.addPoints(posProperty);
 				}
-				else {
-					bbox = Box3(Point3(0,0,0), Point3(1,1,1)).transformed(simulationCell->cellMatrix());
-				}
-				bbox = bbox.padBox(lineWidth() / 2);
 			}
+			else {
+				bbox = Box3(Point3(0,0,0), Point3(1,1,1)).transformed(simulationCell->cellMatrix());
+			}
+			bbox = bbox.padBox(lineWidth() / 2);
 		}
 	}
 	return bbox;
@@ -155,19 +156,19 @@ void TrajectoryVis::render(TimePoint time, const std::vector<const DataObject*>&
 		if(trajObj && lineRadius > 0) {
 
 			// Retrieve the line data stored in the TrajectoryObject.
-			const PropertyObject* posProperty = trajObj->getProperty(TrajectoryObject::PositionProperty);
-			const PropertyObject* timeProperty = trajObj->getProperty(TrajectoryObject::SampleTimeProperty);
-			const PropertyObject* idProperty = trajObj->getProperty(TrajectoryObject::ParticleIdentifierProperty);
-			if(posProperty && timeProperty && idProperty && posProperty->size() == timeProperty->size() && timeProperty->size() == idProperty->size() && posProperty->size() >= 2) {
+			ConstPropertyAccess<Point3> posProperty = trajObj->getProperty(TrajectoryObject::PositionProperty);
+			ConstPropertyAccess<int> timeProperty = trajObj->getProperty(TrajectoryObject::SampleTimeProperty);
+			ConstPropertyAccess<qlonglong> idProperty = trajObj->getProperty(TrajectoryObject::ParticleIdentifierProperty);
+			if(posProperty && timeProperty && idProperty && posProperty.size() == timeProperty.size() && timeProperty.size() == idProperty.size() && posProperty.size() >= 2) {
 
 				// Determine the number of line segments and corner points to render.
 				size_t lineSegmentCount = 0;
 				std::vector<Point3> cornerPoints;
-				const Point3* pos = posProperty->cdata<Point3>();
-				const int* sampleTime = timeProperty->cdata<int>();
-				const qlonglong* id = idProperty->cdata<qlonglong>();
+				const Point3* pos = posProperty.cbegin();
+				const int* sampleTime = timeProperty.cbegin();
+				const qlonglong* id = idProperty.cbegin();
 				if(!simulationCell) {
-					for(auto pos_end = pos + posProperty->size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
+					for(auto pos_end = pos + posProperty.size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
 						if(id[0] == id[1] && sampleTime[1] <= endFrame) {
 							lineSegmentCount++;
 							if(pos + 1 != pos_end && id[1] == id[2] && sampleTime[2] <= endFrame) {
@@ -177,7 +178,7 @@ void TrajectoryVis::render(TimePoint time, const std::vector<const DataObject*>&
 					}
 				}
 				else {
-					for(auto pos_end = pos + posProperty->size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
+					for(auto pos_end = pos + posProperty.size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
 						if(id[0] == id[1] && sampleTime[1] <= endFrame) {
 							clipTrajectoryLine(pos[0], pos[1], cell, [&lineSegmentCount](const Point3& p1, const Point3& p2) {
 								lineSegmentCount++;
@@ -196,19 +197,19 @@ void TrajectoryVis::render(TimePoint time, const std::vector<const DataObject*>&
 				int lineSegmentIndex = 0;
 
 				// Create the line segment geometry.
-				pos = posProperty->cdata<Point3>();
-				sampleTime = timeProperty->cdata<int>();
-				id = idProperty->cdata<qlonglong>();
+				pos = posProperty.cbegin();
+				sampleTime = timeProperty.cbegin();
+				id = idProperty.cbegin();
 				ColorA color = lineColor();
 				if(!simulationCell) {
-					for(auto pos_end = pos + posProperty->size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
+					for(auto pos_end = pos + posProperty.size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
 						if(id[0] == id[1] && sampleTime[1] <= endFrame) {
 							renderingPrimitives.segments->setElement(lineSegmentIndex++, pos[0], pos[1] - pos[0], color, lineRadius);
 						}
 					}
 				}
 				else {
-					for(auto pos_end = pos + posProperty->size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
+					for(auto pos_end = pos + posProperty.size() - 1; pos != pos_end; ++pos, ++sampleTime, ++id) {
 						if(id[0] == id[1] && sampleTime[1] <= endFrame) {
 							clipTrajectoryLine(pos[0], pos[1], cell, [&](const Point3& p1, const Point3& p2) {
 								renderingPrimitives.segments->setElement(lineSegmentIndex++, p1, p2 - p1, color, lineRadius);

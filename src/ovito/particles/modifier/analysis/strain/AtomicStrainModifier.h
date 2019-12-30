@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -128,9 +128,6 @@ private:
 
 	private:
 
-		/// Computes the strain tensor of a single particle.
-		void computeStrain(size_t particleIndex, CutoffNeighborFinder& neighborListBuilder);
-
 		const FloatType _cutoff;
 		PropertyPtr _displacements;
 		QAtomicInt _numInvalidParticles;
@@ -171,5 +168,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,7 @@
 
 
 #include <ovito/particles/Particles.h>
-#include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -80,7 +80,7 @@ public:
 	/// \return \c false when the operation has been canceled by the user;s
 	///         \c true on success.
 	/// \throw Exception on error.
-	bool prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& simCell, const PropertyStorage* selectionProperty, Task* promise);
+	bool prepare(FloatType cutoffRadius, ConstPropertyAccess<Point3> positions, const SimulationCell& simCell, ConstPropertyAccess<int> selectionProperty, Task* promise);
 
 	/// Returns the cutoff radius set via prepare().
 	FloatType cutoffRadius() const { return _cutoffRadius; }
@@ -181,5 +181,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

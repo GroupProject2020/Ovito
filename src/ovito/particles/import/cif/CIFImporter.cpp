@@ -103,13 +103,11 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 
 		// Parse list of atomic sites.
 		std::vector<gemmi::AtomicStructure::Site> sites = structure.get_all_unit_cell_sites();
-		PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::PositionProperty, false);
-		frameData->addParticleProperty(posProperty);
-		PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::TypeProperty, false);
-		frameData->addParticleProperty(typeProperty);
+		PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::PositionProperty, false));
+		PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::TypeProperty, false));
 		ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-		Point3* posIter = posProperty->data<Point3>();
-		int* typeIter = typeProperty->data<int>();
+		Point3* posIter = posProperty.begin();
+		int* typeIter = typeProperty.begin();
 		bool hasOccupancy = false;
 		for(const gemmi::AtomicStructure::Site& site : sites) {
 			gemmi::Position pos = structure.cell.orthogonalize(site.fract.wrap_to_unit());
@@ -124,9 +122,8 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 
 		// Parse the optional site occupancy information.
 		if(hasOccupancy) {
-			PropertyPtr occupancyProperty = std::make_shared<PropertyStorage>(sites.size(), PropertyStorage::Float, 1, 0, QStringLiteral("Occupancy"), false);
-			frameData->addParticleProperty(occupancyProperty);
-			FloatType* occupancyIter = occupancyProperty->data<FloatType>();
+			PropertyAccess<FloatType> occupancyProperty = frameData->addParticleProperty(std::make_shared<PropertyStorage>(sites.size(), PropertyStorage::Float, 1, 0, QStringLiteral("Occupancy"), false));
+			FloatType* occupancyIter = occupancyProperty.begin();
 			for(const gemmi::AtomicStructure::Site& site : sites) {
 				*occupancyIter++ = site.occ;
 			}
@@ -167,10 +164,10 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 			}
 			frameData->simulationCell().setMatrix(cell);
 		}
-		else if(posProperty->size() != 0) {
+		else if(posProperty.size() != 0) {
 			// Use bounding box of atomic coordinates as non-periodic simulation cell.
 			Box3 boundingBox;
-			boundingBox.addPoints(posProperty->crange<Point3>());
+			boundingBox.addPoints(posProperty);
 			frameData->simulationCell().setPbcFlags(false, false, false);
 			frameData->simulationCell().setMatrix(AffineTransformation(
 					Vector3(boundingBox.sizeX(), 0, 0),
@@ -179,7 +176,7 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 					boundingBox.minc - Point3::Origin()));
 		}
 
-		frameData->setStatus(tr("Number of atoms: %1").arg(posProperty->size()));
+		frameData->setStatus(tr("Number of atoms: %1").arg(posProperty.size()));
 	}
 	catch(const std::exception& e) {
 		throw Exception(tr("CIF file reader: %1").arg(e.what()));

@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/series/DataSeriesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
@@ -150,8 +151,11 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 	}
 
 	// Initialize the algorithm object.
-	if(!_algorithm->prepare(*positions(), cell(), selection().get(), task().get()))
+	if(!_algorithm->prepare(positions(), cell(), selection(), task().get()))
 		return;
+
+	// Get access to the particle selection flags.
+	ConstPropertyAccess<int> selectionData(selection());
 
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(positions()->size());
@@ -159,7 +163,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 
 	// Pre-order neighbors of each particle
 	std::vector< uint64_t > cachedNeighbors(positions()->size());
-	parallelForChunks(positions()->size(), *task(), [this, &cachedNeighbors](size_t startIndex, size_t count, Task& task) {
+	parallelForChunks(positions()->size(), *task(), [&](size_t startIndex, size_t count, Task& task) {
 		// Create a thread-local kernel for the PTM algorithm.
 		PTMAlgorithm::Kernel kernel(*_algorithm);
 
@@ -178,11 +182,8 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				break;
 
 			// Skip particles that are not included in the analysis.
-			if(selection() && !selection()->get<int>(index)) {
-				structures()->set<int>(index, PTMAlgorithm::OTHER);
-				rmsd()->set<FloatType>(index, 0);
+			if(selectionData && !selectionData[index])
 				continue;
-			}
 
 			// Calculate ordering of neighbors
 			kernel.precacheNeighbors(index, &cachedNeighbors[index]);
@@ -194,8 +195,16 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 	task()->setProgressValue(0);
 	task()->setProgressText(tr("Performing polyhedral template matching"));
 
+	// Get access to the output buffers that will receive the identified particle types and other data.
+	PropertyAccess<int> outputStructureArray(structures());
+	PropertyAccess<FloatType> rmsdArray(rmsd());
+	PropertyAccess<FloatType> interatomicDistancesArray(interatomicDistances());
+	PropertyAccess<Quaternion> orientationsArray(orientations());
+	PropertyAccess<Matrix3> deformationGradientsArray(deformationGradients());
+	PropertyAccess<int> orderingTypesArray(orderingTypes());
+
 	// Perform analysis on each particle.
-	parallelForChunks(positions()->size(), *task(), [this, &cachedNeighbors](size_t startIndex, size_t count, Task& task) {
+	parallelForChunks(positions()->size(), *task(), [&](size_t startIndex, size_t count, Task& task) {
 
 		// Create a thread-local kernel for the PTM algorithm.
 		PTMAlgorithm::Kernel kernel(*_algorithm);
@@ -214,9 +223,9 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				break;
 
 			// Skip particles that are not included in the analysis.
-			if(selection() && !selection()->get<int>(index)) {
-				structures()->set<int>(index, PTMAlgorithm::OTHER);
-				rmsd()->set<FloatType>(index, 0);
+			if(selectionData && !selectionData[index]) {
+				outputStructureArray[index] = PTMAlgorithm::OTHER;
+				rmsdArray[index] = 0;
 				continue;
 			}
 
@@ -224,13 +233,13 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			PTMAlgorithm::StructureType type = kernel.identifyStructure(index, cachedNeighbors, nullptr);
 
 			// Store results in the output arrays.
-			structures()->set<int>(index, type);
-			rmsd()->set<FloatType>(index, kernel.rmsd());
+			outputStructureArray[index] = type;
+			rmsdArray[index] = kernel.rmsd();
 			if(type != PTMAlgorithm::OTHER) {
-				if(interatomicDistances()) interatomicDistances()->set<FloatType>(index, kernel.interatomicDistance());
-				if(orientations()) orientations()->set<Quaternion>(index, kernel.orientation());
-				if(deformationGradients()) deformationGradients()->set<Matrix3>(index, kernel.deformationGradient());
-				if(orderingTypes()) orderingTypes()->set<int>(index, kernel.orderingType());
+				if(interatomicDistancesArray) interatomicDistancesArray[index] = kernel.interatomicDistance();
+				if(orientationsArray) orientationsArray[index] = kernel.orientation();
+				if(deformationGradientsArray) deformationGradientsArray[index] = kernel.deformationGradient();
+				if(orderingTypesArray) orderingTypesArray[index] = kernel.orderingType();
 			}
 		}
 	});
@@ -240,17 +249,19 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 	// Determine histogram bin size based on maximum RMSD value.
 	const size_t numHistogramBins = 100;
 	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
-	FloatType rmsdHistogramBinSize = FloatType(1.01) * *boost::max_element(rmsd()->crange<FloatType>()) / numHistogramBins;
+	FloatType rmsdHistogramBinSize = FloatType(1.01) * *boost::max_element(rmsdArray) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
 
 	// Perform binning of RMSD values.
-	for(size_t index = 0; index < structures()->size(); index++) {
-		if(structures()->get<int>(index) != PTMAlgorithm::OTHER) {
-			OVITO_ASSERT(rmsd()->get<FloatType>(index) >= 0);
-			int binIndex = rmsd()->get<FloatType>(index) / rmsdHistogramBinSize;
+	PropertyAccess<qlonglong> histogramCounts(_rmsdHistogram);
+	const int* structureType = outputStructureArray.cbegin();
+	for(FloatType rmsdValue : rmsdArray) {
+		if(*structureType++ != PTMAlgorithm::OTHER) {
+			OVITO_ASSERT(rmsdValue >= 0);
+			int binIndex = rmsdValue / rmsdHistogramBinSize;
 			if(binIndex < numHistogramBins)
-				_rmsdHistogram->data<qlonglong>()[binIndex]++;
+				histogramCounts[binIndex]++;
 		}
 	}
 }
@@ -264,15 +275,19 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 	OVITO_ASSERT(modifier);
 
 	// Enforce RMSD cutoff.
-	if(modifier->rmsdCutoff() > 0 && rmsd()) {
+	FloatType rmsdCutoff = modifier->rmsdCutoff();
+	if(rmsdCutoff > 0 && rmsd()) {
 
 		// Start off with the original particle classifications and make a copy.
-		const PropertyPtr finalStructureTypes = std::make_shared<PropertyStorage>(*structures);
+		PropertyPtr finalStructureTypes = std::make_shared<PropertyStorage>(*structures);
 
 		// Mark those particles whose RMSD exceeds the cutoff as 'OTHER'.
-		for(size_t i = 0; i < rmsd()->size(); i++) {
-			if(rmsd()->get<FloatType>(i) > modifier->rmsdCutoff())
-				finalStructureTypes->set<int>(i, PTMAlgorithm::OTHER);
+		ConstPropertyAccess<FloatType> rmdsArray(rmsd());
+		PropertyAccess<int> structureTypesArray(finalStructureTypes);
+		const FloatType* rmsdValue = rmdsArray.cbegin();
+		for(int& type : structureTypesArray) {
+			if(*rmsdValue++ > rmsdCutoff)
+				type = PTMAlgorithm::OTHER;
 		}
 
 		// Replace old classifications with updated ones.

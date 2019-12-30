@@ -22,6 +22,7 @@
 
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
 #include <ovito/gui/mainwin/MainWindow.h>
@@ -310,19 +311,22 @@ QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& i
 			for(size_t component = 0; component < property->componentCount(); component++) {
 				if(component != 0) str += QStringLiteral(" ");
 				if(property->dataType() == PropertyStorage::Int) {
-					str += QString::number(property->get<int>(elementIndex, component));
+					ConstPropertyAccess<int, true> data(property);
+					str += QString::number(data.get(elementIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(ElementType* ptype = property->elementType(property->get<int>(elementIndex, component))) {
+						if(ElementType* ptype = property->elementType(data.get(elementIndex, component))) {
 							if(!ptype->name().isEmpty())
 								str += QStringLiteral(" (%1)").arg(ptype->name());
 						}
 					}
 				}
 				else if(property->dataType() == PropertyStorage::Int64) {
-					str += QString::number(property->get<qlonglong>(elementIndex, component));
+					ConstPropertyAccess<qlonglong, true> data(property);
+					str += QString::number(data.get(elementIndex, component));
 				}
 				else if(property->dataType() == PropertyStorage::Float) {
-					str += QString::number(property->get<FloatType>(elementIndex, component));
+					ConstPropertyAccess<FloatType, true> data(property);
+					str += QString::number(data.get(elementIndex, component));
 				}
 			}
 			return str;
@@ -334,10 +338,12 @@ QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& i
 		size_t elementIndex = index.row();
 		if(elementIndex < property->size()) {
 			if(_applet->isColorProperty(property)) {
-				return (QColor)property->get<Color>(elementIndex);
+				ConstPropertyAccess<Color> data(property);
+				return (QColor)data[elementIndex];
 			}
 			else if(property->dataType() == PropertyStorage::Int && property->componentCount() == 1 && property->elementTypes().empty() == false) {
-				if(ElementType* ptype = property->elementType(property->get<int>(elementIndex)))
+				ConstPropertyAccess<int> data(property);
+				if(ElementType* ptype = property->elementType(data[elementIndex]))
 					return (QColor)ptype->color();
 			}
 		}

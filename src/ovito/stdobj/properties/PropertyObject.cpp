@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/stdobj/StdObj.h>
 #include <ovito/core/dataset/DataSet.h>
 #include "PropertyObject.h"
+#include "PropertyAccess.h"
 
 namespace Ovito { namespace StdObj {
 
@@ -42,8 +43,11 @@ static const PropertyPtr defaultStorage = std::make_shared<PropertyStorage>();
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyObject::PropertyObject(DataSet* dataset, const PropertyPtr& storage) : DataObject(dataset), _storage(storage ? storage : defaultStorage)
+PropertyObject::PropertyObject(DataSet* dataset, PropertyPtr storage) : DataObject(dataset), 
+	_storage(std::move(storage))
 {
+	if(!_storage.mutableValue())
+		_storage.mutableValue() = defaultStorage;
 }
 
 /******************************************************************************
@@ -123,14 +127,14 @@ void PropertyObject::replicate(size_t n, bool replicateValues)
 	resize(oldData->size() * n, false);
 	if(replicateValues) {
 		// Replicate data values N times.
-		size_t chunkSize = stride() * oldData->size();
+		size_t chunkSize = oldData->size();
 		for(size_t i = 0; i < n; i++) {
-			std::memcpy((char*)data<void>() + i * chunkSize, oldData->cdata<void>(), chunkSize);
+			modifiableStorage()->copyRangeFrom(*oldData, 0, i * chunkSize, chunkSize);
 		}
 	}
 	else {
 		// Copy just one replica of the data from the old memory buffer to the new one.
-		std::memcpy((char*)data<void>(), oldData->cdata<void>(), stride() * oldData->size());
+		modifiableStorage()->copyRangeFrom(*oldData, 0, 0, oldData->size());
 	}
 }
 
@@ -156,13 +160,15 @@ void PropertyObject::makeWritableFromPython()
 ******************************************************************************/
 std::tuple<std::map<int,int>, ConstPropertyPtr> PropertyObject::generateContiguousTypeIdMapping(int baseId) const
 {
+	OVITO_ASSERT(dataType() == PropertyStorage::Int && componentCount() == 1);
+
 	// Generate sorted list of existing type IDs.
 	std::set<int> typeIds;
 	for(const ElementType* t : elementTypes())
 		typeIds.insert(t->numericId());
 
 	// Add ID values that occur in the property array but which have not been defined as a type.
-	for(int t : storage()->crange<int>())
+	for(int t : ConstPropertyAccess<int>(storage()))
 		typeIds.insert(t);
 
 	// Build the mappings between old and new IDs.
@@ -179,7 +185,7 @@ std::tuple<std::map<int,int>, ConstPropertyPtr> PropertyObject::generateContiguo
 	PropertyPtr remappedArray;
 	if(remappingRequired) {
 		remappedArray = std::make_shared<PropertyStorage>(*storage());
-		for(int& id : remappedArray->range<int>())
+		for(int& id : PropertyAccess<int>(remappedArray))
 			id = oldToNewMap[id];
 	}
 	else {

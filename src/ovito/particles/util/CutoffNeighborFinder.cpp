@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,9 +29,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 /******************************************************************************
 * Initialization function.
 ******************************************************************************/
-bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& cellData, const PropertyStorage* selectionProperty, Task* promise)
+bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ConstPropertyAccess<Point3> positions, const SimulationCell& cellData, ConstPropertyAccess<int> selectionProperty, Task* promise)
 {
-	OVITO_ASSERT(&positions);
+	OVITO_ASSERT(positions);
 	if(promise) promise->setProgressMaximum(0);
 
 	_cutoffRadius = cutoffRadius;
@@ -162,7 +162,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage
 
 	// Sort particles into bins.
 	particles.resize(positions.size());
-	const Point3* p = positions.cdata<Point3>();
+	const Point3* p = positions.cbegin();
 	for(size_t pindex = 0; pindex < particles.size(); pindex++, ++p) {
 
 		if(promise && promise->isCanceled())
@@ -172,7 +172,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage
 		a.pos = *p;
 		a.pbcShift.setZero();
 
-		if(selectionProperty && selectionProperty->get<int>(pindex) == 0)
+		if(selectionProperty && !selectionProperty[pindex])
 			continue;
 
 		// Determine the bin the atom is located in.

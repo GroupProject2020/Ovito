@@ -172,23 +172,21 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		particleTypeNames.push_back(QByteArrayLiteral("A"));
 
 	// Read particle positions.
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::PositionProperty, false);
-	frameData->addParticleProperty(posProperty);
-	gsd.readFloatArray("particles/position", frameNumber, posProperty->data<Point3>(), numParticles, posProperty->componentCount());
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::PositionProperty, false));
+	gsd.readFloatArray("particles/position", frameNumber, posProperty.begin(), numParticles, posProperty.componentCount());
 	if(isCanceled()) return {};
 
 	// Create particle types.
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::TypeProperty, false);
-	frameData->addParticleProperty(typeProperty);
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::TypeProperty, false));
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	for(int i = 0; i < particleTypeNames.size(); i++)
 		typeList->addTypeId(i, QString::fromUtf8(particleTypeNames[i]));
 
 	// Read particle types.
 	if(gsd.hasChunk("particles/typeid", frameNumber))
-		gsd.readIntArray("particles/typeid", frameNumber, typeProperty->data<int>(), numParticles);
+		gsd.readIntArray("particles/typeid", frameNumber, typeProperty.begin(), numParticles);
 	else
-		typeProperty->fill<int>(0);
+		typeProperty.fill(0);
 	if(isCanceled()) return {};
 
 	// Parse particle shape information.
@@ -204,17 +202,17 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	readOptionalProperty(gsd, "particles/charge", frameNumber, numParticles, ParticlesObject::ChargeProperty, false, frameData);
 	readOptionalProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, false, frameData);
 	readOptionalProperty(gsd, "particles/image", frameNumber, numParticles, ParticlesObject::PeriodicImageProperty, false, frameData);
-	PropertyStorage* radiusProperty = readOptionalProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, false, frameData);
+	PropertyAccess<FloatType> radiusProperty = readOptionalProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, false, frameData);
 	if(radiusProperty) {
 		// Convert particle diameters to radii.
-		for(FloatType& r : radiusProperty->range<FloatType>())
+		for(FloatType& r : radiusProperty)
 			r /= 2;
 	}
-	PropertyStorage* orientationProperty = readOptionalProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticlesObject::OrientationProperty, false, frameData);
+	PropertyAccess<Quaternion> orientationProperty = readOptionalProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticlesObject::OrientationProperty, false, frameData);
 	if(orientationProperty) {
 		// Convert quaternion representation from GSD format to OVITO's internal format.
 		// Left-shift all quaternion components by one: (W,X,Y,Z) -> (X,Y,Z,W).
-		for(Quaternion& q : orientationProperty->range<Quaternion>())
+		for(Quaternion& q : orientationProperty)
 			std::rotate(q.begin(), q.begin() + 1, q.end());
 	}
 	if(isCanceled()) return {};
@@ -247,13 +245,15 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		if(isCanceled()) return {};
 
 		// Convert to OVITO format.
-		PropertyPtr bondTopologyProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TopologyProperty, false);
-		frameData->addBondProperty(bondTopologyProperty);
-		auto bondTopoPtr = bondTopologyProperty->data<qlonglong>(0,0);
-		for(auto b = bondList.cbegin(); b != bondList.cend(); ++b, ++bondTopoPtr) {
-			if(*b >= numParticles)
+		PropertyAccess<ParticleIndexPair> bondTopologyProperty = frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TopologyProperty, false));
+		auto bondTopoPtr = bondList.cbegin();
+		for(ParticleIndexPair& bond : bondTopologyProperty) {
+			if(*bondTopoPtr >= numParticles)
 				throw Exception(tr("Nonexistent atom tag in bond list in GSD file."));
-			*bondTopoPtr = *b;
+			bond[0] = *bondTopoPtr++;
+			if(*bondTopoPtr >= numParticles)
+				throw Exception(tr("Nonexistent atom tag in bond list in GSD file."));
+			bond[1] = *bondTopoPtr++;
 		}
 		frameData->generateBondPeriodicImageProperty();
 		if(isCanceled()) return {};
@@ -267,18 +267,17 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 				bondTypeNames.push_back(QByteArrayLiteral("A"));
 
 			// Create bond types.
-			PropertyPtr bondTypeProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TypeProperty, false);
-			frameData->addBondProperty(bondTypeProperty);
+			PropertyAccess<int> bondTypeProperty = frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TypeProperty, false));
 			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(bondTypeProperty);
 			for(int i = 0; i < bondTypeNames.size(); i++)
 				bondTypeList->addTypeId(i, QString::fromUtf8(bondTypeNames[i]));
 
 			// Read bond types.
 			if(gsd.hasChunk("bonds/typeid", frameNumber)) {
-				gsd.readIntArray("bonds/typeid", frameNumber, bondTypeProperty->data<int>(), numBonds);
+				gsd.readIntArray("bonds/typeid", frameNumber, bondTypeProperty.begin(), numBonds);
 			}
 			else {
-				bondTypeProperty->fill<int>(0);
+				bondTypeProperty.fill(0);
 			}
 			if(isCanceled()) return {};
 		}
@@ -324,11 +323,11 @@ PropertyStorage* GSDImporter::FrameLoader::readOptionalProperty(GSDFile& gsd, co
 		else
 			frameData->addBondProperty(prop);
 		if(prop->dataType() == PropertyStorage::Float)
-			gsd.readFloatArray(chunkName, frameNumber, prop->data<FloatType>(0,0), numElements, prop->componentCount());
+			gsd.readFloatArray(chunkName, frameNumber, PropertyAccess<FloatType,true>(prop).begin(), numElements, prop->componentCount());
 		else if(prop->dataType() == PropertyStorage::Int)
-			gsd.readIntArray(chunkName, frameNumber, prop->data<int>(0,0), numElements, prop->componentCount());
+			gsd.readIntArray(chunkName, frameNumber, PropertyAccess<int,true>(prop).begin(), numElements, prop->componentCount());
 		else if(prop->dataType() == PropertyStorage::Int64)
-			gsd.readIntArray(chunkName, frameNumber, prop->data<qlonglong>(0,0), numElements, prop->componentCount());
+			gsd.readIntArray(chunkName, frameNumber, PropertyAccess<qlonglong,true>(prop).begin(), numElements, prop->componentCount());
 		else
 			throw Exception(tr("Property '%1' cannot be read from GSD file, because its data type is not supported by OVITO.").arg(prop->name()));
 		return prop.get();
@@ -411,18 +410,16 @@ void GSDImporter::FrameLoader::parseEllipsoidShape(int typeId, ParticleFrameData
 	if(abc.z() <= 0)
 		throw Exception(tr("Missing or invalid 'c' field in 'Ellipsoid' particle shape definition in GSD file."));
 
-	// Create the 'Aspherical Shape' particle property.
-	PropertyPtr ashapeProperty = frameData->findStandardParticleProperty(ParticlesObject::AsphericalShapeProperty);
-	if(!ashapeProperty) {
-		ashapeProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::AsphericalShapeProperty, true);
-		frameData->addParticleProperty(ashapeProperty);
-	}
+	// Create the 'Aspherical Shape' particle property if it doesn't exist yet.
+	PropertyAccess<Vector3> ashapeProperty = frameData->findStandardParticleProperty(ParticlesObject::AsphericalShapeProperty);
+	if(!ashapeProperty)
+		ashapeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::AsphericalShapeProperty, true));
 
-	// Assigns the [a,b,c] values to those particles which are of the given type.
-	PropertyPtr typeProperty = frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
+	// Assign the [a,b,c] values to those particles which are of the given type.
+	ConstPropertyAccess<int> typeProperty = frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
 	for(size_t i = 0; i < numParticles; i++) {
-		if(typeProperty->get<int>(i) == typeId)
-			ashapeProperty->set<Vector3>(i, abc);
+		if(typeProperty[i] == typeId)
+			ashapeProperty[i] = abc;
 	}
 }
 

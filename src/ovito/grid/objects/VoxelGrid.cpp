@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -84,7 +84,7 @@ PropertyPtr VoxelGrid::OOMetaClass::createStandardStorage(size_t voxelCount, int
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data<void>(), 0, property->size() * property->stride());
+		property->fillZero();
 	}
 
 	return property;

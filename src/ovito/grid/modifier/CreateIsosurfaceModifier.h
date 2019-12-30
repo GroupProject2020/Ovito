@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -95,7 +95,7 @@ private:
 			ComputeEngine(validityInterval),
 			_gridShape(gridShape),
 			_property(std::move(property)),
-			_vectorComponent(vectorComponent),
+			_vectorComponent(std::max(vectorComponent, 0)),
 			_mesh(simCell),
 			_isolevel(isolevel) {}
 

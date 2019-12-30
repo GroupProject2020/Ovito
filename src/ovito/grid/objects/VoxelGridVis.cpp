@@ -22,6 +22,7 @@
 
 #include <ovito/grid/Grid.h>
 #include <ovito/grid/objects/VoxelGrid.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/rendering/MeshPrimitive.h>
 #include <ovito/core/dataset/DataSet.h>
@@ -88,7 +89,7 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 
 	// Look for 'Color' voxel property.
 	const PropertyObject* colorProperty = gridObj->getProperty(VoxelGrid::ColorProperty);
-	ConstPropertyPtr colorArray = colorProperty ? colorProperty->storage() : nullptr;
+	ConstPropertyAccess<Color> colorArray(colorProperty);
 
 	// The key type used for caching the geometry primitive:
 	using CacheKey = std::tuple<
@@ -178,7 +179,7 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 										if(pbcFlags[dim1]) coords[dim1] = 0; else continue;
 									}
 									else coords[dim1] = nix;
-									interpolatedColor += colorArray->get<Color>(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
+									interpolatedColor += colorArray[gridObj->voxelIndex(coords[0], coords[1], coords[2])];
 									numNeighbors++;
 								}
 							}
@@ -195,7 +196,7 @@ void VoxelGridVis::render(TimePoint time, const std::vector<const DataObject*>& 
 							if(faceColor) {
 								coords[dim1] = ix;
 								coords[dim2] = iy;
-								const Color& c = colorArray->get<Color>(gridObj->voxelIndex(coords[0], coords[1], coords[2]));
+								const Color& c = colorArray[gridObj->voxelIndex(coords[0], coords[1], coords[2])];
 								*faceColor++ = ColorA(c, alpha);
 								*faceColor++ = ColorA(c, alpha);
 							}

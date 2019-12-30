@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "WrapPeriodicImagesModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -62,25 +63,25 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 	ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
 
 	// Make a modifiable copy of the particle position property.
-	PropertyPtr posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty)->modifiableStorage();
+	PropertyAccess<Point3> posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty);
 
 	// Wrap bonds by adjusting their PBC shift vectors.
 	if(outputParticles->bonds()) {
-		if(ConstPropertyPtr topologyProperty = outputParticles->bonds()->getPropertyStorage(BondsObject::TopologyProperty)) {
+		if(ConstPropertyAccess<ParticleIndexPair> topologyProperty = outputParticles->bonds()->getProperty(BondsObject::TopologyProperty)) {
 			outputParticles->makeBondsMutable();
-			PropertyObject* periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
-			for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
-				size_t particleIndex1 = topologyProperty->get<qlonglong>(bondIndex, 0);
-				size_t particleIndex2 = topologyProperty->get<qlonglong>(bondIndex, 1);
-				if(particleIndex1 >= posProperty->size() || particleIndex2 >= posProperty->size())
+			PropertyAccess<Vector3I> periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
+			for(size_t bondIndex = 0; bondIndex < topologyProperty.size(); bondIndex++) {
+				size_t particleIndex1 = topologyProperty[bondIndex][0];
+				size_t particleIndex2 = topologyProperty[bondIndex][1];
+				if(particleIndex1 >= posProperty.size() || particleIndex2 >= posProperty.size())
 					continue;
-				const Point3& p1 = posProperty->get<Point3>(particleIndex1);
-				const Point3& p2 = posProperty->get<Point3>(particleIndex2);
+				const Point3& p1 = posProperty[particleIndex1];
+				const Point3& p2 = posProperty[particleIndex2];
 				for(size_t dim = 0; dim < 3; dim++) {
 					if(pbc[dim]) {
-						periodicImageProperty->set<int>(bondIndex, dim, periodicImageProperty->get<int>(bondIndex, dim)
-							- (int)std::floor(inverseSimCell.prodrow(p1, dim))
-							+ (int)std::floor(inverseSimCell.prodrow(p2, dim)));
+						periodicImageProperty[bondIndex][dim] +=
+							  (int)std::floor(inverseSimCell.prodrow(p2, dim))
+							- (int)std::floor(inverseSimCell.prodrow(p1, dim));
 					}
 				}
 			}
@@ -90,7 +91,7 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 	// Wrap particles coordinates.
 	for(size_t dim = 0; dim < 3; dim++) {
 		if(pbc[dim]) {
-			for(Point3& p : posProperty->range<Point3>()) {
+			for(Point3& p : posProperty) {
 				if(FloatType n = std::floor(inverseSimCell.prodrow(p, dim)))
 					p -= simCell.column(dim) * n;
 			}

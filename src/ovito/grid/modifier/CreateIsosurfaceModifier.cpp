@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/grid/objects/VoxelGrid.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
@@ -121,6 +122,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 
 	// Get modifier inputs.
 	const VoxelGrid* voxelGrid = static_object_cast<VoxelGrid>(input.expectLeafObject(subject()));
+	voxelGrid->verifyIntegrity();
 	OVITO_ASSERT(voxelGrid->domain());
 	if(voxelGrid->domain()->is2D())
 		throwException(tr("Cannot generate isosurface for a two-dimensional voxel grid. Input must be a 3d grid."));
@@ -157,9 +159,8 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	if(property()->size() != _gridShape[0] * _gridShape[1] * _gridShape[2])
 		throw Exception(tr("Input voxel property has wrong array size, which is incompatible with the grid's dimensions."));
 
-	const FloatType* fieldData = property()->cdata<FloatType>(0, std::max(_vectorComponent, 0));
-
-	MarchingCubes mc(_mesh, _gridShape[0], _gridShape[1], _gridShape[2], fieldData, property()->componentCount(), false);
+	ConstPropertyAccess<FloatType, true> data(property());
+	MarchingCubes mc(_mesh, _gridShape[0], _gridShape[1], _gridShape[2], data.cbegin() + _vectorComponent, property()->componentCount(), false);
 	if(!mc.generateIsosurface(_isolevel, *task()))
 		return;
 
@@ -183,18 +184,16 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	// Determine range of input field values.
 	// Only used for informational purposes for the user.
-	const FloatType* fieldDataEnd = fieldData + property()->size() * property()->componentCount();
-	size_t componentCount = property()->componentCount();
-	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {
-		updateMinMax(*v);
+	for(FloatType v : data.componentRange(_vectorComponent)) {
+		updateMinMax(v);
 	}
 
 	// Compute a histogram of the input field values.
-	auto histogramData = histogram()->data<qlonglong>();
-	FloatType binSize = (maxValue() - minValue()) / histogram()->size();
-	int histogramSizeMin1 = histogram()->size() - 1;
-	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {
-		int binIndex = (*v - minValue()) / binSize;
+	PropertyAccess<qlonglong> histogramData(histogram());
+	FloatType binSize = (maxValue() - minValue()) / histogramData.size();
+	int histogramSizeMin1 = histogramData.size() - 1;
+	for(FloatType v : data.componentRange(_vectorComponent)) {
+		int binIndex = (v - minValue()) / binSize;
 		histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 	}
 }

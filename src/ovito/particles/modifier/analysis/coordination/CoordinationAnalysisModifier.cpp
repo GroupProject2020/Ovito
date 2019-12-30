@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,10 +21,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/particles/Particles.h>
-#include <ovito/core/app/Application.h>
-#include <ovito/core/dataset/DataSet.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/core/app/Application.h>
+#include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
@@ -115,36 +116,38 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 
 	// Prepare the neighbor list service.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(cutoff(), *positions(), cell(), nullptr, task().get()))
+	if(!neighborListBuilder.prepare(cutoff(), positions(), cell(), {}, task().get()))
 		return;
 
 	size_t particleCount = positions()->size();
+	PropertyAccess<int> coordinationData(coordinationNumbers());
+	ConstPropertyAccess<int> particleTypeData(particleTypes());
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(particleCount);
 
 	// Parallel calculation loop:
 	std::mutex mutex;
-	parallelForChunks(particleCount, *task(), [&neighborListBuilder, &mutex, this](size_t startIndex, size_t chunkSize, Task& promise) {
+	parallelForChunks(particleCount, *task(), [&](size_t startIndex, size_t chunkSize, Task& promise) {
 		size_t typeCount = _computePartialRdfs ? uniqueTypeIds().size() : 1;
 		size_t binCount = rdfY()->size();
 		size_t rdfCount = rdfY()->componentCount();
 		FloatType rdfBinSize = cutoff() / binCount;
-		std::vector<size_t> threadLocalRDF(rdfY()->size() * rdfY()->componentCount(), 0);
+		std::vector<size_t> threadLocalRDF(binCount * rdfCount, 0);
 		for(size_t i = startIndex, endIndex = startIndex + chunkSize; i < endIndex; ) {
-			int& coordination = coordinationNumbers()->data<int>()[i];
+			int& coordination = coordinationData[i];
 			OVITO_ASSERT(coordination == 0);
 
-			size_t typeIndex1 = _computePartialRdfs ? uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->get<int>(i))) : 0;
+			size_t typeIndex1 = _computePartialRdfs ? uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypeData[i])) : 0;
 			if(typeIndex1 < typeCount) {
 				for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
 					coordination++;
 					if(_computePartialRdfs) {
-						size_t typeIndex2 = uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->get<int>(neighQuery.current())));
+						size_t typeIndex2 = uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypeData[neighQuery.current()]));
 						if(typeIndex2 < typeCount) {
 							size_t lowerIndex = std::min(typeIndex1, typeIndex2);
 							size_t upperIndex = std::max(typeIndex1, typeIndex2);
 							size_t rdfIndex = (typeCount * lowerIndex) - ((lowerIndex - 1) * lowerIndex) / 2 + upperIndex - lowerIndex;
-							OVITO_ASSERT(rdfIndex < rdfY()->componentCount());
+							OVITO_ASSERT(rdfIndex < rdfCount);
 							size_t rdfBin = (size_t)(sqrt(neighQuery.distanceSquared()) / rdfBinSize);
 							threadLocalRDF[rdfIndex + std::min(rdfBin, binCount - 1) * rdfCount]++;
 						}
@@ -166,7 +169,8 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		}
 		// Combine per-thread RDFs into a set of master histograms.
 		std::lock_guard<std::mutex> lock(mutex);
-		auto bin = rdfY()->data<FloatType>(0,0);
+		PropertyAccess<FloatType,true> rdfData(rdfY());
+		auto bin = rdfData.begin();
 		for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
 			*bin++ += *iter;
 	});
@@ -187,10 +191,11 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		FloatType r1 = 0;
 		size_t cmpntCount = rdfY()->componentCount();
 		OVITO_ASSERT(component < cmpntCount);
-		for(FloatType* y = rdfY()->data<FloatType>(0, component), *y_end = y + rdfY()->size()*cmpntCount; y != y_end; y += cmpntCount) {
+		PropertyAccess<FloatType,true> rdfData(rdfY());
+		for(FloatType& y : rdfData.componentRange(component)) {
 			double r2 = r1 + stepSize;
 			FloatType vol = cell().is2D() ? (r2*r2 - r1*r1) : (r2*r2*r2 - r1*r1*r1);
-			*y /= prefactor * vol;
+			y /= prefactor * vol;
 			r1 = r2;
 		}
 	};
@@ -201,7 +206,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 	else {
 		// Count particle type occurrences.
 		std::vector<size_t> particleCounts(uniqueTypeIds().size(), 0);
-		for(int t : particleTypes()->crange<int>()) {
+		for(int t : particleTypeData) {
 			size_t typeIndex = uniqueTypeIds().index_of(uniqueTypeIds().find(t));
 			if(typeIndex < particleCounts.size())
 				particleCounts[typeIndex]++;
@@ -212,7 +217,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		size_t component = 0;
 		for(size_t i = 0; i < particleCounts.size(); i++) {
 			for(size_t j = i; j < particleCounts.size(); j++) {
-				normalizeRDF(particleCounts[i], particleCounts[j], component++, i == j ? 1 : 2);
+				normalizeRDF(particleCounts[i], particleCounts[j], component++, (i == j) ? 1 : 2);
 			}
 		}
 	}

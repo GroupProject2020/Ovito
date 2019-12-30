@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,8 +21,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/particles/Particles.h>
-#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "CalculateDisplacementsModifier.h"
 
@@ -92,18 +93,23 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 	if(!buildParticleMapping(true, false))
 		return;
 
+	PropertyAccess<Vector3> displacementsArray(displacements());
+	PropertyAccess<FloatType> displacementMagnitudesArray(displacementMagnitudes());
+	ConstPropertyAccess<Point3> positionsArray(positions());
+	ConstPropertyAccess<Point3> refPositionsArray(refPositions());
+
 	// Compute displacement vectors.
 	if(affineMapping() != NO_MAPPING) {
-		parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
-			Vector3* u = displacements()->data<Vector3>(startIndex);
-			FloatType* umag = displacementMagnitudes()->data<FloatType>(startIndex);
-			const Point3* p = positions()->cdata<Point3>(startIndex);
+		parallelForChunks(displacements()->size(), *task(), [&](size_t startIndex, size_t count, Task& promise) {
+			Vector3* u = displacementsArray.begin() + startIndex;
+			FloatType* umag = displacementMagnitudesArray.begin() + startIndex;
+			const Point3* p = positionsArray.cbegin() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			const AffineTransformation& reduced_to_absolute = (affineMapping() == TO_REFERENCE_CELL) ? refCell().matrix() : cell().matrix();
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
 				if(promise.isCanceled()) return;
 				Point3 reduced_current_pos = cell().inverseMatrix() * (*p);
-				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositions()->get<Point3>(*index);
+				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositionsArray[*index];
 				Vector3 delta = reduced_current_pos - reduced_reference_pos;
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
@@ -117,14 +123,14 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 		});
 	}
 	else {
-		parallelForChunks(displacements()->size(), *task(), [this] (size_t startIndex, size_t count, Task& promise) {
-			Vector3* u = displacements()->data<Vector3>(startIndex);
-			FloatType* umag = displacementMagnitudes()->data<FloatType>(startIndex);
-			const Point3* p = positions()->cdata<Point3>(startIndex);
+		parallelForChunks(displacements()->size(), *task(), [&] (size_t startIndex, size_t count, Task& promise) {
+			Vector3* u = displacementsArray.begin() + startIndex;
+			FloatType* umag = displacementMagnitudesArray.begin() + startIndex;
+			const Point3* p = positionsArray.cbegin() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
 				if(promise.isCanceled()) return;
-				*u = *p - refPositions()->get<Point3>(*index);
+				*u = *p - refPositionsArray[*index];
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
 						if(refCell().pbcFlags()[k]) {

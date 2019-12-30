@@ -29,6 +29,7 @@
 #include <ovito/grid/objects/VoxelGrid.h>
 #include <ovito/core/dataset/io/FileSourceImporter.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
@@ -159,7 +160,7 @@ public:
 		/// Sorts the types w.r.t. their name. Reassigns the per-element type IDs.
 		/// This method is used by file parsers that create particle/bond types on the go while the read the data.
 		/// In such a case, the assignment of IDs to types depends on the storage order of particles/bonds in the file, which is not desirable.
-		void sortTypesByName(const PropertyPtr& typeProperty);
+		void sortTypesByName(PropertyAccess<int>& typeProperty);
 
 		/// Sorts types according to numeric identifier.
 		void sortTypesById();
@@ -209,8 +210,9 @@ public:
 	}
 
 	/// Adds a new particle property.
-	void addParticleProperty(PropertyPtr property) {
+	PropertyStorage* addParticleProperty(PropertyPtr property) {
 		_particleProperties.push_back(std::move(property));
+		return _particleProperties.back().get();
 	}
 
 	/// Removes a particle property from the list.
@@ -229,17 +231,36 @@ public:
 	}
 
 	/// Returns the list of types defined for a particle or bond property.
-	TypeList* propertyTypesList(const PropertyPtr& property) {
-		auto typeList = _typeLists.find(property.get());
-		if(typeList == _typeLists.end()) {
-			typeList = _typeLists.emplace(property.get(), std::make_unique<TypeList>()).first;
-		}
+	TypeList* propertyTypesList(const PropertyStorage* property) {
+		auto typeList = _typeLists.find(property);
+		if(typeList == _typeLists.end())
+			typeList = _typeLists.emplace(property, std::make_unique<TypeList>()).first;
 		return typeList->second.get();
+	}
+
+	/// Returns the list of types defined for a particle or bond property.
+	TypeList* propertyTypesList(const PropertyPtr& property) {
+		return propertyTypesList(property.get());
+	}
+
+	/// Returns the list of types defined for a particle or bond property.
+	TypeList* propertyTypesList(const PropertyAccess<int>& property) {
+		return propertyTypesList(property.storage());
+	}
+
+	/// Sets the list of types defined for a particle or bond property.
+	void setPropertyTypesList(const PropertyStorage* property, std::unique_ptr<TypeList> list) {
+		_typeLists.emplace(property, std::move(list));
 	}
 
 	/// Sets the list of types defined for a particle or bond property.
 	void setPropertyTypesList(const PropertyPtr& property, std::unique_ptr<TypeList> list) {
-		_typeLists.emplace(property.get(), std::move(list));
+		setPropertyTypesList(property.get(), std::move(list));
+	}
+
+	/// Sets the list of types defined for a particle or bond property.
+	void setPropertyTypesList(const PropertyAccess<int>& property, std::unique_ptr<TypeList> list) {
+		setPropertyTypesList(property.storage(), std::move(list));
 	}
 
 	/// Returns the list of bond properties.
@@ -255,8 +276,9 @@ public:
 	}
 
 	/// Adds a new bond property.
-	void addBondProperty(PropertyPtr property) {
+	PropertyStorage* addBondProperty(PropertyPtr property) {
 		_bondProperties.push_back(std::move(property));
+		return _bondProperties.back().get();
 	}
 
 	/// Removes a bond property from the list.
@@ -291,8 +313,9 @@ public:
 	const std::vector<PropertyPtr>& voxelProperties() const { return _voxelProperties; }
 
 	/// Adds a new voxel grid property.
-	void addVoxelProperty(PropertyPtr quantity) {
+	PropertyStorage* addVoxelProperty(PropertyPtr quantity) {
 		_voxelProperties.push_back(std::move(quantity));
+		return _voxelProperties.back().get();
 	}
 
 	/// Removes a voxel grid property from the list.

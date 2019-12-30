@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -97,7 +97,7 @@ public:
 
 		/// Returns the number of identified particles of the given structure type.
 		qlonglong getTypeCount(int typeIndex) const {
-			if(_typeCounts && _typeCounts->size() > typeIndex) return _typeCounts->get<qlonglong>(typeIndex);
+			if(_typeCounts.size() > typeIndex) return _typeCounts[typeIndex];
 			return 0;
 		}
 
@@ -117,7 +117,7 @@ public:
 		QVector<bool> _typesToIdentify;
 		const PropertyPtr _structures;
 		ParticleOrderingFingerprint _inputFingerprint;
-		PropertyPtr _typeCounts;
+		std::vector<qlonglong> _typeCounts;
 	};
 
 public:

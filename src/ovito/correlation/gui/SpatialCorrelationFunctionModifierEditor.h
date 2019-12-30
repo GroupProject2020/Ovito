@@ -25,6 +25,7 @@
 
 
 #include <ovito/particles/gui/ParticlesGui.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
@@ -53,7 +54,7 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
 	/// Replots one of the correlation function computed by the modifier.
-	std::pair<FloatType,FloatType> plotData(const DataSeriesObject* series, DataSeriesPlotWidget* plotWidget, FloatType offset, FloatType fac, const ConstPropertyPtr& normalization);
+	std::pair<FloatType,FloatType> plotData(const DataSeriesObject* series, DataSeriesPlotWidget* plotWidget, FloatType offset, FloatType fac, ConstPropertyAccess<FloatType> normalization);
 
 protected Q_SLOTS:
 

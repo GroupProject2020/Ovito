@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/series/DataSeriesObject.h>
 #include <ovito/core/app/Application.h>
 #include "ScatterPlotModifier.h"
@@ -145,6 +146,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 
 	// Look up the property container object.
 	const PropertyContainer* container = state.expectLeafObject(subject());
+	container->verifyIntegrity();
 
 	// Get the input properties.
 	const PropertyObject* xPropertyObj = xAxisProperty().findInContainer(container);
@@ -156,7 +158,6 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 
 	ConstPropertyPtr xProperty = xPropertyObj->storage();
 	ConstPropertyPtr yProperty = yPropertyObj->storage();
-	OVITO_ASSERT(xProperty->size() == yProperty->size());
 
 	size_t xVecComponent = std::max(0, xAxisProperty().vectorComponent());
 	size_t xVecComponentCount = xProperty->componentCount();
@@ -177,59 +178,35 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	if(selectionYAxisRangeStart > selectionYAxisRangeEnd)
 		std::swap(selectionYAxisRangeStart, selectionYAxisRangeEnd);
 
-	// Create output selection property.
-	PropertyPtr outputSelection;
+	// Create output selection.
+	PropertyAccess<int> outputSelection;
 	size_t numSelected = 0;
-	if(selectXAxisInRange() || selectYAxisInRange()) {
+	if((selectXAxisInRange() || selectYAxisInRange()) && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)) {
 		// First make sure we can safely modify the property container.
 		PropertyContainer* mutableContainer = state.expectMutableLeafObject(subject());
 		// Add the selection property to the output container.
-		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
-		boost::fill(outputSelection->range<int>(), 1);
-		numSelected = outputSelection->size();
+		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty);
+		boost::fill(outputSelection, 1);
+		numSelected = outputSelection.size();
 	}
 
-#if 0
-	FloatType xIntervalStart = xAxisRangeStart();
-	FloatType xIntervalEnd = xAxisRangeEnd();
-	FloatType yIntervalStart = yAxisRangeStart();
-	FloatType yIntervalEnd = yAxisRangeEnd();
-#endif
-
 	// Create output arrays.
-	auto out_x = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::XProperty, false);
-	auto out_y = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::YProperty, false);
+	PropertyAccessAndRef<FloatType> out_x = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::XProperty, false);
+	PropertyAccessAndRef<FloatType> out_y = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::YProperty, false);
+	out_x.storage()->setName(xAxisProperty().nameWithComponent());
+	out_y.storage()->setName(yAxisProperty().nameWithComponent());
 
 	// Collect X coordinates.
-	if(!xProperty->copyTo(out_x->data<FloatType>(), xVecComponent))
+	if(!xProperty->copyTo(out_x.begin(), xVecComponent))
 		throwException(tr("Failed to extract coordinate values from input property for x-axis."));
 
 	// Collect Y coordinates.
-	if(!yProperty->copyTo(out_y->data<FloatType>(), yVecComponent))
+	if(!yProperty->copyTo(out_y.begin(), yVecComponent))
 		throwException(tr("Failed to extract coordinate values from input property for y-axis."));
 
-#if 0
-	// Determine value ranges.
-	if(fixXAxisRange() == false || fixYAxisRange() == false) {
-		Box2 bbox;
-		for(const QPointF& p : xyData) {
-			bbox.addPoint(p.x(), p.y());
-		}
-		if(fixXAxisRange() == false) {
-			xIntervalStart = bbox.minc.x();
-			xIntervalEnd = bbox.maxc.x();
-		}
-		if(fixYAxisRange() == false) {
-			yIntervalStart = bbox.minc.y();
-			yIntervalEnd = bbox.maxc.y();
-		}
-	}
-#endif
-
 	if(outputSelection && selectXAxisInRange()) {
-		OVITO_ASSERT(outputSelection->size() == out_x->size());
-		int* s = outputSelection->data<int>();
-		for(FloatType x : out_x->crange<FloatType>()) {
+		int* s = outputSelection.begin();
+		for(FloatType x : out_x) {
 			if(x < selectionXAxisRangeStart || x > selectionXAxisRangeEnd) {
 				*s = 0;
 				numSelected--;
@@ -239,9 +216,8 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	}
 
 	if(outputSelection && selectYAxisInRange()) {
-		OVITO_ASSERT(outputSelection->size() == out_y->size());
-		int* s = outputSelection->data<int>();
-		for(FloatType y : out_y->crange<FloatType>()) {
+		int* s = outputSelection.begin();
+		for(FloatType y : out_y) {
 			if(y < selectionYAxisRangeStart || y > selectionYAxisRangeEnd) {
 				if(*s) {
 					*s = 0;
@@ -253,15 +229,15 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	}
 
 	// Output a data series object with the scatter points.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()));
-	seriesObj->createProperty(std::move(out_x))->setName(xAxisProperty().nameWithComponent());
-	seriesObj->createProperty(std::move(out_y))->setName(yAxisProperty().nameWithComponent());
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, 
+		DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()),
+		out_x.takeStorage(), out_y.takeStorage());
 
 	QString statusMessage;
 	if(outputSelection) {
 		statusMessage = tr("%1 %2 selected (%3%)").arg(numSelected)
 				.arg(container->getOOMetaClass().elementDescriptionName())
-				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection->size()), 0, 'f', 1);
+				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection.size()), 0, 'f', 1);
 	}
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));

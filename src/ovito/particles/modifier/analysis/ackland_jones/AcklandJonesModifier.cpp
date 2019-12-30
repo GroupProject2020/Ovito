@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
@@ -77,22 +78,29 @@ void AcklandJonesModifier::AcklandJonesAnalysisEngine::perform()
 {
 	task()->setProgressText(tr("Performing Ackland-Jones analysis"));
 
-	// Prepare the neighbor list.
+	// Prepare the neighbor finder.
 	NearestNeighborFinder neighborFinder(14);
-	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), task().get()))
+	if(!neighborFinder.prepare(positions(), cell(), selection(), task().get()))
 		return;
 
-	// Create output storage.
-	PropertyStorage& output = *structures();
+	PropertyAccess<int> output(structures());
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *task(), [this, &neighborFinder, &output](size_t index) {
-		// Skip particles that are not included in the analysis.
-		if(!selection() || selection()->get<int>(index))
-			output.set<int>(index, determineStructure(neighborFinder, index, typesToIdentify()));
-		else
-			output.set<int>(index, OTHER);
-	});
+	if(!selection()) {
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			output[index] = determineStructure(neighborFinder, index, typesToIdentify());
+		});
+	}
+	else {
+		ConstPropertyAccess<int> selectionData(selection());
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			// Skip particles that are not included in the analysis.
+			if(selectionData[index])
+				output[index] = determineStructure(neighborFinder, index, typesToIdentify());
+			else
+				output[index] = OTHER;
+		});
+	}
 }
 
 /******************************************************************************

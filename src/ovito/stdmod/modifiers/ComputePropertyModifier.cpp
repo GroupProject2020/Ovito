@@ -27,6 +27,7 @@
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
+#include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "ComputePropertyModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -112,6 +113,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	const PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
 	if(outputProperty().containerClass() != delegate()->inputContainerClass())
 		throwException(tr("Property %1 to be computed is not a %2 property.").arg(outputProperty().name()).arg(delegate()->inputContainerClass()->elementDescriptionName()));
+	container->verifyIntegrity();
 
 	// Get the number of input elements.
 	size_t nelements = container->elementCount();
@@ -196,16 +198,59 @@ ComputePropertyModifierDelegate::PropertyComputeEngine::PropertyComputeEngine(
 		int frameNumber,
 		std::unique_ptr<PropertyExpressionEvaluator> evaluator) :
 	AsynchronousModifier::ComputeEngine(validityInterval),
-	_selection(std::move(selectionProperty)),
+	_selectionArray(std::move(selectionProperty)),
 	_expressions(std::move(expressions)),
 	_frameNumber(frameNumber),
 	_outputProperty(std::move(outputProperty)),
-	_evaluator(std::move(evaluator))
+	_evaluator(std::move(evaluator)),
+	_outputArray(_outputProperty)
 {
 	OVITO_ASSERT(_expressions.size() == this->outputProperty()->componentCount());
 
 	// Initialize expression evaluator.
 	_evaluator->initialize(_expressions, input, container, _frameNumber);
+}
+
+/******************************************************************************
+* Performs the actual computation. This method is executed in a worker thread.
+******************************************************************************/
+void ComputePropertyModifierDelegate::PropertyComputeEngine::perform()
+{
+	task()->setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
+
+	task()->setProgressValue(0);
+	task()->setProgressMaximum(outputProperty()->size());
+
+	// Parallelized loop over all data elements.
+	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
+		PropertyExpressionEvaluator::Worker worker(*_evaluator);
+
+		size_t endIndex = startIndex + count;
+		size_t componentCount = outputProperty()->componentCount();
+		for(size_t elementIndex = startIndex; elementIndex < endIndex; elementIndex++) {
+
+			// Update progress indicator.
+			if((elementIndex % 1024) == 0)
+				promise.incrementProgressValue(1024);
+
+			// Exit if operation was canceled.
+			if(promise.isCanceled())
+				return;
+
+			// Skip unselected particles if requested.
+			if(selectionArray() && !selectionArray()[elementIndex])
+				continue;
+
+			for(size_t component = 0; component < componentCount; component++) {
+
+				// Compute expression value.
+				FloatType value = worker.evaluate(elementIndex, component);
+
+				// Store results in output property.
+				outputArray().set(elementIndex, component, value);
+			}
+		}
+	});
 }
 
 /******************************************************************************

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -246,10 +246,8 @@ FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& fi
 	std::vector<FloatType> charges;
 	std::vector<FloatType> displacementMagnitudes;
 
-	// Create particle type property now, because we need to populate the type list while parsing.
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(0, ParticlesObject::TypeProperty, false);
-	frameData->addParticleProperty(typeProperty);
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	// Create particle type list, because we need to populate the it while parsing.
+	std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
 
 	// Parse atoms.
 	do {
@@ -318,46 +316,41 @@ FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& fi
 		throw Exception(tr("Unexpected end of DL_POLY file. Expected %1 atom records but found only %2.").arg(expectedAtomCount).arg(positions.size()));
 
 	// Create particle properties.
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(positions.size(), ParticlesObject::PositionProperty, false);
-	frameData->addParticleProperty(posProperty);
-	boost::copy(positions, posProperty->data<Point3>());
-	typeProperty->resize(atom_types.size(), false);
-	boost::copy(atom_types, typeProperty->data<int>());
-	if(identifiers.size() == positions.size()) {
-		PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(identifiers.size(), ParticlesObject::IdentifierProperty, false);
-		frameData->addParticleProperty(identifierProperty);
-		boost::copy(identifiers, identifierProperty->data<qlonglong>());
-	}
-	if(levcfg > 0) {
-		PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
-		frameData->addParticleProperty(velocityProperty);
-		boost::copy(velocities, velocityProperty->data<Vector3>());
-	}
-	if(levcfg > 1) {
-		PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(forces.size(), ParticlesObject::ForceProperty, false);
-		frameData->addParticleProperty(forceProperty);
-		boost::copy(forces, forceProperty->data<Vector3>());
-	}
-	if(masses.size() == positions.size()) {
-		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(masses.size(), ParticlesObject::MassProperty, false);
-		frameData->addParticleProperty(massProperty);
-		boost::copy(masses, massProperty->data<FloatType>());
-	}
-	if(charges.size() == positions.size()) {
-		PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(charges.size(), ParticlesObject::ChargeProperty, false);
-		frameData->addParticleProperty(chargeProperty);
-		boost::copy(charges, chargeProperty->data<FloatType>());
-	}
-	if(displacementMagnitudes.size() == positions.size()) {
-		PropertyPtr displProperty = ParticlesObject::OOClass().createStandardStorage(displacementMagnitudes.size(), ParticlesObject::DisplacementMagnitudeProperty, false);
-		frameData->addParticleProperty(displProperty);
-		boost::copy(displacementMagnitudes, displProperty->data<FloatType>());
-	}
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(positions.size(), ParticlesObject::PositionProperty, false));
+	boost::copy(positions, posProperty.begin());
 
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(atom_types.size(), ParticlesObject::TypeProperty, false));
+	boost::copy(atom_types, typeProperty.begin());
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 	// why we sort them now.
 	typeList->sortTypesByName(typeProperty);
+	frameData->setPropertyTypesList(typeProperty, std::move(typeList));
+	
+	if(identifiers.size() == positions.size()) {
+		PropertyAccess<qlonglong> identifierProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(identifiers.size(), ParticlesObject::IdentifierProperty, false));
+		boost::copy(identifiers, identifierProperty.begin());
+	}
+	if(levcfg > 0) {
+		PropertyAccess<Vector3> velocityProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false));
+		boost::copy(velocities, velocityProperty.begin());
+	}
+	if(levcfg > 1) {
+		PropertyAccess<Vector3> forceProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(forces.size(), ParticlesObject::ForceProperty, false));
+		boost::copy(forces, forceProperty.begin());
+	}
+	if(masses.size() == positions.size()) {
+		PropertyAccess<FloatType> massProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(masses.size(), ParticlesObject::MassProperty, false));
+		boost::copy(masses, massProperty.begin());
+	}
+	if(charges.size() == positions.size()) {
+		PropertyAccess<FloatType> chargeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(charges.size(), ParticlesObject::ChargeProperty, false));
+		boost::copy(charges, chargeProperty.begin());
+	}
+	if(displacementMagnitudes.size() == positions.size()) {
+		PropertyAccess<FloatType> displProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(displacementMagnitudes.size(), ParticlesObject::DisplacementMagnitudeProperty, false));
+		boost::copy(displacementMagnitudes, displProperty.begin());
+	}
 
 	// Sort particles by ID if requested.
 	if(_sortParticles)

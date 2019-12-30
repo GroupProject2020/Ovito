@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/mesh/Mesh.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "SurfaceMeshRegions.h"
 #include "SurfaceMeshVis.h"
 
@@ -83,7 +84,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 		if(type == ColorProperty) {
 			if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(containerPath[containerPath.size()-2])) {
 				if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
-					boost::fill(property->range<Color>(), vis->surfaceColor());
+					PropertyAccess<Color>(property).fill(vis->surfaceColor());
 					initializeMemory = false;
 				}
 			}
@@ -92,7 +93,7 @@ PropertyPtr SurfaceMeshRegions::OOMetaClass::createStandardStorage(size_t region
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data<void>(), 0, property->size() * property->stride());
+		property->fillZero();
 	}
 
 	return property;

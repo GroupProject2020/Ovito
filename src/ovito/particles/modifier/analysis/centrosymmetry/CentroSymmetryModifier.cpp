@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,10 +23,11 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
-#include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include "CentroSymmetryModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -81,16 +82,16 @@ void CentroSymmetryModifier::CentroSymmetryEngine::perform()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(_nneighbors);
-	if(!neighFinder.prepare(*positions(), cell(), nullptr, task().get())) {
+	if(!neighFinder.prepare(positions(), cell(), {}, task().get())) {
 		return;
 	}
 
 	// Output storage.
-	PropertyStorage& output = *csp();
+	PropertyAccess<FloatType> output(csp());
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *task(), [&neighFinder, &output](size_t index) {
-		output.set<FloatType>(index, computeCSP(neighFinder, index));
+	parallelFor(positions()->size(), *task(), [&](size_t index) {
+		output[index] = computeCSP(neighFinder, index);
 	});
 }
 

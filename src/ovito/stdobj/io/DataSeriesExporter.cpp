@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdobj/StdObj.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "DataSeriesExporter.h"
 
@@ -74,20 +75,29 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 		throwException(tr("The pipeline output does not contain the data series to be exported (animation frame: %1; object key: %2). Available data series keys: (%3)")
 			.arg(frameNumber).arg(objectRef.dataPath()).arg(getAvailableDataObjectList(state, DataSeriesObject::OOClass())));
 	}
+	series->verifyIntegrity();
 
 	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
-	ConstPropertyPtr x = series->getXStorage();
-	ConstPropertyPtr y = series->getYStorage();
+	ConstPropertyPtr xstorage = series->getXStorage();
+	ConstPropertyPtr ystorage = series->getYStorage();
 	const PropertyObject* xprop = series->getX();
 	const PropertyObject* yprop = series->getY();
-	if(!y || !yprop)
+	if(!ystorage || !yprop)
 		throwException(tr("Data series to be exported contains no data points."));
 
 	size_t row_count = series->elementCount();
-	size_t col_count = y->componentCount();
-	int xDataType = x ? x->dataType() : 0;
-	int yDataType = y->dataType();
+	size_t col_count = ystorage->componentCount();
+	int xDataType = xstorage ? xstorage->dataType() : 0;
+	int yDataType = ystorage->dataType();
+
+	ConstPropertyAccess<int, true> xaccessInt(xDataType == PropertyStorage::Int ? xstorage : nullptr);
+	ConstPropertyAccess<qlonglong, true> xaccessInt64(xDataType == PropertyStorage::Int64 ? xstorage : nullptr);
+	ConstPropertyAccess<FloatType, true> xaccessFloat(xDataType == PropertyStorage::Float ? xstorage : nullptr);
+
+	ConstPropertyAccess<int, true> yaccessInt(yDataType == PropertyStorage::Int ? ystorage : nullptr);
+	ConstPropertyAccess<qlonglong, true> yaccessInt64(yDataType == PropertyStorage::Int64 ? ystorage : nullptr);
+	ConstPropertyAccess<FloatType, true> yaccessFloat(yDataType == PropertyStorage::Float ? ystorage : nullptr);
 
 	if(!series->title().isEmpty())
 		textStream() << "# " << series->title() << ":\n";
@@ -96,13 +106,13 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 		return name.contains(QChar(' ')) ? (QChar('"') + name + QChar('"')) : name;
 	};
 	textStream() << formatColumnName((!xprop || !series->axisLabelX().isEmpty()) ? series->axisLabelX() : xprop->name());
-	if(y->componentNames().size() == y->componentCount()) {
+	if(ystorage->componentNames().size() == ystorage->componentCount()) {
 		for(size_t col = 0; col < col_count; col++) {
-			textStream() << " " << formatColumnName(y->componentNames()[col]);
+			textStream() << " " << formatColumnName(ystorage->componentNames()[col]);
 		}
 	}
 	else {
-		textStream() << " " << formatColumnName(!series->axisLabelY().isEmpty() ? series->axisLabelY() : y->name());
+		textStream() << " " << formatColumnName(!series->axisLabelY().isEmpty() ? series->axisLabelY() : ystorage->name());
 	}
 	textStream() << "\n";
 	for(size_t row = 0; row < row_count; row++) {
@@ -115,20 +125,20 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 			else continue;
 		}
 		else {
-			if(xDataType == PropertyStorage::Int)
-				textStream() << x->get<int>(row, 0) << " ";
-			else if(xDataType == PropertyStorage::Int64)
-				textStream() << x->get<qlonglong>(row, 0) << " ";
-			else if(xDataType == PropertyStorage::Float)
-				textStream() << x->get<FloatType>(row, 0) << " ";
+			if(xaccessInt)
+				textStream() << xaccessInt.get(row, 0) << " ";
+			else if(xaccessInt64)
+				textStream() << xaccessInt64.get(row, 0) << " ";
+			else if(xaccessFloat)
+				textStream() << xaccessFloat.get(row, 0) << " ";
 		}
 		for(size_t col = 0; col < col_count; col++) {
-			if(yDataType == PropertyStorage::Int)
-				textStream() << y->get<int>(row, col) << " ";
-			else if(yDataType == PropertyStorage::Int64)
-				textStream() << y->get<qlonglong>(row, col) << " ";
-			else if(yDataType == PropertyStorage::Float)
-				textStream() << y->get<FloatType>(row, col) << " ";
+			if(yaccessInt)
+				textStream() << yaccessInt.get(row, col) << " ";
+			else if(yaccessInt64)
+				textStream() << yaccessInt64.get(row, col) << " ";
+			else if(yaccessFloat)
+				textStream() << yaccessFloat.get(row, col) << " ";
 		}
 		textStream() << "\n";
 	}

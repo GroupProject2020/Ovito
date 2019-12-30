@@ -24,7 +24,9 @@
 
 
 #include <ovito/particles/Particles.h>
+#include <ovito/particles/objects/BondsObject.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/data/DataVis.h>
 #include <ovito/core/rendering/ArrowPrimitive.h>
 #include <ovito/core/rendering/SceneRenderer.h>
@@ -56,9 +58,9 @@ public:
 
 	/// Determines the display colors of half-bonds.
 	/// Returns an array with two colors per full bond, because the two half-bonds may have different colors.
-	std::vector<ColorA> halfBondColors(size_t particleCount, const PropertyObject* topologyProperty,
-			const PropertyObject* bondColorProperty, const PropertyObject* bondTypeProperty, const PropertyObject* bondSelectionProperty, const PropertyObject* transparencyProperty,
-			const ParticlesVis* particleVis, const PropertyObject* particleColorProperty, const PropertyObject* particleTypeProperty) const;
+	std::vector<ColorA> halfBondColors(size_t particleCount, ConstPropertyAccess<ParticleIndexPair> topologyProperty,
+			ConstPropertyAccess<Color> bondColorProperty, const PropertyObject* bondTypeProperty, ConstPropertyAccess<int> bondSelectionProperty, ConstPropertyAccess<FloatType> transparencyProperty,
+			const ParticlesVis* particleVis, ConstPropertyAccess<Color> particleColorProperty, const PropertyObject* particleTypeProperty) const;
 
 public:
 

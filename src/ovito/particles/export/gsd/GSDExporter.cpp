@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/import/gsd/GSDFile.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "GSDExporter.h"
@@ -131,18 +132,18 @@ bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
     // Determine particle ordering.
     std::vector<size_t> ordering(particles->elementCount());
     std::iota(ordering.begin(), ordering.end(), (size_t)0);
-    if(const PropertyObject* idProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
-        boost::sort(ordering, [&](size_t a, size_t b) { return idProperty->get<qlonglong>(a) < idProperty->get<qlonglong>(b); });
+    if(ConstPropertyAccess<qlonglong> idProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
+        boost::sort(ordering, [&](size_t a, size_t b) { return idProperty[a] < idProperty[b]; });
     }
     if(operation.isCanceled()) return false;
 
     // Output particle coordinates.
-    const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+    ConstPropertyAccess<Point3> posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
     // Apply coordinate transformation matrix, wrapping a periodic box boundaries and data type conversion:
-    std::vector<Point_3<float>> posBuffer(posProperty->size());
-    std::vector<Vector_3<int32_t>> imageBuffer(posProperty->size());
+    std::vector<Point_3<float>> posBuffer(posProperty.size());
+    std::vector<Vector_3<int32_t>> imageBuffer(posProperty.size());
     for(size_t i = 0; i < ordering.size(); i++) {
-        const Point3& p = posProperty->get<Point3>(ordering[i]);
+        const Point3& p = posProperty[ordering[i]];
 		for(size_t dim = 0; dim < 3; dim++) {
             FloatType s = std::floor(cell.inverseMatrix().prodrow(p, dim));
             posBuffer[i][dim] = transformation.prodrow(p - s * cell.matrix().column(dim), dim);
@@ -181,64 +182,65 @@ bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
         _gsdFile->writeChunk<int8_t>("particles/types", typeNames.size(), maxStringLength, typeNameBuffer.data());
 
         // Build typeid array.
-        std::vector<uint32_t> typeIdBuffer(typeIds->size());
+        ConstPropertyAccess<int> typeIdsArray(typeIds); 
+        std::vector<uint32_t> typeIdBuffer(typeIdsArray.size());
         boost::transform(ordering, typeIdBuffer.begin(),
-            [&](size_t i) { return typeIds->get<int>(i); });
+            [&](size_t i) { return typeIdsArray[i]; });
         _gsdFile->writeChunk<uint32_t>("particles/typeid", typeIdBuffer.size(), 1, typeIdBuffer.data());
         if(operation.isCanceled()) return false;
     }
 
     // Output particle masses.
-    if(const PropertyObject* massProperty = particles->getProperty(ParticlesObject::MassProperty)) {
+    if(ConstPropertyAccess<FloatType> massProperty = particles->getProperty(ParticlesObject::MassProperty)) {
         // Apply particle index mapping and data type conversion:
-        std::vector<float> massBuffer(massProperty->size());
+        std::vector<float> massBuffer(massProperty.size());
         boost::transform(ordering, massBuffer.begin(),
-            [&](size_t i) { return massProperty->get<FloatType>(i); });
+            [&](size_t i) { return massProperty[i]; });
         _gsdFile->writeChunk<float>("particles/mass", massBuffer.size(), 1, massBuffer.data());
         if(operation.isCanceled()) return false;
     }
 
     // Output particle charges.
-    if(const PropertyObject* chargeProperty = particles->getProperty(ParticlesObject::ChargeProperty)) {
+    if(ConstPropertyAccess<FloatType> chargeProperty = particles->getProperty(ParticlesObject::ChargeProperty)) {
         // Apply particle index mapping and data type conversion:
-        std::vector<float> chargeBuffer(chargeProperty->size());
+        std::vector<float> chargeBuffer(chargeProperty.size());
         boost::transform(ordering, chargeBuffer.begin(),
-            [&](size_t i) { return chargeProperty->get<FloatType>(i); });
+            [&](size_t i) { return chargeProperty[i]; });
         _gsdFile->writeChunk<float>("particles/charge", chargeBuffer.size(), 1, chargeBuffer.data());
         if(operation.isCanceled()) return false;
     }
 
     // Output particle diameters.
-    if(const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty)) {
+    if(ConstPropertyAccess<FloatType> radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty)) {
         // Apply particle index mapping, data type conversion and
         // multiplying with a factor of 2 to convert from radii to diameters:
-        std::vector<float> diameterBuffer(radiusProperty->size());
+        std::vector<float> diameterBuffer(radiusProperty.size());
         boost::transform(ordering, diameterBuffer.begin(),
-            [&](size_t i) { return 2 * radiusProperty->get<FloatType>(i); });
+            [&](size_t i) { return 2 * radiusProperty[i]; });
         _gsdFile->writeChunk<float>("particles/diameter", diameterBuffer.size(), 1, diameterBuffer.data());
         if(operation.isCanceled()) return false;
     }
 
     // Output particle orientations.
-    if(const PropertyObject* orientationProperty = particles->getProperty(ParticlesObject::OrientationProperty)) {
+    if(ConstPropertyAccess<Quaternion> orientationProperty = particles->getProperty(ParticlesObject::OrientationProperty)) {
         // Apply particle index mapping and data type conversion.
         // Also right-shift the quaternion components, because GSD uses a different representation.
         // (X,Y,Z,W) -> (W,X,Y,Z).
-        std::vector<std::array<float,4>> orientationBuffer(orientationProperty->size());
+        std::vector<std::array<float,4>> orientationBuffer(orientationProperty.size());
         boost::transform(ordering, orientationBuffer.begin(),
-            [&](size_t i) { const Quaternion& q = orientationProperty->get<Quaternion>(i);
+            [&](size_t i) { const Quaternion& q = orientationProperty[i];
                 return std::array<float,4>{{ (float)q.w(), (float)q.x(), (float)q.y(), (float)q.z() }}; });
         _gsdFile->writeChunk<float>("particles/orientation", orientationBuffer.size(), 4, orientationBuffer.data());
         if(operation.isCanceled()) return false;
     }
 
     // Output particle velocities.
-    if(const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty)) {
+    if(ConstPropertyAccess<Vector3> velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty)) {
         // Apply particle index mapping and data type conversion:
         // Also apply affine transform of simulation cell to velocity vectors.
-        std::vector<Vector_3<float>> velocityBuffer(velocityProperty->size());
+        std::vector<Vector_3<float>> velocityBuffer(velocityProperty.size());
         boost::transform(ordering, velocityBuffer.begin(),
-            [&](size_t i) { return Vector_3<float>(transformation * velocityProperty->get<Vector3>(i)); });
+            [&](size_t i) { return Vector_3<float>(transformation * velocityProperty[i]); });
         _gsdFile->writeChunk<float>("particles/velocity", velocityBuffer.size(), 3, velocityBuffer.data());
         if(operation.isCanceled()) return false;
     }
@@ -246,7 +248,7 @@ bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
     // See if there any bonds to be exported.
 	if(const BondsObject* bonds = particles->bonds()) {
         bonds->verifyIntegrity();
-    	const PropertyObject* bondTopologyProperty = bonds->expectProperty(BondsObject::TopologyProperty);
+    	ConstPropertyAccess<ParticleIndexPair> bondTopologyProperty = bonds->expectProperty(BondsObject::TopologyProperty);
 
         // Output number of bonds.
         if(bonds->elementCount() > (size_t)std::numeric_limits<uint32_t>::max())
@@ -261,10 +263,10 @@ bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
             reverseOrdering[ordering[i]] = i;
 
         // Output topology array.
-        std::vector<std::array<uint32_t,2>> bondsBuffer(bondTopologyProperty->size());
-        for(size_t i = 0; i < bondTopologyProperty->size(); i++) {
-            size_t a = bondTopologyProperty->get<qlonglong>(i, 0);
-            size_t b = bondTopologyProperty->get<qlonglong>(i, 1);
+        std::vector<std::array<uint32_t,2>> bondsBuffer(bondTopologyProperty.size());
+        for(size_t i = 0; i < bondTopologyProperty.size(); i++) {
+            size_t a = bondTopologyProperty[i][0];
+            size_t b = bondTopologyProperty[i][1];
             if(a >= reverseOrdering.size() || b >= reverseOrdering.size())
                 throwException(tr("GSD/HOOMD file export error: Particle indices in bond topology array are out of range."));
             bondsBuffer[i][0] = reverseOrdering[a];
@@ -300,7 +302,7 @@ bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
             _gsdFile->writeChunk<int8_t>("bonds/types", typeNames.size(), maxStringLength, typeNameBuffer.data());
 
             // Output typeid array.
-            _gsdFile->writeChunk<uint32_t>("bonds/typeid", typeIds->size(), 1, typeIds->cdata<int>());
+            _gsdFile->writeChunk<uint32_t>("bonds/typeid", typeIds->size(), 1, ConstPropertyAccess<int>(typeIds).cbegin());
             if(operation.isCanceled()) return false;
         }
     }

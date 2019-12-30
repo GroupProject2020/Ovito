@@ -25,6 +25,7 @@
 #include <ovito/particles/util/CutoffNeighborFinder.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
@@ -87,11 +88,10 @@ void ChillPlusModifier::ChillPlusEngine::perform()
 
     // Prepare the neighbor list.
     CutoffNeighborFinder neighborListBuilder;
-    if(!neighborListBuilder.prepare(cutoff(), *positions(), cell(), selection().get(), task().get()))
+    if(!neighborListBuilder.prepare(cutoff(), positions(), cell(), selection(), task().get()))
         return;
 
-    // Create output storage.
-    PropertyStorage& output = *structures();
+	PropertyAccess<int> output(structures());
 
     // Find all relevant q_lm
     // create matrix of q_lm
@@ -101,10 +101,10 @@ void ChillPlusModifier::ChillPlusEngine::perform()
 
     q_values = boost::numeric::ublas::matrix<std::complex<float>>(particleCount, 7);
 
-    task()->setProgressText(tr("Computing c_ij values i Chill+"));
+    task()->setProgressText(tr("Computing c_ij values of Chill+"));
 
     // Parallel calculation loop:
-    parallelFor(particleCount, *task(), [this, &neighborListBuilder, &output](size_t index) {
+    parallelFor(particleCount, *task(), [&](size_t index) {
         int coordination = 0;
         for(int m = -3; m <= 3; m++) {
             q_values(index, m+3) = compute_q_lm(neighborListBuilder, index, 3, m);
@@ -112,8 +112,8 @@ void ChillPlusModifier::ChillPlusEngine::perform()
     });
 
     // For each particle, count the bonds and determine structure
-    parallelFor(particleCount, *task(), [this, &neighborListBuilder, &output](size_t index) {
-        output.set<int>(index, determineStructure(neighborListBuilder, index, typesToIdentify()));
+    parallelFor(particleCount, *task(), [&](size_t index) {
+        output[index] = determineStructure(neighborListBuilder, index, typesToIdentify());
     });
 }
 
@@ -202,10 +202,10 @@ void ChillPlusModifier::ChillPlusEngine::emitResults(TimePoint time, ModifierApp
 
 std::pair<float, float> ChillPlusModifier::ChillPlusEngine::polar_asimuthal(const Vector3& delta)
 {
-  float asimuthal = std::atan2(delta.y(), delta.x());
-  float xy_distance = std::sqrt(delta.x()*delta.x()+delta.y()*delta.y());
-  float polar = std::atan2(xy_distance, delta.z());
-  return std::pair<float, float>(polar, asimuthal);
+    float asimuthal = std::atan2(delta.y(), delta.x());
+    float xy_distance = std::sqrt(delta.x()*delta.x()+delta.y()*delta.y());
+    float polar = std::atan2(xy_distance, delta.z());
+    return std::pair<float, float>(polar, asimuthal);
 }
 
 OVITO_END_INLINE_NAMESPACE

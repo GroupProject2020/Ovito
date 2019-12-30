@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ovito/core/dataset/DataSet.h>
 #include "BondsComputePropertyModifierDelegate.h"
@@ -94,35 +95,37 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 	_inputFingerprint(input.expectObject<ParticlesObject>())
 {
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
-	ConstPropertyPtr positions = particles->getPropertyStorage(ParticlesObject::PositionProperty);
 	const BondsObject* bonds = particles->expectBonds();
 	_topology = bonds->getPropertyStorage(BondsObject::TopologyProperty);
-	ConstPropertyPtr periodicImages = bonds->getPropertyStorage(BondsObject::PeriodicImageProperty);
 
 	// Define 'BondLength' computed variable which yields the length of the current bond.
-	if(positions) {
-		SimulationCell simCell;
-		if(const SimulationCellObject* simCellObj = input.getObject<SimulationCellObject>())
-			simCell = simCellObj->data();
-		else
-			periodicImages.reset();
-		_evaluator->registerComputedVariable("BondLength", [positions,topology=_topology,periodicImages,simCell](size_t bondIndex) -> double {
-			size_t index1 = topology->get<qlonglong>(bondIndex, 0);
-			size_t index2 = topology->get<qlonglong>(bondIndex, 1);
-			if(positions->size() > index1 && positions->size() > index2) {
-				const Point3& p1 = positions->get<Point3>(index1);
-				const Point3& p2 = positions->get<Point3>(index2);
-				Vector3 delta = p2 - p1;
-				if(periodicImages) {
-					if(int dx = periodicImages->get<int>(bondIndex, 0)) delta += simCell.matrix().column(0) * (FloatType)dx;
-					if(int dy = periodicImages->get<int>(bondIndex, 1)) delta += simCell.matrix().column(1) * (FloatType)dy;
-					if(int dz = periodicImages->get<int>(bondIndex, 2)) delta += simCell.matrix().column(2) * (FloatType)dz;
+	if(ConstPropertyAccessAndRef<Point3> positions = particles->getProperty(ParticlesObject::PositionProperty)) {
+		if(ConstPropertyAccessAndRef<ParticleIndexPair> topology = bonds->getProperty(BondsObject::TopologyProperty)) {
+			ConstPropertyAccessAndRef<Vector3I> periodicImages = bonds->getProperty(BondsObject::PeriodicImageProperty);
+			SimulationCell simCell;
+			if(const SimulationCellObject* simCellObj = input.getObject<SimulationCellObject>())
+				simCell = simCellObj->data();
+			else
+				periodicImages.reset();
+
+			_evaluator->registerComputedVariable("BondLength", [positions=std::move(positions),topology=std::move(topology),periodicImages=std::move(periodicImages),simCell](size_t bondIndex) -> double {
+				size_t index1 = topology[bondIndex][0];
+				size_t index2 = topology[bondIndex][1];
+				if(positions.size() > index1 && positions.size() > index2) {
+					const Point3& p1 = positions[index1];
+					const Point3& p2 = positions[index2];
+					Vector3 delta = p2 - p1;
+					if(periodicImages) {
+						if(int dx = periodicImages[bondIndex][0]) delta += simCell.matrix().column(0) * (FloatType)dx;
+						if(int dy = periodicImages[bondIndex][1]) delta += simCell.matrix().column(1) * (FloatType)dy;
+						if(int dz = periodicImages[bondIndex][2]) delta += simCell.matrix().column(2) * (FloatType)dz;
+					}
+					return delta.length();
 				}
-				return delta.length();
-			}
-			else return 0;
-		},
-		tr("dynamically calculated"));
+				else return 0;
+			},
+			tr("dynamically calculated"));
+		}
 	}
 
 	// Build list of particle properties that will be made available as expression variables.
@@ -160,6 +163,7 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 	// Parallelized loop over all bonds.
 	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
+		ConstPropertyAccess<ParticleIndexPair> topologyArray(_topology);
 
 		size_t endIndex = startIndex + count;
 		size_t componentCount = outputProperty()->componentCount();
@@ -174,13 +178,13 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 				return;
 
 			// Skip unselected bonds if requested.
-			if(selection() && !selection()->get<int>(bondIndex))
+			if(selectionArray() && !selectionArray()[bondIndex])
 				continue;
 
 			// Update values of particle property variables.
-			if(_topology) {
-				size_t particleIndex1 = _topology->get<qlonglong>(bondIndex, 0);
-				size_t particleIndex2 = _topology->get<qlonglong>(bondIndex, 1);
+			if(topologyArray) {
+				size_t particleIndex1 = topologyArray[bondIndex][0];
+				size_t particleIndex2 = topologyArray[bondIndex][1];
 				worker.updateVariables(1, particleIndex1);
 				worker.updateVariables(2, particleIndex2);
 			}
@@ -191,15 +195,7 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 				FloatType value = worker.evaluate(bondIndex, component);
 
 				// Store results in output property.
-				if(outputProperty()->dataType() == PropertyStorage::Int) {
-					outputProperty()->set<int>(bondIndex, component, (int)value);
-				}
-				else if(outputProperty()->dataType() == PropertyStorage::Int64) {
-					outputProperty()->set<qlonglong>(bondIndex, component, (qlonglong)value);
-				}
-				else if(outputProperty()->dataType() == PropertyStorage::Float) {
-					outputProperty()->set<FloatType>(bondIndex, component, value);
-				}
+				outputArray().set(bondIndex, component, value);
 			}
 		}
 	});

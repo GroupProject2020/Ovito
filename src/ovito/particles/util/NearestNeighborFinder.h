@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,7 @@
 
 
 #include <ovito/particles/Particles.h>
-#include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/core/utilities/BoundedPriorityQueue.h>
 #include <ovito/core/utilities/MemoryPool.h>
@@ -105,7 +105,7 @@ private:
 public:
 
 	//// Constructor that builds the binary search tree.
-	NearestNeighborFinder(int _numNeighbors = 16) : numNeighbors(_numNeighbors), numLeafNodes(0), maxTreeDepth(1) {
+	NearestNeighborFinder(int _numNeighbors = 16) : numNeighbors(_numNeighbors) {
 		bucketSize = std::max(_numNeighbors / 2, 8);
 	}
 
@@ -117,7 +117,7 @@ public:
 	/// \return \c false when the operation has been canceled by the user;
 	///         \c true on success.
 	/// \throw Exception on error.
-	bool prepare(const PropertyStorage& posProperty, const SimulationCell& cellData, const PropertyStorage* selectionProperty, Task* promise);
+	bool prepare(ConstPropertyAccess<Point3> posProperty, const SimulationCell& cellData, ConstPropertyAccess<int> selectionProperty, Task* promise);
 
 	/// Returns the number of input particles in the system for which the NearestNeighborFinder was created.
 	size_t particleCount() const {
@@ -319,10 +319,10 @@ private:
 	std::vector<Vector3> pbcImages;
 
 	/// The number of leaf nodes in the tree.
-	int numLeafNodes;
+	int numLeafNodes = 0;
 
 	/// The maximum depth of this binary tree.
-	int maxTreeDepth;
+	int maxTreeDepth = 1;
 };
 
 OVITO_END_INLINE_NAMESPACE

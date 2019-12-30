@@ -161,6 +161,7 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 {
 	// Get particles and their positions.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell info.
@@ -326,9 +327,9 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 	count[1] = atomsCount;
 	count[2] = 3;
 #ifdef FLOATTYPE_FLOAT
-	NCERR(nc_put_vara_float(_ncid, _coords_var, start, count, posProperty->cdata<FloatType>(0,0)));
+	NCERR(nc_put_vara_float(_ncid, _coords_var, start, count, ConstPropertyAccess<FloatType,true>(posProperty).cbegin()));
 #else
-	NCERR(nc_put_vara_double(_ncid, _coords_var, start, count, posProperty->cdata<FloatType>(0,0)));
+	NCERR(nc_put_vara_double(_ncid, _coords_var, start, count, ConstPropertyAccess<FloatType,true>(posProperty).cbegin()));
 #endif
 
 	// Write out other particle properties.
@@ -347,16 +348,16 @@ bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNu
 		// Write property data to file.
 		count[2] = outColumn.componentCount;
 		if(outColumn.dataType == PropertyStorage::Int) {
-			NCERR(nc_put_vara_int(_ncid, outColumn.ncvar, start, count, prop->cdata<int>(0,0)));
+			NCERR(nc_put_vara_int(_ncid, outColumn.ncvar, start, count, ConstPropertyAccess<int,true>(prop).cbegin()));
 		}
 		else if(outColumn.dataType == PropertyStorage::Int64) {
-			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, prop->cdata<qlonglong>(0,0)));
+			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, ConstPropertyAccess<qlonglong,true>(prop).cbegin()));
 		}
 		else if(outColumn.dataType == PropertyStorage::Float) {
 #ifdef FLOATTYPE_FLOAT
-			NCERR(nc_put_vara_float(_ncid, outColumn.ncvar, start, count, prop->cdata<FloatType>(0,0)));
+			NCERR(nc_put_vara_float(_ncid, outColumn.ncvar, start, count, ConstPropertyAccess<FloatType,true>(prop).cbegin()));
 #else
-			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, prop->cdata<FloatType>(0,0)));
+			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, ConstPropertyAccess<FloatType,true>(prop).cbegin()));
 #endif
 		}
 

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -179,19 +179,16 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			// Will continue parsing subsequent lines from the file.
 			line = stream.line();
 
-			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
-			frameData->addParticleProperty(posProperty);
-			boost::copy(coords, posProperty->data<Point3>());
+			PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false));
+			boost::copy(coords, posProperty.begin());
 
-			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
-			frameData->addParticleProperty(typeProperty);
-			boost::copy(types, typeProperty->data<int>());
+			PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false));
+			boost::copy(types, typeProperty.begin());
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
 			if(forces.size() != 0) {
-				PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::ForceProperty, false);
-				frameData->addParticleProperty(forceProperty);
-				boost::copy(forces, forceProperty->data<Vector3>());
+				PropertyAccess<Vector3> forceProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::ForceProperty, false));
+				boost::copy(forces, forceProperty.begin());
 			}
 
 			frameData->setStatus(tr("%1 atoms").arg(coords.size()));
@@ -199,7 +196,7 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			// If the input file does not contain simulation cell info,
 			// Use bounding box of particles as simulation cell.
 			Box3 boundingBox;
-			boundingBox.addPoints(posProperty->crange<Point3>());
+			boundingBox.addPoints(posProperty);
 			frameData->simulationCell().setMatrix(AffineTransformation(
 					Vector3(boundingBox.sizeX(), 0, 0),
 					Vector3(0, boundingBox.sizeY(), 0),
@@ -318,11 +315,11 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			}
 			frameData->simulationCell().setMatrix(cell);
 
-			PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 1, 0, name, false);
-			FloatType* data = fieldQuantity->data<FloatType>();
-			setProgressMaximum(fieldQuantity->size());
+			PropertyAccess<FloatType> fieldQuantity = frameData->addVoxelProperty(std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 1, 0, name, false));
+			FloatType* data = fieldQuantity.begin();
+			setProgressMaximum(fieldQuantity.size());
 			const char* s = "";
-			for(size_t i = 0; i < fieldQuantity->size(); i++, ++data) {
+			for(size_t i = 0; i < fieldQuantity.size(); i++, ++data) {
 				const char* token;
 				for(;;) {
 					while(*s == ' ' || *s == '\t') ++s;
@@ -338,7 +335,6 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 
 				if(!setProgressValueIntermittent(i)) return {};
 			}
-			frameData->addVoxelProperty(fieldQuantity);
 		}
 	}
 

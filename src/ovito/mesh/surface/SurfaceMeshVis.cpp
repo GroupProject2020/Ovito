@@ -23,6 +23,7 @@
 #include <ovito/mesh/Mesh.h>
 #include <ovito/mesh/util/CapPolygonTessellator.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/rendering/MeshPrimitive.h>
 #include <ovito/core/utilities/mesh/TriMesh.h>
@@ -246,61 +247,83 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 			if(property->type() == SurfaceMeshFaces::SelectionProperty) continue;
 			if(property->type() == SurfaceMeshFaces::ColorProperty) continue;
 			if(property->type() == SurfaceMeshFaces::RegionProperty) continue;
-			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 			if(!str.isEmpty()) str += QStringLiteral(" | ");
 			str += property->name();
 			str += QStringLiteral(" ");
-			for(size_t component = 0; component < property->componentCount(); component++) {
-				if(component != 0) str += QStringLiteral(", ");
-				if(property->dataType() == PropertyStorage::Int) {
-					str += QString::number(property->get<int>(facetIndex, component));
+			if(property->dataType() == PropertyStorage::Int) {
+				ConstPropertyAccess<int, true> data(property);
+				for(size_t component = 0; component < data.componentCount(); component++) {
+					if(component != 0) str += QStringLiteral(", ");
+					str += QString::number(data.get(facetIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(const ElementType* ptype = property->elementType(property->get<int>(facetIndex, component))) {
+						if(const ElementType* ptype = property->elementType(data.get(facetIndex, component))) {
 							if(!ptype->name().isEmpty())
 								str += QString(" (%1)").arg(ptype->name());
 						}
 					}
 				}
-				else if(property->dataType() == PropertyStorage::Int64) {
-					str += QString::number(property->get<qlonglong>(facetIndex, component));
+			}
+			else if(property->dataType() == PropertyStorage::Int64) {
+				ConstPropertyAccess<qlonglong, true> data(property);
+				for(size_t component = 0; component < property->componentCount(); component++) {
+					if(component != 0) str += QStringLiteral(", ");
+					str += QString::number(data.get(facetIndex, component));
 				}
-				else if(property->dataType() == PropertyStorage::Float) {
-					str += QString::number(property->get<FloatType>(facetIndex, component));
+			}
+			else if(property->dataType() == PropertyStorage::Float) {
+				ConstPropertyAccess<FloatType, true> data(property);
+				for(size_t component = 0; component < property->componentCount(); component++) {
+					if(component != 0) str += QStringLiteral(", ");
+					str += QString::number(data.get(facetIndex, component));
 				}
+			}
+			else {
+				str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : "unknown");
 			}
 		}
 
 		// Additionally, list all properties of the region to which the face belongs.
-		if(const PropertyObject* regionProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::RegionProperty)) {
-			if(facetIndex < regionProperty->size() && surfaceMesh()->regions()) {
-				int regionIndex = regionProperty->get<int>(facetIndex);
+		if(ConstPropertyAccess<int> regionProperty = surfaceMesh()->faces()->getProperty(SurfaceMeshFaces::RegionProperty)) {
+			if(facetIndex < regionProperty.size() && surfaceMesh()->regions()) {
+				int regionIndex = regionProperty[facetIndex];
 				if(!str.isEmpty()) str += QStringLiteral(" | ");
 				str += QStringLiteral("Region %1").arg(regionIndex);
 				for(const PropertyObject* property : surfaceMesh()->regions()->properties()) {
 					if(regionIndex < 0 || regionIndex >= property->size()) continue;
 					if(property->type() == SurfaceMeshRegions::SelectionProperty) continue;
 					if(property->type() == SurfaceMeshRegions::ColorProperty) continue;
-					if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 					str += QStringLiteral(" | ");
 					str += property->name();
 					str += QStringLiteral(" ");
-					for(size_t component = 0; component < property->componentCount(); component++) {
-						if(component != 0) str += QStringLiteral(", ");
-						if(property->dataType() == PropertyStorage::Int) {
-							str += QString::number(property->get<int>(regionIndex, component));
+					if(property->dataType() == PropertyStorage::Int) {
+						ConstPropertyAccess<int, true> data(property);
+						for(size_t component = 0; component < property->componentCount(); component++) {
+							if(component != 0) str += QStringLiteral(", ");
+							str += QString::number(data.get(regionIndex, component));
 							if(property->elementTypes().empty() == false) {
-								if(const ElementType* ptype = property->elementType(property->get<int>(regionIndex, component))) {
+								if(const ElementType* ptype = property->elementType(data.get(regionIndex, component))) {
 									if(!ptype->name().isEmpty())
 										str += QString(" (%1)").arg(ptype->name());
 								}
 							}
 						}
-						else if(property->dataType() == PropertyStorage::Int64) {
-							str += QString::number(property->get<qlonglong>(regionIndex, component));
+					}
+					else if(property->dataType() == PropertyStorage::Int64) {
+						ConstPropertyAccess<qlonglong, true> data(property);
+						for(size_t component = 0; component < property->componentCount(); component++) {
+							if(component != 0) str += QStringLiteral(", ");
+							str += QString::number(data.get(facetIndex, component));
 						}
-						else if(property->dataType() == PropertyStorage::Float) {
-							str += QString::number(property->get<FloatType>(regionIndex, component));
+					}
+					else if(property->dataType() == PropertyStorage::Float) {
+						ConstPropertyAccess<FloatType, true> data(property);
+						for(size_t component = 0; component < property->componentCount(); component++) {
+							if(component != 0) str += QStringLiteral(", ");
+							str += QString::number(data.get(facetIndex, component));
 						}
+					}
+					else {
+						str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : "unknown");
 					}
 				}
 			}
@@ -374,63 +397,59 @@ void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
 	ColorA defaultFaceColor(_surfaceColor);
 	ColorA selectionColor(1,0,0,1);
 
-	if(PropertyPtr colorProperty = _inputMesh.faceProperty(SurfaceMeshFaces::ColorProperty)) {
+	if(ConstPropertyAccess<Color> colorProperty = _inputMesh.faceProperty(SurfaceMeshFaces::ColorProperty)) {
 		// The "Color" property of mesh faces has the highest priority.
 		// If it is present, use its information to color the triangle faces.
 		_surfaceMesh.setHasFaceColors(true);
 		auto meshFaceColor = _surfaceMesh.faceColors().begin();
 		for(size_t originalFace : _originalFaceMap) {
-			OVITO_ASSERT(originalFace < colorProperty->size());
-			*meshFaceColor++ = ColorA(colorProperty->get<Color>(originalFace));
+			*meshFaceColor++ = colorProperty[originalFace];
 		}
 	}
-	else if(PropertyPtr colorProperty = _inputMesh.regionProperty(SurfaceMeshRegions::ColorProperty)) {
+	else if(ConstPropertyAccess<Color> colorProperty = _inputMesh.regionProperty(SurfaceMeshRegions::ColorProperty)) {
 		// If the "Color" property of mesh regions is present, use it information to color the 
 		// mesh faces according to the region they belong to.
-		if(PropertyPtr regionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::RegionProperty)) {
+		if(ConstPropertyAccess<int> regionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::RegionProperty)) {
 			_surfaceMesh.setHasFaceColors(true);
-			size_t regionCount = colorProperty->size();
+			size_t regionCount = colorProperty.size();
 			auto meshFaceColor = _surfaceMesh.faceColors().begin();
 			for(size_t originalFace : _originalFaceMap) {
-				OVITO_ASSERT(originalFace < regionProperty->size());
-				SurfaceMeshData::region_index regionIndex = regionProperty->get<int>(originalFace);
+				SurfaceMeshData::region_index regionIndex = regionProperty[originalFace];
 				if(regionIndex >= 0 && regionIndex < regionCount)
-					*meshFaceColor++ = ColorA(colorProperty->get<Color>(regionIndex));
+					*meshFaceColor++ = colorProperty[regionIndex];
 				else
 					*meshFaceColor++ = defaultFaceColor;
 			}
 		}
 	}
 
-	if(PropertyPtr selectionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::SelectionProperty)) {
+	if(ConstPropertyAccess<int> selectionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::SelectionProperty)) {
 		// The "Selection" property of mesh faces has the highest priority.
 		// If it is present, use it to highlight selected mesh faces.
 		if(!_surfaceMesh.hasFaceColors()) {
 			_surfaceMesh.setHasFaceColors(true);
-			std::fill(_surfaceMesh.faceColors().begin(), _surfaceMesh.faceColors().end(), defaultFaceColor);
+			boost::fill(_surfaceMesh.faceColors(), defaultFaceColor);
 		}
 		auto meshFaceColor = _surfaceMesh.faceColors().begin();
 		for(size_t originalFace : _originalFaceMap) {
-			OVITO_ASSERT(originalFace < selectionProperty->size());
-			if(selectionProperty->get<int>(originalFace))
+			if(selectionProperty[originalFace])
 				*meshFaceColor = selectionColor;
 			++meshFaceColor;
 		}
 	}
-	else if(PropertyPtr selectionProperty = _inputMesh.regionProperty(SurfaceMeshRegions::SelectionProperty)) {
+	else if(ConstPropertyAccess<int> selectionProperty = _inputMesh.regionProperty(SurfaceMeshRegions::SelectionProperty)) {
 		// If the "Selection" property of mesh regions is present, use it information to highlight the 
 		// mesh faces that belong to selected regions.
-		if(PropertyPtr regionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::RegionProperty)) {
+		if(ConstPropertyAccess<int> regionProperty = _inputMesh.faceProperty(SurfaceMeshFaces::RegionProperty)) {
 			if(!_surfaceMesh.hasFaceColors()) {
 				_surfaceMesh.setHasFaceColors(true);
-				std::fill(_surfaceMesh.faceColors().begin(), _surfaceMesh.faceColors().end(), defaultFaceColor);
+				boost::fill(_surfaceMesh.faceColors(), defaultFaceColor);
 			}
-			size_t regionCount = selectionProperty->size();
+			size_t regionCount = selectionProperty.size();
 			auto meshFaceColor = _surfaceMesh.faceColors().begin();
 			for(size_t originalFace : _originalFaceMap) {
-				OVITO_ASSERT(originalFace < regionProperty->size());
-				SurfaceMeshData::region_index regionIndex = regionProperty->get<int>(originalFace);
-				if(regionIndex >= 0 && regionIndex < regionCount && selectionProperty->get<int>(regionIndex))
+				SurfaceMeshData::region_index regionIndex = regionProperty[originalFace];
+				if(regionIndex >= 0 && regionIndex < regionCount && selectionProperty[regionIndex])
 					*meshFaceColor = selectionColor;
 				++meshFaceColor;
 			}
@@ -443,11 +462,11 @@ void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
 ******************************************************************************/
 void SurfaceMeshVis::PrepareSurfaceEngine::determineVertexColors()
 {
-	if(PropertyPtr colorProperty = _inputMesh.vertexProperty(SurfaceMeshVertices::ColorProperty)) {
-		OVITO_ASSERT(colorProperty->size() == _surfaceMesh.vertexCount());
-		if(colorProperty->size() == _surfaceMesh.vertexCount()) {
+	if(ConstPropertyAccess<Color> colorProperty = _inputMesh.vertexProperty(SurfaceMeshVertices::ColorProperty)) {
+		OVITO_ASSERT(colorProperty.size() == _surfaceMesh.vertexCount());
+		if(colorProperty.size() == _surfaceMesh.vertexCount()) {
 			_surfaceMesh.setHasVertexColors(true);
-			boost::copy(colorProperty->crange<Color>(), _surfaceMesh.vertexColors().begin());
+			boost::copy(colorProperty, _surfaceMesh.vertexColors().begin());
 		}
 	}
 }

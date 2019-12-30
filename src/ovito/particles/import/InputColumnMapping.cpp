@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -198,17 +198,9 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 			rec.count = rec.property->size();
 			rec.numericParticleTypes = true;
 			rec.dataType = rec.property->dataType();
-			if(rec.dataType == PropertyStorage::Float) {
-				rec.data = reinterpret_cast<uint8_t*>(rec.property->data<FloatType>(0, rec.vectorComponent));
-			}
-			else if(rec.dataType == PropertyStorage::Int) {
-				rec.data = reinterpret_cast<uint8_t*>(rec.property->data<int>(0, rec.vectorComponent));
-			}
-			else if(rec.dataType == PropertyStorage::Int64) {
-				rec.data = reinterpret_cast<uint8_t*>(rec.property->data<qlonglong>(0, rec.vectorComponent));
-			}
-			else rec.data = nullptr;
 			rec.stride = rec.property->stride();
+			rec.propertyArray = PropertyAccess<void,true>(rec.property);
+			rec.data = reinterpret_cast<uint8_t*>(rec.propertyArray.data(rec.vectorComponent));
 		}
 	}
 }
@@ -362,14 +354,16 @@ void InputColumnReader::readParticle(size_t particleIndex, const double* values,
 void InputColumnReader::sortParticleTypes()
 {
 	for(const TargetPropertyRecord& p : _properties) {
-		if(p.property && p.typeList) {
+		if(p.typeList && p.property) {
 			// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 			// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 			// why we sort them here according to their names or numeric IDs.
 			if(p.numericParticleTypes)
 				p.typeList->sortTypesById();
-			else
-				p.typeList->sortTypesByName(p.property);
+			else {
+				PropertyAccess<int> typeArray(p.property);
+				p.typeList->sortTypesByName(typeArray);
+			}
 		}
 	}
 }

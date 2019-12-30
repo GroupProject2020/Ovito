@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/data/VersionedDataObjectRef.h>
@@ -94,18 +95,15 @@ Box3 ParticlesVis::boundingBox(TimePoint time, const std::vector<const DataObjec
 /******************************************************************************
 * Computes the bounding box of the particles.
 ******************************************************************************/
-Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, const PropertyObject* typeProperty, const PropertyObject* radiusProperty, const PropertyObject* shapeProperty, bool includeParticleRadius) const
+Box3 ParticlesVis::particleBoundingBox(ConstPropertyAccess<Point3> positionProperty, const PropertyObject* typeProperty, ConstPropertyAccess<FloatType> radiusProperty, ConstPropertyAccess<Vector3> shapeProperty, bool includeParticleRadius) const
 {
-	OVITO_ASSERT(positionProperty == nullptr || positionProperty->type() == ParticlesObject::PositionProperty);
 	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
-	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticlesObject::RadiusProperty);
-	OVITO_ASSERT(shapeProperty == nullptr || shapeProperty->type() == ParticlesObject::AsphericalShapeProperty);
 	if(particleShape() != Sphere && particleShape() != Box && particleShape() != Cylinder && particleShape() != Spherocylinder)
 		shapeProperty = nullptr;
 
 	Box3 bbox;
 	if(positionProperty) {
-		bbox.addPoints(positionProperty->crange<Point3>());
+		bbox.addPoints(positionProperty);
 	}
 	if(!includeParticleRadius)
 		return bbox;
@@ -138,13 +136,13 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 		if(maxAtomRadius == 0)
 			maxAtomRadius = defaultParticleRadius();
 		if(shapeProperty) {
-			for(const Vector3& s : shapeProperty->crange<Vector3>())
+			for(const Vector3& s : shapeProperty)
 				maxAtomRadius = std::max(maxAtomRadius, std::max(s.x(), std::max(s.y(), s.z())));
 			if(particleShape() == Spherocylinder)
 				maxAtomRadius *= 2;
 		}
-		if(radiusProperty && radiusProperty->size() != 0) {
-			auto minmax = std::minmax_element(radiusProperty->cdata<FloatType>(), radiusProperty->cdata<FloatType>() + radiusProperty->size());
+		if(radiusProperty && radiusProperty.size() != 0) {
+			auto minmax = std::minmax_element(radiusProperty.cbegin(), radiusProperty.cend());
 			if(*minmax.first <= 0)
 				maxAtomRadius = std::max(maxAtomRadius, *minmax.second);
 			else
@@ -154,9 +152,10 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 	else {
 		// Non-standard case - at least one user-defined particle shape assigned:
 		std::map<int,FloatType> typeRadiusMap = ParticleType::typeRadiusMap(typeProperty);
-		if(radiusProperty && radiusProperty->size() == typeProperty->size()) {
-			const FloatType* r = radiusProperty->cdata<FloatType>();
-			for(int t : typeProperty->crange<int>()) {
+		if(radiusProperty && radiusProperty.size() == typeProperty->size()) {
+			const FloatType* r = radiusProperty.cbegin();
+			ConstPropertyAccess<int> typeData(typeProperty);
+			for(int t : typeData) {
 				// Determine effective radius of the current particle.
 				FloatType radius = *r++;
 				if(radius <= 0) radius = typeRadiusMap[t];
@@ -200,17 +199,12 @@ Box3 ParticlesVis::particleBoundingBox(const PropertyObject* positionProperty, c
 /******************************************************************************
 * Determines the display particle colors.
 ******************************************************************************/
-void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty, const PropertyObject* transparencyProperty) const
+void ParticlesVis::particleColors(std::vector<ColorA>& output, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty, ConstPropertyAccess<FloatType> transparencyProperty) const
 {
-	OVITO_ASSERT(colorProperty == nullptr || colorProperty->type() == ParticlesObject::ColorProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
-	OVITO_ASSERT(selectionProperty == nullptr || selectionProperty->type() == ParticlesObject::SelectionProperty);
-	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == ParticlesObject::TransparencyProperty);
-
 	ColorA defaultColor = defaultParticleColor();
-	if(colorProperty && colorProperty->size() == output.size()) {
+	if(colorProperty && colorProperty.size() == output.size()) {
 		// Take particle colors directly from the color property.
-		boost::copy(colorProperty->crange<Color>(), output.begin());
+		boost::copy(colorProperty, output.begin());
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign colors based on particle types.
@@ -225,7 +219,8 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 			for(const auto& entry : colorMap)
 				colorArray[entry.first] = entry.second;
 			// Fill color array.
-			const int* t = typeProperty->cdata<int>();
+			ConstPropertyAccess<int> typeData(typeProperty);
+			const int* t = typeData.cbegin();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				if(*t >= 0 && *t < (int)colorArray.size())
 					*c = colorArray[*t];
@@ -235,7 +230,8 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 		}
 		else {
 			// Fill color array.
-			const int* t = typeProperty->cdata<int>();
+			ConstPropertyAccess<int> typeData(typeProperty);
+			const int* t = typeData.cbegin();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				auto it = colorMap.find(*t);
 				if(it != colorMap.end())
@@ -247,21 +243,21 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 	}
 	else {
 		// Assign a uniform color to all particles.
-		std::fill(output.begin(), output.end(), defaultColor);
+		boost::fill(output, defaultColor);
 	}
 
 	// Set color alpha values based on transparency particle property.
-	if(transparencyProperty && transparencyProperty->size() == output.size()) {
-		const FloatType* t = transparencyProperty->cdata<FloatType>();
+	if(transparencyProperty && transparencyProperty.size() == output.size()) {
+		const FloatType* t = transparencyProperty.cbegin();
 		for(ColorA& c : output) {
 			c.a() = qBound(FloatType(0), FloatType(1) - (*t++), FloatType(1));
 		}
 	}
 
 	// Highlight selected particles.
-	if(selectionProperty && selectionProperty->size() == output.size()) {
+	if(selectionProperty && selectionProperty.size() == output.size()) {
 		const Color selColor = selectionParticleColor();
-		const int* t = selectionProperty->cdata<int>();
+		const int* t = selectionProperty.cbegin();
 		for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 			if(*t)
 				*c = selColor;
@@ -272,17 +268,16 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, const PropertyObj
 /******************************************************************************
 * Determines the display particle radii.
 ******************************************************************************/
-void ParticlesVis::particleRadii(std::vector<FloatType>& output, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const
+void ParticlesVis::particleRadii(std::vector<FloatType>& output, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const
 {
-	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticlesObject::RadiusProperty);
 	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
-	OVITO_ASSERT(!radiusProperty || output.size() == radiusProperty->size());
+	OVITO_ASSERT(!radiusProperty || output.size() == radiusProperty.size());
 	OVITO_ASSERT(!typeProperty || output.size() == typeProperty->size());
 
 	FloatType defaultRadius = defaultParticleRadius();
-	if(radiusProperty && radiusProperty->size() == output.size()) {
+	if(radiusProperty && radiusProperty.size() == output.size()) {
 		// Take particle radii directly from the radius property.
-		boost::transform(radiusProperty->crange<FloatType>(), output.begin(), [defaultRadius](FloatType r) { return r > 0 ? r : defaultRadius; } );
+		boost::transform(radiusProperty, output.begin(), [defaultRadius](FloatType r) { return r > 0 ? r : defaultRadius; } );
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign radii based on particle types.
@@ -291,7 +286,8 @@ void ParticlesVis::particleRadii(std::vector<FloatType>& output, const PropertyO
 		// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.
 		if(boost::algorithm::any_of(radiusMap, [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
 			// Fill radius array.
-			boost::transform(typeProperty->crange<int>(), output.begin(), [&](int t) {
+			ConstPropertyAccess<int> typeData(typeProperty);
+			boost::transform(typeData, output.begin(), [&](int t) {
 				auto it = radiusMap.find(t);
 				// Set particle radius only if the type's radius is non-zero.
 				if(it != radiusMap.end() && it->second != 0)
@@ -314,19 +310,19 @@ void ParticlesVis::particleRadii(std::vector<FloatType>& output, const PropertyO
 /******************************************************************************
 * Determines the display radius of a single particle.
 ******************************************************************************/
-FloatType ParticlesVis::particleRadius(size_t particleIndex, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const
+FloatType ParticlesVis::particleRadius(size_t particleIndex, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const
 {
-	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticlesObject::RadiusProperty);
 	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
 
-	if(radiusProperty && radiusProperty->size() > particleIndex) {
+	if(radiusProperty && radiusProperty.size() > particleIndex) {
 		// Take particle radius directly from the radius property.
-		FloatType r = radiusProperty->get<FloatType>(particleIndex);
+		FloatType r = radiusProperty[particleIndex];
 		if(r > 0) return r;
 	}
 	else if(typeProperty && typeProperty->size() > particleIndex) {
 		// Assign radius based on particle types.
-		const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(typeProperty->get<int>(particleIndex)));
+		ConstPropertyAccess<int> typeData(typeProperty);
+		const ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(typeData[particleIndex]));
 		if(ptype && ptype->radius() > 0)
 			return ptype->radius();
 	}
@@ -337,34 +333,30 @@ FloatType ParticlesVis::particleRadius(size_t particleIndex, const PropertyObjec
 /******************************************************************************
 * Determines the display color of a single particle.
 ******************************************************************************/
-ColorA ParticlesVis::particleColor(size_t particleIndex, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty, const PropertyObject* transparencyProperty) const
+ColorA ParticlesVis::particleColor(size_t particleIndex, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty, ConstPropertyAccess<FloatType> transparencyProperty) const
 {
-	OVITO_ASSERT(colorProperty == nullptr || colorProperty->type() == ParticlesObject::ColorProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
-	OVITO_ASSERT(selectionProperty == nullptr || selectionProperty->type() == ParticlesObject::SelectionProperty);
-	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == ParticlesObject::TransparencyProperty);
-
 	// Check if particle is selected.
-	if(selectionProperty && selectionProperty->size() > particleIndex) {
-		if(selectionProperty->get<int>(particleIndex))
+	if(selectionProperty && selectionProperty.size() > particleIndex) {
+		if(selectionProperty[particleIndex])
 			return selectionParticleColor();
 	}
 
 	ColorA c = defaultParticleColor();
-	if(colorProperty && colorProperty->size() > particleIndex) {
+	if(colorProperty && colorProperty.size() > particleIndex) {
 		// Take particle color directly from the color property.
-		c = colorProperty->get<Color>(particleIndex);
+		c = colorProperty[particleIndex];
 	}
 	else if(typeProperty && typeProperty->size() > particleIndex) {
 		// Return color based on particle types.
-		const ElementType* ptype = typeProperty->elementType(typeProperty->get<int>(particleIndex));
+		ConstPropertyAccess<int> typeData(typeProperty);
+		const ElementType* ptype = typeProperty->elementType(typeData[particleIndex]);
 		if(ptype)
 			c = ptype->color();
 	}
 
 	// Apply alpha component.
-	if(transparencyProperty && transparencyProperty->size() > particleIndex) {
-		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty->get<FloatType>(particleIndex), FloatType(1));
+	if(transparencyProperty && transparencyProperty.size() > particleIndex) {
+		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty[particleIndex], FloatType(1));
 	}
 
 	return c;
@@ -437,11 +429,6 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	const PropertyObject* transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
 	const PropertyObject* asphericalShapeProperty = particles->getProperty(ParticlesObject::AsphericalShapeProperty);
 	const PropertyObject* orientationProperty = particles->getProperty(ParticlesObject::OrientationProperty);
-	ConstPropertyPtr positionArray = positionProperty ? positionProperty->storage() : nullptr;
-	ConstPropertyPtr radiusArray = radiusProperty ? radiusProperty->storage() : nullptr;
-	ConstPropertyPtr colorArray = colorProperty ? colorProperty->storage() : nullptr;
-	ConstPropertyPtr asphericalShapeArray = asphericalShapeProperty ? asphericalShapeProperty->storage() : nullptr;
-	ConstPropertyPtr orientationArray = orientationProperty ? orientationProperty->storage() : nullptr;
 
 	// Check if any of the particle types have a user-defined mesh geometry assigned.
 	std::vector<int> userShapeParticleTypes;
@@ -467,6 +454,12 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 		qWarning() << "WARNING: Cannot render more than" << std::numeric_limits<int>::max() << "particles.";
 		return;
 	}
+
+	ConstPropertyPtr positionStorage = positionProperty ? positionProperty->storage() : nullptr;
+	ConstPropertyPtr radiusStorage = radiusProperty ? radiusProperty->storage() : nullptr;
+	ConstPropertyPtr colorStorage = colorProperty ? colorProperty->storage() : nullptr;
+	ConstPropertyPtr asphericalShapeStorage = asphericalShapeProperty ? asphericalShapeProperty->storage() : nullptr;
+	ConstPropertyPtr orientationStorage = orientationProperty ? orientationProperty->storage() : nullptr;
 
 	// Get total number of particles.
 	int particleCount = particles->elementCount();
@@ -622,16 +615,19 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				particleColors(colors, colorProperty, typeProperty, selectionProperty, transparencyProperty);
 				std::vector<FloatType> radii(particleCount);
 				particleRadii(radii, radiusProperty, typeProperty);
+				ConstPropertyAccess<int> typeArray(typeProperty);
+				ConstPropertyAccess<Point3> positionArray(positionStorage);
+				ConstPropertyAccess<Quaternion> orientationArray(orientationStorage);
 				for(size_t i = 0; i < particleCount; i++) {
-					auto iter = boost::find(userShapeParticleTypes, typeProperty->get<int>(i));
+					auto iter = boost::find(userShapeParticleTypes, typeArray[i]);
 					if(iter == userShapeParticleTypes.end()) continue;
 					if(radii[i] <= 0) continue;
 					size_t typeIndex = iter - userShapeParticleTypes.begin();
 					AffineTransformation tm = AffineTransformation::scaling(radii[i]);
 					if(positionArray)
-						tm.translation() = positionArray->get<Point3>(i) - Point3::Origin();
+						tm.translation() = positionArray[i] - Point3::Origin();
 					if(orientationArray) {
-						Quaternion quat = orientationArray->get<Quaternion>(i);
+						Quaternion quat = orientationArray[i];
 						// Normalize quaternion.
 						FloatType c = sqrt(quat.dot(quat));
 						if(c <= FLOATTYPE_EPSILON)
@@ -668,7 +664,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				// instead of the built-in primitives.
 				hiddenParticlesMask.resize(typeProperty->size());
 				size_t index = 0;
-				for(int t : typeProperty->crange<int>()) {
+				for(int t : ConstPropertyAccess<int>(typeProperty)) {
 					if(boost::find(userShapeParticleTypes, t) != userShapeParticleTypes.cend()) {
 						hiddenParticlesMask.set(index);
 						visibleStandardParticles--;
@@ -699,26 +695,26 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			positionsUpToDate = true;
 
 			visCache.particlePrimitive->setSize(visibleStandardParticles);
-			if(positionArray) {
+			if(positionStorage) {
 				// Filter the property array to include only the visible particles.
 				if(visibleStandardParticles != particleCount)
-					positionArray = positionArray->filterCopy(hiddenParticlesMask);
+					positionStorage = positionStorage->filterCopy(hiddenParticlesMask);
 				// Fill in the position data.
-				visCache.particlePrimitive->setParticlePositions(positionArray->cdata<Point3>());
+				visCache.particlePrimitive->setParticlePositions(ConstPropertyAccess<Point3>(positionStorage).cbegin());
 			}
-			if(asphericalShapeArray) {
+			if(asphericalShapeStorage) {
 				// Filter the property array to include only the visible particles.
 				if(visibleStandardParticles != particleCount)
-					asphericalShapeArray = asphericalShapeArray->filterCopy(hiddenParticlesMask);
+					asphericalShapeStorage = asphericalShapeStorage->filterCopy(hiddenParticlesMask);
 				// Fill in aspherical shape data.
-				visCache.particlePrimitive->setParticleShapes(asphericalShapeArray->cdata<Vector3>());
+				visCache.particlePrimitive->setParticleShapes(ConstPropertyAccess<Vector3>(asphericalShapeStorage).cbegin());
 			}
-			if(orientationArray) {
+			if(orientationStorage) {
 				// Filter the property array to include only the visible particles.
 				if(visibleStandardParticles != particleCount)
-					orientationArray = orientationArray->filterCopy(hiddenParticlesMask);
+					orientationStorage = orientationStorage->filterCopy(hiddenParticlesMask);
 				// Fill in orientation data.
-				visCache.particlePrimitive->setParticleOrientations(orientationArray->cdata<Quaternion>());
+				visCache.particlePrimitive->setParticleOrientations(ConstPropertyAccess<Quaternion>(orientationStorage).cbegin());
 			}
 		}
 
@@ -726,20 +722,20 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 		if(!radiiUpToDate) {
 			radiiUpToDate = true;
 
-			if(radiusArray) {
+			if(radiusStorage) {
 				// Use per-particle radius information.
 				// Filter the property array to include only the visible particles.
-				PropertyPtr positiveRadiusArray;
+				PropertyPtr positiveRadiusStorage;
 				if(visibleStandardParticles != particleCount)
-					positiveRadiusArray = radiusArray->filterCopy(hiddenParticlesMask);
+					positiveRadiusStorage = radiusStorage->filterCopy(hiddenParticlesMask);
 				else
-					positiveRadiusArray = std::make_shared<PropertyStorage>(*radiusArray);
+					positiveRadiusStorage = std::make_shared<PropertyStorage>(*radiusStorage);
 				// Replace null entries in the per-particle radius array with the default radius.
 				FloatType defaultRadius = defaultParticleRadius();
-				for(FloatType& r : positiveRadiusArray->range<FloatType>())
+				for(FloatType& r : PropertyAccess<FloatType>(positiveRadiusStorage))
 					if(r <= 0) r = defaultRadius;
 				// Fill in radius data.
-				visCache.particlePrimitive->setParticleRadii(positiveRadiusArray->cdata<FloatType>());
+				visCache.particlePrimitive->setParticleRadii(ConstPropertyAccess<FloatType>(positiveRadiusStorage).cbegin());
 			}
 			else if(typeProperty) {
 				// Assign radii based on particle types.
@@ -752,7 +748,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					// Fill radius array.
 					auto c = particleRadii.begin();
 					size_t index = 0;
-					for(int t : typeProperty->crange<int>()) {
+					for(int t : ConstPropertyAccess<int>(typeProperty)) {
 						if(hiddenParticlesMask.empty() || !hiddenParticlesMask.test(index)) {
 							auto it = radiusMap.find(t);
 							// Set particle radius only if the type's radius is non-zero.
@@ -781,12 +777,12 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			colorsUpToDate = true;
 
 			// Fill in color data.
-			if(colorArray && !selectionProperty && !transparencyProperty) {
+			if(colorStorage && !selectionProperty && !transparencyProperty) {
 				// Filter the property array to include only the visible particles.
 				if(visibleStandardParticles != particleCount)
-					colorArray = colorArray->filterCopy(hiddenParticlesMask);
+					colorStorage = colorStorage->filterCopy(hiddenParticlesMask);
 				// Directly use particle colors.
-				visCache.particlePrimitive->setParticleColors(colorArray->cdata<Color>());
+				visCache.particlePrimitive->setParticleColors(ConstPropertyAccess<Color>(colorStorage).cbegin());
 			}
 			else {
 				std::vector<ColorA> colors(particleCount);
@@ -894,20 +890,23 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 
 			// Fill cylinder buffer.
 			visCache.cylinderPrimitive->startSetElements(particleCount);
+			ConstPropertyAccess<Point3> positionArray(positionStorage);
+			ConstPropertyAccess<Vector3> asphericalShapeArray(asphericalShapeStorage);
+			ConstPropertyAccess<Quaternion> orientationArray(orientationStorage);
 			for(int index = 0; index < particleCount; index++) {
-				const Point3& center = positionProperty->get<Point3>(index);
+				const Point3& center = positionArray[index];
 				FloatType radius, length;
-				if(asphericalShapeProperty) {
-					radius = std::abs(asphericalShapeProperty->get<Vector3>(index).x());
-					length = asphericalShapeProperty->get<Vector3>(index).z();
+				if(asphericalShapeArray) {
+					radius = std::abs(asphericalShapeArray[index].x());
+					length = asphericalShapeArray[index].z();
 				}
 				else {
 					radius = defaultParticleRadius();
 					length = radius * 2;
 				}
 				Vector3 dir = Vector3(0, 0, length);
-				if(orientationProperty) {
-					const Quaternion& q = orientationProperty->get<Quaternion>(index);
+				if(orientationArray) {
+					const Quaternion& q = orientationArray[index];
 					dir = q * dir;
 				}
 				Point3 p = center - (dir * FloatType(0.5));
@@ -995,14 +994,15 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 
 		// Check if the particle must be rendered using a custom shape.
 		if(typeProperty && particleIndex < typeProperty->size()) {
-			if(ParticleType* ptype = dynamic_object_cast<ParticleType>(typeProperty->elementType(typeProperty->get<int>(particleIndex)))) {
+			ConstPropertyAccess<int> typeArray(typeProperty);
+			if(ParticleType* ptype = dynamic_object_cast<ParticleType>(typeProperty->elementType(typeArray[particleIndex]))) {
 				if(ptype->shapeMesh())
 					return;	// Note: Highlighting of particles with user-defined shapes is not implemented yet.
 			}
 		}
 
 		// Determine position of selected particle.
-		Point3 pos = posProperty->get<Point3>(particleIndex);
+		Point3 pos = ConstPropertyAccess<Point3>(posProperty)[particleIndex];
 
 		// Determine radius of selected particle.
 		FloatType radius = particleRadius(particleIndex, radiusProperty, typeProperty);
@@ -1032,9 +1032,9 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			particleBuffer->setParticlePositions(&pos);
 			particleBuffer->setParticleRadius(radius);
 			if(shapeProperty)
-				particleBuffer->setParticleShapes(shapeProperty->cdata<Vector3>(particleIndex));
+				particleBuffer->setParticleShapes(ConstPropertyAccess<Vector3>(shapeProperty).cbegin() + particleIndex);
 			if(orientationProperty)
-				particleBuffer->setParticleOrientations(orientationProperty->cdata<Quaternion>(particleIndex));
+				particleBuffer->setParticleOrientations(ConstPropertyAccess<Quaternion>(orientationProperty).cbegin() + particleIndex);
 
 			// Prepare marker geometry buffer.
 			highlightParticleBuffer = renderer->createParticlePrimitive(primitiveShadingMode, renderQuality, primitiveParticleShape, false);
@@ -1043,18 +1043,19 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			highlightParticleBuffer->setParticlePositions(&pos);
 			highlightParticleBuffer->setParticleRadius(radius + renderer->viewport()->nonScalingSize(renderer->worldTransform() * pos) * FloatType(1e-1));
 			if(shapeProperty) {
-				Vector3 shape = shapeProperty->get<Vector3>(particleIndex);
+				Vector3 shape = ConstPropertyAccess<Vector3>(shapeProperty)[particleIndex];
 				shape += Vector3(renderer->viewport()->nonScalingSize(renderer->worldTransform() * pos) * FloatType(1e-1));
 				highlightParticleBuffer->setParticleShapes(&shape);
 			}
 			if(orientationProperty)
-				highlightParticleBuffer->setParticleOrientations(orientationProperty->cdata<Quaternion>(particleIndex));
+				highlightParticleBuffer->setParticleOrientations(ConstPropertyAccess<Quaternion>(orientationProperty).cbegin() + particleIndex);
 		}
 		else {
 			FloatType radius, length;
 			if(shapeProperty) {
-				radius = std::abs(shapeProperty->get<Vector3>(particleIndex).x());
-				length = shapeProperty->get<Vector3>(particleIndex).z();
+				Vector3 shape = ConstPropertyAccess<Vector3>(shapeProperty)[particleIndex];
+				radius = std::abs(shape.x());
+				length = shape.z();
 			}
 			else {
 				radius = defaultParticleRadius();
@@ -1062,7 +1063,7 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			}
 			Vector3 dir = Vector3(0, 0, length);
 			if(orientationProperty) {
-				const Quaternion& q = orientationProperty->get<Quaternion>(particleIndex);
+				Quaternion q = ConstPropertyAccess<Quaternion>(orientationProperty)[particleIndex];
 				dir = q * dir;
 			}
 			Point3 p = pos - (dir * FloatType(0.5));
@@ -1125,14 +1126,15 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 			return;
 
 		// Determine position of selected particle.
-		Point3 pos = posProperty->get<Point3>(particleIndex);
+		Point3 pos = ConstPropertyAccess<Point3>(posProperty)[particleIndex];
 
 		// Determine radius of selected particle.
 		FloatType radius = particleRadius(particleIndex, radiusProperty, typeProperty);
 		if(shapeProperty) {
-			radius = std::max(radius, shapeProperty->get<Vector3>(particleIndex).x());
-			radius = std::max(radius, shapeProperty->get<Vector3>(particleIndex).y());
-			radius = std::max(radius, shapeProperty->get<Vector3>(particleIndex).z());
+			Vector3 shape = ConstPropertyAccess<Vector3>(shapeProperty)[particleIndex];
+			radius = std::max(radius, shape.x());
+			radius = std::max(radius, shape.y());
+			radius = std::max(radius, shape.z());
 			radius *= 2;
 		}
 
@@ -1176,27 +1178,38 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 			if(property->size() <= particleIndex) continue;
 			if(property->type() == ParticlesObject::SelectionProperty) continue;
 			if(property->type() == ParticlesObject::ColorProperty) continue;
-			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 			if(!str.isEmpty()) str += QStringLiteral(" | ");
 			str += property->name();
 			str += QStringLiteral(" ");
-			for(size_t component = 0; component < property->componentCount(); component++) {
-				if(component != 0) str += QStringLiteral(", ");
-				if(property->dataType() == PropertyStorage::Int) {
-					str += QString::number(property->get<int>(particleIndex, component));
+			if(property->dataType() == PropertyStorage::Int) {
+				ConstPropertyAccess<int, true> data(property);
+				for(size_t component = 0; component < data.componentCount(); component++) {
+					if(component != 0) str += QStringLiteral(", ");
+					str += QString::number(data.get(particleIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(const ElementType* ptype = property->elementType(property->get<int>(particleIndex, component))) {
+						if(const ElementType* ptype = property->elementType(data.get(particleIndex, component))) {
 							if(!ptype->name().isEmpty())
 								str += QString(" (%1)").arg(ptype->name());
 						}
 					}
 				}
-				else if(property->dataType() == PropertyStorage::Int64) {
-					str += QString::number(property->get<qlonglong>(particleIndex, component));
+			}
+			else if(property->dataType() == PropertyStorage::Int64) {
+				ConstPropertyAccess<qlonglong, true> data(property);
+				for(size_t component = 0; component < property->componentCount(); component++) {
+					if(component != 0) str += QStringLiteral(", ");
+					str += QString::number(data.get(particleIndex, component));
 				}
-				else if(property->dataType() == PropertyStorage::Float) {
-					str += QString::number(property->get<FloatType>(particleIndex, component));
+			}
+			else if(property->dataType() == PropertyStorage::Float) {
+				ConstPropertyAccess<FloatType, true> data(property);
+				for(size_t component = 0; component < property->componentCount(); component++) {
+					if(component != 0) str += QStringLiteral(", ");
+					str += QString::number(data.get(particleIndex, component));
 				}
+			}
+			else {
+				str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : "unknown");
 			}
 		}
 	}

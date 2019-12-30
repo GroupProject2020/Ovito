@@ -22,6 +22,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/BondsVis.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
@@ -107,7 +108,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath[containerPath.size()-2])) {
 				const std::vector<ColorA>& colors = particles->inputBondColors();
 				OVITO_ASSERT(colors.size() == property->size());
-				boost::transform(colors, property->data<Color>(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
+				boost::transform(colors, PropertyAccess<Color>(property).begin(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 				initializeMemory = false;
 			}
 		}
@@ -115,7 +116,7 @@ PropertyPtr BondsObject::OOMetaClass::createStandardStorage(size_t bondsCount, i
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data<void>(), 0, property->size() * property->stride());
+		property->fillZero();
 	}
 
 	return property;
@@ -181,38 +182,38 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 	if(sourceParticles && destParticles) {
 
 		// Make sure the topology information is present.
-		if(const PropertyObject* sourceTopology = sourceBonds->getProperty(TopologyProperty)) {
-			if(const PropertyObject* destTopology = destBonds->getProperty(TopologyProperty)) {
+		if(ConstPropertyAccess<ParticleIndexPair> sourceTopology = sourceBonds->getProperty(TopologyProperty)) {
+			if(ConstPropertyAccess<ParticleIndexPair> destTopology = destBonds->getProperty(TopologyProperty)) {
 
 				// If unique IDs are available try to use them to look up the bond in the other data collection.
-				if(const PropertyObject* sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
-					if(const PropertyObject* destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
-						size_t index_a = sourceTopology->get<qlonglong>(elementIndex, 0);
-						size_t index_b = sourceTopology->get<qlonglong>(elementIndex, 1);
-						if(index_a < sourceIdentifiers->size() && index_b < sourceIdentifiers->size()) {
-							qlonglong id_a = sourceIdentifiers->get<qlonglong>(index_a);
-							qlonglong id_b = sourceIdentifiers->get<qlonglong>(index_b);
+				if(ConstPropertyAccess<qlonglong> sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
+					if(ConstPropertyAccess<qlonglong> destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
+						size_t index_a = sourceTopology[elementIndex][0];
+						size_t index_b = sourceTopology[elementIndex][1];
+						if(index_a < sourceIdentifiers.size() && index_b < sourceIdentifiers.size()) {
+							qlonglong id_a = sourceIdentifiers[index_a];
+							qlonglong id_b = sourceIdentifiers[index_b];
 
 							// Quick test if the bond storage order is the same.
-							if(elementIndex < destTopology->size()) {
-								size_t index2_a = destTopology->get<qlonglong>(elementIndex, 0);
-								size_t index2_b = destTopology->get<qlonglong>(elementIndex, 1);
-								if(index2_a < destIdentifiers->size() && index2_b < destIdentifiers->size()) {
-									if(destIdentifiers->get<qlonglong>(index2_a) == id_a && destIdentifiers->get<qlonglong>(index2_b) == id_b) {
+							if(elementIndex < destTopology.size()) {
+								size_t index2_a = destTopology[elementIndex][0];
+								size_t index2_b = destTopology[elementIndex][1];
+								if(index2_a < destIdentifiers.size() && index2_b < destIdentifiers.size()) {
+									if(destIdentifiers[index2_a] == id_a && destIdentifiers[index2_b] == id_b) {
 										return elementIndex;
 									}
 								}
 							}
 
 							// Determine the indices of the two particles connected by the bond.
-							size_t index2_a = boost::find(destIdentifiers->crange<qlonglong>(), id_a) - destIdentifiers->cdata<qlonglong>();
-							size_t index2_b = boost::find(destIdentifiers->crange<qlonglong>(), id_b) - destIdentifiers->cdata<qlonglong>();
-							if(index2_a < destIdentifiers->size() && index2_b < destIdentifiers->size()) {
+							size_t index2_a = boost::find(destIdentifiers, id_a) - destIdentifiers.cbegin();
+							size_t index2_b = boost::find(destIdentifiers, id_b) - destIdentifiers.cbegin();
+							if(index2_a < destIdentifiers.size() && index2_b < destIdentifiers.size()) {
 								// Go through the whole bonds list to see if there is a bond connecting the particles with
 								// the same IDs.
-								for(auto bond = destTopology->cdata<qlonglong>(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
+								for(const auto& bond : destTopology) {
 									if((bond[0] == index2_a && bond[1] == index2_b) || (bond[0] == index2_b && bond[1] == index2_a)) {
-										return (bond - destTopology->cdata<qlonglong>()) / 2;
+										return (&bond - destTopology.cbegin());
 									}
 								}
 							}
@@ -224,32 +225,32 @@ size_t BondsObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath& so
 				}
 
 				// Try to find matching bond based on particle indices alone.
-				if(const PropertyObject* sourcePos = sourceParticles->getProperty(ParticlesObject::PositionProperty)) {
-					if(const PropertyObject* destPos = destParticles->getProperty(ParticlesObject::PositionProperty)) {
-						size_t index_a = sourceTopology->get<qlonglong>(elementIndex, 0);
-						size_t index_b = sourceTopology->get<qlonglong>(elementIndex, 1);
-						if(index_a < sourcePos->size() && index_b < sourcePos->size()) {
+				if(ConstPropertyAccess<Point3> sourcePos = sourceParticles->getProperty(ParticlesObject::PositionProperty)) {
+					if(ConstPropertyAccess<Point3> destPos = destParticles->getProperty(ParticlesObject::PositionProperty)) {
+						size_t index_a = sourceTopology[elementIndex][0];
+						size_t index_b = sourceTopology[elementIndex][1];
+						if(index_a < sourcePos.size() && index_b < sourcePos.size()) {
 
 							// Quick check if number of particles and bonds didn't change.
-							if(sourcePos->size() == destPos->size() && sourceTopology->size() == destTopology->size()) {
-								size_t index2_a = destTopology->get<qlonglong>(elementIndex, 0);
-								size_t index2_b = destTopology->get<qlonglong>(elementIndex, 1);
+							if(sourcePos.size() == destPos.size() && sourceTopology.size() == destTopology.size()) {
+								size_t index2_a = destTopology[elementIndex][0];
+								size_t index2_b = destTopology[elementIndex][1];
 								if(index_a == index2_a && index_b == index2_b) {
 									return elementIndex;
 								}
 							}
 
 							// Find matching bond by means of particle positions.
-							const Point3& pos_a = sourcePos->get<Point3>(index_a);
-							const Point3& pos_b = sourcePos->get<Point3>(index_b);
-							size_t index2_a = boost::find(destPos->crange<Point3>(), pos_a) - destPos->cdata<Point3>();
-							size_t index2_b = boost::find(destPos->crange<Point3>(), pos_b) - destPos->cdata<Point3>();
-							if(index2_a < destPos->size() && index2_b < destPos->size()) {
+							const Point3& pos_a = sourcePos[index_a];
+							const Point3& pos_b = sourcePos[index_b];
+							size_t index2_a = boost::find(destPos, pos_a) - destPos.cbegin();
+							size_t index2_b = boost::find(destPos, pos_b) - destPos.cbegin();
+							if(index2_a < destPos.size() && index2_b < destPos.size()) {
 								// Go through the whole bonds list to see if there is a bond connecting the particles with
 								// the same positions.
-								for(auto bond = destTopology->cdata<qlonglong>(), bond_end = bond + destTopology->size()*2; bond != bond_end; bond += 2) {
+								for(const auto& bond : destTopology) {
 									if((bond[0] == index2_a && bond[1] == index2_b) || (bond[0] == index2_b && bond[1] == index2_a)) {
-										return (bond - destTopology->cdata<qlonglong>()) / 2;
+										return (&bond - destTopology.cbegin());
 									}
 								}
 							}
@@ -274,22 +275,22 @@ boost::dynamic_bitset<> BondsObject::OOMetaClass::viewportFenceSelection(const Q
 	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectPath.size() >= 2 ? objectPath[objectPath.size()-2] : nullptr);
 
 	if(particles) {
-		if(const PropertyObject* topologyProperty = bonds->getProperty(BondsObject::TopologyProperty)) {
-			if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
+		if(ConstPropertyAccess<ParticleIndexPair> topologyProperty = bonds->getProperty(BondsObject::TopologyProperty)) {
+			if(ConstPropertyAccess<Point3> posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
 
 				if(!bonds->visElement() || bonds->visElement()->isEnabled() == false)
 					node->throwException(tr("Cannot select bonds while the corresponding visual element is disabled. Please enable the display of bonds first."));
 
-				boost::dynamic_bitset<> fullSelection(topologyProperty->size());
+				boost::dynamic_bitset<> fullSelection(topologyProperty.size());
 				QMutex mutex;
-				parallelForChunks(topologyProperty->size(), [topo = topologyProperty->cdata<qlonglong>(), posProperty, &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
+				parallelForChunks(topologyProperty.size(), [topologyProperty, posProperty, &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
 					boost::dynamic_bitset<> selection(fullSelection.size());
-					auto t = topo + startIndex * 2;
-					for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++, t += 2) {
+					for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++) {
+						const ParticleIndexPair& t = topologyProperty[index];
 						int insideCount = 0;
-						for(int i = 0; i < 2; i++) {
-							if(t[i] >= posProperty->size()) continue;
-							const Point3& p = posProperty->get<Point3>(t[i]);
+						for(size_t i = 0; i < 2; i++) {
+							if(t[i] >= posProperty.size()) continue;
+							const Point3& p = posProperty[t[i]];
 
 							// Project particle center to screen coordinates.
 							Point3 projPos = projectionTM * p;

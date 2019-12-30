@@ -25,6 +25,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/series/DataSeriesObject.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
@@ -131,6 +132,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 
 	// Look up the property container object.
 	const PropertyContainer* container = state.expectLeafObject(subject());
+	container->verifyIntegrity();
 
 	// Get the input property.
 	const PropertyObject* property = sourceProperty().findInContainer(container);
@@ -143,19 +145,18 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 	size_t vecComponentCount = property->componentCount();
 
 	// Get the input selection if filtering was enabled by the user.
-	ConstPropertyPtr inputSelection;
-	if(onlySelectedElements()) {
-		inputSelection = container->expectProperty(PropertyStorage::GenericSelectionProperty)->storage();
-		OVITO_ASSERT(inputSelection->size() == property->size());
+	ConstPropertyAccess<int> inputSelection;
+	if(onlySelectedElements() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)) {
+		inputSelection = container->expectProperty(PropertyStorage::GenericSelectionProperty);
 	}
 
 	// Create storage for output selection.
-	PropertyPtr outputSelection;
-	if(selectInRange()) {
+	PropertyAccess<int> outputSelection;
+	if(selectInRange() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)) {
 		// First make sure we can safely modify the property container.
 		PropertyContainer* mutableContainer = state.expectMutableLeafObject(subject());
 		// Add the selection property to the output container.
-		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
+		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty);
 	}
 
 	// Create selection property for output.
@@ -168,33 +169,32 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 	FloatType intervalEnd = xAxisRangeEnd();
 
 	// Allocate output data array.
-	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
-	auto histogramData = histogram->data<qlonglong>();
-	int histogramSizeMin1 = histogram->size() - 1;
+	PropertyAccessAndRef<qlonglong> histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
+	qlonglong* histogramData = histogram.begin();
+	int histogramSizeMin1 = histogram.size() - 1;
 
 	if(property->size() > 0) {
 		if(property->dataType() == PropertyStorage::Float) {
-			auto v_begin = property->cdata<FloatType>(0, vecComponent);
-			auto v_end = v_begin + (property->size() * vecComponentCount);
+			ConstPropertyAccess<FloatType,true> array(property);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
 				intervalEnd = std::numeric_limits<FloatType>::lowest();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(FloatType v : array.componentRange(vecComponent)) {
 					if(sel && !*sel++) continue;
-					if(*v < intervalStart) intervalStart = *v;
-					if(*v > intervalEnd) intervalEnd = *v;
+					if(v < intervalStart) intervalStart = v;
+					if(v > intervalEnd) intervalEnd = v;
 				}
 			}
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
-				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+				FloatType binSize = (intervalEnd - intervalStart) / histogram.size();
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(FloatType v : array.componentRange(vecComponent)) {
 					if(sel && !*sel++) continue;
-					if(*v < intervalStart || *v > intervalEnd) continue;
-					int binIndex = (*v - intervalStart) / binSize;
+					if(v < intervalStart || v > intervalEnd) continue;
+					int binIndex = (v - intervalStart) / binSize;
 					histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 				}
 			}
@@ -202,43 +202,42 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 				if(!inputSelection)
 					histogramData[0] = property->size();
 				else
-					histogramData[0] = property->size() - boost::count(inputSelection->crange<int>(), 0);
+					histogramData[0] = property->size() - boost::count(inputSelection, 0);
 			}
 			if(outputSelection) {
-				OVITO_ASSERT(outputSelection->size() == property->size());
-				int* s = outputSelection->data<int>();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
-					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
-						*s = 1;
+				OVITO_ASSERT(outputSelection.size() == property->size());
+				int* s = outputSelection.begin();
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(FloatType v : array.componentRange(vecComponent)) {
+					if((!sel || *sel++) && v >= selectionRangeStart && v <= selectionRangeEnd) {
+						*s++ = 1;
 						numSelected++;
 					}
-					else *s = 0;
+					else *s++ = 0;
 				}
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Int) {
-			auto v_begin = property->cdata<int>(0, vecComponent);
-			auto v_end = v_begin + (property->size() * vecComponentCount);
+			ConstPropertyAccess<int,true> array(property);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
 				intervalEnd = std::numeric_limits<FloatType>::lowest();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(int v : array.componentRange(vecComponent)) {
 					if(sel && !*sel++) continue;
-					if(*v < intervalStart) intervalStart = *v;
-					if(*v > intervalEnd) intervalEnd = *v;
+					if(v < intervalStart) intervalStart = v;
+					if(v > intervalEnd) intervalEnd = v;
 				}
 			}
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
-				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+				FloatType binSize = (intervalEnd - intervalStart) / histogram.size();
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(int v : array.componentRange(vecComponent)) {
 					if(sel && !*sel++) continue;
-					if(*v < intervalStart || *v > intervalEnd) continue;
-					int binIndex = ((FloatType)*v - intervalStart) / binSize;
+					if(v < intervalStart || v > intervalEnd) continue;
+					int binIndex = ((FloatType)v - intervalStart) / binSize;
 					histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 				}
 			}
@@ -246,43 +245,42 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 				if(!inputSelection)
 					histogramData[0] = property->size();
 				else
-					histogramData[0] = property->size() - boost::count(inputSelection->crange<int>(), 0);
+					histogramData[0] = property->size() - boost::count(inputSelection, 0);
 			}
 			if(outputSelection) {
-				OVITO_ASSERT(outputSelection->size() == property->size());
-				int* s = outputSelection->data<int>();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
-					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
-						*s = 1;
+				OVITO_ASSERT(outputSelection.size() == property->size());
+				int* s = outputSelection.begin();
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(int v : array.componentRange(vecComponent)) {
+					if((!sel || *sel++) && v >= selectionRangeStart && v <= selectionRangeEnd) {
+						*s++ = 1;
 						numSelected++;
 					}
-					else *s = 0;
+					else *s++ = 0;
 				}
 			}
 		}
 		else if(property->dataType() == PropertyStorage::Int64) {
-			auto v_begin = property->cdata<qlonglong>(0, vecComponent);
-			auto v_end = v_begin + (property->size() * vecComponentCount);
+			ConstPropertyAccess<qlonglong,true> array(property);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
 				intervalEnd = std::numeric_limits<FloatType>::lowest();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(qlonglong v : array.componentRange(vecComponent)) {
 					if(sel && !*sel++) continue;
-					if(*v < intervalStart) intervalStart = *v;
-					if(*v > intervalEnd) intervalEnd = *v;
+					if(v < intervalStart) intervalStart = v;
+					if(v > intervalEnd) intervalEnd = v;
 				}
 			}
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
-				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+				FloatType binSize = (intervalEnd - intervalStart) / histogram.size();
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(qlonglong v : array.componentRange(vecComponent)) {
 					if(sel && !*sel++) continue;
-					if(*v < intervalStart || *v > intervalEnd) continue;
-					int binIndex = ((FloatType)*v - intervalStart) / binSize;
+					if(v < intervalStart || v > intervalEnd) continue;
+					int binIndex = ((FloatType)v - intervalStart) / binSize;
 					histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 				}
 			}
@@ -290,18 +288,18 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 				if(!inputSelection)
 					histogramData[0] = property->size();
 				else
-					histogramData[0] = property->size() - boost::count(inputSelection->crange<int>(), 0);
+					histogramData[0] = property->size() - boost::count(inputSelection, 0);
 			}
 			if(outputSelection) {
-				OVITO_ASSERT(outputSelection->size() == property->size());
-				int* s = outputSelection->data<int>();
-				const int* sel = inputSelection ? inputSelection->cdata<int>() : nullptr;
-				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
-					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
-						*s = 1;
+				OVITO_ASSERT(outputSelection.size() == property->size());
+				int* s = outputSelection.begin();
+				const int* sel = inputSelection ? inputSelection.cbegin() : nullptr;
+				for(qlonglong v : array.componentRange(vecComponent)) {
+					if((!sel || *sel++) && v >= selectionRangeStart && v <= selectionRangeEnd) {
+						*s++ = 1;
 						numSelected++;
 					}
-					else *s = 0;
+					else *s++ = 0;
 				}
 			}
 		}
@@ -314,7 +312,10 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 	}
 
 	// Output a data series object with the histogram data.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("histogram[%1]").arg(sourceProperty().nameWithComponent()), modApp, DataSeriesObject::Histogram, sourceProperty().nameWithComponent(), std::move(histogram));
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(
+		QStringLiteral("histogram[%1]").arg(sourceProperty().nameWithComponent()), 
+		modApp, DataSeriesObject::Histogram, sourceProperty().nameWithComponent(), 
+		histogram.takeStorage());
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);
@@ -324,7 +325,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 		statusMessage = tr("%1 %2 selected (%3%)")
 				.arg(numSelected)
 				.arg(container->getOOMetaClass().elementDescriptionName())
-				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection->size()), 0, 'f', 1);
+				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection.size()), 0, 'f', 1);
 	}
 	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 }

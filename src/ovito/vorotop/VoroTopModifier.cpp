@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //  Copyright 2017 Emanuel A. Lazar
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -138,7 +138,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::emitResults(TimePoint time, Modifie
 /******************************************************************************
  * Processes a single Voronoi cell.
  ******************************************************************************/
-void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neighbor& vcell, size_t particleIndex, PropertyStorage& structures, QMutex* mutex)
+int VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neighbor& vcell)
 {
     const int max_epf = 256;    // MAXIMUM EDGES PER FACE
     const int max_epc = 512;    // MAXIMUM EDGES PER CELL
@@ -155,8 +155,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neigh
        vertex_count >= max_vpc                  ||
        edge_count   >= max_epc)
     {
-        structures.set<int>(particleIndex, 0); // structureType OTHER
-        return;
+        return 0; // structureType OTHER
     }
 
     int face_count         = 0;
@@ -358,8 +357,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neigh
 
     canonical_code.push_back(1);
 
-    int structureType = filter()->findType(canonical_code);
-    structures.set<int>(particleIndex, structureType);
+    return filter()->findType(canonical_code);
 }
 
 /******************************************************************************
@@ -387,6 +385,10 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
 
     task()->setProgressText(tr("Performing VoroTop analysis"));
 
+    ConstPropertyAccess<Point3> positionsArray(positions());
+    ConstPropertyAccess<int> selectionArray(selection());
+    PropertyAccess<int> structuresArray(structures());
+
     // Decide whether to use Voro++ container class or our own implementation.
     if(cell().isAxisAligned()) {
         // Use Voro++ container.
@@ -413,11 +415,11 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             size_t count = 0;
             for(size_t index = 0; index < positions()->size(); index++) {
                 // Skip unselected particles (if requested).
-                if(selection() && selection()->get<int>(index) == 0) {
-                    structures()->set<int>(index, 0);
+                if(selectionArray && selectionArray[index] == 0) {
+                    structuresArray[index] = 0;
                     continue;
                 }
-                const Point3& p = positions()->get<Point3>(index);
+                const Point3& p = positionsArray[index];
                 voroContainer.put(index, p.x(), p.y(), p.z());
                 count++;
             }
@@ -433,7 +435,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         return;
                     if(!voroContainer.compute_cell(v,cl))
                         continue;
-                    processCell(v, cl.pid(), *structures(), nullptr);
+                    structuresArray[cl.pid()] = processCell(v);
                     count--;
                 }
                 while(cl.inc());
@@ -448,12 +450,12 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             // Insert particles into Voro++ container.
             size_t count = 0;
             for(size_t index = 0; index < positions()->size(); index++) {
-                structures()->set<int>(index, 0);
+                structuresArray[index] = 0;
                 // Skip unselected particles (if requested).
-                if(selection() && selection()->get<int>(index) == 0) {
+                if(selectionArray && selectionArray[index] == 0) {
                     continue;
                 }
-                const Point3& p = positions()->get<Point3>(index);
+                const Point3& p = positionsArray[index];
                 voroContainer.put(index, p.x(), p.y(), p.z(), _radii[index]);
                 count++;
             }
@@ -469,7 +471,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         return;
                     if(!voroContainer.compute_cell(v,cl))
                         continue;
-                    processCell(v, cl.pid(), *structures(), nullptr);
+                    structuresArray[cl.pid()] = processCell(v);
                     count--;
                 }
                 while(cl.inc());
@@ -481,7 +483,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
     else {
         // Prepare the nearest neighbor list generator.
         NearestNeighborFinder nearestNeighborFinder;
-        if(!nearestNeighborFinder.prepare(*positions(), cell(), selection().get(), task().get()))
+        if(!nearestNeighborFinder.prepare(positions(), cell(), selection(), task().get()))
             return;
 
         // Squared particle radii (input was just radii).
@@ -503,18 +505,14 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
         Point3 corner1 = Point3::Origin() + cell().matrix().column(3);
         Point3 corner2 = corner1 + cell().matrix().column(0) + cell().matrix().column(1) + cell().matrix().column(2);
 
-        QMutex mutex;
-
         // Perform analysis, particle-wise parallel.
-        parallelFor(positions()->size(), *task(),
-                    [&nearestNeighborFinder, this, boxDiameter,
-                     planeNormals, corner1, corner2, &mutex](size_t index) {
+        parallelFor(positions()->size(), *task(), [&](size_t index) {
 
                         // Reset structure type.
-                        structures()->set<int>(index, 0);
+                        structuresArray[index] = 0;
 
                         // Skip unselected particles (if requested).
-                        if(selection() && selection()->get<int>(index) == 0)
+                        if(selectionArray && selectionArray[index] == 0)
                             return;
 
                         // Build Voronoi cell.
@@ -528,10 +526,10 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         for(size_t dim = 0; dim < 3; dim++) {
                             if(!cell().pbcFlags()[dim]) {
                                 double r;
-                                r = 2 * planeNormals[dim].dot(corner2 - positions()->get<Point3>(index));
+                                r = 2 * planeNormals[dim].dot(corner2 - positionsArray[index]);
                                 if(r <= 0) skipParticle = true;
                                 v.nplane(planeNormals[dim].x() * r, planeNormals[dim].y() * r, planeNormals[dim].z() * r, r*r, -1);
-                                r = 2 * planeNormals[dim].dot(positions()->get<Point3>(index) - corner1);
+                                r = 2 * planeNormals[dim].dot(positionsArray[index] - corner1);
                                 if(r <= 0) skipParticle = true;
                                 v.nplane(-planeNormals[dim].x() * r, -planeNormals[dim].y() * r, -planeNormals[dim].z() * r, r*r, -1);
                             }
@@ -542,9 +540,9 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
 
                         // This function will be called for every neighbor particle.
                         int nvisits = 0;
-                        auto visitFunc = [this, &v, &nvisits, index](const NearestNeighborFinder::Neighbor& n, FloatType& mrs) {
+                        auto visitFunc = [&](const NearestNeighborFinder::Neighbor& n, FloatType& mrs) {
                             // Skip unselected particles (if requested).
-                            OVITO_ASSERT(!selection() || selection()->get<int>(n.index));
+                            OVITO_ASSERT(!selectionArray || selectionArray[n.index]);
                             FloatType rs = n.distanceSq;
                             if(!_radii.empty())
                                 rs += _radii[index] - _radii[n.index];
@@ -559,7 +557,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         // Visit all neighbors of the current particles.
                         nearestNeighborFinder.visitNeighbors(nearestNeighborFinder.particlePos(index), visitFunc);
 
-                        processCell(v, index, *structures(), &mutex);
+                        structuresArray[index] = processCell(v);
                     });
     }
 }

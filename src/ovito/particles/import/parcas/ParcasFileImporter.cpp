@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -197,7 +197,7 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 	frameData->attributes().insert(QStringLiteral("Time"), QVariant::fromValue(simu_time));
 
 	// Create particle properties for extra fields.
-	QVector<PropertyStorage*> properties;
+	std::vector<PropertyAccess<FloatType>> extraProperties;
     for(int i = 0; i < fields; i++) {
     	char field_name[5], field_unit[5];
     	stream.read(field_name, 4);
@@ -219,7 +219,7 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 		else
 			property = std::make_shared<PropertyStorage>(natoms, PropertyStorage::Float, 1, 0, propertyName, true);
 		frameData->addParticleProperty(property);
-		properties.push_back(property.get());
+		extraProperties.push_back(PropertyAccess<FloatType>(property));
     }
 
     // Set up simulation cell and periodic boundary flags.
@@ -235,15 +235,12 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 
 	// Create the required standard properties.
     size_t numAtoms = (size_t)natoms;
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, true);
-	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, true);
-	frameData->addParticleProperty(typeProperty);
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-	PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, true);
-	frameData->addParticleProperty(identifierProperty);
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, false));
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, false));
+	PropertyAccess<qlonglong> identifierProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, false));
 
 	// Create atom types in OVITO.
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
     std::vector<std::array<char,5>> types(maxtype - mintype + 1);
     for(int i = mintype; i <= maxtype; i++) {
     	stream.read(types[i - mintype].data(), 4);
@@ -266,15 +263,15 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 	for(size_t i = 0; i < numAtoms; i++) {
 
 		// Parse atom id.
-		identifierProperty->set<qlonglong>(i, stream.get_int64());
+		identifierProperty[i] = stream.get_int64();
 
 		// Parse atom type.
 		int32_t atomType = std::abs(stream.get_int32());
 		OVITO_ASSERT(atomType >= mintype && atomType <= maxtype);
-		typeProperty->set<int>(i, atomType);
+		typeProperty[i] = atomType;
 
 		// Parse atom coordinates.
-		Point3 pos;
+		Point3& pos = posProperty[i];
 		if(realsize == 4) {
 			for(int k = 0; k < 3; k++)
 				pos[k] = (FloatType)stream.get_real32();
@@ -283,16 +280,15 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 			for(int k = 0; k < 3; k++)
 				pos[k] = (FloatType)stream.get_real64();
 		}
-		posProperty->set<Point3>(i, pos);
 
 		// Parse extra fields.
 		if(realsize == 4) {
-			for(PropertyStorage* prop : properties)
-				prop->set<FloatType>(i, (FloatType)stream.get_real32());
+			for(PropertyAccess<FloatType>& prop : extraProperties)
+				prop[i] = (FloatType)stream.get_real32();
 		}
 		else {
-			for(PropertyStorage* prop : properties)
-				prop->set<FloatType>(i, (FloatType)stream.get_real64());
+			for(PropertyAccess<FloatType>& prop : extraProperties)
+				prop[i] = (FloatType)stream.get_real64();
 		}
 
 		// Update progress indicator.

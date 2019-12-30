@@ -23,8 +23,9 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/BondsObject.h>
-#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/io/FileSource.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/data/AttributeDataObject.h>
@@ -65,7 +66,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 
 	// Get the trajectory data source.
 	if(!trajectorySource())
-		throwException(tr("No trajectory data has been provided."));
+		throwException(tr("No trajectory data source has been set."));
 
 	// Get the trajectory frame.
 	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(request);
@@ -96,7 +97,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 		const ParticlesObject* trajectoryParticles = trajState.getObject<ParticlesObject>();
 		if(!trajectoryParticles)
 			modApp->throwException(tr("Trajectory dataset does not contain any particle positions."));
-		const PropertyObject* trajectoryPosProperty = trajectoryParticles->expectProperty(ParticlesObject::PositionProperty);
+		ConstPropertyAccess<Point3> trajectoryPosProperty = trajectoryParticles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Get the positions from the topology dataset.
 		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
@@ -104,28 +105,26 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 
 		// Build particle-to-particle index map.
 		std::vector<size_t> indexToIndexMap(particles->elementCount());
-		const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
-		const PropertyObject* trajIdentifierProperty = trajectoryParticles->getProperty(ParticlesObject::IdentifierProperty);
+		ConstPropertyAccess<qlonglong> identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
+		ConstPropertyAccess<qlonglong> trajIdentifierProperty = trajectoryParticles->getProperty(ParticlesObject::IdentifierProperty);
 		if(identifierProperty && trajIdentifierProperty) {
 
 			// Build map of particle identifiers in trajectory dataset.
 			std::map<qlonglong, size_t> refMap;
 			size_t index = 0;
-			auto id = trajIdentifierProperty->cdata<qlonglong>();
-			auto id_end = id + trajIdentifierProperty->size();
-			for(; id != id_end; ++id, ++index) {
-				if(refMap.insert(std::make_pair(*id, index)).second == false)
+			for(qlonglong id : trajIdentifierProperty) {
+				if(refMap.insert(std::make_pair(id, index++)).second == false)
 					modApp->throwException(tr("Particles with duplicate identifiers detected in trajectory data."));
 			}
 
 			// Check for duplicate identifiers in topology dataset.
-			std::vector<size_t> idSet(identifierProperty->cdata<qlonglong>(), identifierProperty->cdata<qlonglong>() + identifierProperty->size());
-			std::sort(idSet.begin(), idSet.end());
-			if(std::adjacent_find(idSet.begin(), idSet.end()) != idSet.end())
+			std::vector<size_t> idSet(identifierProperty.cbegin(), identifierProperty.cend());
+			boost::sort(idSet);
+			if(boost::adjacent_find(idSet) != idSet.cend())
 				modApp->throwException(tr("Particles with duplicate identifiers detected in topology dataset."));
 
 			// Build index map.
-			id = identifierProperty->cdata<qlonglong>();
+			const qlonglong* id = identifierProperty.cbegin();
 			for(auto& mappedIndex : indexToIndexMap) {
 				auto iter = refMap.find(*id);
 				if(iter == refMap.end())
@@ -136,7 +135,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 		}
 		else {
 			// Topology dataset and trajectory data must contain the same number of particles.
-			if(posProperty->size() != trajectoryPosProperty->size()) {
+			if(posProperty->size() != trajectoryPosProperty.size()) {
 				modApp->throwException(tr("Cannot apply trajectories to current particle dataset. Numbers of particles in the trajectory file and in the topology file do not match."));
 			}
 
@@ -180,26 +179,26 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 			// stored in wrapped coordinates, then it becomes necessary to fix bonds using the minimum image convention.
 			std::array<bool, 3> pbc = topologyCell->pbcFlags();
 			if((pbc[0] || pbc[1] || pbc[2]) && particles->bonds() && std::abs(simCell.determinant()) > FLOATTYPE_EPSILON) {
-				const PropertyObject* outputPosProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+				ConstPropertyAccess<Point3> outputPosProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 				AffineTransformation inverseSimCell = simCell.inverse();
 
-				if(ConstPropertyPtr topologyProperty = particles->bonds()->getPropertyStorage(BondsObject::TopologyProperty)) {
-					BondsObject* bonds = particles->makeBondsMutable();
-					PropertyObject* periodicImageProperty = bonds->createProperty(BondsObject::PeriodicImageProperty, true);
+				BondsObject* bonds = particles->makeBondsMutable();
+				if(ConstPropertyAccess<ParticleIndexPair> topologyProperty = bonds->getProperty(BondsObject::TopologyProperty)) {
+					PropertyAccess<Vector3I> periodicImageProperty = bonds->createProperty(BondsObject::PeriodicImageProperty, true);
 
 					// Wrap bonds crossing a periodic boundary by resetting their PBC shift vectors.
 					SimulationCell cell = trajectoryCell->data();
-					for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
-						size_t particleIndex1 = topologyProperty->get<qlonglong>(bondIndex, 0);
-						size_t particleIndex2 = topologyProperty->get<qlonglong>(bondIndex, 1);
-						if(particleIndex1 >= outputPosProperty->size() || particleIndex2 >= outputPosProperty->size())
+					for(size_t bondIndex = 0; bondIndex < topologyProperty.size(); bondIndex++) {
+						size_t particleIndex1 = topologyProperty[bondIndex][0];
+						size_t particleIndex2 = topologyProperty[bondIndex][1];
+						if(particleIndex1 >= outputPosProperty.size() || particleIndex2 >= outputPosProperty.size())
 							continue;
-						const Point3& p1 = outputPosProperty->get<Point3>(particleIndex1);
-						const Point3& p2 = outputPosProperty->get<Point3>(particleIndex2);
+						const Point3& p1 = outputPosProperty[particleIndex1];
+						const Point3& p2 = outputPosProperty[particleIndex2];
 						Vector3 delta = p1 - p2;
 						for(int dim = 0; dim < 3; dim++) {
 							if(pbc[dim]) {
-								periodicImageProperty->set<int>(bondIndex, dim, (int)floor(inverseSimCell.prodrow(delta, dim) + FloatType(0.5)));
+								periodicImageProperty[bondIndex][dim] = (int)std::floor(inverseSimCell.prodrow(delta, dim) + FloatType(0.5));
 							}
 						}
 					}

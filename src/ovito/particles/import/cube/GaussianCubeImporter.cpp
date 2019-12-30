@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -148,14 +148,12 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 	frameData->simulationCell().setMatrix(cellMatrix);
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, false);
-	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, false);
-	frameData->addParticleProperty(typeProperty);
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, false));
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, false));
 
 	// Read atomic coordinates.
-	Point3* p = posProperty->data<Point3>();
-	int* a = typeProperty->data<int>();
+	Point3* p = posProperty.begin();
+	int* a = typeProperty.begin();
 	setProgressMaximum(numAtoms + gridSize[0]*gridSize[1]*gridSize[2]);
 	for(unsigned long long i = 0; i < numAtoms; i++, ++p, ++a) {
 		if(!setProgressValueIntermittent(i)) return {};
@@ -170,7 +168,7 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 
 	// Translate atomic numbers into element names.
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-	for(int a : typeProperty->crange<int>()) {
+	for(int a : typeProperty) {
 		if(a >= 0 && a < sizeof(chemical_symbols)/sizeof(chemical_symbols[0]))
 			typeList->addTypeId(a, chemical_symbols[a]);
 		else
@@ -212,15 +210,14 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 		// No field table present. Assume file contains a single field property.
 		nfields = 1;
 	}
-	PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(gridSize[0]*gridSize[1]*gridSize[2], PropertyStorage::Float, nfields, 0, QStringLiteral("Property"), false);
-	fieldQuantity->setComponentNames(std::move(componentNames));
+	PropertyAccess<FloatType, true> fieldQuantity = frameData->addVoxelProperty(std::make_shared<PropertyStorage>(gridSize[0]*gridSize[1]*gridSize[2], PropertyStorage::Float, nfields, 0, QStringLiteral("Property"), false, 0, std::move(componentNames)));
 
 	// Parse voxel data.
 	frameData->setVoxelGridShape({gridSize[0], gridSize[1], gridSize[2]});
 	for(size_t x = 0; x < gridSize[0]; x++) {
 		for(size_t y = 0; y < gridSize[1]; y++) {
 			for(size_t z = 0; z < gridSize[2]; z++) {
-				for(size_t compnt = 0; compnt < fieldQuantity->componentCount(); compnt++) {
+				for(size_t compnt = 0; compnt < fieldQuantity.componentCount(); compnt++) {
 					const char* token;
 					for(;;) {
 						while(*s == ' ' || *s == '\t') ++s;
@@ -232,7 +229,7 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 					FloatType value;
 					if(!parseFloatType(token, s, value))
 						throw Exception(tr("Invalid value in line %1 of Cube file: \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
-					fieldQuantity->set<FloatType>(z * gridSize[0] * gridSize[1] + y * gridSize[0] + x, compnt, value);
+					fieldQuantity.set(z * gridSize[0] * gridSize[1] + y * gridSize[0] + x, compnt, value);
 					if(*s != '\0')
 						s++;
 				}
@@ -241,7 +238,6 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 			}
 		}
 	}
-	frameData->addVoxelProperty(fieldQuantity);
 
 	frameData->setStatus(tr("%1 atoms\n%2 x %3 x %4 voxel grid").arg(numAtoms).arg(gridSize[0]).arg(gridSize[1]).arg(gridSize[2]));
 

@@ -22,6 +22,7 @@
 
 #include <ovito/stdmod/StdMod.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/data/AttributeDataObject.h>
 #include <ovito/core/dataset/io/FileSource.h>
@@ -198,8 +199,9 @@ void CombineDatasetsModifierDelegate::mergeElementTypes(PropertyObject* property
 	}
 	// Remap particle property values.
 	if(typeMap.empty() == false) {
-		int* p = property1->data<int>() + (property1->size() - property2->size());
-		int* p_end = property1->data<int>() + property1->size();
+		PropertyAccess<int> selectionArray1 = property1;
+		auto p = selectionArray1.begin() + (property1->size() - property2->size());
+		auto p_end = selectionArray1.end();
 		for(; p != p_end; ++p) {
 			auto iter = typeMap.find(*p);
 			if(iter != typeMap.end()) *p = iter->second;

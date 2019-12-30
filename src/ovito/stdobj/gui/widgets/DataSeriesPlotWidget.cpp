@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdobj/gui/StdObjGui.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "DataSeriesPlotWidget.h"
 
 #include <qwt/qwt_plot.h>
@@ -255,18 +256,12 @@ void DataSeriesPlotWidget::updateDataPlot()
 		}
 		QVector<double> ycoords;
 		QStringList labels;
+		ConstPropertyAccess<void,true> yarray(y);
 		for(int i = 0; i < y->size(); i++) {
 			ElementType* type = y->elementType(i);
 			if(!type && x) type = x->elementType(i);
 			if(type) {
-				if(y->dataType() == PropertyStorage::Int)
-					ycoords.push_back(y->get<int>(i));
-				else if(y->dataType() == PropertyStorage::Int64)
-					ycoords.push_back(y->get<qlonglong>(i));
-				else if(y->dataType() == PropertyStorage::Float)
-					ycoords.push_back(y->get<FloatType>(i));
-				else
-					continue;
+				ycoords.push_back(yarray.get<double>(i, 0));
 				labels.push_back(type->name());
 			}
 		}

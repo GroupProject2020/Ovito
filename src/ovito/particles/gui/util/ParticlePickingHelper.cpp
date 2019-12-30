@@ -45,20 +45,20 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 		ParticlePickInfo* pickInfo = dynamic_object_cast<ParticlePickInfo>(vpPickResult.pickInfo());
 		if(pickInfo) {
 			if(const ParticlesObject* particles = pickInfo->pipelineState().getObject<ParticlesObject>()) {
-				const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+				ConstPropertyAccess<Point3> posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 				size_t particleIndex = pickInfo->particleIndexFromSubObjectID(vpPickResult.subobjectId());
-				if(posProperty && particleIndex < posProperty->size()) {
+				if(posProperty && particleIndex < posProperty.size()) {
 					// Save reference to the selected particle.
 					TimeInterval iv;
 					result.objNode = vpPickResult.pipelineNode();
 					result.particleIndex = particleIndex;
-					result.localPos = posProperty->get<Point3>(result.particleIndex);
+					result.localPos = posProperty[result.particleIndex];
 					result.worldPos = result.objNode->getWorldTransform(vpwin->viewport()->dataset()->animationSettings()->time(), iv) * result.localPos;
 
 					// Determine particle ID.
-					const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
-					if(identifierProperty && result.particleIndex < identifierProperty->size()) {
-						result.particleId = identifierProperty->get<qlonglong>(result.particleIndex);
+					ConstPropertyAccess<qlonglong> identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
+					if(identifierProperty && result.particleIndex < identifierProperty.size()) {
+						result.particleId = identifierProperty[result.particleIndex];
 					}
 					else result.particleId = -1;
 
@@ -90,13 +90,11 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	// If particle selection is based on ID, find particle with the given ID.
 	size_t particleIndex = pickRecord.particleIndex;
 	if(pickRecord.particleId >= 0) {
-		if(const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
-			if(particleIndex >= identifierProperty->size() || identifierProperty->get<qlonglong>(particleIndex) != pickRecord.particleId) {
-				auto begin = identifierProperty->cdata<qlonglong>();
-				auto end = begin + identifierProperty->size();
-				auto iter = std::find(begin, end, pickRecord.particleId);
-				if(iter == end) return;
-				particleIndex = (iter - begin);
+		if(ConstPropertyAccess<qlonglong> identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
+			if(particleIndex >= identifierProperty.size() || identifierProperty[particleIndex] != pickRecord.particleId) {
+				auto iter = boost::find(identifierProperty, pickRecord.particleId);
+				if(iter == identifierProperty.cend()) return;
+				particleIndex = (iter - identifierProperty.cbegin());
 			}
 		}
 	}

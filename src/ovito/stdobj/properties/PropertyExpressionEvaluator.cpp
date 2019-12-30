@@ -141,6 +141,7 @@ void PropertyExpressionEvaluator::registerPropertyVariables(const std::vector<Co
 			continue;
 		v.property = property;
 		v.variableClass = variableClass;
+		v.propertyArray = property;
 
 		// Derive a valid variable name from the property name by removing all invalid characters.
 		QString propertyName = property->name();
@@ -162,15 +163,8 @@ void PropertyExpressionEvaluator::registerPropertyVariables(const std::vector<Co
 				v.name = namePrefix + fullPropertyName.toStdString();
 
 			// Initialize data pointer into property storage.
-			if(property->dataType() == PropertyStorage::Int)
-				v.dataPointer = reinterpret_cast<const char*>(property->cdata<int>(0, k));
-			else if(property->dataType() == PropertyStorage::Int64)
-				v.dataPointer = reinterpret_cast<const char*>(property->cdata<qlonglong>(0, k));
-			else if(property->dataType() == PropertyStorage::Float)
-				v.dataPointer = reinterpret_cast<const char*>(property->cdata<FloatType>(0, k));
-			else
-				continue;
-			v.stride = property->stride();
+			v.dataPointer = v.propertyArray.cdata(k);
+			v.stride = v.propertyArray.stride();
 
 			// Register variable.
 			addVariable(v);

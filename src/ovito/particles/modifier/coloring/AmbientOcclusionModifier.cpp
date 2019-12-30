@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesVis.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
@@ -48,7 +49,9 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(AmbientOcclusionModifier, bufferResolution, I
 * Constructs the modifier object.
 ******************************************************************************/
 AmbientOcclusionModifier::AmbientOcclusionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_intensity(0.7f), _samplingCount(40), _bufferResolution(3)
+	_intensity(0.7),
+	_samplingCount(40),
+	_bufferResolution(3)
 {
 }
 
@@ -178,7 +181,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 				if(!particleBuffer || !particleBuffer->isValid(_renderer)) {
 					particleBuffer = _renderer->createParticlePrimitive(ParticlePrimitive::FlatShading, ParticlePrimitive::LowQuality, ParticlePrimitive::SphericalShape, false);
 					particleBuffer->setSize(positions()->size());
-					particleBuffer->setParticlePositions(positions()->cdata<Point3>());
+					particleBuffer->setParticlePositions(ConstPropertyAccess<Point3>(positions()).cbegin());
 					particleBuffer->setParticleRadii(_particleRadii.data());
 				}
 				particleBuffer->render(_renderer);
@@ -191,7 +194,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 			// Extract brightness values from rendered image.
 			const QImage image = _renderer->image();
-			FloatType* brightnessValues = brightness()->data<FloatType>();
+			PropertyAccess<FloatType> brightnessValues(brightness());
 			for(int y = 0; y < _resolution; y++) {
 				const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
 				for(int x = 0; x < _resolution; x++, ++pixel) {
@@ -203,7 +206,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 					if(id == 0)
 						continue;
 					quint32 particleIndex = id - 1;
-					OVITO_ASSERT(particleIndex < positions()->size());
+					OVITO_ASSERT(particleIndex < brightnessValues.size());
 					brightnessValues[particleIndex] += 1;
 				}
 			}
@@ -219,15 +222,16 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 		task()->setProgressValue(_samplingCount);
 		// Normalize brightness values by particle area.
 		auto r = _particleRadii.cbegin();
-		for(FloatType& b : brightness()->range<FloatType>()) {
+		PropertyAccess<FloatType> brightnessValues(brightness());
+		for(FloatType& b : brightnessValues) {
 			if(*r != 0)
 				b /= (*r) * (*r);
 			++r;
 		}
 		// Normalize brightness values by global maximum.
-		FloatType maxBrightness = *boost::max_element(brightness()->crange<FloatType>());
+		FloatType maxBrightness = *boost::max_element(brightnessValues);
 		if(maxBrightness != 0) {
-			for(FloatType& b : brightness()->range<FloatType>()) {
+			for(FloatType& b : brightnessValues) {
 				b /= maxBrightness;
 			}
 		}
@@ -251,9 +255,10 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint tim
 	FloatType intens = qBound(FloatType(0), modifier->intensity(), FloatType(1));
 
 	// Get output property object.
-	PropertyObject* colorProperty = particles->createProperty(ParticlesObject::ColorProperty, true, {particles});
-	const FloatType* b = brightness()->cdata<FloatType>();
-	for(Color& c : colorProperty->range<Color>()) {
+	ConstPropertyAccess<FloatType> brightnessValues(brightness());
+	PropertyAccess<Color> colorProperty = particles->createProperty(ParticlesObject::ColorProperty, true, {particles});
+	const FloatType* b = brightnessValues.cbegin();
+	for(Color& c : colorProperty) {
 		FloatType factor = FloatType(1) - intens + (*b);
 		if(factor < FloatType(1))
 			c = c * factor;

@@ -137,35 +137,32 @@ public:
 
 	/// Returns the cluster an atom belongs to.
 	Cluster* atomCluster(int atomIndex) const {
-		return clusterGraph()->findCluster(_atomClusters->get<qlonglong>(atomIndex));
+		return clusterGraph()->findCluster(_atomClustersArray[atomIndex]);
 	}
 
 	/// Returns the number of neighbors of the given atom.
 	int numberOfNeighbors(int atomIndex) const {
-		OVITO_ASSERT(_neighborLists);
-		const int* neighborList = _neighborLists->cdata<int>(atomIndex, 0);
+		const int* neighborList = &_neighborLists[atomIndex * _neighborListsSize];
 		size_t count = 0;
-		while(count < _neighborLists->componentCount() && neighborList[count] != -1)
+		while(count < _neighborListsSize && neighborList[count] != -1)
 			count++;
 		return count;
 	}
 
 	/// Returns an atom from an atom's neighbor list.
 	int getNeighbor(int centralAtomIndex, int neighborListIndex) const {
-		OVITO_ASSERT(_neighborLists);
-		return _neighborLists->get<int>(centralAtomIndex, neighborListIndex);
+		return _neighborLists[centralAtomIndex * _neighborListsSize + neighborListIndex];
 	}
 
 	/// Sets an entry in an atom's neighbor list.
-	void setNeighbor(int centralAtomIndex, int neighborListIndex, int neighborAtomIndex) const {
-		_neighborLists->set<int>(centralAtomIndex, neighborListIndex, neighborAtomIndex);
+	void setNeighbor(int centralAtomIndex, int neighborListIndex, int neighborAtomIndex) {
+		_neighborLists[centralAtomIndex * _neighborListsSize + neighborListIndex] = neighborAtomIndex;
 	}
 
 	/// Returns the neighbor list index of the given atom.
 	int findNeighbor(int centralAtomIndex, int neighborAtomIndex) const {
-		OVITO_ASSERT(_neighborLists);
-		const int* neighborList = _neighborLists->cdata<int>(centralAtomIndex, 0);
-		for(size_t index = 0; index < _neighborLists->componentCount() && neighborList[index] != -1; index++) {
+		const int* neighborList = &_neighborLists[centralAtomIndex * _neighborListsSize];
+		for(size_t index = 0; index < _neighborListsSize && neighborList[index] != -1; index++) {
 			if(neighborList[index] == neighborAtomIndex)
 				return index;
 		}
@@ -174,17 +171,17 @@ public:
 
 	/// Releases the memory allocated for neighbor lists.
 	void freeNeighborLists() {
-		_neighborLists.reset();
-		_atomSymmetryPermutations.reset();
+		decltype(_neighborLists){}.swap(_neighborLists);
+		decltype(_atomSymmetryPermutations){}.swap(_atomSymmetryPermutations);
+		_atomClustersArray.reset();
 	}
 
 	/// Returns the ideal lattice vector associated with a neighbor bond.
 	const Vector3& neighborLatticeVector(int centralAtomIndex, int neighborIndex) const {
-		OVITO_ASSERT(_atomSymmetryPermutations);
-		int structureType = _structureTypes->get<int>(centralAtomIndex);
+		int structureType = _structureTypesArray[centralAtomIndex];
 		const LatticeStructure& latticeStructure = _latticeStructures[structureType];
 		OVITO_ASSERT(neighborIndex >= 0 && neighborIndex < _coordinationStructures[structureType].numNeighbors);
-		int symmetryPermutationIndex = _atomSymmetryPermutations->get<int>(centralAtomIndex);
+		int symmetryPermutationIndex = _atomSymmetryPermutations[centralAtomIndex];
 		OVITO_ASSERT(symmetryPermutationIndex >= 0 && symmetryPermutationIndex < latticeStructure.permutations.size());
 		const auto& permutation = latticeStructure.permutations[symmetryPermutationIndex].permutation;
 		return latticeStructure.latticeVectors[permutation[neighborIndex]];
@@ -212,10 +209,13 @@ private:
 	bool _identifyPlanarDefects;
 	const ConstPropertyPtr _positions;
 	const PropertyPtr _structureTypes;
-	PropertyPtr _neighborLists;
+	PropertyAccess<int> _structureTypesArray;
 	const PropertyPtr _atomClusters;
-	PropertyPtr _atomSymmetryPermutations;
-	const ConstPropertyPtr _particleSelection;
+	PropertyAccess<qlonglong> _atomClustersArray;
+	std::vector<int> _neighborLists;
+	std::vector<int> _atomSymmetryPermutations;
+	size_t _neighborListsSize = 0;
+	ConstPropertyAccessAndRef<int> _particleSelection;
 	const std::shared_ptr<ClusterGraph> _clusterGraph;
 	std::atomic<FloatType> _maximumNeighborDistance;
 	const SimulationCell _simCell;

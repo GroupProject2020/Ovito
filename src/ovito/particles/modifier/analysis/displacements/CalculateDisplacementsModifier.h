@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -61,11 +61,16 @@ private:
 	public:
 
 		/// Constructor.
-		DisplacementEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
+		DisplacementEngine(const TimeInterval& validityInterval, 
+				ConstPropertyPtr positions, 
+				const SimulationCell& simCell,
 				ParticleOrderingFingerprint fingerprint,
-				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
-				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
-				AffineMappingType affineMapping, bool useMinimumImageConvention) :
+				ConstPropertyPtr refPositions, 
+				const SimulationCell& simCellRef,
+				ConstPropertyPtr identifiers, 
+				ConstPropertyPtr refIdentifiers,
+				AffineMappingType affineMapping, 
+				bool useMinimumImageConvention) :
 			RefConfigEngineBase(validityInterval, positions, simCell, std::move(refPositions), simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
 			_displacements(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::DisplacementProperty, false)),

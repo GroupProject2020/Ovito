@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,6 +27,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/ParticleBondMap.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
@@ -46,7 +47,8 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CommonNeighborAnalysisModifier, cutoff, Wor
 * Constructs the modifier object.
 ******************************************************************************/
 CommonNeighborAnalysisModifier::CommonNeighborAnalysisModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
-	_cutoff(3.2), _mode(AdaptiveCutoffMode)
+	_cutoff(3.2), 
+	_mode(AdaptiveCutoffMode)
 {
 	// Create the structure types.
 	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
@@ -101,20 +103,28 @@ void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(MAX_NEIGHBORS);
-	if(!neighFinder.prepare(*positions(), cell(), selection().get(), task().get()))
+	if(!neighFinder.prepare(positions(), cell(), selection(), task().get()))
 		return;
 
 	// Create output storage.
-	PropertyStorage& output = *structures();
+	PropertyAccess<int> output(structures());
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *task(), [this, &neighFinder, &output](size_t index) {
-		// Skip particles that are not included in the analysis.
-		if(!selection() || selection()->get<int>(index))
-			output.set<int>(index, determineStructureAdaptive(neighFinder, index, typesToIdentify()));
-		else
-			output.set<int>(index, OTHER);
-	});
+	if(!selection()) {
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			output[index] = determineStructureAdaptive(neighFinder, index, typesToIdentify());
+		});
+	}
+	else {
+		ConstPropertyAccess<int> selectionData(selection());
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			// Skip particles that are not included in the analysis.
+			if(selectionData[index])
+				output[index] = determineStructureAdaptive(neighFinder, index, typesToIdentify());
+			else
+				output[index] = OTHER;
+		});
+	}
 }
 
 /******************************************************************************
@@ -126,20 +136,28 @@ void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoff, *positions(), cell(), selection().get(), task().get()))
+	if(!neighborListBuilder.prepare(_cutoff, positions(), cell(), selection(), task().get()))
 		return;
 
 	// Create output storage.
-	PropertyStorage& output = *structures();
+	PropertyAccess<int> output(structures());
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *task(), [this, &neighborListBuilder, &output](size_t index) {
-		// Skip particles that are not included in the analysis.
-		if(!selection() || selection()->get<int>(index))
-			output.set<int>(index, determineStructureFixed(neighborListBuilder, index, typesToIdentify()));
-		else
-			output.set<int>(index, OTHER);
-	});
+	if(!selection()) {
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			output[index] = determineStructureFixed(neighborListBuilder, index, typesToIdentify());
+		});
+	}
+	else {
+		ConstPropertyAccess<int> selectionData(selection());
+		parallelFor(positions()->size(), *task(), [&](size_t index) {
+			// Skip particles that are not included in the analysis.
+			if(selectionData[index])
+				output[index] = determineStructureFixed(neighborListBuilder, index, typesToIdentify());
+			else
+				output[index] = OTHER;
+		});
+	}
 }
 
 /******************************************************************************
@@ -155,12 +173,15 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 	// Compute per-bond CNA indices.
 	bool maxNeighborLimitExceeded = false;
 	bool maxCommonNeighborBondLimitExceeded = false;
-	parallelFor(bondTopology()->size(), *task(), [this, &bondMap, &maxNeighborLimitExceeded, &maxCommonNeighborBondLimitExceeded](size_t bondIndex) {
-		size_t currentBondParticle1 = bondTopology()->get<qlonglong>(bondIndex, 0);
-		size_t currentBondParticle2 = bondTopology()->get<qlonglong>(bondIndex, 1);
+	ConstPropertyAccess<ParticleIndexPair> bonds(bondTopology());
+	ConstPropertyAccess<Vector3I> bondPeriodicImagesData(bondPeriodicImages());
+	PropertyAccess<Vector3I> cnaIndicesData(cnaIndices());
+	parallelFor(bonds.size(), *task(), [&](size_t bondIndex) {
+		size_t currentBondParticle1 = bonds[bondIndex][0];
+		size_t currentBondParticle2 = bonds[bondIndex][1];
 		if(currentBondParticle1 >= positions()->size()) return;
 		if(currentBondParticle2 >= positions()->size()) return;
-		Vector3I currentBondPbcShift = bondPeriodicImages() ? bondPeriodicImages()->get<Vector3I>(bondIndex) : Vector3I::Zero();
+		Vector3I currentBondPbcShift = bondPeriodicImagesData ? bondPeriodicImagesData[bondIndex] : Vector3I::Zero();
 
 		// Determine common neighbors shared by both particles.
 		int numCommonNeighbors = 0;
@@ -204,9 +225,9 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		int maxChainLength = calcMaxChainLength(commonNeighborBonds.data(), numCommonNeighborBonds);
 
 		// Store results in bond property.
-		cnaIndices()->set<int>(bondIndex, 0, numCommonNeighbors);
-		cnaIndices()->set<int>(bondIndex, 1, numCommonNeighborBonds);
-		cnaIndices()->set<int>(bondIndex, 2, maxChainLength);
+		cnaIndicesData[bondIndex][0] = numCommonNeighbors;
+		cnaIndicesData[bondIndex][1] = numCommonNeighborBonds;
+		cnaIndicesData[bondIndex][2] = maxChainLength;
 	});
 	if(task()->isCanceled())
 		return;
@@ -216,10 +237,11 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		throw Exception(tr("There are more than 64 bonds between common neighbors, which is the built-in limit. Cannot perform CNA in this case."));
 
 	// Create output storage.
-	PropertyStorage& output = *structures();
-
+	PropertyAccess<int> output(structures());
+	ConstPropertyAccess<int> selectionData(selection());
+	
 	// Classify particles.
-	parallelFor(positions()->size(), *task(), [this, &output, &bondMap](size_t particleIndex) {
+	parallelFor(positions()->size(), *task(), [&](size_t particleIndex) {
 
 		int n421 = 0;
 		int n422 = 0;
@@ -228,7 +250,7 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		int n666 = 0;
 		int ntotal = 0;
 		for(size_t neighborBondIndex : bondMap.bondIndicesOfParticle(particleIndex)) {
-			const Point3I& indices = cnaIndices()->get<Point3I>(neighborBondIndex);
+			const Vector3I& indices = cnaIndicesData[neighborBondIndex];
 			if(indices[0] == 4) {
 				if(indices[1] == 2) {
 					if(indices[2] == 1) n421++;
@@ -239,22 +261,22 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 			else if(indices[0] == 5 && indices[1] == 5 && indices[2] == 5) n555++;
 			else if(indices[0] == 6 && indices[1] == 6 && indices[2] == 6) n666++;
 			else {
-				output.set<int>(particleIndex, OTHER);
+				output[particleIndex] = OTHER;
 				return;
 			}
 			ntotal++;
 		}
 
 		if(n421 == 12 && ntotal == 12 && typesToIdentify()[FCC])
-			output.set<int>(particleIndex, FCC);
+			output[particleIndex] = FCC;
 		else if(n421 == 6 && n422 == 6 && ntotal == 12 && typesToIdentify()[HCP])
-			output.set<int>(particleIndex, HCP);
+			output[particleIndex] = HCP;
 		else if(n444 == 6 && n666 == 8 && ntotal == 14 && typesToIdentify()[BCC])
-			output.set<int>(particleIndex, BCC);
+			output[particleIndex] = BCC;
 		else if(n555 == 12 && ntotal == 12 && typesToIdentify()[ICO])
-			output.set<int>(particleIndex, ICO);
+			output[particleIndex] = ICO;
 		else
-			output.set<int>(particleIndex, OTHER);
+			output[particleIndex] = OTHER;
 	});
 }
 

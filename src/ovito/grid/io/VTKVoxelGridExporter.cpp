@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/grid/Grid.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VTKVoxelGridExporter.h"
@@ -124,23 +125,44 @@ bool VTKVoxelGridExporter::exportFrame(int frameNumber, TimePoint time, const QS
 			// Write payload data.
 			size_t cmpnts = prop->componentCount();
 			OVITO_ASSERT(prop->stride() == prop->dataTypeSize() * cmpnts);
-			auto data_f = (prop->dataType() == PropertyStorage::Float) ? prop->cdata<FloatType>() : nullptr;
-			auto data_i = (prop->dataType() == PropertyStorage::Int) ? prop->cdata<int>() : nullptr;
-			auto data_i64 = (prop->dataType() == PropertyStorage::Int64) ? prop->cdata<qlonglong>() : nullptr;
-			for(size_t row = 0; row < dims[1]*dims[2]; row++) {
-				if(operation.isCanceled())
-					return false;
-				for(size_t col = 0; col < dims[0]; col++) {
-					for(size_t c = 0; c < cmpnts; c++) {
-						if(data_f)
-							textStream() << *data_f++ << " ";
-						else if(data_i)
-							textStream() << *data_i++ << " ";
-						else if(data_i64)
-							textStream() << *data_i64++ << " ";
+			if(prop->dataType() == PropertyStorage::Float) {
+				ConstPropertyAccess<FloatType, true> data(prop);
+				for(size_t row = 0, index = 0; row < dims[1]*dims[2]; row++) {
+					if(operation.isCanceled())
+						return false;
+					for(size_t col = 0; col < dims[0]; col++, index++) {
+						for(size_t c = 0; c < cmpnts; c++)
+							textStream() << data.get(index, c) << " ";
 					}
+					textStream() << "\n";
 				}
-				textStream() << "\n";
+			}
+			else if(prop->dataType() == PropertyStorage::Int) {
+				ConstPropertyAccess<int, true> data(prop);
+				for(size_t row = 0, index = 0; row < dims[1]*dims[2]; row++) {
+					if(operation.isCanceled())
+						return false;
+					for(size_t col = 0; col < dims[0]; col++, index++) {
+						for(size_t c = 0; c < cmpnts; c++)
+							textStream() << data.get(index, c) << " ";
+					}
+					textStream() << "\n";
+				}
+			}				
+			else if(prop->dataType() == PropertyStorage::Int64) {
+				ConstPropertyAccess<qlonglong, true> data(prop);
+				for(size_t row = 0, index = 0; row < dims[1]*dims[2]; row++) {
+					if(operation.isCanceled())
+						return false;
+					for(size_t col = 0; col < dims[0]; col++, index++) {
+						for(size_t c = 0; c < cmpnts; c++)
+							textStream() << data.get(index, c) << " ";
+					}
+					textStream() << "\n";
+				}
+			}
+			else {
+				throwException(tr("Grid property '%1' has a non-standard data type that cannot be exported.").arg(prop->name()));
 			}
 		}
 	}

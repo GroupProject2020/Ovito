@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2015 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,10 +25,11 @@
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
-#include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include "ExpandSelectionModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
@@ -105,7 +106,7 @@ void ExpandSelectionModifier::ExpandSelectionEngine::perform()
 {
 	task()->setProgressText(tr("Expanding particle selection"));
 
-	setNumSelectedParticlesInput(_inputSelection->size() - boost::count(_inputSelection->crange<int>(), 0));
+	setNumSelectedParticlesInput(_inputSelection->size() - boost::count(ConstPropertyAccess<int>(_inputSelection), 0));
 
 	task()->beginProgressSubSteps(_numIterations);
 	for(int i = 0; i < _numIterations; i++) {
@@ -119,7 +120,7 @@ void ExpandSelectionModifier::ExpandSelectionEngine::perform()
 	}
 	task()->endProgressSubSteps();
 
-	setNumSelectedParticlesOutput(outputSelection()->size() - boost::count(outputSelection()->crange<int>(), 0));
+	setNumSelectedParticlesOutput(outputSelection()->size() - boost::count(ConstPropertyAccess<int>(outputSelection()), 0));
 }
 
 /******************************************************************************
@@ -132,19 +133,21 @@ void ExpandSelectionModifier::ExpandSelectionNearestEngine::expandSelection()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(_numNearestNeighbors);
-	if(!neighFinder.prepare(*positions(), simCell(), nullptr, task().get()))
+	if(!neighFinder.prepare(positions(), simCell(), {}, task().get()))
 		return;
 
-	OVITO_ASSERT(inputSelection()->cdata<int>() != outputSelection()->data<int>());
-	parallelFor(positions()->size(), *task(), [&neighFinder, this](size_t index) {
-		if(!inputSelection()->get<int>(index)) return;
+	OVITO_ASSERT(inputSelection() != outputSelection());
+	ConstPropertyAccess<int> inputSelectionArray(inputSelection());
+	PropertyAccess<int> outputSelectionArray(outputSelection());
+	parallelFor(positions()->size(), *task(), [&](size_t index) {
+		if(!inputSelectionArray[index]) return;
 
 		NearestNeighborFinder::Query<MAX_NEAREST_NEIGHBORS> neighQuery(neighFinder);
 		neighQuery.findNeighbors(index);
 		OVITO_ASSERT(neighQuery.results().size() <= _numNearestNeighbors);
 
 		for(auto n = neighQuery.results().begin(); n != neighQuery.results().end(); ++n) {
-			outputSelection()->set<int>(n->index, 1);
+			outputSelectionArray[n->index] = 1;
 		}
 	});
 }
@@ -154,18 +157,20 @@ void ExpandSelectionModifier::ExpandSelectionNearestEngine::expandSelection()
 ******************************************************************************/
 void ExpandSelectionModifier::ExpandSelectionBondedEngine::expandSelection()
 {
-	OVITO_ASSERT(inputSelection()->cdata<int>() != outputSelection()->data<int>());
+	PropertyAccess<int> outputSelectionArray(outputSelection());
+	ConstPropertyAccess<int> inputSelectionArray(inputSelection());
+	ConstPropertyAccess<ParticleIndexPair> bondTopologyArray(_bondTopology);
 
 	size_t particleCount = inputSelection()->size();
-	parallelFor(_bondTopology->size(), *task(), [this, particleCount](size_t index) {
-		size_t index1 = _bondTopology->get<qlonglong>(index, 0);
-		size_t index2 = _bondTopology->get<qlonglong>(index, 1);
+	parallelFor(_bondTopology->size(), *task(), [&](size_t index) {
+		size_t index1 = bondTopologyArray[index][0];
+		size_t index2 = bondTopologyArray[index][1];
 		if(index1 >= particleCount || index2 >= particleCount)
 			return;
-		if(inputSelection()->get<int>(index1))
-			outputSelection()->set<int>(index2, 1);
-		if(inputSelection()->get<int>(index2))
-			outputSelection()->set<int>(index1, 1);
+		if(inputSelectionArray[index1])
+			outputSelectionArray[index2] = 1;
+		if(inputSelectionArray[index2])
+			outputSelectionArray[index1] = 1;
 	});
 }
 
@@ -176,14 +181,16 @@ void ExpandSelectionModifier::ExpandSelectionCutoffEngine::expandSelection()
 {
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoffRange, *positions(), simCell(), nullptr, task().get()))
+	if(!neighborListBuilder.prepare(_cutoffRange, positions(), simCell(), {}, task().get()))
 		return;
 
-	OVITO_ASSERT(inputSelection()->cdata<int>() != outputSelection()->data<int>());
-	parallelFor(positions()->size(), *task(), [&neighborListBuilder, this](size_t index) {
-		if(!inputSelection()->get<int>(index)) return;
+	PropertyAccess<int> outputSelectionArray(outputSelection());
+	ConstPropertyAccess<int> inputSelectionArray(inputSelection());
+
+	parallelFor(positions()->size(), *task(), [&](size_t index) {
+		if(!inputSelectionArray[index]) return;
 		for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, index); !neighQuery.atEnd(); neighQuery.next()) {
-			outputSelection()->set<int>(neighQuery.current(), 1);
+			outputSelectionArray[neighQuery.current()] = 1;
 		}
 	});
 }

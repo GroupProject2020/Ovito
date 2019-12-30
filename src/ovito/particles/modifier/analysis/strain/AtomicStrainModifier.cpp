@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,8 +22,9 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/util/CutoffNeighborFinder.h>
-#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ptm/ptm_polar.h>
@@ -113,9 +114,12 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 		return;
 
 	// Compute displacement vectors of particles in the reference configuration.
-	parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
-		Vector3* u = displacements()->data<Vector3>(startIndex);
-		const Point3* p0 = refPositions()->cdata<Point3>(startIndex);
+	PropertyAccess<Vector3> displacementsArray(displacements());
+	ConstPropertyAccess<Point3> positionsArray(positions());
+	ConstPropertyAccess<Point3> refPositionsArray(refPositions());
+	parallelForChunks(displacements()->size(), *task(), [&](size_t startIndex, size_t count, Task& promise) {
+		Vector3* u = displacementsArray.begin() + startIndex;
+		const Point3* p0 = refPositionsArray.cbegin() + startIndex;
 		auto index = refToCurrentIndexMap().cbegin() + startIndex;
 		for(; count; --count, ++u, ++p0, ++index) {
 			if(promise.isCanceled()) return;
@@ -124,7 +128,7 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 				continue;
 			}
 			Point3 reduced_reference_pos = refCell().inverseMatrix() * (*p0);
-			Point3 reduced_current_pos = cell().inverseMatrix() * positions()->get<Point3>(*index);
+			Point3 reduced_current_pos = cell().inverseMatrix() * positionsArray[*index];
 			Vector3 delta = reduced_current_pos - reduced_reference_pos;
 			if(useMinimumImageConvention()) {
 				for(size_t k = 0; k < 3; k++) {
@@ -142,184 +146,181 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 
 	// Prepare the neighbor list for the reference configuration.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(_cutoff, *refPositions(), refCell(), nullptr, task().get()))
+	if(!neighborFinder.prepare(_cutoff, refPositions(), refCell(), {}, task().get()))
 		return;
+
+	// Prepare the output data arrays.
+	PropertyAccess<int> invalidParticlesArray(invalidParticles());
+	PropertyAccess<Matrix3> deformationGradientsArray(deformationGradients());
+	PropertyAccess<SymmetricTensor2> strainTensorsArray(strainTensors());
+	PropertyAccess<FloatType> shearStrainsArray(shearStrains());
+	PropertyAccess<FloatType> volumetricStrainsArray(volumetricStrains());
+	PropertyAccess<FloatType> nonaffineSquaredDisplacementsArray(nonaffineSquaredDisplacements());
+	PropertyAccess<Quaternion> rotationsArray(rotations());
+	PropertyAccess<SymmetricTensor2> stretchTensorsArray(stretchTensors());
 
 	// Perform individual strain calculation for each particle.
-	parallelFor(positions()->size(), *task(), [this, &neighborFinder](size_t index) {
-		computeStrain(index, neighborFinder);
-	});
-}
+	parallelFor(positions()->size(), *task(), [&](size_t particleIndex) {
 
-/******************************************************************************
-* Computes the strain tensor of a single particle.
-******************************************************************************/
-void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleIndex, CutoffNeighborFinder& neighborFinder)
-{
-	// Note: We do the following calculations using double precision numbers to
-	// minimize numerical errors. Final results will be converted back to
-	// standard precision.
+		// Note: We do the following calculations using double precision numbers to
+		// minimize numerical errors. Final results will be converted back to
+		// standard precision.
 
-	Matrix_3<double> V = Matrix_3<double>::Zero();
-	Matrix_3<double> W = Matrix_3<double>::Zero();
-	int numNeighbors = 0;
+		Matrix_3<double> V = Matrix_3<double>::Zero();
+		Matrix_3<double> W = Matrix_3<double>::Zero();
+		int numNeighbors = 0;
 
-	// Iterate over neighbors of central particle.
-	size_t particleIndexReference = currentToRefIndexMap()[particleIndex];
-	FloatType sumSquaredDistance = 0;
-	if(particleIndexReference != std::numeric_limits<size_t>::max()) {
-		const Vector3& center_displacement = displacements()->get<Vector3>(particleIndexReference);
-		for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
-			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
-			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
-			const Vector3& neigh_displacement = displacements()->get<Vector3>(neighQuery.current());
-			Vector3 delta_ref = neighQuery.delta();
-			Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
-			if(affineMapping() == TO_CURRENT_CELL) {
-				delta_ref = refToCurTM() * delta_ref;
-				delta_cur = refToCurTM() * delta_cur;
-			}
-			else if(affineMapping() != TO_REFERENCE_CELL) {
-				delta_cur = refToCurTM() * delta_cur;
-			}
-			for(size_t i = 0; i < 3; i++) {
-				for(size_t j = 0; j < 3; j++) {
-					V(i,j) += delta_ref[j] * delta_ref[i];
-					W(i,j) += delta_ref[j] * delta_cur[i];
+		// Iterate over neighbors of central particle.
+		size_t particleIndexReference = currentToRefIndexMap()[particleIndex];
+		FloatType sumSquaredDistance = 0;
+		if(particleIndexReference != std::numeric_limits<size_t>::max()) {
+			const Vector3& center_displacement = displacementsArray[particleIndexReference];
+			for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
+				size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
+				if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
+				const Vector3& neigh_displacement = displacementsArray[neighQuery.current()];
+				Vector3 delta_ref = neighQuery.delta();
+				Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
+				if(affineMapping() == TO_CURRENT_CELL) {
+					delta_ref = refToCurTM() * delta_ref;
+					delta_cur = refToCurTM() * delta_cur;
 				}
+				else if(affineMapping() != TO_REFERENCE_CELL) {
+					delta_cur = refToCurTM() * delta_cur;
+				}
+				for(size_t i = 0; i < 3; i++) {
+					for(size_t j = 0; j < 3; j++) {
+						V(i,j) += delta_ref[j] * delta_ref[i];
+						W(i,j) += delta_ref[j] * delta_cur[i];
+					}
+				}
+				sumSquaredDistance += delta_ref.squaredLength();
+				numNeighbors++;
 			}
-			sumSquaredDistance += delta_ref.squaredLength();
-			numNeighbors++;
 		}
-	}
 
-	// Special handling for 2D systems.
-	if(cell().is2D()) {
-		// Assume plane strain.
-		V(2,2) = W(2,2) = 1;
-		V(0,2) = V(1,2) = V(2,0) = V(2,1) = 0;
-		W(0,2) = W(1,2) = W(2,0) = W(2,1) = 0;
-	}
+		// Special handling for 2D systems.
+		if(cell().is2D()) {
+			// Assume plane strain.
+			V(2,2) = W(2,2) = 1;
+			V(0,2) = V(1,2) = V(2,0) = V(2,1) = 0;
+			W(0,2) = W(1,2) = W(2,0) = W(2,1) = 0;
+		}
 
-	// Check if matrix can be inverted.
-	Matrix_3<double> inverseV;
-	double detThreshold = (double)sumSquaredDistance * 1e-12;
-	if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, detThreshold) || std::abs(W.determinant()) <= detThreshold) {
-		if(invalidParticles())
-			invalidParticles()->set<int>(particleIndex, 1);
-		if(deformationGradients()) {
+		// Check if matrix can be inverted.
+		Matrix_3<double> inverseV;
+		double detThreshold = (double)sumSquaredDistance * 1e-12;
+		if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, detThreshold) || std::abs(W.determinant()) <= detThreshold) {
+			if(invalidParticlesArray)
+				invalidParticlesArray[particleIndex] = 1;
+			if(deformationGradientsArray)
+				deformationGradientsArray[particleIndex].setZero();
+			if(strainTensorsArray)
+				strainTensorsArray[particleIndex] = SymmetricTensor2::Zero();
+			if(nonaffineSquaredDisplacementsArray)
+				nonaffineSquaredDisplacementsArray[particleIndex] = 0;
+			shearStrainsArray[particleIndex] = 0;
+			volumetricStrainsArray[particleIndex] = 0;
+			if(rotationsArray)
+				rotationsArray[particleIndex] = Quaternion(0,0,0,0);
+			if(stretchTensorsArray)
+				stretchTensorsArray[particleIndex] = SymmetricTensor2::Zero();
+			addInvalidParticle();
+			return;
+		}
+
+		// Calculate deformation gradient tensor F.
+		Matrix_3<double> F = W * inverseV;
+		if(deformationGradientsArray) {
 			for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
 				for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
-					deformationGradients()->set<FloatType>(particleIndex, col*3+row, FloatType(0));
+					deformationGradientsArray[particleIndex](row, col) = (FloatType)F(row, col);
 				}
 			}
 		}
-		if(strainTensors())
-			strainTensors()->set<SymmetricTensor2>(particleIndex, SymmetricTensor2::Zero());
-        if(nonaffineSquaredDisplacements())
-            nonaffineSquaredDisplacements()->set<FloatType>(particleIndex, 0);
-		shearStrains()->set<FloatType>(particleIndex, 0);
-		volumetricStrains()->set<FloatType>(particleIndex, 0);
-		if(rotations())
-			rotations()->set<Quaternion>(particleIndex, Quaternion(0,0,0,0));
-		if(stretchTensors())
-			stretchTensors()->set<SymmetricTensor2>(particleIndex, SymmetricTensor2::Zero());
-		addInvalidParticle();
-		return;
-	}
 
-	// Calculate deformation gradient tensor F.
-	Matrix_3<double> F = W * inverseV;
-	if(deformationGradients()) {
-		for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
-			for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
-				deformationGradients()->set<FloatType>(particleIndex, col*3+row, (FloatType)F(row,col));
+		// Polar decomposition F=RU.
+		if(rotationsArray || stretchTensorsArray) {
+			Matrix_3<double> R, U;
+			ptm::polar_decomposition_3x3(F.elements(), false, R.elements(), U.elements());
+			if(rotationsArray) {
+				// If F contains a reflection, R will not be a pure rotation matrix and the
+				// conversion to a quaternion below will fail with an assertion error.
+				// Thus, in the rather unlikely case that F contains a reflection, we simply flip the
+				// R matrix to make it a pure rotation.
+				if(R.determinant() < 0) {
+					for(size_t i = 0; i < 3; i++)
+						for(size_t j = 0; j < 3; j++)
+							R(i,j) = -R(i,j);
+				}
+				rotationsArray[particleIndex] = (Quaternion)QuaternionT<double>(R);
+			}
+			if(stretchTensorsArray) {
+				stretchTensorsArray[particleIndex] = SymmetricTensor2(U(0,0), U(1,1), U(2,2), U(0,1), U(0,2), U(1,2));
 			}
 		}
-	}
 
-	// Polar decomposition F=RU.
-	if(rotations() || stretchTensors()) {
-		Matrix_3<double> R, U;
-		ptm::polar_decomposition_3x3(F.elements(), false, R.elements(), U.elements());
-		if(rotations()) {
-			// If F contains a reflection, R will not be a pure rotation matrix and the
-			// conversion to a quaternion below will fail with an assertion error.
-			// Thus, in the rather unlikely case that F contains a reflection, we simply flip the
-			// R matrix to make it a pure rotation.
-			if(R.determinant() < 0) {
-				for(size_t i = 0; i < 3; i++)
-					for(size_t j = 0; j < 3; j++)
-						R(i,j) = -R(i,j);
+		// Calculate strain tensor.
+		SymmetricTensor2T<double> strain = (Product_AtA(F) - SymmetricTensor2T<double>::Identity()) * 0.5;
+		if(strainTensorsArray)
+			strainTensorsArray[particleIndex] = (SymmetricTensor2)strain;
+
+		// Calculate nonaffine displacement.
+		if(nonaffineSquaredDisplacementsArray) {
+			FloatType D2min = 0;
+			Matrix3 Fftype = static_cast<Matrix3>(F);
+
+			// Again iterate over neighbor vectors of central particle.
+			numNeighbors = 0;
+			const Vector3& center_displacement = displacementsArray[particleIndexReference];
+			for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
+				size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
+				if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
+				const Vector3& neigh_displacement = displacementsArray[neighQuery.current()];
+				Vector3 delta_ref = neighQuery.delta();
+				Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
+				if(affineMapping() == TO_CURRENT_CELL) {
+					delta_ref = refToCurTM() * delta_ref;
+					delta_cur = refToCurTM() * delta_cur;
+				}
+				else if(affineMapping() != TO_REFERENCE_CELL) {
+					delta_cur = refToCurTM() * delta_cur;
+				}
+				D2min += (Fftype * delta_ref - delta_cur).squaredLength();
 			}
-			rotations()->set<Quaternion>(particleIndex, (Quaternion)QuaternionT<double>(R));
-		}
-		if(stretchTensors()) {
-			stretchTensors()->set<SymmetricTensor2>(particleIndex,
-					SymmetricTensor2(U(0,0), U(1,1), U(2,2), U(0,1), U(0,2), U(1,2)));
-		}
-	}
 
-	// Calculate strain tensor.
-	SymmetricTensor2T<double> strain = (Product_AtA(F) - SymmetricTensor2T<double>::Identity()) * 0.5;
-	if(strainTensors())
-		strainTensors()->set<SymmetricTensor2>(particleIndex, (SymmetricTensor2)strain);
-
-    // Calculate nonaffine displacement.
-    if(nonaffineSquaredDisplacements()) {
-		FloatType D2min = 0;
-		Matrix3 Fftype = static_cast<Matrix3>(F);
-
-        // Again iterate over neighbor vectors of central particle.
-        numNeighbors = 0;
-        const Vector3& center_displacement = displacements()->get<Vector3>(particleIndexReference);
-        for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
-			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
-			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
-			const Vector3& neigh_displacement = displacements()->get<Vector3>(neighQuery.current());
-			Vector3 delta_ref = neighQuery.delta();
-			Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
-			if(affineMapping() == TO_CURRENT_CELL) {
-				delta_ref = refToCurTM() * delta_ref;
-				delta_cur = refToCurTM() * delta_cur;
-			}
-			else if(affineMapping() != TO_REFERENCE_CELL) {
-				delta_cur = refToCurTM() * delta_cur;
-			}
-			D2min += (Fftype * delta_ref - delta_cur).squaredLength();
+			nonaffineSquaredDisplacementsArray[particleIndex] = D2min;
 		}
 
-        nonaffineSquaredDisplacements()->set<FloatType>(particleIndex, D2min);
-	}
+		// Calculate von Mises shear strain.
+		double xydiff = strain.xx() - strain.yy();
+		double shearStrain;
+		if(!cell().is2D()) {
+			double xzdiff = strain.xx() - strain.zz();
+			double yzdiff = strain.yy() - strain.zz();
+			shearStrain = sqrt(strain.xy()*strain.xy() + strain.xz()*strain.xz() + strain.yz()*strain.yz() +
+					(xydiff*xydiff + xzdiff*xzdiff + yzdiff*yzdiff) / 6.0);
+		}
+		else {
+			shearStrain = sqrt(strain.xy()*strain.xy() + (xydiff*xydiff) / 2.0);
+		}
+		OVITO_ASSERT(std::isfinite(shearStrain));
+		shearStrainsArray[particleIndex] = (FloatType)shearStrain;
 
-	// Calculate von Mises shear strain.
-	double xydiff = strain.xx() - strain.yy();
-	double shearStrain;
-	if(!cell().is2D()) {
-		double xzdiff = strain.xx() - strain.zz();
-		double yzdiff = strain.yy() - strain.zz();
-		shearStrain = sqrt(strain.xy()*strain.xy() + strain.xz()*strain.xz() + strain.yz()*strain.yz() +
-				(xydiff*xydiff + xzdiff*xzdiff + yzdiff*yzdiff) / 6.0);
-	}
-	else {
-		shearStrain = sqrt(strain.xy()*strain.xy() + (xydiff*xydiff) / 2.0);
-	}
-	OVITO_ASSERT(std::isfinite(shearStrain));
-	shearStrains()->set<FloatType>(particleIndex, (FloatType)shearStrain);
+		// Calculate volumetric component.
+		double volumetricStrain;
+		if(!cell().is2D()) {
+			volumetricStrain = (strain(0,0) + strain(1,1) + strain(2,2)) / 3.0;
+		}
+		else {
+			volumetricStrain = (strain(0,0) + strain(1,1)) / 2.0;
+		}
+		OVITO_ASSERT(std::isfinite(volumetricStrain));
+		volumetricStrainsArray[particleIndex] = (FloatType)volumetricStrain;
 
-	// Calculate volumetric component.
-	double volumetricStrain;
-	if(!cell().is2D()) {
-		volumetricStrain = (strain(0,0) + strain(1,1) + strain(2,2)) / 3.0;
-	}
-	else {
-		volumetricStrain = (strain(0,0) + strain(1,1)) / 2.0;
-	}
-	OVITO_ASSERT(std::isfinite(volumetricStrain));
-	volumetricStrains()->set<FloatType>(particleIndex, (FloatType)volumetricStrain);
-
-	if(invalidParticles())
-		invalidParticles()->set<int>(particleIndex, 0);
+		if(invalidParticlesArray)
+			invalidParticlesArray[particleIndex] = 0;
+	});
 }
 
 /******************************************************************************

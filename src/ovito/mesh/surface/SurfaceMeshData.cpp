@@ -71,9 +71,14 @@ void SurfaceMeshData::transferTo(SurfaceMesh* sm) const
 	sm->setTopology(topology());
     sm->setSpaceFillingRegion(spaceFillingRegion());
 
-	sm->makeVerticesMutable()->setContent(vertexCount(), _vertexProperties);
-	sm->makeFacesMutable()->setContent(faceCount(), _faceProperties);
-	sm->makeRegionsMutable()->setContent(regionCount(), _regionProperties);
+	OVITO_STATIC_ASSERT(sizeof(PropertyPtr) == sizeof(decltype(_vertexProperties)::value_type));
+	const std::vector<PropertyPtr>& vertexProperties = reinterpret_cast<const std::vector<PropertyPtr>&>(_vertexProperties);
+	const std::vector<PropertyPtr>& faceProperties = reinterpret_cast<const std::vector<PropertyPtr>&>(_faceProperties);
+	const std::vector<PropertyPtr>& regionProperties = reinterpret_cast<const std::vector<PropertyPtr>&>(_regionProperties);
+
+	sm->makeVerticesMutable()->setContent(vertexCount(), vertexProperties);
+	sm->makeFacesMutable()->setContent(faceCount(), faceProperties);
+	sm->makeRegionsMutable()->setContent(regionCount(), regionProperties);
 }
 
 /******************************************************************************

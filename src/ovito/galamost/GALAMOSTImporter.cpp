@@ -253,123 +253,103 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 		QTextStream stream(&_characterData, QIODevice::ReadOnly | QIODevice::Text);
 		if(localName == "position") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::PositionProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				Point3 pos;
-				stream >> pos.x() >> pos.y() >> pos.z();
-				_currentProperty->set<Point3>(i, pos);
+			for(Point3& p : PropertyAccess<Point3>(_currentProperty)) {
+				stream >> p.x() >> p.y() >> p.z();
 			}
 		}
 		else if(localName == "velocity") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::VelocityProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				Vector3 vel;
-				stream >> vel.x() >> vel.y() >> vel.z();
-				_currentProperty->set<Vector3>(i, vel);
+			for(Vector3& v : PropertyAccess<Vector3>(_currentProperty)) {
+				stream >> v.x() >> v.y() >> v.z();
 			}
 		}
 		else if(localName == "image") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::PeriodicImageProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				Point3I image;
-				stream >> image.x() >> image.y() >> image.z();
-				_currentProperty->set<Point3I>(i, image);
+			for(Point3I& p : PropertyAccess<Point3I>(_currentProperty)) {
+				stream >> p.x() >> p.y() >> p.z();
 			}
 		}
 		else if(localName == "mass") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::MassProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				FloatType mass;
+			for(FloatType& mass : PropertyAccess<FloatType>(_currentProperty)) {
 				stream >> mass;
-				_currentProperty->set<FloatType>(i, mass);
 			}
 		}
 		else if(localName == "diameter") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::RadiusProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				FloatType diameter;
-				stream >> diameter;
-				_currentProperty->set<FloatType>(i, diameter / 2);
+			for(FloatType& radius : PropertyAccess<FloatType>(_currentProperty)) {
+				stream >> radius;
+				radius /= 2;
 			}
 		}
 		else if(localName == "charge") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::ChargeProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				FloatType charge;
+			for(FloatType& charge : PropertyAccess<FloatType>(_currentProperty)) {
 				stream >> charge;
-				_currentProperty->set<FloatType>(i, charge);
 			}
 		}
 		else if(localName == "quaternion") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::OrientationProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				Quaternion q;
+			for(Quaternion& q : PropertyAccess<Quaternion>(_currentProperty)) {
 				stream >> q.w() >> q.x() >> q.y() >> q.z();
-				_currentProperty->set<Quaternion>(i, q);
 			}
 		}
 		else if(localName == "orientation") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::OrientationProperty);
-			for(size_t i = 0; i < _natoms; i++) {
+			for(Quaternion& q : PropertyAccess<Quaternion>(_currentProperty)) {
 				Vector3 dir;
 				stream >> dir.x() >> dir.y() >> dir.z();
 				if(!dir.isZero()) {
 					Rotation r(Vector3(0,0,1), dir);
-					_currentProperty->set<Quaternion>(i, Quaternion(r));
+					q = Quaternion(r);
 				}
 				else {
-					_currentProperty->set<Quaternion>(i, Quaternion::Identity());
+					q = Quaternion::Identity();
 				}
 			}
 		}
 		else if(localName == "molecule") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::MoleculeProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				qlonglong molecule;
+			for(qlonglong& molecule : PropertyAccess<qlonglong>(_currentProperty)) {
 				stream >> molecule;
-				_currentProperty->set<qlonglong>(i, molecule);
 			}
 		}
 		else if(localName == "body") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::UserProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				qlonglong body;
+			for(qlonglong& body : PropertyAccess<qlonglong>(_currentProperty)) {
 				stream >> body;
-				_currentProperty->set<qlonglong>(i, body);
 			}
 		}
 		else if(localName == "rotation") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::AngularVelocityProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				Vector3 rot_vel;
+			for(Vector3& rot_vel : PropertyAccess<Vector3>(_currentProperty)) {
 				stream >> rot_vel.x() >> rot_vel.y() >> rot_vel.z();
-				_currentProperty->set<Vector3>(i, rot_vel);
 			}
 		}
 		else if(localName == "inert") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::AngularMomentumProperty);
-			for(size_t i = 0; i < _natoms; i++) {
-				Vector3 ang_moment;
+			for(Vector3& ang_moment : PropertyAccess<Vector3>(_currentProperty)) {
 				stream >> ang_moment.x() >> ang_moment.y() >> ang_moment.z();
-				_currentProperty->set<Vector3>(i, ang_moment);
 			}
 		}
 		else if(localName == "type") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::TypeProperty);
 			QString typeName;
 			std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
-			for(size_t i = 0; i < _natoms; i++) {
+			PropertyAccess<int> typeArray(_currentProperty);
+			for(int& type : typeArray) {
 				stream >> typeName;
-				_currentProperty->set<int>(i, typeList->addTypeName(typeName));
+				type = typeList->addTypeName(typeName);
 			}
-			typeList->sortTypesByName(_currentProperty);
-			_frameData->setPropertyTypesList(_currentProperty, std::move(typeList));
+			typeList->sortTypesByName(typeArray);
+			_frameData->setPropertyTypesList(typeArray, std::move(typeList));
 		}
 		else if(localName == "Aspheres") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::AsphericalShapeProperty);
-			PropertyPtr typeProperty = _frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
+			ConstPropertyAccess<int> typeProperty = _frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
 			if(!typeProperty)
 				throw Exception(tr("GALAMOST file parsing error. <%1> element must appear after <type> element.").arg(qName));
-			ParticleFrameData::TypeList* typeList = _frameData->propertyTypesList(typeProperty);
+			ParticleFrameData::TypeList* typeList = _frameData->propertyTypesList(typeProperty.storage());
 			OVITO_ASSERT(typeList != nullptr);
 			std::vector<Vector3> typesAsphericalShape;
 			while(!stream.atEnd()) {
@@ -385,10 +365,11 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 						break;
 					}
 				}
-				for(size_t i = 0; i < _natoms; i++) {
-					int typeIndex = typeProperty->get<int>(i);
-					if(typeIndex < typesAsphericalShape.size())
-						_currentProperty->set<Vector3>(i, typesAsphericalShape[typeIndex]);
+				const int* typeIndex = typeProperty.cbegin();
+				for(Vector3& shape : PropertyAccess<Vector3>(_currentProperty)) {
+					if(*typeIndex < typesAsphericalShape.size())
+						shape = typesAsphericalShape[*typeIndex];
+					++typeIndex;
 				}
 			}
 		}
@@ -396,24 +377,21 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			OVITO_ASSERT(_currentProperty->type() == BondsObject::TopologyProperty);
 			QString typeName;
 			std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
-			std::vector<qlonglong> topology;
+			std::vector<ParticleIndexPair> topology;
 			std::vector<int> bondTypes;
 			while(!stream.atEnd()) {
 				qlonglong a,b;
 				stream >> typeName >> a >> b;
 				bondTypes.push_back(typeList->addTypeName(typeName));
-				topology.push_back(a);
-				topology.push_back(b);
+				topology.push_back({a,b});
 				stream.skipWhiteSpace();
 			}
-			_currentProperty = BondsObject::OOClass().createStandardStorage(topology.size() / 2, BondsObject::TopologyProperty, false);
-			boost::copy(topology, _currentProperty->data<qlonglong>(0,0));
-			_frameData->addBondProperty(std::move(_currentProperty));
-			_currentProperty = BondsObject::OOClass().createStandardStorage(bondTypes.size(), BondsObject::TypeProperty, false);
-			boost::copy(bondTypes, _currentProperty->data<int>());
-			typeList->sortTypesByName(_currentProperty);
-			_frameData->setPropertyTypesList(_currentProperty, std::move(typeList));
-			_frameData->addBondProperty(std::move(_currentProperty));
+			PropertyAccess<ParticleIndexPair> topologyProperty = _frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(topology.size(), BondsObject::TopologyProperty, false));
+			boost::copy(topology, topologyProperty.begin());
+			PropertyAccess<int> bondTypeProperty = _frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(bondTypes.size(), BondsObject::TypeProperty, false));
+			boost::copy(bondTypes, bondTypeProperty.begin());
+			typeList->sortTypesByName(bondTypeProperty);
+			_frameData->setPropertyTypesList(bondTypeProperty, std::move(typeList));
 			_currentProperty.reset();
 		}
 		if(stream.status() == QTextStream::ReadPastEnd)

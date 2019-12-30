@@ -538,10 +538,10 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	// why we sort them now according to their names.
 	columnParser.sortParticleTypes();
 
-	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
+	PropertyAccess<Point3> posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(posProperty && numParticlesLong != 0) {
 		Box3 boundingBox;
-		boundingBox.addPoints(posProperty->crange<Point3>());
+		boundingBox.addPoints(posProperty);
 
 		if(!hasSimulationCell) {
 			// If the input file does not contain simulation cell info,
@@ -558,13 +558,13 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 			if(Box3(Point3(FloatType(-0.01)), Point3(FloatType(1.01))).containsBox(boundingBox)) {
 				// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 				const AffineTransformation simCell = frameData->simulationCell().matrix();
-				for(Point3& p : posProperty->range<Point3>())
+				for(Point3& p : posProperty)
 					p = simCell * p;
 			}
 			else if(Box3(Point3(FloatType(-0.51)), Point3(FloatType(0.51))).containsBox(boundingBox)) {
 				// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 				const AffineTransformation simCell = frameData->simulationCell().matrix();
-				for(Point3& p : posProperty->range<Point3>())
+				for(Point3& p : posProperty)
 					p = simCell * (p + Vector3(FloatType(0.5)));
 			}
 		}

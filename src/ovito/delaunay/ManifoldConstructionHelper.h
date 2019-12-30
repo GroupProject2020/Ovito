@@ -393,7 +393,7 @@ private:
 					size_t vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 					OVITO_ASSERT(vertexIndex < vertexMap.size());
 					if(vertexMap[vertexIndex] == HalfEdgeMesh::InvalidIndex) {
-						vertexMap[vertexIndex] = _mesh.createVertex(_positions.get<Point3>(vertexIndex));
+						vertexMap[vertexIndex] = _mesh.createVertex(_positions[vertexIndex]);
 						prepareMeshVertexFunc(vertexMap[vertexIndex], vertexIndex);
 					}
 					facetVertices[v] = vertexMap[vertexIndex];
@@ -605,7 +605,7 @@ private:
 	size_t _numInteriorCells = 0;
 
 	/// The input particle positions.
-	const PropertyStorage& _positions;
+	ConstPropertyAccess<Point3> _positions;
 
 	/// The output mesh topology.
 	SurfaceMeshData& _mesh;

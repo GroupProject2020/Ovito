@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -99,7 +99,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 	auto typeList = std::make_unique<ParticleFrameData::TypeList>();
 	bool hasCellVectors = false;
 	bool convertToAbsoluteCoordinates = false;
-	PropertyPtr posProperty;
+	PropertyAccess<Point3> posProperty;
 
 	while(!stream.eof() && !isCanceled()) {
 		const char* line = stream.readLineTrimLeft();
@@ -203,12 +203,9 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 			}
 
 			// Create particle properties.
-			posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, false);
-			frameData->addParticleProperty(posProperty);
-			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, false);
-			frameData->addParticleProperty(typeProperty);
-			PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, true);
-			frameData->addParticleProperty(massProperty);
+			posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, false));
+			PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, false));
+			PropertyAccess<FloatType> massProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, true));
 
 			// Parse atom definitions.
 			for(int i = 0; i < natoms; i++) {
@@ -218,15 +215,15 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 				const char* token_end = line;
 				while(*token_end > ' ') ++token_end;
 				int typeId = typeList->addTypeName(line, token_end);
-				typeProperty->set<int>(i, typeId);
+				typeProperty[i] = typeId;
 				if(typeId >= 1 && typeId <= type_masses.size())
-					massProperty->set<FloatType>(i, type_masses[typeId-1]);
+					massProperty[i] = type_masses[typeId-1];
 
 				// Parse atomic coordinates.
 				Point3 pos;
 				if(sscanf(token_end, FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &pos.x(), &pos.y(), &pos.z()) != 3)
 					throw Exception(tr("Invalid atomic coordinates in line %1 of QE file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				posProperty->set<Point3>(i, pos * scaling);
+				posProperty[i] = pos * scaling;
 			}
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 		}
@@ -298,7 +295,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 	if(convertToAbsoluteCoordinates) {
 		// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 		const AffineTransformation simCell = frameData->simulationCell().matrix();
-		for(Point3& p : posProperty->range<Point3>())
+		for(Point3& p : posProperty)
 			p = simCell * p;
 	}
 

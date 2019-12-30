@@ -21,7 +21,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdobj/StdObj.h>
-#include <ovito/core/dataset/DataSet.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "DataSeriesObject.h"
 
 namespace Ovito { namespace StdObj {
@@ -88,7 +89,7 @@ PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementC
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QString& title, const PropertyPtr& y, const PropertyPtr& x) : PropertyContainer(dataset),
+DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QString& title, PropertyPtr y, PropertyPtr x) : PropertyContainer(dataset),
 	_title(title),
 	_intervalStart(0),
 	_intervalEnd(0),
@@ -97,11 +98,11 @@ DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QS
 	OVITO_ASSERT(!x || !y || x->size() == y->size());
 	if(x) {
 		OVITO_ASSERT(x->type() == XProperty);
-		createProperty(x);
+		createProperty(std::move(x));
 	}
 	if(y) {
 		OVITO_ASSERT(y->type() == YProperty);
-		createProperty(y);
+		createProperty(std::move(y));
 	}
 }
 
@@ -124,14 +125,15 @@ ConstPropertyPtr DataSeriesObject::getXStorage() const
 		return xStorage;
 	}
 	else if(const PropertyObject* yProperty = getY()) {
-		auto xdata = OOClass().createStandardStorage(elementCount(), XProperty, false);
-		FloatType binSize = (intervalEnd() - intervalStart()) / xdata->size();
+		auto xstorage = OOClass().createStandardStorage(elementCount(), XProperty, false);
+		PropertyAccess<FloatType> xdata(xstorage);
+		FloatType binSize = (intervalEnd() - intervalStart()) / xdata.size();
 		FloatType x = intervalStart() + binSize * FloatType(0.5);
-		for(FloatType& v : xdata->range<FloatType>()) {
+		for(FloatType& v : xdata) {
 			v = x;
 			x += binSize;
 		}
-		return std::move(xdata);
+		return std::move(xstorage);
 	}
 	else {
 		return {};

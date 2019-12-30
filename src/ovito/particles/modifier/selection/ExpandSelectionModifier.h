@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2015 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -111,10 +111,15 @@ private:
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 		const PropertyPtr& outputSelection() { return _outputSelection; }
+		
 		void setOutputSelection(PropertyPtr ptr) { _outputSelection = std::move(ptr); }
+		
 		size_t numSelectedParticlesInput() const { return _numSelectedParticlesInput; }
+		
 		size_t numSelectedParticlesOutput() const { return _numSelectedParticlesOutput; }
+		
 		void setNumSelectedParticlesInput(size_t count) { _numSelectedParticlesInput = count; }
+
 		void setNumSelectedParticlesOutput(size_t count) { _numSelectedParticlesOutput = count; }
 
 		const SimulationCell& simCell() const { return _simCell; }

@@ -41,7 +41,7 @@ class OVITO_STDOBJ_EXPORT PropertyObject : public DataObject
 public:
 
 	/// \brief Creates a property object.
-	Q_INVOKABLE PropertyObject(DataSet* dataset, const PropertyPtr& storage = nullptr);
+	Q_INVOKABLE PropertyObject(DataSet* dataset, PropertyPtr storage = {});
 
 	/// \brief Gets the property's name.
 	/// \return The name of property, which is shown to the user.
@@ -109,90 +109,6 @@ public:
 		notifyTargetChanged();
 	}
 
-	/// \brief Returns a read-only pointer to the elements stored in this property object.
-	template<typename T>
-	const T* cdata() const {
-		return storage()->cdata<T>();
-	}
-
-	/// \brief Returns a read-only pointer to the i-th element stored in this property object.
-	template<typename T>
-	const T* cdata(size_t i) const {
-		return storage()->cdata<T>(i);
-	}
-
-	/// Returns a read-only pointer to the j-components of the i-th element in the property array.
-	template<typename T>
-	const T* cdata(size_t i, size_t j) const {
-		return storage()->cdata<T>(i, j);
-	}
-
-	/// \brief Returns the value of the i-th element from the array.
-	template<typename T>
-	const T& get(size_t i) const {
-		return storage()->get<T>(i);
-	}
-
-	/// \brief Returns the value of the j-th component of the i-th element from the array.
-	template<typename T>
-	const T& get(size_t i, size_t j) const {
-		return storage()->get<T>(i, j);
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this array.
-	template<typename T>
-	boost::iterator_range<const T*> crange() const {
-		return storage()->crange<T>();
-	}
-
-	/// \brief Returns a read-write typed pointer to the elements stored in this property object.
-	template<typename T>
-	T* data() {
-		return modifiableStorage()->data<T>();
-	}
-
-	/// \brief Returns a read-write pointer to the raw element data stored in this property array.
-	template<>
-	void* data<void>() {
-		return modifiableStorage()->data<void>();
-	}
-
-	/// Returns a read-write pointer to the i-th element in the property array.
-	template<typename T>
-	T* data(size_t i) {
-		return modifiableStorage()->data<T>(i);
-	}
-
-	/// Returns a read-write pointer to the i-th element in the property storage.
-	template<>
-	void* data<void>(size_t i) {
-		return modifiableStorage()->data<void>(i);
-	}
-
-	/// Returns a read-write pointer to the j-components of the i-th element in the property array.
-	template<typename T>
-	T* data(size_t i, size_t j) {
-		return modifiableStorage()->data<T>(i, j);
-	}
-
-	/// \brief Sets the value of the i-th element in the array.
-	template<typename T>
-	void set(size_t i, const T& v) {
-		modifiableStorage()->set<T>(i, v);
-	}
-
-	/// \brief Sets the value of the j-th component of the i-th element in the array.
-	template<typename T>
-	void set(size_t i, size_t j, const T& v) {
-		modifiableStorage()->set<T>(i, j, v);
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this array.
-	template<typename T>
-	boost::iterator_range<T*> range() {
-		return modifiableStorage()->range<T>();
-	}
-
 	/// \brief Sets all array elements to the given uniform value.
 	template<typename T>
 	void fill(const T& value) {
@@ -218,12 +134,24 @@ public:
 
 	/// Copies the elements from the given source into this property array using a element mapping.
 	void mappedCopyFrom(const PropertyObject* source, const std::vector<size_t>& mapping) {
-		modifiableStorage()->mappedCopy(*source->storage(), mapping);
+		modifiableStorage()->mappedCopyFrom(*source->storage(), mapping);
 	}
 
 	/// Copies the elements from this property array into the given destination array using an index mapping.
 	void mappedCopyTo(PropertyObject* destination, const std::vector<size_t>& mapping) const {
 		storage()->mappedCopyTo(*destination->modifiableStorage(), mapping);
+	}
+
+	/// Copies the data elements from the given source array into this array. 
+	/// Array size, component count and data type of source and destination must match exactly.
+	void copyFrom(const PropertyObject* source) {
+		modifiableStorage()->copyFrom(*source->storage());
+	}
+
+	/// Copies a range of data elements from the given source array into this array. 
+	/// Component count and data type of source and destination must be compatible.
+	void copyRangeFrom(const PropertyObject* source, size_t sourceIndex, size_t destIndex, size_t count) {
+		modifiableStorage()->copyRangeFrom(*source->storage(), sourceIndex, destIndex, count);
 	}
 
 	//////////////////////////////// Element types //////////////////////////////

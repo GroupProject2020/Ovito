@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,6 +28,7 @@
 #include <ovito/particles/import/ParticleImporter.h>
 #include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
@@ -201,6 +202,7 @@ private:
 
 	struct TargetPropertyRecord {
 		PropertyPtr property;
+		PropertyAccess<void,true> propertyArray;
 		uint8_t* data;
 		size_t stride;
 		size_t count;

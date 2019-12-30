@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -241,15 +241,13 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 		isCartesian = true;
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false);
-	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false);
-	frameData->addParticleProperty(typeProperty);
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false));
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false));
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Read atom coordinates.
-	Point3* p = posProperty->data<Point3>();
-	int* a = typeProperty->data<int>();
+	Point3* p = posProperty.begin();
+	int* a = typeProperty.begin();
 	for(int atype = 1; atype <= atomCounts.size(); atype++) {
 		int typeId = atype;
 		if(atomTypeNames.size() == atomCounts.size() && atomTypeNames[atype-1].isEmpty() == false)
@@ -281,9 +279,8 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				isCartesian = true;
 
 			// Read atomic velocities.
-			PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::VelocityProperty, false);
-			frameData->addParticleProperty(velocityProperty);
-			Vector3* v = velocityProperty->data<Vector3>();
+			PropertyAccess<Vector3> velocityProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::VelocityProperty, false));
+			Vector3* v = velocityProperty.begin();
 			for(int atype = 1; atype <= atomCounts.size(); atype++) {
 				for(int i = 0; i < atomCounts[atype-1]; i++, ++v) {
 					if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
@@ -300,8 +297,9 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 			if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
 				auto parseFieldData = [this, &stream, &frameData](size_t nx, size_t ny, size_t nz, const QString& name) -> PropertyPtr {
 					PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 1, 0, name, false);
+					PropertyAccess<FloatType,true> fieldArray(fieldQuantity);
 					const char* s = stream.readLine();
-					FloatType* data = fieldQuantity->data<FloatType>();
+					FloatType* data = fieldArray.begin();
 					setProgressMaximum(fieldQuantity->size());
 					FloatType cellVolume = frameData->simulationCell().volume3D();
 					for(size_t i = 0; i < fieldQuantity->size(); i++, ++data) {
@@ -370,11 +368,10 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				}
 
 				if(magnetizationDensity && magnetizationDensityY && magnetizationDensityZ) {
-					PropertyPtr vectorMagnetization = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 3, 0, tr("Magnetization density"), false);
-					vectorMagnetization->setComponentNames(QStringList() << "X" << "Y" << "Z");
-					for(size_t i = 0; i < vectorMagnetization->size(); i++)
-						vectorMagnetization->set<Vector3>(i, { magnetizationDensity->get<FloatType>(i), magnetizationDensityY->get<FloatType>(i), magnetizationDensityZ->get<FloatType>(i) });
-					frameData->addVoxelProperty(std::move(vectorMagnetization));
+					PropertyAccess<FloatType,true> vectorMagnetization = frameData->addVoxelProperty(std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 3, 0, tr("Magnetization density"), false, 0, QStringList() << "X" << "Y" << "Z"));
+					boost::copy(ConstPropertyAccess<FloatType>(magnetizationDensity), vectorMagnetization.componentRange(0).begin());
+					boost::copy(ConstPropertyAccess<FloatType>(magnetizationDensityY), vectorMagnetization.componentRange(1).begin());
+					boost::copy(ConstPropertyAccess<FloatType>(magnetizationDensityZ), vectorMagnetization.componentRange(2).begin());
 				}
 				else if(magnetizationDensity) {
 					frameData->addVoxelProperty(std::move(magnetizationDensity));

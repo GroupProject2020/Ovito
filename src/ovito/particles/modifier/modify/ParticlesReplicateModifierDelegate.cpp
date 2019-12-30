@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesReplicateModifierDelegate.h"
@@ -78,7 +79,8 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 		// Shift particle positions by the periodicity vector.
 		if(property->type() == ParticlesObject::PositionProperty) {
-			Point3* p = property->data<Point3>();
+			PropertyAccess<Point3> positionArray(property);
+			Point3* p = positionArray.begin();
 			for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
 				for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
 					for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
@@ -97,12 +99,13 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 		// Assign unique IDs to duplicated particles.
 		if(mod->uniqueIdentifiers() && (property->type() == ParticlesObject::IdentifierProperty || property->type() == ParticlesObject::MoleculeProperty)) {
-			auto minmax = std::minmax_element(property->cdata<qlonglong>(), property->cdata<qlonglong>() + oldParticleCount);
+			PropertyAccess<qlonglong> propertyData(property);
+			auto minmax = std::minmax_element(propertyData.cbegin(), propertyData.cbegin() + oldParticleCount);
 			auto minID = *minmax.first;
 			auto maxID = *minmax.second;
 			for(size_t c = 1; c < numCopies; c++) {
 				auto offset = (maxID - minID + 1) * c;
-				for(auto id = property->data<qlonglong>() + c * oldParticleCount, id_end = id + oldParticleCount; id != id_end; ++id)
+				for(auto id = propertyData.begin() + c * oldParticleCount, id_end = id + oldParticleCount; id != id_end; ++id)
 					*id += offset;
 			}
 		}
@@ -110,68 +113,67 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 
 	// Replicate bonds.
 	if(outputParticles->bonds()) {
-		if(ConstPropertyPtr oldTopology = outputParticles->bonds()->getPropertyStorage(BondsObject::TopologyProperty)) {
+		size_t oldBondCount = outputParticles->bonds()->elementCount();
+		size_t newBondCount = oldBondCount * numCopies;
 
-			size_t oldBondCount = oldTopology->size();
-			size_t newBondCount = oldBondCount * numCopies;
+		ConstPropertyAccessAndRef<Vector3I> oldPeriodicImages = outputParticles->bonds()->getProperty(BondsObject::PeriodicImageProperty);
 
-			ConstPropertyPtr oldPeriodicImages = outputParticles->bonds()->getPropertyStorage(BondsObject::PeriodicImageProperty);
+		// Replicate bond property values.
+		outputParticles->makeBondsMutable();
+		outputParticles->bonds()->makePropertiesMutable();
+		outputParticles->bonds()->replicate(numCopies);
+		for(PropertyObject* property : outputParticles->bonds()->properties()) {
+			OVITO_ASSERT(property->size() == newBondCount);
 
-			// Replicate bond property values.
-			outputParticles->makeBondsMutable();
-			outputParticles->bonds()->makePropertiesMutable();
-			outputParticles->bonds()->replicate(numCopies);
-			for(PropertyObject* property : outputParticles->bonds()->properties()) {
-				OVITO_ASSERT(property->size() == newBondCount);
+			size_t destinationIndex = 0;
+			Point3I image;
 
-				size_t destinationIndex = 0;
-				Point3I image;
-
-				// Special handling for the topology property.
-				if(property->type() == BondsObject::TopologyProperty) {
-					for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
-						for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
-							for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
-								for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
-									Point3I newImage;
-									for(size_t dim = 0; dim < 3; dim++) {
-										int i = image[dim] + (oldPeriodicImages ? oldPeriodicImages->get<int>(bindex, dim) : 0) - newImages.minc[dim];
-										newImage[dim] = SimulationCell::modulo(i, nPBC[dim]) + newImages.minc[dim];
-									}
-									OVITO_ASSERT(newImage.x() >= newImages.minc.x() && newImage.x() <= newImages.maxc.x());
-									OVITO_ASSERT(newImage.y() >= newImages.minc.y() && newImage.y() <= newImages.maxc.y());
-									OVITO_ASSERT(newImage.z() >= newImages.minc.z() && newImage.z() <= newImages.maxc.z());
-									size_t imageIndex1 =   ((image.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
-														+ ((image.y()-newImages.minc.y()) * nPBC[2])
-														+  (image.z()-newImages.minc.z());
-									size_t imageIndex2 =   ((newImage.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
-														+ ((newImage.y()-newImages.minc.y()) * nPBC[2])
-														+  (newImage.z()-newImages.minc.z());
-									property->set<qlonglong>(destinationIndex, 0, property->get<qlonglong>(destinationIndex, 0) + imageIndex1 * oldParticleCount);
-									property->set<qlonglong>(destinationIndex, 1, property->get<qlonglong>(destinationIndex, 1) + imageIndex2 * oldParticleCount);
-									OVITO_ASSERT(property->get<qlonglong>(destinationIndex, 0) < newParticleCount);
-									OVITO_ASSERT(property->get<qlonglong>(destinationIndex, 1) < newParticleCount);
+			// Special handling for the topology property.
+			if(property->type() == BondsObject::TopologyProperty) {
+				PropertyAccess<ParticleIndexPair> topologyArray(property);
+				for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
+					for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
+						for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
+							for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
+								Point3I newImage;
+								for(size_t dim = 0; dim < 3; dim++) {
+									int i = image[dim] + (oldPeriodicImages ? oldPeriodicImages[bindex][dim] : 0) - newImages.minc[dim];
+									newImage[dim] = SimulationCell::modulo(i, nPBC[dim]) + newImages.minc[dim];
 								}
+								OVITO_ASSERT(newImage.x() >= newImages.minc.x() && newImage.x() <= newImages.maxc.x());
+								OVITO_ASSERT(newImage.y() >= newImages.minc.y() && newImage.y() <= newImages.maxc.y());
+								OVITO_ASSERT(newImage.z() >= newImages.minc.z() && newImage.z() <= newImages.maxc.z());
+								size_t imageIndex1 =   ((image.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
+													+ ((image.y()-newImages.minc.y()) * nPBC[2])
+													+  (image.z()-newImages.minc.z());
+								size_t imageIndex2 =   ((newImage.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
+													+ ((newImage.y()-newImages.minc.y()) * nPBC[2])
+													+  (newImage.z()-newImages.minc.z());
+								topologyArray[destinationIndex][0] += imageIndex1 * oldParticleCount;
+								topologyArray[destinationIndex][1] += imageIndex2 * oldParticleCount;
+								OVITO_ASSERT(topologyArray[destinationIndex][0] < newParticleCount);
+								OVITO_ASSERT(topologyArray[destinationIndex][1] < newParticleCount);
 							}
 						}
 					}
 				}
-				else if(property->type() == BondsObject::PeriodicImageProperty) {
-					// Special handling for the PBC shift vector property.
-					OVITO_ASSERT(oldPeriodicImages);
-					for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
-						for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
-							for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
-								for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
-									Vector3I newShift;
-									for(size_t dim = 0; dim < 3; dim++) {
-										int i = image[dim] + oldPeriodicImages->get<int>(bindex, dim) - newImages.minc[dim];
-										newShift[dim] = i >= 0 ? (i / nPBC[dim]) : ((i-nPBC[dim]+1) / nPBC[dim]);
-										if(!mod->adjustBoxSize())
-											newShift[dim] *= nPBC[dim];
-									}
-									property->set<Vector3I>(destinationIndex, newShift);
+			}
+			else if(property->type() == BondsObject::PeriodicImageProperty) {
+				// Special handling for the PBC shift vector property.
+				OVITO_ASSERT(oldPeriodicImages);
+				PropertyAccess<Vector3I> pbcImagesArray(property);
+				for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
+					for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
+						for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
+							for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
+								Vector3I newShift;
+								for(size_t dim = 0; dim < 3; dim++) {
+									int i = image[dim] + oldPeriodicImages[bindex][dim] - newImages.minc[dim];
+									newShift[dim] = i >= 0 ? (i / nPBC[dim]) : ((i-nPBC[dim]+1) / nPBC[dim]);
+									if(!mod->adjustBoxSize())
+										newShift[dim] *= nPBC[dim];
 								}
+								pbcImagesArray[destinationIndex] = newShift;
 							}
 						}
 					}

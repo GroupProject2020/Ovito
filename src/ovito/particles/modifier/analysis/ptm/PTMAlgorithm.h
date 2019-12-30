@@ -24,7 +24,7 @@
 
 
 #include <ovito/particles/Particles.h>
-#include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <3rdparty/ptm/ptm_functions.h>
 
@@ -130,15 +130,15 @@ public:
     }
 
     /// \brief Initializes the PTMAlgorithm with the input system of particles.
-    /// \param posProperty The particle coordinates.
+    /// \param positions The particle coordinates.
     /// \param cell The simulation cell information.
-    /// \param selectionProperty Per-particle selection flags determining which particles are included in the neighbor search (optional).
+    /// \param selection Per-particle selection flags determining which particles are included in the neighbor search (optional).
     /// \param promise A callback object that will be used to the report progress during the algorithm initialization (optional).
     /// \return \c false when the operation has been canceled by the user;
     ///         \c true on success.
     /// \throw Exception on error.
-    bool prepare(const PropertyStorage& posProperty, const SimulationCell& cell, const PropertyStorage* selectionProperty = nullptr, Task* task = nullptr) {
-        return NearestNeighborFinder::prepare(posProperty, cell, selectionProperty, task);
+    bool prepare(ConstPropertyAccess<Point3> positions, const SimulationCell& cell, ConstPropertyAccess<int> selection = {}, Task* task = nullptr) {
+        return NearestNeighborFinder::prepare(std::move(positions), cell, std::move(selection), task);
     }
 
     /// This nested class performs a PTM calculation on a single input particle.

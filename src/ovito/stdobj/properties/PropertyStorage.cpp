@@ -22,10 +22,35 @@
 
 #include <ovito/stdobj/StdObj.h>
 #include "PropertyStorage.h"
+#include "PropertyAccess.h"
 
 #include <cstring>
 
 namespace Ovito { namespace StdObj {
+
+// Export a couple of commonly used class template instantiations. 
+template class ConstPropertyAccess<int>;
+template class ConstPropertyAccess<qlonglong>;
+template class ConstPropertyAccess<FloatType>;
+template class ConstPropertyAccess<Point3>;
+template class ConstPropertyAccess<Vector3>;
+template class ConstPropertyAccess<Color>;
+template class ConstPropertyAccess<Vector3I>;
+template class ConstPropertyAccess<std::array<qlonglong,2>>;
+template class ConstPropertyAccess<int, true>;
+template class ConstPropertyAccess<FloatType, true>;
+template class ConstPropertyAccess<void, true>;
+template class PropertyAccess<int>;
+template class PropertyAccess<qlonglong>;
+template class PropertyAccess<FloatType>;
+template class PropertyAccess<Point3>;
+template class PropertyAccess<Vector3>;
+template class PropertyAccess<Color>;
+template class PropertyAccess<Vector3I>;
+template class PropertyAccess<std::array<qlonglong,2>>;
+template class PropertyAccess<int, true>;
+template class PropertyAccess<FloatType, true>;
+template class PropertyAccess<void, true>;
 
 /******************************************************************************
 * Constructor.
@@ -194,57 +219,57 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 	// Optimize filter operation for the most common property types.
 	if(dataType() == PropertyStorage::Float && stride() == sizeof(FloatType)) {
 		// Single float
-		auto src = cdata<FloatType>();
-		auto dst = data<FloatType>();
+		auto src = reinterpret_cast<const FloatType*>(cbuffer());
+		auto dst = reinterpret_cast<FloatType*>(buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		resize(dst - data<FloatType>(), true);
+		resize(dst - reinterpret_cast<FloatType*>(buffer()), true);
 	}
 	else if(dataType() == PropertyStorage::Int && stride() == sizeof(int)) {
 		// Single integer
-		auto src = cdata<int>();
-		auto dst = data<int>();
+		auto src = reinterpret_cast<const int*>(cbuffer());
+		auto dst = reinterpret_cast<int*>(buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		resize(dst - data<int>(), true);
+		resize(dst - reinterpret_cast<int*>(buffer()), true);
 	}
 	else if(dataType() == PropertyStorage::Int64 && stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
-		auto src = cdata<qlonglong>();
-		auto dst = data<qlonglong>();
+		auto src = reinterpret_cast<const qlonglong*>(cbuffer());
+		auto dst = reinterpret_cast<qlonglong*>(buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		resize(dst - data<qlonglong>(), true);
+		resize(dst - reinterpret_cast<qlonglong*>(buffer()), true);
 	}
 	else if(dataType() == PropertyStorage::Float && stride() == sizeof(Point3)) {
 		// Triple float (may actually be four floats when SSE instructions are enabled).
-		auto src = cdata<Point3>();
-		auto dst = data<Point3>();
+		auto src = reinterpret_cast<const Point3*>(cbuffer());
+		auto dst = reinterpret_cast<Point3*>(buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		resize(dst - data<Point3>(), true);
+		resize(dst - reinterpret_cast<Point3*>(buffer()), true);
 	}
 	else if(dataType() == PropertyStorage::Float && stride() == sizeof(Color)) {
 		// Triple float
-		auto src = cdata<Color>();
-		auto dst = data<Color>();
+		auto src = reinterpret_cast<const Color*>(cbuffer());
+		auto dst = reinterpret_cast<Color*>(buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		resize(dst - data<Color>(), true);
+		resize(dst - reinterpret_cast<Color*>(buffer()), true);
 	}
 	else if(dataType() == PropertyStorage::Int && stride() == sizeof(Point3I)) {
 		// Triple int.
-		auto src = cdata<Point3I>();
-		auto dst = data<Point3I>();
+		auto src = reinterpret_cast<const Point3I*>(cbuffer());
+		auto dst = reinterpret_cast<Point3I*>(buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		resize(dst - data<Point3I>(), true);
+		resize(dst - reinterpret_cast<Point3I*>(buffer()), true);
 	}
 	else {
 		// Generic case:
@@ -276,57 +301,57 @@ std::shared_ptr<PropertyStorage> PropertyStorage::filterCopy(const boost::dynami
 	// Optimize filter operation for the most common property types.
 	if(dataType() == PropertyStorage::Float && stride() == sizeof(FloatType)) {
 		// Single float
-		auto src = cdata<FloatType>();
-		auto dst = copy->data<FloatType>();
+		auto src = reinterpret_cast<const FloatType*>(cbuffer());
+		auto dst = reinterpret_cast<FloatType*>(copy->buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		OVITO_ASSERT(dst == copy->data<FloatType>() + newSize);
+		OVITO_ASSERT(dst == reinterpret_cast<FloatType*>(copy->buffer()) + newSize);
 	}
 	else if(dataType() == PropertyStorage::Int && stride() == sizeof(int)) {
 		// Single integer
-		auto src = cdata<int>();
-		auto dst = copy->data<int>();
+		auto src = reinterpret_cast<const int*>(cbuffer());
+		auto dst = reinterpret_cast<int*>(copy->buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		OVITO_ASSERT(dst == copy->data<int>() + newSize);
+		OVITO_ASSERT(dst == reinterpret_cast<int*>(copy->buffer()) + newSize);
 	}
 	else if(dataType() == PropertyStorage::Int64 && stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
-		auto src = cdata<qlonglong>();
-		auto dst = copy->data<qlonglong>();
+		auto src = reinterpret_cast<const qlonglong*>(cbuffer());
+		auto dst = reinterpret_cast<qlonglong*>(copy->buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		OVITO_ASSERT(dst == copy->data<qlonglong>() + newSize);
+		OVITO_ASSERT(dst == reinterpret_cast<qlonglong*>(copy->buffer()) + newSize);
 	}
 	else if(dataType() == PropertyStorage::Float && stride() == sizeof(Point3)) {
 		// Triple float (may actually be four floats when SSE instructions are enabled).
-		auto src = cdata<Point3>();
-		auto dst = copy->data<Point3>();
+		auto src = reinterpret_cast<const Point3*>(cbuffer());
+		auto dst = reinterpret_cast<Point3*>(copy->buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		OVITO_ASSERT(dst == copy->data<Point3>() + newSize);
+		OVITO_ASSERT(dst == reinterpret_cast<Point3*>(copy->buffer()) + newSize);
 	}
 	else if(dataType() == PropertyStorage::Float && stride() == sizeof(Color)) {
 		// Triple float
-		auto src = cdata<Color>();
-		auto dst = copy->data<Color>();
+		auto src = reinterpret_cast<const Color*>(cbuffer());
+		auto dst = reinterpret_cast<Color*>(copy->buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		OVITO_ASSERT(dst == copy->data<Color>() + newSize);
+		OVITO_ASSERT(dst == reinterpret_cast<Color*>(copy->buffer()) + newSize);
 	}
 	else if(dataType() == PropertyStorage::Int && stride() == sizeof(Point3I)) {
 		// Triple int.
-		auto src = cdata<Point3I>();
-		auto dst = copy->data<Point3I>();
+		auto src = reinterpret_cast<const Point3I*>(cbuffer());
+		auto dst = reinterpret_cast<Point3I*>(copy->buffer());
 		for(size_t i = 0; i < s; ++i, ++src) {
 			if(!mask.test(i)) *dst++ = *src;
 		}
-		OVITO_ASSERT(dst == copy->data<Point3I>() + newSize);
+		OVITO_ASSERT(dst == reinterpret_cast<Point3I*>(copy->buffer()) + newSize);
 	}
 	else {
 		// Generic case:
@@ -348,7 +373,7 @@ std::shared_ptr<PropertyStorage> PropertyStorage::filterCopy(const boost::dynami
 * Copies the contents from the given source into this property storage using
 * a mapping of indices.
 ******************************************************************************/
-void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vector<size_t>& mapping)
+void PropertyStorage::mappedCopyFrom(const PropertyStorage& source, const std::vector<size_t>& mapping)
 {
 	OVITO_ASSERT(source.size() == mapping.size());
 	OVITO_ASSERT(stride() == source.stride());
@@ -356,8 +381,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	// Optimize copying operation for the most common property types.
 	if(stride() == sizeof(FloatType)) {
 		// Single float
-		auto src = reinterpret_cast<const FloatType*>(source.cdata<void>());
-		auto dst = reinterpret_cast<FloatType*>(data<void>());
+		auto src = reinterpret_cast<const FloatType*>(source.cbuffer());
+		auto dst = reinterpret_cast<FloatType*>(buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < this->size());
 			dst[idx] = *src++;
@@ -365,8 +390,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	}
 	else if(stride() == sizeof(int)) {
 		// Single integer
-		auto src = reinterpret_cast<const int*>(source.cdata<void>());
-		auto dst = reinterpret_cast<int*>(data<void>());
+		auto src = reinterpret_cast<const int*>(source.cbuffer());
+		auto dst = reinterpret_cast<int*>(buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < this->size());
 			dst[idx] = *src++;
@@ -374,8 +399,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	}
 	else if(stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
-		auto src = reinterpret_cast<const qlonglong*>(source.cdata<void>());
-		auto dst = reinterpret_cast<qlonglong*>(data<void>());
+		auto src = reinterpret_cast<const qlonglong*>(source.cbuffer());
+		auto dst = reinterpret_cast<qlonglong*>(buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < this->size());
 			dst[idx] = *src++;
@@ -383,8 +408,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	}
 	else if(stride() == sizeof(Point3)) {
 		// Triple float (may actually be four floats when SSE instructions are enabled).
-		auto src = reinterpret_cast<const Point3*>(source.cdata<void>());
-		auto dst = reinterpret_cast<Point3*>(data<void>());
+		auto src = reinterpret_cast<const Point3*>(source.cbuffer());
+		auto dst = reinterpret_cast<Point3*>(buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < this->size());
 			dst[idx] = *src++;
@@ -392,8 +417,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	}
 	else if(stride() == sizeof(Color)) {
 		// Triple float
-		auto src = reinterpret_cast<const Color*>(source.cdata<void>());
-		auto dst = reinterpret_cast<Color*>(data<void>());
+		auto src = reinterpret_cast<const Color*>(source.cbuffer());
+		auto dst = reinterpret_cast<Color*>(buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < this->size());
 			dst[idx] = *src++;
@@ -401,8 +426,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	}
 	else if(stride() == sizeof(Point3I)) {
 		// Triple int
-		auto src = reinterpret_cast<const Point3I*>(source.cdata<void>());
-		auto dst = reinterpret_cast<Point3I*>(data<void>());
+		auto src = reinterpret_cast<const Point3I*>(source.cbuffer());
+		auto dst = reinterpret_cast<Point3I*>(buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < this->size());
 			dst[idx] = *src++;
@@ -410,8 +435,8 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 	}
 	else {
 		// General case:
-		const uint8_t* src = source._data.get();
-		uint8_t* dst = _data.get();
+		const uint8_t* src = source.cbuffer();
+		uint8_t* dst = buffer();
 		size_t stride = this->stride();
 		for(size_t i = 0; i < source.size(); i++, src += stride) {
 			OVITO_ASSERT(mapping[i] < this->size());
@@ -432,8 +457,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	// Optimize copying operation for the most common property types.
 	if(stride() == sizeof(FloatType)) {
 		// Single float
-		auto src = reinterpret_cast<const FloatType*>(cdata<void>());
-		auto dst = reinterpret_cast<FloatType*>(destination.data<void>());
+		auto src = reinterpret_cast<const FloatType*>(cbuffer());
+		auto dst = reinterpret_cast<FloatType*>(destination.buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
 			*dst++ = src[idx];
@@ -441,8 +466,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	}
 	else if(stride() == sizeof(int)) {
 		// Single integer
-		auto src = reinterpret_cast<const int*>(cdata<void>());
-		auto dst = reinterpret_cast<int*>(destination.data<void>());
+		auto src = reinterpret_cast<const int*>(cbuffer());
+		auto dst = reinterpret_cast<int*>(destination.buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
 			*dst++ = src[idx];
@@ -450,8 +475,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	}
 	else if(stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
-		auto src = reinterpret_cast<const qlonglong*>(cdata<void>());
-		auto dst = reinterpret_cast<qlonglong*>(destination.data<void>());
+		auto src = reinterpret_cast<const qlonglong*>(cbuffer());
+		auto dst = reinterpret_cast<qlonglong*>(destination.buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
 			*dst++ = src[idx];
@@ -459,8 +484,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	}
 	else if(stride() == sizeof(Point3)) {
 		// Triple float (may actually be four floats when SSE instructions are enabled).
-		auto src = reinterpret_cast<const Point3*>(cdata<void>());
-		auto dst = reinterpret_cast<Point3*>(destination.data<void>());
+		auto src = reinterpret_cast<const Point3*>(cbuffer());
+		auto dst = reinterpret_cast<Point3*>(destination.buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
 			*dst++ = src[idx];
@@ -468,8 +493,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	}
 	else if(stride() == sizeof(Color)) {
 		// Triple float
-		auto src = reinterpret_cast<const Color*>(cdata<void>());
-		auto dst = reinterpret_cast<Color*>(destination.data<void>());
+		auto src = reinterpret_cast<const Color*>(cbuffer());
+		auto dst = reinterpret_cast<Color*>(destination.buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
 			*dst++ = src[idx];
@@ -477,8 +502,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	}
 	else if(stride() == sizeof(Point3I)) {
 		// Triple int
-		auto src = reinterpret_cast<const Point3I*>(cdata<void>());
-		auto dst = reinterpret_cast<Point3I*>(destination.data<void>());
+		auto src = reinterpret_cast<const Point3I*>(cbuffer());
+		auto dst = reinterpret_cast<Point3I*>(destination.buffer());
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
 			*dst++ = src[idx];
@@ -486,8 +511,8 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 	}
 	else {
 		// General case:
-		const uint8_t* src = _data.get();
-		uint8_t* dst = destination._data.get();
+		const uint8_t* src = cbuffer();
+		uint8_t* dst = destination.buffer();
 		size_t stride = this->stride();
 		for(size_t idx : mapping) {
 			OVITO_ASSERT(idx < size());
@@ -495,6 +520,32 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 			dst += stride;
 		}
 	}
+}
+
+/******************************************************************************
+* Copies the data elements from the given source array into this array. 
+* Array size, component count and data type of source and destination must match exactly.
+******************************************************************************/
+void PropertyStorage::copyFrom(const PropertyStorage& source)
+{
+	OVITO_ASSERT(this->dataType() == source.dataType());
+	OVITO_ASSERT(this->stride() == source.stride());
+	OVITO_ASSERT(this->size() == source.size());
+	if(&source != this)
+		std::memcpy(buffer(), source.cbuffer(), this->stride() * this->size());
+}
+
+/******************************************************************************
+* Copies a range of data elements from the given source array into this array. 
+* Component count and data type of source and destination must be compatible.
+******************************************************************************/
+void PropertyStorage::copyRangeFrom(const PropertyStorage& source, size_t sourceIndex, size_t destIndex, size_t count)
+{
+	OVITO_ASSERT(this->dataType() == source.dataType());
+	OVITO_ASSERT(this->stride() == source.stride());
+	OVITO_ASSERT(sourceIndex + count <= source.size());
+	OVITO_ASSERT(destIndex + count <= this->size());
+	std::memcpy(buffer() + destIndex * this->stride(), source.cbuffer() + sourceIndex * source.stride(), this->stride() * count);
 }
 
 }	// End of namespace

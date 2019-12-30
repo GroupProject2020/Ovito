@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/BondsObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesDeleteSelectedModifierDelegate.h"
@@ -59,7 +60,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 			// Generate filter mask.
 			boost::dynamic_bitset<> mask(selProperty->size());
 			boost::dynamic_bitset<>::size_type i = 0;
-			for(int s : selProperty->crange<int>()) {
+			for(int s : ConstPropertyAccess<int>(selProperty)) {
 				if(s != 0) {
 					mask.set(i++);
 					numSelected++;
@@ -118,7 +119,7 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, Pi
 				// Generate filter mask.
 				boost::dynamic_bitset<> mask(selProperty->size());
 				boost::dynamic_bitset<>::size_type i = 0;
-				for(int s : selProperty->crange<int>()) {
+				for(int s : ConstPropertyAccess<int>(selProperty)) {
 					if(s != 0) {
 						mask.set(i++);
 						numSelected++;

@@ -23,6 +23,7 @@
 #include <ovito/stdmod/StdMod.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "InvertSelectionModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -47,8 +48,8 @@ void InvertSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplic
 		throwException(tr("No data element type set."));
 
    	PropertyContainer* container = state.expectMutableLeafObject(subject());
-	PropertyObject* selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty, true);
-	for(int& s : selProperty->range<int>())
+	PropertyAccess<int> selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty, true);
+	for(int& s : selProperty)
 		s = !s;
 }
 

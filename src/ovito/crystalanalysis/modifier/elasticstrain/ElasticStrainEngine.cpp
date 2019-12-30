@@ -84,7 +84,13 @@ void ElasticStrainEngine::perform()
 		return;
 
 	task()->nextProgressSubStep();
-	parallelFor(positions()->size(), *task(), [this](size_t particleIndex) {
+
+	ConstPropertyAccess<Point3> positionsArray(positions());
+	PropertyAccess<Matrix3> deformationGradientsArray(deformationGradients());
+	PropertyAccess<SymmetricTensor2> strainTensorsArray(strainTensors());
+	PropertyAccess<FloatType> volumetricStrainsArray(volumetricStrains());
+
+	parallelFor(positions()->size(), *task(), [&](size_t particleIndex) {
 
 		Cluster* localCluster = _structureAnalysis->atomCluster(particleIndex);
 		if(localCluster->id != 0) {
@@ -116,7 +122,7 @@ void ElasticStrainEngine::perform()
 					int neighborAtomIndex = _structureAnalysis->getNeighbor(particleIndex, n);
 					// Add vector pair to matrices for computing the elastic deformation gradient.
 					Vector3 latticeVector = idealUnitCellTM * _structureAnalysis->neighborLatticeVector(particleIndex, n);
-					const Vector3& spatialVector = cell().wrapVector(positions()->get<Point3>(neighborAtomIndex) - positions()->get<Point3>(particleIndex));
+					const Vector3& spatialVector = cell().wrapVector(positionsArray[neighborAtomIndex] - positionsArray[particleIndex]);
 					for(size_t i = 0; i < 3; i++) {
 						for(size_t j = 0; j < 3; j++) {
 							orientationV(i,j) += (double)(latticeVector[j] * latticeVector[i]);
@@ -127,13 +133,8 @@ void ElasticStrainEngine::perform()
 
 				// Calculate deformation gradient tensor.
 				Matrix_3<double> elasticF = orientationW * orientationV.inverse();
-				if(deformationGradients()) {
-					for(size_t col = 0; col < 3; col++) {
-						for(size_t row = 0; row < 3; row++) {
-							deformationGradients()->set<FloatType>(particleIndex, col*3+row, (FloatType)elasticF(row,col));
-						}
-					}
-				}
+				if(deformationGradientsArray)
+					deformationGradientsArray[particleIndex] = (Matrix3)elasticF;
 
 				// Calculate strain tensor.
 				SymmetricTensor2T<double> elasticStrain;
@@ -150,29 +151,24 @@ void ElasticStrainEngine::perform()
 				}
 
 				// Store strain tensor in output property.
-				if(strainTensors()) {
-					strainTensors()->set<SymmetricTensor2>(particleIndex, (SymmetricTensor2)elasticStrain);
-				}
+				if(strainTensorsArray)
+					strainTensorsArray[particleIndex] = (SymmetricTensor2)elasticStrain;
 
 				// Calculate volumetric strain component.
 				double volumetricStrain = (elasticStrain(0,0) + elasticStrain(1,1) + elasticStrain(2,2)) / 3.0;
 				OVITO_ASSERT(std::isfinite(volumetricStrain));
-				volumetricStrains()->set<FloatType>(particleIndex, (FloatType)volumetricStrain);
+				volumetricStrainsArray[particleIndex] = (FloatType)volumetricStrain;
 
 				return;
 			}
 		}
 
 		// Mark atom as invalid.
-		volumetricStrains()->set<FloatType>(particleIndex, 0);
-		if(strainTensors()) {
-			for(size_t component = 0; component < 6; component++)
-				strainTensors()->set<FloatType>(particleIndex, component, 0);
-		}
-		if(deformationGradients()) {
-			for(size_t component = 0; component < 9; component++)
-				deformationGradients()->set<FloatType>(particleIndex, component, 0);
-		}
+		volumetricStrainsArray[particleIndex] = 0;
+		if(strainTensorsArray)
+			strainTensorsArray[particleIndex] = SymmetricTensor2::Zero();
+		if(deformationGradientsArray)
+			deformationGradientsArray[particleIndex] = Matrix3::Zero();
 	});
 
 	task()->endProgressSubSteps();

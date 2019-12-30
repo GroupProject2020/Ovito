@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +22,7 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/gui/mainwin/MainWindow.h>
 #include <ovito/gui/actions/ViewportModeAction.h>
 #include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
@@ -140,7 +141,7 @@ void ParticleInspectionApplet::updateDistanceTable()
 	int n = std::min(4, visibleElementCount());
 
 	const ParticlesObject* particles = currentState().getObject<ParticlesObject>();
-	const PropertyObject* posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
+	ConstPropertyAccess<Point3> posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
 	_distanceTable->setRowCount(std::max(1, n * (n-1) / 2));
 	int row = 0;
 	for(int i = 0; i < n; i++) {
@@ -148,8 +149,8 @@ void ParticleInspectionApplet::updateDistanceTable()
 		for(int j = i+1; j < n; j++, row++) {
 			size_t j_index = visibleElementAt(j);
 			_distanceTable->setItem(row, 0, new QTableWidgetItem(QStringLiteral("%1 - %2").arg(i_index).arg(j_index)));
-			if(posProperty && i_index < posProperty->size() && j_index < posProperty->size()) {
-				Vector3 delta = posProperty->get<Point3>(j_index) - posProperty->get<Point3>(i_index);
+			if(posProperty && i_index < posProperty.size() && j_index < posProperty.size()) {
+				Vector3 delta = posProperty[j_index] - posProperty[i_index];
 				_distanceTable->setItem(row, 1, new QTableWidgetItem(QString::number(delta.length())));
 				_distanceTable->setItem(row, 2, new QTableWidgetItem(QString::number(delta.x()) + QChar(' ') + QString::number(delta.y()) + QChar(' ') + QString::number(delta.z())));
 			}
@@ -175,7 +176,7 @@ void ParticleInspectionApplet::updateAngleTable()
 	int n = std::min(3, visibleElementCount());
 
 	const ParticlesObject* particles = currentState().getObject<ParticlesObject>();
-	const PropertyObject* posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
+	ConstPropertyAccess<Point3> posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
 	_angleTable->setRowCount(n == 3 ? 3 : 1);
 	int row = 0;
 	for(int i = 0; i < n; i++) {
@@ -187,9 +188,9 @@ void ParticleInspectionApplet::updateAngleTable()
 				if(k == i) continue;
 				size_t k_index = visibleElementAt(k);
 				_angleTable->setItem(row, 0, new QTableWidgetItem(QStringLiteral("%1 - %2 - %3").arg(j_index).arg(i_index).arg(k_index)));
-				if(posProperty && i_index < posProperty->size() && j_index < posProperty->size() && k_index < posProperty->size()) {
-					Vector3 delta1 = posProperty->get<Point3>(j_index) - posProperty->get<Point3>(i_index);
-					Vector3 delta2 = posProperty->get<Point3>(k_index) - posProperty->get<Point3>(i_index);
+				if(posProperty && i_index < posProperty.size() && j_index < posProperty.size() && k_index < posProperty.size()) {
+					Vector3 delta1 = posProperty[j_index] - posProperty[i_index];
+					Vector3 delta2 = posProperty[k_index] - posProperty[i_index];
 					if(!delta1.isZero() && !delta2.isZero()) {
 						FloatType angle = std::acos(delta1.dot(delta2) / delta1.length() / delta2.length());
 						_angleTable->setItem(row, 1, new QTableWidgetItem(QString::number(qRadiansToDegrees(angle))));
@@ -294,19 +295,17 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Viewpo
 				// If particle selection is based on ID, find particle with the given ID.
 				size_t particleIndex = element.particleIndex;
 				if(element.particleId >= 0) {
-					if(const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
-						if(particleIndex >= identifierProperty->size() || identifierProperty->get<qlonglong>(particleIndex) != element.particleId) {
-							auto begin = identifierProperty->cdata<qlonglong>();
-							auto end = begin + identifierProperty->size();
-							auto iter = std::find(begin, end, element.particleId);
-							if(iter == end) continue;
-							element.particleIndex = particleIndex = (iter - begin);
+					if(ConstPropertyAccess<qlonglong> identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
+						if(particleIndex >= identifierProperty.size() || identifierProperty[particleIndex] != element.particleId) {
+							auto iter = boost::find(identifierProperty, element.particleId);
+							if(iter == identifierProperty.cend()) continue;
+							element.particleIndex = particleIndex = (iter - identifierProperty.cbegin());
 						}
 					}
 				}
-				if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
-					if(particleIndex < posProperty->size())
-						*outVertex++ = posProperty->get<Point3>(particleIndex);
+				if(ConstPropertyAccess<Point3> posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
+					if(particleIndex < posProperty.size())
+						*outVertex++ = posProperty[particleIndex];
 				}
 			}
 			if(outVertex == vertices.end())

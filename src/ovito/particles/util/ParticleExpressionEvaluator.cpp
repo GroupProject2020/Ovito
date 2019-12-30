@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/particles/Particles.h>
-#include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include "ParticleExpressionEvaluator.h"
 
@@ -36,20 +36,21 @@ void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 
 	// Create computed variables for reduced particle coordinates.
 	if(simCell) {
-		auto iter = std::find_if(inputProperties.begin(), inputProperties.end(), [](const ConstPropertyPtr& property) {
+		// Look for the 'Position' particle property in the inputs.
+		auto iter = boost::find_if(inputProperties, [](const ConstPropertyPtr& property) {
 			return property->type() == ParticlesObject::PositionProperty;
 		});
 		if(iter != inputProperties.end()) {
-			ConstPropertyPtr posProperty = *iter;
 			SimulationCell cellData = *simCell;
+			ConstPropertyAccess<Point3> posProperty = *iter;
 			registerComputedVariable("ReducedPosition.X", [posProperty,cellData](size_t particleIndex) -> double {
-				return cellData.inverseMatrix().prodrow(posProperty->get<Point3>(particleIndex), 0);
+				return cellData.inverseMatrix().prodrow(posProperty[particleIndex], 0);
 			});
 			registerComputedVariable("ReducedPosition.Y", [posProperty,cellData](size_t particleIndex) -> double {
-				return cellData.inverseMatrix().prodrow(posProperty->get<Point3>(particleIndex), 1);
+				return cellData.inverseMatrix().prodrow(posProperty[particleIndex], 1);
 			});
 			registerComputedVariable("ReducedPosition.Z", [posProperty,cellData](size_t particleIndex) -> double {
-				return cellData.inverseMatrix().prodrow(posProperty->get<Point3>(particleIndex), 2);
+				return cellData.inverseMatrix().prodrow(posProperty[particleIndex], 2);
 			});
 		}
 	}

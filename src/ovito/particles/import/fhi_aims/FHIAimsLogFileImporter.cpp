@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -125,10 +125,8 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 		throw Exception(tr("Invalid FHI-aims log file: No atoms found."));
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false);
-	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false);
-	frameData->addParticleProperty(typeProperty);
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false));
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false));
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Return to beginning of frame.
@@ -140,7 +138,7 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 			const char* line = stream.readLineTrimLeft();
 			if(boost::algorithm::starts_with(line, "atom")) {
 				bool isFractional = boost::algorithm::starts_with(line, "atom_frac");
-				Point3& pos = posProperty->data<Point3>()[i];
+				Point3& pos = posProperty[i];
 				char atomTypeName[16];
 				if(sscanf(line + (isFractional ? 9 : 4), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %15s", &pos.x(), &pos.y(), &pos.z(), atomTypeName) != 4)
 					throw Exception(tr("Invalid atom specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
@@ -149,7 +147,7 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 						throw Exception(tr("Invalid fractional atom coordinates (in line %1). Cell vectors have not been specified: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 					pos = cell * pos;
 				}
-				typeProperty->set<int>(i, typeList->addTypeName(atomTypeName));
+				typeProperty[i] = typeList->addTypeName(atomTypeName);
 				break;
 			}
 		}
@@ -168,9 +166,8 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 	else {
 		// If the input file does not contain simulation cell info,
 		// Use bounding box of particles as simulation cell.
-
 		Box3 boundingBox;
-		boundingBox.addPoints(posProperty->crange<Point3>());
+		boundingBox.addPoints(posProperty);
 		frameData->simulationCell().setMatrix(AffineTransformation(
 				Vector3(boundingBox.sizeX(), 0, 0),
 				Vector3(0, boundingBox.sizeY(), 0),

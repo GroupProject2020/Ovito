@@ -23,6 +23,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/gui/properties/BooleanParameterUI.h>
 #include <ovito/gui/properties/BooleanGroupBoxParameterUI.h>
 #include <ovito/gui/properties/IntegerParameterUI.h>
@@ -203,13 +204,13 @@ QVariant DislocationTypeListParameterUI::getItemData(RefTarget* target, const QM
 			else if(index.column() == 2 && _dislocationCounts) {
 				if(const PropertyObject* yprop = _dislocationCounts->getY()) {
 					if(yprop->size() > family->numericId() && yprop->dataType() == PropertyStorage::Int)
-						return yprop->get<int>(family->numericId());
+						return ConstPropertyAccess<int>(yprop)[family->numericId()];
 				}
 			}
 			else if(index.column() == 3 && _dislocationLengths) {
 				if(const PropertyObject* yprop = _dislocationLengths->getY()) {
 					if(yprop->size() > family->numericId() && yprop->dataType() == PropertyStorage::Float)
-						return QString::number(yprop->get<FloatType>(family->numericId()));
+						return QString::number(ConstPropertyAccess<FloatType>(yprop)[family->numericId()]);
 				}
 			}
 		}

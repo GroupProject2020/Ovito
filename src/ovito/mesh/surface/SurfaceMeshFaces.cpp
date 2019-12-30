@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/mesh/Mesh.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include "SurfaceMeshFaces.h"
 #include "SurfaceMeshVis.h"
 
@@ -75,17 +76,17 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 		// Certain standard properties need to be initialized with default values determined by the attached visual elements.
 		if(type == ColorProperty) {
 			if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(containerPath[containerPath.size()-2])) {
-				const PropertyObject* regionColorProperty = surfaceMesh->regions()->getProperty(SurfaceMeshRegions::ColorProperty);
-				const PropertyObject* faceRegionProperty = surfaceMesh->faces()->getProperty(SurfaceMeshFaces::RegionProperty);
-				if(regionColorProperty && faceRegionProperty && faceRegionProperty->size() == faceCount) {
+				ConstPropertyAccess<Color> regionColorProperty = surfaceMesh->regions()->getProperty(SurfaceMeshRegions::ColorProperty);
+				ConstPropertyAccess<int> faceRegionProperty = surfaceMesh->faces()->getProperty(SurfaceMeshFaces::RegionProperty);
+				if(regionColorProperty && faceRegionProperty && faceRegionProperty.size() == faceCount) {
 					// Inherit face colors from regions.
-					boost::transform(faceRegionProperty->crange<int>(), property->data<Color>(), 
-						[&](int region) { return (region >= 0 && region) < regionColorProperty->size() ? regionColorProperty->get<Color>(region) : Color(1,1,1); });
+					boost::transform(faceRegionProperty, PropertyAccess<Color>(property).begin(), 
+						[&](int region) { return (region >= 0 && region) < regionColorProperty.size() ? regionColorProperty[region] : Color(1,1,1); });
 					initializeMemory = false;
 				}
 				else if(SurfaceMeshVis* vis = surfaceMesh->visElement<SurfaceMeshVis>()) {
 					// Initialize face colors from uniform color set in SurfaceMeshVis.
-					boost::fill(property->range<Color>(), vis->surfaceColor());
+					PropertyAccess<Color>(property).fill(vis->surfaceColor());
 					initializeMemory = false;
 				}
 			}
@@ -94,7 +95,7 @@ PropertyPtr SurfaceMeshFaces::OOMetaClass::createStandardStorage(size_t faceCoun
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data<void>(), 0, property->size() * property->stride());
+		property->fillZero();
 	}
 
 	return property;

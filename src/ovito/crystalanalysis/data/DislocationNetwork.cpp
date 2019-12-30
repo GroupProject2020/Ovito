@@ -75,14 +75,14 @@ DislocationNetwork::DislocationNetwork(const Microstructure* microstructureObj) 
 
 	// Create clusters from microstructure regions.
 	const auto regionCount = microstructure.regionCount();
-	const PropertyPtr phaseProperty = microstructure.regionProperty(SurfaceMeshRegions::PhaseProperty);
-	const PropertyPtr latticeCorrespondonceProperty = microstructure.regionProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
+	ConstPropertyAccess<int> phaseProperty = microstructure.regionProperty(SurfaceMeshRegions::PhaseProperty);
+	ConstPropertyAccess<Matrix3> latticeCorrespondonceProperty = microstructure.regionProperty(SurfaceMeshRegions::LatticeCorrespondenceProperty);
 	for(MicrostructureData::region_index inputRegion = 1; inputRegion < regionCount; inputRegion++) {
 		Cluster* cluster = _clusterGraph->createCluster(inputRegion);
 		if(phaseProperty)
-			cluster->structure = phaseProperty->get<int>(inputRegion);
+			cluster->structure = phaseProperty[inputRegion];
 		if(latticeCorrespondonceProperty)
-			cluster->orientation = latticeCorrespondonceProperty->get<Matrix3>(inputRegion);
+			cluster->orientation = latticeCorrespondonceProperty[inputRegion];
 	}
 
 	// This is used to keep track of which input edges have already been converted to a continuous dislocation

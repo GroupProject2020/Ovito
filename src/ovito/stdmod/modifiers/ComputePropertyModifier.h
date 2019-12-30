@@ -27,6 +27,7 @@
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/stdobj/properties/PropertyReference.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <ovito/core/dataset/pipeline/AsynchronousDelegatingModifier.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifierApplication.h>
@@ -64,14 +65,18 @@ protected:
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
-			_selection.reset();
+			_selectionArray.reset();
 			_expressions.clear();
 			_evaluator.reset();
+			_outputArray.reset();
 			ComputeEngine::cleanup();
 		}
 
-		/// Returns the property storage that contains the input element selection.
-		const ConstPropertyPtr& selection() const { return _selection; }
+		/// Computes the modifier's results.
+		virtual void perform() override;
+
+		/// Returns the data accessor to the selection flag array.
+		const ConstPropertyAccessAndRef<int>& selectionArray() const { return _selectionArray; }
 
 		/// Returns the list of available input variables.
 		virtual QStringList inputVariableNames() const;
@@ -91,6 +96,9 @@ protected:
 		/// Returns the property storage that will receive the computed values.
 		const PropertyPtr& outputProperty() const { return _outputProperty; }
 
+		/// Returns the data accessor to the output property array that will receive the computed values.
+		PropertyAccess<void, true>& outputArray() { return _outputArray; }
+
 		/// Determines whether any of the math expressions is explicitly time-dependent.
 		virtual bool isTimeDependent() { return _evaluator->isTimeDependent(); }
 
@@ -98,9 +106,10 @@ protected:
 
 		const int _frameNumber;
 		QStringList _expressions;
-		ConstPropertyPtr _selection;
+		ConstPropertyAccessAndRef<int> _selectionArray;
 		std::unique_ptr<PropertyExpressionEvaluator> _evaluator;
 		const PropertyPtr _outputProperty;
+		PropertyAccess<void, true> _outputArray;
 	};
 
 public:

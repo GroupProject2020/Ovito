@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/util/CutoffNeighborFinder.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ovito/core/dataset/DataSet.h>
@@ -230,7 +231,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 	CutoffNeighborFinder neighborFinder;
 	if(neighborMode()) {
 		// Prepare the neighbor list.
-		if(!neighborFinder.prepare(_cutoff, *positions(), _neighborEvaluator->simCell(), nullptr, task().get()))
+		if(!neighborFinder.prepare(_cutoff, positions(), _neighborEvaluator->simCell(), {}, task().get()))
 			return;
 	}
 
@@ -274,7 +275,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 				return;
 
 			// Skip unselected particles if requested.
-			if(selection() && !selection()->get<int>(particleIndex))
+			if(selectionArray() && !selectionArray()[particleIndex])
 				continue;
 
 			if(selfNumNeighbors != nullptr) {
@@ -307,15 +308,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 				}
 
 				// Store results in output property.
-				if(outputProperty()->dataType() == PropertyStorage::Int) {
-					outputProperty()->set<int>(particleIndex, component, (int)value);
-				}
-				else if(outputProperty()->dataType() == PropertyStorage::Int64) {
-					outputProperty()->set<qlonglong>(particleIndex, component, (qlonglong)value);
-				}
-				else if(outputProperty()->dataType() == PropertyStorage::Float) {
-					outputProperty()->set<FloatType>(particleIndex, component, value);
-				}
+				outputArray().set(particleIndex, component, value);
 			}
 		}
 	});

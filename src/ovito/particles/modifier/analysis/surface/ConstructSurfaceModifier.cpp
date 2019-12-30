@@ -28,6 +28,7 @@
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include <ovito/grid/modifier/MarchingCubes.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
@@ -169,7 +170,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 	// It is going to be invalid anyway.
 	size_t numInputParticles = positions()->size();
 	if(selection()) {
-		numInputParticles = positions()->size() - boost::count(selection()->crange<int>(), 0);
+		numInputParticles = positions()->size() - boost::count(ConstPropertyAccess<int>(selection()), 0);
 	}
 	if(numInputParticles <= 3) {
 		return;
@@ -181,15 +182,54 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 
 	// Generate Delaunay tessellation.
 	DelaunayTessellation tessellation;
-	if(!tessellation.generateTessellation(mesh().cell(), positions()->cdata<Point3>(), positions()->size(), ghostLayerSize,
-			selection() ? selection()->cdata<int>() : nullptr, *task()))
+	if(!tessellation.generateTessellation(
+			mesh().cell(), 
+			ConstPropertyAccess<Point3>(positions()).cbegin(), 
+			positions()->size(), 
+			ghostLayerSize,
+			selection() ? ConstPropertyAccess<int>(selection()).cbegin() : nullptr, 
+			*task()))
 		return;
 
 	task()->nextProgressSubStep();
 
-	// Create the vertex properties in the output mesh which will receive the values from the input particles.
-	std::vector<PropertyStorage*> meshVertexProperties;
-	meshVertexProperties.reserve(_particleProperties.size());
+	// Determines the region a solid Delaunay cell belongs to.
+	// We use this callback function to compute the total volume of the solid region.
+	auto tetrahedronRegion = [this, &tessellation](DelaunayTessellation::CellHandle cell) {
+		if(tessellation.isGhostCell(cell) == false) {
+			Point3 p0 = tessellation.vertexPosition(tessellation.cellVertex(cell, 0));
+			Vector3 ad = tessellation.vertexPosition(tessellation.cellVertex(cell, 1)) - p0;
+			Vector3 bd = tessellation.vertexPosition(tessellation.cellVertex(cell, 2)) - p0;
+			Vector3 cd = tessellation.vertexPosition(tessellation.cellVertex(cell, 3)) - p0;
+			addSolidVolume(std::abs(ad.dot(cd.cross(bd))) / FloatType(6));
+		}
+		return 0;
+	};
+
+	// This callback function is called for every surface facet created by the manifold construction helper.
+	PropertyAccess<int> surfaceParticleSelectionArray(surfaceParticleSelection());
+	auto prepareMeshFace = [&](HalfEdgeMesh::face_index face, const std::array<size_t,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
+		// Mark vertex atoms as belonging to the surface.
+		if(surfaceParticleSelectionArray) {
+			for(size_t vi : vertexIndices) {
+				OVITO_ASSERT(vi < surfaceParticleSelectionArray.size());
+				surfaceParticleSelectionArray[vi] = 1;
+			}
+		}
+	};
+
+	// This callback function is called for every surface vertex created by the manifold construction helper.
+	std::vector<size_t> vertexToParticleMap;
+	auto prepareMeshVertex = [&](HalfEdgeMesh::vertex_index vertex, size_t particleIndex) {
+		vertexToParticleMap.push_back(particleIndex);
+		OVITO_ASSERT(vertex == vertexToParticleMap.size());
+	};
+
+	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, mesh(), alpha, *positions());
+	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), std::move(prepareMeshFace), std::move(prepareMeshVertex)))
+		return;
+
+	// Copy particle property values to mesh vertices.
 	for(const ConstPropertyPtr& particleProperty : _particleProperties) {
 		PropertyStorage* vertexProperty;
 		if(SurfaceMeshVertices::OOClass().isValidStandardPropertyId(particleProperty->type())) {
@@ -208,47 +248,8 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 			// Input property is a user property for mesh vertices.
 			vertexProperty = mesh().createVertexProperty(particleProperty->dataType(), particleProperty->componentCount(), particleProperty->stride(), particleProperty->name(), false, particleProperty->componentNames()).get();
 		}
-		meshVertexProperties.push_back(vertexProperty);
+		particleProperty->mappedCopyTo(*vertexProperty, vertexToParticleMap);
 	}
-
-	// Determines the region a solid Delaunay cell belongs to.
-	// We use this callback function to compute the total volume of the solid region.
-	auto tetrahedronRegion = [this, &tessellation](DelaunayTessellation::CellHandle cell) {
-		if(tessellation.isGhostCell(cell) == false) {
-			Point3 p0 = tessellation.vertexPosition(tessellation.cellVertex(cell, 0));
-			Vector3 ad = tessellation.vertexPosition(tessellation.cellVertex(cell, 1)) - p0;
-			Vector3 bd = tessellation.vertexPosition(tessellation.cellVertex(cell, 2)) - p0;
-			Vector3 cd = tessellation.vertexPosition(tessellation.cellVertex(cell, 3)) - p0;
-			addSolidVolume(std::abs(ad.dot(cd.cross(bd))) / FloatType(6));
-		}
-		return 0;
-	};
-
-	// This callback function is called for every surface facet created by the manifold construction helper.
-	auto prepareMeshFace = [this](HalfEdgeMesh::face_index face, const std::array<size_t,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
-		// Mark vertex atoms as belonging to the surface.
-		if(surfaceParticleSelection()) {
-			for(size_t vi : vertexIndices) {
-				OVITO_ASSERT(vi < surfaceParticleSelection()->size());
-				surfaceParticleSelection()->set<int>(vi, 1);
-			}
-		}
-	};
-
-	// This callback function is called for every surface vertex created by the manifold construction helper.
-	auto prepareMeshVertex = [&](HalfEdgeMesh::vertex_index vertex, size_t particleIndex) {
-		auto particleProperty = _particleProperties.cbegin();
-		for(PropertyStorage* vertexProperty : meshVertexProperties) {
-			OVITO_ASSERT(vertexProperty->stride() == (*particleProperty)->stride());
-			std::memcpy(vertexProperty->data<void>(vertex), (*particleProperty)->cdata<void>(particleIndex), vertexProperty->stride());
-			++particleProperty;
-		}
-		OVITO_ASSERT(particleProperty == _particleProperties.cend());
-	};
-
-	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, mesh(), alpha, *positions());
-	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), std::move(prepareMeshFace), std::move(prepareMeshVertex)))
-		return;
 
 	task()->nextProgressSubStep();
 
@@ -260,8 +261,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		return;
 
 	// Create the 'Surface area' region property.
-	PropertyPtr surfaceAreaProperty = mesh().createRegionProperty(SurfaceMeshRegions::SurfaceAreaProperty, true);
-	FloatType* surfaceAreaData = surfaceAreaProperty->data<FloatType>();
+	PropertyAccess<FloatType> surfaceAreaProperty = mesh().createRegionProperty(SurfaceMeshRegions::SurfaceAreaProperty, true);
 
 	// Compute surface area (total and per-region) by summing up the triangle face areas.
 	task()->nextProgressSubStep();
@@ -273,7 +273,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		FloatType area = e1.cross(e2).length() / 2;
 		addSurfaceArea(area);
 		SurfaceMeshData::region_index region = mesh().faceRegion(mesh().adjacentFace(edge));
-		surfaceAreaData[region] += area;
+		surfaceAreaProperty[region] += area;
 	}
 
 	task()->endProgressSubSteps();
@@ -305,13 +305,14 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 
 	// Determine the extends of the density grid.
 	AffineTransformation gridBoundaries = mesh().cell().matrix();
+	ConstPropertyAccess<Point3> positionsArray(positions());
 	for(size_t dim = 0; dim < 3; dim++) {
 		// Use bounding box of particles in directions that are non-periodic.
 		if(!mesh().cell().pbcFlags()[dim]) {
 			// Compute range of relative atomic coordinates in the current direction.
 			FloatType xmin =  FLOATTYPE_MAX;
 			FloatType xmax = -FLOATTYPE_MAX;
-			for(const Point3& p : positions()->crange<Point3>()) {
+			for(const Point3& p : positionsArray) {
 				FloatType rp = mesh().cell().inverseMatrix().prodrow(p, dim);
 				if(rp < xmin) xmin = rp;
 				if(rp > xmax) xmax = rp;
@@ -344,7 +345,7 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 
 	// Set up a particle neighbor finder to speed up density field computation.
 	CutoffNeighborFinder neighFinder;
-	if(!neighFinder.prepare(cutoffSize, *positions(), mesh().cell(), selection().get(), task().get()))
+	if(!neighFinder.prepare(cutoffSize, positions(), mesh().cell(), selection(), task().get()))
 		return;
 
 	task()->nextProgressSubStep();

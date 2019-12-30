@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/particles/objects/BondsVis.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/oo/CloneHelper.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
@@ -82,14 +83,12 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 			else
 				secondProp = secondaryParticles->getProperty(prop->name());
 			if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
-				OVITO_ASSERT(prop->stride() == secondProp->stride());
-				std::memcpy(static_cast<char*>(prop->data<void>(primaryParticleCount)), secondProp->cdata<void>(), prop->stride() * secondaryParticleCount);
+				prop->copyRangeFrom(secondProp, 0, primaryParticleCount, secondaryParticleCount);
 			}
 			else if(prop->type() != ParticlesObject::UserProperty) {
 				ConstDataObjectPath containerPath = { secondaryParticles };
 				PropertyPtr temporaryProp = ParticlesObject::OOClass().createStandardStorage(secondaryParticles->elementCount(), prop->type(), true, containerPath);
-				OVITO_ASSERT(temporaryProp->stride() == prop->stride());
-				std::memcpy(static_cast<char*>(prop->data<void>(primaryParticleCount)), temporaryProp->cdata<void>(), prop->stride() * secondaryParticleCount);
+				prop->modifiableStorage()->copyRangeFrom(*temporaryProp, 0, primaryParticleCount, secondaryParticleCount);
 			}
 
 			// Combine particle types lists.
@@ -97,12 +96,14 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 			// Assign unique particle and molecule IDs.
 			if(prop->type() == ParticlesObject::IdentifierProperty && primaryParticleCount != 0) {
-				qlonglong maxId = *std::max_element(prop->cdata<qlonglong>(), prop->cdata<qlonglong>() + primaryParticleCount);
-				std::iota(prop->data<qlonglong>() + primaryParticleCount, prop->data<qlonglong>() + totalParticleCount, maxId+1);
+				PropertyAccess<qlonglong> identifiers(prop);
+				qlonglong maxId = *std::max_element(identifiers.cbegin(), identifiers.cbegin() + primaryParticleCount);
+				std::iota(identifiers.begin() + primaryParticleCount, identifiers.end(), maxId + 1);
 			}
 			else if(prop->type() == ParticlesObject::MoleculeProperty && primaryParticleCount != 0) {
-				qlonglong maxId = *std::max_element(prop->cdata<qlonglong>(), prop->cdata<qlonglong>() + primaryParticleCount);
-				for(qlonglong* mol_id = prop->data<qlonglong>() + primaryParticleCount; mol_id != prop->data<qlonglong>() + totalParticleCount; ++mol_id)
+				PropertyAccess<qlonglong> identifiers(prop);
+				qlonglong maxId = *std::max_element(identifiers.cbegin(), identifiers.cbegin() + primaryParticleCount);
+				for(qlonglong* mol_id = identifiers.begin() + primaryParticleCount; mol_id != identifiers.end(); ++mol_id)
 					*mol_id += maxId;
 			}
 		}
@@ -129,19 +130,17 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 		// Shift values of second dataset and reset values of first dataset to zero:
 		if(primaryParticleCount != 0) {
-			std::memmove(static_cast<char*>(clonedProperty->data<void>(primaryParticleCount)), clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryParticleCount);
-			std::memset(clonedProperty->data<void>(), 0, clonedProperty->stride() * primaryParticleCount);
+			std::memmove(clonedProperty->modifiableStorage()->buffer() + primaryParticleCount * clonedProperty->stride(), clonedProperty->storage()->cbuffer(), clonedProperty->stride() * secondaryParticleCount);
+			std::memset(clonedProperty->modifiableStorage()->buffer(), 0, clonedProperty->stride() * primaryParticleCount);
 		}
 	}
 
 	// Merge bonds.
 	const BondsObject* primaryBonds = particles->bonds();
 	const BondsObject* secondaryBonds = secondaryParticles->bonds();
-	const PropertyObject* primaryBondTopology = primaryBonds ? primaryBonds->getTopology() : nullptr;
-	const PropertyObject* secondaryBondTopology = secondaryBonds ? secondaryBonds->getTopology() : nullptr;
 
 	// Merge bonds if present.
-	if(primaryBondTopology || secondaryBondTopology) {
+	if(primaryBonds || secondaryBonds) {
 
 		// Create the primary bonds object if it doesn't exist yet.
 		if(!primaryBonds) {
@@ -171,7 +170,12 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 					secondProp = secondaryBonds->getProperty(prop->name());
 				if(secondProp && secondProp->size() == secondaryBondCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 					OVITO_ASSERT(prop->stride() == secondProp->stride());
-					std::memcpy(static_cast<char*>(prop->data<void>(primaryBondCount)), secondProp->cdata<void>(), prop->stride() * secondaryBondCount);
+					prop->copyRangeFrom(secondProp, 0, primaryBondCount, secondaryBondCount);
+				}
+				else if(prop->type() != BondsObject::UserProperty) {
+					ConstDataObjectPath containerPath = { secondaryParticles, secondaryBonds };
+					PropertyPtr temporaryProp = BondsObject::OOClass().createStandardStorage(secondaryBondCount, prop->type(), true, containerPath);
+					prop->modifiableStorage()->copyRangeFrom(*temporaryProp, 0, primaryBondCount, secondaryBondCount);
 				}
 
 				// Combine bond type lists.
@@ -202,18 +206,18 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 
 				// Shift values of second dataset and reset values of first dataset to zero:
 				if(primaryBondCount != 0) {
-					std::memmove(static_cast<char*>(clonedProperty->data<void>(primaryBondCount)), clonedProperty->cdata<void>(), clonedProperty->stride() * secondaryBondCount);
-					std::memset(clonedProperty->data<void>(), 0, clonedProperty->stride() * primaryBondCount);
+					std::memmove(clonedProperty->modifiableStorage()->buffer() + primaryBondCount * clonedProperty->stride(), clonedProperty->storage()->cbuffer(), clonedProperty->stride() * secondaryBondCount);
+					std::memset(clonedProperty->modifiableStorage()->buffer(), 0, clonedProperty->stride() * primaryBondCount);
 				}
 			}
 
 			// Shift particle indices stored in the topology array of the second bonds object.
 			const PropertyObject* topologyProperty = primaryMutableBonds->getProperty(BondsObject::TopologyProperty);
 			if(topologyProperty && primaryParticleCount != 0) {
-				PropertyObject* mutableTopologyProperty = primaryMutableBonds->makeMutable(topologyProperty);
-				for(size_t i = primaryBondCount; i < totalBondCount; i++) {
-					mutableTopologyProperty->set<qlonglong>(i, 0, mutableTopologyProperty->get<qlonglong>(i, 0) + primaryParticleCount);
-					mutableTopologyProperty->set<qlonglong>(i, 1, mutableTopologyProperty->get<qlonglong>(i, 1) + primaryParticleCount);
+				PropertyAccess<ParticleIndexPair> mutableTopologyProperty = primaryMutableBonds->makeMutable(topologyProperty);
+				for(auto bond = mutableTopologyProperty.begin() + primaryBondCount; bond != mutableTopologyProperty.end(); ++bond) {
+					(*bond)[0] += primaryParticleCount;
+					(*bond)[1] += primaryParticleCount;
 				}
 			}
 		}

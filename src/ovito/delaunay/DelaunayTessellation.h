@@ -25,7 +25,6 @@
 
 #include <ovito/stdobj/StdObj.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
-#include <ovito/stdobj/properties/PropertyStorage.h>
 
 #include <geogram/Delaunay_psm.h>
 #include <boost/iterator/counting_iterator.hpp>

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -92,7 +92,7 @@ private:
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 		/// Processes a single Voronoi cell.
-		void processCell(voro::voronoicell_neighbor& vcell, size_t particleIndex, PropertyStorage& structures, QMutex* mutex);
+		int processCell(voro::voronoicell_neighbor& vcell);
 
 		/// Returns the VoroTop filter definition.
 		const std::shared_ptr<Filter>& filter() const { return _filter; }

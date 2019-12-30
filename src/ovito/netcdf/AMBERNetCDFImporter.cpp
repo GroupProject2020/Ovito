@@ -542,8 +542,8 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 			// Make sure the dimensions match.
 			bool doVoigtConversion = false;
 			if(componentCount != property->componentCount()) {
-				// For standard particle properties describing symmetric tensors in Voigt notion, we perform autoamtic
-				// converion from the 3x3 full tensors stored in the NetCDF file.
+				// For standard particle properties describing symmetric tensors in Voigt notion, we perform automatic
+				// conversion from the 3x3 full tensors stored in the NetCDF file.
 				if(componentCount == 9 && property->componentCount() == 6 && property->dataType() == PropertyStorage::Float) {
 					doVoigtConversion = true;
 				}
@@ -560,11 +560,12 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				countp[1] = 1000000;
 				setProgressMaximum(totalCount / countp[1] + 1);
 				OVITO_ASSERT(totalCount <= property->size());
+				PropertyAccess<int,true> propertyArray(property);
 				for(size_t chunk = 0; chunk < totalCount; chunk += countp[1], startp[1] += countp[1]) {
 					countp[1] = std::min(countp[1], remaining);
 					remaining -= countp[1];
 					OVITO_ASSERT(countp[1] >= 1);
-					NCERRI( nc_get_vara_int(_ncid, varId, startp, countp, property->data<int>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
+					NCERRI( nc_get_vara_int(_ncid, varId, startp, countp, propertyArray.begin() + chunk * property->componentCount()), tr("(While reading variable '%1'.)").arg(columnName) );
 					if(!incrementProgressValue()) {
 						closeNetCDF();
 						return {};
@@ -578,7 +579,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(property);
 
 					// Create particle types.
-					for(int ptype : property->crange<int>()) {
+					for(int ptype : ConstPropertyAccess<int>(property)) {
 						typeList->addTypeId(ptype);
 					}
 
@@ -595,11 +596,12 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				countp[1] = 1000000;
 				setProgressMaximum(totalCount / countp[1] + 1);
 				OVITO_ASSERT(totalCount <= property->size());
+				PropertyAccess<qlonglong,true> propertyArray(property);
 				for(size_t chunk = 0; chunk < totalCount; chunk += countp[1], startp[1] += countp[1]) {
 					countp[1] = std::min(countp[1], remaining);
 					remaining -= countp[1];
 					OVITO_ASSERT(countp[1] >= 1);
-					NCERRI( nc_get_vara_longlong(_ncid, varId, startp, countp, property->data<qlonglong>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
+					NCERRI( nc_get_vara_longlong(_ncid, varId, startp, countp, propertyArray.begin() + chunk * property->componentCount()), tr("(While reading variable '%1'.)").arg(columnName) );
 					if(!incrementProgressValue()) {
 						closeNetCDF();
 						return {};
@@ -608,6 +610,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				OVITO_ASSERT(remaining == 0);
 			}
 			else if(property->dataType() == PropertyStorage::Float) {
+				PropertyAccess<FloatType,true> propertyArray(property);
 
 				// Special handling for tensor arrays that need to be converted to Voigt notation.
 				if(doVoigtConversion) {
@@ -617,7 +620,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 #else
 					NCERRI( nc_get_vara_double(_ncid, varId, startp, countp, data.get()), tr("(While reading variable '%1'.)").arg(columnName) );
 #endif
-					fullToVoigt(particleCount, data.get(), property->data<FloatType>());
+					fullToVoigt(particleCount, data.get(), propertyArray.begin());
 				}
 				else {
 
@@ -631,9 +634,9 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 						remaining -= countp[1];
 						OVITO_ASSERT(countp[1] >= 1);
 #ifdef FLOATTYPE_FLOAT
-						NCERRI( nc_get_vara_float(_ncid, varId, startp, countp, property->data<FloatType>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
+						NCERRI( nc_get_vara_float(_ncid, varId, startp, countp, propertyArray.begin() + chunk * property->componentCount()), tr("(While reading variable '%1'.)").arg(columnName) );
 #else
-						NCERRI( nc_get_vara_double(_ncid, varId, startp, countp, property->data<FloatType>(chunk, 0)), tr("(While reading variable '%1'.)").arg(columnName) );
+						NCERRI( nc_get_vara_double(_ncid, varId, startp, countp, propertyArray.begin() + chunk * property->componentCount()), tr("(While reading variable '%1'.)").arg(columnName) );
 #endif
 						if(!incrementProgressValue()) {
 							closeNetCDF();
@@ -652,10 +655,10 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 		// If the input file does not contain simulation cell size, use bounding box of particles as simulation cell.
 		if(!pbc[0] || !pbc[1] || !pbc[2]) {
 
-			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
-			if(posProperty && posProperty->size() != 0) {
+			ConstPropertyAccess<Point3> posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
+			if(posProperty && posProperty.size() != 0) {
 				Box3 boundingBox;
-				boundingBox.addPoints(posProperty->crange<Point3>());
+				boundingBox.addPoints(posProperty);
 
 				AffineTransformation cell = frameData->simulationCell().matrix();
 				for(size_t dim = 0; dim < 3; dim++) {

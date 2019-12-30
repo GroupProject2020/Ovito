@@ -24,6 +24,7 @@
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/viewport/Viewport.h>
@@ -82,16 +83,16 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, Pi
 	std::atomic_size_t nselected(0);
 
 	// Generate the output selection property.
-	const PropertyPtr& selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
+	PropertyAccess<int> selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty);
 
 	// Evaluate Boolean expression for every input data element.
-	evaluator->evaluate([selection=selProperty.get(), &nselected](size_t elementIndex, size_t componentIndex, double value) {
+	evaluator->evaluate([&selProperty, &nselected](size_t elementIndex, size_t componentIndex, double value) {
 		if(value) {
-			selection->set<int>(elementIndex, 1);
+			selProperty[elementIndex] = 1;
 			++nselected;
 		}
 		else {
-			selection->set<int>(elementIndex, 0);
+			selProperty[elementIndex] = 0;
 		}
 	});
 
@@ -106,7 +107,7 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, Pi
 	state.addAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()), modApp);
 
 	// Update status display in the UI.
-	QString statusMessage = tr("%1 out of %2 elements selected (%3%)").arg(nselected.load()).arg(selProperty->size()).arg((FloatType)nselected.load() * 100 / std::max((size_t)1,selProperty->size()), 0, 'f', 1);
+	QString statusMessage = tr("%1 out of %2 elements selected (%3%)").arg(nselected.load()).arg(selProperty.size()).arg((FloatType)nselected.load() * 100 / std::max((size_t)1,selProperty.size()), 0, 'f', 1);
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }
 

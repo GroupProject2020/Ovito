@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -425,10 +425,9 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 	// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
 	columnParser.sortParticleTypes();
 
-	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
-	if(posProperty && posProperty->size() > 0) {
+	if(PropertyAccess<Point3> posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty)) {
 		Box3 boundingBox;
-		boundingBox.addPoints(posProperty->crange<Point3>());
+		boundingBox.addPoints(posProperty);
 
 		// Find out if coordinates are given in reduced format and need to be rescaled to absolute format.
 		// Check if all atom coordinates are within the [0,1] interval.
@@ -437,7 +436,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 		if(Box3(Point3(-0.01f), Point3(1.01f)).containsBox(boundingBox)) {
 			// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 			const AffineTransformation simCell = frameData->simulationCell().matrix();
-			for(Point3& p : posProperty->range<Point3>())
+			for(Point3& p : posProperty)
 				p = simCell * p;
 		}
 	}

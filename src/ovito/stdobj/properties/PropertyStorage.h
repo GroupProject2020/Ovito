@@ -157,6 +157,7 @@ public:
 	template<> constexpr int primitiveDataType<Vector3I>() { return Int; }
 	template<> constexpr int primitiveDataType<Point2I>() { return Int; }
 	template<> constexpr int primitiveDataType<Vector2I>() { return Int; }
+	template<> constexpr int primitiveDataType<std::array<qlonglong,2>>() { return primitiveDataType<qlonglong>(); }
 
 	/// \brief Returns the number of bytes per value.
 	/// \return Number of bytes used to store a single value of the data type
@@ -181,134 +182,24 @@ public:
 		_componentNames = std::move(names);
 	}
 
-	/////////////////////////////////////////////////////////////////////////////////////////////
-	//////////////////////////////////// Read access to data ////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////////////////////
-
-	/// \brief Returns a read-only typed pointer to the elements stored in this property object.
-	template<typename T>
-	const T* cdata() const {
-		OVITO_ASSERT(dataType() == primitiveDataType<T>());
-		OVITO_ASSERT(stride() == sizeof(T));
-		return reinterpret_cast<const T*>(_data.get());
-	}
-
 	/// \brief Returns a read-only pointer to the raw element data stored in this property array.
-	template<>
-	const void* cdata<void>() const {
+	const uint8_t* cbuffer() const {
 		return _data.get();
-	}
-
-	/// Returns a read-only pointer to the i-th element in the property array.
-	template<typename T>
-	const T* cdata(size_t i) const {
-		OVITO_ASSERT(dataType() == primitiveDataType<T>());
-		OVITO_ASSERT(stride() == sizeof(T));
-		OVITO_ASSERT(i < size());
-		return reinterpret_cast<const T*>(_data.get() + (i * stride()));
-	}
-
-	/// Returns a read-only pointer to the i-th element in the property storage.
-	template<>
-	const void* cdata<void>(size_t i) const {
-		OVITO_ASSERT(i < size());
-		return _data.get() + (i * stride());
-	}
-
-	/// Returns a read-only pointer to the j-components of the i-th element in the property array.
-	template<typename T>
-	const T* cdata(size_t i, size_t j) const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
-		OVITO_ASSERT(stride() == sizeof(T) * componentCount());
-		OVITO_ASSERT(i < size());
-		OVITO_ASSERT(j < componentCount());
-		return reinterpret_cast<const T*>(_data.get() + (i * stride())) + j;
-	}
-
-	/// \brief Returns the value of the i-th element from the array.
-	template<typename T>
-	const T& get(size_t i) const {
-		return *cdata<T>(i);
-	}
-
-	/// \brief Returns the value of the j-th component of the i-th element from the array.
-	template<typename T>
-	const T& get(size_t i, size_t j) const {
-		return *cdata<T>(i, j);
-	}
-
-	/// \brief Returns a range of const iterators over the elements stored in this array.
-	template<typename T>
-	boost::iterator_range<const T*> crange() const {
-		return boost::make_iterator_range(cdata<T>(), cdata<T>() + size());
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////
-	//////////////////////////////////// Write access to data ///////////////////////////////////
-	/////////////////////////////////////////////////////////////////////////////////////////////
-
-	/// \brief Returns a read-write typed pointer to the elements stored in this property object.
-	template<typename T>
-	T* data() {
-		OVITO_ASSERT(dataType() == primitiveDataType<T>());
-		OVITO_ASSERT(stride() == sizeof(T));
-		return reinterpret_cast<T*>(_data.get());
 	}
 
 	/// \brief Returns a read-write pointer to the raw element data stored in this property array.
-	template<>
-	void* data<void>() {
+	uint8_t* buffer() {
 		return _data.get();
-	}
-
-	/// Returns a read-write pointer to the i-th element in the property array.
-	template<typename T>
-	T* data(size_t i) {
-		OVITO_ASSERT(dataType() == primitiveDataType<T>());
-		OVITO_ASSERT(stride() == sizeof(T));
-		OVITO_ASSERT(i < size());
-		return reinterpret_cast<T*>(_data.get() + (i * stride()));
-	}
-
-	/// Returns a read-write pointer to the i-th element in the property storage.
-	template<>
-	void* data<void>(size_t i) {
-		OVITO_ASSERT(i < size());
-		return _data.get() + (i * stride());
-	}
-
-	/// Returns a read-write pointer to the j-components of the i-th element in the property array.
-	template<typename T>
-	T* data(size_t i, size_t j) {
-		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
-		OVITO_ASSERT(stride() == sizeof(T) * componentCount());
-		OVITO_ASSERT(i < size());
-		OVITO_ASSERT(j < componentCount());
-		return reinterpret_cast<T*>(_data.get() + (i * stride())) + j;
-	}
-
-	/// \brief Sets the value of the i-th element in the array.
-	template<typename T>
-	void set(size_t i, const T& v) {
-		*data<T>(i) = v;
-	}
-
-	/// \brief Sets the value of the j-th component of the i-th element in the array.
-	template<typename T>
-	void set(size_t i, size_t j, const T& v) {
-		*data<T>(i, j) = v;
-	}
-
-	/// \brief Returns a range of iterators over the elements stored in this array.
-	template<typename T>
-	boost::iterator_range<T*> range() {
-		return boost::make_iterator_range(data<T>(), data<T>() + size());
 	}
 
 	/// \brief Sets all array elements to the given uniform value.
 	template<typename T>
 	void fill(const T value) {
-		boost::fill(range<T>(), value);
+		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
+		OVITO_ASSERT(stride() == sizeof(T));
+		T* begin = reinterpret_cast<T*>(buffer());
+		T* end = begin + this->size();
+		std::fill(begin, end, value);
 	}
 
 	/// \brief Sets all array elements for which the corresponding entries in the 
@@ -318,9 +209,9 @@ public:
 		OVITO_ASSERT(selectionProperty.size() == this->size());
 		OVITO_ASSERT(selectionProperty.dataType() == Int);
 		OVITO_ASSERT(selectionProperty.componentCount() == 1);
-		auto selectionIter = selectionProperty.cdata<int>();
-		for(T& v : range<T>())
-			if(*selectionIter++) v = value;
+		const int* selectionIter = reinterpret_cast<const int*>(selectionProperty.cbuffer());
+		for(T* v = reinterpret_cast<T*>(buffer()), *end = v + this->size(); v != end; ++v)
+			if(*selectionIter++) *v = value;
 	}
 
 	/// \brief Sets all array elements for which the corresponding entries in the 
@@ -340,6 +231,11 @@ public:
 		fillSelected(value, selectionProperty.get());
 	}
 
+	// Set all property values to zeros.
+	void fillZero() {
+		std::memset(_data.get(), 0, this->size() * this->stride());
+	}
+
 	/// Reduces the size of the storage array, removing elements for which
 	/// the corresponding bits in the bit array are set.
 	void filterResize(const boost::dynamic_bitset<>& mask);
@@ -349,10 +245,18 @@ public:
 	std::shared_ptr<PropertyStorage> filterCopy(const boost::dynamic_bitset<>& mask) const;
 
 	/// Copies the contents from the given source into this storage using a element mapping.
-	void mappedCopy(const PropertyStorage& source, const std::vector<size_t>& mapping);
+	void mappedCopyFrom(const PropertyStorage& source, const std::vector<size_t>& mapping);
 
 	/// Copies the elements from this storage array into the given destination array using an index mapping.
 	void mappedCopyTo(PropertyStorage& destination, const std::vector<size_t>& mapping) const;
+
+	/// Copies the data elements from the given source array into this array. 
+	/// Array size, component count and data type of source and destination must match exactly.
+	void copyFrom(const PropertyStorage& source);
+
+	/// Copies a range of data elements from the given source array into this array. 
+	/// Component count and data type of source and destination must be compatible.
+	void copyRangeFrom(const PropertyStorage& source, size_t sourceIndex, size_t destIndex, size_t count);
 
 	/// Writes the object to an output stream.
 	void saveToStream(SaveStream& stream, bool onlyMetadata) const;
@@ -369,17 +273,17 @@ public:
 		if(component >= cmpntCount) return false;
 		if(size() == 0) return true;
 		if(dataType() == PropertyStorage::Int) {
-			for(auto v = cdata<int>(0, component), v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
+			for(auto v = reinterpret_cast<const int*>(cbuffer()) + component, v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
 				*iter++ = *v;
 			return true;
 		}
 		else if(dataType() == PropertyStorage::Int64) {
-			for(auto v = cdata<qlonglong>(0, component), v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
+			for(auto v = reinterpret_cast<const qlonglong*>(cbuffer()) + component, v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
 				*iter++ = *v;
 			return true;
 		}
 		else if(dataType() == PropertyStorage::Float) {
-			for(auto v = cdata<FloatType>(0, component), v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
+			for(auto v = reinterpret_cast<const FloatType*>(cbuffer()) + component, v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
 				*iter++ = *v;
 			return true;
 		}
@@ -394,19 +298,19 @@ public:
 		if(component >= cmpntCount) return false;
 		if(s == 0) return true;
 		if(dataType() == PropertyStorage::Int) {
-			auto v = cdata<int>(0, component);
+			auto v = reinterpret_cast<const int*>(cbuffer()) + component;
 			for(size_t i = 0; i < s; i++, v += cmpntCount)
 				f(i, *v);
 			return true;
 		}
 		else if(dataType() == PropertyStorage::Int64) {
-			auto v = cdata<qlonglong>(0, component);
+			auto v = reinterpret_cast<const qlonglong*>(cbuffer()) + component;
 			for(size_t i = 0; i < s; i++, v += cmpntCount)
 				f(i, *v);
 			return true;
 		}
 		else if(dataType() == PropertyStorage::Float) {
-			auto v = cdata<FloatType>(0, component);
+			auto v = reinterpret_cast<const FloatType*>(cbuffer()) + component;
 			for(size_t i = 0; i < s; i++, v += cmpntCount)
 				f(i, *v);
 			return true;

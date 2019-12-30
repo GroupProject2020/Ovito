@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesVis.h>
 #include <ovito/particles/objects/BondType.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
@@ -114,10 +115,10 @@ size_t ParticlesObject::deleteElements(const boost::dynamic_bitset<>& mask)
 
         // Remap particle indices of stored bonds and remove dangling bonds.
         if(const PropertyObject* topologyProperty = mutableBonds->getTopology()) {
-            PropertyPtr mutableTopology = mutableBonds->makeMutable(topologyProperty)->modifiableStorage();
+            PropertyAccess<ParticleIndexPair> mutableTopology = mutableBonds->makeMutable(topologyProperty);
 			for(size_t bondIndex = 0; bondIndex < oldBondCount; bondIndex++) {
-                size_t index1 = mutableTopology->get<qlonglong>(bondIndex, 0);
-                size_t index2 = mutableTopology->get<qlonglong>(bondIndex, 1);
+                size_t index1 = mutableTopology[bondIndex][0];
+                size_t index2 = mutableTopology[bondIndex][1];
 
                 // Remove invalid bonds, i.e. whose particle indices are out of bounds.
                 if(index1 >= oldParticleCount || index2 >= oldParticleCount) {
@@ -132,9 +133,10 @@ size_t ParticlesObject::deleteElements(const boost::dynamic_bitset<>& mask)
                 }
 
                 // Keep bond and remap particle indices.
-                mutableTopology->set<qlonglong>(bondIndex, 0, indexMap[index1]);
-                mutableTopology->set<qlonglong>(bondIndex, 1, indexMap[index2]);
+                mutableTopology[bondIndex][0] = indexMap[index1];
+                mutableTopology[bondIndex][1] = indexMap[index2];
             }
+			mutableTopology.reset();
 
             // Delete the marked bonds.
             mutableBonds->deleteElements(deletedBondsMask);
@@ -153,30 +155,29 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 	if(!bonds() || !bonds()->getProperty(BondsObject::TopologyProperty)) {
 		// Create the bonds object.
 		setBonds(new BondsObject(dataset()));
+		bonds()->setElementCount(newBonds.size());
 
 		// Create essential bond properties.
-		PropertyPtr topologyProperty = BondsObject::OOClass().createStandardStorage(newBonds.size(), BondsObject::TopologyProperty, false);
-		PropertyPtr periodicImageProperty = BondsObject::OOClass().createStandardStorage(newBonds.size(), BondsObject::PeriodicImageProperty, false);
-		PropertyPtr bondTypeProperty = bondType ? BondsObject::OOClass().createStandardStorage(newBonds.size(), BondsObject::TypeProperty, false) : nullptr;
+		PropertyAccess<ParticleIndexPair> topologyProperty = bonds()->createProperty(BondsObject::TopologyProperty, false);
+		PropertyAccess<Vector3I> periodicImageProperty = bonds()->createProperty(BondsObject::PeriodicImageProperty, false);
+		PropertyObject* bondTypeProperty = bondType ? bonds()->createProperty(BondsObject::TypeProperty, false) : nullptr;
 
 		// Copy data into property arrays.
-		auto t = topologyProperty->data<qlonglong>(0,0);
-		auto pbc = periodicImageProperty->data<Vector3I>();
+		auto t = topologyProperty.begin();
+		auto pbc = periodicImageProperty.begin();
 		for(const Bond& bond : newBonds) {
 			OVITO_ASSERT(bond.index1 < elementCount());
 			OVITO_ASSERT(bond.index2 < elementCount());
-			*t++ = bond.index1;
-			*t++ = bond.index2;
+			(*t)[0] = bond.index1;
+			(*t)[1] = bond.index2;
+			++t;
 			*pbc++ = bond.pbcShift;
 		}
 
 		// Insert property objects into the output pipeline state.
-		PropertyObject* topologyPropertyObj = bonds()->createProperty(topologyProperty);
-		PropertyObject* periodicImagePropertyObj = bonds()->createProperty(periodicImageProperty);
 		if(bondTypeProperty) {
-			boost::fill(bondTypeProperty->range<int>(), bondType->numericId());
-			PropertyObject* bondTypePropertyObj = bonds()->createProperty(bondTypeProperty);
-			bondTypePropertyObj->addElementType(bondType);
+			bondTypeProperty->fill<int>(bondType->numericId());
+			bondTypeProperty->addElementType(bondType);
 		}
 
 		// Insert other bond properties.
@@ -216,13 +217,12 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		// Resize the existing property arrays.
 		bonds->setElementCount(outputBondCount);
 
-		PropertyObject* newBondsTopology = bonds->expectMutableProperty(BondsObject::TopologyProperty);
-		PropertyObject* newBondsPeriodicImages = bonds->createProperty(BondsObject::PeriodicImageProperty, true);
-		PropertyObject* newBondTypeProperty = bondType ? bonds->createProperty(BondsObject::TypeProperty, true) : nullptr;
+		PropertyAccess<ParticleIndexPair> newBondsTopology = bonds->expectMutableProperty(BondsObject::TopologyProperty);
+		PropertyAccess<Vector3I> newBondsPeriodicImages = bonds->createProperty(BondsObject::PeriodicImageProperty, true);
+		PropertyAccess<int> newBondTypeProperty = bondType ? bonds->createProperty(BondsObject::TypeProperty, true) : nullptr;
 
-		if(newBondTypeProperty) {
-			newBondTypeProperty->addElementType(bondType);
-		}
+		if(newBondTypeProperty)
+			newBondTypeProperty.propertyObject()->addElementType(bondType);
 
 		// Copy bonds information into the extended arrays.
 		for(size_t bondIndex = 0; bondIndex < newBonds.size(); bondIndex++) {
@@ -230,10 +230,11 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 				const Bond& bond = newBonds[bondIndex];
 				OVITO_ASSERT(bond.index1 < elementCount());
 				OVITO_ASSERT(bond.index2 < elementCount());
-				newBondsTopology->set<qlonglong>(mapping[bondIndex], 0, bond.index1);
-				newBondsTopology->set<qlonglong>(mapping[bondIndex], 1, bond.index2);
-				newBondsPeriodicImages->set<Vector3I>(mapping[bondIndex], bond.pbcShift);
-				if(newBondTypeProperty) newBondTypeProperty->set<int>(mapping[bondIndex], bondType->numericId());
+				newBondsTopology[mapping[bondIndex]][0] = bond.index1;
+				newBondsTopology[mapping[bondIndex]][1] = bond.index2;
+				newBondsPeriodicImages[mapping[bondIndex]] = bond.pbcShift;
+				if(newBondTypeProperty) 
+					newBondTypeProperty[mapping[bondIndex]] = bondType->numericId();
 			}
 		}
 
@@ -242,7 +243,8 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 			if(bondPropertyObject->type() == BondsObject::ColorProperty) {
 				const std::vector<ColorA>& colors = inputBondColors(true);
 				OVITO_ASSERT(colors.size() == bondPropertyObject->size());
-				std::transform(colors.cbegin() + originalBondCount, colors.cend(), bondPropertyObject->data<Color>(originalBondCount), 
+				std::transform(colors.cbegin() + originalBondCount, colors.cend(), 
+					PropertyAccess<Color>(bondPropertyObject).begin() + originalBondCount, 
 					[](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 			}
 		}
@@ -254,8 +256,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 			OVITO_ASSERT(bprop->type() != BondsObject::PeriodicImageProperty);
 			OVITO_ASSERT(!bondType || bprop->type() != BondsObject::TypeProperty);
 
-			OORef<PropertyObject> propertyObject;
-
+			PropertyObject* propertyObject;
 			if(bprop->type() != BondsObject::UserProperty) {
 				propertyObject = bonds->createProperty(bprop->type(), true);
 			}
@@ -264,7 +265,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 			}
 
 			// Copy bond property data.
-			propertyObject->modifiableStorage()->mappedCopy(*bprop, mapping);
+			propertyObject->modifiableStorage()->mappedCopyFrom(*bprop, mapping);
 		}
 	}
 
@@ -292,7 +293,7 @@ std::vector<ColorA> ParticlesObject::inputParticleColors() const
 		return colors;
 	}
 
-	std::fill(colors.begin(), colors.end(), ColorA(1,1,1,1));
+	boost::fill(colors, ColorA(1,1,1,1));
 	return colors;
 }
 
@@ -353,7 +354,7 @@ std::vector<FloatType> ParticlesObject::inputParticleRadii() const
 		return radii;
 	}
 
-	std::fill(radii.begin(), radii.end(), FloatType(1));
+	boost::fill(radii, FloatType(1));
 	return radii;
 }
 
@@ -505,7 +506,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath.back())) {
 				const std::vector<ColorA>& colors = particles->inputParticleColors();
 				OVITO_ASSERT(colors.size() == property->size());
-				boost::transform(colors, property->data<Color>(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
+				boost::transform(colors, PropertyAccess<Color>(property).begin(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
 				initializeMemory = false;
 			}
 		}
@@ -513,7 +514,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath.back())) {
 				const std::vector<FloatType>& radii = particles->inputParticleRadii();
 				OVITO_ASSERT(radii.size() == property->size());
-				boost::copy(radii, property->data<FloatType>());
+				boost::copy(radii, PropertyAccess<FloatType>(property).begin());
 				initializeMemory = false;
 			}
 		}
@@ -532,7 +533,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 
 	if(initializeMemory) {
 		// Default-initialize property values with zeros.
-		std::memset(property->data<void>(), 0, property->size() * property->stride());
+		property->fillZero();
 	}
 
 	return property;
@@ -629,21 +630,21 @@ size_t ParticlesObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath
 	const ParticlesObject* destParticles = static_object_cast<ParticlesObject>(dest.back());
 
 	// If unique IDs are available try to use them to look up the particle in the other data collection.
-	if(const PropertyObject* sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
-		if(const PropertyObject* destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
-			qlonglong id = sourceIdentifiers->get<qlonglong>(elementIndex);
-			size_t mappedId = boost::find(destIdentifiers->crange<qlonglong>(), id) - destIdentifiers->cdata<qlonglong>();
-			if(mappedId != destIdentifiers->size())
+	if(ConstPropertyAccess<qlonglong> sourceIdentifiers = sourceParticles->getProperty(ParticlesObject::IdentifierProperty)) {
+		if(ConstPropertyAccess<qlonglong> destIdentifiers = destParticles->getProperty(ParticlesObject::IdentifierProperty)) {
+			qlonglong id = sourceIdentifiers[elementIndex];
+			size_t mappedId = boost::find(destIdentifiers, id) - destIdentifiers.cbegin();
+			if(mappedId != destIdentifiers.size())
 				return mappedId;
 		}
 	}
 
 	// Next, try to use the position to find the right particle in the other data collection.
-	if(const PropertyObject* sourcePositions = sourceParticles->getProperty(ParticlesObject::PositionProperty)) {
-		if(const PropertyObject* destPositions = destParticles->getProperty(ParticlesObject::PositionProperty)) {
-			const Point3& pos = sourcePositions->get<Point3>(elementIndex);
-			size_t mappedId = boost::find(destPositions->crange<Point3>(), pos) - destPositions->cdata<Point3>();
-			if(mappedId != destPositions->size())
+	if(ConstPropertyAccess<Point3> sourcePositions = sourceParticles->getProperty(ParticlesObject::PositionProperty)) {
+		if(ConstPropertyAccess<Point3> destPositions = destParticles->getProperty(ParticlesObject::PositionProperty)) {
+			const Point3& pos = sourcePositions[elementIndex];
+			size_t mappedId = boost::find(destPositions, pos) - destPositions.cbegin();
+			if(mappedId != destPositions.size())
 				return mappedId;
 		}
 	}
@@ -659,20 +660,19 @@ size_t ParticlesObject::OOMetaClass::remapElementIndex(const ConstDataObjectPath
 boost::dynamic_bitset<> ParticlesObject::OOMetaClass::viewportFenceSelection(const QVector<Point2>& fence, const ConstDataObjectPath& objectPath, PipelineSceneNode* node, const Matrix4& projectionTM) const
 {
 	const ParticlesObject* particles = static_object_cast<ParticlesObject>(objectPath.back());
-	if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
+	if(ConstPropertyAccess<Point3> posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
 
 		if(!particles->visElement() || particles->visElement()->isEnabled() == false)
 			node->throwException(tr("Cannot select particles while the corresponding visual element is disabled. Please enable the display of particles first."));
 
-		boost::dynamic_bitset<> fullSelection(posProperty->size());
+		boost::dynamic_bitset<> fullSelection(posProperty.size());
 		QMutex mutex;
-		parallelForChunks(posProperty->size(), [pos = posProperty->cdata<Point3>(), &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
+		parallelForChunks(posProperty.size(), [posProperty, &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
 			boost::dynamic_bitset<> selection(fullSelection.size());
-			auto p = pos + startIndex;
-			for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++, ++p) {
+			for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++) {
 
 				// Project particle center to screen coordinates.
-				Point3 projPos = projectionTM * (*p);
+				Point3 projPos = projectionTM * posProperty[index];
 
 				// Perform z-clipping.
 				if(std::abs(projPos.z()) >= FloatType(1))

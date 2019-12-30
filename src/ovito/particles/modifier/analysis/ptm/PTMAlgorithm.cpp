@@ -58,7 +58,7 @@ PTMAlgorithm::Kernel::~Kernel()
 typedef struct
 {
 	const NearestNeighborFinder* neighFinder;
-	ConstPropertyPtr particleTypes;
+	ConstPropertyAccess<int> particleTypes;
 	std::vector< uint64_t > *precachedNeighbors;
 
 } ptmnbrdata_t;
@@ -67,7 +67,7 @@ static int get_neighbours(void* vdata, size_t _unused_lammps_variable, size_t at
 {
 	ptmnbrdata_t* nbrdata = (ptmnbrdata_t*)vdata;
 	const NearestNeighborFinder* neighFinder = nbrdata->neighFinder;
-	ConstPropertyPtr particleTypes = nbrdata->particleTypes;
+	const ConstPropertyAccess<int>& particleTypes = nbrdata->particleTypes;
 	std::vector< uint64_t >& precachedNeighbors = *nbrdata->precachedNeighbors;
 
 	// Find nearest neighbors.
@@ -95,10 +95,10 @@ static int get_neighbours(void* vdata, size_t _unused_lammps_variable, size_t at
 	}
 
 	// Build list of particle types for ordering identification.
-	if(particleTypes != nullptr) {
-		env->numbers[0] = particleTypes->get<int>(atom_index);
+	if(particleTypes) {
+		env->numbers[0] = particleTypes[atom_index];
 		for(int i = 0; i < numNeighbors; i++) {
-			env->numbers[i+1] = particleTypes->get<int>(neighQuery.results()[permutation[i]].index);
+			env->numbers[i+1] = particleTypes[neighQuery.results()[permutation[i]].index];
 		}
 	}
 	else {

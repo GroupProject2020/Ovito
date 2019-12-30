@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/stdobj/StdObj.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/UndoStack.h>
 #include "ElementSelectionSet.h"
@@ -125,20 +126,22 @@ void ElementSelectionSet::resetSelection(const PropertyContainer* container)
 	OVITO_ASSERT(container != nullptr);
 
 	// Take a snapshot of the current selection state.
-	if(const PropertyObject* selProperty = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
+	if(ConstPropertyAccess<int> selectionProperty = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
 
 		// Make a backup of the old snapshot so it may be restored.
 		dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-		const PropertyObject* identifierProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
-			container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
-		OVITO_ASSERT(!identifierProperty || selProperty->size() == identifierProperty->size());
+		// Obtain access to the unique identifiers of the data elements (if present).
+		ConstPropertyAccess<qlonglong> identifierProperty;
+		if(useIdentifiers() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty))
+			identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+		OVITO_ASSERT(!identifierProperty || selectionProperty.size() == identifierProperty.size());
 
-		if(identifierProperty && selProperty->size() == identifierProperty->size() && useIdentifiers()) {
+		if(identifierProperty && selectionProperty.size() == identifierProperty.size()) {
 			_selectedIdentifiers.clear();
 			_selection.clear();
-			auto s = selProperty->cdata<int>();
-			for(auto id : identifierProperty->crange<qlonglong>()) {
+			auto s = selectionProperty.begin();
+			for(auto id : identifierProperty) {
 				if(*s++)
 					_selectedIdentifiers.insert(id);
 			}
@@ -146,9 +149,9 @@ void ElementSelectionSet::resetSelection(const PropertyContainer* container)
 		else {
 			// Take a snapshot of the selection state.
 			_selectedIdentifiers.clear();
-			_selection.resize(selProperty->size());
+			_selection.resize(selectionProperty.size());
 			size_t index = 0;
-			for(auto s : selProperty->crange<int>()) {
+			for(auto s : selectionProperty) {
 				_selection.set(index++, s);
 			}
 		}
@@ -191,28 +194,30 @@ void ElementSelectionSet::setSelection(const PropertyContainer* container, const
 	// Make a backup of the old snapshot so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	const PropertyObject* identifierProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
-		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
-	OVITO_ASSERT(!identifierProperty || selection.size() == identifierProperty->size());
+	// Obtain access to the unique identifiers of the data elements (if present).
+	ConstPropertyAccess<qlonglong> identifierProperty;
+	if(useIdentifiers() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty))
+		identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+	OVITO_ASSERT(!identifierProperty || selection.size() == identifierProperty.size());
 
-	if(identifierProperty && useIdentifiers()) {
+	if(identifierProperty) {
 		_selection.clear();
 		size_t index = 0;
 		if(mode == SelectionReplace) {
 			_selectedIdentifiers.clear();
-			for(auto id : identifierProperty->crange<qlonglong>()) {
+			for(auto id : identifierProperty) {
 				if(selection.test(index++))
 					_selectedIdentifiers.insert(id);
 			}
 		}
 		else if(mode == SelectionAdd) {
-			for(auto id : identifierProperty->crange<qlonglong>()) {
+			for(auto id : identifierProperty) {
 				if(selection.test(index++))
 					_selectedIdentifiers.insert(id);
 			}
 		}
 		else if(mode == SelectionSubtract) {
-			for(auto id : identifierProperty->crange<qlonglong>()) {
+			for(auto id : identifierProperty) {
 				if(selection.test(index++))
 					_selectedIdentifiers.remove(id);
 			}
@@ -243,11 +248,14 @@ void ElementSelectionSet::toggleElement(const PropertyContainer* container, size
 	if(elementIndex >= container->elementCount())
 		return;
 
-	const PropertyObject* identifiers = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
-		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
-	if(useIdentifiers() && identifiers) {
+	// Obtain access to the unique identifiers of the data elements (if present).
+	ConstPropertyAccess<qlonglong> identifierProperty;
+	if(useIdentifiers() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty))
+		identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+
+	if(identifierProperty) {
 		_selection.clear();
-		toggleElementById(identifiers->get<qlonglong>(elementIndex));
+		toggleElementById(identifierProperty[elementIndex]);
 	}
 	else if(elementIndex < _selection.size()) {
 		_selectedIdentifiers.clear();
@@ -293,12 +301,15 @@ void ElementSelectionSet::selectAll(const PropertyContainer* container)
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	const PropertyObject* identifiers = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
-		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
-	if(useIdentifiers() && identifiers != nullptr) {
+	// Obtain access to the unique identifiers of the data elements (if present).
+	ConstPropertyAccess<qlonglong> identifierProperty;
+	if(useIdentifiers() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty))
+		identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+
+	if(identifierProperty) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
-		for(auto id : identifiers->crange<qlonglong>())
+		for(auto id : identifierProperty)
 			_selectedIdentifiers.insert(id);
 	}
 	else {
@@ -312,32 +323,31 @@ void ElementSelectionSet::selectAll(const PropertyContainer* container)
 /******************************************************************************
 * Copies the stored selection set into the given output selection property.
 ******************************************************************************/
-PipelineStatus ElementSelectionSet::applySelection(PropertyObject* outputSelectionProperty, const PropertyObject* identifierProperty)
+PipelineStatus ElementSelectionSet::applySelection(PropertyAccess<int> outputSelectionProperty, ConstPropertyAccess<qlonglong> identifierProperty)
 {
 	size_t nselected = 0;
 	if(!identifierProperty || !useIdentifiers()) {
 
 		// When not using identifiers, the number of input elements must match.
-		if(outputSelectionProperty->size() != _selection.size())
+		if(outputSelectionProperty.size() != _selection.size())
 			throwException(tr("Stored selection state became invalid, because the number of input elements has changed."));
 
 		// Restore selection simply by placing the snapshot into the pipeline.
 		size_t index = 0;
-		for(auto& s : outputSelectionProperty->range<int>()) {
+		for(auto& s : outputSelectionProperty) {
 			if((s = _selection.test(index++)))
 				nselected++;
 		}
 	}
-	else {
-		OVITO_ASSERT(outputSelectionProperty->size() == identifierProperty->size());
+	else if(identifierProperty) {
+		OVITO_ASSERT(outputSelectionProperty.size() == identifierProperty.size());
 
-		auto id = identifierProperty->cdata<qlonglong>();
-		for(auto& s : outputSelectionProperty->range<int>()) {
+		auto id = identifierProperty.begin();
+		for(auto& s : outputSelectionProperty) {
 			if((s = _selectedIdentifiers.contains(*id++)))
 				nselected++;
 		}
 	}
-	outputSelectionProperty->notifyTargetChanged();
 
 	return PipelineStatus(PipelineStatus::Success, tr("%1 elements selected").arg(nselected));
 }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 
 #include <ovito/stdobj/StdObj.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 
 #include <muparser/muParser.h>
@@ -152,7 +153,7 @@ protected:
 		/// The variable's value for the current data element.
 		double value;
 		/// Pointer into the property storage.
-		const char* dataPointer;
+		const uint8_t* dataPointer;
 		/// Data array stride in the property storage.
 		size_t stride;
 		/// The type of variable.
@@ -167,6 +168,8 @@ protected:
 		std::function<double(size_t)> function;
 		/// Reference the original property that contains the data.
 		ConstPropertyPtr property;
+		/// Mmeory buffer containing the property values.
+		ConstPropertyAccess<void,true> propertyArray;
 		/// Indicates whether this variable is a caller-defined element variable.
 		int variableClass = 0;
 

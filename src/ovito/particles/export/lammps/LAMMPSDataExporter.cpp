@@ -25,6 +25,7 @@
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
@@ -42,19 +43,23 @@ SET_PROPERTY_FIELD_LABEL(LAMMPSDataExporter, atomStyle, "Atom style");
 bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
-	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
-	const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
-	const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
-	const PropertyObject* periodicImageProperty = particles->getProperty(ParticlesObject::PeriodicImageProperty);
+	particles->verifyIntegrity();
+	ConstPropertyAccess<Point3> posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	ConstPropertyAccess<Vector3> velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
+	ConstPropertyAccess<qlonglong> identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
+	ConstPropertyAccess<Vector3I> periodicImageProperty = particles->getProperty(ParticlesObject::PeriodicImageProperty);
 	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
-	const PropertyObject* chargeProperty = particles->getProperty(ParticlesObject::ChargeProperty);
-	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
-	const PropertyObject* massProperty = particles->getProperty(ParticlesObject::MassProperty);
-	const PropertyObject* moleculeProperty = particles->getProperty(ParticlesObject::MoleculeProperty);
-	const PropertyObject* dipoleOrientationProperty = particles->getProperty(ParticlesObject::DipoleOrientationProperty);
+	ConstPropertyAccess<int> particleTypeArray(particleTypeProperty);
+	ConstPropertyAccess<FloatType> chargeProperty = particles->getProperty(ParticlesObject::ChargeProperty);
+	ConstPropertyAccess<FloatType> radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
+	ConstPropertyAccess<FloatType> massProperty = particles->getProperty(ParticlesObject::MassProperty);
+	ConstPropertyAccess<qlonglong> moleculeProperty = particles->getProperty(ParticlesObject::MoleculeProperty);
+	ConstPropertyAccess<Vector3> dipoleOrientationProperty = particles->getProperty(ParticlesObject::DipoleOrientationProperty);
 	const BondsObject* bonds = particles->bonds();
-	const PropertyObject* bondTopologyProperty = bonds ? bonds->getProperty(BondsObject::TopologyProperty) : nullptr;
+	if(bonds) bonds->verifyIntegrity();
+	ConstPropertyAccess<ParticleIndexPair> bondTopologyProperty = bonds ? bonds->getProperty(BondsObject::TopologyProperty) : nullptr;
 	const PropertyObject* bondTypeProperty = bonds ? bonds->getProperty(BondsObject::TypeProperty) : nullptr;
+	ConstPropertyAccess<int> bondTypeArray(bondTypeProperty);
 
 	// Get simulation cell info.
 	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
@@ -97,25 +102,25 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	FloatType yz = c.y();
 
 	// Decide if we want to export bonds.
-	bool writeBonds = (bondTopologyProperty != nullptr) && (atomStyle() != LAMMPSDataImporter::AtomStyle_Atomic);
+	bool writeBonds = bondTopologyProperty && (atomStyle() != LAMMPSDataImporter::AtomStyle_Atomic);
 
 	textStream() << "# LAMMPS data file written by " << Application::applicationName() << " " << Application::applicationVersionString() << "\n";
-	textStream() << posProperty->size() << " atoms\n";
+	textStream() << particles->elementCount() << " atoms\n";
 	if(writeBonds)
-		textStream() << bondTopologyProperty->size() << " bonds\n";
+		textStream() << bonds->elementCount() << " bonds\n";
 
-	if(particleTypeProperty && particleTypeProperty->size() > 0) {
+	if(particleTypeArray && particleTypeArray.size() > 0) {
 		int numParticleTypes = std::max(
 				particleTypeProperty->elementTypes().size(),
-				*boost::max_element(particleTypeProperty->crange<int>()));
+				*boost::max_element(particleTypeArray));
 		textStream() << numParticleTypes << " atom types\n";
 	}
 	else textStream() << "1 atom types\n";
 	if(writeBonds) {
-		if(bondTypeProperty && bondTypeProperty->size() > 0) {
+		if(bondTypeArray && bondTypeArray.size() > 0) {
 			int numBondTypes = std::max(
 					bondTypeProperty->elementTypes().size(),
-					*boost::max_element(bondTypeProperty->crange<int>()));
+					*boost::max_element(bondTypeArray));
 			textStream() << numBondTypes << " bond types\n";
 		}
 		else textStream() << "1 bond types\n";
@@ -143,9 +148,9 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 		textStream() << "\n";
 	}
 
-	qlonglong totalProgressCount = posProperty->size();
-	if(velocityProperty) totalProgressCount += posProperty->size();
-	if(writeBonds) totalProgressCount += bondTopologyProperty->size();
+	qlonglong totalProgressCount = particles->elementCount();
+	if(velocityProperty) totalProgressCount += particles->elementCount();
+	if(writeBonds) totalProgressCount += bonds->elementCount();
 
 	// Write "Atoms" section.
 	textStream() << "Atoms";
@@ -164,33 +169,33 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 
 	operation.setProgressMaximum(totalProgressCount);
 	qlonglong currentProgress = 0;
-	for(size_t i = 0; i < posProperty->size(); i++) {
+	for(size_t i = 0; i < posProperty.size(); i++) {
 		// atom-ID
-		textStream() << (identifierProperty ? identifierProperty->get<qlonglong>(i) : (i+1));
+		textStream() << (identifierProperty ? identifierProperty[i] : (i+1));
 		if(atomStyle() == LAMMPSDataImporter::AtomStyle_Bond || atomStyle() == LAMMPSDataImporter::AtomStyle_Molecular || atomStyle() == LAMMPSDataImporter::AtomStyle_Full || atomStyle() == LAMMPSDataImporter::AtomStyle_Angle) {
 			textStream() << ' ';
 			// molecule-ID
-			textStream() << (moleculeProperty ? moleculeProperty->get<qlonglong>(i) : 1);
+			textStream() << (moleculeProperty ? moleculeProperty[i] : 1);
 		}
 		textStream() << ' ';
 		// atom-type
-		textStream() << (particleTypeProperty ? particleTypeProperty->get<int>(i) : 1);
+		textStream() << (particleTypeArray ? particleTypeArray[i] : 1);
 		if(atomStyle() == LAMMPSDataImporter::AtomStyle_Charge || atomStyle() == LAMMPSDataImporter::AtomStyle_Dipole || atomStyle() == LAMMPSDataImporter::AtomStyle_Full) {
 			textStream() << ' ';
 			// charge
-			textStream() << (chargeProperty ? chargeProperty->get<FloatType>(i) : 0);
+			textStream() << (chargeProperty ? chargeProperty[i] : 0);
 		}
 		else if(atomStyle() == LAMMPSDataImporter::AtomStyle_Sphere) {
 			// diameter
-			FloatType radius = (radiusProperty ? radiusProperty->get<FloatType>(i) : 0);
-			textStream() << ' ' << (radius*2);
+			FloatType radius = (radiusProperty ? radiusProperty[i] : 0);
+			textStream() << ' ' << (radius * 2);
 			// density
-			FloatType density = (massProperty ? massProperty->get<FloatType>(i) : 0);
+			FloatType density = (massProperty ? massProperty[i] : 0);
 			if(radius > 0) density /= pow(radius, 3) * (FLOATTYPE_PI * FloatType(4) / FloatType(3));
 			textStream() << ' ' << density;
 		}
 		// x y z
-		const Point3& pos = posProperty->get<Point3>(i);
+		const Point3& pos = posProperty[i];
 		if(!transformCoordinates) {
 			for(size_t k = 0; k < 3; k++)
 				textStream() << ' ' << pos[k];
@@ -201,13 +206,18 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 		}
 		if(atomStyle() == LAMMPSDataImporter::AtomStyle_Dipole) {
 			// mux muy muz
-			textStream() << ' ' << (dipoleOrientationProperty ? dipoleOrientationProperty->get<FloatType>(i, 0) : 0);
-			textStream() << ' ' << (dipoleOrientationProperty ? dipoleOrientationProperty->get<FloatType>(i, 1) : 0);
-			textStream() << ' ' << (dipoleOrientationProperty ? dipoleOrientationProperty->get<FloatType>(i, 2) : 0);
+			if(dipoleOrientationProperty) {
+				textStream() << ' ' << dipoleOrientationProperty[i][0]
+							 << ' ' << dipoleOrientationProperty[i][1]
+							 << ' ' << dipoleOrientationProperty[i][2];
+			}
+			else {
+				textStream() << " 0 0 0";
+			}
 		}
 		if(periodicImageProperty) {
 			// pbc images
-			const Point3I& pbc = periodicImageProperty->get<Point3I>(i);
+			const Vector3I& pbc = periodicImageProperty[i];
 			for(size_t k = 0; k < 3; k++) {
 				textStream() << ' ' << pbc[k];
 			}
@@ -221,9 +231,9 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	// Write velocities.
 	if(velocityProperty) {
 		textStream() << "\nVelocities\n\n";
-		const Vector3* v = velocityProperty->cdata<Vector3>();
-		for(size_t i = 0; i < velocityProperty->size(); i++, ++v) {
-			textStream() << (identifierProperty ? identifierProperty->get<qlonglong>(i) : (i+1));
+		const Vector3* v = velocityProperty.cbegin();
+		for(size_t i = 0; i < velocityProperty.size(); i++, ++v) {
+			textStream() << (identifierProperty ? identifierProperty[i] : (i+1));
 			if(!transformCoordinates) {
 				for(size_t k = 0; k < 3; k++)
 					textStream() << ' ' << (*v)[k];
@@ -244,24 +254,24 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 		textStream() << "\nBonds\n\n";
 
 		size_t bondIndex = 1;
-		for(size_t i = 0; i < bondTopologyProperty->size(); i++) {
-			size_t atomIndex1 = bondTopologyProperty->get<qlonglong>(i, 0);
-			size_t atomIndex2 = bondTopologyProperty->get<qlonglong>(i, 1);
-			if(atomIndex1 >= posProperty->size() || atomIndex2 >= posProperty->size())
+		for(size_t i = 0; i < bondTopologyProperty.size(); i++) {
+			size_t atomIndex1 = bondTopologyProperty[i][0];
+			size_t atomIndex2 = bondTopologyProperty[i][1];
+			if(atomIndex1 >= particles->elementCount() || atomIndex2 >= particles->elementCount())
 				throwException(tr("Particle indices in the bond topology array are out of range."));
 			textStream() << bondIndex++;
 			textStream() << ' ';
-			textStream() << (bondTypeProperty ? bondTypeProperty->get<int>(i) : 1);
+			textStream() << (bondTypeArray ? bondTypeArray[i] : 1);
 			textStream() << ' ';
-			textStream() << (identifierProperty ? identifierProperty->get<qlonglong>(atomIndex1) : (atomIndex1+1));
+			textStream() << (identifierProperty ? identifierProperty[atomIndex1] : (atomIndex1+1));
 			textStream() << ' ';
-			textStream() << (identifierProperty ? identifierProperty->get<qlonglong>(atomIndex2) : (atomIndex2+1));
+			textStream() << (identifierProperty ? identifierProperty[atomIndex2] : (atomIndex2+1));
 			textStream() << '\n';
 
 			if(!operation.setProgressValueIntermittent(currentProgress++))
 				return false;
 		}
-		OVITO_ASSERT(bondIndex == bondTopologyProperty->size() + 1);
+		OVITO_ASSERT(bondIndex == bondTopologyProperty.size() + 1);
 	}
 
 	return !operation.isCanceled();

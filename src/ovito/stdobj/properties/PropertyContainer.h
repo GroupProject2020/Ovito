@@ -121,14 +121,14 @@ public:
 
 	/// Creates a standard property and adds it to the container.
 	/// In case the property already exists, it is made sure that it's safe to modify it.
-	PropertyObject* createProperty(int typeId, bool initializeMemory = false, const ConstDataObjectPath& containerPath = {}, size_t elementCountHint = 0);
+	PropertyObject* createProperty(int typeId, bool initializeMemory = false, const ConstDataObjectPath& containerPath = {});
 
 	/// Creates a user-defined property and adds it to the container.
 	/// In case the property already exists, it is made sure that it's safe to modify it.
-	PropertyObject* createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory = false, size_t elementCountHint = 0) ;
+	PropertyObject* createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory = false) ;
 
 	/// Creates a property and adds it to the container.
-	PropertyObject* createProperty(const PropertyPtr& storage);
+	PropertyObject* createProperty(PropertyPtr storage);
 
 	/// Sets the current number of data elements stored in the container.
 	/// The lengths of the property arrays will be adjusted accordingly.

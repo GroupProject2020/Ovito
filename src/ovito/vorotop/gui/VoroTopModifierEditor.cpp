@@ -59,7 +59,7 @@ void VoroTopModifierEditor::createUI(const RolloutInsertionParameters& rolloutPa
 	gridlayout->addWidget(fileFileUI->selectorWidget(), row++, 0, 1, 2);
 	connect(fileFileUI, &FilenameParameterUI::showSelectionDialog, this, &VoroTopModifierEditor::onLoadFilter);
 
-	QLabel* label = new QLabel(tr("Filter definition files are available for download on the <a href=\"https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html\">VoroTop website</a>."));
+	QLabel* label = new QLabel(tr("Filter definition files available from the <a href=\"https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html\">VoroTop website</a>."));
 	label->setWordWrap(true);
 	label->setOpenExternalLinks(true);
 	gridlayout->addWidget(label, row++, 0, 1, 2);

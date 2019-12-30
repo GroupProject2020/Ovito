@@ -98,6 +98,11 @@ public:
 using BondPropertyReference = TypedPropertyReference<BondsObject>;
 
 /**
+ * The data type used for the 'Topology' bond property: two indices into the particles list.
+ */
+using ParticleIndexPair = std::array<qlonglong, 2>;
+
+/**
  * A helper data structure describing a single bond between two particles.
  */
 struct Bond

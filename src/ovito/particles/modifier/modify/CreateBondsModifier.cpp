@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/particles/util/CutoffNeighborFinder.h>
 #include <ovito/particles/objects/BondsVis.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
@@ -151,10 +152,16 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 const ElementType* CreateBondsModifier::lookupParticleType(const PropertyObject* typeProperty, const QVariant& typeSpecification)
 {
-	if(typeSpecification.type() == QVariant::Int)
+	if(typeSpecification.type() == QVariant::Int) {
 		return typeProperty->elementType(typeSpecification.toInt());
-	else
-		return typeProperty->elementType(typeSpecification.toString());
+	}
+	else {
+		const QString& name = typeSpecification.toString();
+		for(const ElementType* type : typeProperty->elementTypes())
+			if(type->nameOrNumericId() == name)
+				return type;
+		return nullptr;
+	}
 }
 
 /******************************************************************************
@@ -218,20 +225,23 @@ void CreateBondsModifier::BondsEngine::perform()
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(_maxCutoff, *_positions, _simCell, nullptr, task().get()))
+	if(!neighborFinder.prepare(_maxCutoff, _positions, _simCell, {}, task().get()))
 		return;
 
 	FloatType minCutoffSquared = _minCutoff * _minCutoff;
 
+	ConstPropertyAccess<qlonglong> moleculeIDsArray(_moleculeIDs);
+	ConstPropertyAccess<int> particleTypesArray(_particleTypes);
+
 	// Generate bonds.
 	size_t particleCount = _positions->size();
 	task()->setProgressMaximum(particleCount);
-	if(!_particleTypes) {
+	if(!particleTypesArray) {
 		for(size_t particleIndex = 0; particleIndex < particleCount; particleIndex++) {
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
 				if(neighborQuery.distanceSquared() < minCutoffSquared)
 					continue;
-				if(_moleculeIDs && _moleculeIDs->get<qlonglong>(particleIndex) != _moleculeIDs->get<qlonglong>(neighborQuery.current()))
+				if(moleculeIDsArray && moleculeIDsArray[particleIndex] != moleculeIDsArray[neighborQuery.current()])
 					continue;
 
 				Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
@@ -250,10 +260,10 @@ void CreateBondsModifier::BondsEngine::perform()
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
 				if(neighborQuery.distanceSquared() < minCutoffSquared)
 					continue;
-				if(_moleculeIDs && _moleculeIDs->get<qlonglong>(particleIndex) != _moleculeIDs->get<qlonglong>(neighborQuery.current()))
+				if(moleculeIDsArray && moleculeIDsArray[particleIndex] != moleculeIDsArray[neighborQuery.current()])
 					continue;
-				int type1 = _particleTypes->get<int>(particleIndex);
-				int type2 = _particleTypes->get<int>(neighborQuery.current());
+				int type1 = particleTypesArray[particleIndex];
+				int type2 = particleTypesArray[neighborQuery.current()];
 				if(type1 >= 0 && type1 < (int)_pairCutoffsSquared.size() && type2 >= 0 && type2 < (int)_pairCutoffsSquared[type1].size()) {
 					if(neighborQuery.distanceSquared() <= _pairCutoffsSquared[type1][type2]) {
 						Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };

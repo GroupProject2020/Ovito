@@ -108,7 +108,7 @@ private:
 		/// The number of atoms.
 		size_t _natoms = 0;
 
-		/// The particle/bond property whose currently being parsed.
+		/// The particle/bond property which is currently being parsed.
 		PropertyPtr _currentProperty;
 
 		/// Buffer for text data read from XML file.

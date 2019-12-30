@@ -197,13 +197,11 @@ FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile
 					p = cell * p;
 			}
 
-			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
-			frameData->addParticleProperty(posProperty);
-			boost::copy(coords, posProperty->data<Point3>());
+			PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false));
+			boost::copy(coords, posProperty.begin());
 
-			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
-			frameData->addParticleProperty(typeProperty);
-			boost::copy(types, typeProperty->data<int>());
+			PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false));
+			boost::copy(types, typeProperty.begin());
 			typeList->sortTypesByName(typeProperty);
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
@@ -220,9 +218,8 @@ FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile
 				line = readNonCommentLine();
 			}
 
-			PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
-			frameData->addParticleProperty(velocityProperty);
-			boost::copy(velocities, velocityProperty->data<Vector3>());
+			PropertyAccess<Vector3> velocityProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false));
+			boost::copy(velocities, velocityProperty.begin());
 		}
 	}
 	return frameData;

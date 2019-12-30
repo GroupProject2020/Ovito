@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/stdmod/StdMod.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
@@ -182,33 +183,33 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 
 	// Check if particle IDs are present and if the order of particles has changed
 	// since we took the snapshot of the property values.
-	const PropertyObject* idProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty)
+	ConstPropertyAccess<qlonglong> idProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty)
 		? container->getProperty(PropertyStorage::GenericIdentifierProperty)
 		: nullptr;
-	if(myModApp->identifiers() && idProperty &&
-			(idProperty->size() != myModApp->identifiers()->size() ||
-			!boost::equal(idProperty->crange<qlonglong>(), myModApp->identifiers()->crange<qlonglong>()))) {
+	ConstPropertyAccess<qlonglong> storedIds = myModApp->identifiers();
+	if(storedIds && idProperty && (idProperty.size() != storedIds.size() || !boost::equal(idProperty, storedIds))) {
 
 		// Build ID-to-index map.
 		std::unordered_map<qlonglong,size_t> idmap;
 		size_t index = 0;
-		for(auto id : myModApp->identifiers()->crange<qlonglong>()) {
-			if(!idmap.insert(std::make_pair(id,index)).second)
+		for(auto id : storedIds) {
+			if(!idmap.insert(std::make_pair(id, index)).second)
 				throwException(tr("Detected duplicate element ID %1 in saved snapshot. Cannot apply saved property values.").arg(id));
 			index++;
 		}
 
-		// Copy and reorder property data.
-		auto id = idProperty->cdata<qlonglong>();
-		char* dest = static_cast<char*>(outputProperty->data<void>());
-		const char* src = static_cast<const char*>(myModApp->property()->cdata<void>());
-		size_t stride = outputProperty->stride();
-		for(size_t index = 0; index < outputProperty->size(); index++, ++id, dest += stride) {
-			auto mapEntry = idmap.find(*id);
+		// Build index-to-index map.
+		std::vector<size_t> mapping(outputProperty->size());
+		auto id = idProperty.cbegin();
+		for(size_t& mappedIndex : mapping) {
+			auto mapEntry = idmap.find(*id++);
 			if(mapEntry == idmap.end())
 				throwException(tr("Detected new element ID %1, which didn't exist when the snapshot was created. Cannot restore saved property values.").arg(*id));
-			std::memcpy(dest, src + stride * mapEntry->second, stride);
+			mappedIndex = mapEntry->second;
 		}
+
+		// Copy and reorder property data.
+		myModApp->property()->mappedCopyTo(outputProperty, mapping);
 	}
 	else {
 		// Make sure the number of elements didn't change when no IDs are defined.
@@ -221,12 +222,9 @@ void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplica
 			// Make shallow data copy if input and output property are the same.
 			outputProperty->setStorage(myModApp->property()->storage());
 		}
-		else {
+		else if(outputProperty->stride() == myModApp->property()->stride()) {
 			// Make a full data copy otherwise.
-			OVITO_ASSERT(outputProperty->dataType() == myModApp->property()->dataType());
-			OVITO_ASSERT(outputProperty->stride() == myModApp->property()->stride());
-			OVITO_ASSERT(outputProperty->size() == myModApp->property()->size());
-			std::memcpy(outputProperty->data<void>(), myModApp->property()->cdata<void>(), outputProperty->stride() * outputProperty->size());
+			outputProperty->copyFrom(myModApp->property());
 		}
 	}
 

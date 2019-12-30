@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,9 +25,9 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/BondsObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 
 #include <boost/iterator/iterator_facade.hpp>
-#include <boost/range/iterator_range.hpp>
 #include <utility>
 
 namespace Ovito { namespace Particles {
@@ -88,8 +88,8 @@ public:
 		Bond dereference() const {
 			OVITO_ASSERT(_currentIndex < _bondMap->_nextBond.size());
 			size_t bindex = _currentIndex / 2;
-			Bond bond = { (size_t)_bondMap->_bondTopology->get<qlonglong>(bindex, 0), (size_t)_bondMap->_bondTopology->get<qlonglong>(bindex, 1),
-								_bondMap->_bondPeriodicImages ? _bondMap->_bondPeriodicImages->get<Vector3I>(bindex) : Vector3I::Zero() };
+			Bond bond = { (size_t)_bondMap->_bondTopology[bindex][0], (size_t)_bondMap->_bondTopology[bindex][1],
+								_bondMap->_bondPeriodicImages ? _bondMap->_bondPeriodicImages[bindex] : Vector3I::Zero() };
 			if(_currentIndex & 1) {
 				std::swap(bond.index1, bond.index2);
 				bond.pbcShift = -bond.pbcShift;
@@ -105,7 +105,7 @@ public:
 	ParticleBondMap(const BondsObject& bonds);
 
 	/// Initializes the helper class.
-	ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages = nullptr);
+	ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages = {});
 
 	/// Returns an iterator range over the indices of the bonds adjacent to the given particle.
 	/// Returns real indices into the bonds list. Note that bonds can point away from and to the given particle.
@@ -132,17 +132,17 @@ public:
 		size_t index = (bond.index1 < _startIndices.size()) ? _startIndices[bond.index1] : endOfListValue();
 		for(; index != endOfListValue(); index = _nextBond[index]) {
 			if((index & 1) == 0) {
-				OVITO_ASSERT(_bondTopology->get<qlonglong>(index/2, 0) == bond.index1);
-				if(_bondTopology->get<qlonglong>(index/2, 1) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->get<Vector3I>(index/2) == bond.pbcShift))
+				OVITO_ASSERT(_bondTopology[index/2][0] == bond.index1);
+				if(_bondTopology[index/2][1] == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages[index/2] == bond.pbcShift))
 					return index/2;
 			}
 			else {
-				OVITO_ASSERT(_bondTopology->get<qlonglong>(index/2, 1) == bond.index1);
-				if(_bondTopology->get<qlonglong>(index/2, 0) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->get<Vector3I>(index/2) == -bond.pbcShift))
+				OVITO_ASSERT(_bondTopology[index/2][1] == bond.index1);
+				if(_bondTopology[index/2][0] == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages[index/2] == -bond.pbcShift))
 					return index/2;
 			}
 		}
-		return _bondTopology->size();
+		return _bondTopology.size();
 	}
 
 private:
@@ -153,10 +153,10 @@ private:
 private:
 
 	/// The bond property containing the bond definitions.
-	const ConstPropertyPtr _bondTopology;
+	const ConstPropertyAccessAndRef<ParticleIndexPair> _bondTopology;
 
 	/// The bond property containing PBC shift vectors.
-	const ConstPropertyPtr _bondPeriodicImages;
+	const ConstPropertyAccessAndRef<Vector3I> _bondPeriodicImages;
 
 	/// Contains the first bond index for each particle (the head of a linked list).
 	std::vector<size_t> _startIndices;

@@ -33,6 +33,7 @@
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/simcell/SimulationCellVis.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/io/FileSource.h>
 #include "ParticleFrameData.h"
@@ -46,7 +47,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 * go while the read the data. In such a case, the assignment of IDs to types
 * depends on the storage order of particles/bonds in the file, which is not desirable.
 ******************************************************************************/
-void ParticleFrameData::TypeList::sortTypesByName(const PropertyPtr& typeProperty)
+void ParticleFrameData::TypeList::sortTypesByName(PropertyAccess<int>& typeProperty)
 {
 	// Check if type IDs form a consecutive sequence starting at 1.
 	// If not, we leave the type order as it is.
@@ -72,7 +73,7 @@ void ParticleFrameData::TypeList::sortTypesByName(const PropertyPtr& typePropert
 
 	// Remap particle/bond type IDs.
 	if(typeProperty) {
-		for(int& t : typeProperty->range<int>()) {
+		for(int& t : typeProperty) {
 			OVITO_ASSERT(t >= 1 && t < mapping.size());
 			t = mapping[t];
 		}
@@ -93,26 +94,26 @@ void ParticleFrameData::TypeList::sortTypesById()
 ******************************************************************************/
 void ParticleFrameData::generateBondPeriodicImageProperty()
 {
-	PropertyPtr posProperty = findStandardParticleProperty(ParticlesObject::PositionProperty);
+	ConstPropertyAccess<Point3> posProperty = findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(!posProperty) return;
 
-	PropertyPtr bondTopologyProperty = findStandardBondProperty(BondsObject::TopologyProperty);
+	ConstPropertyAccess<ParticleIndexPair> bondTopologyProperty = findStandardBondProperty(BondsObject::TopologyProperty);
 	if(!bondTopologyProperty) return;
 
-	PropertyPtr bondPeriodicImageProperty = BondsObject::OOClass().createStandardStorage(bondTopologyProperty->size(), BondsObject::PeriodicImageProperty, true);
-	addBondProperty(bondPeriodicImageProperty);
+	OVITO_ASSERT(!findStandardBondProperty(BondsObject::PeriodicImageProperty));
+	PropertyAccess<Vector3I> bondPeriodicImageProperty = addBondProperty(BondsObject::OOClass().createStandardStorage(bondTopologyProperty.size(), BondsObject::PeriodicImageProperty, true));
 
 	if(!simulationCell().pbcFlags()[0] && !simulationCell().pbcFlags()[1] && !simulationCell().pbcFlags()[2])
 		return;
 
-	for(size_t bondIndex = 0; bondIndex < bondTopologyProperty->size(); bondIndex++) {
-		size_t index1 = bondTopologyProperty->get<qlonglong>(bondIndex, 0);
-		size_t index2 = bondTopologyProperty->get<qlonglong>(bondIndex, 1);
-		OVITO_ASSERT(index1 < posProperty->size() && index2 < posProperty->size());
-		Vector3 delta = simulationCell().absoluteToReduced(posProperty->get<Point3>(index2) - posProperty->get<Point3>(index1));
+	for(size_t bondIndex = 0; bondIndex < bondTopologyProperty.size(); bondIndex++) {
+		size_t index1 = bondTopologyProperty[bondIndex][0];
+		size_t index2 = bondTopologyProperty[bondIndex][1];
+		OVITO_ASSERT(index1 < posProperty.size() && index2 < posProperty.size());
+		Vector3 delta = simulationCell().absoluteToReduced(posProperty[index2] - posProperty[index1]);
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(simulationCell().pbcFlags()[dim])
-				bondPeriodicImageProperty->set<int>(bondIndex, dim, -(int)std::floor(delta[dim] + FloatType(0.5)));
+				bondPeriodicImageProperty[bondIndex][dim] = -(int)std::floor(delta[dim] + FloatType(0.5));
 		}
 	}
 }
@@ -431,9 +432,9 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 		}
 	}
 
-	// Remap particle types.
+	// Remap type IDs.
 	if(!typeRemapping.empty()) {
-		for(int& t : typeProperty->range<int>()) {
+		for(int& t : PropertyAccess<int>(typeProperty)) {
 			for(const auto& mapping : typeRemapping) {
 				if(t == mapping.first) {
 					t = mapping.second;
@@ -450,14 +451,14 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 ******************************************************************************/
 void ParticleFrameData::sortParticlesById()
 {
-	PropertyPtr ids = findStandardParticleProperty(ParticlesObject::IdentifierProperty);
+	ConstPropertyAccess<qlonglong> ids = findStandardParticleProperty(ParticlesObject::IdentifierProperty);
 	if(!ids) return;
 
 	// Determine new permutation of particles where they are sorted by ascending ID.
-	std::vector<size_t> permutation(ids->size());
+	std::vector<size_t> permutation(ids.size());
 	std::iota(permutation.begin(), permutation.end(), (size_t)0);
-	std::sort(permutation.begin(), permutation.end(), [id = ids->cdata<qlonglong>()](size_t a, size_t b) { return id[a] < id[b]; });
-	std::vector<size_t> invertedPermutation(ids->size());
+	std::sort(permutation.begin(), permutation.end(), [&](size_t a, size_t b) { return ids[a] < ids[b]; });
+	std::vector<size_t> invertedPermutation(ids.size());
 	bool isAlreadySorted = true;
 	for(size_t i = 0; i < permutation.size(); i++) {
 		invertedPermutation[permutation[i]] = i;
@@ -468,16 +469,16 @@ void ParticleFrameData::sortParticlesById()
 	// Reorder all values in the particle property arrays.
 	for(const PropertyPtr& prop : particleProperties()) {
 		PropertyStorage copy(*prop);
-		prop->mappedCopy(copy, invertedPermutation);
+		prop->mappedCopyFrom(copy, invertedPermutation);
 	}
 
 	// Update bond topology data to match new particle ordering.
-	if(PropertyPtr bondTopology = findStandardBondProperty(BondsObject::TopologyProperty)) {
-		auto particleIndex = bondTopology->data<qlonglong>(0,0);
-		auto particleIndexEnd = particleIndex + bondTopology->size() * 2;
-		for(; particleIndex != particleIndexEnd; ++particleIndex) {
-			if(*particleIndex >= 0 && (size_t)*particleIndex < invertedPermutation.size())
-				*particleIndex = invertedPermutation[*particleIndex];
+	if(PropertyAccess<ParticleIndexPair> bondTopology = findStandardBondProperty(BondsObject::TopologyProperty)) {
+		for(ParticleIndexPair& bond : bondTopology) {
+			if(bond[0] >= 0 && (size_t)bond[0] < invertedPermutation.size())
+				bond[0] = invertedPermutation[bond[0]];
+			if(bond[1] >= 0 && (size_t)bond[1] < invertedPermutation.size())
+				bond[1] = invertedPermutation[bond[1]];
 		}
 	}
 }

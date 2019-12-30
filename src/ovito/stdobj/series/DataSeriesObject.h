@@ -74,7 +74,7 @@ public:
 	Q_ENUMS(PlotMode);
 
 	/// Constructor.
-	Q_INVOKABLE DataSeriesObject(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), const PropertyPtr& y = nullptr, const PropertyPtr& x = nullptr);
+	Q_INVOKABLE DataSeriesObject(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), PropertyPtr y = {}, PropertyPtr x = {});
 
 	/// Returns the property object containing the y-coordinates of the data points.
 	const PropertyObject* getY() const { return getProperty(Type::YProperty); }

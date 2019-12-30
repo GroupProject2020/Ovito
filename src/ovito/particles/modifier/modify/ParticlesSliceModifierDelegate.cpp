@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesSliceModifierDelegate.h"
@@ -54,10 +55,10 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	boost::dynamic_bitset<> mask(inputParticles->elementCount());
 
 	// Get the required input properties.
-	const PropertyObject* posProperty = inputParticles->expectProperty(ParticlesObject::PositionProperty);
-	const PropertyObject* selProperty = mod->applyToSelection() ? inputParticles->expectProperty(ParticlesObject::SelectionProperty) : nullptr;
-	OVITO_ASSERT(posProperty->size() == mask.size());
-	OVITO_ASSERT(!selProperty || selProperty->size() == mask.size());
+	ConstPropertyAccess<Point3> posProperty = inputParticles->expectProperty(ParticlesObject::PositionProperty);
+	ConstPropertyAccess<int> selProperty = mod->applyToSelection() ? inputParticles->expectProperty(ParticlesObject::SelectionProperty) : nullptr;
+	OVITO_ASSERT(posProperty.size() == mask.size());
+	OVITO_ASSERT(!selProperty || selProperty.size() == mask.size());
 
 	// Obtain modifier parameter values.
 	Plane3 plane;
@@ -65,42 +66,42 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, state.mutableStateValidity());
 	sliceWidth /= 2;
 
-	boost::dynamic_bitset<>::size_type i = 0;
-	const Point3* p = posProperty->cdata<Point3>();
-	const Point3* p_end = p + posProperty->size();
-
 	if(sliceWidth <= 0) {
 		if(selProperty) {
-			const int* s = selProperty->cdata<int>();
-			for(; p != p_end; ++p, ++s, ++i) {
-				if(*s && plane.pointDistance(*p) > 0) {
+			const int* s = selProperty.cbegin();
+			boost::dynamic_bitset<>::size_type i = 0;
+			for(const Point3& p : posProperty) {
+				if(*s++ && plane.pointDistance(p) > 0)
 					mask.set(i);
-				}
+				++i;
 			}
 		}
 		else {
-			for(; p != p_end; ++p, ++i) {
-				if(plane.pointDistance(*p) > 0) {
+			boost::dynamic_bitset<>::size_type i = 0;
+			for(const Point3& p : posProperty) {
+				if(plane.pointDistance(p) > 0)
 					mask.set(i);
-				}
+				++i;
 			}
 		}
 	}
 	else {
 		bool invert = mod->inverse();
 		if(selProperty) {
-			const int* s = selProperty->cdata<int>();
-			for(; p != p_end; ++p, ++s, ++i) {
-				if(*s && invert == (plane.classifyPoint(*p, sliceWidth) == 0)) {
+			const int* s = selProperty.cbegin();
+			boost::dynamic_bitset<>::size_type i = 0;
+			for(const Point3& p : posProperty) {
+				if(*s++ && invert == (plane.classifyPoint(p, sliceWidth) == 0))
 					mask.set(i);
-				}
+				++i;
 			}
 		}
 		else {
-			for(; p != p_end; ++p, ++i) {
-				if(invert == (plane.classifyPoint(*p, sliceWidth) == 0)) {
+			boost::dynamic_bitset<>::size_type i = 0;
+			for(const Point3& p : posProperty) {
+				if(invert == (plane.classifyPoint(p, sliceWidth) == 0))
 					mask.set(i);
-				}
+				++i;
 			}
 		}
 	}
@@ -116,10 +117,10 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 	}
 	else {
 		size_t numSelected = 0;
-		PropertyObject* newSelProperty = outputParticles->createProperty(ParticlesObject::SelectionProperty);
-		OVITO_ASSERT(mask.size() == newSelProperty->size());
+		PropertyAccess<int> newSelProperty = outputParticles->createProperty(ParticlesObject::SelectionProperty);
+		OVITO_ASSERT(mask.size() == newSelProperty.size());
 		boost::dynamic_bitset<>::size_type i = 0;
-		for(int& s : newSelProperty->range<int>()) {
+		for(int& s : newSelProperty) {
 			if(mask.test(i++)) {
 				s = 1;
 				numSelected++;

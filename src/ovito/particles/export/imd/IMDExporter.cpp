@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -39,22 +39,22 @@ IMPLEMENT_OVITO_CLASS(IMDExporter);
 bool IMDExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
-	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
-	const PropertyObject* typeProperty = nullptr;
-	const PropertyObject* identifierProperty = nullptr;
-	const PropertyObject* velocityProperty = nullptr;
-	const PropertyObject* massProperty = nullptr;
+	particles->verifyIntegrity();
 
 	// Get simulation cell info.
 	const SimulationCellObject* simulationCell = state.expectObject<SimulationCellObject>();
 
 	const AffineTransformation& simCell = simulationCell->cellMatrix();
-	size_t atomsCount = posProperty->size();
+	size_t atomsCount = particles->elementCount();
 
 	OutputColumnMapping colMapping;
 	OutputColumnMapping filteredMapping;
-	posProperty = nullptr;
 	bool exportIdentifiers = false;
+	const PropertyObject* posProperty = nullptr;
+	const PropertyObject* typeProperty = nullptr;
+	const PropertyObject* identifierProperty = nullptr;
+	const PropertyObject* velocityProperty = nullptr;
+	const PropertyObject* massProperty = nullptr;
 	for(const ParticlePropertyReference& pref : columnMapping()) {
 		if(pref.type() == ParticlesObject::PositionProperty) {
 			posProperty = particles->expectProperty(ParticlesObject::PositionProperty);

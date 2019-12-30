@@ -24,6 +24,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/core/dataset/animation/controller/Controller.h>
@@ -178,8 +179,6 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 		return false;
 	int vecComponent = std::max(0, sourceProperty().vectorComponent());
 
-	int stride = property->stride() / property->dataTypeSize();
-
 	// Iterate over the property array to find the lowest/highest value.
 	FloatType maxValue = std::numeric_limits<FloatType>::lowest();
 	FloatType minValue = std::numeric_limits<FloatType>::max();
@@ -312,10 +311,10 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	vecComponent = std::max(0, sourceProperty.vectorComponent());
 
 	// Get the selection property if enabled by the user.
-	ConstPropertyPtr selProperty;
+	ConstPropertyAccessAndRef<int> selProperty;
 	if(mod->colorOnlySelected() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)) {
 		if(const PropertyObject* selPropertyObj = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
-			selProperty = selPropertyObj->storage();
+			selProperty = selPropertyObj;
 
 			// Clear selection if requested.
 			if(!mod->keepSelection()) {
@@ -325,7 +324,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	}
 
 	// Create the color output property.
-    PropertyPtr colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath)->modifiableStorage();
+    PropertyAccess<Color> colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath);
 
 	// Get modifier's parameter values.
 	FloatType startValue = 0, endValue = 0;
@@ -337,7 +336,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 	if(!std::isfinite(endValue)) endValue = std::numeric_limits<FloatType>::max();
 
 	bool result = property->forEach(vecComponent, [&](size_t i, auto v) {
-		if(selProperty && !selProperty->get<int>(i))
+		if(selProperty && !selProperty[i])
 			return;
 
 		// Compute linear interpolation.
@@ -356,7 +355,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFl
 		else if(t < 0) t = 0;
 		else if(t > 1) t = 1;
 
-		colorProperty->set<Color>(i, mod->colorGradient()->valueToColor(t));
+		colorProperty[i] = mod->colorGradient()->valueToColor(t);
 	});
 	if(!result)
 		throwException(tr("The property '%1' has an invalid or non-numeric data type.").arg(property->name()));

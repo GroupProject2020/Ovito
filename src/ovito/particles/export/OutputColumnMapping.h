@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,9 +25,10 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/stdobj/properties/PropertyStorage.h>
+#include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
-#include <ovito/stdobj/properties/PropertyStorage.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
@@ -102,6 +103,9 @@ private:
 
 	/// Stores the source vector component for each output column.
 	QVector<int> _vectorComponents;
+
+	/// Stores the memory buffer object for each output property.
+	QVector<ConstPropertyAccess<void,true>> _propertyArrays;
 
 	/// Controls whether type names are output in the particle type column instead of type numbers.
 	bool _writeTypeNames;

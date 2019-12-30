@@ -180,19 +180,17 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, true);
-	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, true);
-	frameData->addParticleProperty(typeProperty);
+	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, false));
+	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, false));
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Parse atoms.
 	size_t atomIndex = 0;
-	Point3* p = posProperty->data<Point3>();
-	int* a = typeProperty->data<int>();
-	PropertyPtr particleIdentifierProperty;
-	PropertyPtr moleculeIdentifierProperty;
-	PropertyPtr moleculeTypeProperty;
+	Point3* p = posProperty.begin();
+	int* a = typeProperty.begin();
+	PropertyAccess<qlonglong> particleIdentifierProperty;
+	PropertyAccess<qlonglong> moleculeIdentifierProperty;
+	PropertyAccess<int> moleculeTypeProperty;
 	ParticleFrameData::TypeList* moleculeTypeList = nullptr;
 	while(!stream.eof() && atomIndex < numAtoms) {
 		if(!setProgressValueIntermittent(atomIndex))
@@ -225,26 +223,24 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			qlonglong atomSerialNumber;
 			if(sscanf(stream.line() + 6, "%5llu", &atomSerialNumber) == 1) {
 				if(!particleIdentifierProperty) {
-					particleIdentifierProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::IdentifierProperty, true);
-					frameData->addParticleProperty(particleIdentifierProperty);
+					particleIdentifierProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::IdentifierProperty, true));
 				}
-				particleIdentifierProperty->set<qlonglong>(atomIndex, atomSerialNumber);
+				particleIdentifierProperty[atomIndex] = atomSerialNumber;
 			}
 			else if(particleIdentifierProperty && qstrncmp(stream.line() + 6, "*****", 5) == 0) {
 				// This is special handling for large PDB files with more than 99,999 atoms.
 				// Some codes replace the 5 digits in the 'atom serial number' column with the string '*****' in this case.
 				// We we encounter this case, we simply assign consecutive IDs to the atoms.
-				particleIdentifierProperty->set<qlonglong>(atomIndex, atomIndex + 1);
+				particleIdentifierProperty[atomIndex] = atomIndex + 1;
 			}
 
 			// Parse molecule ID (residue sequence number).
 			qlonglong residueSequenceNumber;
 			if(sscanf(stream.line() + 22, "%4llu", &residueSequenceNumber) == 1) {
 				if(!moleculeIdentifierProperty) {
-					moleculeIdentifierProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeProperty, true);
-					frameData->addParticleProperty(moleculeIdentifierProperty);
+					moleculeIdentifierProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeProperty, true));
 				}
-				moleculeIdentifierProperty->set<qlonglong>(atomIndex, residueSequenceNumber);
+				moleculeIdentifierProperty[atomIndex] = residueSequenceNumber;
 			}
 
 			// Parse molecule type.
@@ -254,11 +250,10 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 				if(*c != ' ') moleculeType[moleculeTypeLength++] = *c;
 			if(moleculeTypeLength != 0) {
 				if(!moleculeTypeProperty) {
-					moleculeTypeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeTypeProperty, true);
-					frameData->addParticleProperty(moleculeTypeProperty);
+					moleculeTypeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeTypeProperty, true));
 					moleculeTypeList = frameData->propertyTypesList(moleculeTypeProperty);
 				}
-				moleculeTypeProperty->set<int>(atomIndex, moleculeTypeList->addTypeName(moleculeType, moleculeType + moleculeTypeLength));
+				moleculeTypeProperty[atomIndex] = moleculeTypeList->addTypeName(moleculeType, moleculeType + moleculeTypeLength);
 			}
 
 			atomIndex++;
@@ -268,7 +263,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	// Parse bonds.
-	PropertyPtr bondTopologyProperty;
+	PropertyAccess<ParticleIndexPair> bondTopologyProperty;
 	while(!stream.eof()) {
 
 		if(isCanceled())
@@ -283,24 +278,23 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 		if(stream.lineStartsWithToken("CONECT")) {
 			// Parse first atom index.
 			qlonglong atomSerialNumber1;
-			if(lineLength <= 11 || sscanf(stream.line() + 6, "%5llu", &atomSerialNumber1) != 1 || particleIdentifierProperty == nullptr)
+			if(lineLength <= 11 || sscanf(stream.line() + 6, "%5llu", &atomSerialNumber1) != 1 || !particleIdentifierProperty)
 				throw Exception(tr("Invalid CONECT record (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
-			size_t atomIndex1 = boost::find(particleIdentifierProperty->crange<qlonglong>(), atomSerialNumber1) - particleIdentifierProperty->cdata<qlonglong>();
+			size_t atomIndex1 = boost::find(particleIdentifierProperty, atomSerialNumber1) - particleIdentifierProperty.cbegin();
 			for(int i = 0; i < 10; i++) {
 				qlonglong atomSerialNumber2;
 				if(lineLength >= 16+5*i && sscanf(stream.line() + 11+5*i, "%5llu", &atomSerialNumber2) == 1) {
-					size_t atomIndex2 = boost::find(particleIdentifierProperty->crange<qlonglong>(), atomSerialNumber2) - particleIdentifierProperty->cdata<qlonglong>();
-					if(atomIndex1 >= particleIdentifierProperty->size() || atomIndex2 >= particleIdentifierProperty->size())
+					size_t atomIndex2 = boost::find(particleIdentifierProperty, atomSerialNumber2) - particleIdentifierProperty.cbegin();
+					if(atomIndex1 >= particleIdentifierProperty.size() || atomIndex2 >= particleIdentifierProperty.size())
 						throw Exception(tr("Nonexistent atom ID encountered in line %1 of PDB file.").arg(stream.lineNumber()));
 					if(!bondTopologyProperty) {
-						bondTopologyProperty = BondsObject::OOClass().createStandardStorage(1, BondsObject::TopologyProperty, false);
-						frameData->addBondProperty(bondTopologyProperty);
+						bondTopologyProperty = frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(1, BondsObject::TopologyProperty, false));
 					}
 					else {
-						bondTopologyProperty->resize(bondTopologyProperty->size() + 1, true);
+						bondTopologyProperty.storage()->resize(bondTopologyProperty.size() + 1, true);
 					}
-					bondTopologyProperty->set<qlonglong>(bondTopologyProperty->size() - 1, 0, atomIndex1);
-					bondTopologyProperty->set<qlonglong>(bondTopologyProperty->size() - 1, 1, atomIndex2);
+					bondTopologyProperty[bondTopologyProperty.size() - 1][0] = atomIndex1;
+					bondTopologyProperty[bondTopologyProperty.size() - 1][1] = atomIndex2;
 				}
 			}
 		}
@@ -323,7 +317,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	// compute bounding box of atoms and use it as an adhoc simulation cell.
 	if(!hasSimulationCell && numAtoms > 0) {
 		Box3 boundingBox;
-		boundingBox.addPoints(posProperty->crange<Point3>());
+		boundingBox.addPoints(posProperty);
 		frameData->simulationCell().setPbcFlags(false, false, false);
 		frameData->simulationCell().setMatrix(AffineTransformation(
 				Vector3(boundingBox.sizeX(), 0, 0),

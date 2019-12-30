@@ -62,19 +62,19 @@ ForwardIterator most_common(ForwardIterator first, ForwardIterator last)
 /******************************************************************************
 * Creates the mesh facets separating good and bad tetrahedra.
 ******************************************************************************/
-bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const PropertyStorage* crystalClusters, Task& promise)
+bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, ConstPropertyAccess<qlonglong> crystalClusters, Task& promise)
 {
 	OVITO_ASSERT(!crystalClusters); // This option is currently not supported.
 
 	promise.beginProgressSubSteps(2);
 
 	// Determines if a tetrahedron belongs to the good or bad crystal region.
-	auto tetrahedronRegion = [this,crystalClusters](DelaunayTessellation::CellHandle cell) {
+	auto tetrahedronRegion = [this,&crystalClusters](DelaunayTessellation::CellHandle cell) {
 		if(elasticMapping().isElasticMappingCompatible(cell)) {
 			if(crystalClusters) {
 				std::array<int,4> clusters;
 				for(int v = 0; v < 4; v++)
-					clusters[v] = crystalClusters->get<qlonglong>(tessellation().vertexIndex(tessellation().cellVertex(cell, v)));
+					clusters[v] = crystalClusters[tessellation().vertexIndex(tessellation().cellVertex(cell, v))];
 				std::sort(std::begin(clusters), std::end(clusters));
 				return *most_common(std::begin(clusters), std::end(clusters));
 			}
