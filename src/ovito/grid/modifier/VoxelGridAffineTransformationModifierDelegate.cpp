@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -45,7 +45,8 @@ QVector<DataObjectReference> VoxelGridAffineTransformationModifierDelegate::OOMe
 ******************************************************************************/
 PipelineStatus VoxelGridAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	// Transform the domains of PeriodicDomainDataObjects.
+	// Transform the spatial domains of VoxelGrid objects.
+
 	for(const DataObject* obj : state.data()->objects()) {
 		if(const VoxelGrid* existingObject = dynamic_object_cast<VoxelGrid>(obj)) {
 			if(existingObject->domain()) {

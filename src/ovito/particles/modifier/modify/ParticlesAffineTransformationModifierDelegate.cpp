@@ -131,14 +131,13 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 		tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 
 	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
-
 		for(const PropertyObject* inputProperty : inputParticles->properties()) {
 			if(isTransformableProperty(inputProperty)) {
 
-				// Make sure we can safely modify the particles object.
+				// Make sure we can safely modify the particles object and the vector property.
 				ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
-
 				PropertyAccess<Vector3> property = outputParticles->makeMutable(inputProperty);
+
 				if(!mod->selectionOnly()) {
 					for(Vector3& v : property)
 						v = tm * v;

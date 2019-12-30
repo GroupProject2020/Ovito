@@ -107,8 +107,6 @@ QVector<DataObjectReference> SimulationCellAffineTransformationModifierDelegate:
 PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
-	if(mod->selectionOnly())
-		return PipelineStatus::Success;
 
 	AffineTransformation tm;
 	if(mod->relativeMode())
@@ -121,6 +119,9 @@ PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifie
 		SimulationCellObject* outputCell = state.makeMutable(inputCell);
 		outputCell->setCellMatrix(mod->relativeMode() ? (tm * inputCell->cellMatrix()) : mod->targetCell());
 	}
+
+	if(mod->selectionOnly())
+		return PipelineStatus::Success;
 
 	// Transform the domains of PeriodicDomainDataObjects.
 	for(const DataObject* obj : state.data()->objects()) {
