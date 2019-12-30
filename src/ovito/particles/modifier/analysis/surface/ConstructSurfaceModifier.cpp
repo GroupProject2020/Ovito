@@ -221,8 +221,8 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 	// This callback function is called for every surface vertex created by the manifold construction helper.
 	std::vector<size_t> vertexToParticleMap;
 	auto prepareMeshVertex = [&](HalfEdgeMesh::vertex_index vertex, size_t particleIndex) {
-		vertexToParticleMap.push_back(particleIndex);
 		OVITO_ASSERT(vertex == vertexToParticleMap.size());
+		vertexToParticleMap.push_back(particleIndex);
 	};
 
 	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, mesh(), alpha, *positions());

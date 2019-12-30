@@ -24,8 +24,6 @@
 
 
 #include <ovito/stdobj/StdObj.h>
-#include <boost/range/iterator_range_core.hpp>
-
 
 namespace Ovito { namespace StdObj {
 
@@ -142,23 +140,6 @@ public:
 	///         this property storage according to the Qt meta type system.
 	int dataType() const { return _dataType; }
 
-	/// Returns the Qt data type identifier for the elements if the given C++ structure or primitive type.
-	template<typename T>
-	static constexpr int primitiveDataType() { return qMetaTypeId<T>(); }
-	template<> constexpr int primitiveDataType<Point3>() { return Float; }
-	template<> constexpr int primitiveDataType<Point2>() { return Float; }
-	template<> constexpr int primitiveDataType<Vector3>() { return Float; }
-	template<> constexpr int primitiveDataType<Vector2>() { return Float; }
-	template<> constexpr int primitiveDataType<Color>() { return Float; }
-	template<> constexpr int primitiveDataType<Quaternion>() { return Float; }
-	template<> constexpr int primitiveDataType<Matrix3>() { return Float; }
-	template<> constexpr int primitiveDataType<SymmetricTensor2>() { return Float; }
-	template<> constexpr int primitiveDataType<Point3I>() { return Int; }
-	template<> constexpr int primitiveDataType<Vector3I>() { return Int; }
-	template<> constexpr int primitiveDataType<Point2I>() { return Int; }
-	template<> constexpr int primitiveDataType<Vector2I>() { return Int; }
-	template<> constexpr int primitiveDataType<std::array<qlonglong,2>>() { return primitiveDataType<qlonglong>(); }
-
 	/// \brief Returns the number of bytes per value.
 	/// \return Number of bytes used to store a single value of the data type
 	///         specified by type().
@@ -195,7 +176,6 @@ public:
 	/// \brief Sets all array elements to the given uniform value.
 	template<typename T>
 	void fill(const T value) {
-		OVITO_ASSERT(dataType() == qMetaTypeId<T>());
 		OVITO_ASSERT(stride() == sizeof(T));
 		T* begin = reinterpret_cast<T*>(buffer());
 		T* end = begin + this->size();
@@ -318,7 +298,7 @@ public:
 		return false;
 	}
 
-protected:
+private:
 
 	/// Grows the storage buffer to accomodate at least the given number of data elements.
 	void growCapacity(size_t newSize);
@@ -359,6 +339,23 @@ using PropertyPtr = std::shared_ptr<PropertyStorage>;
 
 /// This pointer type is used to indicate that we only need read-only access to the property data.
 using ConstPropertyPtr = std::shared_ptr<const PropertyStorage>;
+
+/// Class template returning the Qt data type identifier for the components in the given C++ array structure.
+template<typename T> struct PropertyStoragePrimitiveDataType { static constexpr int value = qMetaTypeId<T>(); };
+#ifdef Q_CC_MSVC // MSVC compiler doesn't treat qMetaTypeId() function as constexpr. Workaround:
+template<> struct PropertyStoragePrimitiveDataType<int> { static constexpr PropertyStorage::StandardDataType value = PropertyStorage::Int; };
+template<> struct PropertyStoragePrimitiveDataType<qlonglong> { static constexpr PropertyStorage::StandardDataType value = PropertyStorage::Int64; };
+template<> struct PropertyStoragePrimitiveDataType<FloatType> { static constexpr PropertyStorage::StandardDataType value = PropertyStorage::Float; };
+#endif
+template<typename T, std::size_t N> struct PropertyStoragePrimitiveDataType<std::array<T,N>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<Point_3<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<Vector_3<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<Point_2<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<Vector_2<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<Matrix_3<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<QuaternionT<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<ColorT<T>> : public PropertyStoragePrimitiveDataType<T> {};
+template<typename T> struct PropertyStoragePrimitiveDataType<SymmetricTensor2T<T>> : public PropertyStoragePrimitiveDataType<T> {};
 
 }	// End of namespace
 }	// End of namespace

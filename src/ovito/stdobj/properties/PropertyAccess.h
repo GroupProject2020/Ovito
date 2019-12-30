@@ -133,7 +133,7 @@ public:
 	/// \brief Returns a pointer to the first element of the property array.
 	const T* cbegin() const {
 		OVITO_ASSERT(this->_storage);
-		OVITO_ASSERT(this->_storage->dataType() == PropertyStorage::primitiveDataType<T>());
+		OVITO_ASSERT(this->_storage->dataType() == PropertyStoragePrimitiveDataType<T>::value);
 		OVITO_ASSERT(this->stride() == sizeof(T));
 		return reinterpret_cast<const T*>(this->_storage->cbuffer());
 	}
@@ -151,7 +151,7 @@ protected:
 	/// Constructor that associates the access object with a PropertyStorage (may be null).
 	ReadOnlyPropertyAccessBase(PointerType storage) : PropertyAccessBase<PointerType>(std::move(storage)) {
 		OVITO_ASSERT(!this->_storage || this->_storage->stride() == sizeof(T));
-		OVITO_ASSERT(!this->_storage || this->_storage->dataType() == PropertyStorage::primitiveDataType<T>());
+		OVITO_ASSERT(!this->_storage || this->_storage->dataType() == PropertyStoragePrimitiveDataType<T>::value);
 	}
 };
 
@@ -413,9 +413,9 @@ protected:
  * be a compile-time constant.
  */
 template<typename T, bool TableMode = false>
-class ConstPropertyAccess : public std::conditional_t<TableMode, detail::ReadOnlyPropertyAccessBaseTable<T, const PropertyStorage*>, detail::ReadOnlyPropertyAccessBase<T, const PropertyStorage*>>
+class ConstPropertyAccess : public std::conditional_t<TableMode, Ovito::StdObj::detail::ReadOnlyPropertyAccessBaseTable<T, const PropertyStorage*>, Ovito::StdObj::detail::ReadOnlyPropertyAccessBase<T, const PropertyStorage*>>
 {
-	using ParentType = std::conditional_t<TableMode, detail::ReadOnlyPropertyAccessBaseTable<T, const PropertyStorage*>, detail::ReadOnlyPropertyAccessBase<T, const PropertyStorage*>>;
+	using ParentType = std::conditional_t<TableMode, Ovito::StdObj::detail::ReadOnlyPropertyAccessBaseTable<T, const PropertyStorage*>, Ovito::StdObj::detail::ReadOnlyPropertyAccessBase<T, const PropertyStorage*>>;
 
 public:
 
@@ -444,7 +444,7 @@ public:
  *        and which keeps a strong reference to the PropertyStorage.
  */
 template<typename T>
-class ConstPropertyAccessAndRef : public detail::ReadOnlyPropertyAccessBase<T, ConstPropertyPtr>
+class ConstPropertyAccessAndRef : public Ovito::StdObj::detail::ReadOnlyPropertyAccessBase<T, ConstPropertyPtr>
 {
 public:
 
@@ -453,11 +453,11 @@ public:
 
 	/// Constructs a read-only accessor for the data in a PropertyObject.
 	ConstPropertyAccessAndRef(const PropertyObject* propertyObj) 
-		: detail::ReadOnlyPropertyAccessBase<T, ConstPropertyPtr>(propertyObj ? propertyObj->storage() : nullptr) {}
+		: Ovito::StdObj::detail::ReadOnlyPropertyAccessBase<T, ConstPropertyPtr>(propertyObj ? propertyObj->storage() : nullptr) {}
 
 	/// Constructs a read-only accessor for the data in a PropertyStorage.
 	ConstPropertyAccessAndRef(ConstPropertyPtr property)
-		: detail::ReadOnlyPropertyAccessBase<T, ConstPropertyPtr>(std::move(property)) {}
+		: Ovito::StdObj::detail::ReadOnlyPropertyAccessBase<T, ConstPropertyPtr>(std::move(property)) {}
 };
 
 /**
@@ -473,9 +473,9 @@ public:
  * a modification of the stored property values.
  */
 template<typename T, bool TableMode = false>
-class PropertyAccess : public std::conditional_t<TableMode, detail::ReadWritePropertyAccessBaseTable<T, PropertyStorage*>, detail::ReadWritePropertyAccessBase<T, PropertyStorage*>>
+class PropertyAccess : public std::conditional_t<TableMode, Ovito::StdObj::detail::ReadWritePropertyAccessBaseTable<T, PropertyStorage*>, Ovito::StdObj::detail::ReadWritePropertyAccessBase<T, PropertyStorage*>>
 {
-	using ParentType = std::conditional_t<TableMode, detail::ReadWritePropertyAccessBaseTable<T, PropertyStorage*>, detail::ReadWritePropertyAccessBase<T, PropertyStorage*>>;
+	using ParentType = std::conditional_t<TableMode, Ovito::StdObj::detail::ReadWritePropertyAccessBaseTable<T, PropertyStorage*>, Ovito::StdObj::detail::ReadWritePropertyAccessBase<T, PropertyStorage*>>;
 
 public:
 
@@ -515,9 +515,9 @@ private:
  *        and which keeps a strong reference to the PropertyStorage.
  */
 template<typename T, bool TableMode = false>
-class PropertyAccessAndRef : public std::conditional_t<TableMode, detail::ReadWritePropertyAccessBaseTable<T, PropertyPtr>, detail::ReadWritePropertyAccessBase<T, PropertyPtr>>
+class PropertyAccessAndRef : public std::conditional_t<TableMode, Ovito::StdObj::detail::ReadWritePropertyAccessBaseTable<T, PropertyPtr>, Ovito::StdObj::detail::ReadWritePropertyAccessBase<T, PropertyPtr>>
 {
-	using ParentType = std::conditional_t<TableMode, detail::ReadWritePropertyAccessBaseTable<T, PropertyPtr>, detail::ReadWritePropertyAccessBase<T, PropertyPtr>>;
+	using ParentType = std::conditional_t<TableMode, Ovito::StdObj::detail::ReadWritePropertyAccessBaseTable<T, PropertyPtr>, Ovito::StdObj::detail::ReadWritePropertyAccessBase<T, PropertyPtr>>;
 
 public:
 
