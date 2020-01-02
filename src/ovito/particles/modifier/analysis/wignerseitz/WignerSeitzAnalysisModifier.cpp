@@ -54,12 +54,14 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 {
 	// Get the current particle positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the reference particle position.
 	const ParticlesObject* refParticles = referenceState.getObject<ParticlesObject>();
 	if(!refParticles)
 		throwException(tr("Reference configuration does not contain any particles."));
+	refParticles->verifyIntegrity();
 	const PropertyObject* refPosProperty = refParticles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cells.

@@ -91,6 +91,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(Tim
 {
     // Get the current positions.
     const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
     const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// The Voro++ library uses 32-bit integers. It cannot handle more than 2^31 input points.

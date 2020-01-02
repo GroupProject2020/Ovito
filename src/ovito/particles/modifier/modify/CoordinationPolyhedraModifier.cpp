@@ -68,10 +68,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 {
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 	const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 	const PropertyObject* selectionProperty = particles->getProperty(ParticlesObject::SelectionProperty);
+	particles->expectBonds()->verifyIntegrity();
 	const PropertyObject* topologyProperty = particles->expectBondsTopology();
 	const PropertyObject* bondPeriodicImagesProperty = particles->bonds()->getProperty(BondsObject::PeriodicImageProperty);
 	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();

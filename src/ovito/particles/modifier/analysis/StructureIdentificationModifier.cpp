@@ -112,6 +112,7 @@ void StructureIdentificationModifier::StructureIdentificationEngine::emitResults
 	OVITO_ASSERT(modifier);
 
 	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
+	particles->verifyIntegrity();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));

@@ -60,14 +60,15 @@ Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEng
 {
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 
 	if(numNeighbors() < 2)
-		throwException(tr("The selected number of neighbors to take into account for the centrosymmetry calculation is invalid."));
+		throwException(tr("The number of neighbors to take into account in the centrosymmetry calculation is invalid. It must be at least 2."));
 
 	if(numNeighbors() % 2)
-		throwException(tr("The number of neighbors to take into account for the centrosymmetry calculation must be a positive, even integer."));
+		throwException(tr("The number of neighbors to take into account in the centrosymmetry calculation must be a positive and even integer."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<CentroSymmetryEngine>(particles, posProperty->storage(), simCell->data(), numNeighbors());

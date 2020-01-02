@@ -69,6 +69,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 {
 	// Get the current particle positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell.
@@ -84,6 +85,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 		return std::make_shared<CutoffClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
+		particles->expectBonds()->verifyIntegrity();
 		return std::make_shared<BondClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), particles->expectBondsTopology()->storage());
 	}
 	else {

@@ -69,6 +69,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
@@ -84,6 +85,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 		return std::make_shared<AdaptiveCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 	}
 	else if(mode() == BondMode) {
+		particles->expectBonds()->verifyIntegrity();
 		const PropertyObject* topologyProperty = particles->expectBonds()->expectProperty(BondsObject::TopologyProperty);
 		const PropertyObject* periodicImagesProperty = particles->expectBonds()->getProperty(BondsObject::PeriodicImageProperty);
 		return std::make_shared<BondCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),

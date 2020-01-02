@@ -152,6 +152,8 @@ void InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint time, Modifier
 	const ParticlesObject* particles2 = secondState.getObject<ParticlesObject>();
 	if(!particles2 || particles1->elementCount() != particles2->elementCount())
 		throwException(tr("Cannot interpolate between consecutive simulation frames, because they contain different numbers of particles."));
+	particles1->verifyIntegrity();
+	particles2->verifyIntegrity();
 	ConstPropertyAccess<Point3> posProperty1 = particles1->expectProperty(ParticlesObject::PositionProperty);
 	ConstPropertyAccess<Point3> posProperty2 = particles2->expectProperty(ParticlesObject::PositionProperty);
 

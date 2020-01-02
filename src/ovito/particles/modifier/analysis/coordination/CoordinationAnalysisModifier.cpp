@@ -68,6 +68,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::cre
 {
 	// Get the current positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell.

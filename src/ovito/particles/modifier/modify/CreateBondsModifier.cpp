@@ -172,6 +172,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 {
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 

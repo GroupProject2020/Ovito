@@ -169,6 +169,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialCorrelationFunctionModifie
 
 	// Get the current positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the current selected properties.

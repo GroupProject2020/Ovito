@@ -97,8 +97,9 @@ bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const DataCollection& 
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Get the current positions.
+	// Get the input particles.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell.

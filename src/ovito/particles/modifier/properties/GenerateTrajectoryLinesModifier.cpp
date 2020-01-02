@@ -116,6 +116,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& oper
 		const ParticlesObject* particles = state.getObject<ParticlesObject>();
 		if(!particles)
 			throwException(tr("Cannot generate trajectory lines. The pipeline data contains no particles."));
+		particles->verifyIntegrity();
 
 		// Determine set of input particles in the current frame.
 		std::vector<size_t> selectedIndices;

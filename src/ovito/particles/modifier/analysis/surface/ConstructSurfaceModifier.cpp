@@ -98,6 +98,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 {
 	// Get modifier inputs.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	ConstPropertyPtr selProperty;
 	if(onlySelectedParticles())

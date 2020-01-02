@@ -61,6 +61,7 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 
 	// Make a modifiable copy of the particles object.
 	ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
+	outputParticles->verifyIntegrity();
 
 	// Make a modifiable copy of the particle position property.
 	PropertyAccess<Point3> posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty);

@@ -97,10 +97,12 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 		const ParticlesObject* trajectoryParticles = trajState.getObject<ParticlesObject>();
 		if(!trajectoryParticles)
 			modApp->throwException(tr("Trajectory dataset does not contain any particle positions."));
+		trajectoryParticles->verifyIntegrity();
 		ConstPropertyAccess<Point3> trajectoryPosProperty = trajectoryParticles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Get the positions from the topology dataset.
 		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
+		particles->verifyIntegrity();
 		const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Build particle-to-particle index map.

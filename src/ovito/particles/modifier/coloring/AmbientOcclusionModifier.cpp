@@ -75,6 +75,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
@@ -87,7 +88,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	}
 
 	// The render buffer resolution.
-	int res = std::min(std::max(bufferResolution(), 0), (int)MAX_AO_RENDER_BUFFER_RESOLUTION);
+	int res = qBound(0, bufferResolution(), (int)MAX_AO_RENDER_BUFFER_RESOLUTION);
 	int resolution = (128 << res);
 
 	TimeInterval validityInterval = input.stateValidity();
@@ -117,7 +118,7 @@ AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const T
 		const Box3& boundingBox, std::vector<FloatType> particleRadii, AmbientOcclusionRenderer* renderer) :
 	ComputeEngine(validityInterval),
 	_resolution(resolution),
-	_samplingCount(samplingCount),
+	_samplingCount(std::max(1,samplingCount)),
 	_positions(positions),
 	_boundingBox(boundingBox),
 	_particleRadii(std::move(particleRadii)),
@@ -218,22 +219,25 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 	}
 	_renderer->endRender();
 
-	if(!task()->isCanceled()) {
-		task()->setProgressValue(_samplingCount);
-		// Normalize brightness values by particle area.
-		auto r = _particleRadii.cbegin();
-		PropertyAccess<FloatType> brightnessValues(brightness());
+	if(task()->isCanceled()) return;
+	task()->setProgressValue(_samplingCount);
+
+	// Normalize brightness values by particle area.
+	auto r = _particleRadii.cbegin();
+	PropertyAccess<FloatType> brightnessValues(brightness());
+	for(FloatType& b : brightnessValues) {
+		if(*r != 0)
+			b /= (*r) * (*r);
+		++r;
+	}
+
+	if(task()->isCanceled()) return;
+
+	// Normalize brightness values by global maximum.
+	FloatType maxBrightness = *boost::max_element(brightnessValues);
+	if(maxBrightness != 0) {
 		for(FloatType& b : brightnessValues) {
-			if(*r != 0)
-				b /= (*r) * (*r);
-			++r;
-		}
-		// Normalize brightness values by global maximum.
-		FloatType maxBrightness = *boost::max_element(brightnessValues);
-		if(maxBrightness != 0) {
-			for(FloatType& b : brightnessValues) {
-				b /= maxBrightness;
-			}
+			b /= maxBrightness;
 		}
 	}
 }
@@ -252,14 +256,15 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint tim
 	OVITO_ASSERT(brightness() && particles->elementCount() == brightness()->size());
 
 	// Get effective intensity.
-	FloatType intens = qBound(FloatType(0), modifier->intensity(), FloatType(1));
+	FloatType intensity = qBound(FloatType(0), modifier->intensity(), FloatType(1));
+	if(intensity == 0 || particles->elementCount() == 0) return;
 
 	// Get output property object.
 	ConstPropertyAccess<FloatType> brightnessValues(brightness());
 	PropertyAccess<Color> colorProperty = particles->createProperty(ParticlesObject::ColorProperty, true, {particles});
 	const FloatType* b = brightnessValues.cbegin();
 	for(Color& c : colorProperty) {
-		FloatType factor = FloatType(1) - intens + (*b);
+		FloatType factor = FloatType(1) - intensity + (*b);
 		if(factor < FloatType(1))
 			c = c * factor;
 		++b;

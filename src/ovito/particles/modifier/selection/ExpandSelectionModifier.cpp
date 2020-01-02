@@ -74,6 +74,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 {
 	// Get the input particles.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	particles->verifyIntegrity();
 
 	// Get the particle positions.
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
@@ -92,6 +93,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 		return std::make_shared<ExpandSelectionNearestEngine>(particles, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
 	}
 	else if(mode() == BondedNeighbors) {
+		particles->expectBonds()->verifyIntegrity();
 		return std::make_shared<ExpandSelectionBondedEngine>(particles, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), particles->expectBondsTopology()->storage());
 	}
 	else {
