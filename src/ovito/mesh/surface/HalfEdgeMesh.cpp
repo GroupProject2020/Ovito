@@ -435,6 +435,80 @@ void HalfEdgeMesh::deleteFace(face_index face)
 }
 
 /******************************************************************************
+* Deletes all faces from the mesh for which the bit in the given mask array is set.
+* Holes in the mesh will be left behind at the location of the deleted faces.
+* The half-edges of the faces are also disconnected from their respective opposite half-edges and deleted by this method.
+******************************************************************************/
+void HalfEdgeMesh::deleteFaces(const boost::dynamic_bitset<>& mask)
+{
+	OVITO_ASSERT(mask.size() == faceCount());
+
+	// Mark half-edges for deletion that are part of faces to be deleted.
+	// Build a mapping from old face indices to new indices. 
+	std::vector<face_index> remapping(faceCount());
+	boost::dynamic_bitset<> edgeMask(edgeCount());
+	size_type newFaceCount = 0;
+	for(face_index face = 0; face < faceCount(); face++) {
+		if(!mask.test(face)) {
+			remapping[face] = newFaceCount++;
+			continue;
+		}
+		else {
+			remapping[face] = InvalidIndex;
+
+			if(hasOppositeFace(face))
+				unlinkFromOppositeFace(face);
+
+			edge_index ffe = firstFaceEdge(face);
+			if(ffe != InvalidIndex) {
+				edge_index e = ffe;
+				do {
+					edgeMask.set(e);
+					e = nextFaceEdge(e);
+				}
+				while(e != ffe);
+			}
+		}
+	}
+	if(newFaceCount == faceCount()) return; // Nothing to delete.
+
+	// Now delete the marked half-edges.
+	deleteEdges(edgeMask);
+
+	// Update the pointers from the edges to the faces.
+	for(face_index& ef : _edgeFaces) {
+		OVITO_ASSERT(ef != InvalidIndex && ef < faceCount());
+		ef = remapping[ef];
+	}
+
+	// Filter and condense the face-related arrays.
+    std::vector<edge_index> faceEdgesNew(newFaceCount);
+    std::vector<face_index> oppositeFacesNew(newFaceCount);
+
+	auto faceEdgesIter = faceEdgesNew.begin();
+	auto oppositeFacesIter = oppositeFacesNew.begin();
+
+	for(face_index face = 0; face < faceCount(); face++) {
+		if(mask.test(face)) continue;
+
+		*faceEdgesIter++ = firstFaceEdge(face);
+		*oppositeFacesIter++ = hasOppositeFace(face) ? remapping[oppositeFace(face)] : InvalidIndex;
+	}
+
+	OVITO_ASSERT(faceEdgesIter == faceEdgesNew.end());
+	OVITO_ASSERT(oppositeFacesIter == oppositeFacesNew.end());
+
+	_faceEdges.swap(faceEdgesNew);
+	_oppositeFaces.swap(oppositeFacesNew);	
+
+#ifdef OVITO_DEBUG
+	for(edge_index edge = 0; edge < edgeCount(); edge++) {
+		OVITO_ASSERT(adjacentFace(edge) != InvalidIndex && adjacentFace(edge) < faceCount());
+	}
+#endif
+}
+
+/******************************************************************************
 * Deletes a half-edge from the mesh.
 * This method assumes that the half-edge is not connected to any part of the mesh.
 * Returns the successor edge along the face's boundary.
@@ -519,6 +593,111 @@ HalfEdgeMesh::edge_index HalfEdgeMesh::deleteEdge(edge_index edge)
 	_oppositeEdges.pop_back();
 	_nextManifoldEdges.pop_back();
 	return successorEdge;
+}
+
+/******************************************************************************
+* Deletes all half-edges from the mesh for which the bit is set in the given mask array.
+******************************************************************************/
+void HalfEdgeMesh::deleteEdges(const boost::dynamic_bitset<>& mask)
+{
+	// Build a mapping from old edge indices to new indices. 
+	std::vector<edge_index> remapping(edgeCount());
+	size_type newEdgeCount = 0;
+	for(edge_index edge = 0; edge < edgeCount(); edge++) {
+		if(mask.test(edge))
+			remapping[edge] = InvalidIndex;
+		else
+			remapping[edge] = newEdgeCount++;
+	}
+
+	// Update the pointers to the first edge of each vertex.
+	for(edge_index& ve : _vertexEdges) {
+		while(ve != InvalidIndex && remapping[ve] == InvalidIndex)
+			ve = nextVertexEdge(ve);
+		ve = (ve != InvalidIndex) ? remapping[ve] : InvalidIndex;
+	}
+
+	// Update the pointers to the first edge of each face.
+	for(edge_index& fe : _faceEdges) {
+		edge_index fe_old = fe;
+		if(fe_old == InvalidIndex) continue;
+		while(remapping[fe] == InvalidIndex) {
+			fe = nextFaceEdge(fe);
+			if(fe == fe_old) break;
+		}
+		fe = remapping[fe];
+	}
+
+	// Allocate new edge-related arrays with reduced size.
+	std::vector<face_index> edgeFacesNew(newEdgeCount);
+    std::vector<vertex_index> edgeVerticesNew(newEdgeCount);
+    std::vector<edge_index> nextVertexEdgesNew(newEdgeCount);
+    std::vector<edge_index> nextFaceEdgesNew(newEdgeCount);
+    std::vector<edge_index> prevFaceEdgesNew(newEdgeCount);
+    std::vector<edge_index> oppositeEdgesNew(newEdgeCount);
+    std::vector<edge_index> nextManifoldEdgesNew(newEdgeCount);
+
+	auto edgeFacesIter = edgeFacesNew.begin();
+	auto edgeVerticesIter = edgeVerticesNew.begin();
+	auto nextVertexEdgesIter = nextVertexEdgesNew.begin();
+	auto nextFaceEdgesIter = nextFaceEdgesNew.begin();
+	auto prevFaceEdgesIter = prevFaceEdgesNew.begin();
+	auto oppositeEdgesIter = oppositeEdgesNew.begin();
+	auto nextManifoldEdgesIter = nextManifoldEdgesNew.begin();
+	
+	for(edge_index edge = 0; edge < edgeCount(); edge++) {
+		if(mask.test(edge)) continue;
+
+		*edgeFacesIter++ = adjacentFace(edge);
+		*edgeVerticesIter++ = vertex2(edge);
+
+		edge_index nve = nextVertexEdge(edge);		
+		while(nve != InvalidIndex && remapping[nve] == InvalidIndex) {
+			nve = nextVertexEdge(nve);
+		}
+		*nextVertexEdgesIter++ = (nve != InvalidIndex) ? remapping[nve] : InvalidIndex;
+
+		edge_index nfe = nextFaceEdge(edge);
+		OVITO_ASSERT(nfe != InvalidIndex);
+		while(remapping[nfe] == InvalidIndex) {
+			OVITO_ASSERT(nfe != edge);
+			nfe = nextFaceEdge(nfe);
+		}
+		*nextFaceEdgesIter++ = remapping[nfe];
+
+		edge_index pfe = prevFaceEdge(edge);
+		OVITO_ASSERT(pfe != InvalidIndex);
+		while(remapping[pfe] == InvalidIndex) {
+			OVITO_ASSERT(pfe != edge);
+			pfe = prevFaceEdge(pfe);
+		}
+		*prevFaceEdgesIter++ = remapping[pfe];
+
+		*oppositeEdgesIter++ = hasOppositeEdge(edge) ? remapping[oppositeEdge(edge)] : InvalidIndex;
+
+		edge_index nme = nextManifoldEdge(edge);
+		while(nme != InvalidIndex && remapping[nme] == InvalidIndex) {
+			OVITO_ASSERT(nme != edge);
+			nme = nextManifoldEdge(nme);
+		}
+		*nextManifoldEdgesIter++ = (nme != InvalidIndex) ? remapping[nme] : InvalidIndex;
+	}
+
+	OVITO_ASSERT(edgeFacesIter == edgeFacesNew.end());
+	OVITO_ASSERT(edgeVerticesIter == edgeVerticesNew.end());
+	OVITO_ASSERT(nextVertexEdgesIter == nextVertexEdgesNew.end());
+	OVITO_ASSERT(nextFaceEdgesIter == nextFaceEdgesNew.end());
+	OVITO_ASSERT(prevFaceEdgesIter == prevFaceEdgesNew.end());
+	OVITO_ASSERT(oppositeEdgesIter == oppositeEdgesNew.end());
+	OVITO_ASSERT(nextManifoldEdgesIter == nextManifoldEdgesNew.end());
+
+	_edgeFaces.swap(edgeFacesNew);
+	_edgeVertices.swap(edgeVerticesNew);
+	_nextVertexEdges.swap(nextVertexEdgesNew);
+	_nextFaceEdges.swap(nextFaceEdgesNew);
+	_prevFaceEdges.swap(prevFaceEdgesNew);
+	_oppositeEdges.swap(oppositeEdgesNew);
+	_nextManifoldEdges.swap(nextManifoldEdgesNew);
 }
 
 /******************************************************************************

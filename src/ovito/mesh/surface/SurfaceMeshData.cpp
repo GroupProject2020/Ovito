@@ -582,6 +582,7 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 			HalfEdgeMesh::edge_index faceEdge = topology.firstFaceEdge(face);
 			HalfEdgeMesh::edge_index edge1 = topology.nextFaceEdge(faceEdge);
 			HalfEdgeMesh::edge_index edge2 = topology.nextFaceEdge(edge1);
+			bool createOppositeFace = autoGenerateOppositeFaces && (!topology.hasOppositeFace(face) || (!faceSubset.empty() && !faceSubset[topology.oppositeFace(face)])) ;
 			Vector3 baseNormal = calculateNormalAtVertex(faceEdge);
 			Vector3 normal1 = calculateNormalAtVertex(edge1);
 			while(edge2 != faceEdge) {
@@ -589,6 +590,11 @@ void SurfaceMeshData::convertToTriMesh(TriMesh& outputMesh, bool smoothShading, 
 				*outputNormal++ = baseNormal;
 				*outputNormal++ = normal1;
 				*outputNormal++ = normal2;
+				if(createOppositeFace) {
+					*outputNormal++ = -normal2;
+					*outputNormal++ = -normal1;
+					*outputNormal++ = -baseNormal;
+				}
 				normal1 = normal2;
 				edge2 = topology.nextFaceEdge(edge2);
 			}

@@ -264,6 +264,21 @@ public:
         topology()->deleteFace(face);
     }
 
+    /// Deletes all faces from the mesh for which the bit in the given mask array is set.
+    /// Holes in the mesh will be left behind at the location of the deleted faces.
+    /// The half-edges of the faces are also disconnected from their respective opposite half-edges and deleted by this method.
+    void deleteFaces(const boost::dynamic_bitset<>& mask) {
+        OVITO_ASSERT(mask.size() == faceCount());
+        OVITO_ASSERT(isTopologyMutable());
+        OVITO_ASSERT(areFacePropertiesMutable());
+        // Filter and condense the face property arrays.
+        for(auto& prop : _faceProperties) {
+            prop.storage()->filterResize(mask);
+            updateFacePropertyPointers(prop);
+        }
+        topology()->deleteFaces(mask);
+    }
+
     /// Creates a new half-edge between two vertices and adjacent to the given face.
     /// Returns the index of the new half-edge.
     edge_index createEdge(vertex_index vertex1, vertex_index vertex2, face_index face) {
@@ -341,6 +356,36 @@ public:
             prop.storage()->truncate(1);
         }
         _regionCount--;
+    }
+
+    /// Deletes all region from the mesh for which the bit in the given mask array is set.
+    /// This method assumes that the deleted regions are not referenced by any other part of the mesh.
+    void deleteRegions(const boost::dynamic_bitset<>& mask) {
+        OVITO_ASSERT(mask.size() == regionCount());
+        OVITO_ASSERT(areRegionPropertiesMutable());
+        OVITO_ASSERT(areFacePropertiesMutable());
+        // Filter and condense the region property arrays.
+        for(auto& prop : _regionProperties) {
+            prop.storage()->filterResize(mask);
+            updateRegionPropertyPointers(prop);
+        }
+        // Build a mapping from old region indices to new indices. 
+        std::vector<region_index> remapping(regionCount());
+        size_type newRegionCount = 0;
+        for(region_index region = 0; region < regionCount(); region++) {
+            if(mask.test(region))
+                remapping[region] = HalfEdgeMesh::InvalidIndex;
+            else
+                remapping[region] = newRegionCount++;
+        }
+        // Update the faces.
+        if(hasFaceRegions()) {
+            for(int& fr : boost::make_iterator_range_n(_faceRegions, faceCount())) {
+                if(fr >= 0 && fr < regionCount())
+                    fr = remapping[fr];
+            }
+        }
+        _regionCount = newRegionCount;
     }
 
     /// Links two opposite half-edges together.

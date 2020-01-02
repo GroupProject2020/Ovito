@@ -80,22 +80,24 @@ PipelineStatus SurfaceMeshRegionsDeleteSelectedModifierDelegate::apply(Modifier*
 			mesh.makeRegionPropertiesMutable();
 
 			// Delete all faces that belong to one of the selected mesh regions.
-			for(SurfaceMeshData::face_index face = mesh.faceCount() - 1; face >= 0; face--) {
+			boost::dynamic_bitset<> faceMask(mesh.faceCount());
+			for(SurfaceMeshData::face_index face = 0; face < mesh.faceCount(); face++) {
 				SurfaceMeshData::region_index region = mesh.faceRegion(face);
-				if(region >= 0 && region < mesh.regionCount() && selectionProperty[region]) {
-					if(mesh.hasOppositeFace(face))
-						mesh.topology()->unlinkFromOppositeFace(face);
-					mesh.deleteFace(face);
+				if(region >= 0 && region < selectionProperty.size() && selectionProperty[region]) {
+					faceMask.set(face);
 				}
 			}
+			mesh.deleteFaces(faceMask);
 
 			// Delete the selected regions.
+			boost::dynamic_bitset<> regionMask(mesh.regionCount());
 			for(SurfaceMeshData::region_index region = mesh.regionCount() - 1; region >= 0; region--) {
 				if(selectionProperty[region]) {
-					mesh.deleteRegion(region);
+					regionMask.set(region);
 					numSelected++;
 				}
 			}
+			mesh.deleteRegions(regionMask);
 
 			// Create a mutable copy of the SurfaceMesh.
 			SurfaceMesh* newSurface = state.makeMutable(existingSurface);

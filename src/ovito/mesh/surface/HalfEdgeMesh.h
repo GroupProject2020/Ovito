@@ -182,6 +182,11 @@ public:
     /// The half-edges of the face are also disconnected from their respective opposite half-edges and deleted by this method.
     void deleteFace(face_index face);
 
+    /// Deletes all faces from the mesh for which the bit in the given mask array is set.
+    /// Holes in the mesh will be left behind at the location of the deleted faces.
+    /// The half-edges of the faces are also disconnected from their respective opposite half-edges and deleted by this method.
+    void deleteFaces(const boost::dynamic_bitset<>& mask);
+
     /// Deletes a vertex from the mesh.
     /// This method assumes that the vertex is not connected to any part of the mesh.
     void deleteVertex(vertex_index vertex);
@@ -374,6 +379,9 @@ private:
     /// This method assumes that the half-edge is not connected to any part of the mesh.
     /// Returns the successor edge along the face's boundary.
     edge_index deleteEdge(edge_index edge);
+
+    /// Deletes all half-edges from the mesh for which the bit is set in the given mask array.
+    void deleteEdges(const boost::dynamic_bitset<>& mask);
 
     ///////////////// Per vertex data //////////////////
 
