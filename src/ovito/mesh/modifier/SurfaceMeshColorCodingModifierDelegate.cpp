@@ -39,7 +39,8 @@ QVector<DataObjectReference> SurfaceMeshVerticesColorCodingModifierDelegate::OOM
 	// Gather list of all surface mesh vertices in the input data collection.
 	QVector<DataObjectReference> objects;
 	for(const ConstDataObjectPath& path : input.getObjectsRecursive(SurfaceMeshVertices::OOClass())) {
-		objects.push_back(path);
+		if(static_object_cast<SurfaceMeshVertices>(path.back())->properties().empty() == false)
+			objects.push_back(path);
 	}
 	return objects;
 }
@@ -53,7 +54,8 @@ QVector<DataObjectReference> SurfaceMeshFacesColorCodingModifierDelegate::OOMeta
 	// Gather list of all surface mesh faces in the input data collection.
 	QVector<DataObjectReference> objects;
 	for(const ConstDataObjectPath& path : input.getObjectsRecursive(SurfaceMeshFaces::OOClass())) {
-		objects.push_back(path);
+		if(static_object_cast<SurfaceMeshFaces>(path.back())->properties().empty() == false)
+			objects.push_back(path);
 	}
 	return objects;
 }
@@ -67,7 +69,8 @@ QVector<DataObjectReference> SurfaceMeshRegionsColorCodingModifierDelegate::OOMe
 	// Gather list of all surface mesh regions in the input data collection.
 	QVector<DataObjectReference> objects;
 	for(const ConstDataObjectPath& path : input.getObjectsRecursive(SurfaceMeshRegions::OOClass())) {
-		objects.push_back(path);
+		if(static_object_cast<SurfaceMeshRegions>(path.back())->properties().empty() == false)
+			objects.push_back(path);
 	}
 	return objects;
 }

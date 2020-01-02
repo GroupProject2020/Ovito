@@ -231,7 +231,7 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	// Output a data series object with the scatter points.
 	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, 
 		DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()),
-		out_x.takeStorage(), out_y.takeStorage());
+		out_y.takeStorage(), out_x.takeStorage());
 
 	QString statusMessage;
 	if(outputSelection) {

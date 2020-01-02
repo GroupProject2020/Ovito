@@ -144,6 +144,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 {
 	task()->setProgressText(tr("Performing Voronoi analysis"));
+	task()->beginProgressSubSteps(_computePolyhedra ? 2 : 1);
 
 	// Stores the starting vertex index and the vertex count for each Voronoi polyhedron. 
 	std::vector<std::pair<SurfaceMeshData::vertex_index, SurfaceMeshData::size_type>> polyhedraVertices;
@@ -239,7 +240,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		if(_computePolyhedra) {
 			const Point3& center = positionsArray[index];
 			QMutexLocker locker(bondMutex);
-			adjacentCellArray[meshRegionIndex] = vol;
+			cellVolumeArray[meshRegionIndex] = vol;
 			meshVertexBaseIndex = _polyhedraMesh.vertexCount();
 			const double* ptsp = v.pts;
 			for(int i = 0; i < v.p; i++, ptsp += 3) {
@@ -555,11 +556,16 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 	// Finalize the polyhedral mesh.
 	if(_computePolyhedra) {
+		task()->nextProgressSubStep();
+		task()->beginProgressSubStepsWithWeights({1,12,1,1,1});
+
 		// First, connect adjacent faces from the same Voronoi cell.
 		_polyhedraMesh.connectOppositeHalfedges();
 
 		// The polyhedral cells should now be closed manifolds.
 		OVITO_ASSERT(_polyhedraMesh.topology()->isClosed());
+		task()->nextProgressSubStep();
+		task()->setProgressMaximum(_polyhedraMesh.faceCount());
 
 		// Merge mesh vertices that are shared by adjacent Voronoi polyhedra.
 
@@ -570,7 +576,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 		// Iterate over all Voronoi faces.
 		for(SurfaceMeshData::face_index face = 0; face < _polyhedraMesh.faceCount(); face++) {
-			if(task()->isCanceled()) return;
+			if(!task()->setProgressValueIntermittent(face)) return;
 			SurfaceMeshData::region_index region = _polyhedraMesh.faceRegion(face);
 
 			// We know for each Voronoi face which Voronoi polyhedron is on the other side. 
@@ -652,6 +658,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			}
 			while(edge != ffe);
 		}
+		task()->nextProgressSubStep();
 
 		// Transfer edges from vertices that are going to be deleted to ramining vertices.
 		for(SurfaceMeshData::edge_index edge = 0; edge < _polyhedraMesh.edgeCount(); edge++) {
@@ -659,6 +666,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			_polyhedraMesh.topology()->transferFaceBoundaryToVertex(edge, new_vertex);
 			if(task()->isCanceled()) return;
 		}
+		task()->nextProgressSubStep();
 
 		// Delete unused vertices.
 		for(SurfaceMeshData::vertex_index vertex = _polyhedraMesh.vertexCount() - 1; vertex >= 0; vertex--) {
@@ -667,18 +675,22 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 				if(task()->isCanceled()) return;
 			}
 		}
+		task()->nextProgressSubStep();
+		task()->setProgressMaximum(_polyhedraMesh.faceCount());
 
 		// Connect pairs of internal Voronoi faces.
 		for(SurfaceMeshData::face_index face = 0; face < _polyhedraMesh.faceCount(); face++) {
 			if(_polyhedraMesh.hasOppositeFace(face)) continue;
-			if(task()->isCanceled()) return;
+			if(!task()->setProgressValueIntermittent(face)) return;
 
 			// We know for each Voronoi face which Voronoi polyhedron is on the other side.
 			SurfaceMeshData::region_index adjacentRegion = adjacentCellArray[face];
 			// Skip faces that belong to the outer surface.
 			if(adjacentRegion < 0) continue;
-			// Skip faces that belong to a periodic polyhedron.	
-			if(adjacentRegion == _polyhedraMesh.faceRegion(face)) continue;
+			// Periodic polyhedra pose a problem.	
+			if(adjacentRegion == _polyhedraMesh.faceRegion(face)) {
+				throw Exception(tr("Cannot generate polyhedron mesh for this input, because at least one Voronoi cell is touching a periodic image of itself. To avoid this error you can try to use the Replicate modifier or turn off periodic boundary conditions for the simulation cell."));
+			}
 
 			SurfaceMeshData::edge_index first_edge = _polyhedraMesh.firstFaceEdge(face);
 			SurfaceMeshData::vertex_index vertex1 = _polyhedraMesh.vertex1(first_edge);
@@ -700,7 +712,11 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 		// Remove the "Adjacent Cell" property from the mesh faces, because the user is typically not interested in it.
 		_polyhedraMesh.removeFaceProperty(_adjacentCellProperty);
+
+		task()->endProgressSubSteps();
 	}
+
+	task()->endProgressSubSteps();
 }
 
 /******************************************************************************

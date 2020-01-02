@@ -51,6 +51,9 @@ public:
 	/// Creates a new property storage for one of the registered standard properties.
 	virtual PropertyPtr createStandardStorage(size_t elementCount, int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const { return {}; }
 
+	/// Indicates whether this kind of property container supports picking of individual elements in the viewports.
+	virtual bool supportsViewportPicking() const { return false; }
+
 	/// Returns the index of the data element that was picked in a viewport.
 	virtual std::pair<size_t, ConstDataObjectPath> elementFromPickResult(const ViewportPickResult& pickResult) const {
 		return std::pair<size_t, ConstDataObjectPath>(std::numeric_limits<size_t>::max(), ConstDataObjectPath{});

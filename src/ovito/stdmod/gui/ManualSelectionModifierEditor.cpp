@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -218,7 +218,8 @@ void ManualSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 
 	// List only property containers that support element selection.
 	pclassUI->setContainerFilter([](const PropertyContainer* container) {
-		return container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty);
+		return container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty)
+			&& container->getOOMetaClass().supportsViewportPicking();
 	});
 
 	QGroupBox* mouseSelectionGroup = new QGroupBox(tr("Viewport modes"));

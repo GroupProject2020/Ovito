@@ -109,7 +109,7 @@ PipelineStatus SurfaceMeshRegionsDeleteSelectedModifierDelegate::apply(Modifier*
 
 	// Report some statistics:
 	QString statusMessage = tr("%n input regions", 0, numRegions);
-	statusMessage += tr("\n%n regions deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numRegions, (size_t)1));
+	statusMessage += tr("\n%n regions deleted (%1%)", 0, numSelected).arg((FloatType)numSelected * 100 / std::max(numRegions, (size_t)1), 0, 'f', 1);
 
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }

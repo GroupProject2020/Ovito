@@ -85,7 +85,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 
 	// Report some statistics:
 	QString statusMessage = tr("%n input particles", 0, numParticles);
-	statusMessage += tr("\n%n particles deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numParticles, (size_t)1));
+	statusMessage += tr("\n%n particles deleted (%1%)", 0, numSelected).arg((FloatType)numSelected * 100 / std::max(numParticles, (size_t)1), 0, 'f', 1);
 
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }
@@ -146,7 +146,7 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, Pi
 
 	// Report some statistics:
 	QString statusMessage = tr("%n input bonds", 0, numBonds);
-	statusMessage += tr("\n%n bonds deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numBonds, (size_t)1));
+	statusMessage += tr("\n%n bonds deleted (%1%)", 0, numSelected).arg((FloatType)numSelected * 100 / std::max(numBonds, (size_t)1), 0, 'f', 1);
 
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }

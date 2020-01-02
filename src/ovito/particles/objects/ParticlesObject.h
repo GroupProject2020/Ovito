@@ -44,6 +44,9 @@ class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 		/// \brief Create a storage object for standard particle properties.
 		virtual PropertyPtr createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
 
+		/// Indicates whether this kind of property container supports picking of individual elements in the viewports.
+		virtual bool supportsViewportPicking() const override { return true; }
+
 		/// Returns the index of the element that was picked in a viewport.
 		virtual std::pair<size_t, ConstDataObjectPath> elementFromPickResult(const ViewportPickResult& pickResult) const override;
 

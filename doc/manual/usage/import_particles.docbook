@@ -32,6 +32,17 @@
     to apply it on a different simulation dataset.
   </para>
 
+  <simplesect xml:id="usage.import.command_line">
+    <title>Command line operation</title>
+    <para>
+      When launching OVITO from a terminal, you can directly specify a file to load. This works for local and remote files:
+      <screen>
+    <command>ovito /path/filename</command>
+    <command>ovito sftp://hostname/path/filename</command>
+      </screen>
+    </para>
+  </simplesect>
+
   <simplesect xml:id="usage.import.sequence">
     <title>Simulation sequences</title>
     <para>
@@ -84,8 +95,8 @@
   <section xml:id="usage.import.formats">
   <title>Supported file formats</title>
   <para>
-  	OVITO provides readers for a variety of input file formats, in particular data formats written by molecular dynamics
-    and other atomistic simulation codes. In addition, it can load and visualize other types of data, for example
+  	OVITO provides file readers for a variety of input formats, in particular data formats written by molecular dynamics
+    and other atomistic simulation codes. In addition, it can load and visualize other kinds of data, for example
     triangle meshes and voxel data (grid fields).
     <informaltable>
         <tgroup cols="3">
@@ -93,7 +104,7 @@
             <row>
               <entry>File format</entry>
               <entry>Description</entry>
-              <entry>Data type</entry>
+              <entry>Importable data types</entry>
             </row>
           </thead>
 
@@ -221,38 +232,36 @@
   </section>
 
   <section xml:id="usage.import.remote">
-    <title>Loading remote data</title>
+    <title>Remote data access</title>
     <para>
-       OVITO comes with a built-in SSH client for accessing files on remote machines. It can save you from having to transfer
+       OVITO comes with a built-in SSH client for accessing files on remote machines. This feature can save you from having to transfer
        files stored in remote locations, for example on HPC clusters, to your local desktop computer first.
-       To open a data file stored on a remote machine, select
+       To open a file stored on a remote host, select
        <menuchoice><guimenu>File</guimenu><guimenuitem>Load Remote File</guimenuitem></menuchoice> from the menu.
     </para>
     <para>
-       The current program version does not provide a way to browse directories on remote machines. That means you have to directly specify
-       the full path of the remote file as an URL of the form:
+       The current version of OVITO does not provide a way to browse directories on remote machines. You have to directly specify
+       the full path to the remote file as an URL of the form:
        <screen><command>    sftp://user@hostname/path/filename</command></screen>
-       Where <command>sftp://</command> is the remote file access protocol,
-       <command>user</command> the SSH login name on the remote machine,
-       <command>hostname</command> the name of the remote machine,
-       and <command>/path/filename</command> the full path to the simulation file to import.
+       In this URL, replace <command>user</command> with the SSH login name for your remote machine,
+       <command>hostname</command> with the host name of the remote machine,
+       and <command>/path/filename</command> with the full path to the simulation file that should be loaded.
     </para>
     <para>
-       When OVITO connects to the remote machine, it will ask for the login password or the passphrase for the private key to be used for authentication.
-       Once established, the SSH connection is kept alive during the program session. OVITO makes a temporary copy of the remote file on the local computer before
-       loading the data into memory to speed up subsequent accesses to simulation frames. The local file copies are cached until you close OVITO or
+       When connecting to the remote machine, OVITO will ask your for the login password or the passphrase for the private key to be used for authentication.
+       Once established, the SSH connection is kept alive until the program session ends. OVITO creates a temporary copy of the remote file on the local computer before
+       loading the data into memory to speed up subsequent accesses to all simulation frames. The local data copies are cached until you close OVITO or
        until you hit the <emphasis>Reload</emphasis> button in the <link linkend="scene_objects.file_source">External File</link> panel.
     </para>
-
-    <simplesect xml:id="usage.import.command_line">
-      <title>Using the command line</title>
+    <simplesect>
+      <title>Notes</title>
       <para>
-        If you launch OVITO from a terminal, you can directly specify a file to load. This works for local and remote
-        files:
-        <screen>
-      <command>ovito /path/filename</command>
-      <command>ovito sftp://hostname/path/filename</command>
-        </screen>
+        If it exists, OVITO will parse the <filename>~/.ssh/config</filename> <link xlink:href="https://www.ssh.com/ssh/config">configuration file</link> in your home directory to 
+        configure the SSH connection.  
+      </para>
+      <para>
+        When running OVITO from the terminal, you can set the environment variable <envar>OVITO_SSH_LOG=1</envar> to activate logging output
+        for the built-in SSH client and diagnose possible connection problems.
       </para>
     </simplesect>
   </section>

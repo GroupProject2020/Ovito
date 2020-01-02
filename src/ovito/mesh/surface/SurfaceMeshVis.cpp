@@ -312,14 +312,14 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 						ConstPropertyAccess<qlonglong, true> data(property);
 						for(size_t component = 0; component < property->componentCount(); component++) {
 							if(component != 0) str += QStringLiteral(", ");
-							str += QString::number(data.get(facetIndex, component));
+							str += QString::number(data.get(regionIndex, component));
 						}
 					}
 					else if(property->dataType() == PropertyStorage::Float) {
 						ConstPropertyAccess<FloatType, true> data(property);
 						for(size_t component = 0; component < property->componentCount(); component++) {
 							if(component != 0) str += QStringLiteral(", ");
-							str += QString::number(data.get(facetIndex, component));
+							str += QString::number(data.get(regionIndex, component));
 						}
 					}
 					else {
@@ -353,9 +353,15 @@ std::shared_ptr<SurfaceMeshVis::PrepareSurfaceEngine> SurfaceMeshVis::createSurf
 void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 {
 	setProgressText(tr("Preparing mesh for display"));
+	if(_generateCapPolygons)
+		beginProgressSubStepsWithWeights({1,1,12,1,8});
+	else
+		beginProgressSubStepsWithWeights({1,1,12,1});
 
 	determineVisibleFaces();
+
 	if(isCanceled()) return;
+	nextProgressSubStep();
 
 	// Determine wheter we can simply use two-sided rendering to display faces.
 	// This will be the case case if there is no visible mesh face that has a 
@@ -369,15 +375,20 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 			[this](SurfaceMeshData::face_index face) { return _faceSubset[face] && inputMesh().hasOppositeFace(face) && _faceSubset[inputMesh().oppositeFace(face)]; });
 	}
 
+	if(isCanceled()) return;
+	nextProgressSubStep();
+
 	if(!buildSurfaceTriangleMesh() && !isCanceled())
 		throw Exception(tr("Failed to build non-periodic representation of periodic surface mesh. Periodic domain might be too small."));
 
 	if(isCanceled()) return;
+	nextProgressSubStep();
 
 	determineFaceColors();
 
 	if(_generateCapPolygons) {
 		if(isCanceled()) return;
+		nextProgressSubStep();
 		buildCapTriangleMesh();
 	}
 
@@ -387,6 +398,8 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 		std::move(_materialColors), 
 		std::move(_originalFaceMap), 
 		_renderFacesTwoSided);
+
+	endProgressSubSteps();
 }
 
 /******************************************************************************
@@ -479,12 +492,15 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 	if(cell().is2D())
 		throw Exception(tr("Cannot generate surface triangle mesh when domain is two-dimensional."));
 
+	beginProgressSubStepsWithWeights({1,1,1,1,1,1});
+
 	// Transfer vertices and faces from half-edge mesh structure to triangle mesh structure.
 	_inputMesh.convertToTriMesh(_surfaceMesh, _smoothShading, _faceSubset, &_originalFaceMap, !_renderFacesTwoSided);
 
 	// Check for early abortion.
 	if(isCanceled())
 		return false;
+	nextProgressSubStep();
 
 	// Assign mesh vertex colors if available.
 	determineVertexColors();
@@ -496,6 +512,7 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 	// Check for early abortion.
 	if(isCanceled())
 		return false;
+	nextProgressSubStep();
 
 	// Convert vertex positions to reduced coordinates and transfer them to the output mesh.
 	SurfaceMeshData::vertex_index vidx = 0;
@@ -503,6 +520,8 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 		p = cell().absoluteToReduced(_inputMesh.vertexPosition(vidx++));
 		OVITO_ASSERT(std::isfinite(p.x()) && std::isfinite(p.y()) && std::isfinite(p.z()));
 	}
+
+	nextProgressSubStep();
 
 	// Wrap mesh at periodic boundaries.
 	for(size_t dim = 0; dim < 3; dim++) {
@@ -541,10 +560,14 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 	if(isCanceled())
 		return false;
 
+	nextProgressSubStep();
+
 	// Convert vertex positions back from reduced coordinates to absolute coordinates.
 	const AffineTransformation cellMatrix = cell().matrix();
 	for(Point3& p : _surfaceMesh.vertices())
 		p = cellMatrix * p;
+
+	nextProgressSubStep();
 
 	// Clip mesh at cutting planes.
 	if(!_cuttingPlanes.empty()) {
@@ -569,6 +592,7 @@ bool SurfaceMeshVis::PrepareSurfaceEngine::buildSurfaceTriangleMesh()
 	_surfaceMesh.invalidateFaces();
 	OVITO_ASSERT(_originalFaceMap.size() == _surfaceMesh.faces().size());
 
+	endProgressSubSteps();
 	return true;
 }
 
