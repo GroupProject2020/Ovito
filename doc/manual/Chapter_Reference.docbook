@@ -9,7 +9,18 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Reference</title>
 
-  <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
+  <para>
+    <itemizedlist>
+      <listitem><xref linkend="reference.pipelines" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="scene_objects" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="display_objects" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="particles.modifiers" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="viewports" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="rendering" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="data_inspector" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="application_settings" xrefstyle="template:%t" /></listitem>
+    </itemizedlist>
+  </para>
 
   <xi:include href="reference/scene_objects/pipelines.docbook"/>
   <xi:include href="reference/scene_objects/scene_objects.docbook"/>
@@ -18,7 +29,13 @@
   <section xml:id="viewports">
     <title>Viewports</title>
 
-      <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
+      <para>
+        <itemizedlist>
+          <listitem><xref linkend="viewports.adjust_view_dialog" xrefstyle="template:%t" /></listitem>
+          <listitem><xref linkend="viewport_overlays" xrefstyle="template:%t" /></listitem>
+          <listitem><xref linkend="viewports.input_modes" xrefstyle="template:%t" /></listitem>
+        </itemizedlist>
+      </para>
 
   	  <xi:include href="reference/viewports/adjust_view_dialog.docbook"/>
   	  <xi:include href="reference/viewports/overlays/viewport_overlays.docbook"/>

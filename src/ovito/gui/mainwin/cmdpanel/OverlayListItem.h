@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -40,14 +40,25 @@ class OverlayListItem : public RefMaker
 
 public:
 
+	enum OverlayItemType {
+		Layer,
+		ViewportHeader,
+		SceneLayer,
+	};
+
+public:
+
 	/// Constructor.
-	OverlayListItem(ViewportOverlay* overlay);
+	OverlayListItem(ViewportOverlay* overlay, OverlayItemType itemType);
 
 	/// Returns the status of the object represented by the list item.
 	PipelineStatus status() const;
 
 	/// Returns the title text for this list item.
-	QString title() const;
+	QString title(Viewport* selectedViewport) const;
+
+	/// Returns the type of this list item.
+	OverlayItemType itemType() const { return _itemType; }
 
 Q_SIGNALS:
 
@@ -63,6 +74,9 @@ private:
 
 	/// The overlay represented by this item in the list box.
 	DECLARE_REFERENCE_FIELD_FLAGS(ViewportOverlay, overlay, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+
+	/// The type of this list item.
+	OverlayItemType _itemType;
 };
 
 OVITO_END_INLINE_NAMESPACE

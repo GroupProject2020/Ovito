@@ -42,14 +42,14 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	layout->setContentsMargins(2,2,2,2);
 	layout->setSpacing(4);
 
-	_newOverlayBox = new QComboBox(this);
-    layout->addWidget(_newOverlayBox);
-    connect(_newOverlayBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &OverlayCommandPage::onNewOverlay);
+	_newLayerBox = new QComboBox(this);
+    layout->addWidget(_newLayerBox);
+    connect(_newLayerBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &OverlayCommandPage::onNewLayer);
 
-    _newOverlayBox->addItem(tr("Add overlay..."));
-    _newOverlayBox->insertSeparator(1);
+    _newLayerBox->addItem(tr("Add overlay..."));
+    _newLayerBox->insertSeparator(1);
 	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ViewportOverlay::OOClass())) {
-		_newOverlayBox->addItem(clazz->displayName(), QVariant::fromValue(clazz));
+		_newLayerBox->addItem(clazz->displayName(), QVariant::fromValue(clazz));
 	}
 
 	QSplitter* splitter = new QSplitter(Qt::Vertical);
@@ -73,7 +73,7 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	_overlayListWidget->setSelectionModel(_overlayListModel->selectionModel());
 	subLayout->addWidget(_overlayListWidget);
 	connect(_overlayListModel, &OverlayListModel::selectedItemChanged, this, &OverlayCommandPage::onItemSelectionChanged);
-	connect(_overlayListWidget, &OverlayListWidget::doubleClicked, this, &OverlayCommandPage::onOverlayDoubleClicked);
+	connect(_overlayListWidget, &OverlayListWidget::doubleClicked, this, &OverlayCommandPage::onLayerDoubleClicked);
 
 	QToolBar* editToolbar = new QToolBar(this);
 	editToolbar->setOrientation(Qt::Vertical);
@@ -82,10 +82,19 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 #endif
 	subLayout->addWidget(editToolbar);
 
-	_deleteOverlayAction = new QAction(QIcon(":/gui/actions/modify/delete_modifier.bw.svg"), tr("Delete Overlay"), this);
-	_deleteOverlayAction->setEnabled(false);
-	connect(_deleteOverlayAction, &QAction::triggered, this, &OverlayCommandPage::onDeleteOverlay);
-	editToolbar->addAction(_deleteOverlayAction);
+	_deleteLayerAction = new QAction(QIcon(":/gui/actions/modify/delete_modifier.bw.svg"), tr("Delete Layer"), this);
+	_deleteLayerAction->setEnabled(false);
+	connect(_deleteLayerAction, &QAction::triggered, this, &OverlayCommandPage::onDeleteLayer);
+	editToolbar->addAction(_deleteLayerAction);
+
+	editToolbar->addSeparator();
+
+	_moveLayerUpAction = new QAction(QIcon(":/gui/actions/modify/modifier_move_up.bw.svg"), tr("Move Layer Up"), this);
+	connect(_moveLayerUpAction, &QAction::triggered, this, &OverlayCommandPage::onLayerMoveUp);
+	editToolbar->addAction(_moveLayerUpAction);
+	_moveLayerDownAction = new QAction(QIcon(":/gui/actions/modify/modifier_move_down.bw.svg"), tr("Move Layer Down"), this);
+	connect(_moveLayerDownAction, &QAction::triggered, this, &OverlayCommandPage::onLayerMoveDown);
+	editToolbar->addAction(_moveLayerDownAction);
 
 	layout->addWidget(splitter, 1);
 
@@ -99,9 +108,9 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 }
 
 /******************************************************************************
-* Returns the selected overlay.
+* Returns the selected viewport layer.
 ******************************************************************************/
-ViewportOverlay* OverlayCommandPage::selectedOverlay() const
+ViewportOverlay* OverlayCommandPage::selectedLayer() const
 {
 	OverlayListItem* currentItem = overlayListModel()->selectedItem();
 	return currentItem ? currentItem->overlay() : nullptr;
@@ -128,73 +137,161 @@ void OverlayCommandPage::onViewportConfigReplaced(ViewportConfiguration* newView
 void OverlayCommandPage::onActiveViewportChanged(Viewport* activeViewport)
 {
 	overlayListModel()->setSelectedViewport(activeViewport);
-	_newOverlayBox->setEnabled(activeViewport != nullptr && _newOverlayBox->count() > 1);
+	_newLayerBox->setEnabled(activeViewport != nullptr && _newLayerBox->count() > 1);
 }
 
 /******************************************************************************
-* Is called when a new overlay has been selected in the list box.
+* Is called when a new layer has been selected in the list box.
 ******************************************************************************/
 void OverlayCommandPage::onItemSelectionChanged()
 {
-	ViewportOverlay* overlay = selectedOverlay();
-	_propertiesPanel->setEditObject(overlay);
-	_deleteOverlayAction->setEnabled(overlay != nullptr);
+	ViewportOverlay* layer = selectedLayer();
+	_propertiesPanel->setEditObject(layer);
+	if(layer) {
+		_deleteLayerAction->setEnabled(true);
+		const QVector<ViewportOverlay*> overlays = overlayListModel()->selectedViewport()->overlays();
+		const QVector<ViewportOverlay*> underlays = overlayListModel()->selectedViewport()->underlays();
+		_moveLayerUpAction->setEnabled(!overlays.contains(layer) || overlays.indexOf(layer) < overlays.size() - 1);
+		_moveLayerDownAction->setEnabled(!underlays.contains(layer) || underlays.indexOf(layer) > 0);
+	}
+	else {
+		_deleteLayerAction->setEnabled(false);
+		_moveLayerUpAction->setEnabled(false);
+		_moveLayerDownAction->setEnabled(false);
+	}
 }
 
 /******************************************************************************
-* This inserts a new overlay.
+* This inserts a new viewport layer.
 ******************************************************************************/
-void OverlayCommandPage::onNewOverlay(int index)
+void OverlayCommandPage::onNewLayer(int index)
 {
 	if(index > 0) {
-		OvitoClassPtr descriptor = _newOverlayBox->itemData(index).value<OvitoClassPtr>();
+		OvitoClassPtr descriptor = _newLayerBox->itemData(index).value<OvitoClassPtr>();
 		Viewport* vp = overlayListModel()->selectedViewport();
 		if(descriptor && vp) {
-			int index = overlayListModel()->selectedIndex();
-			if(index < 0) index = 0;
-			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Add overlay"), [this, descriptor, vp, index]() {
+			int overlayIndex = -1;
+			int underlayIndex = -1;
+			if(OverlayListItem* item = overlayListModel()->selectedItem()) {
+				overlayIndex = vp->overlays().indexOf(item->overlay());
+				underlayIndex = vp->underlays().indexOf(item->overlay());
+			}
+			UndoableTransaction::handleExceptions(vp->dataset()->undoStack(), tr("Add overlay"), [&]() {
 				// Create an instance of the overlay class.
-				OORef<ViewportOverlay> overlay = static_object_cast<ViewportOverlay>(descriptor->createInstance(vp->dataset()));
+				OORef<ViewportOverlay> layer = static_object_cast<ViewportOverlay>(descriptor->createInstance(vp->dataset()));
 				// Load user-defined default parameters.
-				overlay->loadUserDefaults();
+				layer->loadUserDefaults();
 				// Make sure the new overlay gets selected in the UI.
-				overlayListModel()->setNextToSelectObject(overlay);
-				// Insert it.
-				vp->insertOverlay(index, overlay);
+				overlayListModel()->setNextToSelectObject(layer);
+				// Insert it into either the overlays or the underlays list.
+				if(underlayIndex >= 0)
+					vp->insertUnderlay(underlayIndex+1, layer);
+				else if(overlayIndex >= 0)
+					vp->insertOverlay(overlayIndex+1, layer);
+				else
+					vp->insertOverlay(vp->overlays().size(), layer);
 				// Automatically activate preview mode to make the overlay visible.
 				vp->setRenderPreviewMode(true);
 			});
 			_overlayListWidget->setFocus();
 		}
-		_newOverlayBox->setCurrentIndex(0);
+		_newLayerBox->setCurrentIndex(0);
 	}
 }
 
 /******************************************************************************
-* This deletes the currently selected overlay.
+* This deletes the currently selected viewport layer.
 ******************************************************************************/
-void OverlayCommandPage::onDeleteOverlay()
+void OverlayCommandPage::onDeleteLayer()
 {
-	if(ViewportOverlay* overlay = selectedOverlay()) {
-		UndoableTransaction::handleExceptions(overlay->dataset()->undoStack(), tr("Delete overlay"), [overlay]() {
-			overlay->deleteReferenceObject();
+	if(ViewportOverlay* layer = selectedLayer()) {
+		UndoableTransaction::handleExceptions(layer->dataset()->undoStack(), tr("Delete layer"), [layer]() {
+			layer->deleteReferenceObject();
 		});
 	}
 }
 
 /******************************************************************************
-* This called when the user double clicks on an item in the overlay list.
+* This called when the user double clicks an item in the layer list.
 ******************************************************************************/
-void OverlayCommandPage::onOverlayDoubleClicked(const QModelIndex& index)
+void OverlayCommandPage::onLayerDoubleClicked(const QModelIndex& index)
 {
 	if(OverlayListItem* item = overlayListModel()->item(index.row())) {
-		if(ViewportOverlay* overlay = item->overlay()) {
-			// Toggle enabled state of overlay.
-			UndoableTransaction::handleExceptions(overlay->dataset()->undoStack(), tr("Toggle overlay state"), [overlay]() {
-				overlay->setEnabled(!overlay->isEnabled());
+		if(ViewportOverlay* layer = item->overlay()) {
+			// Toggle enabled state of layer.
+			UndoableTransaction::handleExceptions(layer->dataset()->undoStack(), tr("Toggle layer visibility"), [layer]() {
+				layer->setEnabled(!layer->isEnabled());
 			});
 		}
 	}
+}
+
+/******************************************************************************
+* Action handler moving the selected viewport layer up in the stack.
+******************************************************************************/
+void OverlayCommandPage::onLayerMoveUp()
+{
+	OverlayListItem* selectedItem = overlayListModel()->selectedItem();
+	Viewport* vp = overlayListModel()->selectedViewport();
+	if(!selectedItem || !vp) return;
+	OORef<ViewportOverlay> layer = selectedItem->overlay();
+	if(!layer) return;
+
+	UndoableTransaction::handleExceptions(vp->dataset()->undoStack(), tr("Move layer up"), [&]() {
+		int overlayIndex = vp->overlays().indexOf(layer);
+		int underlayIndex = vp->underlays().indexOf(layer);
+		if(overlayIndex >= 0 && overlayIndex < vp->overlays().size() - 1) {
+			vp->removeOverlay(overlayIndex);
+			vp->insertOverlay(overlayIndex+1, layer);
+		}
+		else if(underlayIndex >= 0) {
+			if(underlayIndex == vp->underlays().size() - 1) {
+				vp->removeUnderlay(underlayIndex);
+				vp->insertOverlay(0, layer);
+			}
+			else {
+				vp->removeUnderlay(underlayIndex);
+				vp->insertUnderlay(underlayIndex+1, layer);
+			}
+		}
+		// Make sure the new overlay gets selected in the UI.
+		overlayListModel()->setNextToSelectObject(layer);
+		_overlayListWidget->setFocus();	
+	});
+}
+
+/******************************************************************************
+* Action handler moving the selected viewport layer down in the stack.
+******************************************************************************/
+void OverlayCommandPage::onLayerMoveDown()
+{
+	OverlayListItem* selectedItem = overlayListModel()->selectedItem();
+	Viewport* vp = overlayListModel()->selectedViewport();
+	if(!selectedItem || !vp) return;
+	OORef<ViewportOverlay> layer = selectedItem->overlay();
+	if(!layer) return;
+
+	UndoableTransaction::handleExceptions(vp->dataset()->undoStack(), tr("Move layer down"), [&]() {
+		int underlayIndex = vp->underlays().indexOf(layer);
+		int overlayIndex = vp->overlays().indexOf(layer);
+		if(underlayIndex >= 1) {
+			vp->removeUnderlay(underlayIndex);
+			vp->insertUnderlay(underlayIndex-1, layer);
+		}
+		else if(overlayIndex >= 0) {
+			if(overlayIndex == 0) {
+				vp->removeOverlay(overlayIndex);
+				vp->insertUnderlay(vp->underlays().size(), layer);
+			}
+			else {
+				vp->removeOverlay(overlayIndex);
+				vp->insertOverlay(overlayIndex-1, layer);
+			}
+		}
+		// Make sure the new overlay gets selected in the UI.
+		overlayListModel()->setNextToSelectObject(layer);
+		_overlayListWidget->setFocus();	
+	});
 }
 
 OVITO_END_INLINE_NAMESPACE

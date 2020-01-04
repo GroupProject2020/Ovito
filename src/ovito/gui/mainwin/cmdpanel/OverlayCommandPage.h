@@ -56,28 +56,34 @@ protected Q_SLOTS:
 	/// This is called when another viewport became active.
 	void onActiveViewportChanged(Viewport* activeViewport);
 
-	/// Is called when a new overlay has been selected in the list box.
+	/// Is called when a new layer has been selected in the list box.
 	void onItemSelectionChanged();
 
-	/// This inserts a new overlay.
-	void onNewOverlay(int index);
+	/// This inserts a new viewport layer.
+	void onNewLayer(int index);
 
-	/// This deletes the selected overlay.
-	void onDeleteOverlay();
+	/// This deletes the selected viewport layer.
+	void onDeleteLayer();
 
-	/// This called when the user double clicks on an item in the overlay list.
-	void onOverlayDoubleClicked(const QModelIndex& index);
+	/// This called when the user double clicks an item in the list.
+	void onLayerDoubleClicked(const QModelIndex& index);
+
+	/// Action handler moving the selected layer up in the stack.
+	void onLayerMoveUp();
+
+	/// Action handler moving the selected layer down in the stack.
+	void onLayerMoveDown();
 
 private:
 
-	/// Returns the selected overlay.
-	ViewportOverlay* selectedOverlay() const;
+	/// Returns the selected viewport layer.
+	ViewportOverlay* selectedLayer() const;
 
 	/// The container of the current dataset being edited.
 	DataSetContainer& _datasetContainer;
 
-	/// Contains the list of available overlay types.
-	QComboBox* _newOverlayBox;
+	/// Contains the list of available layer types.
+	QComboBox* _newLayerBox;
 
 	/// The Qt model for the list of overlays of the active viewport.
 	OverlayListModel* _overlayListModel;
@@ -91,8 +97,14 @@ private:
 	/// Signal connection for detecting active viewport changes.
 	QMetaObject::Connection _activeViewportChangedConnection;
 
-	/// The GUI action that deletes the currently selected viewport overlay.
-	QAction* _deleteOverlayAction;
+	/// The GUI action that deletes the currently selected viewport layer.
+	QAction* _deleteLayerAction;
+
+	/// The GUI action that moves the currently selected viewport layer up in the stack.
+	QAction* _moveLayerUpAction;
+
+	/// The GUI action that moves the currently selected viewport layer down in the stack.
+	QAction* _moveLayerDownAction;
 };
 
 OVITO_END_INLINE_NAMESPACE

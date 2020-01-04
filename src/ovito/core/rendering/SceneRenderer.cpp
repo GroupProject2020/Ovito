@@ -76,9 +76,13 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 
 			// Include three-dimensional content from viewport overlys in the bounding box.
 			if(vp && (!isInteractive() || vp->renderPreviewMode())) {
-				for(ViewportOverlay* overlay : vp->overlays()) {
-					if(overlay->isEnabled())
-						overlay->render3D(vp, time, this, operation);
+				for(ViewportOverlay* layer : vp->underlays()) {
+					if(layer->isEnabled())
+						layer->render3D(vp, time, this, operation);
+				}
+				for(ViewportOverlay* layer : vp->overlays()) {
+					if(layer->isEnabled())
+						layer->render3D(vp, time, this, operation);
 				}
 			}
 		}

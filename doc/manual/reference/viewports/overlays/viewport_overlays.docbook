@@ -16,7 +16,7 @@
     </imageobject></mediaobject></screenshot></informalfigure>
   Viewport overlays render two-dimensional graphics or text on top of the three-dimensional scene.
   OVITO provides different overlay types (see table below), which you can add to a viewport.
-  Viewport overlays are managed on the <guilabel>Overlays</guilabel> tab of OVITO's command panel
+  Viewport overlays are managed on the <guilabel>Viewport layers</guilabel> tab of OVITO's command panel
   as indicated in the screenshot on the right.
   </para>
   <para>Note that overlays added to a viewport will only be visible within OVITO

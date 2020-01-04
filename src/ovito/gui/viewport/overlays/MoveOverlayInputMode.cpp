@@ -63,8 +63,8 @@ void MoveOverlayInputMode::mousePressEvent(ViewportWindow* vpwin, QMouseEvent* e
 {
 	if(event->button() == Qt::LeftButton) {
 		if(_viewport == nullptr) {
-			ViewportOverlay* overlay = dynamic_object_cast<ViewportOverlay>(_editor->editObject());
-			if(overlay && vpwin->viewport()->overlays().contains(overlay)) {
+			ViewportOverlay* layer = dynamic_object_cast<ViewportOverlay>(_editor->editObject());
+			if(layer && (vpwin->viewport()->overlays().contains(layer) || vpwin->viewport()->underlays().contains(layer))) {
 				_viewport = vpwin->viewport();
 				_startPoint = event->localPos();
 				_viewport->dataset()->undoStack().beginCompoundOperation(tr("Move overlay"));
@@ -88,9 +88,9 @@ void MoveOverlayInputMode::mousePressEvent(ViewportWindow* vpwin, QMouseEvent* e
 ******************************************************************************/
 void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 {
-	// Get the viewport overlay being moved.
-	ViewportOverlay* overlay = dynamic_object_cast<ViewportOverlay>(_editor->editObject());
-	if(overlay && vpwin->viewport()->overlays().contains(overlay)) {
+	// Get the viewport layer being moved.
+	ViewportOverlay* layer = dynamic_object_cast<ViewportOverlay>(_editor->editObject());
+	if(layer && (vpwin->viewport()->overlays().contains(layer) || vpwin->viewport()->underlays().contains(layer))) {
 		setCursor(_moveCursor);
 
 		if(viewport() == vpwin->viewport()) {
@@ -99,7 +99,7 @@ void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* ev
 			// generates may be too old.
 			_currentPoint = vpwin->mapFromGlobal(QCursor::pos());
 
-			// Reset the overlay's position first before moving it again below.
+			// Reset the layer's position first before moving it again below.
 			viewport()->dataset()->undoStack().resetCurrentCompoundOperation();
 
 			// Compute the displacement based on the new mouse position.
@@ -109,9 +109,9 @@ void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* ev
 			delta.x() =  (FloatType)(_currentPoint.x() - _startPoint.x()) / vpSize.width() / renderFrameRect.width() * 2;
 			delta.y() = -(FloatType)(_currentPoint.y() - _startPoint.y()) / vpSize.height() / renderFrameRect.height() * 2;
 
-			// Move the overlay.
+			// Move the layer.
 			try {
-				overlay->moveOverlayInViewport(delta);
+				layer->moveLayerInViewport(delta);
 			}
 			catch(const Exception& ex) {
 				inputManager()->removeInputMode(this);

@@ -56,6 +56,7 @@ DEFINE_PROPERTY_FIELD(Viewport, stereoscopicMode);
 DEFINE_PROPERTY_FIELD(Viewport, viewportTitle);
 DEFINE_REFERENCE_FIELD(Viewport, viewNode);
 DEFINE_REFERENCE_FIELD(Viewport, overlays);
+DEFINE_REFERENCE_FIELD(Viewport, underlays);
 SET_PROPERTY_FIELD_CHANGE_EVENT(Viewport, viewportTitle, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
@@ -347,8 +348,8 @@ bool Viewport::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			// Update viewport when camera node has moved.
 			updateViewport();
 		}
-		else if(_overlays.contains(source)) {
-			// Update viewport when one of the overlays has changed.
+		else if(_overlays.contains(source) || _underlays.contains(source)) {
+			// Update viewport when one of the layers has changed.
 			updateViewport();
 		}
 	}
@@ -388,7 +389,7 @@ void Viewport::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget
 ******************************************************************************/
 void Viewport::referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
 {
-	if(field == PROPERTY_FIELD(overlays)) {
+	if(field == PROPERTY_FIELD(overlays) || field == PROPERTY_FIELD(underlays)) {
 		updateViewport();
 	}
 	RefTarget::referenceInserted(field, newTarget, listIndex);
@@ -399,7 +400,7 @@ void Viewport::referenceInserted(const PropertyFieldDescriptor& field, RefTarget
 ******************************************************************************/
 void Viewport::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
 {
-	if(field == PROPERTY_FIELD(overlays)) {
+	if(field == PROPERTY_FIELD(overlays) || field == PROPERTY_FIELD(underlays)) {
 		updateViewport();
 	}
 	RefTarget::referenceRemoved(field, oldTarget, listIndex);
@@ -532,10 +533,9 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 
 		// Render viewport "underlays".
 		if(renderPreviewMode() && !renderer->isPicking()) {
-			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return ov->renderBehindScene() && ov->isEnabled(); })) {
-				// Let overlays paint into QImage buffer, which will then
-				// be painted into the OpenGL frame buffer.
-				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, true, renderOperation);
+			if(boost::algorithm::any_of(underlays(), [](ViewportOverlay* layer) { return layer->isEnabled(); })) {
+				// Let layers paint into QImage buffer, which will then be copied into the OpenGL frame buffer.
+				renderLayers(renderer, time, renderSettings, vpSize, boundingBox, underlays(), renderOperation);
 			}
 		}
 
@@ -587,14 +587,13 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 
 		// Render viewport overlays.
 		if(renderPreviewMode() && !renderer->isPicking()) {
-			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return !ov->renderBehindScene() && ov->isEnabled(); })) {
-				// Let overlays paint into QImage buffer, which will then
-				// be painted over the OpenGL frame buffer.
-				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, false, renderOperation);
+			if(boost::algorithm::any_of(overlays(), [](ViewportOverlay* layer) { return layer->isEnabled(); })) {
+				// Let overlays paint into QImage buffer, which will then be copied over the OpenGL frame buffer.
+				renderLayers(renderer, time, renderSettings, vpSize, boundingBox, overlays(), renderOperation);
 			}
 		}
 
-		// Let GUI window render its custom overlays on top of the scene.
+		// Let GUI window render its own graphics on top of the scene.
 		if(!renderer->isPicking()) {
 			window()->renderGui();
 		}
@@ -615,33 +614,32 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 }
 
 /******************************************************************************
-* Renders the overlays to an image buffer.
+* Renders the viewport layers to an image buffer.
 ******************************************************************************/
-void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer, AsyncOperation& operation)
+void Viewport::renderLayers(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, const QVector<ViewportOverlay*>& layers, AsyncOperation& operation)
 {
-	// Let overlays paint into QImage buffer, which will then
-	// be painted over the OpenGL frame buffer.
-	QImage overlayBuffer(vpSize, QImage::Format_ARGB32_Premultiplied);
-	overlayBuffer.fill(0);
+	// Let layers paint into QImage buffer, which will then be copied over the OpenGL frame buffer.
+	QImage paintBuffer(vpSize, QImage::Format_ARGB32_Premultiplied);
+	paintBuffer.fill(0);
 	Box2 renderFrameBox = renderFrameRect();
 	QRect renderFrameRect(
-			(renderFrameBox.minc.x() + 1) * overlayBuffer.width() / 2,
-			(renderFrameBox.minc.y() + 1) * overlayBuffer.height() / 2,
-			renderFrameBox.width() * overlayBuffer.width() / 2,
-			renderFrameBox.height() * overlayBuffer.height() / 2);
+			(renderFrameBox.minc.x() + 1) * paintBuffer.width() / 2,
+			(renderFrameBox.minc.y() + 1) * paintBuffer.height() / 2,
+			renderFrameBox.width() * paintBuffer.width() / 2,
+			renderFrameBox.height() * paintBuffer.height() / 2);
 	ViewProjectionParameters renderProjParams = computeProjectionParameters(time, renderSettings->outputImageAspectRatio(), boundingBox);
-	for(ViewportOverlay* overlay : overlays()) {
-		if(overlay->isEnabled() && overlay->renderBehindScene() == lowerLayer) {
-			QPainter painter(&overlayBuffer);
+	for(ViewportOverlay* layer : layers) {
+		if(layer->isEnabled()) {
+			QPainter painter(&paintBuffer);
 			painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
 			painter.setViewport(renderFrameRect);
 			painter.setRenderHint(QPainter::Antialiasing);
-			overlay->renderInteractive(this, time, painter, renderProjParams, renderSettings, operation);
+			layer->renderInteractive(this, time, painter, renderProjParams, renderSettings, operation);
 		}
 	}
-	std::shared_ptr<ImagePrimitive> overlayBufferPrim = renderer->createImagePrimitive();
-	overlayBufferPrim->setImage(overlayBuffer);
-	overlayBufferPrim->renderViewport(renderer, Point2(-1,-1), Vector2(2, 2));
+	std::shared_ptr<ImagePrimitive> paintBufferPrim = renderer->createImagePrimitive();
+	paintBufferPrim->setImage(paintBuffer);
+	paintBufferPrim->renderViewport(renderer, Point2(-1,-1), Vector2(2, 2));
 }
 
 /******************************************************************************

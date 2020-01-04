@@ -90,7 +90,7 @@
   <simplesect xml:id="usage.modification_particle_selection">
     <title>Transient pipeline states and particle selection</title>
     <para>
-      Some modifier functions in OVITO, for example the <link linkend="particles.modifiers.delete_selected_particles">Delete Selected</link> modifier,
+      Some modifier functions in OVITO, for example the <link linkend="particles.modifiers.delete_selected_particles">Delete selected</link> modifier,
       act only on the currently selected subset of particles or bonds. What elements are currently selected, is determined by the value of their
       <literal>Selection</literal> property as explained in the <link linkend="usage.particle_properties">previous section</link>.
       The program provides several modifiers for selecting particles based on different criteria.
@@ -101,9 +101,9 @@
     </para>
     <para>
       This system allows you to apply different operations to different groups of particles in a successive fashion. For example,
-      you could use a <link linkend="particles.modifiers.select_particle_type">Select Type</link> modifier to first select particles
-      of one chemical or structural type and then apply a <link linkend="particles.modifiers.assign_color">Assign color</link> modifier
-      to give them a particular color. Next, you could insert another instance of the <link linkend="particles.modifiers.select_particle_type">Select Type</link> modifier to select a second group of particle and subsequently assign them a different color using another <link linkend="particles.modifiers.assign_color">Assign color</link> modifier instance.
+      you could use a <link linkend="particles.modifiers.select_particle_type">Select type</link> modifier to first select particles
+      of one chemical or structural type and then apply an <link linkend="particles.modifiers.assign_color">Assign color</link> modifier
+      to give them a particular color. Next, you could insert another instance of the <link linkend="particles.modifiers.select_particle_type">Select type</link> modifier to select a second group of particle and subsequently assign them a different color using another <link linkend="particles.modifiers.assign_color">Assign color</link> modifier instance.
     </para>
     <para>
       Note that data visualization always happens only for the final results leaving the pipeline. That means in the viewports you will only observe the final selection state of the particles (OVITO highlights them with a red color).

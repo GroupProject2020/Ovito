@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui/GUI.h>
+#include <ovito/core/viewport/Viewport.h>
 #include "OverlayListItem.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -31,7 +32,8 @@ DEFINE_REFERENCE_FIELD(OverlayListItem, overlay);
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-OverlayListItem::OverlayListItem(ViewportOverlay* overlay)
+OverlayListItem::OverlayListItem(ViewportOverlay* overlay, OverlayItemType itemType) :
+	_itemType(itemType)
 {
 	_overlay.set(this, PROPERTY_FIELD(overlay), overlay);
 }
@@ -64,9 +66,16 @@ PipelineStatus OverlayListItem::status() const
 /******************************************************************************
 * Returns the text for this list item.
 ******************************************************************************/
-QString OverlayListItem::title() const
+QString OverlayListItem::title(Viewport* selectedViewport) const
 {
-	return overlay() ? overlay()->objectTitle() : QString();
+	OVITO_ASSERT(selectedViewport);
+	switch(_itemType) {
+	case Layer:  
+		return overlay() ? overlay()->objectTitle() : QString();
+	case ViewportHeader: return tr("Active viewport: %1").arg(selectedViewport->viewportTitle());
+	case SceneLayer: return tr("3D scene layer");
+	default: return {};
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

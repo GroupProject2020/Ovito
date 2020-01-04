@@ -243,10 +243,10 @@ public:
 
 	/// \brief Inserts an overlay into this viewport's list of overlays.
 	/// \param index The position at which to insert the overlay.
-	/// \param overlay The overlay to insert.
+	/// \param layer The overlay to insert.
 	/// \undoable
-	void insertOverlay(int index, ViewportOverlay* overlay) {
-		_overlays.insert(this, PROPERTY_FIELD(overlays), index, overlay);
+	void insertOverlay(int index, ViewportOverlay* layer) {
+		_overlays.insert(this, PROPERTY_FIELD(overlays), index, layer);
 	}
 
 	/// \brief Removes an overlay from this viewport.
@@ -254,6 +254,21 @@ public:
 	/// \undoable
 	void removeOverlay(int index) {
 		_overlays.remove(this, PROPERTY_FIELD(overlays), index);
+	}
+
+	/// \brief Inserts an underlay into this viewport's list of underlays.
+	/// \param index The position at which to insert the underlay into the stack.
+	/// \param layer The underlay to insert.
+	/// \undoable
+	void insertUnderlay(int index, ViewportOverlay* layer) {
+		_underlays.insert(this, PROPERTY_FIELD(underlays), index, layer);
+	}
+
+	/// \brief Removes an underlay from this viewport.
+	/// \param index The index of the underlay to remove.
+	/// \undoable
+	void removeUnderlay(int index) {
+		_underlays.remove(this, PROPERTY_FIELD(underlays), index);
 	}
 
 	/// \brief Returns the size of the viewport's screen window (in device pixels).
@@ -297,8 +312,8 @@ protected:
 	/// matches the true visible area.
 	void adjustProjectionForRenderFrame(ViewProjectionParameters& params);
 
-	/// Renders the overlays to an image buffer.
-	void renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer, AsyncOperation& operation);
+	/// Renders the viewport overlays to an image buffer.
+	void renderLayers(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, const QVector<ViewportOverlay*>& layers, AsyncOperation& operation);
 
 private Q_SLOTS:
 
@@ -338,8 +353,11 @@ private:
 	/// The title of the viewport.
 	DECLARE_PROPERTY_FIELD_FLAGS(QString, viewportTitle, PROPERTY_FIELD_NO_UNDO);
 
-	/// The list of overlay objects owned by this viewport.
+	/// The list of layers which are painted above the 3d scene.
 	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, overlays);
+
+	/// The list of layers which are painted under the 3d scene.
+	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, underlays);
 
 	/// This flag is true during the rendering phase.
 	bool _isRendering = false;

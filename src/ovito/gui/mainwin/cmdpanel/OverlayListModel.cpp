@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,12 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui/GUI.h>
-#include <ovito/core/dataset/data/DataObject.h>
-#include <ovito/core/dataset/data/DataVis.h>
-#include <ovito/core/dataset/pipeline/PipelineObject.h>
-#include <ovito/core/dataset/pipeline/Modifier.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
-#include <ovito/core/dataset/scene/SelectionSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/gui/actions/ActionManager.h>
 #include "OverlayListModel.h"
@@ -46,6 +41,13 @@ OverlayListModel::OverlayListModel(QObject* parent) : QAbstractListModel(parent)
 	_selectionModel = new QItemSelectionModel(this);
 	connect(_selectionModel, &QItemSelectionModel::selectionChanged, this, &OverlayListModel::selectedItemChanged);
 	connect(&_selectedViewport, &RefTargetListener<Viewport>::notificationEvent, this, &OverlayListModel::onViewportEvent);
+
+	if(_sectionHeaderFont.pixelSize() < 0)
+		_sectionHeaderFont.setPointSize(_sectionHeaderFont.pointSize() * 4 / 5);
+	else
+		_sectionHeaderFont.setPixelSize(_sectionHeaderFont.pixelSize() * 4 / 5);
+	_sectionHeaderBackgroundBrush = QBrush(Qt::lightGray, Qt::Dense4Pattern);
+	_sectionHeaderForegroundBrush = QBrush(Qt::blue);
 }
 
 /******************************************************************************
@@ -90,6 +92,8 @@ int OverlayListModel::selectedIndex() const
 ******************************************************************************/
 void OverlayListModel::refreshList()
 {
+	_needListUpdate = false;
+
 	// Determine the currently selected object and
 	// select it again after the list has been rebuilt (and it is still there).
 	// If _nextObjectToSelect is already non-null then the caller
@@ -103,8 +107,16 @@ void OverlayListModel::refreshList()
 	// Create list items.
 	QList<OORef<OverlayListItem>> items;
 	if(selectedViewport()) {
-		for(ViewportOverlay* overlay : selectedViewport()->overlays())
-			items.push_back(new OverlayListItem(overlay));
+		items.push_back(new OverlayListItem(nullptr, OverlayListItem::ViewportHeader));
+		for(auto layer = selectedViewport()->overlays().crbegin(); layer != selectedViewport()->overlays().crend(); ++layer) {
+			items.push_back(new OverlayListItem(*layer, OverlayListItem::Layer));
+		}
+		if(!selectedViewport()->overlays().empty() || !selectedViewport()->underlays().empty()) {
+			items.push_back(new OverlayListItem(nullptr, OverlayListItem::SceneLayer));
+		}
+		for(auto layer = selectedViewport()->underlays().crbegin(); layer != selectedViewport()->underlays().crend(); ++layer) {
+			items.push_back(new OverlayListItem(*layer, OverlayListItem::Layer));
+		}
 	}
 	int selIndex = -1;
 	int selDefaultIndex = -1;
@@ -136,8 +148,8 @@ void OverlayListModel::refreshList()
 ******************************************************************************/
 void OverlayListModel::onViewportEvent(const ReferenceEvent& event)
 {
-	if(event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved) {
-		refreshList();
+	if(event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::TitleChanged) {
+		requestUpdate();
 	}
 }
 
@@ -166,20 +178,47 @@ QVariant OverlayListModel::data(const QModelIndex& index, int role) const
 	OverlayListItem* item = this->item(index.row());
 
 	if(role == Qt::DisplayRole) {
-		return item->title();
+		return item->title(selectedViewport());
 	}
 	else if(role == Qt::DecorationRole) {
-		switch(item->status().type()) {
-		case PipelineStatus::Warning: return QVariant::fromValue(_statusWarningIcon);
-		case PipelineStatus::Error: return QVariant::fromValue(_statusErrorIcon);
-		default: return QVariant::fromValue(_statusNoneIcon);
+		if(item->overlay()) {
+			switch(item->status().type()) {
+			case PipelineStatus::Warning: return QVariant::fromValue(_statusWarningIcon);
+			case PipelineStatus::Error: return QVariant::fromValue(_statusErrorIcon);
+			default: return QVariant::fromValue(_statusNoneIcon);
+			}
 		}
 	}
 	else if(role == Qt::ToolTipRole) {
 		return QVariant::fromValue(item->status().text());
 	}
 	else if(role == Qt::CheckStateRole) {
-		return (item->overlay() && item->overlay()->isEnabled()) ? Qt::Checked : Qt::Unchecked;
+		if(item->overlay()) {
+			return item->overlay()->isEnabled() ? Qt::Checked : Qt::Unchecked;
+		}
+		else if(item->itemType() == OverlayListItem::SceneLayer) {
+			return Qt::Checked;
+		}
+	}
+	else if(role == Qt::TextAlignmentRole) {
+		if(item->itemType() == OverlayListItem::ViewportHeader) {
+			return Qt::AlignCenter;
+		}
+	}
+	else if(role == Qt::BackgroundRole) {
+		if(item->overlay() == nullptr) {
+			return _sectionHeaderBackgroundBrush;
+		}
+	}
+	else if(role == Qt::ForegroundRole) {
+		if(item->itemType() == OverlayListItem::ViewportHeader || item->itemType() == OverlayListItem::SceneLayer) {
+			return _sectionHeaderForegroundBrush;
+		}
+	}
+	else if(role == Qt::FontRole) {
+		if(item->itemType() == OverlayListItem::ViewportHeader) {
+			return _sectionHeaderFont;
+		}
 	}
 	return {};
 }
@@ -193,7 +232,7 @@ bool OverlayListModel::setData(const QModelIndex& index, const QVariant& value, 
 		OverlayListItem* item = this->item(index.row());
 		if(ViewportOverlay* overlay = item->overlay()) {
 			UndoableTransaction::handleExceptions(overlay->dataset()->undoStack(),
-					(value == Qt::Checked) ? tr("Enable visual element") : tr("Disable visual element"), [overlay, &value]() {
+					(value == Qt::Checked) ? tr("Show layer") : tr("Hide layer"), [overlay, &value]() {
 				overlay->setEnabled(value == Qt::Checked);
 			});
 		}

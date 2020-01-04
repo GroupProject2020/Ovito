@@ -7,7 +7,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Add a scale bar to a viewport</title>
+  <title>Adding a scale bar to a viewport</title>
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>

@@ -57,7 +57,7 @@ public:
 
 	/// Moves the position of the overlay in the viewport by the given amount,
 	/// which is specified as a fraction of the viewport render size.
-	virtual void moveOverlayInViewport(const Vector2& delta) override {
+	virtual void moveLayerInViewport(const Vector2& delta) override {
 		setOffsetX(offsetX() + delta.x());
 		setOffsetY(offsetY() + delta.y());
 	}

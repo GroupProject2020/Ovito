@@ -17,14 +17,14 @@
     </informalfigure>
 	  After you have created a pipeline for data analysis and visualization, at some point you may want to
     produce images or a movie for publications or presentations. For this, go to the
-    <emphasis>Render</emphasis> tab in the command panel as shown on the right.
+    <emphasis>Rendering</emphasis> tab in the command panel as shown on the right.
   </para>
   <para>
     The <guibutton>Render Active Viewport</guibutton> button launches the image rendering process for the active viewport (marked with a yellow border).
     OVITO will open a separate window to show the generated image, which can be saved to disk or copied to the clipboard from there.
   </para>
   <para>
-    The <link linkend="core.render_settings">Render Settings</link> panel controls various
+    The <link linkend="core.render_settings">Render settings</link> panel controls various
     settings such as the resolution of the generated image, the background color and the filename
     under which the image or movie should be saved by OVITO. Note that you have the choice to either pick an output filename
     in advance or after rendering is completed (the window displaying the rendered image has a save button for it).
@@ -59,7 +59,7 @@
     <title>Creating animations</title>
     <para>
       OVITO can produce videos from the loaded simulation sequence. To render an animation,
-      select the <guilabel>Complete animation</guilabel> option in the <link linkend="core.render_settings">Render Settings</link> panel and
+      select the <guilabel>Complete animation</guilabel> option in the <link linkend="core.render_settings">Render settings</link> panel and
       set an output filename for the video. OVITO's built-in video encoder supports video formats such as AVI and MPEG.
       The frame rate for the output video is set in the <link linkend="animation.animation_settings_dialog">animation settings</link> dialog.
       Alternatively, you can produce a series of image files, one per frame, and later combine them to a video using an external video encoding tool.

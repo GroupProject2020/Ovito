@@ -564,10 +564,10 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	// Render one frame.
 	try {
 		// Render viewport "underlays".
-		for(ViewportOverlay* overlay : viewport->overlays()) {
-			if(overlay->isEnabled() && overlay->renderBehindScene()) {
+		for(ViewportOverlay* layer : viewport->underlays()) {
+			if(layer->isEnabled()) {
 				{
-					overlay->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
+					layer->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
 					if(operation.isCanceled()) {
 						renderer->endFrame(false);
 						return false;
@@ -591,10 +591,10 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	}
 
 	// Render viewport overlays on top.
-	for(ViewportOverlay* overlay : viewport->overlays()) {
-		if(overlay->isEnabled() && !overlay->renderBehindScene()) {
+	for(ViewportOverlay* layer : viewport->overlays()) {
+		if(layer->isEnabled()) {
 			{
-				overlay->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
+				layer->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
 				if(operation.isCanceled())
 					return false;
 			}

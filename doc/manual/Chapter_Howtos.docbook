@@ -10,7 +10,14 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>How-to guides</title>
 
-  <para>This chapter contains several mini-tutorials covering various advanced features of OVITO.</para>
+  <para>
+    <itemizedlist>
+      <listitem><xref linkend="howto.transparent_particles" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="howto.marker_particles" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="howto.scale_bar" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="howto.aspherical_particles" xrefstyle="template:%t" /></listitem>
+    </itemizedlist>
+  </para>
 
   <xi:include href="howtos/transparent_particles.docbook"/>
   <xi:include href="howtos/marker_particles.docbook"/>

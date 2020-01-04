@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
 
 /**
- * \brief Abstract base class for all viewport overlays.
+ * \brief Abstract base class for all viewport layers types.
  */
 class OVITO_CORE_EXPORT ViewportOverlay : public RefTarget
 {
@@ -61,12 +61,12 @@ public:
 	/// The default implementation of this method does nothing.
 	virtual void render3D(Viewport* vp, TimePoint time, SceneRenderer* renderer, AsyncOperation& operation) {}
 
-	/// \brief Moves the position of the overlay in the viewport by the given amount,
+	/// \brief Moves the position of the layer in the viewport by the given amount,
 	///        which is specified as a fraction of the viewport render size.
 	///
-	/// Overlay implementations should override this method if they support positioning.
+	/// Layer implementations should override this method if they support positioning.
 	/// The default method implementation does nothing.
-	virtual void moveOverlayInViewport(const Vector2& delta) {}
+	virtual void moveLayerInViewport(const Vector2& delta) {}
 
 protected:
 
@@ -78,11 +78,12 @@ private:
 	/// The current status of this overlay object.
 	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PipelineStatus, status, setStatus, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	/// Option for rendering the overlay contents behind the three-dimensional content.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderBehindScene, setRenderBehindScene);
-
 	/// Flag controlling the visibility of the overlay.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isEnabled, setEnabled);
+
+	/// Option for rendering the overlay contents behind the three-dimensional content.
+	/// Note: This field exists only for backward compatibility with OVITO 2.9.0. 
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderBehindScene, setRenderBehindScene);
 };
 
 OVITO_END_INLINE_NAMESPACE
