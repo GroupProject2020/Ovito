@@ -98,8 +98,8 @@
   <simplesect>
     <title>Color legend</title>
     <para>
-       You can superimpose a legend for the color coding into rendered images by adding a
-       <link linkend="viewport_overlays"><guilabel>Color legend</guilabel></link> overlay to the active viewport.
+       You can let OVITO paint the color map as a legend for the color coding into rendered images by adding a
+       <link linkend="viewport_layers"><guilabel>Color legend</guilabel></link> layer to the active viewport.
     </para>
   </simplesect>
 

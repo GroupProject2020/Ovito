@@ -52,13 +52,13 @@
     </para>
   </simplesect>
 
-  <simplesect xml:id="usage.viewport_overlays">
-    <title>Viewport overlays</title>
+  <simplesect xml:id="usage.viewport_layers">
+    <title>Viewport layers</title>
     <para>
-      <link linkend="viewport_overlays">Viewport overlays</link> are a way to superimpose additional information
-      such as text labels, a color legend, a coordinate tripod and other graphics on top of the three-dimensional scene.
-      The program offers several different types of overlays, which can be added to individual viewports from the
-      <link linkend="viewport_overlays"><guilabel>Overlays</guilabel></link> tab of the command panel.
+      Viewport layers are a way to superimpose additional information and graphics
+      such as text labels, color legends, and coordinate tripods on top of the rendered image of the three-dimensional scene.
+      OVITO offers several different layer types, which may be added to a viewport from the
+      <link linkend="viewport_layers"><guilabel>Viewport Layers</guilabel></link> tab of the command panel.
     </para>
   </simplesect>
 
@@ -94,7 +94,7 @@
       In addition to automating tasks, the scripting interface allows you to extend OVITO.
       For example, the <link linkend="particles.modifiers.python_script">Python script modifier</link>
       provides a mechanism for you to write your own data manipulation function and integrate it into
-      OVITO's modification pipeline system. Furthermore, the <link linkend="viewport_overlays.python_script">
+      OVITO's modification pipeline system. Furthermore, the <link linkend="viewport_layers.python_script">
       Python script overlay</link> lets you write your own Python function to add arbitrary 2D graphics
       to rendered images or movies, for example to enrich the visualization with additional information
       like a <link linkend="howto.scale_bar">scale bar</link>.

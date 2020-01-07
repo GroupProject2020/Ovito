@@ -60,15 +60,29 @@
   </simplesect>
 
   <simplesect>
-    <title>Reusing user-defined modifiers</title>
+    <title>Make a user-defined modifier permanently available</title>
     <para>
       The modifier panel contains an input field that lets you optionally assign a descriptive name to your
       script modifier. This name will be displayed in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> and
       makes it easier for you to identify the modifier in case you use several different Python modifiers in a pipeline.
       If you have written a user-defined modifier function that you would like to
-      re-use in future program sessions, it is possible to save the entire Python script modifier, including the source code of the
+      reuse in future program sessions, it is possible to save the entire Python script modifier, including the source code of the
       <code>modify()</code> function, as a <link linkend="modifier_templates">modifier template</link>. This template will appear as a new
-      entry in the list of available modifiers, allowing you to easily access your user-defined modifier in the future.
+      entry in the list of available modifiers, allowing you to easily access the user-defined modifier in the future.
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Examples</title>
+    <para>
+      <pydoc-link href="introduction/examples" anchor="user-defined-modifier-functions">This page</pydoc-link> provides several code examples
+      demonstrating how to implement a <literal>modify()</literal> function:
+      <itemizedlist>
+        <listitem><pydoc-link href="introduction/examples/modifiers/msd_calculation">Calculating mean square displacement</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/order_parameter_calculation">Custom order parameter calculation</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/visualize_local_lattice_orientation">Color mapping to visualize local lattice orientation</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/select_overlapping_particles">Finding overlapping particles</pydoc-link></listitem>
+      </itemizedlist>
     </para>
   </simplesect>
 

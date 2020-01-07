@@ -198,7 +198,7 @@ set       toc
 </xsl:template>
 
 <xsl:template name="user.footer.content">
-  <p class="footer_copyright">&#x00A9; 2019  Alexander Stukowski</p>
+  <p class="footer_copyright">&#x00A9; 2020  Alexander Stukowski</p>
 </xsl:template>
 
 </xsl:stylesheet>

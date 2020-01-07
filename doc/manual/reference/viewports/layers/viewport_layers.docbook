@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="viewport_layers"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Viewport layers</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/viewport_layers/viewport_overlay_command_panel.png" format="PNG" scale="60" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    Viewport layers render two-dimensional text and graphics on top of the three-dimensional scene.
+    OVITO provides several layer types (see table below), which you can add to a viewport.
+    Go to the <guilabel>Viewport layers</guilabel> tab of OVITO's command panel
+    (screenshot on the right) to manage the layers of the active viewport.
+  </para>
+  <para>
+    Note that layers will only be visible within the interactive viewport window
+    when <link linkend="usage.viewports.menu">Preview Mode</link> is enabled for that viewport.
+    OVITO activates this mode automatically whenever you add a new layer to a viewport.
+  </para>
+  <para>
+    Available viewport layer types:
+    <informaltable>
+        <tgroup cols="2">
+          <colspec colname='name'/>
+          <colspec colname='descr'/>
+          <thead>
+            <row>
+              <entry>Layer&#xA0;type</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><link linkend="viewport_layers.color_legend">Color&#xA0;legend</link></entry>
+              <entry>Paints the color map legend for a <link linkend="particles.modifiers.color_coding">Color coding</link> modifier</entry>
+            </row>
+            <row>
+              <entry><link linkend="viewport_layers.coordinate_tripod">Coordinate&#xA0;tripod</link></entry>
+              <entry>Renders an axes tripod to indicate the view orientation</entry>
+            </row>
+            <row>
+              <entry><link linkend="viewport_layers.python_script">Python&#xA0;script</link><ovito-pro/></entry>
+              <entry>Calls your own Python script function to draw arbitrary graphics on top of the rendered image</entry>
+            </row>
+            <row>
+              <entry><link linkend="viewport_layers.text_label">Text&#xA0;label</link></entry>
+              <entry>Renders a user-defined text string, which can contain dynamically computed variables</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+   </para>
+
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <simplelist>
+      <member><pydoc-link href="modules/ovito_vis" anchor="ovito.vis.ViewportOverlay"><classname>ViewportOverlay</classname> (Python API)</pydoc-link></member>
+      <member><pydoc-link href="modules/ovito_vis" anchor="ovito.vis.Viewport.overlays"><classname>Viewport.overlays</classname> (Python API)</pydoc-link></member>
+      <member><pydoc-link href="modules/ovito_vis" anchor="ovito.vis.Viewport.underlays"><classname>Viewport.underlays</classname> (Python API)</pydoc-link></member>
+      </simplelist>
+    </para>
+   </simplesect>
+
+  <xi:include href="color_legend_layer.docbook"/>
+  <xi:include href="coordinate_tripod_layer.docbook"/>
+  <xi:include href="python_script_layer.docbook"/>
+  <xi:include href="text_label_layer.docbook"/>
+
+</section>

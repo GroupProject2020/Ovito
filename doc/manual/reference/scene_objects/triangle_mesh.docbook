@@ -11,14 +11,31 @@
   <title>Triangle meshes</title>
 
   <para>
-    Sorry, this docs section has not been written yet. Please check back later.
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/scene_objects/triangle_mesh_example.jpg" format="JPG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    Triangle meshes are three-dimensional objects made of vertices connected by triangular faces.
+    Typically, they are imported as independent objects into the scene using the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice>
+    function. You can use triangle meshes, for example, to visualize additionally geometry next to your simulation data. 
+    OVITO supports several common geometry file formats
+    such as STL, OBJ and VTK. See <link linkend="usage.import.formats">this page</link> for a complete list. 
+  </para>
+  <para>
+    Either the faces or the vertices of a triangle mesh may be associated with local color values if such 
+    information is present in the imported geometry file. Otherwise, the uniform coloring of the mesh is 
+    controlled by the user within OVITO. 
+  </para>
+  <para>
+    Note that triangle meshes can also be used to <link linkend="scene_objects.particle_types">give particles a free-form shape</link>. 
   </para>
 
+    <!--
   <simplesect>
     <title>See also</title>
     <para>
         <pydoc-link href="modules/ovito_data" anchor="ovito.data.TriangleMesh"><classname>TriangleMesh</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
+    -->
 
 </section>

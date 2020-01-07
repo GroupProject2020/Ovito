@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="viewport_layers.color_legend"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Color legend viewport layer</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/viewport_layers/color_legend_overlay_panel.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This <link linkend="viewport_layers">viewport layer</link> renders the color map of a 
+    <link linkend="particles.modifiers.color_coding">Color coding</link> modifier as a legend into the
+    picture. The modifier must be part of a data pipeline in the current scene.
+
+    <screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/viewport_layers/color_legend_example.jpg" format="JPG" scale="50" />
+    </imageobject></mediaobject></screenshot>
+  </para>
+
+  <simplesect>
+    <title>See also</title>
+    <para>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.ColorLegendOverlay"><classname>ColorLegendOverlay</classname> (Python API)</pydoc-link>
+    </para>
+  </simplesect>
+
+</section>

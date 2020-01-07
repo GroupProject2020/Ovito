@@ -97,11 +97,11 @@
      control over the position and orientation of the viewport's camera using numeric input fields.
    </para>
    <para>
-     The <menuchoice><guimenuitem>Preview Mode</guimenuitem></menuchoice> option activates a virtual frame inside the viewport to
-     indicate the area that will be visible in <link linkend="usage.rendering">rendered pictures</link>. The aspect ratio of this frame reflects the
-     output image size currently set in the <link linkend="core.render_settings">Render settings</link> panel.
-     With preview mode active, the viewport contents including the background and any <link linkend="viewport_overlays">overlays</link> will
-     be rendered like in the final output image.
+     The <menuchoice><guimenuitem>Preview Mode</guimenuitem></menuchoice> option activates a virtual frame that is displayed in the viewport to
+     indicate the region that will be visible in <link linkend="usage.rendering">rendered images</link>. The aspect ratio of the frame reflects the
+     image size currently set in the <link linkend="core.render_settings">Render settings</link> panel.
+     With preview mode active, scene objects and any <link linkend="viewport_layers">viewport layers</link> will
+     be rendered in the interactive viewport window just like they are in the final output image.
    </para>
    <para>
      Use the <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function to insert a camera object into the three-dimensional

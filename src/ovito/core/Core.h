@@ -89,8 +89,8 @@
 #include <QtMath>
 #include <QNetworkAccessManager>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
-#  error "OVITO requires Qt 5.4 or newer."
+#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
+#  error "OVITO requires Qt 5.6 or newer."
 #endif
 
 /******************************************************************************

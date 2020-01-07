@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="viewport_layers.python_script"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Python script viewport layer<ovito-pro/></title>
+
+  <para>
+
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/viewport_layers/python_script_overlay_panel.png" format="PNG" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/viewport_layers/python_script_overlay_code_editor.png" format="PNG" scale="60" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This type of <link linkend="viewport_layers">viewport layer</link> lets you write your own Python script function to paint arbitrary
+    text and graphics on top of images rendered in OVITO. This makes it possible to enrich figures or movies with
+    additional information (e.g. a scale bar or a data plot).
+  </para>
+  <para>
+    The <guibutton>Edit script</guibutton> button opens a code editor, where you enter the code for the user-defined <literal>render()</literal> function.
+  	This function will be invoked by OVITO each time the viewport is repainted or
+    whenever an image or movie frame is being rendered. The <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.PythonViewportOverlay.Arguments">function parameter <literal>args</literal></pydoc-link> 
+    gives access to a 
+    <link xlink:href="https://doc.qt.io/qtforpython/PySide2/QtGui/QPainter.html"><literal>QPainter</literal></link> object,
+    which allows issueing arbitrary drawing commands to paint over the three-dimensional objects rendered by OVITO.
+  </para>
+  <para>
+    Any Python exceptions that raised during script execution are displayed in the output area below.
+    It also shows any output from calls to the <literal>print()</literal> Python function.
+  </para>
+
+  <para>
+    The user-defined script has full access to OVITO's data model and can access viewport properties,
+    camera and animation settings, modifiers, and data pipeline outputs.
+    For more information on OVITO's Python interface and the object model, see the <pydoc-link href="index">scripting reference</pydoc-link>.
+  </para>
+
+  <simplesect>
+    <title>Examples</title>
+    <para>
+      <pydoc-link href="introduction/examples" anchor="user-defined-overlay-functions">This page</pydoc-link> provides several code examples
+      demonstrating how to write a <literal>render()</literal> function for a Python viewport layer:
+      <itemizedlist>
+        <listitem><pydoc-link href="introduction/examples/overlays/scale_bar">Scale bar</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/overlays/data_plot">Including data plots in rendered images</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/overlays/highlight_particle">Highlight a particle</pydoc-link></listitem>
+      </itemizedlist>
+    </para>
+  </simplesect>
+
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.PythonViewportOverlay"><classname>PythonViewportOverlay</classname> (Python API)</pydoc-link>
+    </para>
+   </simplesect>
+
+</section>

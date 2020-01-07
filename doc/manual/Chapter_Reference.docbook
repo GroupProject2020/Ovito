@@ -31,15 +31,15 @@
 
       <para>
         <itemizedlist>
+          <listitem><xref linkend="viewport_layers" xrefstyle="template:%t" /></listitem>
           <listitem><xref linkend="viewports.adjust_view_dialog" xrefstyle="template:%t" /></listitem>
-          <listitem><xref linkend="viewport_overlays" xrefstyle="template:%t" /></listitem>
-          <listitem><xref linkend="viewports.input_modes" xrefstyle="template:%t" /></listitem>
+          <!--<listitem><xref linkend="viewports.input_modes" xrefstyle="template:%t" /></listitem>-->
         </itemizedlist>
       </para>
 
+  	  <xi:include href="reference/viewports/layers/viewport_layers.docbook"/>
   	  <xi:include href="reference/viewports/adjust_view_dialog.docbook"/>
-  	  <xi:include href="reference/viewports/overlays/viewport_overlays.docbook"/>
-  	  <xi:include href="reference/viewports/input_modes.docbook"/>
+  	  <!--<xi:include href="reference/viewports/input_modes.docbook"/>-->
   </section>
 
   <xi:include href="reference/rendering/rendering.docbook"/>

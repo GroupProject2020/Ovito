@@ -39,7 +39,7 @@
   </simplesect>
 
   <simplesect xml:id="usage.export.formats">
-  <title>Supported export formats</title>
+  <title>Supported output file formats</title>
   <para>
     <informaltable>
         <tgroup cols="3">
@@ -55,42 +55,42 @@
             <row>
               <entry>LAMMPS&#xA0;dump</entry>
               <entry><para>Text-based file format produced and read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>.</para></entry>
-              <entry>particles</entry>
+              <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>LAMMPS&#xA0;data</entry>
               <entry><para>File format read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>.</para></entry>
-              <entry>particles, bonds</entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, bonds</entry>
             </row>
             <row>
               <entry>XYZ</entry>
               <entry><para>A simple column-based text format, which is documented <link xlink:href="http://en.wikipedia.org/wiki/XYZ_file_format">here</link> and <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">here</link>.</para></entry>
-              <entry>particles</entry>
+              <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>POSCAR</entry>
               <entry><para>File format used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="http://www.vasp.at/">VASP</link>.</para></entry>
-              <entry>particles</entry>
+              <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>IMD</entry>
               <entry><para>File format used by the molecular dynamics code <link xlink:href="http://imd.itap.physik.uni-stuttgart.de/">IMD</link>.</para></entry>
-              <entry>particles</entry>
+              <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>FHI-aims</entry>
               <entry><para>File format used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="https://aimsclub.fhi-berlin.mpg.de/index.php">FHI-aims</link>.</para></entry>
-              <entry>particles</entry>
+              <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>NetCDF</entry>
               <entry><para>Binary format for molecular dynamics data following the <link xlink:href="http://ambermd.org/netcdf/nctraj.pdf">AMBER format convention</link>.</para></entry>
-              <entry>particles</entry>
+              <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>GSD/HOOMD</entry>
               <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="https://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue code</link>. See <link xlink:href="https://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
-              <entry>particles, bond, global&#xA0;attributess</entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, bonds, global&#xA0;attributes</entry>
             </row>
             <row>
               <entry>Table&#xA0;of&#xA0;values</entry>
@@ -100,7 +100,7 @@
             <row>
               <entry>VTK</entry>
               <entry><para>Generic text-based data format used by the ParaView software.</para></entry>
-              <entry>surface&#xA0;meshes, grid&#xA0;data, dislocations</entry>
+              <entry><link linkend="scene_objects.surface_mesh">surface&#xA0;meshes</link>, <link linkend="scene_objects.voxel_grid">voxel&#xA0;grids</link>, <link linkend="scene_objects.dislocations">dislocations</link></entry>
             </row>
             <row>
               <entry>POV-Ray&#xA0;scene</entry>
@@ -111,7 +111,7 @@
               <entry>Crystal&#xA0;Analysis&#xA0;(.ca)</entry>
               <entry><para>Format that can store dislocation lines extracted from an atomistic crystal model by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation Analysis</link> modifier.
               The format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">here</link>.</para></entry>
-              <entry>dislocations, surface&#xA0;meshes</entry>
+              <entry><link linkend="scene_objects.dislocations">dislocations</link>, <link linkend="scene_objects.surface_mesh">surface&#xA0;meshes</link></entry>
             </row>
           </tbody>
         </tgroup>

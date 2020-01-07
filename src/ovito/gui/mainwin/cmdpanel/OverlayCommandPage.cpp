@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -46,7 +46,7 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
     layout->addWidget(_newLayerBox);
     connect(_newLayerBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &OverlayCommandPage::onNewLayer);
 
-    _newLayerBox->addItem(tr("Add overlay..."));
+    _newLayerBox->addItem(tr("Add layer..."));
     _newLayerBox->insertSeparator(1);
 	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ViewportOverlay::OOClass())) {
 		_newLayerBox->addItem(clazz->displayName(), QVariant::fromValue(clazz));
@@ -176,7 +176,7 @@ void OverlayCommandPage::onNewLayer(int index)
 				overlayIndex = vp->overlays().indexOf(item->overlay());
 				underlayIndex = vp->underlays().indexOf(item->overlay());
 			}
-			UndoableTransaction::handleExceptions(vp->dataset()->undoStack(), tr("Add overlay"), [&]() {
+			UndoableTransaction::handleExceptions(vp->dataset()->undoStack(), tr("Add viewport layer"), [&]() {
 				// Create an instance of the overlay class.
 				OORef<ViewportOverlay> layer = static_object_cast<ViewportOverlay>(descriptor->createInstance(vp->dataset()));
 				// Load user-defined default parameters.
