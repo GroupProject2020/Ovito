@@ -94,7 +94,7 @@ bool LAMMPSDumpExporter::exportData(const PipelineFlowState& state, int frameNum
 	}
 	textStream() << "ITEM: ATOMS";
 
-	const OutputColumnMapping& mapping = columnMapping();
+	const ParticlesOutputColumnMapping& mapping = columnMapping();
 	if(mapping.empty())
 		throwException(tr("No particle properties have been selected for export to the LAMMPS dump file. Cannot write dump file with zero columns."));
 
@@ -157,10 +157,10 @@ bool LAMMPSDumpExporter::exportData(const PipelineFlowState& state, int frameNum
 	}
 	textStream() << '\n';
 
-	OutputColumnWriter columnWriter(mapping, state);
+	PropertyOutputWriter columnWriter(mapping, particles, PropertyOutputWriter::WriteNumericIds);
 	operation.setProgressMaximum(atomsCount);
 	for(size_t i = 0; i < atomsCount; i++) {
-		columnWriter.writeParticle(i, textStream());
+		columnWriter.writeElement(i, textStream());
 
 		if(!operation.setProgressValueIntermittent(i))
 			return false;

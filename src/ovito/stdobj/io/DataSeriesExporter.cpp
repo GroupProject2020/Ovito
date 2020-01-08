@@ -77,6 +77,9 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 	}
 	series->verifyIntegrity();
 
+	// Make sure the X property exists in the property container.
+	// If not, create a temporary property for export.
+
 	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
 	ConstPropertyPtr xstorage = series->getXStorage();
@@ -87,7 +90,6 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 		throwException(tr("Data series to be exported contains no data points."));
 
 	size_t row_count = series->elementCount();
-	size_t col_count = ystorage->componentCount();
 	int xDataType = xstorage ? xstorage->dataType() : 0;
 	int yDataType = ystorage->dataType();
 
@@ -95,27 +97,44 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 	ConstPropertyAccess<qlonglong, true> xaccessInt64(xDataType == PropertyStorage::Int64 ? xstorage : nullptr);
 	ConstPropertyAccess<FloatType, true> xaccessFloat(xDataType == PropertyStorage::Float ? xstorage : nullptr);
 
-	ConstPropertyAccess<int, true> yaccessInt(yDataType == PropertyStorage::Int ? ystorage : nullptr);
-	ConstPropertyAccess<qlonglong, true> yaccessInt64(yDataType == PropertyStorage::Int64 ? ystorage : nullptr);
-	ConstPropertyAccess<FloatType, true> yaccessFloat(yDataType == PropertyStorage::Float ? ystorage : nullptr);
-
 	if(!series->title().isEmpty())
-		textStream() << "# " << series->title() << ":\n";
+		textStream() << "# " << series->title() << " (" << row_count << " data points):\n";
 	textStream() << "# ";
 	auto formatColumnName = [](const QString& name) {
 		return name.contains(QChar(' ')) ? (QChar('"') + name + QChar('"')) : name;
 	};
 	textStream() << formatColumnName((!xprop || !series->axisLabelX().isEmpty()) ? series->axisLabelX() : xprop->name());
+
 	if(ystorage->componentNames().size() == ystorage->componentCount()) {
-		for(size_t col = 0; col < col_count; col++) {
+		for(size_t col = 0; col < ystorage->componentCount(); col++) {
 			textStream() << " " << formatColumnName(ystorage->componentNames()[col]);
 		}
 	}
 	else {
 		textStream() << " " << formatColumnName(!series->axisLabelY().isEmpty() ? series->axisLabelY() : ystorage->name());
 	}
+
+	// Collect the extra properties that should be written to the file.
+	std::vector<ConstPropertyAccess<void,true>> outputProperties;
+	outputProperties.emplace_back(ystorage);
+	for(const PropertyObject* propObj : series->properties()) {
+		if(propObj->type() == DataSeriesObject::XProperty) continue;
+		if(propObj->type() == DataSeriesObject::YProperty) continue;
+		outputProperties.emplace_back(propObj->storage());
+		if(propObj->componentNames().size() == propObj->componentCount()) {
+			for(size_t col = 0; col < propObj->componentCount(); col++) {
+				textStream() << " " << formatColumnName(QStringLiteral("%1.%2").arg(propObj->name()).arg(propObj->componentNames()[col]));
+			}
+		}
+		else {
+			textStream() << " " << formatColumnName(propObj->name());
+		}
+	}
+
 	textStream() << "\n";
+
 	for(size_t row = 0; row < row_count; row++) {
+		// Write the X column.
 		if(series->plotMode() == DataSeriesObject::BarChart) {
 			ElementType* type = yprop->elementType(row);
 			if(!type && xprop) type = xprop->elementType(row);
@@ -131,14 +150,21 @@ bool DataSeriesExporter::exportFrame(int frameNumber, TimePoint time, const QStr
 				textStream() << xaccessInt64.get(row, 0) << " ";
 			else if(xaccessFloat)
 				textStream() << xaccessFloat.get(row, 0) << " ";
+			else
+				textStream() << "<?> ";
 		}
-		for(size_t col = 0; col < col_count; col++) {
-			if(yaccessInt)
-				textStream() << yaccessInt.get(row, col) << " ";
-			else if(yaccessInt64)
-				textStream() << yaccessInt64.get(row, col) << " ";
-			else if(yaccessFloat)
-				textStream() << yaccessFloat.get(row, col) << " ";
+		// Write the Y column(s).
+		for(const ConstPropertyAccess<void,true>& array : outputProperties) {
+			for(size_t col = 0; col < array.componentCount(); col++) {
+				if(array.storage()->dataType() == PropertyStorage::Int)
+					textStream() << *reinterpret_cast<const int*>(array.cdata(row, col)) << " ";
+				else if(array.storage()->dataType() == PropertyStorage::Int64)
+					textStream() << *reinterpret_cast<const qlonglong*>(array.cdata(row, col)) << " ";
+				else if(array.storage()->dataType() == PropertyStorage::Float)
+					textStream() << *reinterpret_cast<const FloatType*>(array.cdata(row, col)) << " ";
+				else
+					textStream() << "<?> ";
+			}
 		}
 		textStream() << "\n";
 	}

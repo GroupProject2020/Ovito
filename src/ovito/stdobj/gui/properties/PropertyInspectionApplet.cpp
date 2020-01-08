@@ -173,7 +173,7 @@ void PropertyInspectionApplet::currentContainerChanged()
 /******************************************************************************
 * Selects a specific data object in this applet.
 ******************************************************************************/
-bool PropertyInspectionApplet::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint)
+bool PropertyInspectionApplet::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint)
 {
 	for(int i = 0; i < containerSelectionWidget()->count(); i++) {
 		QListWidgetItem* item = containerSelectionWidget()->item(i);

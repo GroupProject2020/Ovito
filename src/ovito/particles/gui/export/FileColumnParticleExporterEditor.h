@@ -25,8 +25,8 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/ParticlesObject.h>
-#include <ovito/particles/export/OutputColumnMapping.h>
 #include <ovito/particles/export/FileColumnParticleExporter.h>
+#include <ovito/stdobj/io/PropertyOutputWriter.h>
 #include <ovito/gui/properties/PropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
@@ -63,7 +63,7 @@ private Q_SLOTS:
 private:
 
 	/// Populates the column mapping list box with an entry.
-	void insertPropertyItem(ParticlePropertyReference propRef, const QString& displayName, const OutputColumnMapping& columnMapping);
+	void insertPropertyItem(ParticlePropertyReference propRef, const QString& displayName, const ParticlesOutputColumnMapping& columnMapping);
 
 	/// This writes the settings made in the UI back to the exporter.
 	void saveChanges(FileColumnParticleExporter* particleExporter);
@@ -74,5 +74,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -22,12 +22,12 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/particles/export/FileColumnParticleExporter.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
 #include "IMDExporter.h"
-#include "../OutputColumnMapping.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -47,8 +47,8 @@ bool IMDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 	const AffineTransformation& simCell = simulationCell->cellMatrix();
 	size_t atomsCount = particles->elementCount();
 
-	OutputColumnMapping colMapping;
-	OutputColumnMapping filteredMapping;
+	ParticlesOutputColumnMapping colMapping;
+	ParticlesOutputColumnMapping filteredMapping;
 	bool exportIdentifiers = false;
 	const PropertyObject* posProperty = nullptr;
 	const PropertyObject* typeProperty = nullptr;
@@ -146,9 +146,9 @@ bool IMDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 	textStream() << "#E\n";
 
 	operation.setProgressMaximum(atomsCount);
-	OutputColumnWriter columnWriter(colMapping, state);
+	PropertyOutputWriter columnWriter(colMapping, particles, PropertyOutputWriter::WriteNumericIds);
 	for(size_t i = 0; i < atomsCount; i++) {
-		columnWriter.writeParticle(i, textStream());
+		columnWriter.writeElement(i, textStream());
 
 		if(!operation.setProgressValueIntermittent(i))
 			return false;

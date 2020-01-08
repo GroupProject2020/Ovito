@@ -39,6 +39,7 @@ OVITO_STANDARD_PLUGIN(StdObj
 		properties/PropertyExpressionEvaluator.cpp
 		series/DataSeriesObject.cpp
 		io/DataSeriesExporter.cpp
+		io/PropertyOutputWriter.cpp
 		util/ElementSelectionSet.cpp
 	LIB_DEPENDENCIES
 		muParser

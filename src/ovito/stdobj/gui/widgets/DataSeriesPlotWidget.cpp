@@ -136,7 +136,7 @@ void DataSeriesPlotWidget::updateDataPlot()
 	// Create plot items.
 	if(plotMode == DataSeriesObject::Scatter) {
 		// Scatter plot:
-		size_t seriesCount = std::min(x ? x->componentCount() : 0, y ? y->componentCount() : 0);
+		size_t seriesCount = std::min(x ? x->componentCount() : 1, y ? y->componentCount() : 0);
 		while(_spectroCurves.size() < seriesCount) {
 			QwtPlotSpectroCurve* curve = new QwtPlotSpectroCurve();
 			curve->setPenWidth(3);
@@ -157,10 +157,12 @@ void DataSeriesPlotWidget::updateDataPlot()
 				_spectroCurves[cmpnt]->setTitle(tr("Component %1").arg(cmpnt+1));
 		}
 
-		QVector<QwtPoint3D> coords(y->size());
+		ConstPropertyPtr xstorage = series()->getXStorage();
+		ConstPropertyPtr ystorage = series()->getYStorage();
+		QVector<QwtPoint3D> coords(ystorage->size());
 		for(size_t cmpnt = 0; cmpnt < seriesCount; cmpnt++) {
-			x->storage()->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].rx() = v; });
-			y->storage()->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].ry() = v; });
+			xstorage->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].rx() = v; });
+			ystorage->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].ry() = v; });
 			_spectroCurves[cmpnt]->setSamples(coords);
 		}
 

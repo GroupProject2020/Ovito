@@ -154,7 +154,7 @@ void FileColumnParticleExporterEditor::updateParticlePropertiesList()
 /******************************************************************************
 * Populates the column mapping list box with an entry.
 ******************************************************************************/
-void FileColumnParticleExporterEditor::insertPropertyItem(ParticlePropertyReference propRef, const QString& displayName, const OutputColumnMapping& columnMapping)
+void FileColumnParticleExporterEditor::insertPropertyItem(ParticlePropertyReference propRef, const QString& displayName, const ParticlesOutputColumnMapping& columnMapping)
 {
 	QListWidgetItem* item = new QListWidgetItem(displayName);
 	item->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren));
@@ -190,7 +190,7 @@ void FileColumnParticleExporterEditor::insertPropertyItem(ParticlePropertyRefere
 ******************************************************************************/
 void FileColumnParticleExporterEditor::saveChanges(FileColumnParticleExporter* exporter)
 {
-	OutputColumnMapping newMapping;
+	ParticlesOutputColumnMapping newMapping;
 	for(int index = 0; index < _columnMappingWidget->count(); index++) {
 		if(_columnMappingWidget->item(index)->checkState() == Qt::Checked) {
 			newMapping.push_back(_columnMappingWidget->item(index)->data(Qt::UserRole).value<PropertyReference>());

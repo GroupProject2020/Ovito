@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <ovito/gui/properties/BooleanParameterUI.h>
 #include <ovito/gui/properties/FloatParameterUI.h>
 #include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
+#include <ovito/gui/mainwin/MainWindow.h>
 #include "ClusterAnalysisModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -65,19 +66,34 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	cutoffRadiusPUI->setEnabled(false);
 	connect(cutoffModeBtn, &QRadioButton::toggled, cutoffRadiusPUI, &FloatParameterUI::setEnabled);
 
-	// Sort by size
+	// Sort by size.
 	BooleanParameterUI* sortBySizeUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::sortBySize));
 	gridlayout->addWidget(sortBySizeUI->checkBox(), 4, 0, 1, 3);
 
+	// Compute centers of mass.
+	BooleanParameterUI* computeCentersOfMassUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::computeCentersOfMass));
+	gridlayout->addWidget(computeCentersOfMassUI->checkBox(), 5, 0, 1, 3);
+
+	// Unwrap particle coordinates.
+	BooleanParameterUI* unwrapParticleCoordinatesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::unwrapParticleCoordinates));
+	gridlayout->addWidget(unwrapParticleCoordinatesUI->checkBox(), 6, 0, 1, 3);
+
 	// Use only selected particles.
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::onlySelectedParticles));
-	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 5, 0, 1, 3);
+	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 7, 0, 1, 3);
 
 	layout->addLayout(gridlayout);
 
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
+
+	QPushButton* btn = new QPushButton(tr("Show list of clusters"));
+	connect(btn, &QPushButton::clicked, this, [this]() {
+		if(modifierApplication())
+			mainWindow()->openDataInspector(modifierApplication(), {}, 1); // Note: Mode hint "1" is used to switch to the data table view.
+	});
+	layout->addWidget(btn);
 }
 
 OVITO_END_INLINE_NAMESPACE

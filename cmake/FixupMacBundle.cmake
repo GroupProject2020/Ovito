@@ -135,12 +135,12 @@ INSTALL(CODE "
 	# Fix the rpath information of the PySide2/Shiboken2 libraries.
 	SET(QT_LIB_INSTALL_PATH \"${_qt5Core_install_prefix}/lib\")
 	FOREACH(lib \${PYSIDE_DYNLIBS} \${PYSIDE_SOLIBS} \${SHIBOKEN_DYNLIBS} \${SHIBOKEN_SOLIBS})
-		MESSAGE(\"Adding @loader_path to rpath list of \${lib}\")
-		EXECUTE_PROCESS(COMMAND install_name_tool -add_rpath \"@loader_path/\" \"\${lib}\" RESULT_VARIABLE install_name_tool_result)
+		MESSAGE(\"Adding rpath to \${lib}\")
+		EXECUTE_PROCESS(COMMAND install_name_tool -add_rpath \"@loader_path/\" -add_rpath \"@executable_path/../Frameworks/\" \"\${lib}\" RESULT_VARIABLE install_name_tool_result)
 		IF(install_name_tool_result)
 			MESSAGE(FATAL_ERROR \"install_name_tool returned error code \${install_name_tool_result}\")
 		ENDIF()
-		MESSAGE(\"Removing Qt installation path '\${QT_LIB_INSTALL_PATH}' from rpath list of \${lib}\")
+		MESSAGE(\"Removing '\${QT_LIB_INSTALL_PATH}' from rpaths of \${lib}\")
 		EXECUTE_PROCESS(COMMAND install_name_tool -delete_rpath \"\${QT_LIB_INSTALL_PATH}\" \"\${lib}\")
 	ENDFOREACH()
 

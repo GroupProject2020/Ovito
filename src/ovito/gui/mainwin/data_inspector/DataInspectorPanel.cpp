@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -337,7 +337,7 @@ void DataInspectorPanel::onCurrentPageChanged(int index)
 /******************************************************************************
 * Selects a specific data object in the data inspector.
 ******************************************************************************/
-bool DataInspectorPanel::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint)
+bool DataInspectorPanel::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint)
 {
 	if(!_selectedNodeListener.target())
 		return false;
@@ -356,7 +356,7 @@ bool DataInspectorPanel::selectDataObject(PipelineObject* dataSource, const QStr
 		applet->updateDisplay(pipelineState, _selectedNodeListener.target());
 
 		// Check if this applet contains the requested data object.
-		if(applet->selectDataObject(dataSource, objectIdentifierHint)) {
+		if(applet->selectDataObject(dataSource, objectIdentifierHint, modeHint)) {
 			// If yes, switch to the tab and we are done.
 			_tabBar->setCurrentIndex(_appletsToTabs[appletIndex]);
 			return true;

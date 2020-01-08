@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -43,7 +43,7 @@ public:
 	DataInspectorPanel(MainWindow* mainWindow);
 
 	/// Selects a specific data object in the data inspector.
-	bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint);
+	bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint);
 
 public Q_SLOTS:
 

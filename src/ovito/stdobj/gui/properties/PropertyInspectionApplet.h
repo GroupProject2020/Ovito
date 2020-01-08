@@ -76,7 +76,7 @@ public:
 	const PropertyContainer* selectedContainerObject() const { return _selectedContainerObject; }
 
 	/// Selects a specific data object in this applet.
-	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint) override;
+	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint) override;
 
 protected:
 

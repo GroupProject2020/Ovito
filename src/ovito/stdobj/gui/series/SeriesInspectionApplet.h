@@ -53,6 +53,9 @@ public:
 	/// Returns the plotting widget.
 	DataSeriesPlotWidget* plotWidget() const { return _plotWidget; }
 
+	/// Selects a specific data object in this applet.
+	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint) override;
+
 protected:
 
 	/// Creates the evaluator object for filter expressions.
@@ -75,6 +78,8 @@ private:
 
 	MainWindow* _mainWindow;
 	QStackedWidget* _stackedWidget;
+	QAction* _switchToPlotAction;
+	QAction* _switchToTableAction;
 	QAction* _exportSeriesToFileAction;
 };
 

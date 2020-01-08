@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,8 +25,10 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/ParticleBondMap.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
+#include <ovito/stdobj/series/DataSeriesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
+#include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "ClusterAnalysisModifier.h"
 
@@ -37,10 +39,14 @@ DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, neighborMode);
 DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, cutoff);
 DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, onlySelectedParticles);
 DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, sortBySize);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, unwrapParticleCoordinates);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, computeCentersOfMass);
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, neighborMode, "Neighbor mode");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, cutoff, "Cutoff distance");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, onlySelectedParticles, "Use only selected particles");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, sortBySize, "Sort clusters by size");
+SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, unwrapParticleCoordinates, "Unwrap particle coordinates");
+SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, computeCentersOfMass, "Compute centers of mass");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ClusterAnalysisModifier, cutoff, WorldParameterUnit, 0);
 
 /******************************************************************************
@@ -50,7 +56,9 @@ ClusterAnalysisModifier::ClusterAnalysisModifier(DataSet* dataset) : Asynchronou
 	_cutoff(3.2),
 	_onlySelectedParticles(false),
 	_sortBySize(false),
-	_neighborMode(CutoffRange)
+	_neighborMode(CutoffRange),
+	_unwrapParticleCoordinates(false),
+	_computeCentersOfMass(false)
 {
 }
 
@@ -82,11 +90,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(neighborMode() == CutoffRange) {
-		return std::make_shared<CutoffClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
+		return std::make_shared<CutoffClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), unwrapParticleCoordinates(), computeCentersOfMass(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
 		particles->expectBonds()->verifyIntegrity();
-		return std::make_shared<BondClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), particles->expectBondsTopology()->storage());
+		return std::make_shared<BondClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), unwrapParticleCoordinates(), computeCentersOfMass(), std::move(selectionProperty), particles->expectBondsTopology()->storage());
 	}
 	else {
 		throwException(tr("Invalid cluster neighbor mode"));
@@ -108,31 +116,39 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 	if(task()->isCanceled())
 		return;
 
+	// Determine cluster sizes.
+	_clusterSizes = std::make_shared<PropertyStorage>(numClusters() + 1, PropertyStorage::Int64, 1, 0, QStringLiteral("Particle Count"), true, DataSeriesObject::YProperty);
+	PropertyAccess<qlonglong> clusterSizeArray(_clusterSizes);
+	for(auto id : ConstPropertyAccess<qlonglong>(particleClusters())) {
+		clusterSizeArray[id]++;
+	}
+	if(task()->isCanceled())
+		return;
+
 	// Sort clusters by size.
 	if(_sortBySize && numClusters() != 0) {
-		PropertyAccess<qlonglong> particleClusters(this->particleClusters());
 
-		// Determine cluster sizes.
-		std::vector<size_t> clusterSizes(numClusters() + 1, 0);
-		for(auto id : particleClusters) {
-			clusterSizes[id]++;
+		// Determine new cluster ordering.
+		std::vector<size_t> mapping(clusterSizeArray.size());
+		std::iota(mapping.begin(), mapping.end(), size_t(0));
+		std::sort(mapping.begin() + 1, mapping.end(), [&](size_t a, size_t b) {
+			return clusterSizeArray[a] > clusterSizeArray[b];
+		});
+		std::sort(clusterSizeArray.begin() + 1, clusterSizeArray.end(), std::greater<>());
+		setLargestClusterSize(clusterSizeArray[1]);
+
+		// Reorder centers of mass.
+		if(_computeCentersOfMass) {
+			PropertyPtr oldCentersOfMass = _centersOfMass;
+			PropertyStorage::makeMutable(_centersOfMass);
+			oldCentersOfMass->mappedCopyTo(*_centersOfMass, mapping);
 		}
 
-		// Sort clusters by size.
-		std::vector<size_t> mapping(numClusters() + 1);
-		std::iota(mapping.begin(), mapping.end(), size_t(0));
-		std::sort(mapping.begin() + 1, mapping.end(), [&clusterSizes](size_t a, size_t b) {
-			return clusterSizes[a] > clusterSizes[b];
-		});
-		setLargestClusterSize(clusterSizes[mapping[1]]);
-		clusterSizes.clear();
-		clusterSizes.shrink_to_fit();
-
-		// Remap cluster IDs.
+		// Remap cluster IDs of particles.
 		std::vector<size_t> inverseMapping(numClusters() + 1);
 		for(size_t i = 0; i <= numClusters(); i++)
 			inverseMapping[mapping[i]] = i;
-		for(auto& id : particleClusters)
+		for(auto& id : PropertyAccess<qlonglong>(particleClusters()))
 			id = inverseMapping[id];
 	}
 }
@@ -150,9 +166,12 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 	size_t particleCount = positions()->size();
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(particleCount);
+	size_t progress = 0;
 
 	PropertyAccess<qlonglong> particleClusters(this->particleClusters());
 	ConstPropertyAccess<int> selectionData(selection());
+	PropertyAccess<Point3> unwrappedCoordinates(_unwrappedPositions);
+	PropertyAccess<Point3> comArray(_centersOfMass);
 
 	std::deque<size_t> toProcess;
 	for(size_t seedParticleIndex = 0; seedParticleIndex < particleCount; seedParticleIndex++) {
@@ -160,6 +179,7 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 		// Skip unselected particles that are not included in the analysis.
 		if(selectionData && !selectionData[seedParticleIndex]) {
 			particleClusters[seedParticleIndex] = 0;
+			progress++;
 			continue;
 		}
 
@@ -171,14 +191,15 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 		setNumClusters(numClusters() + 1);
 		qlonglong cluster = numClusters();
 		particleClusters[seedParticleIndex] = cluster;
+		Vector3 centerOfMass = Vector3::Zero();
+		size_t clusterSize = 1;
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
 		OVITO_ASSERT(toProcess.empty());
 		toProcess.push_back(seedParticleIndex);
 
 		do {
-			task()->incrementProgressValue();
-			if(task()->isCanceled())
+			if(!task()->setProgressValueIntermittent(progress++))
 				return;
 
 			size_t currentParticle = toProcess.front();
@@ -188,10 +209,20 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 				if(particleClusters[neighborIndex] == -1) {
 					particleClusters[neighborIndex] = cluster;
 					toProcess.push_back(neighborIndex);
+					if(unwrappedCoordinates) {
+						unwrappedCoordinates[neighborIndex] = unwrappedCoordinates[currentParticle] + neighQuery.delta();
+						centerOfMass += unwrappedCoordinates[neighborIndex] - Point3::Origin();
+						clusterSize++;
+					}
 				}
 			}
 		}
 		while(toProcess.empty() == false);
+
+		if(_centersOfMass) {
+			_centersOfMass->grow(1);
+			comArray[comArray.size() - 1] = unwrappedCoordinates[seedParticleIndex] + (centerOfMass / clusterSize);
+		}
 	}
 }
 
@@ -203,6 +234,7 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 	size_t particleCount = positions()->size();
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(particleCount);
+	size_t progress = 0;
 
 	// Prepare particle bond map.
 	ParticleBondMap bondMap(bondTopology());
@@ -210,6 +242,8 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 	PropertyAccess<qlonglong> particleClusters(this->particleClusters());
 	ConstPropertyAccess<int> selectionData(this->selection());
 	ConstPropertyAccess<ParticleIndexPair> bondTopology(this->bondTopology());
+	PropertyAccess<Point3> unwrappedCoordinates(_unwrappedPositions);
+	PropertyAccess<Point3> comArray(_centersOfMass);
 
 	std::deque<size_t> toProcess;
 	for(size_t seedParticleIndex = 0; seedParticleIndex < particleCount; seedParticleIndex++) {
@@ -217,6 +251,7 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 		// Skip unselected particles that are not included in the analysis.
 		if(selectionData && !selectionData[seedParticleIndex]) {
 			particleClusters[seedParticleIndex] = 0;
+			progress++;
 			continue;
 		}
 
@@ -228,14 +263,15 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 		setNumClusters(numClusters() + 1);
 		qlonglong cluster = numClusters();
 		particleClusters[seedParticleIndex] = cluster;
+		Vector3 centerOfMass = Vector3::Zero();
+		size_t clusterSize = 1;
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
 		OVITO_ASSERT(toProcess.empty());
 		toProcess.push_back(seedParticleIndex);
 
 		do {
-			task()->incrementProgressValue();
-			if(task()->isCanceled())
+			if(!task()->setProgressValueIntermittent(progress++))
 				return;
 
 			size_t currentParticle = toProcess.front();
@@ -256,9 +292,21 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 
 				particleClusters[neighborIndex] = cluster;
 				toProcess.push_back(neighborIndex);
+
+				if(unwrappedCoordinates) {
+					Vector3 delta = cell().wrapVector(unwrappedCoordinates[neighborIndex] - unwrappedCoordinates[currentParticle]);
+					unwrappedCoordinates[neighborIndex] = unwrappedCoordinates[currentParticle] + delta;
+					centerOfMass += unwrappedCoordinates[neighborIndex] - Point3::Origin();
+					clusterSize++;
+				}
 			}
 		}
 		while(toProcess.empty() == false);
+
+		if(_centersOfMass) {
+			_centersOfMass->grow(1);
+			comArray[comArray.size() - 1] = unwrappedCoordinates[seedParticleIndex] + (centerOfMass / clusterSize);
+		}
 	}
 }
 
@@ -274,11 +322,24 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::emitResults(TimePoint time,
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
+	// Output the cluster assignment.
 	particles->createProperty(particleClusters());
+
+	// Output unwrapped particle coordinates.
+	if(modifier->unwrapParticleCoordinates() && _unwrappedPositions)
+		particles->createProperty(_unwrappedPositions);
 
 	state.addAttribute(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()), modApp);
 	if(modifier->sortBySize())
 		state.addAttribute(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()), modApp);
+
+	// Output a data series object with cluster list.
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("clusters"), modApp, DataSeriesObject::Scatter, tr("Clusters"), _clusterSizes);
+	seriesObj->setAxisLabelX(tr("Cluster ID"));
+
+	// Output centers of mass.
+	if(modifier->computeCentersOfMass() && _centersOfMass)
+		seriesObj->createProperty(_centersOfMass);
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s).", "", numClusters())));
 }

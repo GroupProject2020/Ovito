@@ -46,10 +46,10 @@ bool XYZExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 	size_t atomsCount = particles->elementCount();
 	textStream() << atomsCount << '\n';
 
-	const OutputColumnMapping& mapping = columnMapping();
+	const ParticlesOutputColumnMapping& mapping = columnMapping();
 	if(mapping.empty())
 		throwException(tr("No particle properties have been selected for export to the XYZ file. Cannot write file with zero columns."));
-	OutputColumnWriter columnWriter(mapping, state, true);
+	PropertyOutputWriter columnWriter(mapping, particles, PropertyOutputWriter::WriteNamesUnderscore);
 
 	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 
@@ -165,7 +165,7 @@ bool XYZExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
 
 	operation.setProgressMaximum(atomsCount);
 	for(size_t i = 0; i < atomsCount; i++) {
-		columnWriter.writeParticle(i, textStream());
+		columnWriter.writeElement(i, textStream());
 
 		if(!operation.setProgressValueIntermittent(i))
 			return false;

@@ -24,10 +24,12 @@
 
 
 #include <ovito/particles/Particles.h>
+#include <ovito/stdobj/io/PropertyOutputWriter.h>
 #include "ParticleExporter.h"
-#include "OutputColumnMapping.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
+
+using ParticlesOutputColumnMapping = TypedOutputColumnMapping<ParticlesObject>;
 
 /**
  * \brief Abstract base class for export services that can export an arbitrary list of particle properties.
@@ -45,10 +47,10 @@ protected:
 public:
 
 	/// \brief Returns the mapping of particle properties to output file columns.
-	const OutputColumnMapping& columnMapping() const { return _columnMapping; }
+	const ParticlesOutputColumnMapping& columnMapping() const { return _columnMapping; }
 
 	/// \brief Sets the mapping of particle properties to output file columns.
-	void setColumnMapping(const OutputColumnMapping& mapping) { _columnMapping = mapping; }
+	void setColumnMapping(const ParticlesOutputColumnMapping& mapping) { _columnMapping = mapping; }
 
 	/// \brief Loads the user-defined default values of this object's parameter fields from the
 	///        application's settings store.
@@ -56,14 +58,16 @@ public:
 
 public:
 
-	Q_PROPERTY(Ovito::Particles::OutputColumnMapping columnMapping READ columnMapping WRITE setColumnMapping);
+	Q_PROPERTY(Ovito::Particles::ParticlesOutputColumnMapping columnMapping READ columnMapping WRITE setColumnMapping);
 
 private:
 
 	/// The mapping of particle properties to output file columns.
-	OutputColumnMapping _columnMapping;
+	ParticlesOutputColumnMapping _columnMapping;
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::Particles::ParticlesOutputColumnMapping);

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,10 +20,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/particles/Particles.h>
-#include "OutputColumnMapping.h"
+#include <ovito/stdobj/StdObj.h>
+#include "PropertyOutputWriter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
+namespace Ovito { namespace StdObj {
 
 /******************************************************************************
  * Saves the mapping to the given stream.
@@ -32,7 +32,7 @@ void OutputColumnMapping::saveToStream(SaveStream& stream) const
 {
 	stream.beginChunk(0x01);
 	stream << (int)size();
-	for(const ParticlePropertyReference& col : *this) {
+	for(const PropertyReference& col : *this) {
 		stream << col;
 	}
 	stream.endChunk();
@@ -47,7 +47,7 @@ void OutputColumnMapping::loadFromStream(LoadStream& stream)
 	int numColumns;
 	stream >> numColumns;
 	resize(numColumns);
-	for(ParticlePropertyReference& col : *this) {
+	for(PropertyReference& col : *this) {
 		stream >> col;
 	}
 	stream.closeChunk();
@@ -80,25 +80,22 @@ void OutputColumnMapping::fromByteArray(const QByteArray& array)
 /******************************************************************************
  * Initializes the writer object.
  *****************************************************************************/
-OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const PipelineFlowState& source, bool writeTypeNames)
-	: _mapping(mapping), _source(source), _writeTypeNames(writeTypeNames)
+PropertyOutputWriter::PropertyOutputWriter(const OutputColumnMapping& mapping, const PropertyContainer* sourceContainer, TypedPropertyMode typedPropertyMode)
+	: _typedPropertyMode(typedPropertyMode)
 {
-	const ParticlesObject* particles = source.expectObject<ParticlesObject>();
-
 	// Gather the source properties.
 	for(int i = 0; i < (int)mapping.size(); i++) {
-		const ParticlePropertyReference& pref = mapping[i];
-
-		const PropertyObject* property = pref.findInContainer(particles);
-		if(property == nullptr && pref.type() != ParticlesObject::IdentifierProperty) {
+		const PropertyReference& pref = mapping[i];
+		const PropertyObject* property = pref.findInContainer(sourceContainer);
+		if(property == nullptr && pref.type() != PropertyStorage::GenericIdentifierProperty) {
 			throw Exception(tr("The specified list of output file columns is invalid. "
 			                   "The property '%2', which is needed to write file column %1, does not exist or could not be computed.").arg(i+1).arg(pref.name()));
 		}
 		if(property) {
 			if((int)property->componentCount() <= std::max(0, pref.vectorComponent()))
-				throw Exception(tr("The output vector component selected for column %1 is out of range. The particle property '%2' has only %3 component(s).").arg(i+1).arg(pref.name()).arg(property->componentCount()));
+				throw Exception(tr("The output vector component selected for column %1 is out of range. The property '%2' has only %3 component(s).").arg(i+1).arg(pref.name()).arg(property->componentCount()));
 			if(property->dataType() == QMetaType::Void)
-				throw Exception(tr("The particle property '%1' cannot be written to the output file, because it is empty.").arg(pref.name()));
+				throw Exception(tr("The property '%1' cannot be written to the output file, because it is empty.").arg(pref.name()));
 		}
 
 		// Build internal list of property objects for fast look up during writing.
@@ -109,9 +106,9 @@ OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const
 }
 
 /******************************************************************************
- * Writes the data record for a single atom to the output stream.
+ * Writes the data record for a single data element to the output stream.
  *****************************************************************************/
-void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWriter& stream)
+void PropertyOutputWriter::writeElement(size_t index, CompressedTextWriter& stream)
 {
 	QVector<const PropertyObject*>::const_iterator property = _properties.constBegin();
 	QVector<int>::const_iterator vcomp = _vectorComponents.constBegin();
@@ -120,40 +117,51 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 		if(property != _properties.constBegin()) stream << ' ';
 		if(*property) {
 			if((*property)->dataType() == PropertyStorage::Int) {
-				if(!_writeTypeNames || (*property)->type() != ParticlesObject::TypeProperty) {
-					stream << *reinterpret_cast<const int*>(array->cdata(particleIndex, *vcomp));
+				if(_typedPropertyMode == WriteNumericIds || (*property)->elementTypes().empty()) {
+					stream << *reinterpret_cast<const int*>(array->cdata(index, *vcomp));
 				}
 				else {
 					// Write type name instead of type number.
-					// Replace spaces in the name with underscores.
-					int particleTypeId = *reinterpret_cast<const int*>(array->cdata(particleIndex, *vcomp));
-					const ElementType* type = (*property)->elementType(particleTypeId);
+					int numericTypeId = *reinterpret_cast<const int*>(array->cdata(index, *vcomp));
+					const ElementType* type = (*property)->elementType(numericTypeId);
 					if(type && !type->name().isEmpty()) {
-						QString s = type->name();
-						stream << s.replace(QChar(' '), QChar('_'));
+						if(_typedPropertyMode == WriteNamesUnmodified) {
+							stream << type->name();
+						}
+						else if(_typedPropertyMode == WriteNamesUnderscore) {
+							// Replace spaces in the name with underscores.
+							QString s = type->name();
+							stream << s.replace(QChar(' '), QChar('_'));
+						}
+						else if(_typedPropertyMode == WriteNamesInQuotes) {
+							// Surround name with quotes if necessary.
+							if(type->name().contains(QChar(' ')))
+								stream << QChar('"') << type->name() << QChar('"');
+							else
+								stream << type->name();
+						}
 					}
 					else {
-						stream << particleTypeId;
+						stream << numericTypeId;
 					}
 				}
 			}
 			else if((*property)->dataType() == PropertyStorage::Int64) {
-				stream << *reinterpret_cast<const qlonglong*>(array->cdata(particleIndex, *vcomp));
+				stream << *reinterpret_cast<const qlonglong*>(array->cdata(index, *vcomp));
 			}
 			else if((*property)->dataType() == PropertyStorage::Float) {
-				stream << *reinterpret_cast<const FloatType*>(array->cdata(particleIndex, *vcomp));
+				stream << *reinterpret_cast<const FloatType*>(array->cdata(index, *vcomp));
 			}
 			else {
 				throw Exception(tr("The property '%1' cannot be written to the output file, because it has a non-standard data type.").arg((*property)->name()));
 			}
 		}
 		else {
-			stream << (particleIndex + 1);
+			stream << (index + 1);
 		}
 	}
 	stream << '\n';
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

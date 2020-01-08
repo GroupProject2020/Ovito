@@ -54,7 +54,7 @@ public:
 	virtual void deactivate(MainWindow* mainWindow) {}
 
 	/// Selects a specific data object in this applet.
-	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint) { return false; }
+	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint) { return false; }
 
 public:
 

@@ -82,7 +82,6 @@ SET(SourceFiles
 	import/cif/CIFImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp
-	export/OutputColumnMapping.cpp
 	export/vasp/POSCARExporter.cpp
 	export/fhi_aims/FHIAimsExporter.cpp
 	export/lammps/LAMMPSDataExporter.cpp

@@ -62,13 +62,13 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 	toolbar->setStyleSheet("QToolBar { padding: 0px; margin: 0px; border: 0px none black; spacing: 0px; }");
 
 	QActionGroup* plotTypeActionGroup = new QActionGroup(this);
-	QAction* switchToPlotAction = plotTypeActionGroup->addAction(QIcon(":/gui/mainwin/inspector/show_chart.svg"), tr("Chart view"));
-	QAction* switchToTableAction = plotTypeActionGroup->addAction(QIcon(":/gui/mainwin/inspector/table_chart.svg"), tr("Data table view"));
-	toolbar->addAction(switchToPlotAction);
-	toolbar->addAction(switchToTableAction);
-	switchToPlotAction->setCheckable(true);
-	switchToTableAction->setCheckable(true);
-	switchToPlotAction->setChecked(true);
+	_switchToPlotAction = plotTypeActionGroup->addAction(QIcon(":/gui/mainwin/inspector/show_chart.svg"), tr("Chart view"));
+	_switchToTableAction = plotTypeActionGroup->addAction(QIcon(":/gui/mainwin/inspector/table_chart.svg"), tr("Data table view"));
+	toolbar->addAction(_switchToPlotAction);
+	toolbar->addAction(_switchToTableAction);
+	_switchToPlotAction->setCheckable(true);
+	_switchToTableAction->setCheckable(true);
+	_switchToPlotAction->setChecked(true);
 	toolbar->addSeparator();
 
 	_exportSeriesToFileAction = new QAction(QIcon(":/gui/actions/file/file_save_as.bw.svg"), tr("Export data plot"), this);
@@ -79,11 +79,11 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 	rightLayout->addWidget(_stackedWidget, 1);
 	rightLayout->addWidget(toolbar, 0);
 
-	connect(switchToPlotAction, &QAction::triggered, this, [this]() {
+	connect(_switchToPlotAction, &QAction::triggered, this, [this]() {
 		_stackedWidget->setCurrentIndex(0);
 		_exportSeriesToFileAction->setToolTip(tr("Export data plot"));
 	});
-	connect(switchToTableAction, &QAction::triggered, this, [this]() {
+	connect(_switchToTableAction, &QAction::triggered, this, [this]() {
 		_stackedWidget->setCurrentIndex(1);
 		_exportSeriesToFileAction->setToolTip(tr("Export data to text file"));
 	});
@@ -107,6 +107,28 @@ void SeriesInspectionApplet::currentContainerChanged()
 
 	// Update actions.
 	_exportSeriesToFileAction->setEnabled(plotWidget()->series() != nullptr);
+}
+
+/******************************************************************************
+* Selects a specific data object in this applet.
+******************************************************************************/
+bool SeriesInspectionApplet::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint)
+{
+	// Let the base class switch to the right data series object. 
+	bool result = PropertyInspectionApplet::selectDataObject(dataSource, objectIdentifierHint, modeHint);
+	
+	if(result) {
+		// The mode hint is used to switch between plot and table view.
+		int mode = modeHint.toInt();
+		if(mode == 0) {
+			_switchToPlotAction->trigger(); // Plot view
+		}
+		else {
+			_switchToTableAction->trigger(); // Table view
+		}
+	}
+
+	return result;
 }
 
 /******************************************************************************

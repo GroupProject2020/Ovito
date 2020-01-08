@@ -125,15 +125,24 @@ ConstPropertyPtr DataSeriesObject::getXStorage() const
 		return xStorage;
 	}
 	else if(const PropertyObject* yProperty = getY()) {
-		auto xstorage = OOClass().createStandardStorage(elementCount(), XProperty, false);
-		PropertyAccess<FloatType> xdata(xstorage);
-		FloatType binSize = (intervalEnd() - intervalStart()) / xdata.size();
-		FloatType x = intervalStart() + binSize * FloatType(0.5);
-		for(FloatType& v : xdata) {
-			v = x;
-			x += binSize;
+		if(intervalStart() != 0 || intervalEnd() != 0) {
+			auto xstorage = OOClass().createStandardStorage(elementCount(), XProperty, false);
+			xstorage->setName(axisLabelX());
+			PropertyAccess<FloatType> xdata(xstorage);
+			FloatType binSize = (intervalEnd() - intervalStart()) / xdata.size();
+			FloatType x = intervalStart() + binSize * FloatType(0.5);
+			for(FloatType& v : xdata) {
+				v = x;
+				x += binSize;
+			}
+			return std::move(xstorage);
 		}
-		return std::move(xstorage);
+		else {
+			auto xstorage = std::make_shared<PropertyStorage>(elementCount(), PropertyStorage::Int64, 1, 0, axisLabelX(), false, DataSeriesObject::XProperty);
+			PropertyAccess<qlonglong> xdata(xstorage);
+			std::iota(xdata.begin(), xdata.end(), (size_t)0);
+			return std::move(xstorage);
+		}
 	}
 	else {
 		return {};

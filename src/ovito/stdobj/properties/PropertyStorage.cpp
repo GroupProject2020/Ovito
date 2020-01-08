@@ -377,6 +377,7 @@ void PropertyStorage::mappedCopyFrom(const PropertyStorage& source, const std::v
 {
 	OVITO_ASSERT(source.size() == mapping.size());
 	OVITO_ASSERT(stride() == source.stride());
+	OVITO_ASSERT(&source != this);
 
 	// Optimize copying operation for the most common property types.
 	if(stride() == sizeof(FloatType)) {
@@ -453,6 +454,7 @@ void PropertyStorage::mappedCopyTo(PropertyStorage& destination, const std::vect
 {
 	OVITO_ASSERT(destination.size() == mapping.size());
 	OVITO_ASSERT(this->stride() == destination.stride());
+	OVITO_ASSERT(&destination != this);
 
 	// Optimize copying operation for the most common property types.
 	if(stride() == sizeof(FloatType)) {
