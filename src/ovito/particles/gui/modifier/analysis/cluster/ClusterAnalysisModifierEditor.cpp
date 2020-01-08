@@ -48,6 +48,7 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 
 	QGridLayout* gridlayout = new QGridLayout();
 	gridlayout->setContentsMargins(4,4,4,4);
+	gridlayout->setVerticalSpacing(6);
 	gridlayout->setColumnStretch(2, 1);
 	gridlayout->setColumnMinimumWidth(0, 10);
 	gridlayout->setRowMinimumHeight(3, 6);
@@ -78,9 +79,13 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	BooleanParameterUI* unwrapParticleCoordinatesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::unwrapParticleCoordinates));
 	gridlayout->addWidget(unwrapParticleCoordinatesUI->checkBox(), 6, 0, 1, 3);
 
+	// Color particles by cluster.
+	BooleanParameterUI* colorParticlesByClusterUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::colorParticlesByCluster));
+	gridlayout->addWidget(colorParticlesByClusterUI->checkBox(), 7, 0, 1, 3);
+
 	// Use only selected particles.
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::onlySelectedParticles));
-	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 7, 0, 1, 3);
+	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 8, 0, 1, 3);
 
 	layout->addLayout(gridlayout);
 

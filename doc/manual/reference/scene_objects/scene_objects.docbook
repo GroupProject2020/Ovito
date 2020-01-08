@@ -87,5 +87,6 @@
   <xi:include href="triangle_mesh.docbook"/>
   <xi:include href="particle_trajectory_lines.docbook"/>
   <xi:include href="dislocations.docbook"/>
+  <xi:include href="data_series.docbook"/>
 
 </section>
