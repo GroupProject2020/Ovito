@@ -274,8 +274,9 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 		while(toProcess.empty() == false);
 
 		if(_centersOfMass) {
+			centerOfMass += unwrappedCoordinates[seedParticleIndex] - Point3::Origin();
 			_centersOfMass->grow(1);
-			comArray[comArray.size() - 1] = unwrappedCoordinates[seedParticleIndex] + (centerOfMass / clusterSize);
+			comArray[comArray.size() - 1] = Point3::Origin() + (centerOfMass / clusterSize);
 		}
 	}
 }
@@ -358,13 +359,12 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 		while(toProcess.empty() == false);
 
 		if(_centersOfMass) {
-			_centersOfMass->grow(1);
 			centerOfMass += unwrappedCoordinates[seedParticleIndex] - Point3::Origin();
+			_centersOfMass->grow(1);
 			comArray[comArray.size() - 1] = Point3::Origin() + (centerOfMass / clusterSize);
 		}
 	}
 }
-
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
