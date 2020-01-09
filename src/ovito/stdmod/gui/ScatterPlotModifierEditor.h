@@ -25,7 +25,7 @@
 
 #include <ovito/stdmod/gui/StdModGui.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlotZoneItem;
@@ -58,7 +58,7 @@ protected Q_SLOTS:
 private:
 
 	/// The graph widget to display the plot.
-	DataSeriesPlotWidget* _plotWidget;
+	DataTablePlotWidget* _plotWidget;
 
 	/// Marks the range of selected points in the X direction.
 	QwtPlotZoneItem* _selectionRangeIndicatorX;

@@ -22,7 +22,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/DataSet.h>
@@ -239,10 +239,10 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::emitResults(TimeP
 	particles->createProperty(coordinationNumbers());
 
 	// Output RDF histogram(s).
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("coordination-rdf"), modApp, DataSeriesObject::Line, tr("Radial distribution function"), rdfY());
-	seriesObj->setIntervalStart(0);
-	seriesObj->setIntervalEnd(cutoff());
-	seriesObj->setAxisLabelX(tr("Pair separation distance"));
+	DataTable* table = state.createObject<DataTable>(QStringLiteral("coordination-rdf"), modApp, DataTable::Line, tr("Radial distribution function"), rdfY());
+	table->setIntervalStart(0);
+	table->setIntervalEnd(cutoff());
+	table->setAxisLabelX(tr("Pair separation distance"));
 }
 
 OVITO_END_INLINE_NAMESPACE

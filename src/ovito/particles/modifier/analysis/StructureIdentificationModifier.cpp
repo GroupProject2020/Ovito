@@ -23,7 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/particles/objects/ParticlesObject.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "StructureIdentificationModifier.h"
@@ -162,16 +162,16 @@ void StructureIdentificationModifier::StructureIdentificationEngine::emitResults
 	}
 
 	// Create the property arrays for the bar chart.
-	PropertyPtr typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), false, DataSeriesObject::YProperty);
+	PropertyPtr typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), false, DataTable::YProperty);
 	boost::copy(_typeCounts, PropertyAccess<qlonglong>(typeCounts).begin());
-	PropertyPtr typeIds = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int, 1, 0, tr("Structure type"), false, DataSeriesObject::XProperty);
+	PropertyPtr typeIds = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int, 1, 0, tr("Structure type"), false, DataTable::XProperty);
 	boost::algorithm::iota_n(PropertyAccess<int>(typeIds).begin(), 0, typeIds->size());
 
 	// Output a bar chart with the type counts.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), std::move(typeCounts), std::move(typeIds));
+	DataTable* table = state.createObject<DataTable>(QStringLiteral("structures"), modApp, DataTable::BarChart, tr("Structure counts"), std::move(typeCounts), std::move(typeIds));
 
 	// Use the structure types as labels for the output bar chart.
-	PropertyObject* xProperty = seriesObj->expectMutableProperty(DataSeriesObject::XProperty);
+	PropertyObject* xProperty = table->expectMutableProperty(DataTable::XProperty);
 	for(const ElementType* type : modifier->structureTypes()) {
 		if(type->enabled())
 			xProperty->addElementType(type);

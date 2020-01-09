@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,29 +21,29 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdobj/gui/StdObjGui.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
-#include "DataSeriesPlotExporter.h"
+#include "DataTablePlotExporter.h"
 
 #include <qwt/qwt_plot_renderer.h>
 
 namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(DataSeriesPlotExporter);
-DEFINE_PROPERTY_FIELD(DataSeriesPlotExporter, plotWidth);
-DEFINE_PROPERTY_FIELD(DataSeriesPlotExporter, plotHeight);
-DEFINE_PROPERTY_FIELD(DataSeriesPlotExporter, plotDPI);
-SET_PROPERTY_FIELD_LABEL(DataSeriesPlotExporter, plotWidth, "Width (mm)");
-SET_PROPERTY_FIELD_LABEL(DataSeriesPlotExporter, plotHeight, "Height (mm)");
-SET_PROPERTY_FIELD_LABEL(DataSeriesPlotExporter, plotDPI, "Resolution (DPI)");
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DataSeriesPlotExporter, plotWidth, FloatParameterUnit, 1);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DataSeriesPlotExporter, plotHeight, FloatParameterUnit, 1);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DataSeriesPlotExporter, plotDPI, IntegerParameterUnit, 1);
+IMPLEMENT_OVITO_CLASS(DataTablePlotExporter);
+DEFINE_PROPERTY_FIELD(DataTablePlotExporter, plotWidth);
+DEFINE_PROPERTY_FIELD(DataTablePlotExporter, plotHeight);
+DEFINE_PROPERTY_FIELD(DataTablePlotExporter, plotDPI);
+SET_PROPERTY_FIELD_LABEL(DataTablePlotExporter, plotWidth, "Width (mm)");
+SET_PROPERTY_FIELD_LABEL(DataTablePlotExporter, plotHeight, "Height (mm)");
+SET_PROPERTY_FIELD_LABEL(DataTablePlotExporter, plotDPI, "Resolution (DPI)");
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DataTablePlotExporter, plotWidth, FloatParameterUnit, 1);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DataTablePlotExporter, plotHeight, FloatParameterUnit, 1);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DataTablePlotExporter, plotDPI, IntegerParameterUnit, 1);
 
 /******************************************************************************
 * Constructs a new instance of the class.
 ******************************************************************************/
-DataSeriesPlotExporter::DataSeriesPlotExporter(DataSet* dataset) : FileExporter(dataset),
+DataTablePlotExporter::DataTablePlotExporter(DataSet* dataset) : FileExporter(dataset),
 	_plotWidth(150),
 	_plotHeight(100),
 	_plotDPI(200)
@@ -53,7 +53,7 @@ DataSeriesPlotExporter::DataSeriesPlotExporter(DataSet* dataset) : FileExporter(
 /******************************************************************************
  * This is called once for every output file to be written.
  *****************************************************************************/
-bool DataSeriesPlotExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool DataTablePlotExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	_outputFile.setFileName(filePath);
@@ -64,7 +64,7 @@ bool DataSeriesPlotExporter::openOutputFile(const QString& filePath, int numberO
 /******************************************************************************
  * This is called once for every output file written .
  *****************************************************************************/
-void DataSeriesPlotExporter::closeOutputFile(bool exportCompleted)
+void DataTablePlotExporter::closeOutputFile(bool exportCompleted)
 {
 	if(!exportCompleted)
 		_outputFile.remove();
@@ -73,25 +73,26 @@ void DataSeriesPlotExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool DataSeriesPlotExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool DataTablePlotExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
 	// Evaluate pipeline.
 	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
 	if(operation.isCanceled())
 		return false;
 
-	// Look up the DataSeries to be exported in the pipeline state.
-	DataObjectReference objectRef(&DataSeriesObject::OOClass(), dataObjectToExport().dataPath());
-	const DataSeriesObject* series = static_object_cast<DataSeriesObject>(state.getLeafObject(objectRef));
-	if(!series) {
-		throwException(tr("The pipeline output does not contain the data series to be exported (animation frame: %1; object key: %2). Available data series keys: (%3)")
-			.arg(frameNumber).arg(objectRef.dataPath()).arg(getAvailableDataObjectList(state, DataSeriesObject::OOClass())));
+	// Look up the DataTable to be exported in the pipeline state.
+	DataObjectReference objectRef(&DataTable::OOClass(), dataObjectToExport().dataPath());
+	const DataTable* table = static_object_cast<DataTable>(state.getLeafObject(objectRef));
+	if(!table) {
+		throwException(tr("The pipeline output does not contain the data table to be exported (animation frame: %1; object key: %2). Available data tables: (%3)")
+			.arg(frameNumber).arg(objectRef.dataPath()).arg(getAvailableDataObjectList(state, DataTable::OOClass())));
 	}
+	table->verifyIntegrity();
 
 	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
-	DataSeriesPlotWidget plotWidget;
-	plotWidget.setSeries(series);
+	DataTablePlotWidget plotWidget;
+	plotWidget.setTable(table);
 	plotWidget.axisScaleDraw(QwtPlot::yLeft)->setPenWidth(1);
 	plotWidget.axisScaleDraw(QwtPlot::xBottom)->setPenWidth(1);
 	QwtPlotRenderer plotRenderer;

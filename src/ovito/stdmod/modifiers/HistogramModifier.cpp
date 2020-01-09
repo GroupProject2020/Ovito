@@ -26,7 +26,7 @@
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "HistogramModifier.h"
@@ -169,7 +169,7 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 	FloatType intervalEnd = xAxisRangeEnd();
 
 	// Allocate output data array.
-	PropertyAccessAndRef<qlonglong> histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
+	PropertyAccessAndRef<qlonglong> histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataTable::YProperty);
 	qlonglong* histogramData = histogram.begin();
 	int histogramSizeMin1 = histogram.size() - 1;
 
@@ -311,14 +311,14 @@ void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication*
 		intervalStart = intervalEnd = 0;
 	}
 
-	// Output a data series object with the histogram data.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(
+	// Output a data table with the histogram data.
+	DataTable* table = state.createObject<DataTable>(
 		QStringLiteral("histogram[%1]").arg(sourceProperty().nameWithComponent()), 
-		modApp, DataSeriesObject::Histogram, sourceProperty().nameWithComponent(), 
+		modApp, DataTable::Histogram, sourceProperty().nameWithComponent(), 
 		histogram.takeStorage());
-	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
-	seriesObj->setIntervalStart(intervalStart);
-	seriesObj->setIntervalEnd(intervalEnd);
+	table->setAxisLabelX(sourceProperty().nameWithComponent());
+	table->setIntervalStart(intervalStart);
+	table->setIntervalEnd(intervalEnd);
 
 	QString statusMessage;
 	if(outputSelection) {

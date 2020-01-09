@@ -26,7 +26,7 @@
 #include <ovito/stdmod/gui/StdModGui.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 #include <ovito/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlotZoneItem;
@@ -58,7 +58,7 @@ protected Q_SLOTS:
 private:
 
 	/// The graph widget to display the histogram.
-	DataSeriesPlotWidget* _plotWidget;
+	DataTablePlotWidget* _plotWidget;
 
 	/// The plot item for indicating the seletion range.
 	QwtPlotZoneItem* _selectionRangeIndicator;

@@ -37,8 +37,8 @@ OVITO_STANDARD_PLUGIN(StdObj
 		properties/ElementType.cpp
 		properties/GenericPropertyModifier.cpp
 		properties/PropertyExpressionEvaluator.cpp
-		series/DataSeriesObject.cpp
-		io/DataSeriesExporter.cpp
+		table/DataTable.cpp
+		io/DataTableExporter.cpp
 		io/PropertyOutputWriter.cpp
 		util/ElementSelectionSet.cpp
 	LIB_DEPENDENCIES

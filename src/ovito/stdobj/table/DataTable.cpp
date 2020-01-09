@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,34 +22,33 @@
 
 #include <ovito/stdobj/StdObj.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/stdobj/properties/PropertyAccess.h>
-#include "DataSeriesObject.h"
+#include "DataTable.h"
 
 namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(DataSeriesObject);
-DEFINE_PROPERTY_FIELD(DataSeriesObject, title);
-DEFINE_PROPERTY_FIELD(DataSeriesObject, intervalStart);
-DEFINE_PROPERTY_FIELD(DataSeriesObject, intervalEnd);
-DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelX);
-DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelY);
-DEFINE_PROPERTY_FIELD(DataSeriesObject, plotMode);
-SET_PROPERTY_FIELD_CHANGE_EVENT(DataSeriesObject, title, ReferenceEvent::TitleChanged);
+IMPLEMENT_OVITO_CLASS(DataTable);
+DEFINE_PROPERTY_FIELD(DataTable, title);
+DEFINE_PROPERTY_FIELD(DataTable, intervalStart);
+DEFINE_PROPERTY_FIELD(DataTable, intervalEnd);
+DEFINE_PROPERTY_FIELD(DataTable, axisLabelX);
+DEFINE_PROPERTY_FIELD(DataTable, axisLabelY);
+DEFINE_PROPERTY_FIELD(DataTable, plotMode);
+SET_PROPERTY_FIELD_CHANGE_EVENT(DataTable, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Registers all standard properties with the property traits class.
 ******************************************************************************/
-void DataSeriesObject::OOMetaClass::initialize()
+void DataTable::OOMetaClass::initialize()
 {
 	PropertyContainerClass::initialize();
 
-	// Enable automatic conversion of a DataSeriesPropertyReference to a generic PropertyReference and vice versa.
-	QMetaType::registerConverter<DataSeriesPropertyReference, PropertyReference>();
-	QMetaType::registerConverter<PropertyReference, DataSeriesPropertyReference>();
+	// Enable automatic conversion of a DataTablePropertyReference to a generic PropertyReference and vice versa.
+	QMetaType::registerConverter<DataTablePropertyReference, PropertyReference>();
+	QMetaType::registerConverter<PropertyReference, DataTablePropertyReference>();
 
-	setPropertyClassDisplayName(tr("Data series"));
+	setPropertyClassDisplayName(tr("Data table"));
 	setElementDescriptionName(QStringLiteral("points"));
-	setPythonName(QStringLiteral("series"));
+	setPythonName(QStringLiteral("table"));
 
 	const QStringList emptyList;
 	registerStandardProperty(XProperty, tr("X"), PropertyStorage::Float, emptyList);
@@ -57,9 +56,9 @@ void DataSeriesObject::OOMetaClass::initialize()
 }
 
 /******************************************************************************
-* Creates a storage object for standard data series properties.
+* Creates a storage object for standard data table properties.
 ******************************************************************************/
-PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath) const
+PropertyPtr DataTable::OOMetaClass::createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath) const
 {
 	int dataType;
 	size_t componentCount;
@@ -73,7 +72,7 @@ PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementC
 		stride = sizeof(FloatType);
 		break;
 	default:
-		OVITO_ASSERT_MSG(false, "DataSeriesObject::createStandardStorage()", "Invalid standard property type");
+		OVITO_ASSERT_MSG(false, "DataTable::createStandardStorage()", "Invalid standard property type");
 		throw Exception(tr("This is not a valid standard property type: %1").arg(type));
 	}
 
@@ -89,7 +88,7 @@ PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementC
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QString& title, PropertyPtr y, PropertyPtr x) : PropertyContainer(dataset),
+DataTable::DataTable(DataSet* dataset, PlotMode plotMode, const QString& title, PropertyPtr y, PropertyPtr x) : PropertyContainer(dataset),
 	_title(title),
 	_intervalStart(0),
 	_intervalEnd(0),
@@ -109,7 +108,7 @@ DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QS
 /******************************************************************************
 * Returns the display title of this object in the user interface.
 ******************************************************************************/
-QString DataSeriesObject::objectTitle() const
+QString DataTable::objectTitle() const
 {
 	return !title().isEmpty() ? title() : identifier();
 }
@@ -117,9 +116,9 @@ QString DataSeriesObject::objectTitle() const
 /******************************************************************************
 * Returns the data array containing the x-coordinates of the data points.
 * If no explicit x-coordinate data is available, the array is dynamically generated
-* from the x-axis interval set for this data series.
+* from the x-axis interval set for this data table.
 ******************************************************************************/
-ConstPropertyPtr DataSeriesObject::getXStorage() const
+ConstPropertyPtr DataTable::getXStorage() const
 {
 	if(ConstPropertyPtr xStorage = getPropertyStorage(XProperty)) {
 		return xStorage;
@@ -138,7 +137,7 @@ ConstPropertyPtr DataSeriesObject::getXStorage() const
 			return std::move(xstorage);
 		}
 		else {
-			auto xstorage = std::make_shared<PropertyStorage>(elementCount(), PropertyStorage::Int64, 1, 0, axisLabelX(), false, DataSeriesObject::XProperty);
+			auto xstorage = std::make_shared<PropertyStorage>(elementCount(), PropertyStorage::Int64, 1, 0, axisLabelX(), false, DataTable::XProperty);
 			PropertyAccess<qlonglong> xdata(xstorage);
 			std::iota(xdata.begin(), xdata.end(), (size_t)0);
 			return std::move(xstorage);

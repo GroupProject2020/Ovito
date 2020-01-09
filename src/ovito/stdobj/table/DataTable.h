@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,19 +30,19 @@
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief Data object that holds a series of data values for 2d plots.
+ * \brief A data object type that consists of a set of data columns, which are typically used to generate 2d data plots.
  */
-class OVITO_STDOBJ_EXPORT DataSeriesObject : public PropertyContainer
+class OVITO_STDOBJ_EXPORT DataTable : public PropertyContainer
 {
-	/// Define a new property metaclass for data series property containers.
-	class DataSeriesObjectClass : public PropertyContainerClass
+	/// Define a new property metaclass for data table property containers.
+	class DataTableClass : public PropertyContainerClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
 
-		/// Creates a storage object for standard data series properties.
+		/// Creates a storage object for standard data table properties.
 		virtual PropertyPtr createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
 
 	protected:
@@ -52,12 +52,12 @@ class OVITO_STDOBJ_EXPORT DataSeriesObject : public PropertyContainer
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(DataSeriesObject, DataSeriesObjectClass);
-	Q_CLASSINFO("DisplayName", "Data series");
+	OVITO_CLASS_META(DataTable, DataTableClass);
+	Q_CLASSINFO("DisplayName", "Data table");
 
 public:
 
-	/// \brief The list of standard data series properties.
+	/// \brief The list of standard data table properties.
 	enum Type {
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
 		XProperty = PropertyStorage::FirstSpecificProperty,
@@ -74,7 +74,7 @@ public:
 	Q_ENUMS(PlotMode);
 
 	/// Constructor.
-	Q_INVOKABLE DataSeriesObject(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), PropertyPtr y = {}, PropertyPtr x = {});
+	Q_INVOKABLE DataTable(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), PropertyPtr y = {}, PropertyPtr x = {});
 
 	/// Returns the property object containing the y-coordinates of the data points.
 	const PropertyObject* getY() const { return getProperty(Type::YProperty); }
@@ -87,7 +87,7 @@ public:
 
 	/// Returns the data array containing the x-coordinates of the data points.
 	/// If no explicit x-coordinate data is available, the array is dynamically generated
-	/// from the x-axis interval set for this data series.
+	/// from the x-axis interval set for this data table.
 	ConstPropertyPtr getXStorage() const;
 
 	//////////////////////////////// from RefTarget //////////////////////////////
@@ -97,7 +97,7 @@ public:
 
 private:
 
-	/// The title of the data series, which is shown in the user interface.
+	/// The title of the data table, which is shown in the user interface.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The lower bound of the x-interval of the histogram if data points have no explicit x-coordinates.
@@ -112,18 +112,18 @@ private:
 	/// The label of the y-axis (optional).
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, axisLabelY, setAxisLabelY);
 
-	/// The data plotting mode for this data series.
+	/// The plotting mode for this data table.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(PlotMode, plotMode, setPlotMode);
 };
 
 /**
- * Encapsulates a reference to a data series property.
+ * Encapsulates a reference to a data table property.
  */
-using DataSeriesPropertyReference = TypedPropertyReference<DataSeriesObject>;
+using DataTablePropertyReference = TypedPropertyReference<DataTable>;
 
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::StdObj::DataSeriesPropertyReference);
-Q_DECLARE_METATYPE(Ovito::StdObj::DataSeriesObject::PlotMode);
-Q_DECLARE_TYPEINFO(Ovito::StdObj::DataSeriesObject::PlotMode, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::StdObj::DataTablePropertyReference);
+Q_DECLARE_METATYPE(Ovito::StdObj::DataTable::PlotMode);
+Q_DECLARE_TYPEINFO(Ovito::StdObj::DataTable::PlotMode, Q_PRIMITIVE_TYPE);

@@ -26,7 +26,7 @@
 #include <ovito/stdmod/StdMod.h>
 #include <ovito/stdobj/properties/GenericPropertyModifier.h>
 #include <ovito/stdobj/properties/PropertyReference.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 
 namespace Ovito { namespace StdMod {
 

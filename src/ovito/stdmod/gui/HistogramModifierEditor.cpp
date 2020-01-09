@@ -77,7 +77,7 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 
 	layout->addLayout(gridlayout);
 
-	_plotWidget = new DataSeriesPlotWidget();
+	_plotWidget = new DataTablePlotWidget();
 	_plotWidget->setMinimumHeight(240);
 	_plotWidget->setMaximumHeight(240);
 	_selectionRangeIndicator = new QwtPlotZoneItem();
@@ -210,10 +210,10 @@ void HistogramModifierEditor::plotHistogram()
 		// Request the modifier's pipeline output.
 		const PipelineFlowState& state = getModifierOutput();
 
-		// Look up the generated data series in the modifier's pipeline output.
-		QString seriesName = QStringLiteral("histogram[%1]").arg(modifier->sourceProperty().nameWithComponent());
-		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), seriesName);
-		_plotWidget->setSeries(series);
+		// Look up the generated data table in the modifier's pipeline output.
+		QString tableName = QStringLiteral("histogram[%1]").arg(modifier->sourceProperty().nameWithComponent());
+		const DataTable* table = state.getObjectBy<DataTable>(modifierApplication(), tableName);
+		_plotWidget->setTable(table);
 	}
 	else {
 		_plotWidget->reset();

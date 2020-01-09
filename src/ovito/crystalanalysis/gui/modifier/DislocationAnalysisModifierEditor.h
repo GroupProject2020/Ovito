@@ -25,7 +25,7 @@
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 #include <ovito/gui/properties/RefTargetListParameterUI.h>
 
@@ -87,8 +87,8 @@ protected Q_SLOTS:
 
 private:
 
-	OORef<DataSeriesObject> _dislocationLengths;
-	OORef<DataSeriesObject> _dislocationCounts;
+	OORef<DataTable> _dislocationLengths;
+	OORef<DataTable> _dislocationCounts;
 };
 
 /**

@@ -460,7 +460,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 	}
 
 	// Averaged reciprocal space correlation function.
-	_reciprocalSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfWavevectorBins, PropertyStorage::Float, 1, 0, tr("C(q)"), true, DataSeriesObject::YProperty);
+	_reciprocalSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfWavevectorBins, PropertyStorage::Float, 1, 0, tr("C(q)"), true, DataTable::YProperty);
 	_reciprocalSpaceCorrelationRange = 2 * FLOATTYPE_PI * minReciprocalSpaceVector * numberOfWavevectorBins;
 
 	std::vector<int> numberOfValues(numberOfWavevectorBins, 0);
@@ -541,9 +541,9 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 	FloatType gridSpacing = minCellFaceDistance / (2 * numberOfDistanceBins);
 
 	// Radially averaged real space correlation function.
-	_realSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("C(r)"), true, DataSeriesObject::YProperty);
+	_realSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("C(r)"), true, DataTable::YProperty);
 	_realSpaceCorrelationRange = minCellFaceDistance / 2;
-	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true, DataSeriesObject::YProperty);
+	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true, DataTable::YProperty);
 
 	numberOfValues = std::vector<int>(numberOfDistanceBins, 0);
 	PropertyAccess<FloatType> realSpaceCorrelationData(_realSpaceCorrelation);
@@ -626,7 +626,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 	}
 
 	// Allocate neighbor RDF.
-	_neighRDF = std::make_shared<PropertyStorage>(neighCorrelation()->size(), PropertyStorage::Float, 1, 0, tr("Neighbor g(r)"), true, DataSeriesObject::YProperty);
+	_neighRDF = std::make_shared<PropertyStorage>(neighCorrelation()->size(), PropertyStorage::Float, 1, 0, tr("Neighbor g(r)"), true, DataTable::YProperty);
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
@@ -789,36 +789,36 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 ******************************************************************************/
 void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	// Output real-space correlation function to the pipeline as a data series.
-	DataSeriesObject* realSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space"), modApp, DataSeriesObject::Line, tr("Real-space correlation"), realSpaceCorrelation());
+	// Output real-space correlation function to the pipeline as a data table.
+	DataTable* realSpaceCorrelationObj = state.createObject<DataTable>(QStringLiteral("correlation-real-space"), modApp, DataTable::Line, tr("Real-space correlation"), realSpaceCorrelation());
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
 
-	// Output real-space RDF to the pipeline as a data series.
-	DataSeriesObject* realSpaceRDFObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space-rdf"), modApp, DataSeriesObject::Line, tr("Real-space RDF"), realSpaceRDF());
+	// Output real-space RDF to the pipeline as a data table.
+	DataTable* realSpaceRDFObj = state.createObject<DataTable>(QStringLiteral("correlation-real-space-rdf"), modApp, DataTable::Line, tr("Real-space RDF"), realSpaceRDF());
 	realSpaceRDFObj->setAxisLabelX(tr("Distance r"));
 	realSpaceRDFObj->setIntervalStart(0);
 	realSpaceRDFObj->setIntervalEnd(_realSpaceCorrelationRange);
 
-	// Output short-ranged part of the real-space correlation function to the pipeline as a data series.
+	// Output short-ranged part of the real-space correlation function to the pipeline as a data table.
 	if(neighCorrelation()) {
-		DataSeriesObject* neighCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor"), modApp, DataSeriesObject::Line, tr("Neighbor correlation"), neighCorrelation());
+		DataTable* neighCorrelationObj = state.createObject<DataTable>(QStringLiteral("correlation-neighbor"), modApp, DataTable::Line, tr("Neighbor correlation"), neighCorrelation());
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
 		neighCorrelationObj->setIntervalStart(0);
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
 	}
 
-	// Output short-ranged part of the RDF to the pipeline as a data series.
+	// Output short-ranged part of the RDF to the pipeline as a data table.
 	if(neighRDF()) {
-		DataSeriesObject* neighRDFObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor-rdf"), modApp, DataSeriesObject::Line, tr("Neighbor RDF"), neighRDF());
+		DataTable* neighRDFObj = state.createObject<DataTable>(QStringLiteral("correlation-neighbor-rdf"), modApp, DataTable::Line, tr("Neighbor RDF"), neighRDF());
 		neighRDFObj->setAxisLabelX(tr("Distance r"));
 		neighRDFObj->setIntervalStart(0);
 		neighRDFObj->setIntervalEnd(neighCutoff());
 	}
 
-	// Output reciprocal-space correlation function to the pipeline as a data series.
-	DataSeriesObject* reciprocalSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-reciprocal-space"), modApp, DataSeriesObject::Line, tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
+	// Output reciprocal-space correlation function to the pipeline as a data table.
+	DataTable* reciprocalSpaceCorrelationObj = state.createObject<DataTable>(QStringLiteral("correlation-reciprocal-space"), modApp, DataTable::Line, tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);
 	reciprocalSpaceCorrelationObj->setIntervalEnd(_reciprocalSpaceCorrelationRange);

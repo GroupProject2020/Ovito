@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="data_inspector.data_series"
+         xml:id="data_inspector.data_tables"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Data series (data inspector)</title>
-  <titleabbrev>Data series</titleabbrev>
+  <title>Data tables (data inspector)</title>
+  <titleabbrev>Data tables</titleabbrev>
 
   <para>
     <informalfigure>
       <mediaobject><imageobject>
-        <imagedata fileref="images/data_inspector/data_series_page.png" format="PNG" scale="85" />
+        <imagedata fileref="images/data_inspector/data_tables_page.png" format="PNG" scale="85" />
       </imageobject></mediaobject>
     </informalfigure>
 
     This tab of the <link linkend="data_inspector">data inspector panel</link> lists all
-    data series and plots computed by the current pipeline. A data series is a table of values or data points
-    that are plotted as a graph, histogram or scatter plot.
+    data tables and data plots computed by the current pipeline. A data table is a collection of data columns 
+    that can be plotted as a graph, histogram or scatter plot.
   </para>
 
 </section>

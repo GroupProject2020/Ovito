@@ -24,25 +24,25 @@
 
 
 #include <ovito/stdobj/gui/StdObjGui.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/table/DataTable.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/stdobj/gui/properties/PropertyInspectionApplet.h>
 
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief Data inspector page for 2d plots.
+ * \brief Data inspector page for data tables and 2d data plots.
  */
-class OVITO_STDOBJGUI_EXPORT SeriesInspectionApplet : public PropertyInspectionApplet
+class OVITO_STDOBJGUI_EXPORT DataTableInspectionApplet : public PropertyInspectionApplet
 {
 	Q_OBJECT
-	OVITO_CLASS(SeriesInspectionApplet)
-	Q_CLASSINFO("DisplayName", "Data Series");
+	OVITO_CLASS(DataTableInspectionApplet)
+	Q_CLASSINFO("DisplayName", "Data Tables");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SeriesInspectionApplet() : PropertyInspectionApplet(DataSeriesObject::OOClass()) {}
+	Q_INVOKABLE DataTableInspectionApplet() : PropertyInspectionApplet(DataTable::OOClass()) {}
 
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 200; }
@@ -51,7 +51,7 @@ public:
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;
 
 	/// Returns the plotting widget.
-	DataSeriesPlotWidget* plotWidget() const { return _plotWidget; }
+	DataTablePlotWidget* plotWidget() const { return _plotWidget; }
 
 	/// Selects a specific data object in this applet.
 	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint) override;
@@ -74,13 +74,13 @@ private Q_SLOTS:
 private:
 
 	/// The plotting widget.
-	DataSeriesPlotWidget* _plotWidget;
+	DataTablePlotWidget* _plotWidget;
 
 	MainWindow* _mainWindow;
 	QStackedWidget* _stackedWidget;
 	QAction* _switchToPlotAction;
 	QAction* _switchToTableAction;
-	QAction* _exportSeriesToFileAction;
+	QAction* _exportTableToFileAction;
 };
 
 }	// End of namespace

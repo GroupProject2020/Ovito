@@ -214,11 +214,11 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 		meshObj->setVisElement(modifier->surfaceMeshVis());
 	}
 
-	// Output a data series object with the field value histogram.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("isosurface-histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
-	seriesObj->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
-	seriesObj->setIntervalStart(minValue());
-	seriesObj->setIntervalEnd(maxValue());
+	// Output a data table with the field value histogram.
+	DataTable* table = state.createObject<DataTable>(QStringLiteral("isosurface-histogram"), modApp, DataTable::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
+	table->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
+	table->setIntervalStart(minValue());
+	table->setIntervalEnd(maxValue());
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Field value range: [%1, %2]").arg(minValue()).arg(maxValue())));
 }

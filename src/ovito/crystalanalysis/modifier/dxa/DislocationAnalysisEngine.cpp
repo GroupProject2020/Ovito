@@ -24,7 +24,7 @@
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/crystalanalysis/objects/ClusterGraphObject.h>
 #include <ovito/mesh/surface/SurfaceMesh.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
 #include "DislocationAnalysisEngine.h"
@@ -337,26 +337,26 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 		dislocationCrystalStructures[family] = structure;
 	}
 
-	// Output a data series object with the dislocation line lengths.
+	// Output a data table with the dislocation line lengths.
 	int maxId = 0;
 	for(const auto& entry : dislocationLengths)
 		maxId = std::max(maxId, entry.first->numericId());
-	PropertyAccessAndRef<FloatType> dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataSeriesObject::YProperty);
+	PropertyAccessAndRef<FloatType> dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataTable::YProperty);
 	for(const auto& entry : dislocationLengths)
 		dislocationLengthsProperty[entry.first->numericId()] = entry.second;
-	PropertyAccessAndRef<int> dislocationTypeIds = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation type"), false, DataSeriesObject::XProperty);
+	PropertyAccessAndRef<int> dislocationTypeIds = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation type"), false, DataTable::XProperty);
 	boost::algorithm::iota_n(dislocationTypeIds.begin(), 0, dislocationTypeIds.size());
-	DataSeriesObject* lengthSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-lengths"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"), dislocationLengthsProperty.takeStorage(), dislocationTypeIds.takeStorage());
-	PropertyObject* xProperty = lengthSeriesObj->expectMutableProperty(DataSeriesObject::XProperty);
+	DataTable* lengthTableObj = state.createObject<DataTable>(QStringLiteral("disloc-lengths"), modApp, DataTable::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"), dislocationLengthsProperty.takeStorage(), dislocationTypeIds.takeStorage());
+	PropertyObject* xProperty = lengthTableObj->expectMutableProperty(DataTable::XProperty);
 	for(const auto& entry : dislocationLengths)
 		xProperty->addElementType(entry.first);
 
-	// Output a data series object with the dislocation segment counts.
-	PropertyAccessAndRef<int> dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation count"), true, DataSeriesObject::YProperty);
+	// Output a data table with the dislocation segment counts.
+	PropertyAccessAndRef<int> dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Dislocation count"), true, DataTable::YProperty);
 	for(const auto& entry : segmentCounts)
 		dislocationCountsProperty[entry.first->numericId()] = entry.second;
-	DataSeriesObject* countSeriesObj = state.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"), dislocationCountsProperty.takeStorage());
-	countSeriesObj->insertProperty(0, xProperty);
+	DataTable* countTableObj = state.createObject<DataTable>(QStringLiteral("disloc-counts"), modApp, DataTable::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"), dislocationCountsProperty.takeStorage());
+	countTableObj->insertProperty(0, xProperty);
 
 	// Output particle properties.
 	if(atomClusters()) {

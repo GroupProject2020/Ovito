@@ -25,7 +25,7 @@
 
 #include <ovito/gui/GUI.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlotMarker;
@@ -58,7 +58,7 @@ protected Q_SLOTS:
 private:
 
 	/// The graph widget to display the histogram.
-	StdObj::DataSeriesPlotWidget* _plotWidget;
+	StdObj::DataTablePlotWidget* _plotWidget;
 
 	/// The plot item for indicating the current iso level value.
 	QwtPlotMarker* _isoLevelIndicator;

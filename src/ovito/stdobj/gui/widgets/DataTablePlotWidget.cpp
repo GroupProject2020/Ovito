@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,7 +22,7 @@
 
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include "DataSeriesPlotWidget.h"
+#include "DataTablePlotWidget.h"
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
@@ -38,7 +38,7 @@ namespace Ovito { namespace StdObj {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesPlotWidget::DataSeriesPlotWidget(QWidget* parent) : QwtPlot(parent)
+DataTablePlotWidget::DataTablePlotWidget(QWidget* parent) : QwtPlot(parent)
 {
 	setCanvasBackground(Qt::white);
 
@@ -50,22 +50,22 @@ DataSeriesPlotWidget::DataSeriesPlotWidget(QWidget* parent) : QwtPlot(parent)
 }
 
 /******************************************************************************
-* Sets the data series object to be plotted.
+* Sets the data table to be plotted.
 ******************************************************************************/
-void DataSeriesPlotWidget::setSeries(const DataSeriesObject* series)
+void DataTablePlotWidget::setTable(const DataTable* table)
 {
-	if(series != _series) {
-		_series = series;
+	if(table != _table) {
+		_table = table;
 		updateDataPlot();
 	}
 }
 
 /******************************************************************************
 * Regenerates the plot.
-* This function is called whenever a new data series has been loaded into
-* widget or if the current series data changes.
+* This function is called whenever a new data table has been loaded into
+* widget or if the current table data changes.
 ******************************************************************************/
-void DataSeriesPlotWidget::updateDataPlot()
+void DataTablePlotWidget::updateDataPlot()
 {
 	static const Qt::GlobalColor curveColors[] = {
 		Qt::black, Qt::red, Qt::blue, Qt::green,
@@ -81,28 +81,28 @@ void DataSeriesPlotWidget::updateDataPlot()
 	plotLayout()->setCanvasMargin(4);
 
 	// Determine the current plotting mode.
-	DataSeriesObject::PlotMode plotMode = DataSeriesObject::None;
-	const PropertyObject* y = series() ? series()->getY() : nullptr;
-	const PropertyObject* x = series() ? series()->getX() : nullptr;
+	DataTable::PlotMode plotMode = DataTable::None;
+	const PropertyObject* y = table() ? table()->getY() : nullptr;
+	const PropertyObject* x = table() ? table()->getX() : nullptr;
 	if(y) {
 		if(y->size() > (size_t)std::numeric_limits<int>::max())
 			qWarning() << "Number of plot data points exceeds limit:" << y->size() << ">" << std::numeric_limits<int>::max();
 		else if(x && x->size() != y->size())
-			qWarning() << "Detected inconsistent lengths of X and Y data arrays in data plot series:" << series()->objectTitle();
+			qWarning() << "Detected inconsistent lengths of X and Y data arrays in data table:" << table()->objectTitle();
 		else
-			plotMode = series()->plotMode();
+			plotMode = table()->plotMode();
 	}
 
 	// Release plot items if plot mode has changed.
-	if(plotMode != DataSeriesObject::Line && plotMode != DataSeriesObject::Histogram) {
+	if(plotMode != DataTable::Line && plotMode != DataTable::Histogram) {
 		for(QwtPlotCurve* curve : _curves) delete curve;
 		_curves.clear();
 	}
-	if(plotMode != DataSeriesObject::Scatter) {
+	if(plotMode != DataTable::Scatter) {
 		for(QwtPlotSpectroCurve* curve : _spectroCurves) delete curve;
 		_spectroCurves.clear();
 	}
-	if(plotMode != DataSeriesObject::BarChart) {
+	if(plotMode != DataTable::BarChart) {
 		if(_barChart) {
 			delete _barChart;
 			_barChart = nullptr;
@@ -116,7 +116,7 @@ void DataSeriesPlotWidget::updateDataPlot()
 	// Determine if a legend should be displayed.
 	bool showLegend = false;
 	if(y && !y->componentNames().empty()) {
-		if(plotMode == DataSeriesObject::Line)
+		if(plotMode == DataTable::Line)
 			showLegend = true;
 	}
 
@@ -134,33 +134,33 @@ void DataSeriesPlotWidget::updateDataPlot()
 	}
 
 	// Create plot items.
-	if(plotMode == DataSeriesObject::Scatter) {
+	if(plotMode == DataTable::Scatter) {
 		// Scatter plot:
-		size_t seriesCount = std::min(x ? x->componentCount() : 1, y ? y->componentCount() : 0);
-		while(_spectroCurves.size() < seriesCount) {
+		size_t colCount = std::min(x ? x->componentCount() : 1, y ? y->componentCount() : 0);
+		while(_spectroCurves.size() < colCount) {
 			QwtPlotSpectroCurve* curve = new QwtPlotSpectroCurve();
 			curve->setPenWidth(3);
 			curve->setZ(0);
 			curve->attach(this);
 			_spectroCurves.push_back(curve);
 		}
-		while(_spectroCurves.size() > seriesCount) {
+		while(_spectroCurves.size() > colCount) {
 			delete _spectroCurves.back();
 			_spectroCurves.pop_back();
 		}
 
 		// Set legend titles.
-		for(size_t cmpnt = 0; cmpnt < seriesCount; cmpnt++) {
+		for(size_t cmpnt = 0; cmpnt < colCount; cmpnt++) {
 			if(cmpnt < y->componentNames().size())
 				_spectroCurves[cmpnt]->setTitle(y->componentNames()[cmpnt]);
 			else
 				_spectroCurves[cmpnt]->setTitle(tr("Component %1").arg(cmpnt+1));
 		}
 
-		ConstPropertyPtr xstorage = series()->getXStorage();
-		ConstPropertyPtr ystorage = series()->getYStorage();
+		ConstPropertyPtr xstorage = table()->getXStorage();
+		ConstPropertyPtr ystorage = table()->getYStorage();
 		QVector<QwtPoint3D> coords(ystorage->size());
-		for(size_t cmpnt = 0; cmpnt < seriesCount; cmpnt++) {
+		for(size_t cmpnt = 0; cmpnt < colCount; cmpnt++) {
 			xstorage->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].rx() = v; });
 			ystorage->forEach(cmpnt, [&coords](size_t i, auto v) { coords[i].ry() = v; });
 			_spectroCurves[cmpnt]->setSamples(coords);
@@ -189,7 +189,7 @@ void DataSeriesPlotWidget::updateDataPlot()
 #endif
 
 	}
-	else if(plotMode == DataSeriesObject::Line || plotMode == DataSeriesObject::Histogram) {
+	else if(plotMode == DataTable::Line || plotMode == DataTable::Histogram) {
 		// Line and histogram charts:
 		while(_curves.size() < y->componentCount()) {
 			QwtPlotCurve* curve = new QwtPlotCurve();
@@ -221,9 +221,9 @@ void DataSeriesPlotWidget::updateDataPlot()
 
 		QVector<double> xcoords(y->size());
 		if(!x || x->size() != xcoords.size() || !x->storage()->copyTo(xcoords.begin())) {
-			if(series()->intervalStart() < series()->intervalEnd() && y->size() != 0) {
-				FloatType binSize = (series()->intervalEnd() - series()->intervalStart()) / y->size();
-				double xc = series()->intervalStart() + binSize / 2;
+			if(table()->intervalStart() < table()->intervalEnd() && y->size() != 0) {
+				FloatType binSize = (table()->intervalEnd() - table()->intervalStart()) / y->size();
+				double xc = table()->intervalStart() + binSize / 2;
 				for(auto& v : xcoords) {
 					v = xc;
 					xc += binSize;
@@ -242,7 +242,7 @@ void DataSeriesPlotWidget::updateDataPlot()
 			_curves[cmpnt]->setSamples(xcoords, ycoords);
 		}
 	}
-	else if(plotMode == DataSeriesObject::BarChart) {
+	else if(plotMode == DataTable::BarChart) {
 		// Bar chart:
 		if(!_barChart) {
 			_barChart = new QwtPlotBarChart();
@@ -276,9 +276,9 @@ void DataSeriesPlotWidget::updateDataPlot()
 		replot();
 	}
 
-	if(plotMode != DataSeriesObject::PlotMode::None) {
-		setAxisTitle(QwtPlot::xBottom, (!x || !series()->axisLabelX().isEmpty()) ? series()->axisLabelX() : x->name());
-		setAxisTitle(QwtPlot::yLeft, (!y || !series()->axisLabelY().isEmpty()) ? series()->axisLabelY() : y->name());
+	if(plotMode != DataTable::PlotMode::None) {
+		setAxisTitle(QwtPlot::xBottom, (!x || !table()->axisLabelX().isEmpty()) ? table()->axisLabelX() : x->name());
+		setAxisTitle(QwtPlot::yLeft, (!y || !table()->axisLabelY().isEmpty()) ? table()->axisLabelY() : y->name());
 	}
 
 	// Workaround for layout bug in QwtPlot:

@@ -80,7 +80,7 @@ void CreateIsosurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	layout2->addWidget(isolevelPUI->label(), 2, 0);
 	layout2->addLayout(isolevelPUI->createFieldLayout(), 2, 1);
 
-	_plotWidget = new StdObj::DataSeriesPlotWidget();
+	_plotWidget = new StdObj::DataTablePlotWidget();
 	_plotWidget->setMinimumHeight(200);
 	_plotWidget->setMaximumHeight(200);
 	_isoLevelIndicator = new QwtPlotMarker();
@@ -121,9 +121,9 @@ void CreateIsosurfaceModifierEditor::plotHistogram()
 		// Request the modifier's pipeline output.
 		const PipelineFlowState& state = getModifierOutput();
 
-		// Look up the generated data series in the modifier's pipeline output.
-		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("isosurface-histogram"));
-		_plotWidget->setSeries(series);
+		// Look up the generated data table in the modifier's pipeline output.
+		const DataTable* table = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("isosurface-histogram"));
+		_plotWidget->setTable(table);
 	}
 	else {
 		_isoLevelIndicator->hide();
