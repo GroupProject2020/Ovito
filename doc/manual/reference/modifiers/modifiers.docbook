@@ -37,14 +37,6 @@
               <entry>Calculates local strain tensors based on the relative motion of neighboring particles. </entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.bin_and_reduce">Spatial&#xA0;binning</link><ovito-pro/></entry>
-              <entry>Aggregates a particle property over a one-, two- or three-dimensional bin grid.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.correlation_function">Spatial&#xA0;correlation&#xA0;function</link></entry>
-              <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation&#xA0;analysis&#xA0;(DXA)</link></entry>
               <entry>Identifies dislocation defects in a crystal.</entry>
             </row>
@@ -71,6 +63,14 @@
             <row>
               <entry><link linkend="particles.modifiers.scatter_plot">Scatter&#xA0;plot</link></entry>
               <entry>Generates a scatter plot of two properties.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.bin_and_reduce">Spatial&#xA0;binning</link><ovito-pro/></entry>
+              <entry>Aggregates a particle property over a one-, two- or three-dimensional bin grid.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.correlation_function">Spatial&#xA0;correlation&#xA0;function</link></entry>
+              <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.voronoi_analysis">Voronoi&#xA0;analysis</link></entry>
