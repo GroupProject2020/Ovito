@@ -24,7 +24,7 @@
 
 
 #include <ovito/particles/gui/ParticlesGui.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
@@ -56,7 +56,7 @@ protected Q_SLOTS:
 private:
 
 	/// The plotting widget for displaying the computed RDFs.
-	DataSeriesPlotWidget* _rdfPlot;
+	DataTablePlotWidget* _rdfPlot;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<CoordinationAnalysisModifierEditor, &CoordinationAnalysisModifierEditor::plotRDF> plotRDFLater;

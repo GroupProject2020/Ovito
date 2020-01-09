@@ -26,7 +26,7 @@
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/app/Application.h>
 #include "ScatterPlotModifier.h"
 
@@ -191,8 +191,8 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 	}
 
 	// Create output arrays.
-	PropertyAccessAndRef<FloatType> out_x = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::XProperty, false);
-	PropertyAccessAndRef<FloatType> out_y = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::YProperty, false);
+	PropertyAccessAndRef<FloatType> out_x = DataTable::OOClass().createStandardStorage(container->elementCount(), DataTable::XProperty, false);
+	PropertyAccessAndRef<FloatType> out_y = DataTable::OOClass().createStandardStorage(container->elementCount(), DataTable::YProperty, false);
 	out_x.storage()->setName(xAxisProperty().nameWithComponent());
 	out_y.storage()->setName(yAxisProperty().nameWithComponent());
 
@@ -228,9 +228,9 @@ void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplicatio
 		}
 	}
 
-	// Output a data series object with the scatter points.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, 
-		DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()),
+	// Output a data table object with the scatter points.
+	DataTable* table = state.createObject<DataTable>(QStringLiteral("scatter"), modApp, 
+		DataTable::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()),
 		out_y.takeStorage(), out_x.takeStorage());
 
 	QString statusMessage;

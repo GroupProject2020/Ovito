@@ -133,7 +133,7 @@ void SpatialCorrelationFunctionModifierEditor::createUI(const RolloutInsertionPa
 	typeOfRealSpacePlotLayout->addWidget(typeOfRealSpacePlotPUI->addRadioButton(1, tr("log-lin")), 0, 2);
 	typeOfRealSpacePlotLayout->addWidget(typeOfRealSpacePlotPUI->addRadioButton(3, tr("log-log")), 0, 3);
 
-	_realSpacePlot = new DataSeriesPlotWidget();
+	_realSpacePlot = new DataTablePlotWidget();
 	_realSpacePlot->setMinimumHeight(200);
 	_realSpacePlot->setMaximumHeight(200);
 	_neighCurve = new QwtPlotCurve();
@@ -209,7 +209,7 @@ void SpatialCorrelationFunctionModifierEditor::createUI(const RolloutInsertionPa
 	typeOfReciprocalSpacePlotLayout->addWidget(typeOfReciprocalSpacePlotPUI->addRadioButton(1, tr("log-lin")), 0, 2);
 	typeOfReciprocalSpacePlotLayout->addWidget(typeOfReciprocalSpacePlotPUI->addRadioButton(3, tr("log-log")), 0, 3);
 
-	_reciprocalSpacePlot = new DataSeriesPlotWidget();
+	_reciprocalSpacePlot = new DataTablePlotWidget();
 	_reciprocalSpacePlot->setMinimumHeight(200);
 	_reciprocalSpacePlot->setMaximumHeight(200);
 
@@ -282,23 +282,23 @@ void SpatialCorrelationFunctionModifierEditor::createUI(const RolloutInsertionPa
 * Replots one of the correlation function computed by the modifier.
 ******************************************************************************/
 std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotData(
-												const DataSeriesObject* series,
-												DataSeriesPlotWidget* plotWidget,
+												const DataTable* table,
+												DataTablePlotWidget* plotWidget,
 												FloatType offset,
 												FloatType fac,
 												ConstPropertyAccess<FloatType> normalization)
 {
-	// Duplicate the data series, then modify the stored values.
-	UndoSuspender noUndo(series);
+	// Duplicate the data table, then modify the stored values.
+	UndoSuspender noUndo(table);
 	CloneHelper cloneHelper;
-	OORef<DataSeriesObject> clonedSeries = cloneHelper.cloneObject(series, false);
-	clonedSeries->makePropertiesMutable();
+	OORef<DataTable> clonedTable = cloneHelper.cloneObject(table, false);
+	clonedTable->makePropertiesMutable();
 
 	// Normalize function values.
 	if(normalization) {
-		OVITO_ASSERT(normalization.size() == clonedSeries->elementCount());
+		OVITO_ASSERT(normalization.size() == clonedTable->elementCount());
 		auto pf = normalization.cbegin();
-		PropertyAccess<FloatType> valueArray = clonedSeries->expectMutableProperty(DataSeriesObject::YProperty);
+		PropertyAccess<FloatType> valueArray = clonedTable->expectMutableProperty(DataTable::YProperty);
 		for(FloatType& v : valueArray) {
 			FloatType factor = *pf++;
 			v = (factor > FloatType(1e-12)) ? (v / factor) : FloatType(0);
@@ -307,17 +307,17 @@ std::pair<FloatType,FloatType> SpatialCorrelationFunctionModifierEditor::plotDat
 
 	// Scale and shift function values.
 	if(fac != 1 || offset != 0) {
-		PropertyAccess<FloatType> valueArray = clonedSeries->expectMutableProperty(DataSeriesObject::YProperty);
+		PropertyAccess<FloatType> valueArray = clonedTable->expectMutableProperty(DataTable::YProperty);
 		for(FloatType& v :valueArray)
 			v = fac * (v - offset);
 	}
 
 	// Determine value range.
-	ConstPropertyAccess<FloatType> yarray = clonedSeries->getY();
+	ConstPropertyAccess<FloatType> yarray = clonedTable->getY();
 	auto minmax = std::minmax_element(yarray.cbegin(), yarray.cend());
 
-	// Hand data series over to plot widget.
-	plotWidget->setSeries(std::move(clonedSeries));
+	// Hand data table over to plot widget.
+	plotWidget->setTable(std::move(clonedTable));
 
 	return { *minmax.first, *minmax.second };
 }
@@ -390,8 +390,8 @@ void SpatialCorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Display direct neighbor correlation function.
-	const DataSeriesObject* neighCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-neighbor"));
-	const DataSeriesObject* neighRDF = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-neighbor-rdf"));
+	const DataTable* neighCorrelation = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("correlation-neighbor"));
+	const DataTable* neighRDF = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("correlation-neighbor-rdf"));
 	if(modifier && modifierApplication() && modifier->doComputeNeighCorrelation() && neighCorrelation && neighRDF) {
 		const auto& xStorage = neighCorrelation->getXStorage();
 		ConstPropertyAccess<FloatType> xData(xStorage);
@@ -419,8 +419,8 @@ void SpatialCorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Plot real-space correlation function.
-	const DataSeriesObject* realSpaceCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-real-space"));
-	const DataSeriesObject* realSpaceRDF = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-real-space-rdf"));
+	const DataTable* realSpaceCorrelation = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("correlation-real-space"));
+	const DataTable* realSpaceRDF = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("correlation-real-space-rdf"));
 	if(modifier && modifierApplication() && realSpaceCorrelation) {
 		auto realSpaceYRange = plotData(realSpaceCorrelation, _realSpacePlot, offset, uniformFactor,
 			(realSpaceRDF && modifier->normalizeRealSpaceByRDF()) ? realSpaceRDF->getYStorage() : nullptr);
@@ -440,7 +440,7 @@ void SpatialCorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Plot reciprocal-space correlation function.
-	const DataSeriesObject* reciprocalSpaceCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-reciprocal-space"));
+	const DataTable* reciprocalSpaceCorrelation = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("correlation-reciprocal-space"));
 	if(modifier && modifierApplication() && reciprocalSpaceCorrelation) {
 		FloatType rfac = 1;
 		if(modifier->normalizeReciprocalSpace() && covariance.toDouble() != 0)

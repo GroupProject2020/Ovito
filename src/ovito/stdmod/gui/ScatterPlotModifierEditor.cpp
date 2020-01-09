@@ -23,7 +23,7 @@
 #include <ovito/stdmod/gui/StdModGui.h>
 #include <ovito/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <ovito/stdobj/gui/widgets/PropertyContainerParameterUI.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/gui/properties/IntegerParameterUI.h>
 #include <ovito/gui/properties/FloatParameterUI.h>
 #include <ovito/gui/properties/BooleanParameterUI.h>
@@ -60,9 +60,9 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	layout->addWidget(pclassUI->comboBox());
 	layout->addSpacing(6);
 
-	// Do not list data series as available inputs.
+	// Do not list data tables as available inputs.
 	pclassUI->setContainerFilter([](const PropertyContainer* container) {
-		return DataSeriesObject::OOClass().isMember(container) == false;
+		return DataTable::OOClass().isMember(container) == false;
 	});
 
 
@@ -85,7 +85,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	});
 	layout->addSpacing(6);
 
-	_plotWidget = new DataSeriesPlotWidget();
+	_plotWidget = new DataTablePlotWidget();
 	_plotWidget->setMinimumHeight(240);
 	_plotWidget->setMaximumHeight(240);
 	_selectionRangeIndicatorX = new QwtPlotZoneItem();
@@ -247,9 +247,9 @@ void ScatterPlotModifierEditor::plotScatterPlot()
 		// Request the modifier's pipeline output.
 		const PipelineFlowState& state = getModifierOutput();
 
-		// Look up the generated data series in the modifier's pipeline output.
-		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("scatter"));
-		_plotWidget->setSeries(series);
+		// Look up the generated data table in the modifier's pipeline output.
+		const DataTable* table = state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("scatter"));
+		_plotWidget->setTable(table);
 	}
 	else {
 		_plotWidget->reset();

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,16 +23,17 @@
 #pragma once
 
 
-#include <ovito/stdobj/gui/StdObjGui.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/StdObj.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/dataset/io/FileExporter.h>
+#include <ovito/core/utilities/io/CompressedTextWriter.h>
 
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief Exporter that writes the graphical plot of a data series to an image file.
+ * \brief Exporter that writes a data table to a text output file.
  */
-class OVITO_STDOBJGUI_EXPORT DataSeriesPlotExporter : public FileExporter
+class OVITO_STDOBJ_EXPORT DataTableExporter : public FileExporter
 {
 	/// Defines a metaclass specialization for this exporter type.
 	class OOMetaClass : public FileExporter::OOMetaClass
@@ -42,23 +43,23 @@ class OVITO_STDOBJGUI_EXPORT DataSeriesPlotExporter : public FileExporter
 		using FileExporter::OOMetaClass::OOMetaClass;
 
 		/// Returns the file filter that specifies the files that can be exported by this service.
-		virtual QString fileFilter() const override { return QStringLiteral("*.pdf *.png"); }
+		virtual QString fileFilter() const override { return QStringLiteral("*.txt"); }
 
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
-		virtual QString fileFilterDescription() const override { return tr("Data Plot File"); }
+		virtual QString fileFilterDescription() const override { return tr("Data Table Text File"); }
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(DataSeriesPlotExporter, OOMetaClass)
+	OVITO_CLASS_META(DataTableExporter, OOMetaClass)
 
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE DataSeriesPlotExporter(DataSet* dataset);
+	Q_INVOKABLE DataTableExporter(DataSet* dataset) : FileExporter(dataset) {}
 
 	/// \brief Returns the type(s) of data objects that this exporter service can export.
 	virtual std::vector<DataObjectClassPtr> exportableDataObjectClass() const override {
-		return { &DataSeriesObject::OOClass() };
+		return { &DataTable::OOClass() };
 	}
 
 protected:
@@ -75,19 +76,16 @@ protected:
 	/// Returns the current file this exporter is writing to.
 	QFile& outputFile() { return _outputFile; }
 
+	/// Returns the text stream used to write into the current output file.
+	CompressedTextWriter& textStream() { return *_outputStream; }
+
 private:
 
 	/// The output file stream.
 	QFile _outputFile;
 
-	/// The width of the plot in milimeters.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, plotWidth, setPlotWidth, PROPERTY_FIELD_MEMORIZE);
-
-	/// The height of the plot in milimeters.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, plotHeight, setPlotHeight, PROPERTY_FIELD_MEMORIZE);
-
-	/// The resolution of the plot in DPI.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, plotDPI, setPlotDPI, PROPERTY_FIELD_MEMORIZE);
+	/// The stream object used to write into the output file.
+	std::unique_ptr<CompressedTextWriter> _outputStream;
 };
 
 }	// End of namespace

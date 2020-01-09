@@ -103,7 +103,7 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	layout1->addWidget(label);
 
 	// Create plot widget for RMSD distribution.
-	_rmsdPlotWidget = new DataSeriesPlotWidget();
+	_rmsdPlotWidget = new DataTablePlotWidget();
 	_rmsdPlotWidget->setMinimumHeight(200);
 	_rmsdPlotWidget->setMaximumHeight(200);
 	_rmsdRangeIndicator = new QwtPlotZoneItem();
@@ -149,8 +149,8 @@ void PolyhedralTemplateMatchingModifierEditor::plotHistogram()
 		// Request the modifier's pipeline output.
 		const PipelineFlowState& state = getModifierOutput();
 
-		// Look up the data series in the modifier's pipeline output.
-		_rmsdPlotWidget->setSeries(state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("ptm-rmsd")));
+		// Look up the data table in the modifier's pipeline output.
+		_rmsdPlotWidget->setTable(state.getObjectBy<DataTable>(modifierApplication(), QStringLiteral("ptm-rmsd")));
 	}
 	else {
 		_rmsdPlotWidget->reset();

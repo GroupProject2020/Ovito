@@ -26,7 +26,7 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/gui/properties/ModifierPropertiesEditor.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
@@ -54,7 +54,7 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
 	/// Replots one of the correlation function computed by the modifier.
-	std::pair<FloatType,FloatType> plotData(const DataSeriesObject* series, DataSeriesPlotWidget* plotWidget, FloatType offset, FloatType fac, ConstPropertyAccess<FloatType> normalization);
+	std::pair<FloatType,FloatType> plotData(const DataTable* table, DataTablePlotWidget* plotWidget, FloatType offset, FloatType fac, ConstPropertyAccess<FloatType> normalization);
 
 protected Q_SLOTS:
 
@@ -64,10 +64,10 @@ protected Q_SLOTS:
 private:
 
 	/// The plotting widget for displaying the computed real-space correlation function.
-	DataSeriesPlotWidget* _realSpacePlot;
+	DataTablePlotWidget* _realSpacePlot;
 
 	/// The plotting widget for displaying the computed reciprocal-space correlation function.
-	DataSeriesPlotWidget* _reciprocalSpacePlot;
+	DataTablePlotWidget* _reciprocalSpacePlot;
 
 	/// The plot item for the short-ranged part of the real-space correlation function.
     QwtPlotCurve* _neighCurve = nullptr;

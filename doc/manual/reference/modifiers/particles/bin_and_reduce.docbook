@@ -34,7 +34,7 @@
 
     <para>
       When mapping the particle values to a one-dimensional bin grid using this modifier, you can subsequently
-      access the computed data series in the <link linkend="data_inspector.data_series">data inspector panel</link>.
+      access the computed data table in the <link linkend="data_inspector.data_tables">data inspector panel</link>.
       From here you can export the bin values to a text file.
     </para>
 

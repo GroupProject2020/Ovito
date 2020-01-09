@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,17 +29,17 @@
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief User interface component for the DataSeriesPlotExporter class.
+ * \brief User interface component for the DataTablePlotExporter class.
  */
-class DataSeriesPlotExporterEditor : public PropertiesEditor
+class DataTablePlotExporterEditor : public PropertiesEditor
 {
-	OVITO_CLASS(DataSeriesPlotExporterEditor)
+	OVITO_CLASS(DataTablePlotExporterEditor)
 	Q_OBJECT
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE DataSeriesPlotExporterEditor() {}
+	Q_INVOKABLE DataTablePlotExporterEditor() {}
 
 protected:
 

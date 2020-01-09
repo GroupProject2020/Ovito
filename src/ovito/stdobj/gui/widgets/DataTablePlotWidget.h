@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,7 @@
 
 
 #include <ovito/stdobj/gui/StdObjGui.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/oo/RefTargetListener.h>
 
 #include <qwt/qwt_plot.h>
@@ -38,27 +38,27 @@ class QwtPlotSpectroCurve;
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief A widget that plots the data of a DataSeriesObject.
+ * \brief A widget that plots the data of a DataTable.
  */
-class OVITO_STDOBJGUI_EXPORT DataSeriesPlotWidget : public QwtPlot
+class OVITO_STDOBJGUI_EXPORT DataTablePlotWidget : public QwtPlot
 {
 	Q_OBJECT
 
 public:
 
 	/// Constructor.
-	DataSeriesPlotWidget(QWidget* parent = nullptr);
+	DataTablePlotWidget(QWidget* parent = nullptr);
 
-	/// Returns the data series object currently being plotted.
-	const DataSeriesObject* series() const { return _series; }
+	/// Returns the data table object currently being plotted.
+	const DataTable* table() const { return _table; }
 
-	/// Sets the data series object to be plotted.
-	void setSeries(const DataSeriesObject* series);
+	/// Sets the data table to be plotted.
+	void setTable(const DataTable* table);
 
 	/// Resets the plot.
 	void reset() {
-		if(_series) {
-			_series.reset();
+		if(_table) {
+			_table.reset();
 			updateDataPlot();
 		}
 	}
@@ -66,7 +66,7 @@ public:
 private Q_SLOTS:
 
 	/// Regenerates the plot.
-	/// This function is called whenever a new data series has been loaded into widget or if the current series data changes.
+	/// This function is called whenever a new data table has been loaded into widget or if the current table data changes.
 	void updateDataPlot();
 
 private:
@@ -101,8 +101,8 @@ private:
 
 private:
 
-	/// Reference to the current data series shown in the plot widget.
-	OORef<DataSeriesObject> _series;
+	/// Reference to the current data table shown in the plot widget.
+	OORef<DataTable> _table;
 
 	/// The plot item(s) for standard line charts.
     std::vector<QwtPlotCurve*> _curves;

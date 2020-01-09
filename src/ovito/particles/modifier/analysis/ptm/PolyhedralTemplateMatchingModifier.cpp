@@ -24,7 +24,7 @@
 #include <ovito/particles/util/NearestNeighborFinder.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include <ovito/core/utilities/concurrent/Task.h>
@@ -249,7 +249,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 
 	// Determine histogram bin size based on maximum RMSD value.
 	const size_t numHistogramBins = 100;
-	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
+	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataTable::YProperty);
 	FloatType rmsdHistogramBinSize = FloatType(1.01) * *boost::max_element(rmsdArray) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
@@ -341,10 +341,10 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, 
 	}
 
 	// Output RMSD histogram.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("ptm-rmsd"), modApp, DataSeriesObject::Line, tr("RMSD distribution"), rmsdHistogram());
-	seriesObj->setAxisLabelX(tr("RMSD"));
-	seriesObj->setIntervalStart(0);
-	seriesObj->setIntervalEnd(rmsdHistogramRange());
+	DataTable* table = state.createObject<DataTable>(QStringLiteral("ptm-rmsd"), modApp, DataTable::Line, tr("RMSD distribution"), rmsdHistogram());
+	table->setAxisLabelX(tr("RMSD"));
+	table->setIntervalStart(0);
+	table->setIntervalEnd(rmsdHistogramRange());
 }
 
 OVITO_END_INLINE_NAMESPACE

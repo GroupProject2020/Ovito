@@ -24,7 +24,7 @@
 #include <ovito/stdmod/modifiers/FreezePropertyModifier.h>
 #include <ovito/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <ovito/stdobj/gui/widgets/PropertyContainerParameterUI.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/gui/properties/IntegerParameterUI.h>
 #include "FreezePropertyModifierEditor.h"
 
@@ -50,9 +50,9 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->addWidget(pclassUI->comboBox());
 	layout->addSpacing(8);
 
-	// Do not list data series as available inputs.
+	// Do not list data tables as available inputs.
 	pclassUI->setContainerFilter([](const PropertyContainer* container) {
-		return DataSeriesObject::OOClass().isMember(container) == false;
+		return DataTable::OOClass().isMember(container) == false;
 	});
 
 	PropertyReferenceParameterUI* sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::sourceProperty), nullptr, false, true);

@@ -25,7 +25,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/ParticleBondMap.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
@@ -166,7 +166,7 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 	}
 
 	// Determine cluster sizes.
-	_clusterSizes = std::make_shared<PropertyStorage>(numClusters(), PropertyStorage::Int64, 1, 0, QStringLiteral("Cluster Size"), true, DataSeriesObject::YProperty);
+	_clusterSizes = std::make_shared<PropertyStorage>(numClusters(), PropertyStorage::Int64, 1, 0, QStringLiteral("Cluster Size"), true, DataTable::YProperty);
 	PropertyAccess<qlonglong> clusterSizeArray(_clusterSizes);
 	for(auto id : ConstPropertyAccess<qlonglong>(particleClusters())) {
 		if(id != 0) clusterSizeArray[id-1]++;
@@ -175,7 +175,7 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 		return;
 
 	// Create custer ID property.
-	_clusterIds =  std::make_shared<PropertyStorage>(numClusters(), PropertyStorage::Int64, 1, 0, QStringLiteral("Cluster Identifier"), false, DataSeriesObject::XProperty);
+	_clusterIds =  std::make_shared<PropertyStorage>(numClusters(), PropertyStorage::Int64, 1, 0, QStringLiteral("Cluster Identifier"), false, DataTable::XProperty);
 	boost::algorithm::iota_n(PropertyAccess<qlonglong>(_clusterIds).begin(), size_t(1), _clusterIds->size());
 
 	// Sort clusters by size.
@@ -412,12 +412,12 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::emitResults(TimePoint time,
 	if(modifier->sortBySize())
 		state.addAttribute(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()), modApp);
 
-	// Output a data series object with the cluster list.
-	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("clusters"), modApp, DataSeriesObject::Scatter, tr("Clusters"), _clusterSizes, _clusterIds);
+	// Output a data table with the cluster list.
+	DataTable* table = state.createObject<DataTable>(QStringLiteral("clusters"), modApp, DataTable::Scatter, tr("Cluster list"), _clusterSizes, _clusterIds);
 
 	// Output centers of mass.
 	if(modifier->computeCentersOfMass() && _centersOfMass)
-		seriesObj->createProperty(_centersOfMass);
+		table->createProperty(_centersOfMass);
 
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s).", "", numClusters())));
 }

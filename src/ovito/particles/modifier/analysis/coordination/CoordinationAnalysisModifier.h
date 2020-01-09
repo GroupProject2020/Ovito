@@ -29,7 +29,7 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
 #include <boost/container/flat_map.hpp>
@@ -99,7 +99,7 @@ private:
 					}
 				}
 			}
-			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true, DataSeriesObject::YProperty, std::move(componentNames));
+			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true, DataTable::YProperty, std::move(componentNames));
 		}
 
 		/// This method is called by the system after the computation was successfully completed.

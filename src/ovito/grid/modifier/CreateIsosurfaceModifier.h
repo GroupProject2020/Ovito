@@ -27,7 +27,7 @@
 #include <ovito/grid/objects/VoxelGrid.h>
 #include <ovito/mesh/surface/SurfaceMeshData.h>
 #include <ovito/mesh/surface/SurfaceMeshVis.h>
-#include <ovito/stdobj/series/DataSeriesObject.h>
+#include <ovito/stdobj/table/DataTable.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Grid {
@@ -152,7 +152,7 @@ private:
 		FloatType _maxValue = -FLOATTYPE_MAX;
 
 		/// The computed histogram of the input field values.
-		PropertyPtr _histogram = std::make_shared<PropertyStorage>(64, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
+		PropertyPtr _histogram = std::make_shared<PropertyStorage>(64, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataTable::YProperty);
 	};
 
 	/// Specifies the voxel grid this modifier should operate on.

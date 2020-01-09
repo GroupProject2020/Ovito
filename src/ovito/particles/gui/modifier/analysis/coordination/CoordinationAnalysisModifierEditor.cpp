@@ -65,7 +65,7 @@ void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParamete
 	BooleanParameterUI* partialRdfPUI = new BooleanParameterUI(this, PROPERTY_FIELD(CoordinationAnalysisModifier::computePartialRDF));
 	layout->addWidget(partialRdfPUI->checkBox());
 
-	_rdfPlot = new DataSeriesPlotWidget();
+	_rdfPlot = new DataTablePlotWidget();
 	_rdfPlot->setMinimumHeight(200);
 	_rdfPlot->setMaximumHeight(200);
 
@@ -96,16 +96,16 @@ void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParamete
 ******************************************************************************/
 void CoordinationAnalysisModifierEditor::plotRDF()
 {
-	OORef<DataSeriesObject> series;
+	OORef<DataTable> table;
 
 	if(modifierApplication()) {
-		// Look up the data series in the modifier's pipeline output.
-		series = getModifierOutput().getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("coordination-rdf"));
+		// Look up the data table in the modifier's pipeline output.
+		table = getModifierOutput().getObjectBy<DataTable>(modifierApplication(), QStringLiteral("coordination-rdf"));
 
 		// Determine X plotting range.
-		if(series) {
-			ConstPropertyPtr rdfX = series->getXStorage();
-			ConstPropertyPtr rdfY = series->getYStorage();
+		if(table) {
+			ConstPropertyPtr rdfX = table->getXStorage();
+			ConstPropertyPtr rdfY = table->getYStorage();
 			ConstPropertyAccess<FloatType,false> rdfXArray(rdfX);
 			ConstPropertyAccess<FloatType,true>  rdfYArray(rdfY);
 			double minX = 0;
@@ -118,10 +118,10 @@ void CoordinationAnalysisModifierEditor::plotRDF()
 				}
 				if(minX) break;
 			}
-			_rdfPlot->setAxisScale(QwtPlot::xBottom, std::floor(minX * 9.0 / series->intervalEnd()) / 10.0 * series->intervalEnd(), series->intervalEnd());
+			_rdfPlot->setAxisScale(QwtPlot::xBottom, std::floor(minX * 9.0 / table->intervalEnd()) / 10.0 * table->intervalEnd(), table->intervalEnd());
 		}
 	}
-	_rdfPlot->setSeries(series);
+	_rdfPlot->setTable(table);
 }
 
 OVITO_END_INLINE_NAMESPACE

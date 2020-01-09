@@ -17,7 +17,7 @@
       </imageobject></mediaobject>
     </informalfigure>
 
-    The data inspector is a panel located beneath the viewport area, providing an comprehensive view of the data
+    The data inspector is a panel located below the viewport area, providing a comprehensive view of the data
     loaded from the input file and/or dynamically computed by the data pipeline. The data inspector panel is initially
     in a collapsed state, with only the tab bar visible. It can be expanded by clicking anywhere in the tab bar.
     The panel consists of several pages, each being dynamically shown depending on the kinds of
@@ -32,7 +32,7 @@
       <listitem><link linkend="data_inspector.particles">Particles</link></listitem>
       <listitem><link linkend="data_inspector.bonds">Bonds</link></listitem>
       <listitem><link linkend="data_inspector.attributes">Global attributes</link></listitem>
-      <listitem><link linkend="data_inspector.data_series">Data series</link></listitem>
+      <listitem><link linkend="data_inspector.data_tables">Data tables</link></listitem>
       <listitem><link linkend="data_inspector.dislocations">Dislocations</link></listitem>
     </itemizedlist>
    </para>
@@ -40,7 +40,7 @@
   <xi:include href="particles.docbook"/>
   <xi:include href="bonds.docbook"/>
   <xi:include href="attributes.docbook"/>
-  <xi:include href="data_series.docbook"/>
+  <xi:include href="data_tables.docbook"/>
   <xi:include href="dislocations.docbook"/>
 
 </section>

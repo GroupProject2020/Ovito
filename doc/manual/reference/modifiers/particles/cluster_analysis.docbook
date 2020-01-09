@@ -152,7 +152,7 @@
           <para>
             The modifiers outputs the list of identified clusters as a <link linkend="scene_objects.data_series">data table</link> named <literal>Clusters</literal>,
             which includes each cluster's size (number of particles) and center of mass (if calculation is enabled).
-            You can view this table in the <link linkend="data_inspector.data_series">data inspector panel</link> of OVITO by pressing the <guibutton>Show list of clusters</guibutton>
+            You can view this table in the <link linkend="data_inspector.data_tables">data inspector panel</link> of OVITO by pressing the <guibutton>Show list of clusters</guibutton>
             button of the modifier. The data inspector panel provides functions for exporting the table to a text file.
           </para>
         </listitem>

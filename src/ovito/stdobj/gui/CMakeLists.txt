@@ -28,17 +28,17 @@ OVITO_STANDARD_PLUGIN(StdObjGui
 	SOURCES
 		StdObjGui.cpp
 		camera/CameraObjectEditor.cpp
-		io/DataSeriesPlotExporter.cpp
-		io/DataSeriesPlotExporterEditor.cpp
+		io/DataTablePlotExporter.cpp
+		io/DataTablePlotExporterEditor.cpp
 		properties/PropertyInspectionApplet.cpp
 		properties/PropertyObjectEditor.cpp
 		simcell/SimulationCellObjectEditor.cpp
 		simcell/SimulationCellVisEditor.cpp
-		series/SeriesInspectionApplet.cpp
+		table/DataTableInspectionApplet.cpp
 		widgets/PropertyContainerParameterUI.cpp
 		widgets/PropertyReferenceParameterUI.cpp
 		widgets/PropertySelectionComboBox.cpp
-		widgets/DataSeriesPlotWidget.cpp
+		widgets/DataTablePlotWidget.cpp
 		${ResourceFiles}
 	PLUGIN_DEPENDENCIES StdObj
 	LIB_DEPENDENCIES Qwt
