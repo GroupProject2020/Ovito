@@ -13,7 +13,7 @@
     <itemizedlist>
       <listitem><xref linkend="reference.pipelines" xrefstyle="template:%t" /></listitem>
       <listitem><xref linkend="scene_objects" xrefstyle="template:%t" /></listitem>
-      <listitem><xref linkend="display_objects" xrefstyle="template:%t" /></listitem>
+      <listitem><xref linkend="visual_elements" xrefstyle="template:%t" /></listitem>
       <listitem><xref linkend="particles.modifiers" xrefstyle="template:%t" /></listitem>
       <listitem><xref linkend="viewports" xrefstyle="template:%t" /></listitem>
       <listitem><xref linkend="rendering" xrefstyle="template:%t" /></listitem>
@@ -24,7 +24,7 @@
 
   <xi:include href="reference/scene_objects/pipelines.docbook"/>
   <xi:include href="reference/scene_objects/scene_objects.docbook"/>
-  <xi:include href="reference/display_objects/display_objects.docbook"/>
+  <xi:include href="reference/visual_elements/visual_elements.docbook"/>
   <xi:include href="reference/modifiers/modifiers.docbook"/>
   <section xml:id="viewports">
     <title>Viewports</title>

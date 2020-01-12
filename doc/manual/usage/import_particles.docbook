@@ -94,6 +94,7 @@
 
   <section xml:id="usage.import.formats">
   <title>Supported input file formats</title>
+  <titleabbrev>Input file formats</titleabbrev>
   <para>
   	OVITO provides file readers for a variety of input formats, in particular data formats written by molecular dynamics
     and other atomistic simulation codes. In addition, it can load and visualize other kinds of data, for example

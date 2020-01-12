@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Rendering</title>
+  <title>Image and movie rendering</title>
 
   <para>
 
@@ -16,8 +16,8 @@
        <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="45" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    <link linkend="usage.rendering">Rendering</link> is the process of producing a high-quality output image and movie
-    of the current dataset for publication and other purposes.
+    <link linkend="usage.rendering">Rendering</link> is the process of producing high-quality output images
+    of the current dataset for publication or other presentation purposes.
     The <link linkend="core.render_settings">rendering page</link> of the command panel depicted in the screenshot
     on the right lets you control various settings related to rendering. For example, here you can determine OVITO should
     render a single image, a series of images, or a video. Furthermore, you can adjust relevant parameters such as the

@@ -37,20 +37,20 @@
               <entry>Calculates local strain tensors based on the relative motion of neighboring particles. </entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation&#xA0;analysis&#xA0;(DXA)</link></entry>
-              <entry>Identifies dislocation defects in a crystal.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.displacement_vectors">Displacement&#xA0;vectors</link></entry>
-              <entry>Calculates the displacements of particles based on an initial and a deformed configuration.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.cluster_analysis">Cluster&#xA0;analysis</link></entry>
               <entry>Decomposes a particle system into clusters of particles.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.coordination_analysis">Coordination&#xA0;analysis</link></entry>
               <entry>Determines the number of neighbors of each particle and computes the radial distribution function for the system.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation&#xA0;analysis&#xA0;(DXA)</link></entry>
+              <entry>Identifies dislocation defects in a crystal.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.displacement_vectors">Displacement&#xA0;vectors</link></entry>
+              <entry>Calculates the displacements of particles based on an initial and a deformed configuration.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.elastic_strain">Elastic&#xA0;strain&#xA0;calculation</link></entry>
@@ -164,6 +164,10 @@
               <entry>Selects particles that are neighbors of already selected particles.</entry>
             </row>
             <row>
+              <entry><link linkend="particles.modifiers.expression_select">Expression&#xA0;selection</link></entry>
+              <entry>Selects particles and other elements based on a user-defined criterion.</entry>
+            </row>
+            <row>
               <entry><link linkend="particles.modifiers.manual_selection">Manual&#xA0;selection</link></entry>
               <entry>Lets you select individual particles or bonds with the mouse.</entry>
             </row>
@@ -172,12 +176,8 @@
               <entry>Inverts the selection state of each element.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.expression_select">Expression&#xA0;selection</link></entry>
-              <entry>Selects particles based on a user-defined criterion.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.select_particle_type">Select&#xA0;type</link></entry>
-              <entry>Selects all elements of a given type.</entry>
+              <entry>Selects all elements of a particular type, e.g. all atoms of a chemical species.</entry>
             </row>
 
 		<!-- STRUCTURE IDENTIFICATION -->
@@ -243,6 +243,8 @@
       </informaltable>
    </para>
 
+  <xi:include href="particles/bond_angle_analysis.docbook"/>
+
   <xi:include href="particles/affine_transformation.docbook"/>
 
   <xi:include href="particles/ambient_occlusion.docbook"/>
@@ -251,13 +253,9 @@
 
   <xi:include href="particles/atomic_strain.docbook"/>
 
-  <xi:include href="particles/bin_and_reduce.docbook"/>
+  <xi:include href="particles/centrosymmetry.docbook"/>
 
   <xi:include href="particles/chill_plus.docbook"/>
-
-  <xi:include href="particles/bond_angle_analysis.docbook"/>
-
-  <xi:include href="particles/centrosymmetry.docbook"/>
 
   <xi:include href="particles/clear_selection.docbook"/>
 
@@ -315,11 +313,13 @@
 
   <xi:include href="particles/python_script.docbook"/>
 
+  <xi:include href="particles/show_periodic_images.docbook"/>
+
   <xi:include href="particles/scatter_plot.docbook"/>
 
   <xi:include href="particles/select_particle_type.docbook"/>
 
-  <xi:include href="particles/show_periodic_images.docbook"/>
+  <xi:include href="particles/bin_and_reduce.docbook"/>
 
   <xi:include href="particles/slice.docbook"/>
 

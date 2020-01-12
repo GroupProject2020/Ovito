@@ -11,7 +11,16 @@
   <title>Trajectory lines</title>
 
   <para>
-    Sorry, this docs section has not been written yet. Please check back later.
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/scene_objects/trajectory_lines_example.gif" format="GIF" scale="60" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    A trajectory lines <link linkend="scene_objects">data object</link> stores the continuous motion paths of a set of particles,
+    which have been precomputed by a <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier
+    for the purpose of visualization. 
+  </para>
+  <para>
+    The visual appearance of the trajectory lines in rendered images is controlled through the associated 
+    <link linkend="visual_elements.trajectory_lines">Trajectory lines</link> visual element.
   </para>
 
   <simplesect>

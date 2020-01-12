@@ -33,7 +33,7 @@
     <para>
       The modifier stores the calculated displacement vectors in a new particle property named <literal>Displacement</literal>.
       This particle property supports visualization of the data using graphical arrows.
-      To show the arrows in the viewports, you have to activate the associated <link linkend="display_objects.vectors">vector display</link>.
+      To show the arrows in the viewports, you have to activate the associated <link linkend="visual_elements.vectors">vector display</link>.
       Alternatively, you can use the <link linkend="particles.modifiers.color_coding">Color coding modifier</link> to
       visualize the displacements using a varying particle color. This can be done for one of the three components of the
       displacement vectors or their magnitudes, which the modifier

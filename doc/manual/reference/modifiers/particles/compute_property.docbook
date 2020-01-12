@@ -423,7 +423,7 @@ G(j) := ParticleType != @ParticleType</programlisting>
       and want to give these particles a different size.
       You can use the <emphasis>Compute property</emphasis> modifier to set
       the value of the <literal>Radius</literal> particle property, which determines the
-      per-particle display radii (see <link linkend="display_objects.particles">here</link>).
+      per-particle display radii (see <link linkend="visual_elements.particles">here</link>).
       The selection state of particles is determined by the current value of their
       <literal>Selection</literal> property (non-zero means selected). The conditional
       formula <programlisting>Selection ? 1.5 : 0.75</programlisting> sets a

@@ -36,7 +36,7 @@
     While the size of standard spherical and cubic particles is controlled by the <literal>Radius</literal> particle property,
     the size and shape of non-spherical and non-cubic particles is determined by the <literal>Aspherical Shape</literal> property.
     For OVITO to display non-spherical particles, this property must be defined and the
-    desired shape must be selected in the settings of the <link linkend="display_objects.particles">Particles</link> visual element.
+    desired shape must be selected in the settings of the <link linkend="visual_elements.particles">Particles</link> visual element.
   </para>
 
   <para>

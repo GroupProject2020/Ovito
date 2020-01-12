@@ -39,7 +39,7 @@ SET_OVITO_OBJECT_EDITOR(SurfaceMeshVis, SurfaceMeshVisEditor);
 void SurfaceMeshVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(QString(), rolloutParams, "display_objects.surface_mesh.html");
+	QWidget* rollout = createRollout(QString(), rolloutParams, "visual_elements.surface_mesh.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);

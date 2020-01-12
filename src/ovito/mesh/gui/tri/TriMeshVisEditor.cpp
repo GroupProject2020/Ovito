@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,7 +38,7 @@ SET_OVITO_OBJECT_EDITOR(TriMeshVis, TriMeshVisEditor);
 void TriMeshVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Mesh display"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Triangle mesh display"), rolloutParams, "visual_elements.triangle_mesh.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);

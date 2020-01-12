@@ -188,7 +188,7 @@
       affect the other pipeline.
     </para>
     <para>
-      Notice that also the <link linkend="display_objects">visual elements</link> are displayed using an italic font in the pipeline editor.
+      Notice that also the <link linkend="visual_elements">visual elements</link> are displayed using an italic font in the pipeline editor.
       This is because these visual elements are produced by the data source of the pipeline, which is located in the upstream section of the pipeline
       that is shared by multiple pipelines. Again, because these visual elements are shared objects, changing their
       parameters or turning their display on or off will affect the rendering of both datasets produced by the two pipelines.

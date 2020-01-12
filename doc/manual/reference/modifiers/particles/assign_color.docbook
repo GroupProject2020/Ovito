@@ -42,7 +42,7 @@
           </row>
           <row>
             <entry>Particle&#xA0;vectors</entry>
-            <entry><para>The <link linkend="display_objects.vectors">vector glyphs</link> of selected particles are colored by setting their <literal>Vector Color</literal> property.</para></entry>
+            <entry><para>The <link linkend="visual_elements.vectors">vector glyphs</link> of selected particles are colored by setting their <literal>Vector Color</literal> property.</para></entry>
           </row>
           <row>
             <entry>Mesh&#xA0;faces</entry>

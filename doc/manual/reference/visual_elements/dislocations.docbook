@@ -18,14 +18,22 @@
 
     This <link linkend="visual_elements">visual element</link> controls the rendering of dislocation lines
     which have been extracted by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier
-    or loaded from an data file.
+    or loaded from a discrete dislocation dynamics simulation file. The visual element is responsible for
+    the graphical representation of the dislocation lines stored in the <link linkend="data_inspector.dislocations">Dislocations data object</link>.
+  </para>
+  
+  <para>
+    The parameters of the visualization element provide control over the appearance of the dislocation lines.
+    OVITO provides options to indicate the line sense and Burgers vector of each dislocation line segment.
+    Different coloring schemes allow to visualize other local properties of the dislocation defects such as
+    as the Burgers vector family or the screw/edge character (i.e. the angle between local line tangent and Burgers vector).
   </para>
 
-   <simplesect>
-    <title>See also</title>
-    <para>
-      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.DislocationVis"><classname>DislocationVis</classname> (Python API)</pydoc-link>
-    </para>
-   </simplesect>
+  <simplesect>
+  <title>See also</title>
+  <para>
+    <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.DislocationVis"><classname>DislocationVis</classname> (Python API)</pydoc-link>
+  </para>
+  </simplesect>
 
 </section>

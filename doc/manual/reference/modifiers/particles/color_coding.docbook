@@ -40,7 +40,7 @@
           </row>
           <row>
             <entry>Particle&#xA0;vectors</entry>
-            <entry><para>Colors <link linkend="display_objects.vectors">vector glyphs</link> by setting the <literal>Vector Color</literal>
+            <entry><para>Colors <link linkend="visual_elements.vectors">vector glyphs</link> by setting the <literal>Vector Color</literal>
               property of the associated particles.</para></entry>
           </row>
           <row>

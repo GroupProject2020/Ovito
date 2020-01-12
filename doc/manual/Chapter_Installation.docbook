@@ -15,9 +15,10 @@
     </para>
 
     <para>
-      Note that OVITO uses the OpenGL interface to render three-dimensional content using your computer's graphics hardware.
-      Older OpenGL drivers may not be fully compatible with OVITO. It is recommended that you install the most recent
-      version of your hardware vendor's graphics driver.
+      Note that OVITO uses <link xlink:href="https://en.wikipedia.org/wiki/OpenGL">OpenGL</link> to render three-dimensional graphics
+      and thus requires a computer with modern graphics hardware supporting the OpenGL standard (at least version 2.1; version 3.2 or higher recommended). 
+      Older graphics drivers might not fully support modern OpenGL specifications and may therefore lead to problems when running OVITO. 
+      It is recommended that you install the latest version of the graphics driver provided by your hardware vendor prior to running OVITO.
     </para>
 
     <simplesect xml:id="installation.runovito.linux">
@@ -46,10 +47,22 @@
     </simplesect>
 
     <simplesect>
+      <title>Troubleshooting</title>
+
+      <para>
+        If you run into any problems during the installation of OVITO, please contact us 
+        through the support forum on our website <link xlink:href="https://www.ovito.org/forum/">www.ovito.org</link>.
+        We will be happy to help you.
+      </para>
+    </simplesect>
+
+    <simplesect>
       <title>Building from source</title>
 
-      <para>You can also download the source code of OVITO and build the program yourself.
-      See the <link linkend="development">developers section</link> for instructions.</para>
+      <para>
+        Large parts of OVITO (Basic) are available under an Open Source license and you can download the source code of OVITO 
+        to build the program yourself, for example to develop new plugin functions for OVITO. 
+        See the <link linkend="development">developers section</link> for build instructions.</para>
     </simplesect>
 
 </chapter>

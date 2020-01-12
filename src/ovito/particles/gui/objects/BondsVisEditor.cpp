@@ -39,7 +39,7 @@ SET_OVITO_OBJECT_EDITOR(BondsVis, BondsVisEditor);
 void BondsVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Bonds display"), rolloutParams, "display_objects.bonds.html");
+	QWidget* rollout = createRollout(tr("Bonds display"), rolloutParams, "visual_elements.bonds.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);

@@ -26,20 +26,20 @@
       <varlistentry>
         <term>Render cell</term>
         <listitem>
-          <para>Determines whether the cell is visible in rendered images and movies. If you uncheck
-          this option, the cell will still be visible in the interactive viewports of OVITO. To
-          hide the cell in the interactive viewports as well as in rendered images, uncheck the
-          box to left of the "Simulation cell" entry in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
+          <para>Controls the visibility of the simulation cell in rendered images. If you turn
+          this option off, the cell will still remain visible in the interactive viewports of OVITO. To
+          hide it in the interactive viewports as well, uncheck the
+          box next to the "Simulation cell" visual element in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
           </para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>Line width</term>
         <listitem>
-          <para>OVITO renders the simulation cell edges as thin cylinders with a finite diameter.
+          <para>OVITO renders the simulation cell edges as thin cylinders of finite diameter.
           This parameters controls the diameter of these cylinders in units of length of the simulation.
-          When importing a new simulation cell, the line width is automatically set by OVITO relative to
-          the diameter of the simulation cell.
+          When importing a new simulation cell, the line width is automatically configured by OVITO depending on
+          the overall size of the simulation cell.
           </para>
         </listitem>
       </varlistentry>
@@ -54,7 +54,7 @@
       Note that the <emphasis>line width</emphasis> and <emphasis>line color</emphasis> settings
       control how the cell appears in <link linkend="usage.rendering">rendered images</link> of the scene. In the
       <link linkend="usage.viewports">interactive viewports</link>, the
-      cell is always rendered as white (or black) wireframe.
+      cell is always rendered as a white (or black) wireframe model.
     </para>
    </simplesect>
 

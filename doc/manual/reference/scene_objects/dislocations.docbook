@@ -11,7 +11,20 @@
   <title>Dislocation lines</title>
 
   <para>
-    Sorry, this docs section has not been written yet. Please check back later.
+    This <link linkend="scene_objects">data object</link> holds a set of dislocation lines 
+    that have been extracted from an atomistic input crystal using the 
+    <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier,
+    or which have been imported from a discrete dislocation dynamics (DDD) simulation.
+  </para>
+  <para>
+    Each dislocation is represented by a continous three-dimensional curve and is accociated with a Burgers vector
+    and the type of crystal lattice it is embedded in. The table of dislocation lines is accessible
+    in the <link linkend="data_inspector.dislocations">data inspector</link> panel of OVITO. Furthermore,
+    it is possible to export the dislocation lines from OVITO to a VTK output file, for example.
+  </para>
+  <para>
+    Note that the visual appearance of dislocation lines in rendered images is controlled through the associated 
+    <link linkend="visual_elements.dislocations">Dislocations visual element</link>.
   </para>
 
   <simplesect>

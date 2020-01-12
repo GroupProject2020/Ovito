@@ -16,14 +16,14 @@
 		<link linkend="particles.modifiers.create_isosurface">Create isosurface</link> or <link linkend="particles.modifiers.coordination_polyhedra">Coordination polyhedra</link>.
   </para>
   <para>
-		The appearance of a surface mesh can be controlled through the parameter panel of the <link linkend="display_objects.surface_mesh">Surface mesh visual element</link>,
+		The appearance of a surface mesh can be controlled through the parameter panel of the <link linkend="visual_elements.surface_mesh">Surface mesh visual element</link>,
     which is located in the top section of the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
   </para>
   <simplesect>
     <title>Surfaces embedded in periodic domains</title>
     <para>
       <informalfigure><screenshot><mediaobject><imageobject>
-        <imagedata fileref="images/display_objects/surface_mesh_example.png" format="PNG" scale="50" />
+        <imagedata fileref="images/visual_elements/surface_mesh_example.png" format="PNG" scale="50" />
       </imageobject></mediaobject></screenshot></informalfigure>
 			Surface meshes may be embedded in a periodic domain, i.e. in a simulation cell with periodic boundary conditions.
 			That means the triangle faces of the surface mesh can connect vertices on opposite sides of a simulation box and wrap around correctly.

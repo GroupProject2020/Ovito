@@ -83,7 +83,7 @@
   <para>
     The modifier defines a new bond type, which will be assigned to bonds newly created by the modifier.
     The properties of this bond type, in particular its name and display color, can be edited in the second parameter panel.
-    Furthermore, the modifier will automatically create a <link linkend="display_objects.bonds">bonds
+    Furthermore, the modifier will automatically create a <link linkend="visual_elements.bonds">bonds
     visual element</link>, which controls the visual appearance of bonds. The third parameter panel shows the display settings
     of this visual element.
   </para>

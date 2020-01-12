@@ -50,7 +50,7 @@ class OVITO_PARTICLES_EXPORT GenerateTrajectoryLinesModifier : public Modifier
 
 	Q_OBJECT
 	OVITO_CLASS_META(GenerateTrajectoryLinesModifier, GenerateTrajectoryLinesModifierClass)
-	Q_CLASSINFO("DisplayName", "Generate particle trajectories");
+	Q_CLASSINFO("DisplayName", "Generate trajectory lines");
 	Q_CLASSINFO("ModifierCategory", "Visualization");
 
 public:

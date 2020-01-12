@@ -11,12 +11,12 @@
   <title>Data pipelines</title>
 
   <para>
-    Data pipelines are <emphasis>the</emphasis> central concept of OVITO. You can find a general introduction in the <link linkend="usage.modification_pipeline">overview part</link> of this manual.
-    The following sections list the different building blocks that are involved when creating a data pipeline in OVITO:
+    Data pipelines are the basis of the OVITO workflow. Please see the <link linkend="usage.modification_pipeline">introduction section</link> to get familiar with the conpcept.
+    The following sections describe the different building blocks that you use to build a data pipeline in OVITO:
     <itemizedlist>
       <listitem><link linkend="data_sources">Data sources</link></listitem>
       <listitem><link linkend="scene_objects">Data objects</link></listitem>
-      <listitem><link linkend="display_objects">Visual elements</link></listitem>
+      <listitem><link linkend="visual_elements">Visual elements</link></listitem>
       <listitem><link linkend="particles.modifiers">Modifiers</link></listitem>
     </itemizedlist>
   </para>

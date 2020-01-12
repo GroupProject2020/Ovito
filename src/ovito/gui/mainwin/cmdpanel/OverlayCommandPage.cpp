@@ -46,7 +46,7 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
     layout->addWidget(_newLayerBox);
     connect(_newLayerBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &OverlayCommandPage::onNewLayer);
 
-    _newLayerBox->addItem(tr("Add layer..."));
+    _newLayerBox->addItem(tr("Add viewport layer..."));
     _newLayerBox->insertSeparator(1);
 	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ViewportOverlay::OOClass())) {
 		_newLayerBox->addItem(clazz->displayName(), QVariant::fromValue(clazz));

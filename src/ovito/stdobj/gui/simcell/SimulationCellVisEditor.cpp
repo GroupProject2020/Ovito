@@ -38,7 +38,7 @@ SET_OVITO_OBJECT_EDITOR(SimulationCellVis, SimulationCellVisEditor);
 void SimulationCellVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(QString(), rolloutParams, "display_objects.simulation_cell.html");
+	QWidget* rollout = createRollout(QString(), rolloutParams, "visual_elements.simulation_cell.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);

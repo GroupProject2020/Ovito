@@ -37,7 +37,7 @@
 
     This modifier generates an <link xlink:href="https://en.wikipedia.org/wiki/Isosurface">isosurface</link> for a field quantity defined on a structured data grid.
     The generated isosurface is represented as a <link linkend="scene_objects.surface_mesh">surface mesh</link> in OVITO and its visual appearance is controlled by
-    the accompanying <link linkend="display_objects.surface_mesh">surface mesh visual element</link>.
+    the accompanying <link linkend="visual_elements.surface_mesh">surface mesh visual element</link>.
   </para>
   <para>
     See the <link linkend="usage.import.formats">list of file formats</link> supported by OVITO to find out how to load

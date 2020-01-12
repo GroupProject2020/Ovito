@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <section version="5.0"
          xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
-         xml:id="display_objects"
+         xml:id="visual_elements"
          xmlns="http://docbook.org/ns/docbook"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -12,15 +12,15 @@
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/display_objects/visual_elements_panel.svg" format="SVG" scale="65" />
+       <imagedata fileref="images/visual_elements/visual_elements_panel.svg" format="SVG" scale="65" />
     </imageobject></mediaobject></screenshot></informalfigure>
     OVITO distinguishes between the underlying data and the visual representations produced from that data.
     One typical example for this separation between <link linkend="scene_objects"><emphasis>data objects</emphasis></link>
     and their visual representation is the <literal>Position</literal> particle
     property, which holds the XYZ coordinates of a set of point-like particles. To visualize this data, OVITO automatically creates
-    a <emphasis>visual element</emphasis> of the <link linkend="display_objects.particles">Particles</link> type, which is responsible for rendering a
+    a <emphasis>visual element</emphasis> of the <link linkend="visual_elements.particles">Particles</link> type, which is responsible for rendering a
     corresponding set of spheres in the viewports, using the <literal>Position</literal> particle property as input data.
-    The <link linkend="display_objects.particles">Particles</link> visual element provides several parameters that let you control
+    The <link linkend="visual_elements.particles">Particles</link> visual element provides several parameters that let you control
     the visual appearance of the particles, e.g. the glyph shape (spheres, discs, cubes, etc.).
   </para>
   <para>
@@ -49,36 +49,36 @@
           </thead>
           <tbody>
             <row>
-              <entry><link linkend="display_objects.bonds">Bonds</link></entry>
-              <entry>Renders the bonds between particles as cylinders</entry>
-            </row>
-            <row>
-              <entry><link linkend="display_objects.particles">Particles</link></entry>
+              <entry><link linkend="visual_elements.particles">Particles</link></entry>
               <entry>Renders a set of particles using different glyph shapes</entry>
             </row>
             <row>
-              <entry><link linkend="display_objects.vectors">Vectors</link></entry>
+              <entry><link linkend="visual_elements.bonds">Bonds</link></entry>
+              <entry>Renders the bonds between particles as cylinders</entry>
+            </row>
+            <row>
+              <entry><link linkend="visual_elements.vectors">Vectors</link></entry>
               <entry>Renders arrow glyphs to graphically represent a vector particle property</entry>
             </row>
             <row>
-              <entry><link linkend="display_objects.simulation_cell">Simulation&#xA0;cell</link></entry>
+              <entry><link linkend="visual_elements.simulation_cell">Simulation&#xA0;cell</link></entry>
               <entry>Renders the simulation box as a wireframe geometry</entry>
             </row>
             <row>
-              <entry><link linkend="display_objects.surface_mesh">Surface&#xA0;mesh</link></entry>
+              <entry><link linkend="visual_elements.surface_mesh">Surface&#xA0;mesh</link></entry>
               <entry>Renders a smooth polygonal <link linkend="scene_objects.surface_mesh">surface mesh</link></entry>
             </row>
             <row>
-              <entry>Triangle&#xA0;mesh</entry>
-              <entry>Renders a triangle mesh, loaded from a VTK file, for example</entry>
+              <entry><link linkend="visual_elements.triangle_mesh">Triangle&#xA0;mesh</link></entry>
+              <entry>Renders a <link linkend="scene_objects.triangle_mesh">triangle mesh</link> loaded from a mesh geometry file</entry>
             </row>
             <row>
-              <entry><link linkend="display_objects.trajectory_lines">Trajectory&#xA0;lines</link></entry>
+              <entry><link linkend="visual_elements.trajectory_lines">Trajectory&#xA0;lines</link></entry>
               <entry>Renders a set of continuous lines to visualize the particle trajectories created with the
               <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
             </row>
             <row>
-              <entry><link linkend="display_objects.dislocations">Dislocations</link></entry>
+              <entry><link linkend="visual_elements.dislocations">Dislocations</link></entry>
               <entry>Renders dislocation lines extracted by the
               <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier</entry>
             </row>
@@ -99,6 +99,7 @@
   <xi:include href="vectors.docbook"/>
   <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
+  <xi:include href="triangle_mesh.docbook"/>
   <xi:include href="trajectory_lines.docbook"/>
   <xi:include href="dislocations.docbook"/>
 

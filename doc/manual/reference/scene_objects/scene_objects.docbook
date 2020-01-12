@@ -11,10 +11,16 @@
   <title>Data object types</title>
 
   <para>
-    The dataset loaded from a simulation file may consist of several individual <emphasis>data objects</emphasis>, which represent different
-    facets of the information, e.g. the simulation cell geometry, the atomic coordinates, and the bond list. 
-    <link linkend="particles.modifiers">Modifiers</link> operate on these data objects or add new data objects to the current dataset as it flows down
+    A dataset loaded into OVITO from a simulation file may consist of several individual <emphasis>data objects</emphasis>, which represent different
+    facets of the information, e.g. the simulation cell geometry, the atomic coordinates, the bond list, etc. 
+    <link linkend="particles.modifiers">Modifiers</link> operate on these data objects and may add dynamically computed data objects to the dataset as it is processed in
     the <link linkend="usage.modification_pipeline">data pipeline</link>.
+  </para>
+  <para>
+    Note that, in OVITO, the visualization of data is delegated to so-called <link linkend="visual_elements">visual elements</link>,
+    which are responsible for producing the three-dimensional graphical representation of the numerical data stored in the data objects.
+    That means data objects themselves have no configurable visualization parameters; only the <link linkend="visual_elements">visual elements</link>
+    rendering the graphical representation do.
   </para>
 
   <para>
@@ -34,8 +40,8 @@
             <entry>A set of particles which may be associated with an arbitrary set of per-particle property values</entry>
           </row>
           <row>
-            <entry>Bonds</entry>
-            <entry>A set of bonds which connect pairs of particles and which may be associated with an arbitrary set of per-bond property values</entry>
+            <entry><link linkend="scene_objects.bonds">Bonds</link></entry>
+            <entry>A set of bonds connecting pairs of particles</entry>
           </row>
           <row>
             <entry><link linkend="scene_objects.simulation_cell">Simulation&#xA0;cell</link></entry>
@@ -50,16 +56,16 @@
             <entry>A general polyhedral mesh made of vertices and triangular faces</entry>
           </row>
           <row>
-            <entry>Camera</entry>
-            <entry>A viewport camera object created using the <link linkend="usage.viewports.menu">Create camera</link> function in the viewport menu</entry>
+            <entry><link linkend="scene_objects.data_table">Data&#xA0;table</link></entry>
+            <entry>A table of values arranged in columns and rows, which can be visualized as a 2d data plot</entry>
+          </row>
+          <row>
+            <entry><link linkend="scene_objects.voxel_grid">Voxel&#xA0;grid</link></entry>
+            <entry>A structured 2d or 3d grid made of uniform voxel elements</entry>
           </row>
           <row>
             <entry><link linkend="scene_objects.particle_trajectory_lines">Trajectory&#xA0;lines</link></entry>
             <entry>The continuous particle trajectory lines computed by the <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
-          </row>
-          <row>
-            <entry><link linkend="scene_objects.voxel_grid">Voxel&#xA0;grid</link></entry>
-            <entry>A structured 2d/3d grid made of uniform voxel elements</entry>
           </row>
           <row>
             <entry><link linkend="scene_objects.dislocations">Dislocations</link></entry>
@@ -68,9 +74,6 @@
         </tbody>
       </tgroup>
     </informaltable>
-    Note that data objects are essentially non-visual structures carrying information only. 
-    In OVITO, the visualization of the data is delegated to so-called <link linkend="display_objects">visual elements</link>,
-    which are responsible for rendering a graphical representation of the data objects in the viewports.
   </para>
 
   <simplesect>
@@ -81,12 +84,13 @@
   </simplesect>
 
   <xi:include href="particles.docbook"/>
+  <xi:include href="bonds.docbook"/>
   <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
-  <xi:include href="voxel_grid.docbook"/>
   <xi:include href="triangle_mesh.docbook"/>
+  <xi:include href="data_table.docbook"/>
+  <xi:include href="voxel_grid.docbook"/>
   <xi:include href="particle_trajectory_lines.docbook"/>
   <xi:include href="dislocations.docbook"/>
-  <xi:include href="data_series.docbook"/>
 
 </section>

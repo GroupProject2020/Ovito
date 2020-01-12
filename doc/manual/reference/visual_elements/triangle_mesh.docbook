@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="visual_elements.triangle_mesh"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Triangle mesh (visual element)</title>
+  <titleabbrev>Triangle mesh</titleabbrev>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/visual_elements/triangle_mesh_panel.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/scene_objects/triangle_mesh_example.jpg" format="JPG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
+    This <link linkend="visual_elements">visual element</link> controls the appearance of triangle meshes,
+    which are general polyhedral objects made of vertices and triangular faces connecting those vertices.
+    Typically, <link linkend="scene_objects.triangle_mesh">triangle meshes</link> are imported into OVITO from an external
+    data file, for example an STL or an OBJ file. See the list of supported file formats <link linkend="usage.import.formats">here</link>.
+  </para>
+  <para>
+    The faces or the vertices of a triangle mesh may be associated with color information loaded from the imported geoemtry file. 
+    If not present, the uniform color of the mesh is controlled by the user though this visualization element.
+  </para>
+
+   <simplesect>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term>Display color</term>
+        <listitem>
+          <para>
+            The color used for rendering the triangle mesh. Only takes effect if the mesh 
+            has no per-vertex or per-face color information.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Transparency</term>
+        <listitem>
+          <para>The degree of semi-transparency to use when rendering the mesh.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Highlight edges</term>
+        <listitem>
+          <para>Activates the rendering of wireframe lines along the edges of the mesh's faces.</para>
+        </listitem>
+      </varlistentry>
+  	</variablelist>
+  </simplesect>
+
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.TriangleMeshVis"><classname>TriangleMeshVis</classname> (Python API)</pydoc-link>
+    </para>
+   </simplesect>
+
+</section>

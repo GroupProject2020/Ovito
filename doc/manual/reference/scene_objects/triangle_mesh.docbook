@@ -14,28 +14,26 @@
     <informalfigure><screenshot><mediaobject><imageobject>
       <imagedata fileref="images/scene_objects/triangle_mesh_example.jpg" format="JPG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    Triangle meshes are three-dimensional objects made of vertices connected by triangular faces.
-    Typically, they are imported as independent objects into the scene using the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice>
-    function. You can use triangle meshes, for example, to visualize additionally geometry next to your simulation data. 
+    Triangle meshes are general polyhedral objects made of vertices connected by triangular faces.
+    Typically, they are imported as extra objects into the scene using the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice>
+    function of OVITO. You can use triangle meshes, for example, to visualize additional geometry next to your simulation data. 
     OVITO supports several common geometry file formats
     such as STL, OBJ and VTK. See <link linkend="usage.import.formats">this page</link> for a complete list. 
   </para>
   <para>
-    Either the faces or the vertices of a triangle mesh may be associated with local color values if such 
+    Either the faces or vertices of a triangle mesh may be associated with color information &#x2014; if such 
     information is present in the imported geometry file. Otherwise, the uniform coloring of the mesh is 
-    controlled by the user within OVITO. 
+    controlled by the user within OVITO. See also the <link linkend="visual_elements.triangle_mesh">visual element for triangle meshes</link> for more information.
   </para>
   <para>
-    Note that triangle meshes can also be used to <link linkend="scene_objects.particle_types">give particles a free-form shape</link>. 
+    Note that triangle meshes are also used in OVITO to <link linkend="scene_objects.particle_types">give particles a free-form shape</link>. 
   </para>
 
-    <!--
   <simplesect>
     <title>See also</title>
     <para>
         <pydoc-link href="modules/ovito_data" anchor="ovito.data.TriangleMesh"><classname>TriangleMesh</classname> (Python API)</pydoc-link>
     </para>
   </simplesect>
-    -->
 
 </section>
