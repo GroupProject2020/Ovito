@@ -142,6 +142,12 @@ public:
 	/// Computes the recommended size for the widget.
 	virtual QSize sizeHint() const override;
 
+	/// Returns true if the widget's preferred height depends on its width; otherwise returns false.
+	virtual bool hasHeightForWidth() const override { return _noticeWidget != nullptr; }
+
+	/// Returns the preferred height for this widget, given a width.
+	virtual int heightForWidth(int w) const override;
+
 	Q_PROPERTY(int visiblePercentage READ visiblePercentage WRITE setVisiblePercentage);
 
 public Q_SLOTS:
@@ -156,6 +162,9 @@ public Q_SLOTS:
 	void setTitle(const QString& title) {
 		_titleButton->setText(title);
 	}
+	
+	/// Displays a notice text at the top of the rollout window.
+	void setNotice(const QString& noticeText);
 
 	/// Is called when the user presses the help button.
 	void onHelpButton();
@@ -181,6 +190,9 @@ private:
 
 	/// The widget that is inside the rollout.
 	QPointer<QWidget> _content;
+
+	/// The label widget displaying the user notice.
+	QLabel* _noticeWidget = nullptr;
 
 	/// Internal property that controls how much of rollout contents is visible.
 	int _visiblePercentage;
@@ -213,6 +225,9 @@ public:
 	virtual QSize minimumSizeHint() const override {
 		return QSize(QFrame::minimumSizeHint().width(), 10);
 	}
+
+	/// Returns the Rollout that hosts the given widget.
+	Rollout* findRolloutFromWidget(QWidget* content) const;
 
 protected:
 

@@ -46,11 +46,11 @@ SET_OVITO_OBJECT_EDITOR(RenderSettings, RenderSettingsEditor);
 static const int imageSizePresets[][2] = {
 		{ 320, 240 },
 		{ 640, 480 },
+		{ 600, 600 },
 		{ 800, 600 },
 		{ 1024, 768 },
+		{ 1000, 1000 },
 		{ 1600, 1200 },
-		{ 600, 600 },
-		{ 1000, 1000 }
 };
 
 /******************************************************************************
@@ -267,24 +267,15 @@ void RenderSettingsEditor::onSwitchRenderer()
 	dlg.setWindowTitle(tr("Switch renderer"));
 	QGridLayout* layout = new QGridLayout(&dlg);
 
-	QLabel* label = new QLabel(tr("Select a rendering engine, which is used to generate static images or movies."));
+	QLabel* label = new QLabel(tr("Select a rendering engine to use for producing output images or movies."));
 	label->setWordWrap(true);
 	layout->addWidget(label, 0, 0, 1, 2);
 
 	QListWidget* rendererListWidget = new HtmlListWidget(&dlg);
 	for(OvitoClassPtr clazz : rendererClasses) {
-		QString description;
-		if(clazz->name() == QStringLiteral("StandardSceneRenderer"))
-			description = tr("Hardware-accelerated rendering engine, also used by OVITO's interactive viewports. "
-						"The OpenGL renderer is fast and has the smallest memory footprint.");
-		else if(clazz->name() == QStringLiteral("TachyonRenderer"))
-			description = tr("Software-based ray tracer with support for shadows and ambient occlusion.");
-		else if(clazz->name() == QStringLiteral("POVRayRenderer"))
-			description = tr("Offloads rendering to the external Persistence of Vision Raytracer (POV-Ray). POV-Ray must be installed on your computer.");
-		else if(clazz->name() == QStringLiteral("OSPRayRenderer"))
-			description = tr("Software-based renderer with support for shadows and ambient occlusion.");
 		QString text = QStringLiteral("<p style=\"font-weight: bold;\">") + clazz->displayName() + QStringLiteral("</p>");
-		if(description.isEmpty() == false)
+		QString description = clazz->descriptionString();
+		if(!description.isEmpty())
 			text += QStringLiteral("<p style=\"font-size: small;\">") + description + QStringLiteral("</p>");
 		QListWidgetItem* item = new QListWidgetItem(text, rendererListWidget);
 		if(settings->renderer() && &settings->renderer()->getOOClass() == clazz)

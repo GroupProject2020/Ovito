@@ -106,6 +106,11 @@ public:
 	/// \note The rollout is automatically deleted when the editor is deleted.
 	QWidget* createRollout(const QString& title, const RolloutInsertionParameters& rolloutParams, const char* helpPage = nullptr);
 
+	/// \brief Completely disables the UI elements in the given rollout widget.
+	/// \param rolloutWidget The rollout widget to be disabled, which has been created by createRollout().
+	/// \param noticeText A text to displayed in the rollout panel to inform the user why the rollout has been disabled.
+	void disableRollout(QWidget* rolloutWidget, const QString& noticeText);
+
 	/// \brief Executes the passed functor and catches any exceptions thrown during its execution.
 	/// If an exception is thrown by the functor, all changes done by the functor
 	/// so far will be undone and an error message is shown to the user.

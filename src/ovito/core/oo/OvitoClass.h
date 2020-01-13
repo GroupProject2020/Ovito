@@ -64,6 +64,10 @@ public:
 	/// \return The human-readable name of this object type that should be shown in the user interface.
 	const QString& displayName() const { return _displayName; }
 
+	/// \brief Returns a human-readable string describing this class.
+	/// \return The description string for this class, or an empty string if the developer did not define a description.
+	QString descriptionString() const;
+
 	/// Returns the name alias that has been set for this class.
 	/// It will be used as an alternative name when looking up the class for a serialized object in a state file.
 	/// This allows to maintain backward compatibility when renaming classes in the C++ source code.

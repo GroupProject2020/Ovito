@@ -121,6 +121,19 @@ QWidget* PropertiesEditor::createRollout(const QString& title, const RolloutInse
 }
 
 /******************************************************************************
+* Completely disables the UI elements in the given rollout widget.
+******************************************************************************/
+void PropertiesEditor::disableRollout(QWidget* rolloutWidget, const QString& noticeText)
+{
+	rolloutWidget->setEnabled(false);
+	if(Rollout* rollout = container()->findRolloutFromWidget(rolloutWidget)) {
+		rollout->setNotice(noticeText);
+		// Force a re-layout of the rollouts.
+		QTimer::singleShot(100, container(), &RolloutContainer::updateRollouts);	
+	}
+}
+
+/******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
 bool PropertiesEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)

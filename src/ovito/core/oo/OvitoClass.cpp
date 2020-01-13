@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -60,7 +60,7 @@ void OvitoClass::initialize()
 {
 	// Remove namespace qualifier from Qt's class name.
 	if(qtMetaObject()) {
-		// Mark classes that don't have an invokable constructor as abstract.
+		// Mark classes as abstract that don't have an invokable constructor.
 		setAbstract(qtMetaObject()->constructorCount() == 0);
 
 		_pureClassName = qtMetaObject()->className();
@@ -86,6 +86,19 @@ void OvitoClass::initialize()
 	else {
 		setAbstract(true);
 	}
+}
+
+/******************************************************************************
+* Returns a human-readable string describing this class.
+******************************************************************************/
+QString OvitoClass::descriptionString() const
+{
+	for(int i = qtMetaObject()->classInfoOffset(); i < qtMetaObject()->classInfoCount(); i++) {
+		if(qstrcmp(qtMetaObject()->classInfo(i).name(), "Description") == 0) {
+			return QString::fromUtf8(qtMetaObject()->classInfo(i).value());
+		}
+	}
+	return QString();
 }
 
 /******************************************************************************

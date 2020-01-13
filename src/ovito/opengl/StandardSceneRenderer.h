@@ -40,6 +40,8 @@ class OVITO_OPENGLRENDERER_EXPORT StandardSceneRenderer : public OpenGLSceneRend
 	Q_OBJECT
 	OVITO_CLASS(StandardSceneRenderer)
 	Q_CLASSINFO("DisplayName", "OpenGL");
+	Q_CLASSINFO("Description", "Hardware-accelerated rendering engine, also used by OVITO's interactive viewports. "
+								"The OpenGL renderer is fast and has the smallest memory footprint.");
 
 public:
 
