@@ -492,9 +492,9 @@ void ModifyCommandPage::createAboutPanel()
 	QResource res("/gui/mainwin/command_panel/about_panel_no_updates.html");
 	newsPage = QByteArray((const char *)res.data(), (int)res.size());
 #endif
-	aboutLabel->setHtml(QString::fromUtf8(newsPage.constData()));
 
 	_aboutRollout = _propertiesPanel->addRollout(rollout, QCoreApplication::applicationName());
+	showProgramNotice(QString::fromUtf8(newsPage.constData()));
 
 #if !defined(OVITO_BUILD_APPSTORE_VERSION)
 	if(settings.value("updates/check_for_updates", true).toBool()) {
@@ -560,9 +560,7 @@ void ModifyCommandPage::onWebRequestFinished()
 		reply->close();
 		if(page.startsWith("<html><!--OVITO-->")) {
 
-			QTextBrowser* aboutLabel = _aboutRollout->findChild<QTextBrowser*>("AboutLabel");
-			OVITO_CHECK_POINTER(aboutLabel);
-			aboutLabel->setHtml(QString::fromUtf8(page.constData()));
+			showProgramNotice(QString::fromUtf8(page.constData()));
 
 			QSettings settings;
 			settings.setValue("news/cached_webpage", page);
@@ -570,6 +568,46 @@ void ModifyCommandPage::onWebRequestFinished()
 	}
 	reply->deleteLater();
 }
+
+/******************************************************************************
+* Displays the given HTML page content in the About pane.
+******************************************************************************/
+void ModifyCommandPage::showProgramNotice(const QString& htmlPage)
+{
+	QString finalText = htmlPage;
+
+#ifdef OVITO_EXPIRATION_DATE
+	QDate expirationDate = QDate::fromString(QStringLiteral(OVITO_EXPIRATION_DATE), Qt::ISODate);
+	QDate currentDate = QDate::currentDate();
+	QString expirationNotice;
+	if(currentDate < expirationDate.addMonths(-1)) {
+		expirationNotice = tr("<h4>Preview build</h4><p>You are using a preview version of %1, which will expire on %2. "
+				"The final release of %1 will be made available on our website <a href=\"https://www.ovito.org/\">www.ovito.org</a>.</p>")
+			.arg(QCoreApplication::applicationName())
+			.arg(expirationDate.toString(Qt::SystemLocaleShortDate));
+	}
+	else if(currentDate <= expirationDate) {
+		expirationNotice = tr("<h4>Preview build: Expiration date approaching</h4><p style=\"background-color: rgb(230,180,180);\">You are using a preview version of %1, which will expire on %2. "
+				"The final program release is now available. Please visit our website <a href=\"https://www.ovito.org/\">www.ovito.org</a>. "
+				"<br>This preview release will stop working in %3 days!</p>")
+			.arg(QCoreApplication::applicationName())
+			.arg(expirationDate.toString(Qt::SystemLocaleShortDate))
+			.arg(currentDate.daysTo(expirationDate));
+	}
+	else {
+		expirationNotice = tr("<h4>Preview build</h4><p style=\"background-color: rgb(230,180,180);\">This preview version of %1 has expired on %2 and will no longer work. "
+				"The final program release is now available, please visit our website <a href=\"https://www.ovito.org/\">www.ovito.org</a>. ")
+			.arg(QCoreApplication::applicationName())
+			.arg(expirationDate.toString(Qt::SystemLocaleShortDate));
+	}
+	finalText.replace(QStringLiteral("<p>&nbsp;</p>"), expirationNotice);
+#endif
+
+	QTextBrowser* aboutLabel = _aboutRollout->findChild<QTextBrowser*>("AboutLabel");
+	OVITO_CHECK_POINTER(aboutLabel);
+	aboutLabel->setHtml(finalText);
+}
+
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

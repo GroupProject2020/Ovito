@@ -97,6 +97,9 @@ private:
 	/// Creates the rollout panel that shows information about the application whenever no object is selected.
 	void createAboutPanel();
 
+	/// Displays the given HTML page content in the About pane.
+	void showProgramNotice(const QString& htmlPage);
+
 private:
 
 	/// The container of the current dataset being edited.

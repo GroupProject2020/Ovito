@@ -50,10 +50,14 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 ******************************************************************************/
 MainWindow::MainWindow() : _datasetContainer(this)
 {
-	setWindowTitle(tr("%1 (Open Visualization Tool)").arg(QCoreApplication::applicationName()));
+	_baseWindowTitle = tr("%1 (Open Visualization Tool)").arg(QCoreApplication::applicationName());
+#ifdef OVITO_EXPIRATION_DATE
+	_baseWindowTitle += tr(" - Preview build expiring on %1").arg(QDate::fromString(QStringLiteral(OVITO_EXPIRATION_DATE), Qt::ISODate).toString(Qt::SystemLocaleShortDate));
+#endif
+	setWindowTitle(_baseWindowTitle);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	// Setup the layout of docking widgets.
+	// Set up the layout of docking widgets.
 	setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 	setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
@@ -217,8 +221,8 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	_frameBufferWindow = new FrameBufferWindow(this);
 
 	// Update window title when document path changes.
-	connect(&_datasetContainer, &DataSetContainer::filePathChanged, [this](const QString& filePath) { setWindowFilePath(filePath); });
-	connect(&_datasetContainer, &DataSetContainer::modificationStatusChanged, [this](bool isClean) { setWindowModified(!isClean); });
+	connect(&_datasetContainer, &DataSetContainer::filePathChanged, this, [this](const QString& filePath) { setWindowFilePath(filePath); });
+	connect(&_datasetContainer, &DataSetContainer::modificationStatusChanged, this, [this](bool isClean) { setWindowModified(!isClean); });
 
 	// Accept files via drag & drop.
 	setAcceptDrops(true);
@@ -229,6 +233,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 ******************************************************************************/
 MainWindow::~MainWindow()
 {
+	_datasetContainer.setCurrentSet(nullptr);
 }
 
 /******************************************************************************
@@ -488,9 +493,9 @@ void MainWindow::setCurrentCommandPanelPage(CommandPanelPage page)
 void MainWindow::setWindowFilePath(const QString& filePath)
 {
 	if(filePath.isEmpty())
-		setWindowTitle(tr("%1 (Open Visualization Tool) [*]").arg(QCoreApplication::applicationName()));
+		setWindowTitle(_baseWindowTitle + QStringLiteral(" [*]"));
 	else
-		setWindowTitle(tr("%1 (Open Visualization Tool) - %2[*]").arg(QCoreApplication::applicationName()).arg(QFileInfo(filePath).fileName()));
+		setWindowTitle(_baseWindowTitle + QStringLiteral(" - %1[*]").arg(QFileInfo(filePath).fileName()));
 	QMainWindow::setWindowFilePath(filePath);
 }
 

@@ -146,6 +146,25 @@ bool GuiApplication::startupApplication()
 		mainWin->show();
 #endif
 		mainWin->restoreLayout();
+
+#ifdef OVITO_EXPIRATION_DATE
+		QDate expirationDate = QDate::fromString(QStringLiteral(OVITO_EXPIRATION_DATE), Qt::ISODate);
+		if(QDate::currentDate() > expirationDate) {
+			QMessageBox msgbox(mainWin);
+			msgbox.setWindowTitle(tr("Expiration - %1").arg(QCoreApplication::applicationName()));
+			msgbox.setStandardButtons(QMessageBox::Close);
+			msgbox.setText(tr("<p>This is a preview version of %1 with a limited life span, which did expire on %2.</p>"
+				"<p>Please obtain the final program release, which is now available on our website "
+				"<a href=\"https://www.ovito.org/\">www.ovito.org</a>.</p>"
+				"<p>This pre-release build of %2 can no longer be used and will quit now.</p>")
+					.arg(QCoreApplication::applicationName())
+					.arg(expirationDate.toString(Qt::SystemLocaleLongDate)));
+			msgbox.setTextInteractionFlags(Qt::TextBrowserInteraction);
+			msgbox.setIcon(QMessageBox::Critical);
+			msgbox.exec();
+			return false;
+		}
+#endif
 	}
 	else {
 		// Create a dataset container.

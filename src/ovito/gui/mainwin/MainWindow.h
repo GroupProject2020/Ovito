@@ -182,6 +182,9 @@ private:
 
 	/// The UI panel containing the data inspector tabs.
 	DataInspectorPanel* _dataInspector;
+
+	/// The title string to use for the main window (without any dynamic content).
+	QString _baseWindowTitle;
 };
 
 OVITO_END_INLINE_NAMESPACE
