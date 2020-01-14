@@ -64,9 +64,15 @@
 
   <!-- Template for an element that generates a tag for marking program features of the PRO version -->
   <xsl:template match="ovito-pro" name="ovito-pro">
-<!--
-    <span class="ovito-pro-tag" data-tooltip="This program feature is only available in the Pro edition of OVITO" data-tooltip-position="bottom">pro</span>
--->
+    <xsl:variable name="pro.description.page" select="//section[@id='credits.ovito_pro']"/>
+    <a class="ovito-pro-tag" data-tooltip="Program feature is only available in the Pro edition of OVITO. Click to learn more." data-tooltip-position="bottom">
+      <xsl:attribute name="href">
+        <xsl:call-template name="href.target">
+          <xsl:with-param name="object" select="$pro.description.page" />
+        </xsl:call-template>
+      </xsl:attribute>
+      pro
+    </a>
   </xsl:template>
 
   <!-- Template for an element that generates a link into the Sphinx-generated Python API documentation -->

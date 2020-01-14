@@ -167,7 +167,8 @@ hr {
 .ovito-pro-tag {
 	background-color: rgb(230,230,50);
 	color: rgb(0,0,0);
-	line-height: 1;
+    line-height: 1;
+    text-decoration: none;
 	text-align: center;
 	white-space: nowrap;
 	font-size: 80%;
@@ -177,14 +178,11 @@ hr {
 	padding: 2px 3px;
 	margin-left: 0.2rem;
 }
-.navheader .ovito-pro-tag,.navfooter .ovito-pro-tag {
-    display: none;
-};
 
 [data-tooltip] {
     display: inline-block;
     position: relative;
-    cursor: help;
+/*    cursor: help;*/
     padding: 4px;
 }
 /* Tooltip styling */
@@ -283,4 +281,9 @@ hr {
 [data-tooltip]:hover:after {
     display: block;
     z-index: 50;
+}
+
+/* Don't show the <pro> tags in the header/footer of the page */
+.navheader .ovito-pro-tag,.navfooter .ovito-pro-tag {
+    display: none;
 }

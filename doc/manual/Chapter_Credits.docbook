@@ -10,16 +10,17 @@
   <title>Credits and licensing information</title>
 
   <para>
-    OVITO has been developed by Alexander Stukowski and other contributors.
+    The development versions of <emphasis>OVITO Pro</emphasis> and <emphasis>OVITO Basic</emphasis> ("3.0.0-dev") are licensed under <link linkend="appendix.license.ovito_pro">the terms found here</link>.
+    Please see <link linkend="credits.ovito_pro">this page</link> for more information on the differences between the <emphasis>Pro</emphasis> and <emphasis>Basic</emphasis> editions of OVITO.
   </para>
 
   <para>
-    The <emphasis>Pro</emphasis> edition of OVITO in binary form is licensed under <link linkend="appendix.license.ovito_pro">the terms found here</link>.
-    The <emphasis>Basic</emphasis> edition of OVITO in binary form is licensed under the terms of the <link linkend="appendix.GPL">GNU General Public License (v3)</link>.
-    The complete source code for the <emphasis>Basic</emphasis> edition can be found on <link xlink:href="https://gitlab.com/stuko/ovito/">GitLab.com</link>.
+    The source code for building program binaries equivalent to <emphasis>OVITO Basic</emphasis> is made available under the terms of the 
+    <link linkend="appendix.GPL">GNU General Public License (v3)</link> and can be found in our <link xlink:href="https://gitlab.com/stuko/ovito/">GitLab repository</link>.
+    OVITO has been developed by Alexander Stukowski and other contributors.
   </para>
 
-  <para>This user manual was written by Alexander Stukowski and is licensed under the terms of the <link linkend="appendix.GFDL">GNU Free Documentation License</link>.</para>
+  <para>This user manual has been written by Alexander Stukowski and is licensed under the terms of the <link linkend="appendix.GFDL">GNU Free Documentation License</link>.</para>
 
   <para>The following third-party libraries are used within OVITO:
     <informaltable>
@@ -175,6 +176,10 @@
     </informaltable>
   </para>
 
+  <section xml:id="credits.ovito_pro" role="NotInToc">
+    <title>OVITO Pro</title>
+    <para>To be written...</para>
+  </section>
 
   <xi:include href="licenses/ovito_pro.docbook"/>
 
