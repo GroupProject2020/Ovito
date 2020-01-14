@@ -18,7 +18,7 @@
     This modifier generates a 1-, 2- or 3-dimensional grid covering the simulation domain and assigns each particle
     into one of the uniformly sized bins. It then performs a reduction operation for a selected particle property,
     mapping the values of all particles contained in a cell to a single output value.
-    This modifier can thus be used to project the per-particle data to a structured grid, for example to coarse-grain
+    This modifier can thus be used to project the per-particle data to a <link linkend="scene_objects.voxel_grid">structured grid</link>, for example to coarse-grain
     the atomistic data and generate a continuous field representation of a particle property.
     You can choose between different reduction operations, e.g. sum, average (mean), minimum or maximum.
   </para>
@@ -39,7 +39,7 @@
     </para>
 
     <para>
-      When mapping the particle values to a three-dimensional grid using this modifier, you can subsequently
+      When mapping the particle values to a three-dimensional <link linkend="scene_objects.voxel_grid">voxel grid</link> using this modifier, you can subsequently
       employ the <link linkend="particles.modifiers.create_isosurface">Create isosurface</link> modifier to
       render iso-level surfaces of the computed field.
     </para>

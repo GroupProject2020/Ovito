@@ -13,7 +13,7 @@
   <para>
     This <link linkend="scene_objects">data object</link> holds a set of dislocation lines 
     that have been extracted from an atomistic input crystal using the 
-    <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier,
+    <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link> modifier,
     or which have been imported from a discrete dislocation dynamics (DDD) simulation.
   </para>
   <para>

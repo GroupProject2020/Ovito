@@ -112,12 +112,12 @@
           <tbody>
             <row>
               <entry>LAMMPS&#xA0;dump</entry>
-              <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>. OVITO supports both text-based and binary dump files.</para></entry>
+              <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov">LAMMPS</link> molecular dynamics code. OVITO supports both text-based and binary dump files.</para></entry>
               <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>LAMMPS&#xA0;data</entry>
-              <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov/doc/read_data.html">LAMMPS molecular dynamics code</link>.</para></entry>
+              <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov/doc/read_data.html">LAMMPS</link> molecular dynamics code.</para></entry>
               <entry><link linkend="scene_objects.particles">particles</link>, bonds</entry>
             </row>
             <row>
@@ -163,7 +163,7 @@
             <row>
               <entry>PDB</entry>
               <entry><para>Protein Data Bank (PDB) files (experimental support).</para></entry>
-              <entry><link linkend="scene_objects.particles">particles</link>, bonds</entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.bonds">bonds</link></entry>
             </row>
             <row>
               <entry>FHI-aims</entry>
@@ -172,7 +172,7 @@
             </row>
             <row>
               <entry>GSD/HOOMD</entry>
-              <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="https://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue code</link>. See <link xlink:href="https://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
+              <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="https://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue</link> code. See <link xlink:href="https://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
               <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
@@ -193,7 +193,7 @@
             <row>
               <entry>GALAMOST</entry>
               <entry><para>XML-based file format used by the <emphasis>GALAMOST</emphasis> molecular dynamics code.</para></entry>
-              <entry><link linkend="scene_objects.particles">particles</link>, bonds</entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.bonds">bonds</link></entry>
             </row>
             <row>
               <entry>Quantum Espresso</entry>

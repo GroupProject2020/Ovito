@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="visual_elements.voxel_grid"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Voxel grid (visual element)</title>
+  <titleabbrev>Voxel grid</titleabbrev>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/visual_elements/voxel_grid_panel.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
+    This type of <link linkend="visual_elements">visual element</link> controls the visual appearance of 
+    <link linkend="scene_objects.voxel_grid">Voxel grid</link> data objects, which are structured grids of 
+    2- or 3-dimensional cells (voxels), each associated with one or more numeric values.
+  </para>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/visual_elements/voxel_grid_example.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This visual element renders the voxel grid as a solid object showing just the voxel cells on the outer 
+    boundaries of the domain. Note that by default the voxel cells will all appear gray, because they do not have a 
+    color assigned to them yet. You can use the <link linkend="particles.modifiers.color_coding">Color coding</link> modifier
+    to given them a color and visualize a numeric field quantity associated with the grid cells as in this example.
+  </para>
+
+  <simplesect>
+    <title>Parameters</title>
+    <variablelist>
+      <varlistentry>
+        <term>Transparency</term>
+        <listitem>
+          <para>The degree of semi-transparency to use when rendering the grid surfaces.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Highlight edges</term>
+        <listitem>
+          <para>Activates the rendering of wireframe lines along the edges of the grid cells.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Interpolate colors</term>
+        <listitem>
+          <para>
+            <informalfigure><screenshot><mediaobject><imageobject>
+              <imagedata fileref="images/visual_elements/voxel_grid_example_interpolated.png" format="PNG" scale="50" />
+            </imageobject></mediaobject></screenshot></informalfigure>
+            Will smoothly interpolate between the discrete colors of adjacent cells.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </simplesect>
+
+  <simplesect>
+    <title>See also</title>
+    <para>
+      <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.VoxelGridVis"><classname>VoxelGridVis</classname> (Python API)</pydoc-link>
+    </para>
+  </simplesect>
+
+</section>

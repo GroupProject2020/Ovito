@@ -54,13 +54,13 @@
           <tbody>
             <row>
               <entry>LAMMPS&#xA0;dump</entry>
-              <entry><para>Text-based file format produced and read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>.</para></entry>
+              <entry><para>Text-based file format produced and read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS</link> molecular dynamics code.</para></entry>
               <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>LAMMPS&#xA0;data</entry>
-              <entry><para>File format read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>.</para></entry>
-              <entry><link linkend="scene_objects.particles">particles</link>, bonds</entry>
+              <entry><para>File format read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS</link> molecular dynamics code.</para></entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.bonds">bonds</link></entry>
             </row>
             <row>
               <entry>XYZ</entry>
@@ -89,8 +89,8 @@
             </row>
             <row>
               <entry>GSD/HOOMD</entry>
-              <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="https://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue code</link>. See <link xlink:href="https://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
-              <entry><link linkend="scene_objects.particles">particles</link>, bonds, global&#xA0;attributes</entry>
+              <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="https://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue</link> code. See <link xlink:href="https://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.bonds">bonds</link>, global&#xA0;attributes</entry>
             </row>
             <row>
               <entry>Table&#xA0;of&#xA0;values</entry>

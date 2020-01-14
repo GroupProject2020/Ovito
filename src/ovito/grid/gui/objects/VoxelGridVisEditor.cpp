@@ -37,7 +37,7 @@ SET_OVITO_OBJECT_EDITOR(VoxelGridVis, VoxelGridVisEditor);
 void VoxelGridVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Grid display"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Grid display"), rolloutParams, "visual_elements.voxel_grid.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);

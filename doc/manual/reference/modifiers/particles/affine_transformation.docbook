@@ -15,15 +15,15 @@
        <imagedata fileref="images/modifiers/affine_transformation_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     This modifier applies an affine transformation to the system. It may be used to translate, scale, rotate or shear
-    the particles, the simulation cell and/or other elements. The transformation can either be explicitly specified in terms of a 3 x 3
-    matrix plus a translation vector, or implicitly by prescribing a target geometry for the simulation cell.
+    the particles, the simulation cell and/or other elements. The transformation can either be specified explicitly in terms of a 3 x 3
+    matrix plus a translation vector, or implicitly by prescribing a fixed target shape for the simulation cell.
   </para>
 
   <para>
-    Given the 3 x 3 linear transformation matrix <inlineequation><mathphrase><emphasis>M</emphasis></mathphrase></inlineequation>
-    and the translation vector <inlineequation><mathphrase><emphasis>t</emphasis></mathphrase></inlineequation>,
-    which are both parameters of the modifier,
-    the new position <inlineequation><mathphrase><emphasis>x'</emphasis></mathphrase></inlineequation> for
+    Given a 3 x 3 linear transformation matrix <inlineequation><mathphrase><emphasis>M</emphasis></mathphrase></inlineequation>
+    and a translation vector <inlineequation><mathphrase><emphasis>t</emphasis></mathphrase></inlineequation>,
+    which together describe a general affine transformation,
+    the new position <inlineequation><mathphrase><emphasis>x'</emphasis></mathphrase></inlineequation> of
     a particle at the original position <inlineequation><mathphrase><emphasis>x</emphasis></mathphrase></inlineequation>
     is computed as
     <inlineequation><mathphrase><emphasis>x'</emphasis> = <emphasis>M</emphasis>&#x22C5;<emphasis>x</emphasis> + <emphasis>t</emphasis></mathphrase></inlineequation>.
@@ -31,7 +31,7 @@
   </para>
 
   <para>
-    The <guibutton>Enter rotation</guibutton> button opens a dialog box letting you enter a rotation
+    The <guibutton>Enter rotation</guibutton> button opens a dialog box letting you specify a rotation
     axis, a rotation angle and a center of rotation. Based on these inputs, OVITO will compute the corresponding
     affine transformation matrix for you.
   </para>
@@ -40,46 +40,54 @@
     <title>Transform to target box</title>
     <para>
       This option lets the modifier automatically compute the affine transformation from the current shape of the input simulation cell and the specified
-      target shape. After application of the implicitly determined transformation, the cell will take on the
-      given target size and shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
-      cell shape accordingly, unless you turn their transformation off (see next section).
+      target shape. After application of the implicitly determined transformation, the existing simulation cell will be mapped the
+      given target cell shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
+      cell shape accordingly, unless you turn off their transformation (see next section).
     </para>
     <para>
-      Note that you can use the target box option as a way to replace the simulation cell read from the input simulation file(s)
-      with a constant, non-varying simulation cell.
+      Note that you can use this option to replace a varying simulation cell loaded from the input simulation file(s)
+      with a static, non-varying simulation cell.
     </para>
   </simplesect>
 
   <simplesect>
     <title>Transformed elements</title>
     <para>
-      You can select the kinds of elements that should be transformed by the modifier:
+      You can select the types of data elements that should be transformed by the modifier:
       <informaltable>
         <tgroup cols="2">
           <thead>
             <row>
-              <entry>Data element</entry>
+              <entry>Data&#xA0;element</entry>
               <entry>Description</entry>
             </row>
           </thead>
           <tbody>
             <row>
-              <entry>Particles</entry>
-              <entry><para>Applies the affine transformation to the coordinates of the particles (<literal>Position</literal> particle property).</para></entry>
+              <entry><link linkend="scene_objects.particles">Particles</link></entry>
+              <entry><para>Applies the affine transformation to the coordinates of particles (i.e. the <literal>Position</literal> particle property).</para></entry>
             </row>
             <row>
-              <entry>Vector particle properties</entry>
+              <entry><link linkend="usage.particle_properties">Vector particle properties</link></entry>
               <entry><para>Applies the linear part of the affine transformation to the <literal>Velocity</literal>, <literal>Force</literal>
                     and <literal>Displacement</literal> particle properties.</para></entry>
             </row>
             <row>
-              <entry>Simulation cell</entry>
+              <entry><link linkend="scene_objects.simulation_cell">Simulation&#xA0;cell</link></entry>
               <entry><para>Applies the affine transformation to the origin of the <link linkend="scene_objects.simulation_cell">simulation cell</link> and the linear part of the transformation
                     to the three cell vectors.</para></entry>
             </row>
             <row>
-              <entry>Surfaces</entry>
+              <entry><link linkend="scene_objects.surface_mesh">Surfaces</link></entry>
               <entry><para>Applies the affine transformation to the vertices of <link linkend="scene_objects.surface_mesh">surface meshes</link>.</para></entry>
+            </row>
+            <row>
+              <entry><link linkend="scene_objects.voxel_grid">Voxel&#xA0;grids</link></entry>
+              <entry><para>Applies the affine transformation to the domain shape of a <link linkend="scene_objects.voxel_grid">voxel grid</link>.</para></entry>
+            </row>
+            <row>
+              <entry><link linkend="scene_objects.dislocations">Dislocations</link></entry>
+              <entry><para>Applies the affine transformation to a set of <link linkend="scene_objects.dislocations">dislocation lines</link>.</para></entry>
             </row>
           </tbody>
         </tgroup>

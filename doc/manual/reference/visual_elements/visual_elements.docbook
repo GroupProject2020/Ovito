@@ -73,6 +73,10 @@
               <entry>Renders a <link linkend="scene_objects.triangle_mesh">triangle mesh</link> loaded from a mesh geometry file</entry>
             </row>
             <row>
+              <entry><link linkend="visual_elements.voxel_grid">Voxel&#xA0;grid</link></entry>
+              <entry>Renders a <link linkend="scene_objects.voxel_grid">voxel grid</link></entry>
+            </row>
+            <row>
               <entry><link linkend="visual_elements.trajectory_lines">Trajectory&#xA0;lines</link></entry>
               <entry>Renders a set of continuous lines to visualize the particle trajectories created with the
               <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
@@ -100,6 +104,7 @@
   <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
   <xi:include href="triangle_mesh.docbook"/>
+  <xi:include href="voxel_grid.docbook"/>
   <xi:include href="trajectory_lines.docbook"/>
   <xi:include href="dislocations.docbook"/>
 
