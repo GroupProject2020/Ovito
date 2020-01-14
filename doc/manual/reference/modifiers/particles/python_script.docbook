@@ -38,7 +38,7 @@
       <guibutton>Edit script</guibutton> button. The editor window lets you enter the source code for the user-defined modifier function.
       This Python function must be called <code>modify()</code>. Note that you are free to define additional helper functions
       in case you want to invoke them as sub-routines from the main <code>modify()</code> function.
-      The <pydoc-link href="introduction/custom_modifiers" anchor="custom-modifier-functions">corresponding section</pydoc-link> of the scripting manual provides further
+      The <pydoc-link href="introduction/custom_modifiers" anchor="custom-modifier-functions" no-pro-tag="1">corresponding section</pydoc-link> of the scripting manual provides further
       instructions on how to write a user-defined modifier function.
     </para>
 
@@ -75,13 +75,13 @@
   <simplesect>
     <title>Examples</title>
     <para>
-      <pydoc-link href="introduction/examples" anchor="user-defined-modifier-functions">This page</pydoc-link> provides several code examples
+      <pydoc-link href="introduction/examples" anchor="user-defined-modifier-functions" no-pro-tag="1">This page</pydoc-link> provides several code examples
       demonstrating how to implement a <literal>modify()</literal> function:
       <itemizedlist>
-        <listitem><pydoc-link href="introduction/examples/modifiers/msd_calculation">Calculating mean square displacement</pydoc-link></listitem>
-        <listitem><pydoc-link href="introduction/examples/modifiers/order_parameter_calculation">Custom order parameter calculation</pydoc-link></listitem>
-        <listitem><pydoc-link href="introduction/examples/modifiers/visualize_local_lattice_orientation">Color mapping to visualize local lattice orientation</pydoc-link></listitem>
-        <listitem><pydoc-link href="introduction/examples/modifiers/select_overlapping_particles">Finding overlapping particles</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/msd_calculation" no-pro-tag="1">Calculating mean square displacement</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/order_parameter_calculation" no-pro-tag="1">Custom order parameter calculation</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/visualize_local_lattice_orientation" no-pro-tag="1">Color mapping to visualize local lattice orientation</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/modifiers/select_overlapping_particles" no-pro-tag="1">Finding overlapping particles</pydoc-link></listitem>
       </itemizedlist>
     </para>
   </simplesect>
@@ -90,7 +90,7 @@
   <title>See also</title>
     <para>
       <simplelist>
-        <member><pydoc-link href="introduction/custom_modifiers">How to write user-defined modifier functions</pydoc-link></member>
+        <member><pydoc-link href="introduction/custom_modifiers" no-pro-tag="1">How to write user-defined modifier functions</pydoc-link></member>
         <member><pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.PythonScriptModifier"><classname>PythonScriptModifier</classname> (Python API)</pydoc-link></member>
       </simplelist>
     </para>

@@ -78,10 +78,13 @@ set       toc
 <xsl:template match="pydoc-link">
   <xsl:param name="href" select="@href" />
   <xsl:param name="anchor" select="@anchor" />
+  <xsl:param name="no-pro-tag" select="@no-pro-tag" />
   <xsl:call-template name="link">
     <xsl:with-param name="xhref" select="concat('python/', @href, '.html', '#', @anchor)"/>
   </xsl:call-template>
-  <xsl:call-template name="ovito-pro" />
+  <xsl:if test="not($no-pro-tag)">
+    <xsl:call-template name="ovito-pro" />
+  </xsl:if>
 </xsl:template>
 
 <xsl:template name="header.navigation">

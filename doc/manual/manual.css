@@ -165,14 +165,14 @@ hr {
 }
 
 .ovito-pro-tag {
-	background-color: rgb(230,230,50);
+	background-color: rgb(230,200,170);
 	color: rgb(0,0,0);
     line-height: 1;
     text-decoration: none;
 	text-align: center;
 	white-space: nowrap;
 	font-size: 80%;
-	font-weight: bold;
+	font-weight: normal;
 	vertical-align: baseline;
 	border-radius: 0.25rem;
 	padding: 2px 3px;

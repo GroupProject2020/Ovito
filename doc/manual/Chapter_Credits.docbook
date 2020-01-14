@@ -11,7 +11,7 @@
 
   <para>
     The development versions of <emphasis>OVITO Pro</emphasis> and <emphasis>OVITO Basic</emphasis> ("3.0.0-dev") are licensed under <link linkend="appendix.license.ovito_pro">the terms found here</link>.
-    Please see <link linkend="credits.ovito_pro">this page</link> for more information on the differences between the <emphasis>Pro</emphasis> and <emphasis>Basic</emphasis> editions of OVITO.
+    See <link linkend="credits.ovito_pro">this page</link> for more information on the differences between the <emphasis>Pro</emphasis> and <emphasis>Basic</emphasis> editions of OVITO.
   </para>
 
   <para>
@@ -176,9 +176,39 @@
     </informaltable>
   </para>
 
-  <section xml:id="credits.ovito_pro" role="NotInToc">
-    <title>OVITO Pro</title>
-    <para>To be written...</para>
+  <section xml:id="credits.ovito_pro">
+    <title>OVITO Pro and OVITO Basic</title>
+    <para>
+      We (the team behind OVITO) provide two variants of the software: <emphasis>OVITO Basic</emphasis> and <emphasis>OVITO Pro</emphasis>. 
+      The two differ in terms of the program features and <link linkend="credits">licensing conditions</link>. 
+    </para>
+    <para> 
+      <emphasis>OVITO Basic</emphasis> is made available to the research community free of charge and provides the 
+      basic functionality typically needed by occasional users, who want an easy way to visualize molecular simulations or other particle-based data. 
+      This edition of OVITO is also meant for students and teachers, who use the software in a classroom setting. 
+      The source code of <emphasis>OVITO Basic</emphasis> is freely available, giving you open access to the algorithms
+      that work behind the scenes. We also invite you to contribute new code to this version of OVITO under the MIT Open Source license.
+    </para>
+    <para> 
+      <emphasis>OVITO Pro</emphasis> will be made available for a fee (coming in 2020) and addresses the needs of professional researchers, 
+      who require scripting capabilities, advanced data analysis tools and high-quality rendering functions.
+      The proceeds from sales of <emphasis>OVITO Pro</emphasis> will enable us to further extend the
+      code and make well-maintained program packages available to the community on a long-term basis. Furthermore, buyers of a <emphasis>OVITO Pro</emphasis> license
+      will receive priority technical support from the OVITO team. Note that the development of OVITO is no longer funded by any
+      public institution, and we now work on a freelance basis out of Germany. 
+      (Upside is we can invest much more time into making OVITO better than ever before.)
+    </para>
+    <para>
+      Note that this user manual covers both editions of OVITO. Program features which are exclusively available in the <emphasis>Pro</emphasis>
+      edition are marked with the following tag: 
+      <blockquote>
+        <ovito-pro/>
+      </blockquote>
+    </para>
+    <para>
+      If you have any questions and comments, don't hesitate to contact us. You can find our email contact and more up to date information 
+      on the website <link xlink:href="https://www.ovito.org/">www.ovito.org</link>.
+    </para> 
   </section>
 
   <xi:include href="licenses/ovito_pro.docbook"/>

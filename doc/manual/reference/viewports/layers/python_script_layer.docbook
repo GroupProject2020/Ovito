@@ -25,7 +25,7 @@
   <para>
     The <guibutton>Edit script</guibutton> button opens a code editor, where you enter the code for the user-defined <literal>render()</literal> function.
   	This function will be invoked by OVITO each time the viewport is repainted or
-    whenever an image or movie frame is being rendered. The <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.PythonViewportOverlay.Arguments">function parameter <literal>args</literal></pydoc-link> 
+    whenever an image or movie frame is being rendered. The <pydoc-link href="modules/ovito_vis" anchor="ovito.vis.PythonViewportOverlay.Arguments" no-pro-tag="1">function parameter <literal>args</literal></pydoc-link> 
     gives access to a 
     <link xlink:href="https://doc.qt.io/qtforpython/PySide2/QtGui/QPainter.html"><literal>QPainter</literal></link> object,
     which allows issueing arbitrary drawing commands to paint over the three-dimensional objects rendered by OVITO.
@@ -38,18 +38,18 @@
   <para>
     The user-defined script has full access to OVITO's data model and can access viewport properties,
     camera and animation settings, modifiers, and data pipeline outputs.
-    For more information on OVITO's Python interface and the object model, see the <pydoc-link href="index">scripting reference</pydoc-link>.
+    For more information on OVITO's Python interface and the object model, see the <pydoc-link href="index" no-pro-tag="1">scripting reference</pydoc-link>.
   </para>
 
   <simplesect>
     <title>Examples</title>
     <para>
-      <pydoc-link href="introduction/examples" anchor="user-defined-overlay-functions">This page</pydoc-link> provides several code examples
+      <pydoc-link href="introduction/examples" anchor="user-defined-overlay-functions" no-pro-tag="1">This page</pydoc-link> provides several code examples
       demonstrating how to write a <literal>render()</literal> function for a Python viewport layer:
       <itemizedlist>
-        <listitem><pydoc-link href="introduction/examples/overlays/scale_bar">Scale bar</pydoc-link></listitem>
-        <listitem><pydoc-link href="introduction/examples/overlays/data_plot">Including data plots in rendered images</pydoc-link></listitem>
-        <listitem><pydoc-link href="introduction/examples/overlays/highlight_particle">Highlight a particle</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/overlays/scale_bar" no-pro-tag="1">Scale bar</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/overlays/data_plot" no-pro-tag="1">Including data plots in rendered images</pydoc-link></listitem>
+        <listitem><pydoc-link href="introduction/examples/overlays/highlight_particle" no-pro-tag="1">Highlight a particle</pydoc-link></listitem>
       </itemizedlist>
     </para>
   </simplesect>

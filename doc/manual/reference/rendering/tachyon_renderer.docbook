@@ -12,7 +12,7 @@
 
   <para>
      <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/rendering/tachyon_renderer_panel.png" format="PNG" />
+       <imagedata fileref="images/rendering/tachyon_renderer_panel.png" format="PNG" scale="50" />
      </imageobject></mediaobject></screenshot></informalfigure>
 
     This is a software-based raytracing renderer. It can produce renderings of the scene with
