@@ -146,7 +146,7 @@ INSTALL(CODE "
 
 ")
 
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT AND NOT OVITO_BUILD_BASIC)
 
 	# Create a nested bundle for 'ovitos'.
 	# This is to prevent the program icon from showing up in the dock when 'ovitos' is run.
