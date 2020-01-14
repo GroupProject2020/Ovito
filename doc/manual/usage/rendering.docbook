@@ -32,37 +32,38 @@
   <para>
     OVITO comes with several rendering engines to choose from, which differ in terms of speed, visual quality and memory requirements.
     The default <link linkend="rendering.opengl_renderer">OpenGL renderer</link> is the fastest and produces pictures that are more or less
-    identical to what you see in the interactive viewports. The <link linkend="rendering.tachyon_renderer">Tachyon renderer</link><ovito-pro/>, on the other hand,
-    is a software-based raytracing engine, which can generate high-quality renderings including shadows, ambient occlusion shading and depth of field effects.
-    See the <link linkend="rendering">Rendering</link> reference section for a description of all rendering engines included with OVITO.
-      <informalfigure role="inline">
+    identical to what you see in the interactive viewports. The <link linkend="rendering.tachyon_renderer">Tachyon</link><ovito-pro/> and 
+    <link linkend="rendering.ospray_renderer">OSPRay</link><ovito-pro/> renderers, on the other hand,
+    are software-based raytracing engines, which can generate high-quality renderings including shadows, ambient occlusion shading and depth of field effects.
+    See the <link linkend="rendering">Rendering</link> reference section to learn more about the rendering capabilities of OVITO.
+    <informalfigure role="inline">
       <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
               <entry>OpenGL renderer:</entry>
               <entry>Tachyon renderer:<ovito-pro/></entry>
-              <entry>POV-Ray renderer:<ovito-pro/></entry>
+              <entry>OSPRay renderer:<ovito-pro/></entry>
             </row>
             <row valign="top">
-              <entry><mediaobject><imageobject><imagedata fileref="images/rendering/renderer_example_opengl.png" format="PNG" /></imageobject></mediaobject></entry>
-              <entry><mediaobject><imageobject><imagedata fileref="images/rendering/renderer_example_tachyon.png" format="PNG" /></imageobject></mediaobject></entry>
-              <entry><mediaobject><imageobject><imagedata fileref="images/rendering/renderer_example_povray.png" format="PNG" /></imageobject></mediaobject></entry>
+              <entry><mediaobject><imageobject><imagedata fileref="images/rendering/renderer_example_opengl.jpg" format="JPG" scale="50" /></imageobject></mediaobject></entry>
+              <entry><mediaobject><imageobject><imagedata fileref="images/rendering/renderer_example_tachyon.jpg" format="JPG" scale="50" /></imageobject></mediaobject></entry>
+              <entry><mediaobject><imageobject><imagedata fileref="images/rendering/renderer_example_ospray.jpg" format="JPG" scale="50" /></imageobject></mediaobject></entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>
-      </informalfigure>
-    </para>
+    </informalfigure>
+  </para>
 
   <simplesect xml:id="usage.rendering.animation">
     <title>Creating animations</title>
     <para>
-      OVITO can produce videos from the loaded simulation sequence. To render an animation,
+      OVITO can render a video of the loaded simulation trjectory. To render an animation,
       select the <guilabel>Complete animation</guilabel> option in the <link linkend="core.render_settings">Render settings</link> panel and
       set an output filename for the video. OVITO's built-in video encoder supports video formats such as AVI and MPEG.
       The frame rate for the output video is set in the <link linkend="animation.animation_settings_dialog">animation settings</link> dialog.
-      Alternatively, you can produce a series of image files, one per frame, and later combine them to a video using an external video encoding tool.
+      Alternatively, you can produce a series of image files, one per frame, and later combine them into a movie using an external video encoding tool.
     </para>
   </simplesect>
 

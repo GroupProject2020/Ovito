@@ -14,6 +14,9 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/bin_and_reduce_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/visual_elements/voxel_grid_example.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
 
     This modifier generates a 1-, 2- or 3-dimensional grid covering the simulation domain and assigns each particle
     into one of the uniformly sized bins. It then performs a reduction operation for a selected particle property,
@@ -106,13 +109,6 @@
         </listitem>
       </varlistentry>
     </variablelist>
-  </simplesect>
-
-  <simplesect>
-    <title>Acknowledgment</title>
-    <para>
-      The code for this modifier has been contributed to OVITO by Lars Pastewka.
-    </para>
   </simplesect>
 
   <simplesect>

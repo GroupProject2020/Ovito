@@ -16,7 +16,7 @@
        <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="45" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    <link linkend="usage.rendering">Rendering</link> is the process of producing high-quality output images
+    <link linkend="usage.rendering">Rendering</link> is the process of generating high-quality output pictures
     of the current dataset for publication or other presentation purposes.
     The <link linkend="core.render_settings">rendering page</link> of the command panel depicted in the screenshot
     on the right lets you control various settings related to rendering. For example, here you can determine OVITO should
@@ -27,7 +27,7 @@
     OVITO provides several different rendering engines, which differ in terms of visual quality and rendering time.
     They are listed in the following table. The OpenGL rendering engine is the default choice. It is very fast and produces
     pictures that provide roughly the same basic visual quality as the realtime viewports of OVITO. The other available
-    rendering engines provide can produce visually more appealing pictures but also require longer rendering times.
+    rendering engines can produce visually more appealing pictures but require also longer rendering times.
 
     <informaltable>
         <tgroup cols="2">
@@ -52,10 +52,6 @@
               <entry><link linkend="rendering.ospray_renderer">OSPRay&#xA0;renderer</link><ovito-pro/></entry>
               <entry>Another highly optimized software rendering engine with similar features as the Tachyon renderer but reduced memory requirements</entry>
             </row>
-            <row>
-              <entry><link linkend="rendering.povray_renderer">POV-Ray&#xA0;renderer</link><ovito-pro/></entry>
-              <entry>This engine automatically invokes the external POV-Ray software to render OVITO scenes</entry>
-            </row>
           </tbody>
         </tgroup>
       </informaltable>
@@ -66,6 +62,5 @@
   <xi:include href="opengl_renderer.docbook"/>
   <xi:include href="tachyon_renderer.docbook"/>
   <xi:include href="ospray_renderer.docbook"/>
-  <xi:include href="povray_renderer.docbook"/>
 
 </section>
