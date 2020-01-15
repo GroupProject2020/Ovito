@@ -58,7 +58,7 @@
         <tgroup cols="2">
           <thead>
             <row>
-              <entry>Data&#xA0;element</entry>
+              <entry>Data&#xA0;element&#xA0;type</entry>
               <entry>Description</entry>
             </row>
           </thead>

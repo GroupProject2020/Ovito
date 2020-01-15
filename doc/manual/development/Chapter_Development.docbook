@@ -10,10 +10,9 @@
   <title>Developer information</title>
 
    <para>
-
-	The source code of OVITO is available on <link xlink:href="https://gitlab.com/stuko/ovito/">GitLab.com</link>.
-	Note that the following build instructions pertain to the <emphasis>Basic</emphasis> edition of OVITO, which
-	is available under the GNU GPLv3 open source license and includes only a reduced set of program features.
+	The latest source code of OVITO is available in our repository on <link xlink:href="https://gitlab.com/stuko/ovito/">GitLab.com</link>.
+	Note that the following build instructions pertain to the code of <emphasis>OVITO Basic</emphasis>, which
+	is available under the GNU GPLv3 and MIT open source licenses and includes only <link linkend="credits.ovito_pro">subset of program features</link>.
 
    <itemizedlist>
    	<listitem><link linkend="development.build_linux">Building OVITO on Linux</link></listitem>

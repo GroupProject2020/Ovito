@@ -9,19 +9,29 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Building OVITO on Windows</title>
 
- <simplesect>
-  <title>Installing dependencies</title>
   <para>
-    OVITO for Windows is typically built using Microsoft's Visual C++ 2017 compiler. However, building
-    it with the MinGW compiler should still be possible too.
+    The required steps are quite involved, in particular those for building/installing the prerequisites, 
+    and the available instructions may be insufficient. Please get in touch with the developers if you want to 
+    build OVITO on the Windows platform.
   </para>
   <para>
-    The required steps are quite involved, and the available instructions may be insufficient.
-    Please contact the author if you want to build OVITO on Windows and get stuck.
+    You are going to need at least the following prerequisites:
+    <itemizedlist>
+      <listitem>Microsoft Visual Studio 2017 (64-bit command line tools for C++ development)</listitem>
+      <listitem>Qt 5.12.x (install the "msvc2017 64-bit" component)</listitem>
+      <listitem>CMake (v3.1 or newer)</listitem>
+      <listitem>git</listitem>
+      <listitem><link xlink:href="http://www.zlib.net/">Zlib</link> (v1.2.11)</listitem>
+      <listitem><link xlink:href="https://www.boost.org">Boost</link> (header-only component)</listitem>
+      <listitem><link xlink:href="https://www.openssl.org">OpenSSL</link> (v1.1.0*, requires Perl and ZLib)</listitem>
+      <listitem><link xlink:href="https://www.libssh.org">libSSH</link> (0.9.0, requires OpenSSL and ZLib)</listitem>
+      <listitem>HDF5 (optional, requires ZLib)</listitem>
+      <listitem>NetCDF (optional, requires HDF5 and ZLib)</listitem>
+      <listitem>ffmpeg (v4.2.1, optional, requires MSYS2)</listitem>
+    </itemizedlist>
   </para>
-  </simplesect>
 
- <simplesect>
+  <simplesect>
     <title>Downloading the source code</title>
     <para>
     To download OVITO's source code into a new subdirectory named <filename>ovito</filename>, install <link xlink:href="http://git-scm.com">Git</link> and run:

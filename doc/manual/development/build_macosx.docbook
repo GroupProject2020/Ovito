@@ -22,7 +22,7 @@
     from the terminal to install the dependencies of OVITO.
   </para>
   <para>
-    Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.12.5 for Mac</link>.
+    Next, download and install <link xlink:href="https://www.qt.io/download/">Qt 5.12.x for Mac</link>.
   </para>
   <para>
 Next, download the source code and build the shared version of the <link xlink:href="https://ffmpeg.org/">ffmpeg</link> video encoding library (optional):
