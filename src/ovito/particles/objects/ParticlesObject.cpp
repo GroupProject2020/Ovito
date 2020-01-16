@@ -410,6 +410,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 	case SelectionProperty:
 	case CoordinationProperty:
 	case MoleculeTypeProperty:
+	case StrandProperty:
 		dataType = PropertyStorage::Int;
 		componentCount = 1;
 		stride = sizeof(int);
@@ -601,6 +602,7 @@ void ParticlesObject::OOMetaClass::initialize()
 	registerStandardProperty(RotationProperty, tr("Rotation"), PropertyStorage::Float, quaternionList);
 	registerStandardProperty(StretchTensorProperty, tr("Stretch Tensor"), PropertyStorage::Float, symmetricTensorList);
 	registerStandardProperty(MoleculeTypeProperty, tr("Molecule Type"), PropertyStorage::Float, emptyList, tr("Molecule types"));
+	registerStandardProperty(StrandProperty, tr("Strand"), PropertyStorage::Int, emptyList, tr("Strands"));
 }
 
 /******************************************************************************

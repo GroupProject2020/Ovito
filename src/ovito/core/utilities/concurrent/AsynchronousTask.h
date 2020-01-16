@@ -51,6 +51,12 @@ public:
 	/// This virtual function is responsible for computing the results of the task.
 	virtual void perform() = 0;
 
+	/// Blocks execution until the given future enters the completed state.
+	virtual bool waitForFuture(const FutureBase& future) override;
+
+	/// Returns the TaskManager managing this task while it is running.
+	TaskManager& taskManager() { OVITO_ASSERT(_taskManager != nullptr); return *_taskManager; }
+
 protected:
 
 	/// Constructor.
@@ -62,6 +68,11 @@ private:
 
 	/// Implementation of QRunnable.
 	virtual void run() override;
+
+	/// The TaskManager which manages this task while it is running.
+	TaskManager* _taskManager = nullptr;
+
+	friend class TaskManager;
 };
 
 template<typename... R>

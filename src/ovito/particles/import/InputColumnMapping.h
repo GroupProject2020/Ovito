@@ -103,6 +103,9 @@ class OVITO_PARTICLES_EXPORT InputColumnMapping : public std::vector<InputColumn
 {
 public:
 
+	/// Inherit constructors from base class.
+	using std::vector<InputColumnInfo>::vector;
+
 	/// \brief Saves the mapping to a stream.
 	void saveToStream(SaveStream& stream) const;
 

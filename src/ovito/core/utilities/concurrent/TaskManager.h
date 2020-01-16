@@ -61,7 +61,12 @@ public:
 	template<class TaskType>
 	auto runTaskAsync(const std::shared_ptr<TaskType>& task) {
 		OVITO_ASSERT(task);
+		OVITO_ASSERT(task->_taskManager == nullptr);
+		// Associate this TaskManager with the task.
+		task->_taskManager = this; 
+		// Submit the task for execution.
 		QThreadPool::globalInstance()->start(task.get());
+		// The task is now associated with this TaskManager.
 		registerTask(task);
 		return task->future();
 	}
@@ -153,6 +158,12 @@ private:
 
 	/// \brief Registers a promise with the progress manager.
 	Q_INVOKABLE TaskWatcher* addTaskInternal(const TaskPtr& sharedState);
+
+    /// \brief Waits for a task to finish while running in the main UI thread.
+    bool waitForTaskUIThread(const TaskPtr& task, const TaskPtr& dependentTask);
+
+    /// \brief Waits for a task to finish while running in a thread other than the main UI thread.
+    bool waitForTaskNonUIThread(const TaskPtr& task, const TaskPtr& dependentTask);
 
 private Q_SLOTS:
 

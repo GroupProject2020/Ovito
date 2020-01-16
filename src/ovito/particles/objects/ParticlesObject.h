@@ -114,7 +114,8 @@ public:
 		ElasticDeformationGradientProperty,
 		RotationProperty,
 		StretchTensorProperty,
-		MoleculeTypeProperty
+		MoleculeTypeProperty,
+		StrandProperty
 	};
 
 	/// \brief Constructor.

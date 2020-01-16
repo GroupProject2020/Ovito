@@ -202,8 +202,6 @@ void TaskManager::stopLocalEventHandling()
 ******************************************************************************/
 bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 {
-	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may be called only from the main thread.");
-
 	// Before entering the local event loop, check if the task has already finished.
 	if(task->isFinished()) {
 		return !task->isCanceled();
@@ -211,6 +209,33 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 	if(dependentTask && dependentTask->isCanceled()) {
 		return false;
 	}
+
+	// Use different waiting schemes depending on the thread we are currently in.
+	bool result;
+	if(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread())
+		result = waitForTaskUIThread(task, dependentTask);
+	else
+		result = waitForTaskNonUIThread(task, dependentTask);
+	if(!result)
+		return false;
+
+	if(dependentTask && dependentTask->isCanceled())
+		return false;
+
+	if(!task->isFinished()) {
+		qWarning() << "Warning: TaskManager::waitForTask() returning with an unfinished promise state (canceled=" << task->isCanceled() << ")";
+		task->cancel();
+	}
+
+	return !task->isCanceled();	
+}
+
+/******************************************************************************
+* Waits for a task to finish while running in the main UI thread.
+******************************************************************************/
+bool TaskManager::waitForTaskUIThread(const TaskPtr& task, const TaskPtr& dependentTask)
+{
+	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTaskUIThread", "Function may be called only from the main thread.");
 
 	// Make sure this method is not called while rendering a viewport.
 	// Qt doesn't allow a local event loops during paint event processing.
@@ -281,16 +306,35 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 	}
 #endif
 
-	if(dependentTask && dependentTask->isCanceled()) {
-		return false;
+	return true;
+}
+
+/******************************************************************************
+* Waits for a task to finish while running in a thread other than the main UI thread.
+******************************************************************************/
+bool TaskManager::waitForTaskNonUIThread(const TaskPtr& task, const TaskPtr& dependentTask)
+{
+	// Create local task watchers.
+	TaskWatcher watcher;
+	TaskWatcher dependentWatcher;
+
+	// Start a local event loop and wait for the task to generate a signal when it finishes.
+	QEventLoop eventLoop;
+	connect(&watcher, &TaskWatcher::finished, &eventLoop, &QEventLoop::quit);
+
+	// Stop the event loop when the dependent task gets canceled.
+	if(dependentTask) {
+		connect(&dependentWatcher, &TaskWatcher::canceled, &watcher, [task]() {
+			task->cancelIfSingleFutureLeft();
+		});
+		connect(&dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
 	}
 
-	if(!task->isFinished()) {
-		qWarning() << "Warning: TaskManager::waitForTask() returning with an unfinished promise state (canceled=" << task->isCanceled() << ")";
-		task->cancel();
-	}
+	// Start waiting phase.
+	watcher.watch(task);
+	eventLoop.exec();
 
-	return !task->isCanceled();
+	return true;
 }
 
 /******************************************************************************
