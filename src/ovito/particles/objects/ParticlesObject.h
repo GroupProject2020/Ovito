@@ -115,7 +115,10 @@ public:
 		RotationProperty,
 		StretchTensorProperty,
 		MoleculeTypeProperty,
-		StrandProperty
+		NucleobaseTypeProperty,
+		DNAStrandProperty,
+		NucleotideAxisProperty,
+		NucleotideNormalProperty
 	};
 
 	/// \brief Constructor.

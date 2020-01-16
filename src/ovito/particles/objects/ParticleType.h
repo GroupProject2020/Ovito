@@ -79,7 +79,8 @@ public:
 	static std::map<int,FloatType> typeRadiusMap(const PropertyObject* typeProperty) {
 		std::map<int,FloatType> m;
 		for(const ElementType* type : typeProperty->elementTypes())
-			m.insert({ type->numericId(), static_object_cast<ParticleType>(type)->radius() });
+			if(const ParticleType* particleType = dynamic_object_cast<ParticleType>(type))
+				m.insert({ type->numericId(), particleType->radius() });
 		return m;
 	}
 

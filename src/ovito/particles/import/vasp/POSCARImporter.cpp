@@ -243,7 +243,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 	// Create the particle properties.
 	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false));
 	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false));
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 
 	// Read atom coordinates.
 	Point3* p = posProperty.begin();

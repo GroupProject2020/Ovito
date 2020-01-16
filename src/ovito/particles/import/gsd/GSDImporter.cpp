@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/particles/Particles.h>
+#include <ovito/particles/objects/BondType.h>
 #include <ovito/mesh/surface/SurfaceMeshData.h>
 #include <ovito/mesh/util/CapPolygonTessellator.h>
 #include <ovito/core/utilities/mesh/TriMesh.h>
@@ -178,7 +179,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 
 	// Create particle types.
 	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::TypeProperty, false));
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 	for(int i = 0; i < particleTypeNames.size(); i++)
 		typeList->addTypeId(i, QString::fromUtf8(particleTypeNames[i]));
 
@@ -268,7 +269,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 
 			// Create bond types.
 			PropertyAccess<int> bondTypeProperty = frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TypeProperty, false));
-			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(bondTypeProperty);
+			ParticleFrameData::TypeList* bondTypeList = frameData->createPropertyTypesList(bondTypeProperty, BondType::OOClass());
 			for(int i = 0; i < bondTypeNames.size(); i++)
 				bondTypeList->addTypeId(i, QString::fromUtf8(bondTypeNames[i]));
 

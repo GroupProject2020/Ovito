@@ -551,7 +551,7 @@ QString FileSource::objectTitle() const
 {
 	QString filename;
 	int frameIndex = storedFrameIndex();
-	if(frameIndex >= 0) {
+	if(frameIndex >= 0 && frameIndex < frames().size()) {
 		filename = QFileInfo(frames()[frameIndex].sourceFile.path()).fileName();
 	}
 	else if(!sourceUrls().empty()) {

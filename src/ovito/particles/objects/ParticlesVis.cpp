@@ -762,12 +762,12 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					visCache.particlePrimitive->setParticleRadii(particleRadii.data());
 				}
 				else {
-					// Assign a constant radius to all particles.
+					// Assign a uniform radius to all particles.
 					visCache.particlePrimitive->setParticleRadius(defaultParticleRadius());
 				}
 			}
 			else {
-				// Assign a constant radius to all particles.
+				// Assign a uniform radius to all particles.
 				visCache.particlePrimitive->setParticleRadius(defaultParticleRadius());
 			}
 		}

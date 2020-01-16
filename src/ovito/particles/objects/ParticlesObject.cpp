@@ -45,7 +45,7 @@ SET_PROPERTY_FIELD_LABEL(ParticlesObject, bonds, "Bonds");
 ******************************************************************************/
 ParticlesObject::ParticlesObject(DataSet* dataset) : PropertyContainer(dataset)
 {
-	// Attach a visualization element for rendering the particles.
+	// Create and attach a default visualization element for rendering the particles.
 	addVisElement(new ParticlesVis(dataset));
 }
 
@@ -410,7 +410,8 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 	case SelectionProperty:
 	case CoordinationProperty:
 	case MoleculeTypeProperty:
-	case StrandProperty:
+	case NucleobaseTypeProperty:
+	case DNAStrandProperty:
 		dataType = PropertyStorage::Int;
 		componentCount = 1;
 		stride = sizeof(int);
@@ -431,6 +432,8 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 	case AngularMomentumProperty:
 	case TorqueProperty:
 	case AsphericalShapeProperty:
+	case NucleotideAxisProperty:
+	case NucleotideNormalProperty:
 		dataType = PropertyStorage::Float;
 		componentCount = 3;
 		stride = sizeof(Vector3);
@@ -602,7 +605,10 @@ void ParticlesObject::OOMetaClass::initialize()
 	registerStandardProperty(RotationProperty, tr("Rotation"), PropertyStorage::Float, quaternionList);
 	registerStandardProperty(StretchTensorProperty, tr("Stretch Tensor"), PropertyStorage::Float, symmetricTensorList);
 	registerStandardProperty(MoleculeTypeProperty, tr("Molecule Type"), PropertyStorage::Float, emptyList, tr("Molecule types"));
-	registerStandardProperty(StrandProperty, tr("Strand"), PropertyStorage::Int, emptyList, tr("Strands"));
+	registerStandardProperty(NucleobaseTypeProperty, tr("Nucleobase"), PropertyStorage::Int, emptyList, tr("Nucleobases"));
+	registerStandardProperty(DNAStrandProperty, tr("DNA Strand"), PropertyStorage::Int, emptyList, tr("DNA Strands"));
+	registerStandardProperty(NucleotideAxisProperty, tr("Nucleotide Axis"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(NucleotideNormalProperty, tr("Nucleotide Normal"), PropertyStorage::Float, xyzList);
 }
 
 /******************************************************************************

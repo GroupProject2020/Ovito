@@ -27,6 +27,7 @@
 #include <ovito/core/utilities/io/FileManager.h>
 #include <ovito/core/app/Application.h>
 #include "OXDNAImporter.h"
+#include "NucleotidesVis.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -61,6 +62,62 @@ bool OXDNAImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl&
 }
 
 /******************************************************************************
+* Scans the given input file to find all contained simulation frames.
+******************************************************************************/
+void OXDNAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+{
+	CompressedTextReader stream(file, sourceUrl.path());
+	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressMaximum(stream.underlyingSize());
+
+	QFileInfo fileInfo(stream.device().fileName());
+	QString filename = fileInfo.fileName();
+	QDateTime lastModified = fileInfo.lastModified();
+	int frameNumber = 0;
+
+	qint64 byteOffset = stream.byteOffset();
+	int lineNumber = stream.lineNumber();
+	while(!stream.eof() && !isCanceled()) {
+
+		// Check for a valid "t = ..." line.
+		FloatType t;
+		if(frameNumber == 0) stream.readLine();
+		if(sscanf(stream.line(), " t = " FLOATTYPE_SCANF_STRING, &t) != 1) 
+			break; 
+
+		// Check for a valid "b = ..." line.
+		Vector3 b;
+		if(sscanf(stream.readLineTrimLeft(), "b = " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &b.x(), &b.y(), &b.z()) != 3) 
+			break; 
+
+		// Check for a valid "E = ..." line.
+		FloatType Etot, U, K;
+		if(sscanf(stream.readLineTrimLeft(), "E = " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &Etot, &U, &K) != 3) 
+			break; 
+
+		// Create a new record for the time step.
+		Frame frame;
+		frame.sourceFile = sourceUrl;
+		frame.byteOffset = byteOffset;
+		frame.lineNumber = lineNumber;
+		frame.lastModificationTime = lastModified;
+		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
+		frames.push_back(frame);
+
+		// Skip nucleotide lines.
+		while(!stream.eof()) {
+			byteOffset = stream.byteOffset();
+			lineNumber = stream.lineNumber();
+			stream.readLine();
+			if(stream.lineStartsWith("t", true))
+				break;
+			if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
+				return;
+		}
+	}
+}
+
+/******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
 FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& file)
@@ -75,11 +132,20 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 		topoFileUrl.setPath(filepath.path() + QStringLiteral("/") + filepath.completeBaseName() + QStringLiteral(".top"));
 
 		// Check if the topology file exists.
-		if(!topoFileUrl.isValid() || (topoFileUrl.isLocalFile() && !QFileInfo::exists(topoFileUrl.toLocalFile())))
-			throw Exception(tr("Could not locate corresponding topology file for oxDNA configuration file '%1'. "
-				"Tried inferred path '%2', but the file does not exist. Please specify the path of the topology file explicitly.")
-					.arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
-					.arg(topoFileUrl.toLocalFile()));
+		if(!topoFileUrl.isValid() || (topoFileUrl.isLocalFile() && !QFileInfo::exists(topoFileUrl.toLocalFile()))) {
+			if(_isInteractiveContext) {
+				throw Exception(tr("Could not locate corresponding topology file for oxDNA configuration file '%1'.\n"
+					"Tried automatically inferred path:\n\n%2\n\nBut the path does not exist. Please pick the topology file manually.")
+						.arg(frame().sourceFile.fileName())
+						.arg(topoFileUrl.toLocalFile()));
+			}
+			else {
+				throw Exception(tr("Could not locate corresponding topology file for oxDNA configuration file '%1'. "
+					"Tried inferred path '%2', but the file does not exist. Please specify the path of the topology file explicitly.")
+						.arg(frame().sourceFile.fileName())
+						.arg(topoFileUrl.toLocalFile()));
+			}
+		}
 	}
 
 	// Fetch the oxDNA topology file if it is stored on a remote location.
@@ -90,24 +156,34 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	// Open oxDNA topology file for reading.
 	QFile localTopologyFile(localTopologyFileFuture.result());
 	CompressedTextReader topoStream(localTopologyFile, topoFileUrl.path());
+	beginProgressSubSteps(2);
 	setProgressText(tr("Reading oxDNA topology file %1").arg(topoFileUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Create the container for the particle data to be loaded.
 	auto frameData = std::make_shared<ParticleFrameData>();
 
+	// Create a special visual element for rendering the nuclotides.
+	frameData->setParticleVisElementClass(&NucleotidesVis::OOClass());
+
 	// Parse number of nucleotides and number of strands.
 	unsigned long long numNucleotidesLong;
-	int numStrandsLong;
-	if(sscanf(topoStream.readLine(), "%llu %i", &numNucleotidesLong, &numStrandsLong) != 2)
+	int numStrands;
+	if(sscanf(topoStream.readLine(), "%llu %i", &numNucleotidesLong, &numStrands) != 2)
 		throw Exception(tr("Invalid number of nucleotides or strands in line %1 of oxDNA topology file: %2").arg(topoStream.lineNumber()).arg(topoStream.lineString().trimmed()));
 
-	// Define nucleotide types.
-	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numNucleotidesLong, ParticlesObject::TypeProperty, false));
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	// Define nucleobase types.
+	PropertyAccess<int> baseProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numNucleotidesLong, ParticlesObject::NucleobaseTypeProperty, false));
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(baseProperty, ElementType::OOClass());
 	typeList->addTypeId(1, QStringLiteral("A"));
 	typeList->addTypeId(2, QStringLiteral("C"));
 	typeList->addTypeId(3, QStringLiteral("G"));
 	typeList->addTypeId(4, QStringLiteral("T"));
+
+	// Define strands list.
+	PropertyAccess<int> strandsProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numNucleotidesLong, ParticlesObject::DNAStrandProperty, false));
+	ParticleFrameData::TypeList* strandsList = frameData->createPropertyTypesList(strandsProperty, ElementType::OOClass());
+	for(int i = 1; i <= numStrands; i++)
+		strandsList->addTypeId(i);
 
 	// The list of bonds between nucleotides.
 	std::vector<ParticleIndexPair> bonds;
@@ -115,19 +191,19 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 
 	// Parse the nucleotides list in the topology file.
 	setProgressMaximum(numNucleotidesLong);
-	int* particleTypeIter = typeProperty.begin();
-	for(size_t i = 0; i < numNucleotidesLong; i++) {
+	int* baseTypeIter = baseProperty.begin();
+	int* strandId = strandsProperty.begin();
+	for(size_t i = 0; i < numNucleotidesLong; i++, ++strandId) {
 		if(!setProgressValueIntermittent(i)) return {};
 
-		int strandId;
 		char base;
 		qlonglong neighbor1, neighbor2;
-		if(sscanf(topoStream.readLine(), "%u %c %lld %lld", &strandId, &base, &neighbor1, &neighbor2) != 4)
+		if(sscanf(topoStream.readLine(), "%u %c %lld %lld", strandId, &base, &neighbor1, &neighbor2) != 4)
 			throw Exception(tr("Invalid nucleotide specification in line %1 of oxDNA topology file: %2").arg(topoStream.lineNumber()).arg(topoStream.lineString()));
 
-		if(strandId < 1 || strandId > numStrandsLong)
-			throw Exception(tr("Strand ID %2 in line %1 of oxDNA topology file is out of range.").arg(topoStream.lineNumber()).arg(strandId));
-
+		if(*strandId < 1 || *strandId > numStrands)
+			throw Exception(tr("Strand ID %2 in line %1 of oxDNA topology file is out of range.").arg(topoStream.lineNumber()).arg(*strandId));
+	
 		if(neighbor1 < -1 || neighbor1 >= (qlonglong)numNucleotidesLong)
 			throw Exception(tr("3' neighbor %2 in line %1 of oxDNA topology file is out of range.").arg(topoStream.lineNumber()).arg(neighbor1));
 
@@ -138,10 +214,10 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 			bonds.push_back({(qlonglong)i, neighbor2});
 
 		switch(base) {
-		case 'A': *particleTypeIter++ = 1; break;
-		case 'C': *particleTypeIter++ = 2; break;
-		case 'G': *particleTypeIter++ = 3; break;
-		case 'T': *particleTypeIter++ = 4; break;
+		case 'A': *baseTypeIter++ = 1; break;
+		case 'C': *baseTypeIter++ = 2; break;
+		case 'G': *baseTypeIter++ = 3; break;
+		case 'T': *baseTypeIter++ = 4; break;
 		default:
 			throw Exception(tr("Base in line %1 of oxDNA topology file is invalid. Must be one of {A,C,G,T}.").arg(topoStream.lineNumber()));			
 		}
@@ -152,14 +228,9 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	PropertyAccess<ParticleIndexPair> bondTopologyProperty = frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(bonds.size(), BondsObject::TopologyProperty, false));
 	boost::copy(bonds, bondTopologyProperty.begin());
 
-	// Define strands list.
-	PropertyAccess<int> strandsProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numNucleotidesLong, ParticlesObject::StrandProperty, false));
-	ParticleFrameData::TypeList* strandsList = frameData->propertyTypesList(strandsProperty);
-	for(int i = 1; i <= numStrandsLong; i++)
-		strandsList->addTypeId(i);
-
 	// Open oxDNA configuration file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
+	nextProgressSubStep();
 	setProgressText(tr("Reading oxDNA file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Jump to byte offset.
@@ -173,9 +244,11 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	frameData->attributes().insert(QStringLiteral("Time"), QVariant::fromValue(simulationTime));
 
 	// Parse the 2nd line: "b = Lx Ly Lz".
-	Vector3 boxSize;
-	if(sscanf(stream.readLineTrimLeft(), "b = " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &boxSize.x(), &boxSize.y(), &boxSize.z()) != 3) 
+	AffineTransformation cellMatrix = AffineTransformation::Identity();
+	if(sscanf(stream.readLineTrimLeft(), "b = " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &cellMatrix(0,0), &cellMatrix(1,1), &cellMatrix(2,2)) != 3) 
 		throw Exception(tr("Invalid header format encountered in line %1 of oxDNA configuration file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+	cellMatrix.translation() = Vector3(-0.5 * cellMatrix(0,0), -0.5 * cellMatrix(1,1), -0.5 * cellMatrix(2,2));
+	frameData->simulationCell().setMatrix(cellMatrix);
 
 	// Parse the 3rd line: "E = Etot U K".
 	FloatType Etot, U, K;
@@ -185,16 +258,17 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	frameData->attributes().insert(QStringLiteral("U"), QVariant::fromValue(U));
 	frameData->attributes().insert(QStringLiteral("K"), QVariant::fromValue(K));
 
+	// Define the column data layout in the input file to be parsed.
 	InputColumnMapping columnMapping(15);
 	columnMapping[0].mapStandardColumn(ParticlesObject::PositionProperty, 0);
 	columnMapping[1].mapStandardColumn(ParticlesObject::PositionProperty, 1);
 	columnMapping[2].mapStandardColumn(ParticlesObject::PositionProperty, 2);
-	columnMapping[3].mapCustomColumn(QStringLiteral("Backbone Base"), PropertyStorage::Float, 0);
-	columnMapping[4].mapCustomColumn(QStringLiteral("Backbone Base"), PropertyStorage::Float, 1);
-	columnMapping[5].mapCustomColumn(QStringLiteral("Backbone Base"), PropertyStorage::Float, 2);
-	columnMapping[6].mapCustomColumn(QStringLiteral("Normal Vector"), PropertyStorage::Float, 0);
-	columnMapping[7].mapCustomColumn(QStringLiteral("Normal Vector"), PropertyStorage::Float, 1);
-	columnMapping[8].mapCustomColumn(QStringLiteral("Normal Vector"), PropertyStorage::Float, 2);
+	columnMapping[3].mapStandardColumn(ParticlesObject::NucleotideAxisProperty, 0);
+	columnMapping[4].mapStandardColumn(ParticlesObject::NucleotideAxisProperty, 1);
+	columnMapping[5].mapStandardColumn(ParticlesObject::NucleotideAxisProperty, 2);
+	columnMapping[6].mapStandardColumn(ParticlesObject::NucleotideNormalProperty, 0);
+	columnMapping[7].mapStandardColumn(ParticlesObject::NucleotideNormalProperty, 1);
+	columnMapping[8].mapStandardColumn(ParticlesObject::NucleotideNormalProperty, 2);
 	columnMapping[9].mapStandardColumn(ParticlesObject::VelocityProperty, 0);
 	columnMapping[10].mapStandardColumn(ParticlesObject::VelocityProperty, 1);
 	columnMapping[11].mapStandardColumn(ParticlesObject::VelocityProperty, 2);
@@ -202,7 +276,7 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	columnMapping[13].mapStandardColumn(ParticlesObject::AngularVelocityProperty, 1);
 	columnMapping[14].mapStandardColumn(ParticlesObject::AngularVelocityProperty, 2);
 
-	// Parse data columns.
+	// Parse data table.
 	InputColumnReader columnParser(columnMapping, *frameData, numNucleotidesLong);
 	for(size_t i = 0; i < numNucleotidesLong; i++) {
 		if(!setProgressValueIntermittent(i)) return {};
@@ -214,6 +288,20 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 		}
 	}
 
+	// Detect if there are more simulation frames following in the file.
+	if(!stream.eof())
+		frameData->signalAdditionalFrames();
+
+	// Displace particle positions. oxDNA stores center of mass coordinates, but OVITO expects particle coordinates to be backbone sphere centers.
+	PropertyAccess<Point3> positionsArray = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
+	ConstPropertyAccess<Vector3> axisVectorArray = frameData->findStandardParticleProperty(ParticlesObject::NucleotideAxisProperty);
+	for(size_t i = 0; i < numNucleotidesLong; i++) {
+		positionsArray[i] -= 0.4 * axisVectorArray[i];
+	}
+
+	frameData->setStatus(tr("%1 nucleotides\n%2 strands").arg(numNucleotidesLong).arg(numStrands));
+
+	endProgressSubSteps();
 	return std::move(frameData);
 }
 

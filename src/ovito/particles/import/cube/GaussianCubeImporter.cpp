@@ -167,7 +167,7 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 	}
 
 	// Translate atomic numbers into element names.
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 	for(int a : typeProperty) {
 		if(a >= 0 && a < sizeof(chemical_symbols)/sizeof(chemical_symbols[0]))
 			typeList->addTypeId(a, chemical_symbols[a]);

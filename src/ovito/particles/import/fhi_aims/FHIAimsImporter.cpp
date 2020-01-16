@@ -109,7 +109,7 @@ FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile(QFile& f
 	// Create the particle properties.
 	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false));
 	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false));
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 
 	// Return to file beginning.
 	stream.seek(0);

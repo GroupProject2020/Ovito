@@ -23,6 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/particles/import/InputColumnMapping.h>
+#include <ovito/particles/objects/BondType.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/utilities/io/CompressedTextReader.h>
 #include <ovito/core/utilities/io/FileManager.h>
@@ -228,7 +229,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	PropertyAccess<qlonglong> identifierProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, true));
 
 	// Create atom types.
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 	for(int i = 1; i <= natomtypes; i++)
 		typeList->addTypeId(i);
 
@@ -401,7 +402,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 			PropertyAccess<int> typeProperty = frameData->addBondProperty(BondsObject::OOClass().createStandardStorage(nbonds, BondsObject::TypeProperty, true));
 
 			// Create bond types.
-			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(typeProperty);
+			ParticleFrameData::TypeList* bondTypeList = frameData->createPropertyTypesList(typeProperty, BondType::OOClass());
 			for(int i = 1; i <= nbondtypes; i++)
 				bondTypeList->addTypeId(i);
 

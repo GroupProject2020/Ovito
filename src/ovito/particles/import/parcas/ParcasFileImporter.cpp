@@ -239,8 +239,8 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, false));
 	PropertyAccess<qlonglong> identifierProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, false));
 
-	// Create atom types in OVITO.
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	// Create particle types list.
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
     std::vector<std::array<char,5>> types(maxtype - mintype + 1);
     for(int i = mintype; i <= maxtype; i++) {
     	stream.read(types[i - mintype].data(), 4);

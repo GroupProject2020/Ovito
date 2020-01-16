@@ -147,7 +147,7 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 
 					// Also create a particle type list if it is a typed property.
 					if(pref.type() == ParticlesObject::TypeProperty || pref.type() == ParticlesObject::StructureTypeProperty)
-						rec.typeList = destination.propertyTypesList(property);
+						rec.typeList = destination.createPropertyTypesList(property);
 				}
 			}
 			else {

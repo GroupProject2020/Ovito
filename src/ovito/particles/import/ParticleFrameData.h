@@ -25,7 +25,9 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/objects/ParticlesObject.h>
+#include <ovito/particles/objects/ParticlesVis.h>
 #include <ovito/particles/objects/BondsObject.h>
+#include <ovito/particles/objects/ParticleType.h>
 #include <ovito/grid/objects/VoxelGrid.h>
 #include <ovito/core/dataset/io/FileSourceImporter.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
@@ -56,6 +58,12 @@ public:
 	class OVITO_PARTICLES_EXPORT TypeList
 	{
 	public:
+
+		/// Constructor, which takes the class of type elements defined by this list.
+		explicit TypeList(const OvitoClass& elementClass = ParticleType::OOClass()) : _elementClass(elementClass) {}
+
+		/// Returns the class of element types defined in this list.
+		const OvitoClass& elementClass() const { return _elementClass; }
 
 		/// Defines a new particle/bond type with the given id.
 		void addTypeId(int id) {
@@ -169,6 +177,9 @@ public:
 
 		/// The list of defined types.
 		std::vector<TypeDefinition> _types;
+
+		/// The kind of type elements defined in this list (particles types, bond types, etc.).
+		const OvitoClass& _elementClass; 
 	};
 
 public:
@@ -234,7 +245,7 @@ public:
 	TypeList* propertyTypesList(const PropertyStorage* property) {
 		auto typeList = _typeLists.find(property);
 		if(typeList == _typeLists.end())
-			typeList = _typeLists.emplace(property, std::make_unique<TypeList>()).first;
+			return nullptr;
 		return typeList->second.get();
 	}
 
@@ -247,6 +258,24 @@ public:
 	TypeList* propertyTypesList(const PropertyAccess<int>& property) {
 		return propertyTypesList(property.storage());
 	}
+
+	/// Creates a types list for a particle or bond property.
+	TypeList* createPropertyTypesList(const PropertyStorage* property, const OvitoClass& elementClass = ParticleType::OOClass()) {
+		auto typeList = _typeLists.find(property);
+		if(typeList == _typeLists.end())
+			typeList = _typeLists.emplace(property, std::make_unique<TypeList>(elementClass)).first;
+		return typeList->second.get();
+	}
+
+	/// Creates a types list for a particle or bond property.
+	TypeList* createPropertyTypesList(const PropertyPtr& property, const OvitoClass& elementClass = ParticleType::OOClass()) {
+		return createPropertyTypesList(property.get(), elementClass);
+	}
+
+	/// Creates a types list for a particle or bond property.
+	TypeList* createPropertyTypesList(const PropertyAccess<int>& property, const OvitoClass& elementClass = ParticleType::OOClass()) {
+		return createPropertyTypesList(property.storage(), elementClass);
+	}	
 
 	/// Sets the list of types defined for a particle or bond property.
 	void setPropertyTypesList(const PropertyStorage* property, std::unique_ptr<TypeList> list) {
@@ -335,6 +364,9 @@ public:
 	/// Does nothing if particles do not have IDs.
 	void sortParticlesById();
 
+	/// Selects the type of visual element to create for rendering the particles.
+	void setParticleVisElementClass(OvitoClassPtr visElementClass) { _particleVisElementClass = visElementClass; }
+
 private:
 
 	/// Inserts the stored particle or bond types into the given property object.
@@ -371,6 +403,9 @@ private:
 
 	/// Flag that is set by the parser to indicate that the input file contains more than one frame.
 	bool _detectedAdditionalFrames = false;
+
+	/// The type of visual element to create for rendering the particles.
+	OvitoClassPtr _particleVisElementClass = &ParticlesVis::OOClass();
 };
 
 OVITO_END_INLINE_NAMESPACE

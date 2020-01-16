@@ -576,7 +576,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				// Create particles types if this is the particle type property.
 				if(propertyType == ParticlesObject::TypeProperty || propertyType == ParticlesObject::StructureTypeProperty) {
 
-					ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(property);
+					ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(property);
 
 					// Create particle types.
 					for(int ptype : ConstPropertyAccess<int>(property)) {

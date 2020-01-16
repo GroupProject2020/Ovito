@@ -384,7 +384,7 @@ void FileSourceEditor::updateInformationLabel()
 	_wildcardPatternTextbox->setEnabled(true);
 
 	int frameIndex = fileSource->storedFrameIndex();
-	if(frameIndex >= 0) {
+	if(frameIndex >= 0 && frameIndex < fileSource->frames().size()) {
 		const FileSourceImporter::Frame& frameInfo = fileSource->frames()[frameIndex];
 		if(frameInfo.sourceFile.isLocalFile()) {
 			_filenameLabel->setText(QFileInfo(frameInfo.sourceFile.toLocalFile()).fileName());

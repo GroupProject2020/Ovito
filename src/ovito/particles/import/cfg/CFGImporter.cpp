@@ -218,7 +218,7 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 	ParticleFrameData::TypeList* typeList = nullptr;
 	if(header.isExtendedFormat) {
 		typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::TypeProperty, false));
-		typeList = frameData->propertyTypesList(typeProperty);
+		typeList = frameData->createPropertyTypesList(typeProperty);
 		massProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(header.numParticles, ParticlesObject::MassProperty, false));
 	}
 

@@ -105,7 +105,7 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 		std::vector<gemmi::AtomicStructure::Site> sites = structure.get_all_unit_cell_sites();
 		PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::PositionProperty, false));
 		PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(sites.size(), ParticlesObject::TypeProperty, false));
-		ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+		ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 		Point3* posIter = posProperty.begin();
 		int* typeIter = typeProperty.begin();
 		bool hasOccupancy = false;

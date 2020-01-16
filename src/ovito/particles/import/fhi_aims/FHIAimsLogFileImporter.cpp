@@ -127,7 +127,7 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 	// Create the particle properties.
 	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false));
 	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false));
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 
 	// Return to beginning of frame.
 	stream.seek(frame().byteOffset, frame().lineNumber);

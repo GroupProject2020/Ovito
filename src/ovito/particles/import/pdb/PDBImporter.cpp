@@ -182,7 +182,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	// Create the particle properties.
 	PropertyAccess<Point3> posProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, false));
 	PropertyAccess<int> typeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, false));
-	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(typeProperty);
 
 	// Parse atoms.
 	size_t atomIndex = 0;
@@ -251,7 +251,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			if(moleculeTypeLength != 0) {
 				if(!moleculeTypeProperty) {
 					moleculeTypeProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeTypeProperty, true));
-					moleculeTypeList = frameData->propertyTypesList(moleculeTypeProperty);
+					moleculeTypeList = frameData->createPropertyTypesList(moleculeTypeProperty);
 				}
 				moleculeTypeProperty[atomIndex] = moleculeTypeList->addTypeName(moleculeType, moleculeType + moleculeTypeLength);
 			}

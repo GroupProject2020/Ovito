@@ -26,6 +26,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/import/ParticleImporter.h>
 #include <ovito/particles/import/ParticleFrameData.h>
+#include <ovito/core/app/Application.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -68,7 +69,15 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename, topologyFileUrl());
+		activateCLocale();
+		bool isInteractiveContext = (Application::instance()->executionContext() == Application::ExecutionContext::Interactive);
+		return std::make_shared<FrameLoader>(frame, localFilename, topologyFileUrl(), isInteractiveContext);
+	}
+
+	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+		activateCLocale();
+		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
 	}
 
 private:
@@ -79,8 +88,10 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename, const QUrl& userSpecifiedTopologyUrl) :
-			FileSourceImporter::FrameLoader(frame, filename), _userSpecifiedTopologyUrl(userSpecifiedTopologyUrl) {}
+		FrameLoader(const Frame& frame, const QString& filename, const QUrl& userSpecifiedTopologyUrl, bool isInteractiveContext) :
+			FileSourceImporter::FrameLoader(frame, filename), 
+			_userSpecifiedTopologyUrl(userSpecifiedTopologyUrl), 
+			_isInteractiveContext(isInteractiveContext) {}
 
 	protected:
 
@@ -89,6 +100,23 @@ private:
 
 		/// URL of the topology file if explicitly specified by the user.
 		QUrl _userSpecifiedTopologyUrl;
+
+		/// Are we running in the interactive environment?
+		bool _isInteractiveContext;
+	};
+
+	/// The format-specific task object that is responsible for scanning the input file for animation frames.
+	class FrameFinder : public FileSourceImporter::FrameFinder
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameFinder::FrameFinder;
+
+	protected:
+
+		/// Scans the given file for source frames.
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;
 	};
 
 private:
@@ -97,7 +125,7 @@ private:
 	/// The configuration file is the primary file passed to the file importer by the system.
 	/// This extra field stores the URL of the oxDNA topology file belonging to the configuration file
 	/// if explicitly specified by the user.
-	DECLARE_PROPERTY_FIELD(QUrl, topologyFileUrl);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QUrl, topologyFileUrl, setTopologyFileUrl);
 };
 
 OVITO_END_INLINE_NAMESPACE

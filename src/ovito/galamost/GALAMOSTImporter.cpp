@@ -22,6 +22,7 @@
 
 #include <ovito/particles/Particles.h>
 #include <ovito/particles/import/ParticleFrameData.h>
+#include <ovito/particles/objects/BondType.h>
 #include <ovito/core/utilities/io/CompressedTextReader.h>
 #include "GALAMOSTImporter.h"
 
@@ -349,8 +350,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			ConstPropertyAccess<int> typeProperty = _frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
 			if(!typeProperty)
 				throw Exception(tr("GALAMOST file parsing error. <%1> element must appear after <type> element.").arg(qName));
-			ParticleFrameData::TypeList* typeList = _frameData->propertyTypesList(typeProperty.storage());
-			OVITO_ASSERT(typeList != nullptr);
+			ParticleFrameData::TypeList* typeList = _frameData->createPropertyTypesList(typeProperty.storage());
 			std::vector<Vector3> typesAsphericalShape;
 			while(!stream.atEnd()) {
 				QString typeName;
@@ -376,7 +376,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 		else if(localName == "bond") {
 			OVITO_ASSERT(_currentProperty->type() == BondsObject::TopologyProperty);
 			QString typeName;
-			std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
+			std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>(BondType::OOClass());
 			std::vector<ParticleIndexPair> topology;
 			std::vector<int> bondTypes;
 			while(!stream.atEnd()) {

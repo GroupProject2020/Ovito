@@ -162,13 +162,28 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		const ParticlesObject* existingParticles = existing ? existing->getObject<ParticlesObject>() : nullptr;
 		ParticlesObject* particles = output->createObject<ParticlesObject>(fileSource);
 		if(!existingParticles) {
+			
+			// Create the custom vis element requested by the file importer.
+			if(_particleVisElementClass && (!particles->visElement() || _particleVisElementClass != &particles->visElement()->getOOMetaClass()))
+				particles->setVisElement(static_object_cast<DataVis>(_particleVisElementClass->createInstance(particles->dataset())));
+			else if(!_particleVisElementClass && particles->visElement())
+				particles->removeVisElement(0);
+
 			// Initialize the particles object and its vis element to default values.
 			if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 				particles->loadUserDefaults();
 		}
 		else {
-			// Adopt the existing particles vis element.
-			particles->setVisElements(existingParticles->visElements());
+			// Adopt the existing particles vis element, or create the right vis element requested by the file importer.
+			if(_particleVisElementClass && (!existingParticles->visElement() || _particleVisElementClass != &existingParticles->visElement()->getOOMetaClass())) {
+				particles->setVisElement(static_object_cast<DataVis>(_particleVisElementClass->createInstance(particles->dataset())));
+				if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
+					particles->visElement()->loadUserDefaults();
+			}
+			else if(!_particleVisElementClass && particles->visElement())
+				particles->removeVisElement(0);
+			else
+				particles->setVisElement(existingParticles->visElement());
 		}
 
 		// Auto-adjust particle display radius.
@@ -201,12 +216,11 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 			}
 			else {
 				propertyObj = particles->createProperty(std::move(property));
-
-				// For backward compatibility with OVITO 2.9.0, attach the particles vis element
-				// to the 'Position' particle property object as well.
-				if(propertyObj->type() == ParticlesObject::PositionProperty)
-					propertyObj->setVisElement(particles->visElement<ParticlesVis>());
 			}
+			// For backward compatibility with OVITO 2.9.0, attach the particles vis element
+			// to the 'Position' particle property object as well.
+			if(propertyObj->type() == ParticlesObject::PositionProperty)
+				propertyObj->setVisElement(particles->visElement<ParticlesVis>());
 
 			// Transfer particle types.
 			auto typeList = _typeLists.find(propertyObj->storage().get());
@@ -364,15 +378,17 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 			}
 			if(!ptype) {
 				if(!isBondProperty) {
-					ptype = new ParticleType(typeProperty->dataset());
+					ptype = static_object_cast<ElementType>(typeList->elementClass().createInstance(typeProperty->dataset()));
 					if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 						ptype->loadUserDefaults();
 					ptype->setNumericId(item.id);
 					ptype->setName(item.name);
-					if(item.radius == 0)
+					if(item.radius == 0 && ParticleType::OOClass().isMember(ptype)) {
 						static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticlesObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
+					}
 				}
 				else {
+					OVITO_ASSERT(typeList->elementClass().isDerivedFrom(BondType::OOClass()));
 					ptype = new BondType(typeProperty->dataset());
 					if(Application::instance()->executionContext() == Application::ExecutionContext::Interactive)
 						ptype->loadUserDefaults();
@@ -397,21 +413,21 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 				ptype->setColor(item.color);
 
 			if(item.radius != 0) {
-				if(!isBondProperty)
-					static_object_cast<ParticleType>(ptype)->setRadius(item.radius);
-				else
-					static_object_cast<BondType>(ptype)->setRadius(item.radius);
+				if(ParticleType* particleType = dynamic_object_cast<ParticleType>(ptype))
+					particleType->setRadius(item.radius);
+				else if(BondType* bondType = dynamic_object_cast<BondType>(ptype))
+					bondType->setRadius(item.radius);
 			}
 			if(item.mass != 0) {
-				if(!isBondProperty)
-					static_object_cast<ParticleType>(ptype)->setMass(item.mass);
+				if(ParticleType* particleType = dynamic_object_cast<ParticleType>(ptype))
+					particleType->setMass(item.mass);
 			}
-			if(!isBondProperty) {
+			if(ParticleType* particleType = dynamic_object_cast<ParticleType>(ptype)) {
 				if(item.shapeMesh) {
-					TriMeshObject* shapeObject = static_object_cast<ParticleType>(ptype)->shapeMesh();
+					TriMeshObject* shapeObject = particleType->shapeMesh();
 					if(!shapeObject) {
 						shapeObject = new TriMeshObject(typeProperty->dataset());
-						static_object_cast<ParticleType>(ptype)->setShapeMesh(shapeObject);
+						particleType->setShapeMesh(shapeObject);
 					}
 					shapeObject->setMesh(item.shapeMesh);
 				}

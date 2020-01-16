@@ -226,6 +226,11 @@
               <entry><para>File format of the <link xlink:href="http://paradis.stanford.edu">ParaDiS</link> discrete dislocation dynamics code.</para></entry>
               <entry><link linkend="scene_objects.dislocations">dislocations</link></entry>
             </row>
+            <row>
+              <entry>oxDNA</entry>
+              <entry><para>Configuration/topology file format used by the <link xlink:href="https://dna.physics.ox.ac.uk/">oxDNA</link> simulation code for coarse-grained DNA models.</para></entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.bonds">bonds</link></entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
