@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -278,23 +278,15 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 ******************************************************************************/
 std::vector<ColorA> ParticlesObject::inputParticleColors() const
 {
-	std::vector<ColorA> colors(elementCount());
-
 	// Obtain the particle vis element.
 	if(ParticlesVis* particleVis = visElement<ParticlesVis>()) {
-
+		
 		// Query particle colors from vis element.
-		particleVis->particleColors(colors,
-				getProperty(ParticlesObject::ColorProperty),
-				getProperty(ParticlesObject::TypeProperty),
-				nullptr,
-				getProperty(ParticlesObject::TransparencyProperty));
-
-		return colors;
+		return particleVis->particleColors(this, false, true);
 	}
 
-	boost::fill(colors, ColorA(1,1,1,1));
-	return colors;
+	// Return an array with uniform colors if there is no vis element attached to the particles object.
+	return std::vector<ColorA>(elementCount(), ColorA(1,1,1,1));
 }
 
 /******************************************************************************
@@ -306,20 +298,8 @@ std::vector<ColorA> ParticlesObject::inputBondColors(bool ignoreExistingColorPro
     if(bonds()) {
 		if(BondsVis* bondsVis = bonds()->visElement<BondsVis>()) {
 
-			// Additionally, look up the particles vis element.
-			ParticlesVis* particleVis = visElement<ParticlesVis>();
-
 			// Query half-bond colors from vis element.
-			std::vector<ColorA> halfBondColors = bondsVis->halfBondColors(
-					elementCount(),
-					bonds()->getProperty(BondsObject::TopologyProperty),
-					!ignoreExistingColorProperty ? bonds()->getProperty(BondsObject::ColorProperty) : nullptr,
-					bonds()->getProperty(BondsObject::TypeProperty),
-					nullptr, // No selection highlighting needed here
-					nullptr, // No transparency needed here
-					particleVis,
-					getProperty(ParticlesObject::ColorProperty),
-					getProperty(ParticlesObject::TypeProperty));
+			std::vector<ColorA> halfBondColors = bondsVis->halfBondColors(this, false, bondsVis->useParticleColors(), ignoreExistingColorProperty);
 			OVITO_ASSERT(bonds()->elementCount() * 2 == halfBondColors.size());
 
 			// Map half-bond colors to full bond colors.
@@ -341,23 +321,16 @@ std::vector<ColorA> ParticlesObject::inputBondColors(bool ignoreExistingColorPro
 ******************************************************************************/
 std::vector<FloatType> ParticlesObject::inputParticleRadii() const
 {
-	std::vector<FloatType> radii(elementCount());
-
 	// Obtain the particle vis element.
 	if(ParticlesVis* particleVis = visElement<ParticlesVis>()) {
 
 		// Query particle radii from vis element.
-		particleVis->particleRadii(radii,
-				getProperty(ParticlesObject::RadiusProperty),
-				getProperty(ParticlesObject::TypeProperty));
-
-		return radii;
+		return particleVis->particleRadii(this);
 	}
 
-	boost::fill(radii, FloatType(1));
-	return radii;
+	// Return uniform default radius for all particles.
+	return std::vector<FloatType>(elementCount(), FloatType(1));
 }
-
 
 /******************************************************************************
 * Gives the property class the opportunity to set up a newly created

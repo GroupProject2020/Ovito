@@ -174,10 +174,10 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	// Define nucleobase types.
 	PropertyAccess<int> baseProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numNucleotidesLong, ParticlesObject::NucleobaseTypeProperty, false));
 	ParticleFrameData::TypeList* typeList = frameData->createPropertyTypesList(baseProperty, ElementType::OOClass());
-	typeList->addTypeId(1, QStringLiteral("A"));
+	typeList->addTypeId(1, QStringLiteral("T"));
 	typeList->addTypeId(2, QStringLiteral("C"));
 	typeList->addTypeId(3, QStringLiteral("G"));
-	typeList->addTypeId(4, QStringLiteral("T"));
+	typeList->addTypeId(4, QStringLiteral("A"));
 
 	// Define strands list.
 	PropertyAccess<int> strandsProperty = frameData->addParticleProperty(ParticlesObject::OOClass().createStandardStorage(numNucleotidesLong, ParticlesObject::DNAStrandProperty, false));
@@ -196,9 +196,9 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	for(size_t i = 0; i < numNucleotidesLong; i++, ++strandId) {
 		if(!setProgressValueIntermittent(i)) return {};
 
-		char base;
+		char baseName[32];
 		qlonglong neighbor1, neighbor2;
-		if(sscanf(topoStream.readLine(), "%u %c %lld %lld", strandId, &base, &neighbor1, &neighbor2) != 4)
+		if(sscanf(topoStream.readLine(), "%u %31s %lld %lld", strandId, baseName, &neighbor1, &neighbor2) != 4)
 			throw Exception(tr("Invalid nucleotide specification in line %1 of oxDNA topology file: %2").arg(topoStream.lineNumber()).arg(topoStream.lineString()));
 
 		if(*strandId < 1 || *strandId > numStrands)
@@ -213,15 +213,7 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 		if(neighbor2 != -1)
 			bonds.push_back({(qlonglong)i, neighbor2});
 
-		switch(base) {
-		case 'A': *baseTypeIter++ = 1; break;
-		case 'C': *baseTypeIter++ = 2; break;
-		case 'G': *baseTypeIter++ = 3; break;
-		case 'T': *baseTypeIter++ = 4; break;
-		default:
-			throw Exception(tr("Base in line %1 of oxDNA topology file is invalid. Must be one of {A,C,G,T}.").arg(topoStream.lineNumber()));			
-		}
-
+		*baseTypeIter++ = typeList->addTypeName(baseName, baseName + qstrlen(baseName));
 	}
 
 	// Create and fill bonds topology storage.
@@ -293,10 +285,14 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 		frameData->signalAdditionalFrames();
 
 	// Displace particle positions. oxDNA stores center of mass coordinates, but OVITO expects particle coordinates to be backbone sphere centers.
+	PropertyAccess<Point3> centerOfMassPositionsArray = frameData->addParticleProperty(std::make_shared<PropertyStorage>(numNucleotidesLong, PropertyStorage::Float, 3, 0, QStringLiteral("Center Of Mass"), false, 0, QStringList() << QStringLiteral("X") << QStringLiteral("Y") << QStringLiteral("Z")));
+	PropertyAccess<Point3> basePositionsArray = frameData->addParticleProperty(std::make_shared<PropertyStorage>(numNucleotidesLong, PropertyStorage::Float, 3, 0, QStringLiteral("Base Position"), false, 0, QStringList() << QStringLiteral("X") << QStringLiteral("Y") << QStringLiteral("Z")));
 	PropertyAccess<Point3> positionsArray = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 	ConstPropertyAccess<Vector3> axisVectorArray = frameData->findStandardParticleProperty(ParticlesObject::NucleotideAxisProperty);
 	for(size_t i = 0; i < numNucleotidesLong; i++) {
+		centerOfMassPositionsArray[i] = positionsArray[i];
 		positionsArray[i] -= 0.4 * axisVectorArray[i];
+		basePositionsArray[i] = centerOfMassPositionsArray[i] + 0.4 * axisVectorArray[i];
 	}
 
 	frameData->setStatus(tr("%1 nucleotides\n%2 strands").arg(numNucleotidesLong).arg(numStrands));

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -197,10 +197,31 @@ Box3 ParticlesVis::particleBoundingBox(ConstPropertyAccess<Point3> positionPrope
 }
 
 /******************************************************************************
+* Returns the typed particle property used to determine the rendering colors 
+* of particles (if no per-particle colors are defined).
+******************************************************************************/
+const PropertyObject* ParticlesVis::getParticleTypeColorProperty(const ParticlesObject* particles) const
+{
+	return particles->getProperty(ParticlesObject::TypeProperty);
+}
+
+/******************************************************************************
 * Determines the display particle colors.
 ******************************************************************************/
-void ParticlesVis::particleColors(std::vector<ColorA>& output, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty, ConstPropertyAccess<FloatType> transparencyProperty) const
+std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particles, bool highlightSelection, bool includeTransparency) const
 {
+	OVITO_ASSERT(particles);
+	particles->verifyIntegrity();
+
+	// Get all relevant particle properties which determine the particle rendering color.
+	ConstPropertyAccess<Color> colorProperty = particles->getProperty(ParticlesObject::ColorProperty);
+	const PropertyObject* typeProperty = getParticleTypeColorProperty(particles);
+	ConstPropertyAccess<int> selectionProperty = highlightSelection ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
+	ConstPropertyAccess<FloatType> transparencyProperty = includeTransparency ? particles->getProperty(ParticlesObject::TransparencyProperty) : nullptr;
+
+	// Allocate output array.
+	std::vector<ColorA> output(particles->elementCount());
+
 	ColorA defaultColor = defaultParticleColor();
 	if(colorProperty && colorProperty.size() == output.size()) {
 		// Take particle colors directly from the color property.
@@ -263,23 +284,39 @@ void ParticlesVis::particleColors(std::vector<ColorA>& output, ConstPropertyAcce
 				*c = selColor;
 		}
 	}
+
+	return output;
+}
+
+/******************************************************************************
+* Returns the typed particle property used to determine the rendering radii 
+* of particles (if no per-particle radii are defined).
+******************************************************************************/
+const PropertyObject* ParticlesVis::getParticleTypeRadiusProperty(const ParticlesObject* particles) const
+{
+	return particles->getProperty(ParticlesObject::TypeProperty);
 }
 
 /******************************************************************************
 * Determines the display particle radii.
 ******************************************************************************/
-void ParticlesVis::particleRadii(std::vector<FloatType>& output, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const
+std::vector<FloatType> ParticlesVis::particleRadii(const ParticlesObject* particles) const
 {
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticlesObject::TypeProperty);
-	OVITO_ASSERT(!radiusProperty || output.size() == radiusProperty.size());
-	OVITO_ASSERT(!typeProperty || output.size() == typeProperty->size());
+	particles->verifyIntegrity();
+
+	// Get particle properties that determine the rendering size of particles.
+	ConstPropertyAccess<FloatType> radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
+	const PropertyObject* typeProperty = getParticleTypeRadiusProperty(particles);
+
+	// Allocate output array.
+	std::vector<FloatType> output(particles->elementCount());
 
 	FloatType defaultRadius = defaultParticleRadius();
-	if(radiusProperty && radiusProperty.size() == output.size()) {
+	if(radiusProperty) {
 		// Take particle radii directly from the radius property.
 		boost::transform(radiusProperty, output.begin(), [defaultRadius](FloatType r) { return r > 0 ? r : defaultRadius; } );
 	}
-	else if(typeProperty && typeProperty->size() == output.size()) {
+	else if(typeProperty) {
 		// Assign radii based on particle types.
 		// Build a lookup map for particle type radii.
 		const std::map<int,FloatType> radiusMap = ParticleType::typeRadiusMap(typeProperty);
@@ -305,6 +342,8 @@ void ParticlesVis::particleRadii(std::vector<FloatType>& output, ConstPropertyAc
 		// Assign a uniform radius to all particles.
 		boost::fill(output, defaultRadius);
 	}
+
+	return output;
 }
 
 /******************************************************************************
@@ -424,7 +463,8 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
 	const PropertyObject* colorProperty = particles->getProperty(ParticlesObject::ColorProperty);
-	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* typeProperty = getParticleTypeColorProperty(particles);
+	const PropertyObject* typeRadiusProperty = getParticleTypeRadiusProperty(particles);
 	const PropertyObject* selectionProperty = renderer->isInteractive() ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
 	const PropertyObject* transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
 	const PropertyObject* asphericalShapeProperty = particles->getProperty(ParticlesObject::AsphericalShapeProperty);
@@ -529,7 +569,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			visCache.particlePrimitive,
 			defaultParticleRadius(),
 			radiusProperty,
-			typeProperty));
+			typeRadiusProperty));
 
 		// The type of lookup key used for caching the particle colors:
 		using ColorCacheKey = std::tuple<
@@ -611,10 +651,8 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				std::vector<std::vector<AffineTransformation>> shapeParticleTMs(meshVisCache->shapeMeshPrimitives.size());
 				std::vector<std::vector<ColorA>> shapeParticleColors(meshVisCache->shapeMeshPrimitives.size());
 				std::vector<std::vector<size_t>> shapeParticleIndices(meshVisCache->shapeMeshPrimitives.size());
-				std::vector<ColorA> colors(particleCount);
-				particleColors(colors, colorProperty, typeProperty, selectionProperty, transparencyProperty);
-				std::vector<FloatType> radii(particleCount);
-				particleRadii(radii, radiusProperty, typeProperty);
+				std::vector<ColorA> colors = particleColors(particles, renderer->isInteractive(), true);
+				std::vector<FloatType> radii = particleRadii(particles);
 				ConstPropertyAccess<int> typeArray(typeProperty);
 				ConstPropertyAccess<Point3> positionArray(positionStorage);
 				ConstPropertyAccess<Quaternion> orientationArray(orientationStorage);
@@ -785,8 +823,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				visCache.particlePrimitive->setParticleColors(ConstPropertyAccess<Color>(colorStorage).cbegin());
 			}
 			else {
-				std::vector<ColorA> colors(particleCount);
-				particleColors(colors, colorProperty, typeProperty, selectionProperty, transparencyProperty);
+				std::vector<ColorA> colors = particleColors(particles, renderer->isInteractive(), true);
 				// Filter the color array to include only the visible particles.
 				if(visibleStandardParticles != particleCount) {
 					auto c = colors.begin();
@@ -876,8 +913,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			visCache.cylinderPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
 
 			// Determine cylinder colors.
-			std::vector<ColorA> colors(particleCount);
-			particleColors(colors, colorProperty, typeProperty, selectionProperty);
+			std::vector<ColorA> colors = particleColors(particles, renderer->isInteractive(), true);
 
 			std::vector<Point3> sphereCapPositions;
 			std::vector<FloatType> sphereRadii;

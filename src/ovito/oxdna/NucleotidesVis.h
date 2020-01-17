@@ -49,10 +49,21 @@ public:
 	virtual Box3 boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 	/// Determines the effective rendering colors for the backbone sites of the nucleotides.
-	void backboneColors(std::vector<ColorA>& output, const ParticlesObject* particles, bool highlightSelection) const;
+	std::vector<ColorA> backboneColors(const ParticlesObject* particles, bool highlightSelection) const;
 
 	/// Determines the effective rendering colors for the base sites of the nucleotides.
-	void nucleobaseColors(std::vector<ColorA>& output, const ParticlesObject* particles, bool highlightSelection) const;
+	std::vector<ColorA> nucleobaseColors(const ParticlesObject* particles, bool highlightSelection) const;
+
+	/// Returns the typed particle property used to determine the rendering colors of particles (if no per-particle colors are defined).
+	virtual const PropertyObject* getParticleTypeColorProperty(const ParticlesObject* particles) const override;
+
+	/// Returns the typed particle property used to determine the rendering radii of particles (if no per-particle radii are defined).
+	virtual const PropertyObject* getParticleTypeRadiusProperty(const ParticlesObject* particles) const override;
+
+private:
+
+	/// Controls the displa radius of cylinder elements.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cylinderRadius, setCylinderRadius, PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

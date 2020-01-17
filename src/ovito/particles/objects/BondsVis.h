@@ -58,9 +58,7 @@ public:
 
 	/// Determines the display colors of half-bonds.
 	/// Returns an array with two colors per full bond, because the two half-bonds may have different colors.
-	std::vector<ColorA> halfBondColors(size_t particleCount, ConstPropertyAccess<ParticleIndexPair> topologyProperty,
-			ConstPropertyAccess<Color> bondColorProperty, const PropertyObject* bondTypeProperty, ConstPropertyAccess<int> bondSelectionProperty, ConstPropertyAccess<FloatType> transparencyProperty,
-			const ParticlesVis* particleVis, ConstPropertyAccess<Color> particleColorProperty, const PropertyObject* particleTypeProperty) const;
+	std::vector<ColorA> halfBondColors(const ParticlesObject* particles, bool highlightSelection, bool useParticleColors, bool ignoreBondColorProperty) const;
 
 public:
 

@@ -77,11 +77,11 @@ public:
 	/// Returns the actual rendering quality used to render the particles.
 	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, const ParticlesObject* particles) const;
 
-	/// Determines the display particle colors.
-	void particleColors(std::vector<ColorA>& output, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty = {}, ConstPropertyAccess<FloatType> transparencyProperty = {}) const;
+	/// Determines the color of each particle to be used for rendering.
+	std::vector<ColorA> particleColors(const ParticlesObject* particles, bool highlightSelection, bool includeTransparency) const;
 
-	/// Determines the display particle radii.
-	void particleRadii(std::vector<FloatType>& output, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const;
+	/// Determines the particle radii used for rendering.
+	std::vector<FloatType> particleRadii(const ParticlesObject* particles) const;
 
 	/// Determines the display radius of a single particle.
 	FloatType particleRadius(size_t particleIndex, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const;
@@ -94,6 +94,12 @@ public:
 
 	/// Render a marker around a particle to highlight it in the viewports.
 	void highlightParticle(size_t particleIndex, const ParticlesObject* particles, SceneRenderer* renderer) const;
+
+	/// Returns the typed particle property used to determine the rendering colors of particles (if no per-particle colors are defined).
+	virtual const PropertyObject* getParticleTypeColorProperty(const ParticlesObject* particles) const;
+
+	/// Returns the typed particle property used to determine the rendering radii of particles (if no per-particle radii are defined).
+	virtual const PropertyObject* getParticleTypeRadiusProperty(const ParticlesObject* particles) const;
 
 public:
 

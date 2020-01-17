@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -153,16 +153,19 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 	const PropertyObject* bondPeriodicImageProperty = bonds->getProperty(BondsObject::PeriodicImageProperty);
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	const SimulationCellObject* simulationCell = flowState.getObject<SimulationCellObject>();
-	const PropertyObject* particleColorProperty = particles->getProperty(ParticlesObject::ColorProperty);
-	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
-	const PropertyObject* particleRadiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
 	const PropertyObject* bondTypeProperty = bonds->getProperty(BondsObject::TypeProperty);
 	const PropertyObject* bondColorProperty = bonds->getProperty(BondsObject::ColorProperty);
-	const PropertyObject* bondSelectionProperty = bonds->getProperty(BondsObject::SelectionProperty);
+	const PropertyObject* bondSelectionProperty = renderer->isInteractive() ? bonds->getProperty(BondsObject::SelectionProperty) : nullptr;
 	const PropertyObject* transparencyProperty = bonds->getProperty(BondsObject::TransparencyProperty);
-	if(!useParticleColors()) {
-		particleColorProperty = nullptr;
-		particleTypeProperty = nullptr;
+
+	// Obtain particle-related properties and the vis element.
+	const ParticlesVis* particleVis = particles->visElement<ParticlesVis>();
+	const PropertyObject* particleRadiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
+	const PropertyObject* particleColorProperty = nullptr;
+	const PropertyObject* particleTypeProperty = nullptr;
+	if(useParticleColors() && particleVis) {
+		particleColorProperty = particles->getProperty(ParticlesObject::ColorProperty);
+		particleTypeProperty = particleVis->getParticleTypeColorProperty(particles);
 	}
 
 	// Make sure we don't exceed our internal limits.
@@ -221,9 +224,6 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 			arrowPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, shadingMode(), renderingQuality(), transparencyProperty != nullptr);
 			arrowPrimitive->startSetElements((int)bondTopologyProperty->size() * 2);
 
-			// Obtain particles vis element.
-			ParticlesVis* particleVis = particles->visElement<ParticlesVis>();
-
 			// Cache some values.
 			ConstPropertyAccess<Point3> positions(positionProperty);
 			size_t particleCount = positions.size();
@@ -231,18 +231,14 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 
 			// Compute the radii of the particles.
 			std::vector<FloatType> particleRadii;
-			if(particleVis) {
-				particleRadii.resize(particleCount);
-				particleVis->particleRadii(particleRadii, particleRadiusProperty, particleTypeProperty);
-			}
+			if(particleVis)
+				particleRadii = particleVis->particleRadii(particles);
 
 			if(!useParticleColors())
 				particleVis = nullptr;
 
 			// Determine half-bond colors.
-			std::vector<ColorA> colors = halfBondColors(positionProperty->size(), bondTopologyProperty,
-					bondColorProperty, bondTypeProperty, bondSelectionProperty, transparencyProperty,
-					particleVis, particleColorProperty, particleTypeProperty);
+			std::vector<ColorA> colors = halfBondColors(particles, renderer->isInteractive(), useParticleColors(), false);
 			OVITO_ASSERT(colors.size() == arrowPrimitive->elementCount());
 
 			// Make sure the particle radius array has the correct length.
@@ -302,11 +298,31 @@ void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& obje
 * Returns an array with two colors per full bond, because the two half-bonds
 * may have different colors.
 ******************************************************************************/
-std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, ConstPropertyAccess<ParticleIndexPair> topologyProperty,
-		ConstPropertyAccess<Color> bondColorProperty, const PropertyObject* bondTypeProperty, ConstPropertyAccess<int> bondSelectionProperty, ConstPropertyAccess<FloatType> transparencyProperty,
-		const ParticlesVis* particleVis, ConstPropertyAccess<Color> particleColorProperty, const PropertyObject* particleTypeProperty) const
+std::vector<ColorA> BondsVis::halfBondColors(const ParticlesObject* particles, bool highlightSelection, bool useParticleColors, bool ignoreBondColorProperty) const
 {
-	std::vector<ColorA> output(topologyProperty.size() * 2);
+	OVITO_ASSERT(particles != nullptr);
+	particles->verifyIntegrity();
+	const BondsObject* bonds = particles->bonds();
+	if(!bonds) return {};
+	bonds->verifyIntegrity();
+
+	// Get bond-related properties which determine the bond coloring.
+	ConstPropertyAccess<ParticleIndexPair> topologyProperty = bonds->getProperty(BondsObject::TopologyProperty);
+	ConstPropertyAccess<Color> bondColorProperty = !ignoreBondColorProperty ? bonds->getProperty(BondsObject::ColorProperty) : nullptr;
+	const PropertyObject* bondTypeProperty = bonds->getProperty(BondsObject::TypeProperty);
+	ConstPropertyAccess<int> bondSelectionProperty = highlightSelection ? bonds->getProperty(BondsObject::SelectionProperty) : nullptr;
+	ConstPropertyAccess<FloatType> transparencyProperty = bonds->getProperty(BondsObject::TransparencyProperty);
+
+	// Get particle-related properties and the vis element.
+	const ParticlesVis* particleVis = particles->visElement<ParticlesVis>();
+	ConstPropertyAccess<Color> particleColorProperty;
+	const PropertyObject* particleTypeProperty = nullptr;
+	if(useParticleColors && particleVis) {
+		particleColorProperty = particles->getProperty(ParticlesObject::ColorProperty);
+		particleTypeProperty = particleVis->getParticleTypeColorProperty(particles);
+	}
+
+	std::vector<ColorA> output(bonds->elementCount() * 2);
 	ColorA defaultColor = (ColorA)bondColor();
 	if(bondColorProperty && bondColorProperty.size() * 2 == output.size()) {
 		// Take bond colors directly from the color property.
@@ -316,10 +332,10 @@ std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, ConstProperty
 			*bc++ = c;
 		}
 	}
-	else if(useParticleColors() && particleVis != nullptr) {
+	else if(useParticleColors && particleVis) {
 		// Derive bond colors from particle colors.
-		std::vector<ColorA> particleColors(particleCount);
-		particleVis->particleColors(particleColors, particleColorProperty, particleTypeProperty, nullptr);
+		size_t particleCount = particles->elementCount();
+		std::vector<ColorA> particleColors = particleVis->particleColors(particles, false, false);
 		auto bc = output.begin();
 		for(const auto& bond : topologyProperty) {
 			if(bond[0] < particleCount && bond[1] < particleCount) {

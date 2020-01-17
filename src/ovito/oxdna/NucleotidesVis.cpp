@@ -34,12 +34,17 @@
 namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(NucleotidesVis);
+DEFINE_PROPERTY_FIELD(NucleotidesVis, cylinderRadius);
+SET_PROPERTY_FIELD_LABEL(NucleotidesVis, cylinderRadius, "Cylinder radius");
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(NucleotidesVis, cylinderRadius, WorldParameterUnit, 0);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-NucleotidesVis::NucleotidesVis(DataSet* dataset) : ParticlesVis(dataset)
-{
+NucleotidesVis::NucleotidesVis(DataSet* dataset) : ParticlesVis(dataset),
+	_cylinderRadius(0.05)
+{	
+	setDefaultParticleRadius(0.1);
 }
 
 /******************************************************************************
@@ -91,94 +96,42 @@ Box3 NucleotidesVis::boundingBox(TimePoint time, const std::vector<const DataObj
 }
 
 /******************************************************************************
+* Returns the typed particle property used to determine the rendering colors 
+* of particles (if no per-particle colors are defined).
+******************************************************************************/
+const PropertyObject* NucleotidesVis::getParticleTypeColorProperty(const ParticlesObject* particles) const
+{
+	return particles->getProperty(ParticlesObject::DNAStrandProperty);
+}
+
+/******************************************************************************
+* Returns the typed particle property used to determine the rendering radii 
+* of particles (if no per-particle radii are defined).
+******************************************************************************/
+const PropertyObject* NucleotidesVis::getParticleTypeRadiusProperty(const ParticlesObject* particles) const
+{
+	return particles->getProperty(ParticlesObject::TypeProperty);
+}
+
+/******************************************************************************
 * Determines the effective rendering colors for the backbone sites of the nucleotides.
 ******************************************************************************/
-void NucleotidesVis::backboneColors(std::vector<ColorA>& output, const ParticlesObject* particles, bool highlightSelection) const
+std::vector<ColorA> NucleotidesVis::backboneColors(const ParticlesObject* particles, bool highlightSelection) const
 {
-	particles->verifyIntegrity();
-	OVITO_ASSERT(particles->elementCount() == output.size());
-
-	const PropertyObject* colorProperty = particles->getProperty(ParticlesObject::ColorProperty);
-	const PropertyObject* strandProperty = particles->getProperty(ParticlesObject::DNAStrandProperty);
-	const PropertyObject* selectionProperty = highlightSelection ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
-	const PropertyObject* transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
-
-	ColorA defaultColor = defaultParticleColor();
-	if(colorProperty) {
-		// Take particle colors directly from the color property.
-		boost::copy(ConstPropertyAccess<Color>(colorProperty), output.begin());
-	}
-	else if(strandProperty) {
-		// Assign colors based on strand.
-		// Generate a lookup map for strand colors.
-		const std::map<int,Color> colorMap = strandProperty->typeColorMap();
-		std::array<ColorA,32> colorArray;
-		// Check if all type IDs are within a small, non-negative range.
-		// If yes, we can use an array lookup strategy. Otherwise we have to use a dictionary lookup strategy, which is slower.
-		if(std::all_of(colorMap.begin(), colorMap.end(), [&colorArray](const auto& i) { return i.first >= 0 && i.first < (int)colorArray.size(); })) {
-			colorArray.fill(defaultColor);
-			for(const auto& entry : colorMap)
-				colorArray[entry.first] = entry.second;
-			// Fill color array.
-			ConstPropertyAccess<int> typeArray(strandProperty);
-			const int* t = typeArray.cbegin();
-			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
-				if(*t >= 0 && *t < (int)colorArray.size())
-					*c = colorArray[*t];
-				else
-					*c = defaultColor;
-			}
-		}
-		else {
-			// Fill color array.
-			ConstPropertyAccess<int> typeArray(strandProperty);
-			const int* t = typeArray.cbegin();
-			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
-				auto it = colorMap.find(*t);
-				if(it != colorMap.end())
-					*c = it->second;
-				else
-					*c = defaultColor;
-			}
-		}
-	}
-	else {
-		// Assign a uniform color to all nucleotides.
-		boost::fill(output, defaultColor);
-	}
-
-	// Set color alpha values based on transparency property.
-	if(transparencyProperty) {
-		ConstPropertyAccess<FloatType> transparencyArray(transparencyProperty);
-		const FloatType* t = transparencyArray.cbegin();
-		for(ColorA& c : output) {
-			c.a() = qBound(FloatType(0), FloatType(1) - (*t++), FloatType(1));
-		}
-	}
-
-	// Highlight selected particles.
-	if(selectionProperty) {
-		const Color selColor = selectionParticleColor();
-		ConstPropertyAccess<int> selectionArray(selectionProperty);
-		const int* t = selectionArray.cbegin();
-		for(auto c = output.begin(); c != output.end(); ++c, ++t) {
-			if(*t)
-				*c = selColor;
-		}
-	}
+	return particleColors(particles, highlightSelection, true);
 }
 
 /******************************************************************************
 * Determines the effective rendering colors for the base sites of the nucleotides.
 ******************************************************************************/
-void NucleotidesVis::nucleobaseColors(std::vector<ColorA>& output, const ParticlesObject* particles, bool highlightSelection) const
+std::vector<ColorA> NucleotidesVis::nucleobaseColors(const ParticlesObject* particles, bool highlightSelection) const
 {
 	particles->verifyIntegrity();
-	OVITO_ASSERT(particles->elementCount() == output.size());
-
 	const PropertyObject* baseProperty = particles->getProperty(ParticlesObject::NucleobaseTypeProperty);
 	const PropertyObject* selectionProperty = highlightSelection ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
 	const PropertyObject* transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
+
+	std::vector<ColorA> output(particles->elementCount());
 
 	ColorA defaultColor = defaultParticleColor();
 	if(baseProperty) {
@@ -239,6 +192,8 @@ void NucleotidesVis::nucleobaseColors(std::vector<ColorA>& output, const Particl
 				*c = selColor;
 		}
 	}
+
+	return output;
 }
 
 /******************************************************************************
@@ -283,7 +238,8 @@ void NucleotidesVis::render(TimePoint time, const std::vector<const DataObject*>
 		VersionedDataObjectRef,		// Selection property + revision number
 		VersionedDataObjectRef,		// Nucleotide axis property + revision number
 		VersionedDataObjectRef,		// Nucleotide normal property + revision number
-		FloatType					// Default particle radius
+		FloatType,					// Default particle radius
+		FloatType					// Cylinder radius
 	>;
 	
 	// The data structure stored in the vis cache.
@@ -305,7 +261,8 @@ void NucleotidesVis::render(TimePoint time, const std::vector<const DataObject*>
 		selectionProperty,
 		nucleotideAxisProperty,
 		nucleotideNormalProperty,
-		defaultParticleRadius()));
+		defaultParticleRadius(),
+		cylinderRadius()));
 
 	// Check if we already have valid rendering primitives that are up to date.
 	if(!visCache.backbonePrimitive
@@ -322,8 +279,7 @@ void NucleotidesVis::render(TimePoint time, const std::vector<const DataObject*>
 		visCache.backbonePrimitive->setParticlePositions(ConstPropertyAccess<Point3>(positionProperty).cbegin());
 
 		// Compute the effective color of each particle.
-		std::vector<ColorA> colors(particles->elementCount());
-		backboneColors(colors, particles, renderer->isInteractive());
+		std::vector<ColorA> colors = backboneColors(particles, renderer->isInteractive());
 
 		// Fill in backbone color data.
 		visCache.backbonePrimitive->setParticleColors(colors.data());
@@ -345,24 +301,33 @@ void NucleotidesVis::render(TimePoint time, const std::vector<const DataObject*>
 			visCache.basePrimitive->setParticlePositions(baseSites.data());
 
 			// Fill in base color data.
-			std::vector<ColorA> baseColors(particles->elementCount());
-			nucleobaseColors(baseColors, particles, renderer->isInteractive());
+			std::vector<ColorA> baseColors = nucleobaseColors(particles, renderer->isInteractive());
 			visCache.basePrimitive->setParticleColors(baseColors.data());
 
 			// Fill in aspherical shape values.
-			Vector3 asphericalShape(defaultParticleRadius(), defaultParticleRadius(), 0.5 * defaultParticleRadius());
+			Vector3 asphericalShape = cylinderRadius() * Vector3(2.0, 3.0, 1.0);
 			std::vector<Vector3> asphericalShapes(particles->elementCount(), asphericalShape);
 			visCache.basePrimitive->setParticleShapes(asphericalShapes.data());
 
 			// Fill in base orientations.
 			if(ConstPropertyAccess<Vector3> nucleotideNormalArray = nucleotideNormalProperty) {
-				std::vector<Quaternion> orientations(particles->elementCount());
+				std::vector<Quaternion> orientations(particles->elementCount());				
 				for(size_t i = 0; i < orientations.size(); i++) {
-					Vector3 an = nucleotideNormalArray[i].safelyNormalized();
-					if(an.z() > 1.0 - FLOATTYPE_EPSILON || an.z() < -1.0 + FLOATTYPE_EPSILON || an == Vector3::Zero())
+					if(nucleotideNormalArray[i] != Vector3::Zero() && nucleotideAxisArray[i] != Vector3::Zero()) {
+						// Build an orthonomal basis from the two direction vectors of a nucleotide.
+						Matrix3 tm;
+						tm.column(2) = nucleotideNormalArray[i];
+						tm.column(1) = nucleotideAxisArray[i];
+						tm.column(0) = tm.column(1).cross(tm.column(2));
+						if(!tm.column(0).isZero()) {
+							tm.orthonormalize();
+							orientations[i] = Quaternion(tm);
+						}
+						else orientations[i] = Quaternion::Identity();
+					}
+					else {
 						orientations[i] = Quaternion::Identity();
-					else
-						orientations[i] = Quaternion(Rotation(Vector3(0,0,1).cross(an), std::acos(an.z())));
+					}
 				}
 				visCache.basePrimitive->setParticleOrientations(orientations.data());	
 			}
@@ -370,9 +335,8 @@ void NucleotidesVis::render(TimePoint time, const std::vector<const DataObject*>
 			// Create the rendering primitive for the connections between backbone and base sites.
 			visCache.connectionPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality, transparencyProperty != nullptr);
 			visCache.connectionPrimitive->startSetElements(particles->elementCount());
-			FloatType cylinderRadius = 0.4 * defaultParticleRadius();
 			for(size_t i = 0; i < positionsArray.size(); i++)
-				visCache.connectionPrimitive->setElement(i, positionsArray[i], 0.8 * nucleotideAxisArray[i], colors[i], cylinderRadius);
+				visCache.connectionPrimitive->setElement(i, positionsArray[i], 0.8 * nucleotideAxisArray[i], colors[i], cylinderRadius());
 			visCache.connectionPrimitive->endSetElements();
 		}
 		else {
