@@ -314,7 +314,9 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 									fileColumnNames[i] == "xs" || fileColumnNames[i] == "xsu" ||
 									fileColumnNames[i] == "ys" || fileColumnNames[i] == "ysu" ||
 									fileColumnNames[i] == "zs" || fileColumnNames[i] == "zsu");
-							break;
+							// break; Note: Do not stop the loop here, because the 'Position' particle 
+							// property may be associated with several file columns, and it's the last column that 
+							// ends up getting imported into OVITO. 
 						}
 					}
 				}

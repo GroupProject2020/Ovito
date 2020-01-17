@@ -433,7 +433,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 		// Check if all atom coordinates are within the [0,1] interval.
 		// If yes, we assume reduced coordinate format.
 
-		if(Box3(Point3(-0.01f), Point3(1.01f)).containsBox(boundingBox)) {
+		if(Box3(Point3(-0.01), Point3(1.01)).containsBox(boundingBox)) {
 			// Convert all atom coordinates from reduced to absolute (Cartesian) format.
 			const AffineTransformation simCell = frameData->simulationCell().matrix();
 			for(Point3& p : posProperty)

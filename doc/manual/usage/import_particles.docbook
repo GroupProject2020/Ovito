@@ -118,21 +118,20 @@
             <row>
               <entry>LAMMPS&#xA0;data</entry>
               <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov/doc/read_data.html">LAMMPS</link> molecular dynamics code.</para></entry>
-              <entry><link linkend="scene_objects.particles">particles</link>, bonds</entry>
+              <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.bonds">bonds</link></entry>
             </row>
             <row>
               <entry>XYZ</entry>
-              <entry><para>A simple column-based text format, which is documented <link xlink:href="http://en.wikipedia.org/wiki/XYZ_file_format">here</link>.</para>
-                <para>The basic XYZ format does not contain simulation cell information. OVITO takes the axis-aligned bounding box of particles as the simulation box in this case.
-                The program also supports the <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">extended XYZ format</link>, which includes information on the simulation cell,
-                boundary conditions, and per-particle fields.</para>
+              <entry><para>Simple column-based text format for particle data, which is documented <link xlink:href="http://en.wikipedia.org/wiki/XYZ_file_format">here</link>.</para>
+                <para>OVITO can read the <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">extended XYZ format</link>, which supports arbitrary sets of particle data columns, 
+                and can store addtional information such as the simulation cell geometry and boundary conditions.</para>
                 </entry>
               <entry><link linkend="scene_objects.particles">particles</link></entry>
             </row>
             <row>
               <entry>POSCAR / XDATCAR / CHGCAR</entry>
               <entry><para>File formats used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="http://www.vasp.at/">VASP</link>.
-                    OVITO can read and visualize charge density fields from CHGCAR files.</para></entry>
+                    OVITO can import atomistic configurations and also charge density fields from CHGCAR files.</para></entry>
               <entry><link linkend="scene_objects.particles">particles</link>, <link linkend="scene_objects.voxel_grid">voxel&#xA0;grids</link></entry>
             </row>
             <row>
@@ -224,7 +223,7 @@
             <row>
               <entry>ParaDiS</entry>
               <entry><para>File format of the <link xlink:href="http://paradis.stanford.edu">ParaDiS</link> discrete dislocation dynamics code.</para></entry>
-              <entry><link linkend="scene_objects.dislocations">dislocations</link></entry>
+              <entry><link linkend="scene_objects.dislocations">dislocation&#xA0;lines</link></entry>
             </row>
             <row>
               <entry>oxDNA</entry>
