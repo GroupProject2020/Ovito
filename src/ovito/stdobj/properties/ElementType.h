@@ -59,6 +59,15 @@ public:
 	/// \brief Returns the title of this object. Same as nameOrNumericId().
 	virtual QString objectTitle() const override { return nameOrNumericId(); }
 
+	/// Returns the default color for the element type with the given ID.
+	static const Color& getDefaultColorForId(int typeClass, int typeId);
+
+	/// Returns the default color for a named element type.
+	static Color getDefaultColor(int typeClass, const QString& typeName, int typeId, bool useUserDefaults = true);
+
+	/// Changes the default color for a named element type.
+	static void setDefaultColor(int typeClass, const QString& typeName, const Color& color);
+
 protected:
 
 	/// Stores the unique numeric identifier of the type.

@@ -22,11 +22,10 @@
 
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/properties/ElementType.h>
+#include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
 #include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/mainwin/MainWindow.h>
 #include "ElementTypeEditor.h"
 
 namespace Ovito { namespace StdObj {
@@ -79,7 +78,23 @@ void ElementTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams
 	gridLayout->addWidget(colorPUI->label(), 0, 0);
 	gridLayout->addWidget(colorPUI->colorPicker(), 0, 1);
 
-	connect(this, &PropertiesEditor::contentsReplaced, [namePUI](RefTarget* newEditObject) {
+	// "Save as default" button
+	QPushButton* setAsDefaultBtn = new QPushButton(tr("Save as default"));
+	setAsDefaultBtn->setToolTip(tr("Save the current color as default value for this type."));
+	setAsDefaultBtn->setEnabled(false);
+	gridLayout->addWidget(setAsDefaultBtn, 1, 0, 1, 2, Qt::AlignRight);
+	connect(setAsDefaultBtn, &QPushButton::clicked, this, [this]() {
+		ElementType* ptype = static_object_cast<ElementType>(editObject());
+		if(!ptype) return;
+
+		ElementType::setDefaultColor(PropertyStorage::GenericTypeProperty, ptype->nameOrNumericId(), ptype->color());
+
+		mainWindow()->statusBar()->showMessage(tr("Stored current color as default value for type '%1'.").arg(ptype->nameOrNumericId()), 4000);
+	});
+
+	connect(this, &PropertiesEditor::contentsReplaced, [setAsDefaultBtn,namePUI](RefTarget* newEditObject) {
+		setAsDefaultBtn->setEnabled(newEditObject != nullptr);
+
 		// Update the placeholder text of the name input field to reflect the numeric ID of the current particle type.
 		if(QLineEdit* lineEdit = qobject_cast<QLineEdit*>(namePUI->textBox())) {
 			if(ElementType* ptype = dynamic_object_cast<ElementType>(newEditObject))

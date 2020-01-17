@@ -400,10 +400,15 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 
 				if(item.color != Color(0,0,0))
 					ptype->setColor(item.color);
-				else if(!isBondProperty)
-					ptype->setColor(ParticleType::getDefaultParticleColor((ParticlesObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
-				else
+				else if(!isBondProperty) {
+					if(ParticleType::OOClass().isMember(ptype))
+						ptype->setColor(ParticleType::getDefaultParticleColor((ParticlesObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
+					else
+						ptype->setColor(ElementType::getDefaultColor(PropertyStorage::GenericTypeProperty, ptype->nameOrNumericId(), ptype->numericId()));
+				}
+				else {
 					ptype->setColor(BondType::getDefaultBondColor((BondsObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
+				}
 
 				typeProperty->addElementType(ptype);
 			}

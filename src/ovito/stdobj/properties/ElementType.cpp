@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -45,6 +45,58 @@ ElementType::ElementType(DataSet* dataset) : DataObject(dataset),
 	_color(1,1,1),
 	_enabled(true)
 {
+}
+
+/******************************************************************************
+* Returns the default color for a numeric type ID.
+******************************************************************************/
+const Color& ElementType::getDefaultColorForId(int typeClass, int typeId)
+{
+	// Initial standard colors assigned to new element types:
+	static const Color defaultTypeColors[] = {
+		Color(0.4,  1.0,  0.2),
+		Color(1.0,  0.4,  0.4),
+		Color(0.4,  0.4,  1.0),
+		Color(0.8,  1.0,  0.7),
+		Color(0.97, 0.97, 0.97),
+		Color(1.0,  1.0,  0.0),
+		Color(1.0,  0.4,  1.0),
+		Color(0.7,  0.0,  1.0),
+		Color(0.2,  1.0,  1.0),
+	};
+	return defaultTypeColors[std::abs(typeId) % (sizeof(defaultTypeColors) / sizeof(defaultTypeColors[0]))];
+}
+
+/******************************************************************************
+* Returns the default color for a element type name.
+******************************************************************************/
+Color ElementType::getDefaultColor(int typeClass, const QString& typeName, int typeId, bool useUserDefaults)
+{
+	if(useUserDefaults) {
+		QSettings settings;
+		settings.beginGroup("defaults/color");
+		settings.beginGroup(QString::number(typeClass));
+		QVariant v = settings.value(typeName);
+		if(v.isValid() && v.type() == QVariant::Color)
+			return v.value<Color>();
+	}
+
+	return getDefaultColorForId(typeClass, typeId);
+}
+
+/******************************************************************************
+* Changes the default color for an element type name.
+******************************************************************************/
+void ElementType::setDefaultColor(int typeClass, const QString& typeName, const Color& color)
+{
+	QSettings settings;
+	settings.beginGroup("defaults/color");
+	settings.beginGroup(QString::number(typeClass));
+
+	if(getDefaultColor(typeClass, typeName, 0, false) != color)
+		settings.setValue(typeName, QVariant::fromValue((QColor)color));
+	else
+		settings.remove(typeName);
 }
 
 }	// End of namespace

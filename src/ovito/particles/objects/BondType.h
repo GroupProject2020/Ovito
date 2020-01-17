@@ -56,7 +56,7 @@ public:
 	//////////////////////////////////// Default settings ////////////////////////////////
 
 	/// Returns the default color for the bond type with the given ID.
-	static Color getDefaultBondColorFromId(BondsObject::Type typeClass, int bondTypeId);
+	static Color getDefaultBondColorForId(BondsObject::Type typeClass, int bondTypeId);
 
 	/// Returns the default color for a named bond type.
 	static Color getDefaultBondColor(BondsObject::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);

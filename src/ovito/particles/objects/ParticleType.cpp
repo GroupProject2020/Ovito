@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -165,26 +165,6 @@ std::array<ParticleType::PredefinedTypeInfo, ParticleType::NUMBER_OF_PREDEFINED_
 }};
 
 /******************************************************************************
-* Returns the default color for a particle type ID.
-******************************************************************************/
-Color ParticleType::getDefaultParticleColorFromId(ParticlesObject::Type typeClass, int particleTypeId)
-{
-	// Assign initial standard color to new particle types.
-	static const Color defaultTypeColors[] = {
-		Color(0.4f,1.0f,0.4f),
-		Color(1.0f,0.4f,0.4f),
-		Color(0.4f,0.4f,1.0f),
-		Color(1.0f,1.0f,0.7f),
-		Color(0.97f,0.97f,0.97f),
-		Color(1.0f,1.0f,0.0f),
-		Color(1.0f,0.4f,1.0f),
-		Color(0.7f,0.0f,1.0f),
-		Color(0.2f,1.0f,1.0f),
-	};
-	return defaultTypeColors[std::abs(particleTypeId) % (sizeof(defaultTypeColors) / sizeof(defaultTypeColors[0]))];
-}
-
-/******************************************************************************
 * Returns the default color for a particle type name.
 ******************************************************************************/
 Color ParticleType::getDefaultParticleColor(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults)
@@ -211,12 +191,13 @@ Color ParticleType::getDefaultParticleColor(ParticlesObject::Type typeClass, con
 				return std::get<1>(predefType);
 		}
 
-		// Sometime atom type names have additional letters/numbers appended.
+		// Sometimes atom type names have additional letters/numbers appended.
 		if(particleTypeName.length() > 1 && particleTypeName.length() <= 3) {
 			return getDefaultParticleColor(typeClass, particleTypeName.left(particleTypeName.length() - 1), particleTypeId, userDefaults);
 		}
 	}
-	return getDefaultParticleColorFromId(typeClass, particleTypeId);
+
+	return getDefaultColorForId(typeClass, particleTypeId);
 }
 
 /******************************************************************************
@@ -254,7 +235,7 @@ FloatType ParticleType::getDefaultParticleRadius(ParticlesObject::Type typeClass
 				return std::get<2>(predefType);
 		}
 
-		// Sometime atom type names have additional letters/numbers appended.
+		// Sometimes atom type names have additional letters/numbers appended.
 		if(particleTypeName.length() > 1 && particleTypeName.length() <= 3) {
 			return getDefaultParticleRadius(typeClass, particleTypeName.left(particleTypeName.length() - 1), particleTypeId, userDefaults);
 		}

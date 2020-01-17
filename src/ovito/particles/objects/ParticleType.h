@@ -101,9 +101,6 @@ public:
 		return std::get<0>(_predefinedStructureTypes[predefType]);
 	}
 
-	/// Returns the default color for the particle type with the given ID.
-	static Color getDefaultParticleColorFromId(ParticlesObject::Type typeClass, int particleTypeId);
-
 	/// Returns the default color for a named particle type.
 	static Color getDefaultParticleColor(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
 

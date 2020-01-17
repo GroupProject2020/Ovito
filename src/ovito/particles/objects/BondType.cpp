@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,7 @@ namespace Ovito { namespace Particles {
 IMPLEMENT_OVITO_CLASS(BondType);
 DEFINE_PROPERTY_FIELD(BondType, radius);
 SET_PROPERTY_FIELD_LABEL(BondType, radius, "Radius");
-SET_PROPERTY_FIELD_UNITS(BondType, radius, WorldParameterUnit);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(BondType, radius, WorldParameterUnit, 0);
 
 /******************************************************************************
 * Constructs a new BondType.
@@ -41,19 +41,19 @@ BondType::BondType(DataSet* dataset) : ElementType(dataset), _radius(0)
 /******************************************************************************
 * Returns the default color for a bond type ID.
 ******************************************************************************/
-Color BondType::getDefaultBondColorFromId(BondsObject::Type typeClass, int bondTypeId)
+Color BondType::getDefaultBondColorForId(BondsObject::Type typeClass, int bondTypeId)
 {
-	// Assign initial standard color to new bond types.
+	// Initial standard colors assigned to new bond types:
 	static const Color defaultTypeColors[] = {
-		Color(1.0f,1.0f,0.0f),
-		Color(0.7f,0.0f,1.0f),
-		Color(0.2f,1.0f,1.0f),
-		Color(1.0f,0.4f,1.0f),
-		Color(0.4f,1.0f,0.4f),
-		Color(1.0f,0.4f,0.4f),
-		Color(0.4f,0.4f,1.0f),
-		Color(1.0f,1.0f,0.7f),
-		Color(0.97f,0.97f,0.97f)
+		Color(1.0,  1.0,  0.0),
+		Color(0.7,  0.0,  1.0),
+		Color(0.2,  1.0,  1.0),
+		Color(1.0,  0.4,  1.0),
+		Color(0.4,  1.0,  0.4),
+		Color(1.0,  0.4,  0.4),
+		Color(0.4,  0.4,  1.0),
+		Color(1.0,  1.0,  0.7),
+		Color(0.97, 0.97, 0.97)
 	};
 	return defaultTypeColors[std::abs(bondTypeId) % (sizeof(defaultTypeColors) / sizeof(defaultTypeColors[0]))];
 }
@@ -72,7 +72,7 @@ Color BondType::getDefaultBondColor(BondsObject::Type typeClass, const QString& 
 			return v.value<Color>();
 	}
 
-	return getDefaultBondColorFromId(typeClass, bondTypeId);
+	return getDefaultBondColorForId(typeClass, bondTypeId);
 }
 
 /******************************************************************************

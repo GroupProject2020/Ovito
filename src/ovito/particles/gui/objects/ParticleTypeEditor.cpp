@@ -94,7 +94,7 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 
 	// "Save as defaults" button
 	QPushButton* setAsDefaultBtn = new QPushButton(tr("Save as defaults"));
-	setAsDefaultBtn->setToolTip(tr("Saves the current color and radius values as defaults for this particle type."));
+	setAsDefaultBtn->setToolTip(tr("Save current color/radius as default values for this particle type."));
 	setAsDefaultBtn->setEnabled(false);
 	gridLayout->addWidget(setAsDefaultBtn, 2, 0, 1, 2, Qt::AlignRight);
 	connect(setAsDefaultBtn, &QPushButton::clicked, this, [this]() {
