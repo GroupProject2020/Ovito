@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,8 @@
 #include "GuiFileManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+
+#ifdef OVITO_SSH_CLIENT
 
 /******************************************************************************
 * Asks the user for the login password for a SSH server.
@@ -92,6 +94,8 @@ bool GuiFileManager::detectedUnknownSshServer(const QString& hostname, const QSt
 		return FileManager::detectedUnknownSshServer(hostname, unknownHostMessage, hostPublicKeyHash);
 	}
 }
+
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

@@ -64,14 +64,17 @@ public:
 	/// \brief Constructs a URL from a path entered by the user.
 	QUrl urlFromUserInput(const QString& path);
 
+#ifdef OVITO_SSH_CLIENT
     /// Create a new SSH connection or returns an existing connection having the same parameters.
     Ssh::SshConnection* acquireSshConnection(const Ssh::SshConnectionParameters& sshParams);
 
     /// Releases an SSH connection after it is no longer used.
     void releaseSshConnection(Ssh::SshConnection* connection);
+#endif
 
 protected:
 
+#ifdef OVITO_SSH_CLIENT
 	/// \brief Asks the user for the login password for a SSH server.
 	/// \return True on success, false if user has canceled the operation.
 	virtual bool askUserForPassword(const QString& hostname, const QString& username, QString& password);
@@ -86,9 +89,11 @@ protected:
 
 	/// \brief Informs the user about an unknown SSH host.
 	virtual bool detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash);
+#endif
 
 private Q_SLOTS:
 
+#ifdef OVITO_SSH_CLIENT
     /// Is called whenever an SSH connection is closed.
     void cleanupSshConnection();
 
@@ -106,6 +111,7 @@ private Q_SLOTS:
 
 	/// Is called whenever a private SSH key requires a passphrase.
 	void needSshPassphrase(const QString& prompt);
+#endif
 
 private:
 
@@ -130,6 +136,7 @@ private:
 	/// The mutex to synchronize access to above data structures.
 	QMutex _mutex{QMutex::Recursive};
 
+#ifdef OVITO_SSH_CLIENT
 	/// Holds open SSH connections, which are currently active.
     QList<Ssh::SshConnection*> _acquiredConnections;
 
@@ -137,6 +144,7 @@ private:
     QList<Ssh::SshConnection*> _unacquiredConnections;
 
 	friend class DownloadRemoteFileJob;
+#endif
 };
 
 OVITO_END_INLINE_NAMESPACE

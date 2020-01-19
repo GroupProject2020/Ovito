@@ -215,7 +215,7 @@
       basic functionality typically needed by occasional users, who want an easy way to visualize molecular simulations or other particle-based data. 
       This edition of OVITO is also meant for students and teachers, who use the software in a classroom setting. 
       The source code of <emphasis>OVITO Basic</emphasis> is freely available, giving you open access to the algorithms
-      that work behind the scenes. We also invite you to contribute new code to this version of OVITO under the MIT Open Source license
+      that work behind the scenes. We also invite you to contribute new code to this version of OVITO under the MIT and GNU GPL open source licenses
       and share your developments with the research community.
     </para>
     <para> 

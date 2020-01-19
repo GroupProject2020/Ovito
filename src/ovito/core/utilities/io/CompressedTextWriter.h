@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,9 @@
 
 
 #include <ovito/core/Core.h>
-#include <ovito/core/utilities/io/gzdevice/GzipIODevice.h>
+#ifdef OVITO_ZLIB_SUPPORT
+	#include <ovito/core/utilities/io/gzdevice/GzipIODevice.h>
+#endif
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -111,8 +113,10 @@ private:
 	/// The underlying output device.
 	QFileDevice& _device;
 
+#ifdef OVITO_ZLIB_SUPPORT
 	/// The compression filter stream.
 	GzipIODevice _compressor;
+#endif
 
 	/// The output stream.
 	QIODevice* _stream;
@@ -129,5 +133,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

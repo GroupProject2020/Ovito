@@ -294,7 +294,9 @@ void MainWindow::createMainMenu()
 	QMenu* fileMenu = menuBar->addMenu(tr("&File"));
 	fileMenu->setObjectName(QStringLiteral("FileMenu"));
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_IMPORT));
+#ifdef OVITO_SSH_CLIENT
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_REMOTE_IMPORT));
+#endif
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_EXPORT));
 	fileMenu->addSeparator();
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_OPEN));

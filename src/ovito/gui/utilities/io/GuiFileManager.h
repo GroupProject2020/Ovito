@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -37,6 +37,7 @@ class GuiFileManager : public FileManager
 
 public:
 
+#ifdef OVITO_SSH_CLIENT
 	/// \brief Asks the user for the login password for a SSH server.
 	/// \return True on success, false if user has canceled the operation.
 	virtual bool askUserForPassword(const QString& hostname, const QString& username, QString& password) override;
@@ -51,6 +52,7 @@ public:
 
 	/// \brief Informs the user about an unknown SSH host.
 	virtual bool detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash) override;
+#endif
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -24,7 +24,9 @@
 
 
 #include <ovito/core/Core.h>
-#include <ovito/core/utilities/io/gzdevice/GzipIODevice.h>
+#ifdef OVITO_ZLIB_SUPPORT
+	#include <ovito/core/utilities/io/gzdevice/GzipIODevice.h>
+#endif
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -184,22 +186,24 @@ private:
 	std::vector<char> _line;
 
 	/// The current line number.
-	int _lineNumber;
+	int _lineNumber = 0;
 
 	/// The current position in the uncompressed data stream.
-	qint64 _byteOffset;
+	qint64 _byteOffset = 0;
 
 	/// The underlying input device.
 	QFileDevice& _device;
 
+#ifdef OVITO_ZLIB_SUPPORT
 	/// The uncompressing filter stream.
 	GzipIODevice _uncompressor;
+#endif
 
 	/// The input stream from which uncompressed data is read.
-	QIODevice* _stream;
+	QIODevice* _stream = nullptr;
 
 	/// The pointer to the memory-mapped data.
-	uchar* _mmapPointer;
+	uchar* _mmapPointer = nullptr;
 
 	Q_OBJECT
 };

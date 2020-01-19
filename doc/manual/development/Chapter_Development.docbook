@@ -49,11 +49,11 @@
     <tbody>
 		<row><entry><link xlink:href="http://www.qt.io/developers/">Qt5</link></entry><entry>required</entry>
 		<entry>Used for OVITO's graphical user interface (version 5.6 or newer)</entry></row>
-		<row><entry><link xlink:href="http://www.zlib.net/">zlib</link></entry><entry>required</entry>
+		<row><entry><link xlink:href="http://www.zlib.net/">zlib</link></entry><entry>optional</entry>
 		<entry>Required for reading and writing compressed files.</entry></row>
 		<row><entry><link xlink:href="http://www.boost.org/">Boost</link></entry><entry>required</entry>
 		<entry>OVITO uses some utility classes from this C++ library.</entry></row>
-		<row><entry><link xlink:href="http://www.libssh.org/">libssh</link></entry><entry>required</entry>
+		<row><entry><link xlink:href="http://www.libssh.org/">libssh</link></entry><entry>optional</entry>
 		<entry>Used by OVITO's built-in SSH client for remote data access.</entry></row>
 		<row><entry><link xlink:href="http://ffmpeg.org/">ffmpeg</link></entry><entry>optional</entry>
 		<entry>Audio and video processing libraries used by OVITO to write movie files.</entry></row>

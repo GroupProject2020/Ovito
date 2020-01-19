@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,17 +32,25 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 * Opens the output file for writing.
 ******************************************************************************/
 CompressedTextWriter::CompressedTextWriter(QFileDevice& output, DataSet* context) :
-	_device(output), _compressor(&output), _context(context)
+	_device(output), 
+#ifdef OVITO_ZLIB_SUPPORT
+	_compressor(&output), 
+#endif
+	_context(context)
 {
 	_filename = output.fileName();
 
 	// Check if file should be compressed (i.e. filename ends with .gz).
 	if(_filename.endsWith(".gz", Qt::CaseInsensitive)) {
+#ifdef OVITO_ZLIB_SUPPORT
 		// Open file for writing.
 		_compressor.setStreamFormat(GzipIODevice::GzipFormat);
 		if(!_compressor.open(QIODevice::WriteOnly))
-			throw Exception(tr("Failed to open output file '%1' for writing: %2").arg(_compressor.errorString()), _context);
+			throw Exception(tr("Failed to open output file '%1' for writing: %2").arg(_filename).arg(_compressor.errorString()), _context);
 		_stream = &_compressor;
+#else
+		throw Exception(tr("Cannot open file '%1' for writing. This version of OVITO was built without I/O support for gzip compressed files.").arg(_filename), _context);
+#endif
 	}
 	else {
 		// Open file for writing.

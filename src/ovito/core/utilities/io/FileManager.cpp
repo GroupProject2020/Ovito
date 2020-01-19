@@ -1,6 +1,6 @@
-	////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,9 @@
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
-#include <ovito/core/utilities/io/ssh/SshConnection.h>
+#ifdef OVITO_SSH_CLIENT
+	#include <ovito/core/utilities/io/ssh/SshConnection.h>
+#endif
 #include "FileManager.h"
 #include "RemoteFileJob.h"
 
@@ -32,18 +34,22 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
+#ifdef OVITO_SSH_CLIENT
 using namespace Ovito::Ssh;
+#endif
 
 /******************************************************************************
 * Destructor.
 ******************************************************************************/
 FileManager::~FileManager()
 {
+#ifdef OVITO_SSH_CLIENT
     for(SshConnection* connection : _unacquiredConnections) {
         disconnect(connection, nullptr, this, nullptr);
         delete connection;
     }
     Q_ASSERT(_acquiredConnections.empty());
+#endif
 }
 
 /******************************************************************************
@@ -62,6 +68,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		return filePath;
 	}
 	else if(url.scheme() == QStringLiteral("sftp")) {
+#ifdef OVITO_SSH_CLIENT
 		QUrl normalizedUrl = normalizeUrl(url);
 		QMutexLocker lock(&_mutex);
 
@@ -86,6 +93,9 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		_pendingFiles.emplace(normalizedUrl, future);
 		new DownloadRemoteFileJob(url, std::move(promise));
 		return future;
+#else
+		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
+#endif
 	}
 	else {
 		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
@@ -98,10 +108,14 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.scheme() == QStringLiteral("sftp")) {
+#ifdef OVITO_SSH_CLIENT
 		Promise<QStringList> promise = taskManager.createMainThreadOperation<QStringList>(false);
 		Future<QStringList> future = promise.future();
 		new ListRemoteDirectoryJob(url, std::move(promise));
 		return future;
+#else
+		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. This version fo OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
+#endif
 	}
 	else {
 		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
@@ -150,6 +164,7 @@ QUrl FileManager::urlFromUserInput(const QString& path)
 		return QUrl::fromLocalFile(path);
 }
 
+#ifdef OVITO_SSH_CLIENT
 /******************************************************************************
 * Create a new SSH connection or returns an existing connection having the same parameters.
 ******************************************************************************/
@@ -369,6 +384,7 @@ bool FileManager::askUserForKeyPassphrase(const QString& hostname, const QString
 	passphrase = QString::fromStdString(pp);
 	return true;
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

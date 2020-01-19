@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,11 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 * Opens the stream for reading.
 ******************************************************************************/
 CompressedTextReader::CompressedTextReader(QFileDevice& input, const QString& originalFilePath) :
-	_device(input), _lineNumber(0), _byteOffset(0), _uncompressor(&input, 6, 0x100000), _mmapPointer(nullptr)
+#ifdef OVITO_ZLIB_SUPPORT
+	_device(input), _uncompressor(&input, 6, 0x100000)
+#else
+	_device(input)
+#endif
 {
 	// Try to find out what the filename is.
 	if(!originalFilePath.isEmpty())
@@ -39,11 +43,15 @@ CompressedTextReader::CompressedTextReader(QFileDevice& input, const QString& or
 
 	// Check if file is compressed (i.e. filename ends with .gz).
 	if(_filename.endsWith(".gz", Qt::CaseInsensitive)) {
+#ifdef OVITO_ZLIB_SUPPORT
 		// Open compressed file for reading.
 		_uncompressor.setStreamFormat(GzipIODevice::GzipFormat);
 		if(!_uncompressor.open(QIODevice::ReadOnly))
 			throw Exception(tr("Failed to open input file: %1").arg(_uncompressor.errorString()));
 		_stream = &_uncompressor;
+#else
+		throw Exception(tr("Cannot open file '%1' for reading. This version of OVITO was built without I/O support for gzip compressed files."));
+#endif
 	}
 	else {
 		// Open uncompressed file for reading.

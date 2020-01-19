@@ -62,7 +62,9 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	layout->addWidget(toolbar);
 
 	toolbar->addAction(QIcon(":/gui/actions/file/import_object_changefile.bw.svg"), tr("Pick new file"), this, SLOT(onPickLocalInputFile()));
+#ifdef OVITO_SSH_CLIENT
 	toolbar->addAction(QIcon(":/gui/actions/file/file_import_remote.bw.svg"), tr("Pick new remote file"), this, SLOT(onPickRemoteInputFile()));
+#endif
 	toolbar->addAction(QIcon(":/gui/actions/file/import_object_reload.bw.svg"), tr("Reload data from external file"), this, SLOT(onReloadFrame()));
 	toolbar->addAction(QIcon(":/gui/actions/file/import_object_refresh_animation.bw.svg"), tr("Update time series"), this, SLOT(onReloadAnimation()));
 
