@@ -56,7 +56,6 @@
 * QT Library
 ******************************************************************************/
 #include <QCoreApplication>
-#include <QException>
 #include <QStringList>
 #include <QSettings>
 #include <QUrl>
@@ -88,6 +87,9 @@
 #include <QElapsedTimer>
 #include <QtMath>
 #include <QNetworkAccessManager>
+#ifndef Q_OS_WASM
+#include <QException>
+#endif
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
 #  error "OVITO requires Qt 5.6 or newer."

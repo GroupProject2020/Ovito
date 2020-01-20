@@ -33,6 +33,10 @@ IF(OVITO_BUILD_GUI)
 	# Note: QtDBus is an indirect dependency of the Xcb platform plugin under Linux.
 	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets Concurrent PrintSupport Svg DBus)
 ENDIF()
+IF(EMSCRIPTEN)
+	# The user interface is implemented using Qt Qml and Quick when running inside a web browser.
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Qml Quick)
+ENDIF()
 
 # Find the required Qt5 modules.
 FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)

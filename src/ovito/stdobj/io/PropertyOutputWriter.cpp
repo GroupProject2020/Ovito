@@ -157,7 +157,7 @@ void PropertyOutputWriter::writeElement(size_t index, CompressedTextWriter& stre
 			}
 		}
 		else {
-			stream << (index + 1);
+			stream << (quint64)(index + 1);
 		}
 	}
 	stream << '\n';

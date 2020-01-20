@@ -84,9 +84,11 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		ENDIF()
 	ENDFOREACH()
 
-	# Set prefix and suffix of library name.
-	# This is needed so that the Python interpreter can load OVITO plugins as modules.
-	SET_TARGET_PROPERTIES(${target_name} PROPERTIES PREFIX "" SUFFIX "${OVITO_PLUGIN_LIBRARY_SUFFIX}")
+	IF(NOT EMSCRIPTEN)
+		# Set prefix and suffix of library name.
+		# This is needed so that the Python interpreter can load OVITO plugins as modules.
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES PREFIX "" SUFFIX "${OVITO_PLUGIN_LIBRARY_SUFFIX}")
+	ENDIF()
 
 	# Define macro for symbol export from shared library.
 	STRING(TOUPPER "${target_name}" _uppercase_plugin_name)

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -82,7 +82,11 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
  * \endcode
  *
  */
-class OVITO_CORE_EXPORT Exception : public QException
+#ifndef Q_OS_WASM
+	class OVITO_CORE_EXPORT Exception : public QException
+#else
+	class OVITO_CORE_EXPORT Exception
+#endif
 {
 public:
 
@@ -144,6 +148,8 @@ public:
 	/// Sets the context object for this exception or error.
 	void setContext(QObject* context) { _context = context; }
 
+#ifndef Q_OS_WASM
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// The following two functions are required by the base class QException
 
@@ -152,6 +158,8 @@ public:
 
 	// Creates a copy of this exception object.
 	virtual Exception* clone() const override { return new Exception(*this); }
+
+#endif
 
 private:
 

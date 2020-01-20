@@ -98,7 +98,7 @@ bool DataTableExporter::exportFrame(int frameNumber, TimePoint time, const QStri
 	ConstPropertyAccess<FloatType, true> xaccessFloat(xDataType == PropertyStorage::Float ? xstorage : nullptr);
 
 	if(!table->title().isEmpty())
-		textStream() << "# " << table->title() << " (" << row_count << " data points):\n";
+		textStream() << "# " << table->title() << " (" << (quint64)row_count << " data points):\n";
 	textStream() << "# ";
 	auto formatColumnName = [](const QString& name) {
 		return name.contains(QChar(' ')) ? (QChar('"') + name + QChar('"')) : name;

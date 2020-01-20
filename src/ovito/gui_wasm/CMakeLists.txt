@@ -1,6 +1,6 @@
 #######################################################################################
 #
-#  Copyright 2019 Alexander Stukowski
+#  Copyright 2020 Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -20,30 +20,18 @@
 #
 #######################################################################################
 
-# Place all compiled libraries into OVITO's library directory by default.
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
+# Compile Qt resources, which will be linked into the plugin.
+QT5_ADD_RESOURCES(ResourceFiles resources/gui.qrc)
 
-# Build all third-party libraries.
-ADD_SUBDIRECTORY(3rdparty)
-
-# Build all plugin modules including the core module.
-ADD_SUBDIRECTORY(ovito)
-
-# This allows external CMake projects to inject their customization code into the OVITO project:
-IF(OVITO_CMAKE_FILE_INJECTION_PLUGINS)
-	INCLUDE("${OVITO_CMAKE_FILE_INJECTION_PLUGINS}")
-ENDIF()
-
-# Build the main application executable 'ovito'.
-IF(OVITO_BUILD_GUI)
-	ADD_SUBDIRECTORY(ovito_exe)
-ENDIF()
-
-# Build the main application for the WebAssembly platform.
-IF(EMSCRIPTEN)
-	ADD_SUBDIRECTORY(ovito_wasm)
-ENDIF()
-
-# Propagate list of plugins to parent scope.
-SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)
+# Define plugin module.
+OVITO_STANDARD_PLUGIN(GuiWasm
+	SOURCES
+		GUI.cpp
+		app/WasmApplication.cpp
+		dataset/WasmDataSetContainer.cpp
+		mainwin/MainWindow.cpp
+		mainwin/ViewportsPanel.cpp
+		${ResourceFiles}
+	LIB_DEPENDENCIES
+		Qt5::Qml Qt5::Quick
+)

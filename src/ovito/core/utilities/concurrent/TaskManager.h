@@ -26,7 +26,9 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 
+#ifdef QT_NO_THREAD
 #include <QThreadPool>
+#endif
 #include <QMetaObject>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
@@ -65,7 +67,9 @@ public:
 		// Associate this TaskManager with the task.
 		task->_taskManager = this; 
 		// Submit the task for execution.
+#ifdef QT_NO_THREAD
 		QThreadPool::globalInstance()->start(task.get());
+#endif
 		// The task is now associated with this TaskManager.
 		registerTask(task);
 		return task->future();

@@ -55,6 +55,10 @@ ENDIF()
 # It is ignored oustide of Visual Studio Code/CMake tools.
 INCLUDE(CMakeToolsHelpers OPTIONAL)
 
+IF(EMSCRIPTEN)
+	INCLUDE(cmake/wasm.cmake)
+ENDIF()
+
 SET(OVITO_SOURCE_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 LIST(APPEND CMAKE_MODULE_PATH "${OVITO_SOURCE_BASE_DIR}/cmake")
 INCLUDE(cmake/Version.cmake)

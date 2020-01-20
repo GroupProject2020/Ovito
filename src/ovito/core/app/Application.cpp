@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,8 +33,8 @@ static void registerQtResources()
 {
 #ifdef OVITO_BUILD_MONOLITHIC
 	Q_INIT_RESOURCE(core);
-	Q_INIT_RESOURCE(resources);
-	#ifdef OVITO_BUILD_GUI
+//	Q_INIT_RESOURCE(opengl);
+	#if defined(OVITO_BUILD_GUI) || defined(Q_OS_WASM)
 		Q_INIT_RESOURCE(gui);
 	#endif
 #endif
@@ -177,8 +177,6 @@ bool Application::initialize()
 	return true;
 }
 
-void test_func() {}
-
 /******************************************************************************
 * Create the global instance of the right QCoreApplication derived class.
 ******************************************************************************/
@@ -250,6 +248,5 @@ QNetworkAccessManager* Application::networkAccessManager()
 		_networkAccessManager = new QNetworkAccessManager(this);
 	return _networkAccessManager;
 }
-
 
 }	// End of namespace

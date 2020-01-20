@@ -31,7 +31,7 @@ IF(NOT TARGET OpenGL::GL AND OPENGL_FOUND)
 ENDIF()
 
 # Compile resources.
-QT5_ADD_RESOURCES(ResourceFiles resources/resources.qrc)
+QT5_ADD_RESOURCES(ResourceFiles resources/opengl.qrc)
 
 # Define plugin module.
 OVITO_STANDARD_PLUGIN(OpenGLRenderer
