@@ -4,6 +4,7 @@ import QtQuick.Window 2.2
 // The main window.
 Window {
     visible: true
+	color: "black"
 
     MouseArea {
         anchors.fill: parent
@@ -16,6 +17,7 @@ Window {
 		anchors.fill: parent
 		Text {
 			anchors.centerIn: parent
+			color: "#00FF00"
 			text: "Hello World"
 		}
 	}

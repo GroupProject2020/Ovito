@@ -43,16 +43,34 @@ public:
 	/// Destructor.
 	virtual ~MainWindow();
 
+	/// Returns the Qt Quick window associated with this MainWindow instance.
+	QQuickWindow* quickWindow() const { return static_cast<QQuickWindow*>(parent()); }
+
 	/// Returns the container that keeps a reference to the current dataset.
 	WasmDataSetContainer& datasetContainer() { return _datasetContainer; }
 
 	/// Returns the main window in which the given dataset is opened.
 	static MainWindow* fromDataset(DataSet* dataset);
 
+	/// Returns the window's viewport input manager.
+	ViewportInputManager* viewportInputManager() const { return _viewportInputManager; }
+	
+	/// Displays a message string in the window's status bar.
+	void showStatusBarMessage(const QString& message, int timeout = 0) {}
+
+	/// Hides any messages currently displayed in the window's status bar.
+	void clearStatusBarMessage() {}
+
 private:
 
 	/// Container managing the current dataset.
 	WasmDataSetContainer _datasetContainer;
+
+	/// The container for the viewport windows.
+	QObject* _viewportsPanel;
+
+	/// The associated viewport input manager.
+	ViewportInputManager* _viewportInputManager;
 };
 
 OVITO_END_INLINE_NAMESPACE

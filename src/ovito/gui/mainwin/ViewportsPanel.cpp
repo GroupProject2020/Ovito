@@ -101,6 +101,7 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 void ViewportsPanel::onAnimationSettingsReplaced(AnimationSettings* newAnimationSettings)
 {
 	disconnect(_autoKeyModeChangedConnection);
+	disconnect(_timeChangeCompleteConnection);
 	_animSettings = newAnimationSettings;
 
 	if(newAnimationSettings) {

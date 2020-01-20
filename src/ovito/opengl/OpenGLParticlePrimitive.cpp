@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -520,6 +520,7 @@ void OpenGLParticlePrimitive::render(SceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
 	OVITO_ASSERT(!_positionsBuffers.empty());
 	OVITO_ASSERT(_positionsBuffers.front().verticesPerElement() == 1);
 
@@ -627,6 +628,7 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 
 	if(particleShape() == SphericalShape && shadingMode() == NormalShading && !renderer->isPicking())
 		deactivateBillboardTexture(renderer);
+#endif		
 }
 
 /******************************************************************************
@@ -634,6 +636,7 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
 	int verticesPerElement = _positionsBuffers.front().verticesPerElement();
 	OVITO_ASSERT(!_usingGeometryShader || verticesPerElement == 1);
 	OVITO_ASSERT(_usingGeometryShader || verticesPerElement == 14);
@@ -804,6 +807,7 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader);
 
 	shader->release();
+#endif	
 }
 
 /******************************************************************************
@@ -811,6 +815,7 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
 	int verticesPerElement = _positionsBuffers.front().verticesPerElement();
 
 	// Pick the right OpenGL shader program.
@@ -922,6 +927,7 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 
 	if(particleShape() == SphericalShape && shadingMode() == NormalShading && !renderer->isPicking())
 		deactivateBillboardTexture(renderer);
+#endif		
 }
 
 /******************************************************************************
@@ -1001,8 +1007,10 @@ void OpenGLParticlePrimitive::activateBillboardTexture(OpenGLSceneRenderer* rend
 	OVITO_CHECK_OPENGL(renderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST));
 	OVITO_CHECK_OPENGL(renderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
 
+#ifndef Q_OS_WASM
 	OVITO_STATIC_ASSERT(BILLBOARD_TEXTURE_LEVELS >= 3);
 	OVITO_CHECK_OPENGL(renderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, BILLBOARD_TEXTURE_LEVELS - 3));
+#endif	
 }
 
 /******************************************************************************

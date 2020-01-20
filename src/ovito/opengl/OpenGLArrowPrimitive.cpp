@@ -594,6 +594,7 @@ void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
 	QOpenGLShaderProgram* shader = renderer->isPicking() ? _pickingShader : _shader;
 	if(!shader->bind())
 		renderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
@@ -646,6 +647,7 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader, true);
 
 	shader->release();
+#endif	
 }
 
 /******************************************************************************
@@ -653,6 +655,7 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
 	QOpenGLShaderProgram* shader = renderer->isPicking() ? _pickingShader : _shader;
 	if(!shader)
 		return;
@@ -728,6 +731,7 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader, true);
 
 	shader->release();
+#endif	
 }
 
 OVITO_END_INLINE_NAMESPACE

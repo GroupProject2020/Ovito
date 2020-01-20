@@ -107,6 +107,7 @@ bool OpenGLMarkerPrimitive::isValid(SceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM	
     OVITO_REPORT_OPENGL_ERRORS();
 	OVITO_ASSERT(_contextGroup == QOpenGLContextGroup::currentContextGroup());
 
@@ -180,6 +181,7 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 	}
 
 	shader->release();
+#endif
 }
 
 OVITO_END_INLINE_NAMESPACE

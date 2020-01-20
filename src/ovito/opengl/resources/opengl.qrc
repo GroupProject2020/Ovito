@@ -98,6 +98,14 @@
 	<file>glsl/lines/picking/line.vs</file>
 	<file>glsl/lines/picking/line.fs</file>
 	<file>glsl/lines/picking/thick_line.vs</file>
+
+	<file>glsl/gles/lines/line.vs</file>
+	<file>glsl/gles/lines/line.fs</file>
+	<file>glsl/gles/lines/thick_line.vs</file>
+	<file>glsl/gles/lines/picking/line.vs</file>
+	<file>glsl/gles/lines/picking/line.fs</file>
+	<file>glsl/gles/lines/picking/thick_line.vs</file>
+
 	<file>glsl/text/text.vs</file>
 	<file>glsl/text/text.fs</file>
 	<file>glsl/image/image.vs</file>

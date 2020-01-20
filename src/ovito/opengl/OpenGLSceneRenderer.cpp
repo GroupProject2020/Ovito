@@ -263,6 +263,7 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 		_glformat.setMinorVersion(1);
 	}
 
+#ifndef Q_OS_WASM	
     // Obtain a functions object that allows to call OpenGL 2.0 functions in a platform-independent way.
 	_glFunctions20 = _glcontext->versionFunctions<QOpenGLFunctions_2_0>();
 	if(!_glFunctions20 || !_glFunctions20->initializeOpenGLFunctions())
@@ -280,6 +281,7 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 
 	if(!_glFunctions20 && !_glFunctions30 && !_glFunctions32)
 		throwException(tr("Could not resolve OpenGL functions. Invalid OpenGL context."));
+#endif
 
 	// Check if this context implements the core profile.
 	_isCoreProfile = (_glformat.profile() == QSurfaceFormat::CoreProfile)
@@ -323,9 +325,14 @@ void OpenGLSceneRenderer::initializeGLState()
 	OVITO_CHECK_OPENGL(glDisable(GL_STENCIL_TEST));
 	OVITO_CHECK_OPENGL(glEnable(GL_DEPTH_TEST));
 	OVITO_CHECK_OPENGL(glDepthFunc(GL_LESS));
+#ifndef Q_OS_WASM	
 	OVITO_CHECK_OPENGL(glDepthRange(0, 1));
-	OVITO_CHECK_OPENGL(glDepthMask(GL_TRUE));
 	OVITO_CHECK_OPENGL(glClearDepth(1));
+#else
+	OVITO_CHECK_OPENGL(glDepthRangef(0, 1));
+	OVITO_CHECK_OPENGL(glClearDepthf(1));
+#endif	
+	OVITO_CHECK_OPENGL(glDepthMask(GL_TRUE));
 	OVITO_CHECK_OPENGL(glDisable(GL_SCISSOR_TEST));
 	_translucentPass = false;
 	setClearColor(ColorA(0, 0, 0, 0));
@@ -416,10 +423,10 @@ const char* OpenGLSceneRenderer::openglErrorString(GLenum errorCode)
 	case GL_INVALID_ENUM: return "GL_INVALID_ENUM - An unacceptable value is specified for an enumerated argument.";
 	case GL_INVALID_VALUE: return "GL_INVALID_VALUE - A numeric argument is out of range.";
 	case GL_INVALID_OPERATION: return "GL_INVALID_OPERATION - The specified operation is not allowed in the current state.";
-	case GL_STACK_OVERFLOW: return "GL_STACK_OVERFLOW - This command would cause a stack overflow.";
-	case GL_STACK_UNDERFLOW: return "GL_STACK_UNDERFLOW - This command would cause a stack underflow.";
+	case 0x0503 /*GL_STACK_OVERFLOW*/: return "GL_STACK_OVERFLOW - This command would cause a stack overflow.";
+	case 0x0504 /*GL_STACK_UNDERFLOW*/: return "GL_STACK_UNDERFLOW - This command would cause a stack underflow.";
 	case GL_OUT_OF_MEMORY: return "GL_OUT_OF_MEMORY - There is not enough memory left to execute the command.";
-	case GL_TABLE_TOO_LARGE: return "GL_TABLE_TOO_LARGE - The specified table exceeds the implementation's maximum supported table size.";
+	case 0x8031 /*GL_TABLE_TOO_LARGE*/: return "GL_TABLE_TOO_LARGE - The specified table exceeds the implementation's maximum supported table size.";
 	default: return "Unknown OpenGL error code.";
 	}
 }
@@ -556,12 +563,16 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 
 	// Insert GLSL version string at the top.
 	// Pick GLSL language version based on current OpenGL version.
+#ifndef Q_OS_WASM	
 	if((glformat().majorVersion() >= 3 && glformat().minorVersion() >= 2) || glformat().majorVersion() > 3)
 		shaderSource.append("#version 150\n");
 	else if(glformat().majorVersion() >= 3)
 		shaderSource.append("#version 130\n");
 	else
 		shaderSource.append("#version 120\n");
+#else
+//	shaderSource.append("#version 300 es\n");
+#endif
 
 	// Preprocess shader source while reading it from the file.
 	//
@@ -657,6 +668,7 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 		colorBuffer.fillConstant(color);
 		OVITO_CHECK_OPENGL(colorBuffer.bindColors(this, shader, 4));
 	}
+#ifndef Q_OS_WASM	
 	else if(oldGLFunctions()) {
 		OVITO_CHECK_OPENGL(oldGLFunctions()->glEnableClientState(GL_VERTEX_ARRAY));
 #ifdef FLOATTYPE_FLOAT
@@ -667,6 +679,7 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 		OVITO_CHECK_OPENGL(oldGLFunctions()->glColor4dv(color.data()));
 #endif
 	}
+#endif
 
 	OVITO_CHECK_OPENGL(glDrawArrays(closed ? GL_LINE_LOOP : GL_LINE_STRIP, 0, count));
 
@@ -674,9 +687,11 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 		vertexBuffer.detach(this, shader, "position");
 		colorBuffer.detachColors(this, shader);
 	}
+#ifndef Q_OS_WASM	
 	else if(oldGLFunctions()) {
 		OVITO_CHECK_OPENGL(oldGLFunctions()->glDisableClientState(GL_VERTEX_ARRAY));
 	}
+#endif	
 	shader->release();
 	if(wasDepthTestEnabled) glEnable(GL_DEPTH_TEST);
 }

@@ -31,7 +31,16 @@ OVITO_STANDARD_PLUGIN(GuiWasm
 		dataset/WasmDataSetContainer.cpp
 		mainwin/MainWindow.cpp
 		mainwin/ViewportsPanel.cpp
+		rendering/ViewportSceneRenderer.cpp
+		viewport/ViewportWindow.cpp
+		viewport/input/NavigationModes.cpp
+		viewport/input/ViewportInputManager.cpp
+		viewport/input/ViewportInputMode.cpp
+		viewport/input/XFormModes.cpp
+		viewport/picking/PickingSceneRenderer.cpp
 		${ResourceFiles}
+	PLUGIN_DEPENDENCIES
+		OpenGLRenderer
 	LIB_DEPENDENCIES
 		Qt5::Qml Qt5::Quick
 )

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -101,8 +101,10 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+#ifndef Q_OS_WASM
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, 0);
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+#endif
 
 		// Upload texture data.
 		QImage textureImage = convertToGLFormat(image());
@@ -157,6 +159,7 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 
 		_shader->disableAttributeArray("vertex_pos");
 	}
+#ifndef Q_OS_WASM
 	else if(vpRenderer->oldGLFunctions()) {
 		vpRenderer->oldGLFunctions()->glBegin(GL_TRIANGLE_STRIP);
 		vpRenderer->oldGLFunctions()->glTexCoord2f(0,0);
@@ -169,6 +172,7 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 		vpRenderer->oldGLFunctions()->glVertex2f(corners[3].x(), corners[3].y());
 		vpRenderer->oldGLFunctions()->glEnd();
 	}
+#endif    
 
 	_shader->release();
 
@@ -183,7 +187,7 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 
 static inline QRgb qt_gl_convertToGLFormatHelper(QRgb src_pixel, GLenum texture_format)
 {
-    if(texture_format == GL_BGRA) {
+    if(texture_format == 0x80E1 /*GL_BGRA*/) {
         if(QSysInfo::ByteOrder == QSysInfo::BigEndian) {
             return ((src_pixel << 24) & 0xff000000)
                    | ((src_pixel >> 24) & 0x000000ff)
@@ -246,7 +250,7 @@ static void convertToGLFormatHelper(QImage &dst, const QImage &img, GLenum textu
         const uint *p = (const uint*) img.scanLine(img.height() - 1);
         uint *q = (uint*) dst.scanLine(0);
 
-        if(texture_format == GL_BGRA) {
+        if(texture_format == 0x80E1 /*GL_BGRA*/) {
             if(QSysInfo::ByteOrder == QSysInfo::BigEndian) {
                 // mirror + swizzle
                 for(int i=0; i < height; ++i) {

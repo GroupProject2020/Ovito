@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,7 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui_wasm/GUI.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/oo/RefTargetListener.h>
 #include "ViewportInputMode.h"
@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 * The default input mode for the viewports. This mode lets the user
 * select scene nodes.
 ******************************************************************************/
-class OVITO_GUI_EXPORT SelectionMode : public ViewportInputMode
+class OVITO_GUIWASM_EXPORT SelectionMode : public ViewportInputMode
 {
 	Q_OBJECT
 
@@ -83,7 +83,7 @@ protected:
 /******************************************************************************
 * Base class for selection, move, rotate and scale modes.
 ******************************************************************************/
-class OVITO_GUI_EXPORT XFormMode : public ViewportInputMode
+class OVITO_GUIWASM_EXPORT XFormMode : public ViewportInputMode
 {
 	Q_OBJECT
 
@@ -110,13 +110,7 @@ public:
 protected:
 
 	/// Protected constructor.
-	XFormMode(QObject* parent, const QString& cursorImagePath) : ViewportInputMode(parent), _xformCursor(QPixmap(cursorImagePath)) {
-		connect(&_selectedNode, &RefTargetListener<SceneNode>::notificationEvent, this, &XFormMode::onSceneNodeEvent);
-	}
-
-	/// \brief This is called by the system after the input handler has
-	///        become the active handler.
-	virtual void activated(bool temporaryActivation) override;
+	XFormMode(QObject* parent, const QString& cursorImagePath) : ViewportInputMode(parent), _xformCursor(QPixmap(cursorImagePath)) {}
 
 	/// \brief This is called by the system after the input handler is
 	///        no longer the active handler.
@@ -136,28 +130,6 @@ protected:
 
 	/// Applies the current transformation to a set of nodes.
 	virtual void applyXForm(const QVector<SceneNode*>& nodeSet, FloatType multiplier) {}
-
-	/// Updates the values displayed in the coordinate display widget.
-	virtual void updateCoordinateDisplay(CoordinateDisplayWidget* coordDisplay) {}
-
-protected Q_SLOT:
-
-	/// Is called when the user has selected a different scene node.
-	void onSelectionChangeComplete(SelectionSet* selection);
-
-	/// Is called when the selected scene node generates a notification event.
-	void onSceneNodeEvent(const ReferenceEvent& event);
-
-	/// Is called when the current animation time has changed.
-	void onTimeChanged(TimePoint time);
-
-	/// This signal handler is called by the coordinate display widget when the user
-	/// has changed the value of one of the vector components.
-	virtual void onCoordinateValueEntered(int component, FloatType value) {}
-
-	/// This signal handler is called by the coordinate display widget when the user
-	/// has pressed the "Animate" button.
-	virtual void onAnimateTransformationButton() {}
 
 protected:
 
@@ -180,7 +152,7 @@ protected:
 /******************************************************************************
 * This mode lets the user move scene nodes.
 ******************************************************************************/
-class OVITO_GUI_EXPORT MoveMode : public XFormMode
+class OVITO_GUIWASM_EXPORT MoveMode : public XFormMode
 {
 	Q_OBJECT
 
@@ -203,17 +175,6 @@ protected:
 	/// Applies the current transformation to a set of nodes.
 	virtual void applyXForm(const QVector<SceneNode*>& nodeSet, FloatType multiplier) override;
 
-	/// Updates the values displayed in the coordinate display widget.
-	virtual void updateCoordinateDisplay(CoordinateDisplayWidget* coordDisplay) override;
-
-	/// This signal handler is called by the coordinate display widget when the user
-	/// has changed the value of one of the vector components.
-	virtual void onCoordinateValueEntered(int component, FloatType value) override;
-
-	/// This signal handler is called by the coordinate display widget when the user
-	/// has pressed the "Animate" button.
-	virtual void onAnimateTransformationButton() override;
-
 private:
 
 	/// The coordinate system to use for translations.
@@ -229,7 +190,7 @@ private:
 /******************************************************************************
 * This mode lets the user rotate scene nodes.
 ******************************************************************************/
-class OVITO_GUI_EXPORT RotateMode : public XFormMode
+class OVITO_GUIWASM_EXPORT RotateMode : public XFormMode
 {
 	Q_OBJECT
 
@@ -252,17 +213,6 @@ protected:
 	/// Applies the current transformation to a set of nodes.
 	virtual void applyXForm(const QVector<SceneNode*>& nodeSet, FloatType multiplier) override;
 
-	/// Updates the values displayed in the coordinate display widget.
-	virtual void updateCoordinateDisplay(CoordinateDisplayWidget* coordDisplay) override;
-
-	/// This signal handler is called by the coordinate display widget when the user
-	/// has changed the value of one of the vector components.
-	virtual void onCoordinateValueEntered(int component, FloatType value) override;
-
-	/// This signal handler is called by the coordinate display widget when the user
-	/// has pressed the "Animate" button.
-	virtual void onAnimateTransformationButton() override;
-
 private:
 
 	/// The cached transformation center for off-center rotation.
@@ -270,11 +220,8 @@ private:
 
 	/// The current rotation
 	Rotation _rotation;
-
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

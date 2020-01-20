@@ -45,6 +45,29 @@ namespace Ovito {
 
     OVITO_BEGIN_INLINE_NAMESPACE(Gui)
         class MainWindow;
+
+        OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+            class OpenGLSceneRenderer;
+            class ViewportSceneRenderer;
+        OVITO_END_INLINE_NAMESPACE
+
+        OVITO_BEGIN_INLINE_NAMESPACE(View)
+            OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+                class PickingSceneRenderer;
+            OVITO_END_INLINE_NAMESPACE
+        OVITO_END_INLINE_NAMESPACE
+
+		OVITO_BEGIN_INLINE_NAMESPACE(ViewportInput)
+			class ViewportInputManager;
+			class ViewportInputMode;
+			class ViewportModeAction;
+			class ViewportGizmo;
+		OVITO_END_INLINE_NAMESPACE
+
+		OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+			class ViewportWindow;
+		OVITO_END_INLINE_NAMESPACE
+
     OVITO_END_INLINE_NAMESPACE
 
 }

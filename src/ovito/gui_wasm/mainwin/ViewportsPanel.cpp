@@ -22,7 +22,7 @@
 
 #include <ovito/gui_wasm/GUI.h>
 #include <ovito/gui_wasm/mainwin/MainWindow.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
+#include <ovito/gui_wasm/viewport/ViewportWindow.h>
 #include <ovito/core/viewport/ViewportSettings.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
@@ -45,9 +45,9 @@ ViewportsPanel::ViewportsPanel(MainWindow* parent) : QObject(parent)
 /******************************************************************************
 * Returns the widget that is associated with the given viewport.
 ******************************************************************************/
-QWidget* ViewportsPanel::viewportWidget(Viewport* vp)
+QQuickWindow* ViewportsPanel::viewportWindow(Viewport* vp)
 {
-	return static_cast<ViewportWindow*>(vp->window());
+	return static_cast<ViewportWindow*>(vp->window())->quickWindow();
 }
 
 /******************************************************************************
@@ -58,9 +58,9 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 	disconnect(_activeViewportChangedConnection);
 	disconnect(_maximizedViewportChangedConnection);
 
-	// Delete all existing viewport widgets first.
-	for(QWidget* widget : findChildren<QWidget*>())
-		delete widget;
+	// Delete all existing viewport windows first.
+	for(ViewportWindow* window : findChildren<ViewportWindow*>())
+		delete window;
 
 	_viewportConfig = newViewportConfiguration;
 
@@ -68,10 +68,13 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 
 		// Create windows for the new viewports.
 		try {
-			ViewportInputManager* inputManager = MainWindow::fromDataset(newViewportConfiguration->dataset())->viewportInputManager();
-			for(Viewport* vp : newViewportConfiguration->viewports()) {
-				OVITO_ASSERT(vp->window() == nullptr);
-				ViewportWindow* viewportWindow = new ViewportWindow(vp, inputManager, this);
+			MainWindow* mainWindow = MainWindow::fromDataset(newViewportConfiguration->dataset());
+			ViewportInputManager* inputManager = mainWindow->viewportInputManager();
+			
+			// In the web browser application, only a single viewport is supported.
+			if(newViewportConfiguration->activeViewport()) {
+				OVITO_ASSERT(newViewportConfiguration->activeViewport()->window() == nullptr);
+				ViewportWindow* viewportWindow = new ViewportWindow(newViewportConfiguration->activeViewport(), inputManager, mainWindow->quickWindow());
 			}
 		}
 		catch(const Exception& ex) {
@@ -80,10 +83,10 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 		}
 
 		// Repaint the viewport borders when another viewport has been activated.
-		_activeViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::activeViewportChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
+//		_activeViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::activeViewportChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
 
 		// Update layout when a viewport has been maximized.
-		_maximizedViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::maximizedViewportChanged, this, &ViewportsPanel::layoutViewports);
+//		_maximizedViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::maximizedViewportChanged, this, &ViewportsPanel::layoutViewports);
 	}
 }
 
@@ -93,11 +96,12 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 void ViewportsPanel::onAnimationSettingsReplaced(AnimationSettings* newAnimationSettings)
 {
 	disconnect(_autoKeyModeChangedConnection);
+	disconnect(_timeChangeCompleteConnection);
 	_animSettings = newAnimationSettings;
 
 	if(newAnimationSettings) {
-		_autoKeyModeChangedConnection = connect(newAnimationSettings, &AnimationSettings::autoKeyModeChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
-		_timeChangeCompleteConnection = connect(newAnimationSettings, &AnimationSettings::timeChangeComplete, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
+//		_autoKeyModeChangedConnection = connect(newAnimationSettings, &AnimationSettings::autoKeyModeChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
+//		_timeChangeCompleteConnection = connect(newAnimationSettings, &AnimationSettings::timeChangeComplete, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
 	}
 }
 

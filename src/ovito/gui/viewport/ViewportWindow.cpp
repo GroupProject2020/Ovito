@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -157,21 +157,6 @@ void ViewportWindow::renderViewportTitle()
 	Point2 pos = Point2(2, 2) * (FloatType)devicePixelRatio();
 	_contextMenuArea = QRect(0, 0, std::max(metrics.width(_captionBuffer->text()), 30.0) + pos.x(), metrics.height() + pos.y());
 	_captionBuffer->renderWindow(_viewportRenderer, pos, Qt::AlignLeft | Qt::AlignTop);
-}
-
-/******************************************************************************
-* Sets whether mouse grab should be enabled or not for this viewport window.
-******************************************************************************/
-bool ViewportWindow::setMouseGrabEnabled(bool grab)
-{
-	if(grab) {
-		grabMouse();
-		return true;
-	}
-	else {
-		releaseMouse();
-		return false;
-	}
 }
 
 /******************************************************************************

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -231,6 +231,8 @@ protected:
 	/// Returns the supersampling level to use.
 	virtual int antialiasingLevelInternal() { return 1; }
 
+#ifndef Q_OS_WASM
+
 	/// The OpenGL glPointParameterf() function.
 	void glPointSize(GLfloat size) {
 		if(_glFunctions32) _glFunctions32->glPointSize(size);
@@ -267,6 +269,8 @@ protected:
 	/// The OpenGL 2.0 functions object.
 	QOpenGLFunctions_2_0* oldGLFunctions() const { return _glFunctions20; }
 
+#endif
+
 private:
 
 	/// The OpenGL context this renderer uses.
@@ -278,6 +282,8 @@ private:
 	/// The surface used by the GL context.
 	QSurface* _glsurface;
 
+#ifndef Q_OS_WASM
+
 	/// The OpenGL 2.0 functions object.
 	QOpenGLFunctions_2_0* _glFunctions20;
 
@@ -286,6 +292,8 @@ private:
 
 	/// The OpenGL 3.2 core profile functions object.
 	QOpenGLFunctions_3_2_Core* _glFunctions32;
+
+#endif	
 
 	/// The OpenGL vertex array object that is required by OpenGL 3.2 core profile.
 	QScopedPointer<QOpenGLVertexArrayObject> _vertexArrayObject;
@@ -351,6 +359,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-
-

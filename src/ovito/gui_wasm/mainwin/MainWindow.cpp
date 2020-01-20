@@ -21,19 +21,24 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui_wasm/GUI.h>
+#include <ovito/gui_wasm/viewport/input/ViewportInputManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
-#include <ovito/core/viewport/ViewportConfiguration.h>
-#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include <ovito/core/app/StandaloneApplication.h>
 #include "MainWindow.h"
+#include "ViewportsPanel.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 
 /******************************************************************************
-* The constructor of the main window class.
+* Constructor.
 ******************************************************************************/
 MainWindow::MainWindow(QQuickWindow* quickWindow) : QObject(quickWindow), _datasetContainer(this)
 {
+	// Create viewport input mode manager.
+	_viewportInputManager = new ViewportInputManager(this, datasetContainer());
+
+	// Create container for the viewports.
+	_viewportsPanel = new ViewportsPanel(this);
 }
 
 /******************************************************************************

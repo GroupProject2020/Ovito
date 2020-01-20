@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,7 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui_wasm/GUI.h>
 #include <ovito/core/viewport/ViewportWindowInterface.h>
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/rendering/TextPrimitive.h>
@@ -33,17 +33,22 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * \brief The internal render window/widget used by the Viewport class.
+ * \brief The internal render window assciated with the Viewport class.
  */
-class OVITO_GUI_EXPORT ViewportWindow : public QOpenGLWidget, public ViewportWindowInterface
+class OVITO_GUIWASM_EXPORT ViewportWindow : public QObject, public ViewportWindowInterface
 {
+	Q_OBJECT
+
 public:
 
 	/// Constructor.
-	ViewportWindow(Viewport* owner, ViewportInputManager* inputManager, QWidget* parentWidget);
+	ViewportWindow(Viewport* owner, ViewportInputManager* inputManager, QQuickWindow* quickWindow);
 
 	/// Destructor.
 	virtual ~ViewportWindow();
+
+	/// Returns the underlying Qt Quick window.
+	QQuickWindow* quickWindow() const { return _quickWindow; }
 
 	/// Returns the owning viewport of this window.
 	Viewport* viewport() const { return _viewport; }
@@ -63,16 +68,12 @@ public:
 
 	/// Returns the current size of the viewport window (in device pixels).
 	virtual QSize viewportWindowDeviceSize() override {
-#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
-		return size() * devicePixelRatio();
-#else
-		return size() * devicePixelRatioF();
-#endif
+		return quickWindow()->size() * quickWindow()->effectiveDevicePixelRatio();
 	}
 
 	/// Returns the current size of the viewport window (in device-independent pixels).
 	virtual QSize viewportWindowDeviceIndependentSize() override {
-		return size();
+		return quickWindow()->size();
 	}
 
 	/// Lets the viewport window delete itself.
@@ -87,7 +88,7 @@ public:
 	virtual void renderGui() override;
 
 	/// Provides access to the OpenGL context used by the viewport window for rendering.
-	virtual QOpenGLContext* glcontext() override { return this->context(); }
+	virtual QOpenGLContext* glcontext() override { return quickWindow()->openglContext(); }
 
 	/// \brief Determines the object that is visible under the given mouse cursor position.
 	ViewportPickResult pick(const QPointF& pos);
@@ -96,45 +97,7 @@ public:
 	/// \param pos The position in where the context menu should be displayed.
 	void showViewportMenu(const QPoint& pos = QPoint(0,0));
 
-protected:
-
-	/// Is called whenever the widget needs to be painted.
-	virtual void paintGL() override;
-
-	/// Is called whenever the GL context needs to be initialized.
-	virtual void initializeGL() override;
-
-	/// Is called when the mouse cursor leaves the widget.
-	virtual void leaveEvent(QEvent* event) override;
-
-	/// Is called when the viewport becomes visible.
-	virtual void showEvent(QShowEvent* event) override;
-
-	/// Handles double click events.
-	virtual void mouseDoubleClickEvent(QMouseEvent* event) override;
-
-	/// Handles mouse press events.
-	virtual void mousePressEvent(QMouseEvent* event) override;
-
-	/// Handles mouse release events.
-	virtual void mouseReleaseEvent(QMouseEvent* event) override;
-
-	/// Handles mouse move events.
-	virtual void mouseMoveEvent(QMouseEvent* event) override;
-
-	/// Handles mouse wheel events.
-	virtual void wheelEvent(QWheelEvent* event) override;
-
-	/// Is called when the widgets looses the input focus.
-	virtual void focusOutEvent(QFocusEvent* event) override;
-
 private:
-
-	/// Renders the contents of the viewport window.
-	void renderViewport();
-
-	/// Renders the viewport caption text.
-	void renderViewportTitle();
 
 	/// Render the axis tripod symbol in the corner of the viewport that indicates
 	/// the coordinate system orientation.
@@ -143,10 +106,18 @@ private:
 	/// Renders the frame on top of the scene that indicates the visible rendering area.
 	void renderRenderFrame();
 
+private Q_SLOTS:
+
+	/// Renders the contents of the viewport window.
+	void renderViewport();
+
 private:
 
 	/// The owning viewport of this window.
 	Viewport* _viewport;
+
+	/// The underlying Qt Quick window.
+	QQuickWindow* _quickWindow;
 
 	/// A flag that indicates that a viewport update has been requested.
 	bool _updateRequested = false;
@@ -184,10 +155,6 @@ private:
 
 	/// This renderer generates an offscreen rendering of the scene that allows picking of objects.
 	OORef<PickingSceneRenderer> _pickingRenderer;
-
-private:
-
-	Q_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

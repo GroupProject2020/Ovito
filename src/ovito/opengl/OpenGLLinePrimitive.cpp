@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,13 +36,21 @@ OpenGLLinePrimitive::OpenGLLinePrimitive(OpenGLSceneRenderer* renderer) :
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
 	// Initialize OpenGL shaders.
+#ifndef Q_OS_WASM
 	_shader = renderer->loadShaderProgram("line", ":/openglrenderer/glsl/lines/line.vs", ":/openglrenderer/glsl/lines/line.fs");
 	_pickingShader = renderer->loadShaderProgram("line.picking", ":/openglrenderer/glsl/lines/picking/line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
 	_thickLineShader = renderer->loadShaderProgram("thick_line", ":/openglrenderer/glsl/lines/thick_line.vs", ":/openglrenderer/glsl/lines/line.fs");
 	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/lines/picking/thick_line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
+#else
+	_shader = renderer->loadShaderProgram("line", ":/openglrenderer/glsl/gles/lines/line.vs", ":/openglrenderer/glsl/gles/lines/line.fs");
+//	_pickingShader = renderer->loadShaderProgram("line.picking", ":/openglrenderer/glsl/lines/picking/line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
+//	_thickLineShader = renderer->loadShaderProgram("thick_line", ":/openglrenderer/glsl/lines/thick_line.vs", ":/openglrenderer/glsl/lines/line.fs");
+//	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/lines/picking/thick_line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
+#endif
 
 	// Use VBO to store glDrawElements() indices only on a real core profile implementation.
 	_useIndexVBO = (renderer->glformat().profile() == QSurfaceFormat::CoreProfile);
+	qDebug() << "_useIndexVBO=" << _useIndexVBO;
 
 	// Standard line width.
 	_lineWidth = renderer->devicePixelRatio();

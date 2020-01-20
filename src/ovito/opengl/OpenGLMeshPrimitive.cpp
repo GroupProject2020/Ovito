@@ -280,10 +280,12 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		if(vpRenderer->glformat().majorVersion() >= 3) {
 			OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
 		}
+#ifndef Q_OS_WASM	
 		else if(vpRenderer->oldGLFunctions()) {
 			// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
 			OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
 		}
+#endif		
 		if(_alpha != 1.0) {
 			vpRenderer->glEnable(GL_BLEND);
 			vpRenderer->glBlendEquation(GL_FUNC_ADD);
@@ -312,10 +314,12 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 					if(vpRenderer->glformat().majorVersion() >= 3) {
 						OVITO_CHECK_OPENGL(_lineShader->setAttributeValue("color", wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
 					}
+#ifndef Q_OS_WASM	
 					else if(vpRenderer->oldGLFunctions()) {
 						// Older OpenGL implementations cannot take vertex colors through a custom shader attribute.
 						OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(wireframeColor.r(), wireframeColor.g(), wireframeColor.b(), wireframeColor.a()));
 					}
+#endif					
 					OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_LINES, 0, _edgeLinesBuffer.elementCount() * _edgeLinesBuffer.verticesPerElement()));
 				}
 			}
@@ -379,10 +383,12 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 				if(vpRenderer->glformat().majorVersion() >= 3) {
 					OVITO_CHECK_OPENGL(shader->setAttributeValue("color", color.r(), color.g(), color.b(), color.a()));
 				}
+#ifndef Q_OS_WASM	
 				else if(vpRenderer->oldGLFunctions()) {
 					// Older OpenGL implementations cannot take colors through a custom shader attribute.
 					OVITO_CHECK_OPENGL(vpRenderer->oldGLFunctions()->glColor4f(color.r(), color.g(), color.b(), color.a()));
 				}
+#endif				
 			}
 		}
 		else {
