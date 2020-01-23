@@ -81,7 +81,7 @@ public:
 protected:
 
 	/// Constructor that creates an invalid access object not associated with any PropertyStorage.
-	PropertyAccessBase() = default;
+	PropertyAccessBase() {}
 
 	/// Constructor that associates the access object with a PropertyStorage (may be null).
 	PropertyAccessBase(PointerType storage) : _storage(std::move(storage)) {}
@@ -146,7 +146,7 @@ public:
 protected:
 
 	/// Constructor that creates an invalid access object not associated with any PropertyStorage.
-	ReadOnlyPropertyAccessBase() = default;
+	ReadOnlyPropertyAccessBase() {}
 
 	/// Constructor that associates the access object with a PropertyStorage (may be null).
 	ReadOnlyPropertyAccessBase(PointerType storage) : PropertyAccessBase<PointerType>(std::move(storage)) {
@@ -191,7 +191,7 @@ public:
 protected:
 
 	/// Constructor that creates an invalid access object not associated with any PropertyStorage.
-	ReadOnlyPropertyAccessBaseTable() = default;
+	ReadOnlyPropertyAccessBaseTable() {}
 
 	/// Constructor that associates the access object with a PropertyStorage (may be null).
 	ReadOnlyPropertyAccessBaseTable(PointerType storage) : PropertyAccessBase<PointerType>(std::move(storage)) {
@@ -419,7 +419,7 @@ class ConstPropertyAccess : public std::conditional_t<TableMode, Ovito::StdObj::
 public:
 
 	/// Constructs an accessor object not associated yet with any PropertyStorage.
-	ConstPropertyAccess() = default;
+	ConstPropertyAccess() {}
 
 	/// Constructs a read-only accessor for the data in a PropertyObject.
 	ConstPropertyAccess(const PropertyObject* propertyObj) 
@@ -448,7 +448,7 @@ class ConstPropertyAccessAndRef : public Ovito::StdObj::detail::ReadOnlyProperty
 public:
 
 	/// Constructs an accessor object not associated yet with any PropertyStorage.
-	ConstPropertyAccessAndRef() = default;
+	ConstPropertyAccessAndRef() {}
 
 	/// Constructs a read-only accessor for the data in a PropertyObject.
 	ConstPropertyAccessAndRef(const PropertyObject* propertyObj) 
@@ -479,7 +479,7 @@ class PropertyAccess : public std::conditional_t<TableMode, Ovito::StdObj::detai
 public:
 
 	/// Constructs an accessor object not associated yet with any PropertyStorage.
-	PropertyAccess() = default;
+	PropertyAccess() {}
 
 	/// Constructs a read/write accessor for the data in a PropertyObject.
 	PropertyAccess(PropertyObject* propertyObj) : 
@@ -521,7 +521,7 @@ class PropertyAccessAndRef : public std::conditional_t<TableMode, Ovito::StdObj:
 public:
 
 	/// Constructs an accessor object not associated yet with any PropertyStorage.
-	PropertyAccessAndRef() = default;
+	PropertyAccessAndRef() {}
 
 	/// Constructs a read/write accessor for the data in a PropertyObject.
 	PropertyAccessAndRef(PropertyObject* propertyObj) : 
@@ -553,6 +553,7 @@ extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<Color>;
 extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<Vector3I>;
 extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<std::array<qlonglong,2>>;
 extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<int, true>;
+extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<qlonglong, true>;
 extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<FloatType, true>;
 extern template class OVITO_STDOBJ_EXPORT ConstPropertyAccess<void, true>;
 extern template class OVITO_STDOBJ_EXPORT PropertyAccess<int>;
@@ -564,6 +565,7 @@ extern template class OVITO_STDOBJ_EXPORT PropertyAccess<Color>;
 extern template class OVITO_STDOBJ_EXPORT PropertyAccess<Vector3I>;
 extern template class OVITO_STDOBJ_EXPORT PropertyAccess<std::array<qlonglong,2>>;
 extern template class OVITO_STDOBJ_EXPORT PropertyAccess<int, true>;
+extern template class OVITO_STDOBJ_EXPORT PropertyAccess<qlonglong, true>;
 extern template class OVITO_STDOBJ_EXPORT PropertyAccess<FloatType, true>;
 extern template class OVITO_STDOBJ_EXPORT PropertyAccess<void, true>;
 

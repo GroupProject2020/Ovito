@@ -43,6 +43,11 @@ ELSE()
 	SET_PROPERTY(TARGET geogram PROPERTY POSITION_INDEPENDENT_CODE ON)
 ENDIF()
 
+# Geogram requires pthread lib on Linux platform.
+SET(THREADS_PREFER_PTHREAD_FLAG ON)
+FIND_PACKAGE(Threads REQUIRED)
+TARGET_LINK_LIBRARIES(geogram Threads::Threads)
+
 # Give our library file a new name to not confuse it with any system versions of the library.
 SET_TARGET_PROPERTIES(geogram PROPERTIES OUTPUT_NAME "ovito_geogram")
 

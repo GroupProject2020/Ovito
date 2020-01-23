@@ -76,8 +76,8 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 		export/vasp/POSCARExporterEditor.cpp
 		export/xyz/XYZExporterEditor.cpp
 		${ResourceFiles}
-	PRIVATE_LIB_DEPENDENCIES Qwt
-	PLUGIN_DEPENDENCIES Particles StdObjGui
+	PRIVATE_LIB_DEPENDENCIES Qwt PolyhedralTemplateMatching
+	PLUGIN_DEPENDENCIES Particles StdObjGui 
 	GUI_PLUGIN
 )
 
