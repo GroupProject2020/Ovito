@@ -20,7 +20,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include "VRSceneRenderer.h"

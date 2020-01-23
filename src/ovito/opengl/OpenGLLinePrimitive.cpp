@@ -43,14 +43,13 @@ OpenGLLinePrimitive::OpenGLLinePrimitive(OpenGLSceneRenderer* renderer) :
 	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/lines/picking/thick_line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
 #else
 	_shader = renderer->loadShaderProgram("line", ":/openglrenderer/glsl/gles/lines/line.vs", ":/openglrenderer/glsl/gles/lines/line.fs");
-//	_pickingShader = renderer->loadShaderProgram("line.picking", ":/openglrenderer/glsl/lines/picking/line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
-//	_thickLineShader = renderer->loadShaderProgram("thick_line", ":/openglrenderer/glsl/lines/thick_line.vs", ":/openglrenderer/glsl/lines/line.fs");
-//	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/lines/picking/thick_line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
+	_pickingShader = renderer->loadShaderProgram("line.picking", ":/openglrenderer/glsl/gles/lines/picking/line.vs", ":/openglrenderer/glsl/gles/lines/picking/line.fs");
+	_thickLineShader = renderer->loadShaderProgram("thick_line", ":/openglrenderer/glsl/gles/lines/thick_line.vs", ":/openglrenderer/glsl/gles/lines/line.fs");
+	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/gles/lines/picking/thick_line.vs", ":/openglrenderer/glsl/gles/lines/picking/line.fs");
 #endif
 
 	// Use VBO to store glDrawElements() indices only on a real core profile implementation.
 	_useIndexVBO = (renderer->glformat().profile() == QSurfaceFormat::CoreProfile);
-	qDebug() << "_useIndexVBO=" << _useIndexVBO;
 
 	// Standard line width.
 	_lineWidth = renderer->devicePixelRatio();
@@ -176,10 +175,12 @@ void OpenGLLinePrimitive::renderLines(OpenGLSceneRenderer* renderer)
 	else
 		shader = _pickingShader;
 
-	if(!shader->bind())
+	if(!shader->bind()) {
+		OVITO_ASSERT(false);
 		renderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
+	}
 
-	OVITO_CHECK_OPENGL(shader->setUniformValue("modelview_projection_matrix",
+	OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("modelview_projection_matrix",
 			(QMatrix4x4)(renderer->projParams().projectionMatrix * renderer->modelViewTM())));
 
 	_positionsBuffer.bindPositions(renderer, shader);
@@ -191,7 +192,7 @@ void OpenGLLinePrimitive::renderLines(OpenGLSceneRenderer* renderer)
 		renderer->activateVertexIDs(shader, _positionsBuffer.elementCount() * _positionsBuffer.verticesPerElement());
 	}
 
-	OVITO_CHECK_OPENGL(renderer->glDrawArrays(GL_LINES, 0, _positionsBuffer.elementCount() * _positionsBuffer.verticesPerElement()));
+	OVITO_CHECK_OPENGL(renderer, renderer->glDrawArrays(GL_LINES, 0, _positionsBuffer.elementCount() * _positionsBuffer.verticesPerElement()));
 
 	_positionsBuffer.detachPositions(renderer, shader);
 	if(!renderer->isPicking()) {
@@ -202,7 +203,7 @@ void OpenGLLinePrimitive::renderLines(OpenGLSceneRenderer* renderer)
 	}
 	shader->release();
 
-	OVITO_REPORT_OPENGL_ERRORS();
+	OVITO_REPORT_OPENGL_ERRORS(renderer);
 }
 
 /******************************************************************************
@@ -216,11 +217,13 @@ void OpenGLLinePrimitive::renderThickLines(OpenGLSceneRenderer* renderer)
 	else
 		shader = _thickLinePickingShader;
 
-	if(!shader->bind())
+	if(!shader->bind()) {
+		OVITO_ASSERT(false);
 		renderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
+	}
 
-	OVITO_CHECK_OPENGL(shader->setUniformValue("modelview_matrix", (QMatrix4x4)renderer->modelViewTM()));
-	OVITO_CHECK_OPENGL(shader->setUniformValue("projection_matrix", (QMatrix4x4)renderer->projParams().projectionMatrix));
+	OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("modelview_matrix", (QMatrix4x4)renderer->modelViewTM()));
+	OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("projection_matrix", (QMatrix4x4)renderer->projParams().projectionMatrix));
 
 	_positionsBuffer.bindPositions(renderer, shader);
 	if(!renderer->isPicking()) {
@@ -241,11 +244,11 @@ void OpenGLLinePrimitive::renderThickLines(OpenGLSceneRenderer* renderer)
 
 	if(_useIndexVBO) {
 		_indicesBuffer.oglBuffer().bind();
-		OVITO_CHECK_OPENGL(renderer->glDrawElements(GL_TRIANGLES, _indicesBuffer.elementCount(), GL_UNSIGNED_INT, nullptr));
+		OVITO_CHECK_OPENGL(renderer, renderer->glDrawElements(GL_TRIANGLES, _indicesBuffer.elementCount(), GL_UNSIGNED_INT, nullptr));
 		_indicesBuffer.oglBuffer().release();
 	}
 	else {
-		OVITO_CHECK_OPENGL(renderer->glDrawElements(GL_TRIANGLES, _indicesBufferClient.size(), GL_UNSIGNED_INT, _indicesBufferClient.data()));
+		OVITO_CHECK_OPENGL(renderer, renderer->glDrawElements(GL_TRIANGLES, _indicesBufferClient.size(), GL_UNSIGNED_INT, _indicesBufferClient.data()));
 	}
 
 	_positionsBuffer.detachPositions(renderer, shader);
@@ -258,7 +261,7 @@ void OpenGLLinePrimitive::renderThickLines(OpenGLSceneRenderer* renderer)
 	_vectorsBuffer.detach(renderer, shader, "vector");
 	shader->release();
 
-	OVITO_REPORT_OPENGL_ERRORS();
+	OVITO_REPORT_OPENGL_ERRORS(renderer);
 }
 
 OVITO_END_INLINE_NAMESPACE

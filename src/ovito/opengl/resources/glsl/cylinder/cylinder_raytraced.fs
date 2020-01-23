@@ -116,7 +116,7 @@ void main()
 
 			// Find intersection position along cylinder axis.
 			float anear = dot(view_intersection_pnt - cylinder_view_base, cylinder_view_axis) / (cylinder_length*cylinder_length);
-			if(anear >= 0 && anear <= 1.0) {
+			if(anear >= 0.0 && anear <= 1.0) {
 
 				// Calculate surface normal in view coordinate system.
 				surface_normal = (view_intersection_pnt - (cylinder_view_base + anear * cylinder_view_axis));
@@ -128,7 +128,7 @@ void main()
 				float afar = dot(far_view_intersection_pnt - cylinder_view_base, cylinder_view_axis) / (cylinder_length*cylinder_length);
 
 				// Compute intersection with cylinder caps.
-				if(anear < 0 && afar > 0) {
+				if(anear < 0.0 && afar > 0.0) {
 					view_intersection_pnt += (anear / (anear - afar) * 2.0 * s + 1e-6 * ln) * ray_dir;
 					surface_normal = -cylinder_view_axis;
 				}

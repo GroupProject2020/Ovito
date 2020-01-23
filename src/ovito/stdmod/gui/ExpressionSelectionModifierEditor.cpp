@@ -22,9 +22,9 @@
 
 #include <ovito/stdmod/gui/StdModGui.h>
 #include <ovito/stdmod/modifiers/ExpressionSelectionModifier.h>
-#include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/properties/ModifierDelegateParameterUI.h>
-#include <ovito/gui/widgets/general/AutocompleteTextEdit.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/ModifierDelegateParameterUI.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteTextEdit.h>
 #include "ExpressionSelectionModifierEditor.h"
 
 namespace Ovito { namespace StdMod {

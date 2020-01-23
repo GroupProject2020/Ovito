@@ -23,8 +23,8 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/PropertiesEditor.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 
 namespace VRPlugin {

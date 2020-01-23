@@ -41,7 +41,7 @@ IF(OVITO_BUILD_GUI)
 ENDIF()
 
 # Build the main application for the WebAssembly platform.
-IF(EMSCRIPTEN)
+IF(OVITO_BUILD_WEBGUI)
 	ADD_SUBDIRECTORY(ovito_wasm)
 ENDIF()
 

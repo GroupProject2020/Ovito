@@ -23,8 +23,8 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 

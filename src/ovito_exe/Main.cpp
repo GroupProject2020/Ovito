@@ -20,8 +20,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/app/GuiApplication.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/app/GuiApplication.h>
 
 /**
  * This is the main entry point for the graphical desktop application.

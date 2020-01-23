@@ -24,12 +24,12 @@
 #include <ovito/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/BooleanGroupBoxParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/SubObjectParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanGroupBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/SubObjectParameterUI.h>
 #include "DislocationAnalysisModifierEditor.h"
 
 namespace Ovito { namespace CrystalAnalysis {

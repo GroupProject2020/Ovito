@@ -120,6 +120,9 @@ public:
 	/// Returns the final size of the rendered image in pixels.
 	virtual QSize outputSize() const;
 
+	/// Returns the device pixel ratio of the output device we are rendering to.
+	virtual qreal devicePixelRatio() const { return 1.0; }
+
 	/// \brief Computes the bounding box of the entire scene to be rendered.
 	/// \param time The time at which the bounding box should be computed.
 	/// \return An axis-aligned box in the world coordinate system that contains

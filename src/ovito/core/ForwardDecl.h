@@ -150,6 +150,13 @@ namespace Ovito {
 		class ViewportPickResult;
 		class RenderSettings;
 		class FrameBuffer;
+		class ArrowPrimitive;
+		class ImagePrimitive;
+		class LinePrimitive;
+		class MarkerPrimitive;
+		class MeshPrimitive;
+		class ParticlePrimitive;
+		class TextPrimitive;
 		OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 		OVITO_END_INLINE_NAMESPACE
 	OVITO_END_INLINE_NAMESPACE
@@ -159,6 +166,8 @@ namespace Ovito {
 		class ViewportSettings;
 		struct ViewProjectionParameters;
 		class ViewportOverlay;
+		class ViewportGizmo;
+		class ViewportWindowInterface;
 	OVITO_END_INLINE_NAMESPACE
 	OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 		class FileImporter;
@@ -167,9 +176,6 @@ namespace Ovito {
 		class FileExporterClass;
 		class FileSource;
 		class FileSourceImporter;
-	OVITO_END_INLINE_NAMESPACE
-	OVITO_BEGIN_INLINE_NAMESPACE(Gui)
-		class MainWindow;
 	OVITO_END_INLINE_NAMESPACE
 
 	// This should only be visible to Doxygen:

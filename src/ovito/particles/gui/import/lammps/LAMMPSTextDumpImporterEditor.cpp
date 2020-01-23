@@ -23,9 +23,9 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/lammps/LAMMPSTextDumpImporter.h>
 #include <ovito/particles/gui/import/InputColumnMappingDialog.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/BooleanRadioButtonParameterUI.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanRadioButtonParameterUI.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/dataset/io/FileSource.h>
 #include "LAMMPSTextDumpImporterEditor.h"
 

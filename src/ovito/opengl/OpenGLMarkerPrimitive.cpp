@@ -108,13 +108,13 @@ bool OpenGLMarkerPrimitive::isValid(SceneRenderer* renderer)
 void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 {
 #ifndef Q_OS_WASM	
-    OVITO_REPORT_OPENGL_ERRORS();
 	OVITO_ASSERT(_contextGroup == QOpenGLContextGroup::currentContextGroup());
 
 	OpenGLSceneRenderer* vpRenderer = dynamic_object_cast<OpenGLSceneRenderer>(renderer);
 
 	if(markerCount() <= 0 || !vpRenderer)
 		return;
+    OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 	vpRenderer->rebindVAO();
 
@@ -125,7 +125,7 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 
 	if(markerShape() == DotShape) {
 		OVITO_ASSERT(_positionBuffer.verticesPerElement() == 1);
-		OVITO_CHECK_OPENGL(vpRenderer->glPointSize(3));
+		OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glPointSize(3));
 	}
 
 	_positionBuffer.bindPositions(vpRenderer, shader);
@@ -139,8 +139,8 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 	}
 
 	if(markerShape() == DotShape) {
-		OVITO_CHECK_OPENGL(shader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM())));
-		OVITO_CHECK_OPENGL(glDrawArrays(GL_POINTS, 0, markerCount()));
+		OVITO_CHECK_OPENGL(vpRenderer, shader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM())));
+		OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glDrawArrays(GL_POINTS, 0, markerCount()));
 	}
 	else if(markerShape() == BoxShape) {
 
@@ -167,9 +167,9 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 				{ 1, -1,  1}, { 1, 1, 1},
 				{-1, -1,  1}, {-1, 1, 1}
 		};
-		OVITO_CHECK_OPENGL(shader->setUniformValueArray("cubeVerts", cubeVerts, 24));
+		OVITO_CHECK_OPENGL(vpRenderer, shader->setUniformValueArray("cubeVerts", cubeVerts, 24));
 
-		OVITO_CHECK_OPENGL(glDrawArrays(GL_LINES, 0, _positionBuffer.elementCount() * _positionBuffer.verticesPerElement()));
+		OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glDrawArrays(GL_LINES, 0, _positionBuffer.elementCount() * _positionBuffer.verticesPerElement()));
 	}
 
 	_positionBuffer.detachPositions(vpRenderer, shader);

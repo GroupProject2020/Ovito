@@ -1,6 +1,6 @@
 #######################################################################################
 #
-#  Copyright 2019 Alexander Stukowski
+#  Copyright 2020 Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -24,16 +24,8 @@
 FILE(MAKE_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
 
 ADD_SUBDIRECTORY(core)
-
 ADD_SUBDIRECTORY(opengl)
-
-IF(EMSCRIPTEN)
-	ADD_SUBDIRECTORY(gui_wasm)
-ENDIF()
-
-IF(OVITO_BUILD_GUI)
-	ADD_SUBDIRECTORY(gui)
-ENDIF()
+ADD_SUBDIRECTORY(gui)
 
 IF(OVITO_BUILD_PLUGIN_STDOBJ)
 	ADD_SUBDIRECTORY(stdobj)

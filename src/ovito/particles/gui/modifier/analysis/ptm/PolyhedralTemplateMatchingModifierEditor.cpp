@@ -23,9 +23,9 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerRadioButtonParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include "PolyhedralTemplateMatchingModifierEditor.h"
 
 #include <qwt/qwt_plot_zoneitem.h>

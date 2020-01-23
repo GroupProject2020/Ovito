@@ -23,9 +23,9 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
 #include <ovito/gui/viewport/ViewportWindow.h>
 #include "ParticleInspectionApplet.h"
 

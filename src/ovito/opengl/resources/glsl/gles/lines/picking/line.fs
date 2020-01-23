@@ -20,19 +20,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#if __VERSION__ >= 130
+precision mediump float; 
 
-	in vec4 vertex_color_fs;
-	out vec4 FragColor;
-
-#else
-
-	#define vertex_color_fs gl_Color
-	#define FragColor gl_FragColor
-
-#endif
+varying vec4 vertex_color_fs;
 
 void main()
 {
-	FragColor = vertex_color_fs;
+	gl_FragColor = vertex_color_fs;
 }

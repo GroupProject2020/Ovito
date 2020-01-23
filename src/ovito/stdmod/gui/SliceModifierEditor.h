@@ -24,7 +24,7 @@
 
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include <ovito/gui/viewport/input/ViewportInputMode.h>
 #include <ovito/gui/viewport/input/ViewportInputManager.h>
 #include <ovito/stdmod/modifiers/SliceModifier.h>

@@ -23,8 +23,8 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/PropertiesEditor.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/core/oo/RefTarget.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -51,5 +51,3 @@ protected:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

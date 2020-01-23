@@ -20,10 +20,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/Vector3ParameterUI.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/Vector3ParameterUI.h>
 #include "VRSettingsObject.h"
 #include "VRSettingsObjectEditor.h"
 

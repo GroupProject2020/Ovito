@@ -20,8 +20,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include <ovito/opengl/StandardSceneRenderer.h>
 #include "StandardSceneRendererEditor.h"
 

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,38 +25,23 @@ uniform mat4 projection_matrix;
 uniform bool is_perspective;
 uniform float line_width;
 
-#if __VERSION__ >= 130
+attribute vec3 position;
+attribute vec4 color;
+attribute vec3 vector;
 
-	in vec3 position;
-	in vec4 color;
-	in vec3 vector;
-	out vec4 vertex_color_fs;
-
-#else
-
-	attribute vec3 vector;
-
-#endif
+varying vec4 vertex_color_fs;
 
 void main()
 {
-#if __VERSION__ >= 130
 	vertex_color_fs = color;
-#else
-	gl_FrontColor = gl_Color;
-#endif
 
-#if __VERSION__ >= 130
 	vec4 view_position = modelview_matrix * vec4(position, 1.0);
-#else
-	vec4 view_position = modelview_matrix * gl_Vertex;
-#endif
 	vec3 view_dir;
 	if(is_perspective)
 		view_dir = view_position.xyz;
 	else
-		view_dir = vec3(0,0,-1);
-	vec3 u = cross(view_dir, (modelview_matrix * vec4(vector,0.0)).xyz);
+		view_dir = vec3(0.0, 0.0, -1.0);
+	vec3 u = cross(view_dir, (modelview_matrix * vec4(vector, 0.0)).xyz);
 	if(u != vec3(0)) {
 		float w = projection_matrix[0][3] * view_position.x + projection_matrix[1][3] * view_position.y
 			+ projection_matrix[2][3] * view_position.z + projection_matrix[3][3];
@@ -65,5 +50,4 @@ void main()
 	else {
 		gl_Position = vec4(0);
 	}
-
 }

@@ -20,19 +20,23 @@
 #
 #######################################################################################
 
-# Builds the main executable for the WebAssembly platform.
-ADD_EXECUTABLE(Ovito 
-	Main.cpp
-)
+# Builds the main executable for the WebAssembly web browser platform.
+IF(EMSCRIPTEN)
+	ADD_EXECUTABLE(Ovito Main.cpp)
+ELSE()
+	ADD_EXECUTABLE(Ovito MACOSX_BUNDLE Main.cpp)
+ENDIF()
 
 # Copy in Qt HTML/JS launch files.
 SET(APPNAME "ovito")
-CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/wasm_shell.html" "${OVITO_BINARY_DIRECTORY}/Ovito.html")
-CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/qtloader.js" "${OVITO_BINARY_DIRECTORY}/qtloader.js" COPYONLY)
-CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/qtlogo.svg" "${OVITO_BINARY_DIRECTORY}/qtlogo.svg" COPYONLY)
+IF(EMSCRIPTEN)
+	CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/wasm_shell.html" "${OVITO_BINARY_DIRECTORY}/Ovito.html")
+	CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/qtloader.js" "${OVITO_BINARY_DIRECTORY}/qtloader.js" COPYONLY)
+	CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/qtlogo.svg" "${OVITO_BINARY_DIRECTORY}/qtlogo.svg" COPYONLY)
+ENDIF()
 
 # The executable depends on the core and the gui modules, of course.
-TARGET_LINK_LIBRARIES(Ovito PRIVATE Core GuiWasm)
+TARGET_LINK_LIBRARIES(Ovito PRIVATE Core GuiWeb)
 
 # Put the executable into the right directory.
 SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
@@ -43,16 +47,26 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "${APPNAME}")
 # Link Qt5.
 TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick)
 
-# Link to missing Qt libraries (the order does matter).
-TARGET_LINK_LIBRARIES(Ovito PRIVATE
-	"${_qt5Core_install_prefix}/qml/QtQuick.2/libqtquick2plugin.a"      # QtQuick2Plugin
-	"${_qt5Core_install_prefix}/qml/QtQuick/Window.2/libwindowplugin.a" # QtQuick2WindowPlugin
-	"${_qt5Core_install_prefix}/plugins/platforms/libqwasm.a"       	# No longer needed in Qt 5.14
-	"${_qt5Core_install_prefix}/lib/libQt5Quick.a"						# No longer needed in Qt 5.14
-	"${_qt5Core_install_prefix}/lib/libQt5EventDispatcherSupport.a"		# No longer needed in Qt 5.14
-    "${_qt5Core_install_prefix}/lib/libQt5FontDatabaseSupport.a"		# No longer needed in Qt 5.14
-    "${_qt5Core_install_prefix}/lib/libqtfreetype.a"					# No longer needed in Qt 5.14
-)
+IF(EMSCRIPTEN)
+	# Link to missing Qt libraries (the order does matter).
+	TARGET_LINK_LIBRARIES(Ovito PRIVATE
+		"${_qt5Core_install_prefix}/qml/QtQuick.2/libqtquick2plugin.a"      # QtQuick2Plugin
+		"${_qt5Core_install_prefix}/qml/QtQuick/Window.2/libwindowplugin.a" # QtQuick2WindowPlugin
+		"${_qt5Core_install_prefix}/qml/QtQuick/Layouts/libqquicklayoutsplugin.a" # QtQuick2LayoutsPlugin
+		"${_qt5Core_install_prefix}/plugins/platforms/libqwasm.a"       	# No longer needed in Qt 5.14
+		"${_qt5Core_install_prefix}/lib/libQt5Quick.a"						# No longer needed in Qt 5.14
+		"${_qt5Core_install_prefix}/lib/libQt5EventDispatcherSupport.a"		# No longer needed in Qt 5.14
+		"${_qt5Core_install_prefix}/lib/libQt5FontDatabaseSupport.a"		# No longer needed in Qt 5.14
+		"${_qt5Core_install_prefix}/lib/libqtfreetype.a"					# No longer needed in Qt 5.14
+	)
+ELSE()
+	IF(APPLE)
+		# Enable the use of @rpath on macOS.
+		SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_RPATH TRUE)
+		SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "@executable_path/;@executable_path/../Frameworks/;@executable_path/../PlugIns/")
+		SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+	ENDIF()
+ENDIF()
 
 # This executable will be part of the installation package.
 INSTALL(TARGETS Ovito DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/")

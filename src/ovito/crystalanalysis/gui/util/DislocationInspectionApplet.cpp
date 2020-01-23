@@ -24,10 +24,10 @@
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/crystalanalysis/objects/Microstructure.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
 #include <ovito/gui/viewport/ViewportWindow.h>
 #include <ovito/gui/rendering/ViewportSceneRenderer.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "DislocationInspectionApplet.h"
 
 namespace Ovito { namespace CrystalAnalysis {

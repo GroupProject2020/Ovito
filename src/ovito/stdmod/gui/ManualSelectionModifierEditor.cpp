@@ -26,8 +26,8 @@
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/gui/rendering/ViewportSceneRenderer.h>
 #include <ovito/gui/viewport/ViewportWindow.h>
 #include <ovito/gui/viewport/input/ViewportInputManager.h>

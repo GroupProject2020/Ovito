@@ -24,6 +24,7 @@ uniform mat4 modelview_projection_matrix;
 
 attribute vec3 position;
 attribute vec4 color;
+
 varying vec4 vertex_color_fs;
 
 void main()

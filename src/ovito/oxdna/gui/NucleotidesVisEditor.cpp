@@ -22,7 +22,7 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/oxdna/NucleotidesVis.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include "NucleotidesVisEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)

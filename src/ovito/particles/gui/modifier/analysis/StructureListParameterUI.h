@@ -25,7 +25,7 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <ovito/gui/properties/RefTargetListParameterUI.h>
+#include <ovito/gui/desktop/properties/RefTargetListParameterUI.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 

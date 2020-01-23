@@ -35,24 +35,19 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
 #define OVITO_OPENGL_REQUESTED_VERSION_MAJOR 		3
 #define OVITO_OPENGL_REQUESTED_VERSION_MINOR		2
 
-/// Reports OpenGL error status codes.
-extern void checkOpenGLErrorStatus(const char* command, const char* sourceFile, int sourceLine);
-
 // OpenGL debugging macro:
 #ifdef OVITO_DEBUG
-	#define OVITO_CHECK_OPENGL(cmd)									\
+	#define OVITO_CHECK_OPENGL(renderer, cmd)						\
 	{																\
 		cmd;														\
-		Ovito::checkOpenGLErrorStatus(#cmd, __FILE__, __LINE__);	\
+		renderer->checkOpenGLErrorStatus(#cmd, __FILE__, __LINE__);	\
 	}
-    #define OVITO_REPORT_OPENGL_ERRORS() Ovito::checkOpenGLErrorStatus("", __FILE__, __LINE__);
+    #define OVITO_REPORT_OPENGL_ERRORS(renderer) renderer->checkOpenGLErrorStatus("", __FILE__, __LINE__);
 #else
-	#define OVITO_CHECK_OPENGL(cmd)			cmd
-    #define OVITO_REPORT_OPENGL_ERRORS()
+	#define OVITO_CHECK_OPENGL(renderer, cmd) cmd
+    #define OVITO_REPORT_OPENGL_ERRORS(renderer)
 #endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

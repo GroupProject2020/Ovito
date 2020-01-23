@@ -24,7 +24,7 @@
 
 
 #include <ovito/particles/gui/ParticlesGui.h>
-#include <ovito/gui/dialogs/ApplicationSettingsDialog.h>
+#include <ovito/gui/desktop/dialogs/ApplicationSettingsDialog.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

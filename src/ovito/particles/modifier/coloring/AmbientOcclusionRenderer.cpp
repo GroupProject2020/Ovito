@@ -123,7 +123,7 @@ void AmbientOcclusionRenderer::endFrame(bool renderSuccessful)
 		if(_image.isNull() || _image.size() != size)
 			_image = QImage(size, QImage::Format_ARGB32);
 		while(glGetError() != GL_NO_ERROR);
-		glReadPixels(0, 0, size.width(), size.height(), GL_BGRA, GL_UNSIGNED_BYTE, _image.bits());
+		glReadPixels(0, 0, size.width(), size.height(), 0x80E1 /*GL_BGRA*/, GL_UNSIGNED_BYTE, _image.bits());
 		if(glGetError() != GL_NO_ERROR) {
 			glReadPixels(0, 0, size.width(), size.height(), GL_RGBA, GL_UNSIGNED_BYTE, _image.bits());
 			_image = _image.rgbSwapped();

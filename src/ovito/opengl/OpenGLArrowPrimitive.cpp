@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,10 +32,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
 OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowPrimitive::Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality, bool translucentElements) :
 	ArrowPrimitive(shape, shadingMode, renderingQuality, translucentElements),
 	_contextGroup(QOpenGLContextGroup::currentContextGroup()),
-	_elementCount(-1), _cylinderSegments(16), _verticesPerElement(0),
-	_mappedVerticesWithNormals(nullptr), _mappedVerticesWithElementInfo(nullptr),
-	_maxVBOSize(4*1024*1024), _mappedChunkIndex(-1),
-	_shader(nullptr), _pickingShader(nullptr),
 	_usingGeometryShader(renderer->useGeometryShaders())
 {
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
@@ -46,12 +42,22 @@ OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowP
 			if(!_usingGeometryShader) {
 				_shader = renderer->loadShaderProgram(
 						"cylinder_raytraced",
+#ifndef Q_OS_WASM
 						":/openglrenderer/glsl/cylinder/cylinder_raytraced_tri.vs",
 						":/openglrenderer/glsl/cylinder/cylinder_raytraced.fs");
+#else
+						":/openglrenderer/glsl/gles/cylinder/cylinder_raytraced_tri.vs",
+						":/openglrenderer/glsl/gles/cylinder/cylinder_raytraced.fs");
+#endif
 				_pickingShader = renderer->loadShaderProgram(
 						"cylinder_raytraced_picking",
+#ifndef Q_OS_WASM
 						":/openglrenderer/glsl/cylinder/picking/cylinder_raytraced_tri.vs",
 						":/openglrenderer/glsl/cylinder/picking/cylinder_raytraced.fs");
+#else
+						":/openglrenderer/glsl/gles/cylinder/picking/cylinder_raytraced_tri.vs",
+						":/openglrenderer/glsl/gles/cylinder/picking/cylinder_raytraced.fs");
+#endif
 			}
 			else {
 				_shader = renderer->loadShaderProgram(
@@ -81,12 +87,22 @@ OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowP
 		if(!_usingGeometryShader || shape != CylinderShape) {
 			_shader = renderer->loadShaderProgram(
 					"arrow_flat",
+#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/flat_tri.vs",
 					":/openglrenderer/glsl/arrows/flat.fs");
+#else
+					":/openglrenderer/glsl/gles/arrows/flat_tri.vs",
+					":/openglrenderer/glsl/gles/arrows/flat.fs");
+#endif
 			_pickingShader = renderer->loadShaderProgram(
 					"arrow_flat_picking",
+#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/picking/flat_tri.vs",
 					":/openglrenderer/glsl/arrows/picking/flat.fs");
+#else
+					":/openglrenderer/glsl/gles/arrows/picking/flat_tri.vs",
+					":/openglrenderer/glsl/gles/arrows/picking/flat.fs");
+#endif
 		}
 		else {
 			_shader = renderer->loadShaderProgram(
@@ -179,7 +195,6 @@ void OpenGLArrowPrimitive::startSetElements(int elementCount)
 			_verticesWithElementInfo.push_back(buffer);
 		}
 	}
-	OVITO_REPORT_OPENGL_ERRORS();
 
 	// Prepare arrays to be passed to the glMultiDrawArrays() function.
 	_stripPrimitiveVertexStarts.resize(_chunkSize * stripsPerElement);
@@ -529,7 +544,6 @@ void OpenGLArrowPrimitive::endSetElements()
 	_mappedVerticesWithNormals = nullptr;
 	_mappedVerticesWithElementInfo = nullptr;
 	_mappedChunkIndex = -1;
-	OVITO_REPORT_OPENGL_ERRORS();
 }
 
 /******************************************************************************
@@ -547,7 +561,6 @@ bool OpenGLArrowPrimitive::isValid(SceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 {
-	OVITO_REPORT_OPENGL_ERRORS();
 	OVITO_ASSERT(_contextGroup == QOpenGLContextGroup::currentContextGroup());
 	OVITO_ASSERT(_elementCount >= 0);
 	OVITO_ASSERT(_mappedChunkIndex == -1);
@@ -556,6 +569,7 @@ void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 
 	if(_elementCount <= 0 || !vpRenderer)
 		return;
+	OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 	// If object is translucent, don't render it during the first rendering pass.
 	// Queue primitive so that it gets rendered during the second pass.
@@ -582,7 +596,7 @@ void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 	else if(shadingMode() == FlatShading) {
 		renderWithElementInfo(vpRenderer);
 	}
-	OVITO_REPORT_OPENGL_ERRORS();
+	OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 	// Deactivate blend mode after rendering translucent elements.
 	if(!vpRenderer->isPicking() && translucentElements())
@@ -629,13 +643,13 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 
 		int stripPrimitivesPerElement = _stripPrimitiveVertexCounts.size() / _chunkSize;
 		int stripVerticesPerElement = std::accumulate(_stripPrimitiveVertexCounts.begin(), _stripPrimitiveVertexCounts.begin() + stripPrimitivesPerElement, 0);
-		OVITO_CHECK_OPENGL(shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
-		OVITO_CHECK_OPENGL(renderer->glMultiDrawArrays(GL_TRIANGLE_STRIP, _stripPrimitiveVertexStarts.data(), _stripPrimitiveVertexCounts.data(), stripPrimitivesPerElement * chunkSize));
+		OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
+		OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_STRIP, _stripPrimitiveVertexStarts.data(), _stripPrimitiveVertexCounts.data(), stripPrimitivesPerElement * chunkSize));
 
 		int fanPrimitivesPerElement = _fanPrimitiveVertexCounts.size() / _chunkSize;
 		int fanVerticesPerElement = std::accumulate(_fanPrimitiveVertexCounts.begin(), _fanPrimitiveVertexCounts.begin() + fanPrimitivesPerElement, 0);
-		OVITO_CHECK_OPENGL(shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
-		OVITO_CHECK_OPENGL(renderer->glMultiDrawArrays(GL_TRIANGLE_FAN, _fanPrimitiveVertexStarts.data(), _fanPrimitiveVertexCounts.data(), fanPrimitivesPerElement * chunkSize));
+		OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
+		OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_FAN, _fanPrimitiveVertexStarts.data(), _fanPrimitiveVertexCounts.data(), fanPrimitivesPerElement * chunkSize));
 
 		_verticesWithNormals[chunkIndex].detachPositions(renderer, shader);
 		if(!renderer->isPicking()) {
@@ -689,7 +703,7 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 	if(renderer->isPicking()) {
 		pickingBaseID = renderer->registerSubObjectIDs(elementCount());
 		renderer->activateVertexIDs(shader, _chunkSize * _verticesPerElement, true);
-		OVITO_CHECK_OPENGL(shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
+		OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
 	}
 
 	for(int chunkIndex = 0; chunkIndex < _verticesWithElementInfo.size(); chunkIndex++) {
@@ -709,14 +723,14 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 			_verticesWithElementInfo[chunkIndex].bindColors(renderer, shader, 4, offsetof(VertexWithElementInfo, color));
 
 		if(_usingGeometryShader && (shadingMode() == FlatShading || renderingQuality() == HighQuality) && shape() == CylinderShape) {
-			OVITO_CHECK_OPENGL(renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
+			OVITO_CHECK_OPENGL(renderer, renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
 		}
 		else {
 			int stripPrimitivesPerElement = _stripPrimitiveVertexCounts.size() / _chunkSize;
-			OVITO_CHECK_OPENGL(renderer->glMultiDrawArrays(GL_TRIANGLE_STRIP, _stripPrimitiveVertexStarts.data(), _stripPrimitiveVertexCounts.data(), stripPrimitivesPerElement * chunkSize));
+			OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_STRIP, _stripPrimitiveVertexStarts.data(), _stripPrimitiveVertexCounts.data(), stripPrimitivesPerElement * chunkSize));
 
 			int fanPrimitivesPerElement = _fanPrimitiveVertexCounts.size() / _chunkSize;
-			OVITO_CHECK_OPENGL(renderer->glMultiDrawArrays(GL_TRIANGLE_FAN, _fanPrimitiveVertexStarts.data(), _fanPrimitiveVertexCounts.data(), fanPrimitivesPerElement * chunkSize));
+			OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_FAN, _fanPrimitiveVertexStarts.data(), _fanPrimitiveVertexCounts.data(), fanPrimitivesPerElement * chunkSize));
 		}
 
 		_verticesWithElementInfo[chunkIndex].detachPositions(renderer, shader);

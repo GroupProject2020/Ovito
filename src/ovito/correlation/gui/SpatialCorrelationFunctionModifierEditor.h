@@ -27,7 +27,7 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlot;

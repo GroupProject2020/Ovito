@@ -34,7 +34,8 @@ static void registerQtResources()
 #ifdef OVITO_BUILD_MONOLITHIC
 	Q_INIT_RESOURCE(core);
 	Q_INIT_RESOURCE(opengl);
-	#if defined(OVITO_BUILD_GUI) || defined(Q_OS_WASM)
+	#if defined(OVITO_BUILD_GUI) || defined(OVITO_BUILD_WEBGUI)
+		Q_INIT_RESOURCE(guibase);
 		Q_INIT_RESOURCE(gui);
 	#endif
 #endif

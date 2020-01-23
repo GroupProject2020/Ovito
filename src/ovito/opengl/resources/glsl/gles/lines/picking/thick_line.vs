@@ -24,50 +24,31 @@ uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 uniform bool is_perspective;
 uniform float line_width;
-uniform int pickingBaseID;
+uniform float pickingBaseID;
 
-#if __VERSION__ >= 130
+attribute vec3 position;
+attribute float vertexID;
+attribute vec3 vector;
 
-	in vec3 position;
-	in vec3 vector;
-	out vec4 vertex_color_fs;
-
-#else
-
-	attribute vec3 vector;
-	attribute float vertexID;
-
-#endif
+varying vec4 vertex_color_fs;
 
 void main()
 {
 	// Compute color from object ID.
-#if __VERSION__ >= 130
-	int objectID = pickingBaseID + gl_VertexID / 4;
+	float objectID = pickingBaseID + floor(vertexID / 4.0);
 	vertex_color_fs = vec4(
-		float(objectID & 0xFF) / 255.0,
-		float((objectID >> 8) & 0xFF) / 255.0,
-		float((objectID >> 16) & 0xFF) / 255.0,
-		float((objectID >> 24) & 0xFF) / 255.0);
-#else
-	float objectID = pickingBaseID + floor(vertexID / 2);
-	gl_FrontColor = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
 		floor(mod(objectID / 256.0, 256.0)) / 255.0,
 		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
 		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
-#endif
 
-#if __VERSION__ >= 130
 	vec4 view_position = modelview_matrix * vec4(position, 1.0);
-#else
-	vec4 view_position = modelview_matrix * gl_Vertex;
-#endif
+
 	vec3 view_dir;
 	if(is_perspective)
 		view_dir = view_position.xyz;
 	else
-		view_dir = vec3(0,0,-1);
+		view_dir = vec3(0.0, 0.0, -1.0);
 	vec3 u = cross(view_dir, (modelview_matrix * vec4(vector,0.0)).xyz);
 	if(u != vec3(0)) {
 		float w = projection_matrix[0][3] * view_position.x + projection_matrix[1][3] * view_position.y
@@ -77,5 +58,4 @@ void main()
 	else {
 		gl_Position = vec4(0);
 	}
-
 }

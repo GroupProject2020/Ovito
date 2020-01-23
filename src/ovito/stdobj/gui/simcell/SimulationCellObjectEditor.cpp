@@ -23,9 +23,9 @@
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
-#include <ovito/gui/properties/AffineTransformationParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/BooleanRadioButtonParameterUI.h>
+#include <ovito/gui/desktop/properties/AffineTransformationParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanRadioButtonParameterUI.h>
 #include "SimulationCellObjectEditor.h"
 
 namespace Ovito { namespace StdObj {

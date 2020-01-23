@@ -27,7 +27,7 @@
 #ifndef __OVITO_PARTICLES_GUI_
 #define __OVITO_PARTICLES_GUI_
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/particles/Particles.h>
 
 namespace Ovito {

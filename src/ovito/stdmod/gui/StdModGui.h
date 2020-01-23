@@ -27,7 +27,7 @@
 #ifndef __OVITO_STDMOD_GUI_
 #define __OVITO_STDMOD_GUI_
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/stdmod/StdMod.h>
 
 #endif

@@ -99,13 +99,13 @@ private:
 	QPointer<QOpenGLContextGroup> _contextGroup;
 
 	/// The number of elements stored in the buffer.
-	int _elementCount;
+	int _elementCount = -1;
 
 	/// The number of cylinder segments to generate.
-	int _cylinderSegments;
+	int _cylinderSegments = 16;
 
 	/// The number of mesh vertices generated per element.
-	int _verticesPerElement;
+	int _verticesPerElement = 0;
 
 	/// The OpenGL vertex buffer objects that store the vertices with normal vectors for polygon rendering.
 	std::vector<OpenGLBuffer<VertexWithNormal>> _verticesWithNormals;
@@ -114,28 +114,28 @@ private:
 	std::vector<OpenGLBuffer<VertexWithElementInfo>> _verticesWithElementInfo;
 
 	/// The index of the VBO chunk currently mapped to memory.
-	int _mappedChunkIndex;
+	int _mappedChunkIndex = -1;
 
 	/// Pointer to the memory-mapped VBO buffer.
-	VertexWithNormal* _mappedVerticesWithNormals;
+	VertexWithNormal* _mappedVerticesWithNormals = nullptr;
 
 	/// Pointer to the memory-mapped VBO buffer.
-	VertexWithElementInfo* _mappedVerticesWithElementInfo;
+	VertexWithElementInfo* _mappedVerticesWithElementInfo = nullptr;
 
 	/// The maximum size (in bytes) of a single VBO buffer.
-	int _maxVBOSize;
+	int _maxVBOSize = 4 * 1024 * 1024;
 
 	/// The maximum number of render elements per VBO buffer.
-	int _chunkSize;
+	int _chunkSize = 0;
 
 	/// Indicates that an OpenGL geometry shader is being used.
-	bool _usingGeometryShader;
+	bool _usingGeometryShader = false;
 
 	/// The OpenGL shader program that is used for rendering.
-	QOpenGLShaderProgram* _shader;
+	QOpenGLShaderProgram* _shader = nullptr;
 
 	/// The OpenGL shader program that is used for picking primitives.
-	QOpenGLShaderProgram* _pickingShader;
+	QOpenGLShaderProgram* _pickingShader = nullptr;
 
 	/// Lookup table for fast cylinder geometry generation.
 	std::vector<float> _cosTable;
@@ -159,5 +159,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

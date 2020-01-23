@@ -22,10 +22,10 @@
 
 #include <ovito/vorotop/VoroTopPlugin.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/FilenameParameterUI.h>
-#include <ovito/gui/dialogs/HistoryFileDialog.h>
-#include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/FilenameParameterUI.h>
+#include <ovito/gui/desktop/dialogs/HistoryFileDialog.h>
+#include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VoroTopModifierEditor.h"
 

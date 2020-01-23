@@ -23,7 +23,7 @@
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/properties/ElementType.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
-#include <ovito/gui/properties/RefTargetListParameterUI.h>
+#include <ovito/gui/desktop/properties/RefTargetListParameterUI.h>
 #include "PropertyObjectEditor.h"
 
 namespace Ovito { namespace StdObj {

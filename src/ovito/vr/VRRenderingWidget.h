@@ -23,7 +23,7 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/utilities/mesh/TriMesh.h>
 #include "VRSceneRenderer.h"
 #include "VRSettingsObject.h"

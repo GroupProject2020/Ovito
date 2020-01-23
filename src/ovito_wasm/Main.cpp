@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/core/Core.h>
-#include <ovito/gui_wasm/app/WasmApplication.h>
+#include <ovito/gui/web/app/WasmApplication.h>
 
 /**
  * This is the main entry point for the WebAssembly application.

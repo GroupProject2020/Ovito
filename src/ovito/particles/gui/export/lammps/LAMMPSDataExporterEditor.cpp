@@ -23,8 +23,8 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/export/lammps/LAMMPSDataExporter.h>
 #include <ovito/particles/import/lammps/LAMMPSDataImporter.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include "LAMMPSDataExporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

@@ -23,10 +23,10 @@
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/gui/io/DataTablePlotExporter.h>
 #include <ovito/stdobj/io/DataTableExporter.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/dialogs/FileExporterSettingsDialog.h>
-#include <ovito/gui/dialogs/HistoryFileDialog.h>
-#include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/dialogs/FileExporterSettingsDialog.h>
+#include <ovito/gui/desktop/dialogs/HistoryFileDialog.h>
+#include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "DataTableInspectionApplet.h"
 

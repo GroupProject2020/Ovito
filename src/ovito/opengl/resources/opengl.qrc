@@ -76,6 +76,11 @@
 	<file>glsl/arrows/picking/shaded.fs</file>
 	<file>glsl/arrows/picking/shaded.vs</file>
 
+	<file>glsl/gles/arrows/flat.fs</file>
+	<file>glsl/gles/arrows/flat_tri.vs</file>
+	<file>glsl/gles/arrows/picking/flat.fs</file>
+	<file>glsl/gles/arrows/picking/flat_tri.vs</file>
+
 	<file>glsl/cylinder/cylinder_raytraced.vs</file>
 	<file>glsl/cylinder/cylinder_raytraced.fs</file>
 	<file>glsl/cylinder/cylinder_raytraced.gs</file>
@@ -86,6 +91,11 @@
 	<file>glsl/cylinder/picking/cylinder_raytraced.gs</file>
 	<file>glsl/cylinder/picking/cylinder_raytraced_tri.vs</file>
 	<file>glsl/cylinder/picking/flat.gs</file>
+
+	<file>glsl/gles/cylinder/cylinder_raytraced.fs</file>
+	<file>glsl/gles/cylinder/cylinder_raytraced_tri.vs</file>
+	<file>glsl/gles/cylinder/picking/cylinder_raytraced.fs</file>
+	<file>glsl/gles/cylinder/picking/cylinder_raytraced_tri.vs</file>
 
 	<file>glsl/mesh/mesh.fs</file>
 	<file>glsl/mesh/mesh.vs</file>
@@ -106,10 +116,11 @@
 	<file>glsl/gles/lines/picking/line.fs</file>
 	<file>glsl/gles/lines/picking/thick_line.vs</file>
 
-	<file>glsl/text/text.vs</file>
-	<file>glsl/text/text.fs</file>
 	<file>glsl/image/image.vs</file>
 	<file>glsl/image/image.fs</file>
+
+	<file>glsl/gles/image/image.vs</file>
+	<file>glsl/gles/image/image.fs</file>
 
 	<file>glsl/markers/marker.vs</file>
 	<file>glsl/markers/marker.fs</file>

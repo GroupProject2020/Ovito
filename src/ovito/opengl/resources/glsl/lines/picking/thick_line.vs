@@ -50,7 +50,7 @@ void main()
 		float((objectID >> 16) & 0xFF) / 255.0,
 		float((objectID >> 24) & 0xFF) / 255.0);
 #else
-	float objectID = pickingBaseID + floor(vertexID / 2);
+	float objectID = pickingBaseID + floor(vertexID / 4);
 	gl_FrontColor = vec4(
 		floor(mod(objectID, 256.0)) / 255.0,
 		floor(mod(objectID / 256.0, 256.0)) / 255.0,

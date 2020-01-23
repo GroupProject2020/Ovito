@@ -24,8 +24,8 @@
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "PropertyInspectionApplet.h"
 
 namespace Ovito { namespace StdObj {

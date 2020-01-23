@@ -26,7 +26,7 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/crystalanalysis/objects/DislocationVis.h>
-#include <ovito/gui/mainwin/data_inspector/DataInspectionApplet.h>
+#include <ovito/gui/desktop/mainwin/data_inspector/DataInspectionApplet.h>
 #include <ovito/gui/viewport/input/ViewportInputMode.h>
 #include <ovito/gui/viewport/input/ViewportInputManager.h>
 #include <ovito/gui/viewport/input/ViewportGizmo.h>

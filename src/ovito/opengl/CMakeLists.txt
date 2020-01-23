@@ -21,7 +21,7 @@
 #######################################################################################
 
 # Compile resources.
-QT5_ADD_RESOURCES(ResourceFiles resources/opengl.qrc)
+QT5_ADD_RESOURCES(ResourceFiles resources/opengl.qrc OPTIONS ${OVITO_QT5_RESOURCE_OPTIONS})
 
 # Define plugin module.
 OVITO_STANDARD_PLUGIN(OpenGLRenderer
@@ -39,7 +39,7 @@ OVITO_STANDARD_PLUGIN(OpenGLRenderer
 		${ResourceFiles}
 )
 
-IF(NOT EMSCRIPTEN)
+IF(NOT OVITO_BUILD_WEBGUI)
 	# Find OpenGL library.
 	FIND_PACKAGE(OpenGL REQUIRED)
 

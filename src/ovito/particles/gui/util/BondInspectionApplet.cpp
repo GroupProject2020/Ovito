@@ -22,9 +22,9 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/BondsObject.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
 #include "BondInspectionApplet.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

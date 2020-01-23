@@ -25,7 +25,7 @@
 
 #include <ovito/vorotop/VoroTopPlugin.h>
 #include <ovito/vorotop/VoroTopModifier.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace VoroTop {
 

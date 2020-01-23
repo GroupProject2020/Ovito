@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -174,6 +174,11 @@ bool OpenGLSceneRenderer::pointSpritesEnabled(bool forceDefaultSetting)
 ******************************************************************************/
 bool OpenGLSceneRenderer::geometryShadersEnabled(bool forceDefaultSetting)
 {
+#ifdef Q_OS_WASM
+	// Completely disable support for geometry shaders on WebAssembly platform for now. 
+	return false;
+#endif
+
 	if(!forceDefaultSetting) {
 		// The user can override the use of geometry shaders.
 		QVariant userSetting = QSettings().value("display/use_geometry_shaders");
@@ -181,7 +186,7 @@ bool OpenGLSceneRenderer::geometryShadersEnabled(bool forceDefaultSetting)
 			return userSetting.toBool() && geometryShadersSupported();
 	}
 
-#if defined(Q_OS_WIN)
+#ifdef Q_OS_WIN
 	// Geometry shaders don't seem to work well on AMD/ATI hardware under Windows.
 	if(_openGLVendor.contains("Radeon") || _openGLRenderer.contains("Radeon"))
 		return false;
@@ -236,11 +241,11 @@ bool OpenGLSceneRenderer::sharesResourcesWith(SceneRenderer* otherRenderer) cons
 void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp)
 {
 	SceneRenderer::beginFrame(time, params, vp);
-	OVITO_REPORT_OPENGL_ERRORS();
 
 	if(Application::instance()->headlessMode())
 		throwException(tr("Cannot use OpenGL renderer in headless mode."));
 
+	// Get the GL context being used for the current rendering pass.
 	_glcontext = QOpenGLContext::currentContext();
 	if(!_glcontext)
 		throwException(tr("Cannot render scene: There is no active OpenGL context"));
@@ -248,17 +253,42 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 	_glsurface = _glcontext->surface();
 	OVITO_ASSERT(_glsurface != nullptr);
 
-	// Obtain a functions object that allows to call basic OpenGL functions in a platform-independent way.
-    OVITO_REPORT_OPENGL_ERRORS();
+	// Prepare a functions table allowing us to call OpenGL functions in a platform-independent way.
     initializeOpenGLFunctions();
+    OVITO_REPORT_OPENGL_ERRORS(this);
+
+#if 1
+	static bool printedGLInfo = false;
+	if(!printedGLInfo) {
+		printedGLInfo = true;
+		_openGLVendor = reinterpret_cast<const char*>(_glcontext->functions()->glGetString(GL_VENDOR));
+		_openGLRenderer = reinterpret_cast<const char*>(_glcontext->functions()->glGetString(GL_RENDERER));
+		_openGLVersion = reinterpret_cast<const char*>(_glcontext->functions()->glGetString(GL_VERSION));
+		_openGLSLVersion = reinterpret_cast<const char*>(_glcontext->functions()->glGetString(GL_SHADING_LANGUAGE_VERSION));
+		_openglSupportsGeomShaders = QOpenGLShader::hasOpenGLShaders(QOpenGLShader::Geometry);
+		_openglSurfaceFormat = QOpenGLContext::currentContext()->format();
+		qDebug() << "OpenGL version: " << _glcontext->format().majorVersion() << QStringLiteral(".") << _glcontext->format().minorVersion();
+		qDebug() << "OpenGL profile: " << (_glcontext->format().profile() == QSurfaceFormat::CoreProfile ? "core" : (_glcontext->format().profile() == QSurfaceFormat::CompatibilityProfile ? "compatibility" : "none"));
+		qDebug() << "OpenGL vendor: " << QString(OpenGLSceneRenderer::openGLVendor());
+		qDebug() << "OpenGL renderer: " << QString(OpenGLSceneRenderer::openGLRenderer());
+		qDebug() << "OpenGL version string: " << QString(OpenGLSceneRenderer::openGLVersion());
+		qDebug() << "OpenGL shading language: " << QString(OpenGLSceneRenderer::openGLSLVersion());
+		qDebug() << "OpenGL shader programs: " << QOpenGLShaderProgram::hasOpenGLShaderPrograms();
+		qDebug() << "OpenGL geometry shaders: " << QOpenGLShader::hasOpenGLShaders(QOpenGLShader::Geometry, _glcontext);
+		qDebug() << "isOpenGLES:" << _glcontext->isOpenGLES();
+		qDebug() << "Extensions:";
+		for(const QByteArray& e : _glcontext->extensions())
+			qDebug() << e;
+	}
+#endif
 
 	// Obtain surface format.
-    OVITO_REPORT_OPENGL_ERRORS();
+    OVITO_REPORT_OPENGL_ERRORS(this);
 	_glformat = _glcontext->format();
 
-	// OpenGL in a VirtualBox machine Windows guest reports "2.1 Chromium 1.9" as version string,
-	// which is not correctly parsed by Qt. We have to workaround this.
-	if(qstrncmp((const char*)glGetString(GL_VERSION), "2.1 ", 4) == 0) {
+	// OpenGL of a Windows guest machine running inside a VirtualBox reports "2.1 Chromium 1.9" as version string,
+	// which is not correctly parsed by Qt. We have to work around this by explicitly setting the major/minor version numbers.
+	if(qstrncmp((const char*)this->glGetString(GL_VERSION), "2.1 ", 4) == 0) {
 		_glformat.setMajorVersion(2);
 		_glformat.setMinorVersion(1);
 	}
@@ -301,17 +331,17 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 	// Set up a vertex array object (VAO). An active VAO is required during rendering according to the OpenGL core profile.
 	if(glformat().majorVersion() >= 3) {
 		_vertexArrayObject.reset(new QOpenGLVertexArrayObject());
-		OVITO_CHECK_OPENGL(_vertexArrayObject->create());
-		OVITO_CHECK_OPENGL(_vertexArrayObject->bind());
+		OVITO_CHECK_OPENGL(this, _vertexArrayObject->create());
+		OVITO_CHECK_OPENGL(this, _vertexArrayObject->bind());
 	}
-    OVITO_REPORT_OPENGL_ERRORS();
+    OVITO_REPORT_OPENGL_ERRORS(this);
 
 	// Reset OpenGL state.
 	initializeGLState();
 
 	// Clear background.
 	clearFrameBuffer();
-	OVITO_REPORT_OPENGL_ERRORS();
+	OVITO_REPORT_OPENGL_ERRORS(this);
 }
 
 /******************************************************************************
@@ -321,19 +351,14 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 void OpenGLSceneRenderer::initializeGLState()
 {
 	// Set up OpenGL state.
-    OVITO_CHECK_OPENGL(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
-	OVITO_CHECK_OPENGL(glDisable(GL_STENCIL_TEST));
-	OVITO_CHECK_OPENGL(glEnable(GL_DEPTH_TEST));
-	OVITO_CHECK_OPENGL(glDepthFunc(GL_LESS));
-#ifndef Q_OS_WASM	
-	OVITO_CHECK_OPENGL(glDepthRange(0, 1));
-	OVITO_CHECK_OPENGL(glClearDepth(1));
-#else
-	OVITO_CHECK_OPENGL(glDepthRangef(0, 1));
-	OVITO_CHECK_OPENGL(glClearDepthf(1));
-#endif	
-	OVITO_CHECK_OPENGL(glDepthMask(GL_TRUE));
-	OVITO_CHECK_OPENGL(glDisable(GL_SCISSOR_TEST));
+    OVITO_CHECK_OPENGL(this, this->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
+	OVITO_CHECK_OPENGL(this, this->glDisable(GL_STENCIL_TEST));
+	OVITO_CHECK_OPENGL(this, this->glEnable(GL_DEPTH_TEST));
+	OVITO_CHECK_OPENGL(this, this->glDepthFunc(GL_LESS));
+	OVITO_CHECK_OPENGL(this, this->glDepthRangef(0, 1));
+	OVITO_CHECK_OPENGL(this, this->glClearDepthf(1));
+	OVITO_CHECK_OPENGL(this, this->glDepthMask(GL_TRUE));
+	OVITO_CHECK_OPENGL(this, this->glDisable(GL_SCISSOR_TEST));
 	_translucentPass = false;
 	setClearColor(ColorA(0, 0, 0, 0));
 
@@ -342,7 +367,7 @@ void OpenGLSceneRenderer::initializeGLState()
     	QSize vpSize = viewport()->window()->viewportWindowDeviceSize();
     	setRenderingViewport(0, 0, vpSize.width(), vpSize.height());
     }
-    OVITO_REPORT_OPENGL_ERRORS();
+    OVITO_REPORT_OPENGL_ERRORS(this);
 }
 
 /******************************************************************************
@@ -350,8 +375,8 @@ void OpenGLSceneRenderer::initializeGLState()
 ******************************************************************************/
 void OpenGLSceneRenderer::endFrame(bool renderSuccessful)
 {
-    OVITO_REPORT_OPENGL_ERRORS();
-	OVITO_CHECK_OPENGL(_vertexArrayObject.reset());
+    OVITO_REPORT_OPENGL_ERRORS(this);
+	OVITO_CHECK_OPENGL(this, _vertexArrayObject.reset());
 	_glcontext = nullptr;
 
 	SceneRenderer::endFrame(renderSuccessful);
@@ -366,17 +391,17 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 
 	// Set up poor man's stereosopic rendering using red/green filtering.
 	if(stereoTask == StereoscopicLeft)
-		glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
+		this->glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 	else if(stereoTask == StereoscopicRight)
-		glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+		this->glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	// Render the 3D scene objects.
 	if(renderScene(operation)) {
-		OVITO_REPORT_OPENGL_ERRORS();
+		OVITO_REPORT_OPENGL_ERRORS(this);
 
 		// Call subclass to render additional content that is only visible in the interactive viewports.
 		renderInteractiveContent();
-		OVITO_REPORT_OPENGL_ERRORS();
+		OVITO_REPORT_OPENGL_ERRORS(this);
 
 		// Render translucent objects in a second pass.
 		_translucentPass = true;
@@ -388,8 +413,8 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 	}
 
 	// Restore default OpenGL state.
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	OVITO_REPORT_OPENGL_ERRORS();
+	this->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	OVITO_REPORT_OPENGL_ERRORS(this);
 
 	return !operation.isCanceled();
 }
@@ -545,7 +570,7 @@ QOpenGLShaderProgram* OpenGLSceneRenderer::loadShaderProgram(const QString& id, 
 	}
 
 	OVITO_ASSERT(contextGroup->findChild<QOpenGLShaderProgram*>(id) == program.data());
-	OVITO_REPORT_OPENGL_ERRORS();
+	OVITO_REPORT_OPENGL_ERRORS(this);
 
 	return program.take();
 }
@@ -631,7 +656,7 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 		throw ex;
 	}
 
-	OVITO_REPORT_OPENGL_ERRORS();
+	OVITO_REPORT_OPENGL_ERRORS(this);
 }
 
 /******************************************************************************
@@ -649,14 +674,14 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 	if(!shader->bind())
 		throwException(tr("Failed to bind OpenGL shader."));
 
-	bool wasDepthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
-	glDisable(GL_DEPTH_TEST);
+	bool wasDepthTestEnabled = this->glIsEnabled(GL_DEPTH_TEST);
+	this->glDisable(GL_DEPTH_TEST);
 
 	GLint vc[4];
-	glGetIntegerv(GL_VIEWPORT, vc);
+	this->glGetIntegerv(GL_VIEWPORT, vc);
 	QMatrix4x4 tm;
 	tm.ortho(vc[0], vc[0] + vc[2], vc[1] + vc[3], vc[1], -1, 1);
-	OVITO_CHECK_OPENGL(shader->setUniformValue("modelview_projection_matrix", tm));
+	OVITO_CHECK_OPENGL(this, shader->setUniformValue("modelview_projection_matrix", tm));
 
 	OpenGLBuffer<Point_2<float>> vertexBuffer;
 	OpenGLBuffer<ColorAT<float>> colorBuffer;
@@ -666,22 +691,22 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 		vertexBuffer.bind(this, shader, "position", GL_FLOAT, 0, 2);
 		colorBuffer.create(QOpenGLBuffer::StaticDraw, count);
 		colorBuffer.fillConstant(color);
-		OVITO_CHECK_OPENGL(colorBuffer.bindColors(this, shader, 4));
+		OVITO_CHECK_OPENGL(this, colorBuffer.bindColors(this, shader, 4));
 	}
 #ifndef Q_OS_WASM	
 	else if(oldGLFunctions()) {
-		OVITO_CHECK_OPENGL(oldGLFunctions()->glEnableClientState(GL_VERTEX_ARRAY));
+		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glEnableClientState(GL_VERTEX_ARRAY));
 #ifdef FLOATTYPE_FLOAT
-		OVITO_CHECK_OPENGL(oldGLFunctions()->glVertexPointer(2, GL_FLOAT, 0, points));
-		OVITO_CHECK_OPENGL(oldGLFunctions()->glColor4fv(color.data()));
+		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glVertexPointer(2, GL_FLOAT, 0, points));
+		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glColor4fv(color.data()));
 #else
-		OVITO_CHECK_OPENGL(oldGLFunctions()->glVertexPointer(2, GL_DOUBLE, 0, points));
-		OVITO_CHECK_OPENGL(oldGLFunctions()->glColor4dv(color.data()));
+		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glVertexPointer(2, GL_DOUBLE, 0, points));
+		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glColor4dv(color.data()));
 #endif
 	}
 #endif
 
-	OVITO_CHECK_OPENGL(glDrawArrays(closed ? GL_LINE_LOOP : GL_LINE_STRIP, 0, count));
+	OVITO_CHECK_OPENGL(this, glDrawArrays(closed ? GL_LINE_LOOP : GL_LINE_STRIP, 0, count));
 
 	if(glformat().majorVersion() >= 3) {
 		vertexBuffer.detach(this, shader, "position");
@@ -689,11 +714,11 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 	}
 #ifndef Q_OS_WASM	
 	else if(oldGLFunctions()) {
-		OVITO_CHECK_OPENGL(oldGLFunctions()->glDisableClientState(GL_VERTEX_ARRAY));
+		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glDisableClientState(GL_VERTEX_ARRAY));
 	}
 #endif	
 	shader->release();
-	if(wasDepthTestEnabled) glEnable(GL_DEPTH_TEST);
+	if(wasDepthTestEnabled) this->glEnable(GL_DEPTH_TEST);
 }
 
 /******************************************************************************
@@ -762,7 +787,7 @@ qreal OpenGLSceneRenderer::devicePixelRatio() const
 	if(glcontext() && glcontext()->screen())
 		return glcontext()->screen()->devicePixelRatio();
 	else
-		return 1.0;
+		return SceneRenderer::devicePixelRatio();
 }
 
 /******************************************************************************
@@ -770,7 +795,7 @@ qreal OpenGLSceneRenderer::devicePixelRatio() const
 ******************************************************************************/
 void OpenGLSceneRenderer::setClearColor(const ColorA& color)
 {
-	OVITO_CHECK_OPENGL(glClearColor(color.r(), color.g(), color.b(), color.a()));
+	OVITO_CHECK_OPENGL(this, this->glClearColor(color.r(), color.g(), color.b(), color.a()));
 }
 
 /******************************************************************************
@@ -778,7 +803,7 @@ void OpenGLSceneRenderer::setClearColor(const ColorA& color)
 ******************************************************************************/
 void OpenGLSceneRenderer::setRenderingViewport(int x, int y, int width, int height)
 {
-	OVITO_CHECK_OPENGL(glViewport(x, y, width, height));
+	OVITO_CHECK_OPENGL(this, this->glViewport(x, y, width, height));
 }
 
 /******************************************************************************
@@ -786,7 +811,7 @@ void OpenGLSceneRenderer::setRenderingViewport(int x, int y, int width, int heig
 ******************************************************************************/
 void OpenGLSceneRenderer::clearFrameBuffer(bool clearDepthBuffer, bool clearStencilBuffer)
 {
-	OVITO_CHECK_OPENGL(glClear(GL_COLOR_BUFFER_BIT |
+	OVITO_CHECK_OPENGL(this, this->glClear(GL_COLOR_BUFFER_BIT |
 			(clearDepthBuffer ? GL_DEPTH_BUFFER_BIT : 0) |
 			(clearStencilBuffer ? GL_STENCIL_BUFFER_BIT : 0)));
 }
@@ -796,8 +821,8 @@ void OpenGLSceneRenderer::clearFrameBuffer(bool clearDepthBuffer, bool clearSten
 ******************************************************************************/
 void OpenGLSceneRenderer::setDepthTestEnabled(bool enabled)
 {
-	if(enabled) glEnable(GL_DEPTH_TEST);
-	else glDisable(GL_DEPTH_TEST);
+	if(enabled) this->glEnable(GL_DEPTH_TEST);
+	else this->glDisable(GL_DEPTH_TEST);
 }
 
 /******************************************************************************
@@ -806,43 +831,40 @@ void OpenGLSceneRenderer::setDepthTestEnabled(bool enabled)
 void OpenGLSceneRenderer::setHighlightMode(int pass)
 {
 	if(pass == 1) {
-		glEnable(GL_DEPTH_TEST);
-		glClearStencil(0);
-		glClear(GL_STENCIL_BUFFER_BIT);
-		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-		glStencilMask(0x1);
-		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-		glDepthFunc(GL_LEQUAL);
+		this->glEnable(GL_DEPTH_TEST);
+		this->glClearStencil(0);
+		this->glClear(GL_STENCIL_BUFFER_BIT);
+		this->glEnable(GL_STENCIL_TEST);
+		this->glStencilFunc(GL_ALWAYS, 0x1, 0x1);
+		this->glStencilMask(0x1);
+		this->glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+		this->glDepthFunc(GL_LEQUAL);
 	}
 	else if(pass == 2) {
-		glDisable(GL_DEPTH_TEST);
-		glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
-		glStencilMask(0x1);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+		this->glDisable(GL_DEPTH_TEST);
+		this->glStencilFunc(GL_NOTEQUAL, 0x1, 0x1);
+		this->glStencilMask(0x1);
+		this->glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 	}
 	else {
-		glDepthFunc(GL_LESS);
-		glEnable(GL_DEPTH_TEST);
-		glDisable(GL_STENCIL_TEST);
+		this->glDepthFunc(GL_LESS);
+		this->glEnable(GL_DEPTH_TEST);
+		this->glDisable(GL_STENCIL_TEST);
 	}
 }
-
-OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /******************************************************************************
 * Reports OpenGL error status codes.
 ******************************************************************************/
-void checkOpenGLErrorStatus(const char* command, const char* sourceFile, int sourceLine)
+void OpenGLSceneRenderer::checkOpenGLErrorStatus(const char* command, const char* sourceFile, int sourceLine)
 {
 	GLenum error;
-	while((error = ::glGetError()) != GL_NO_ERROR) {
+	while((error = this->glGetError()) != GL_NO_ERROR) {
 		qDebug() << "WARNING: OpenGL call" << command << "failed "
 				"in line" << sourceLine << "of file" << sourceFile
 				<< "with error" << OpenGLSceneRenderer::openglErrorString(error);
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

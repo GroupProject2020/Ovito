@@ -126,6 +126,7 @@ SET(SourceFiles
 	rendering/RenderSettings.cpp
 	rendering/FrameBuffer.cpp
 	viewport/Viewport.cpp
+	viewport/ViewportWindowInterface.cpp
 	viewport/ViewportConfiguration.cpp
 	viewport/ViewportSettings.cpp
 	viewport/overlays/ViewportOverlay.cpp
@@ -211,6 +212,9 @@ IF(OVITO_BUILD_MONOLITHIC)
 ENDIF()
 IF(OVITO_BUILD_GUI)
 	SET_PROPERTY(SOURCE app/Application.cpp APPEND PROPERTY COMPILE_DEFINITIONS "OVITO_BUILD_GUI")
+ENDIF()
+IF(OVITO_BUILD_WEBGUI)
+	SET_PROPERTY(SOURCE app/Application.cpp APPEND PROPERTY COMPILE_DEFINITIONS "OVITO_BUILD_WEBGUI")
 ENDIF()
 IF(OVITO_BUILD_PROFESSIONAL)
 	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_BUILD_PROFESSIONAL")

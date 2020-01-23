@@ -27,7 +27,7 @@
 #ifndef __OVITO_STDOBJ_GUI_
 #define __OVITO_STDOBJ_GUI_
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/stdobj/StdObj.h>
 
 #endif

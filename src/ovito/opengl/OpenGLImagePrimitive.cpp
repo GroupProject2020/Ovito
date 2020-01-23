@@ -36,16 +36,15 @@ OpenGLImagePrimitive::OpenGLImagePrimitive(OpenGLSceneRenderer* renderer) :
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
 	// Initialize OpenGL shader.
+#ifndef Q_OS_WASM
 	_shader = renderer->loadShaderProgram("image", ":/openglrenderer/glsl/image/image.vs", ":/openglrenderer/glsl/image/image.fs");
+#else
+	_shader = renderer->loadShaderProgram("image", ":/openglrenderer/glsl/gles/image/image.vs", ":/openglrenderer/glsl/gles/image/image.fs");
+#endif
 
-	// Create vertex buffer
-	if(!_vertexBuffer.create())
+	// Create vertex buffer.
+	if(!_vertexBuffer.create(QOpenGLBuffer::DynamicDraw, 4))
 		renderer->throwException(QStringLiteral("Failed to create OpenGL vertex buffer."));
-	_vertexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-	if(!_vertexBuffer.bind())
-		renderer->throwException(QStringLiteral("Failed to bind OpenGL vertex buffer (OpenGLImagePrimitive initialization)."));
-	_vertexBuffer.allocate(4 * sizeof(Point2));
-	_vertexBuffer.release();
 
 	// Create OpenGL texture.
 	_texture.create();
@@ -108,7 +107,7 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 
 		// Upload texture data.
 		QImage textureImage = convertToGLFormat(image());
-		OVITO_CHECK_OPENGL(vpRenderer->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureImage.width(), textureImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureImage.constBits()));
+		OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureImage.width(), textureImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, textureImage.constBits()));
 	}
 
 	// Transform rectangle to normalized device coordinates.
@@ -126,53 +125,29 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 	QRectF rect2(x, y, w, h);
 	GLint vc[4];
 	vpRenderer->glGetIntegerv(GL_VIEWPORT, vc);
-	Point_2<GLfloat> corners[4] = {
-			Point_2<GLfloat>(rect2.left() / vc[2] * 2 - 1, 1 - rect2.bottom() / vc[3] * 2),
-			Point_2<GLfloat>(rect2.right() / vc[2] * 2 - 1, 1 - rect2.bottom() / vc[3] * 2),
-			Point_2<GLfloat>(rect2.left() / vc[2] * 2 - 1, 1 - rect2.top() / vc[3] * 2),
-			Point_2<GLfloat>(rect2.right() / vc[2] * 2 - 1, 1 - rect2.top() / vc[3] * 2)
-	};
+    Point_3<GLfloat>* vertices = _vertexBuffer.map(QOpenGLBuffer::WriteOnly);
+    vertices[0] = Point_3<GLfloat>(rect2.left() / vc[2] * 2 - 1, 1 - rect2.bottom() / vc[3] * 2, 0);
+    vertices[1] = Point_3<GLfloat>(rect2.right() / vc[2] * 2 - 1, 1 - rect2.bottom() / vc[3] * 2, 1);
+    vertices[2] = Point_3<GLfloat>(rect2.left() / vc[2] * 2 - 1, 1 - rect2.top() / vc[3] * 2, 2);
+    vertices[3] = Point_3<GLfloat>(rect2.right() / vc[2] * 2 - 1, 1 - rect2.top() / vc[3] * 2, 3);
+    _vertexBuffer.unmap();
 
 	bool wasDepthTestEnabled = vpRenderer->glIsEnabled(GL_DEPTH_TEST);
 	bool wasBlendEnabled = vpRenderer->glIsEnabled(GL_BLEND);
-	OVITO_CHECK_OPENGL(vpRenderer->glDisable(GL_DEPTH_TEST));
-	OVITO_CHECK_OPENGL(vpRenderer->glEnable(GL_BLEND));
-	OVITO_CHECK_OPENGL(vpRenderer->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+	OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glDisable(GL_DEPTH_TEST));
+	OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glEnable(GL_BLEND));
+	OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
 	if(!_shader->bind())
 		renderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
 
-	if(vpRenderer->glformat().majorVersion() >= 3) {
-		if(!_vertexBuffer.bind())
-			renderer->throwException(QStringLiteral("Failed to bind OpenGL vertex buffer (OpenGLImagePrimitive rendering)."));
+    // Set up look-up table for texture coordinates.
+    static const QVector2D uvcoords[] = {{0,0}, {1,0}, {0,1}, {1,1}};
+    _shader->setUniformValueArray("uvcoords", uvcoords, 4);
 
-		// Set up look-up table for texture coordinates.
-		static const QVector2D uvcoords[] = {{0,0}, {1,0}, {0,1}, {1,1}};
-		_shader->setUniformValueArray("uvcoords", uvcoords, 4);
-
-		_vertexBuffer.write(0, corners, 4 * sizeof(Point2));
-		_shader->enableAttributeArray("vertex_pos");
-		_shader->setAttributeBuffer("vertex_pos", GL_FLOAT, 0, 2);
-		_vertexBuffer.release();
-
-		OVITO_CHECK_OPENGL(vpRenderer->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-
-		_shader->disableAttributeArray("vertex_pos");
-	}
-#ifndef Q_OS_WASM
-	else if(vpRenderer->oldGLFunctions()) {
-		vpRenderer->oldGLFunctions()->glBegin(GL_TRIANGLE_STRIP);
-		vpRenderer->oldGLFunctions()->glTexCoord2f(0,0);
-		vpRenderer->oldGLFunctions()->glVertex2f(corners[0].x(), corners[0].y());
-		vpRenderer->oldGLFunctions()->glTexCoord2f(1,0);
-		vpRenderer->oldGLFunctions()->glVertex2f(corners[1].x(), corners[1].y());
-		vpRenderer->oldGLFunctions()->glTexCoord2f(0,1);
-		vpRenderer->oldGLFunctions()->glVertex2f(corners[2].x(), corners[2].y());
-		vpRenderer->oldGLFunctions()->glTexCoord2f(1,1);
-		vpRenderer->oldGLFunctions()->glVertex2f(corners[3].x(), corners[3].y());
-		vpRenderer->oldGLFunctions()->glEnd();
-	}
-#endif    
+    _vertexBuffer.bindPositions(vpRenderer, _shader);
+    OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+    _vertexBuffer.detachPositions(vpRenderer, _shader);
 
 	_shader->release();
 

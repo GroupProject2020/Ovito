@@ -20,24 +20,25 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
+uniform vec2 uvcoords[4];
+
 #if __VERSION__ >= 130
 
-uniform vec2 uvcoords[4];
-in vec2 vertex_pos;
+in vec3 position;
 out vec2 tex_coords;
 
 void main()
 {
-	gl_Position = vec4(vertex_pos, 0, 1);
-	tex_coords = uvcoords[gl_VertexID];
+	gl_Position = vec4(positions.xy, 0, 1);
+	tex_coords = uvcoords[positions.z];
 }
 
 #else
 
 void main()
 {
-	gl_Position = gl_Vertex;
-	gl_TexCoord[0] = gl_MultiTexCoord0;
+	gl_Position = vec4(gl_Vertex.xy, 0, 1);
+	gl_TexCoord[0] = uvcoords[gl_Vertex.z];
 }
 
 #endif

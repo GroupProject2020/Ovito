@@ -177,7 +177,10 @@ public:
 	virtual void setHighlightMode(int pass) override;
 
 	/// Returns the device pixel ratio of the output device we are rendering to.
-	qreal devicePixelRatio() const;
+	virtual qreal devicePixelRatio() const override;
+
+	/// Reports OpenGL error status codes.
+	void checkOpenGLErrorStatus(const char* command, const char* sourceFile, int sourceLine);
 
 	/// Determines whether all viewport windows should share one GL context or not.
 	static bool contextSharingEnabled(bool forceDefaultSetting = false);
