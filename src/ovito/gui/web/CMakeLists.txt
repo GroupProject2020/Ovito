@@ -39,3 +39,8 @@ OVITO_STANDARD_PLUGIN(GuiWeb
 	LIB_DEPENDENCIES
 		Qt5::Qml Qt5::Quick
 )
+
+# Speed up compilation by using precompiled headers.
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(GuiWeb ovito/gui/web/GUIWeb.h)
+ENDIF()

@@ -104,7 +104,7 @@ private:
 	/// The number of cylinder segments to generate.
 	int _cylinderSegments = 16;
 
-	/// The number of mesh vertices generated per element.
+	/// The number of mesh vertices generated per primitive.
 	int _verticesPerElement = 0;
 
 	/// The OpenGL vertex buffer objects that store the vertices with normal vectors for polygon rendering.
@@ -125,7 +125,7 @@ private:
 	/// The maximum size (in bytes) of a single VBO buffer.
 	int _maxVBOSize = 4 * 1024 * 1024;
 
-	/// The maximum number of render elements per VBO buffer.
+	/// The maximum number of primitives per VBO buffer.
 	int _chunkSize = 0;
 
 	/// Indicates that an OpenGL geometry shader is being used.
@@ -143,6 +143,7 @@ private:
 	/// Lookup table for fast cylinder geometry generation.
 	std::vector<float> _sinTable;
 
+#ifndef Q_OS_WASM
 	/// Primitive start indices passed to glMultiDrawArrays() using GL_TRIANGLE_STRIP primitives.
 	std::vector<GLint> _stripPrimitiveVertexStarts;
 
@@ -154,6 +155,13 @@ private:
 
 	/// Primitive vertex counts passed to glMultiDrawArrays() using GL_TRIANGLE_FAN primitives.
 	std::vector<GLsizei> _fanPrimitiveVertexCounts;
+#else
+	/// The number of vertex indices need per element.
+	int _indicesPerElement = 0;
+
+	/// Vertex indices passed to glDrawElements() using GL_TRIANGLES primitives.
+	std::vector<GLuint> _trianglePrimitiveVertexIndices;
+#endif
 };
 
 OVITO_END_INLINE_NAMESPACE

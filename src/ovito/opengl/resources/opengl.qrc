@@ -80,6 +80,10 @@
 	<file>glsl/gles/arrows/flat_tri.vs</file>
 	<file>glsl/gles/arrows/picking/flat.fs</file>
 	<file>glsl/gles/arrows/picking/flat_tri.vs</file>
+	<file>glsl/gles/arrows/shaded.fs</file>
+	<file>glsl/gles/arrows/shaded.vs</file>
+	<file>glsl/gles/arrows/picking/shaded.fs</file>
+	<file>glsl/gles/arrows/picking/shaded.vs</file>
 
 	<file>glsl/cylinder/cylinder_raytraced.vs</file>
 	<file>glsl/cylinder/cylinder_raytraced.fs</file>

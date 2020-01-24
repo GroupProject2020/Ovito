@@ -75,12 +75,22 @@ OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowP
 		else {
 			_shader = renderer->loadShaderProgram(
 					"arrow_shaded",
+#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/shaded.vs",
 					":/openglrenderer/glsl/arrows/shaded.fs");
+#else
+					":/openglrenderer/glsl/gles/arrows/shaded.vs",
+					":/openglrenderer/glsl/gles/arrows/shaded.fs");
+#endif
 			_pickingShader = renderer->loadShaderProgram(
 					"arrow_shaded_picking",
+#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/picking/shaded.vs",
 					":/openglrenderer/glsl/arrows/picking/shaded.fs");
+#else
+					":/openglrenderer/glsl/gles/arrows/picking/shaded.vs",
+					":/openglrenderer/glsl/gles/arrows/picking/shaded.fs");
+#endif
 		}
 	}
 	else if(shadingMode == FlatShading) {
@@ -135,6 +145,8 @@ void OpenGLArrowPrimitive::startSetElements(int elementCount)
 
 	_elementCount = elementCount;
 	bool renderMesh = true;
+
+	// Determine the number of triangle strips and triangle fans required to render N primitives.
 	int stripsPerElement;
 	int fansPerElement;
 	int verticesPerStrip;
@@ -196,6 +208,7 @@ void OpenGLArrowPrimitive::startSetElements(int elementCount)
 		}
 	}
 
+#ifndef Q_OS_WASM
 	// Prepare arrays to be passed to the glMultiDrawArrays() function.
 	_stripPrimitiveVertexStarts.resize(_chunkSize * stripsPerElement);
 	_stripPrimitiveVertexCounts.resize(_chunkSize * stripsPerElement);
@@ -211,6 +224,36 @@ void OpenGLArrowPrimitive::startSetElements(int elementCount)
 		for(int p = 0; p < fansPerElement; p++, baseIndex += verticesPerFan)
 			*ps_fan++ = baseIndex;
 	}
+#else
+	// Prepare list of vertex indices needed for glDrawElements() call.
+	_indicesPerElement = 3 * (stripsPerElement * std::max(verticesPerStrip - 2, 0) + fansPerElement * std::max(verticesPerFan - 2, 0));
+	_trianglePrimitiveVertexIndices.resize(_indicesPerElement * _chunkSize);
+	auto pvi = _trianglePrimitiveVertexIndices.begin();
+	for(GLuint index = 0, baseIndex = 0; index < _chunkSize; index++) {
+		for(int p = 0; p < stripsPerElement; p++, baseIndex += verticesPerStrip) {
+			for(int u = 2; u < verticesPerStrip; u++) {
+				if((u & 1) == 0) {
+					*pvi++ = baseIndex + u - 2;
+					*pvi++ = baseIndex + u - 1;
+					*pvi++ = baseIndex + u - 0;
+				}
+				else {
+					*pvi++ = baseIndex + u - 0;
+					*pvi++ = baseIndex + u - 1;
+					*pvi++ = baseIndex + u - 2;
+				}
+			}
+		}
+		for(int p = 0; p < fansPerElement; p++, baseIndex += verticesPerFan) {
+			for(int u = 2; u < verticesPerFan; u++) {
+				*pvi++ = baseIndex;
+				*pvi++ = baseIndex + u - 1;
+				*pvi++ = baseIndex + u - 0;
+			}
+		}
+	}
+	OVITO_ASSERT(pvi == _trianglePrimitiveVertexIndices.end());
+#endif	
 
 	// Precompute cos() and sin() functions.
 	if(shadingMode() == NormalShading) {
@@ -608,7 +651,6 @@ void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 {
-#ifndef Q_OS_WASM
 	QOpenGLShaderProgram* shader = renderer->isPicking() ? _pickingShader : _shader;
 	if(!shader->bind())
 		renderer->throwException(QStringLiteral("Failed to bind OpenGL shader."));
@@ -641,6 +683,7 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 			_verticesWithNormals[chunkIndex].bindColors(renderer, shader, 4, offsetof(VertexWithNormal, color));
 		}
 
+#ifndef Q_OS_WASM
 		int stripPrimitivesPerElement = _stripPrimitiveVertexCounts.size() / _chunkSize;
 		int stripVerticesPerElement = std::accumulate(_stripPrimitiveVertexCounts.begin(), _stripPrimitiveVertexCounts.begin() + stripPrimitivesPerElement, 0);
 		OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
@@ -650,6 +693,10 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 		int fanVerticesPerElement = std::accumulate(_fanPrimitiveVertexCounts.begin(), _fanPrimitiveVertexCounts.begin() + fanPrimitivesPerElement, 0);
 		OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
 		OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_FAN, _fanPrimitiveVertexStarts.data(), _fanPrimitiveVertexCounts.data(), fanPrimitivesPerElement * chunkSize));
+#else
+		OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
+		OVITO_CHECK_OPENGL(renderer, renderer->glDrawElements(GL_TRIANGLES, _indicesPerElement * chunkSize, GL_UNSIGNED_INT, _trianglePrimitiveVertexIndices.data()));
+#endif
 
 		_verticesWithNormals[chunkIndex].detachPositions(renderer, shader);
 		if(!renderer->isPicking()) {
@@ -661,7 +708,6 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader, true);
 
 	shader->release();
-#endif	
 }
 
 /******************************************************************************
@@ -669,7 +715,6 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 ******************************************************************************/
 void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 {
-#ifndef Q_OS_WASM
 	QOpenGLShaderProgram* shader = renderer->isPicking() ? _pickingShader : _shader;
 	if(!shader)
 		return;
@@ -726,11 +771,16 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 			OVITO_CHECK_OPENGL(renderer, renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
 		}
 		else {
+#ifndef Q_OS_WASM
 			int stripPrimitivesPerElement = _stripPrimitiveVertexCounts.size() / _chunkSize;
 			OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_STRIP, _stripPrimitiveVertexStarts.data(), _stripPrimitiveVertexCounts.data(), stripPrimitivesPerElement * chunkSize));
 
 			int fanPrimitivesPerElement = _fanPrimitiveVertexCounts.size() / _chunkSize;
 			OVITO_CHECK_OPENGL(renderer, renderer->glMultiDrawArrays(GL_TRIANGLE_FAN, _fanPrimitiveVertexStarts.data(), _fanPrimitiveVertexCounts.data(), fanPrimitivesPerElement * chunkSize));
+#else
+			OVITO_CHECK_OPENGL(renderer, shader->setUniformValue("verticesPerElement", (GLint)_verticesPerElement));
+			OVITO_CHECK_OPENGL(renderer, renderer->glDrawElements(GL_TRIANGLES, _indicesPerElement * chunkSize, GL_UNSIGNED_INT, _trianglePrimitiveVertexIndices.data()));
+#endif			
 		}
 
 		_verticesWithElementInfo[chunkIndex].detachPositions(renderer, shader);
@@ -745,7 +795,6 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader, true);
 
 	shader->release();
-#endif	
 }
 
 OVITO_END_INLINE_NAMESPACE
