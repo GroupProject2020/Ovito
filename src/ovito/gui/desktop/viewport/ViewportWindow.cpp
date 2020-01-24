@@ -118,46 +118,6 @@ void ViewportWindow::showViewportMenu(const QPoint& pos)
 }
 
 /******************************************************************************
-* Renders the viewport caption text.
-******************************************************************************/
-void ViewportWindow::renderViewportTitle()
-{
-	// Create a rendering buffer that is responsible for rendering the viewport's caption text.
-	if(!_captionBuffer || !_captionBuffer->isValid(_viewportRenderer)) {
-		_captionBuffer = _viewportRenderer->createTextPrimitive();
-		_captionBuffer->setFont(ViewportSettings::getSettings().viewportFont());
-	}
-
-	if(_cursorInContextMenuArea && !_captionBuffer->font().underline()) {
-		QFont font = _captionBuffer->font();
-		font.setUnderline(true);
-		_captionBuffer->setFont(font);
-	}
-	else if(!_cursorInContextMenuArea && _captionBuffer->font().underline()) {
-		QFont font = _captionBuffer->font();
-		font.setUnderline(false);
-		_captionBuffer->setFont(font);
-	}
-
-	QString str = viewport()->viewportTitle();
-	if(viewport()->renderPreviewMode())
-		str += tr(" (preview)");
-#ifdef OVITO_DEBUG
-	str += QString(" [%1]").arg(++_renderDebugCounter);
-#endif
-	_captionBuffer->setText(str);
-	Color textColor = Viewport::viewportColor(ViewportSettings::COLOR_VIEWPORT_CAPTION);
-	if(viewport()->renderPreviewMode() && textColor == _viewportRenderer->renderSettings()->backgroundColor())
-		textColor = Vector3(1,1,1) - (Vector3)textColor;
-	_captionBuffer->setColor(ColorA(textColor));
-
-	QFontMetricsF metrics(_captionBuffer->font());
-	Point2 pos = Point2(2, 2) * (FloatType)devicePixelRatio();
-	_contextMenuArea = QRect(0, 0, std::max(metrics.width(_captionBuffer->text()), 30.0) + pos.x(), metrics.height() + pos.y());
-	_captionBuffer->renderWindow(_viewportRenderer, pos, Qt::AlignLeft | Qt::AlignTop);
-}
-
-/******************************************************************************
 * Returns the list of gizmos to render in the viewport.
 ******************************************************************************/
 const std::vector<ViewportGizmo*>& ViewportWindow::viewportGizmos()
@@ -251,7 +211,7 @@ void ViewportWindow::mousePressEvent(QMouseEvent* event)
 	viewport()->dataset()->viewportConfig()->setActiveViewport(viewport());
 
 	// Intercept mouse clicks on the viewport caption.
-	if(_contextMenuArea.contains(event->pos())) {
+	if(_contextMenuArea.contains(event->localPos())) {
 		showViewportMenu(event->pos());
 		return;
 	}
@@ -292,11 +252,11 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
 ******************************************************************************/
 void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 {
-	if(_contextMenuArea.contains(event->pos()) && !_cursorInContextMenuArea) {
+	if(_contextMenuArea.contains(event->localPos()) && !_cursorInContextMenuArea) {
 		_cursorInContextMenuArea = true;
 		viewport()->updateViewport();
 	}
-	else if(!_contextMenuArea.contains(event->pos()) && _cursorInContextMenuArea) {
+	else if(!_contextMenuArea.contains(event->localPos()) && _cursorInContextMenuArea) {
 		_cursorInContextMenuArea = false;
 		viewport()->updateViewport();
 	}
@@ -368,17 +328,17 @@ void ViewportWindow::focusOutEvent(QFocusEvent* event)
 ******************************************************************************/
 void ViewportWindow::renderGui()
 {
-	if(viewport()->renderPreviewMode()) {
+	if(viewport()->renderPreviewMode(_viewportRenderer)) {
 		// Render render frame.
 		renderRenderFrame();
 	}
 	else {
 		// Render orientation tripod.
-		renderOrientationIndicator();
+		renderOrientationIndicator(_viewportRenderer);
 	}
 
 	// Render viewport caption.
-	renderViewportTitle();
+	_contextMenuArea = renderViewportTitle(_viewportRenderer, _cursorInContextMenuArea);
 }
 
 /******************************************************************************

@@ -24,6 +24,7 @@
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/viewport/ViewportWindowInterface.h>
 #include <ovito/core/rendering/SceneRenderer.h>
+#include <ovito/core/rendering/RenderSettings.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -97,7 +98,6 @@ void ViewportWindowInterface::renderOrientationIndicator(SceneRenderer* renderer
 	_orientationTripodGeometry->setVertexPositions(vertices);
 	_orientationTripodGeometry->render(renderer);
 
-#if 0
 	// Render x,y,z labels.
 	for(int axis = 0; axis < 3; axis++) {
 
@@ -109,13 +109,12 @@ void ViewportWindowInterface::renderOrientationIndicator(SceneRenderer* renderer
 			_orientationTripodLabels[axis]->setText(labels[axis]);
 		}
 
-		Point3 p = Point3::Origin() + viewport()->projectionParams().viewMatrix.column(axis).resized(1.2f);
+		Point3 p = Point3::Origin() + viewport()->projectionParams().viewMatrix.column(axis).resized(1.2);
 		Point3 ndcPoint = projParams.projectionMatrix * p;
-		Point2 windowPoint(( ndcPoint.x() + FloatType(1)) * tripodPixelSize / 2,
-							(-ndcPoint.y() + FloatType(1)) * tripodPixelSize / 2);
+		Point2 windowPoint(( ndcPoint.x() + FloatType(1)) * imageSize.width() / 2,
+							(-ndcPoint.y() + FloatType(1)) * imageSize.height() / 2);
 		_orientationTripodLabels[axis]->renderWindow(renderer, windowPoint, Qt::AlignHCenter | Qt::AlignVCenter);
 	}
-#endif
 
 	// Restore old rendering attributes.
 	renderer->setDepthTestEnabled(true);
@@ -141,6 +140,48 @@ void ViewportWindowInterface::renderRenderFrame(SceneRenderer* renderer)
 	_renderFrameOverlay->renderViewport(renderer, Point2(rect.maxc.x(),-1), Vector2(FloatType(1) - rect.maxc.x(), 2));
 	_renderFrameOverlay->renderViewport(renderer, Point2(rect.minc.x(),-1), Vector2(rect.width(), FloatType(1) + rect.minc.y()));
 	_renderFrameOverlay->renderViewport(renderer, Point2(rect.minc.x(),rect.maxc.y()), Vector2(rect.width(), FloatType(1) - rect.maxc.y()));
+}
+
+/******************************************************************************
+* Renders the viewport caption text.
+******************************************************************************/
+QRectF ViewportWindowInterface::renderViewportTitle(SceneRenderer* renderer, bool hoverState)
+{
+	// Create a rendering buffer that is responsible for rendering the viewport's caption text.
+	if(!_captionBuffer || !_captionBuffer->isValid(renderer)) {
+		_captionBuffer = renderer->createTextPrimitive();
+		_captionBuffer->setFont(ViewportSettings::getSettings().viewportFont());
+	}
+
+	if(hoverState && !_captionBuffer->font().underline()) {
+		QFont font = _captionBuffer->font();
+		font.setUnderline(true);
+		_captionBuffer->setFont(font);
+	}
+	else if(!hoverState && _captionBuffer->font().underline()) {
+		QFont font = _captionBuffer->font();
+		font.setUnderline(false);
+		_captionBuffer->setFont(font);
+	}
+
+	QString str = viewport()->viewportTitle();
+	if(viewport()->renderPreviewMode())
+		str += Viewport::tr(" (preview)");
+#ifdef OVITO_DEBUG
+	str += QStringLiteral(" [%1]").arg(++_renderDebugCounter);
+#endif
+	_captionBuffer->setText(str);
+	Color textColor = Viewport::viewportColor(ViewportSettings::COLOR_VIEWPORT_CAPTION);
+	if(viewport()->renderPreviewMode() && textColor == renderer->renderSettings()->backgroundColor())
+		textColor = Vector3(1,1,1) - (Vector3)textColor;
+	_captionBuffer->setColor(ColorA(textColor));
+
+	QFontMetricsF metrics(_captionBuffer->font());
+	Point2 pos = Point2(2, 2) * renderer->devicePixelRatio();
+	_captionBuffer->renderWindow(renderer, pos, Qt::AlignLeft | Qt::AlignTop);
+
+	// Compute the area covered by the caption text.
+	return QRectF(0, 0, std::max(metrics.width(_captionBuffer->text()), 30.0) + pos.x(), metrics.height() + pos.y());
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@ out vec2 tex_coords;
 void main()
 {
 	gl_Position = vec4(positions.xy, 0, 1);
-	tex_coords = uvcoords[positions.z];
+	tex_coords = uvcoords[int(positions.z)];
 }
 
 #else
@@ -38,7 +38,7 @@ void main()
 void main()
 {
 	gl_Position = vec4(gl_Vertex.xy, 0, 1);
-	gl_TexCoord[0] = uvcoords[gl_Vertex.z];
+	gl_TexCoord[0] = vec4(uvcoords[int(gl_Vertex.z)], 0, 0);
 }
 
 #endif

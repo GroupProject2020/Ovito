@@ -140,9 +140,6 @@ private:
 	/// Renders the contents of the viewport window.
 	void renderViewport();
 
-	/// Renders the viewport caption text.
-	void renderViewportTitle();
-
 private:
 
 	/// A flag that indicates that a viewport update has been requested.
@@ -150,7 +147,7 @@ private:
 
 	/// The zone in the upper left corner of the viewport where
 	/// the context menu can be activated by the user.
-	QRect _contextMenuArea;
+	QRectF _contextMenuArea;
 
 	/// Indicates that the mouse cursor is currently positioned inside the
 	/// viewport area that activates the viewport context menu.
@@ -158,14 +155,6 @@ private:
 
 	/// The input manager handling mouse events of the viewport.
 	QPointer<ViewportInputManager> _inputManager;
-
-#ifdef OVITO_DEBUG
-	/// Counts how often this viewport has been rendered.
-	int _renderDebugCounter = 0;
-#endif
-
-	/// The rendering buffer maintained to render the viewport's caption text.
-	std::shared_ptr<TextPrimitive> _captionBuffer;
 
 	/// This is the renderer of the interactive viewport.
 	OORef<ViewportSceneRenderer> _viewportRenderer;

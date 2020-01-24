@@ -116,6 +116,7 @@ OORef<ViewportConfiguration> DataSet::createDefaultViewportConfiguration()
 
 		defaultViewportConfig->setActiveViewport(perspectiveView);
 
+#ifndef Q_OS_WASM
 		Viewport::ViewType maximizedViewportType = static_cast<Viewport::ViewType>(ViewportSettings::getSettings().defaultMaximizedViewportType());
 		if(maximizedViewportType != Viewport::VIEW_NONE) {
 			for(Viewport* vp : defaultViewportConfig->viewports()) {
@@ -132,6 +133,9 @@ OORef<ViewportConfiguration> DataSet::createDefaultViewportConfiguration()
 			}
 		}
 		else defaultViewportConfig->setMaximizedViewport(nullptr);
+#else
+		defaultViewportConfig->setMaximizedViewport(defaultViewportConfig->activeViewport());
+#endif
 	}
 
 	return defaultViewportConfig;

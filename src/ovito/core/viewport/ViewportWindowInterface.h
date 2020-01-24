@@ -95,6 +95,9 @@ protected:
 	/// Renders the frame on top of the scene that indicates the visible rendering area.
 	void renderRenderFrame(SceneRenderer* renderer);
 
+	/// Renders the viewport caption text.
+	QRectF renderViewportTitle(SceneRenderer* renderer, bool hoverState);
+
 private:
 
 	/// Pointer to the main window hosting this viewport window.
@@ -102,6 +105,11 @@ private:
 
 	/// The viewport associated with this window.
 	Viewport* _viewport;
+
+#ifdef OVITO_DEBUG
+	/// Counts how often this viewport has been rendered during the current program session.
+	int _renderDebugCounter = 0;
+#endif
 
 	/// The primitive for rendering the viewport's caption text.
 	std::shared_ptr<TextPrimitive> _captionBuffer;

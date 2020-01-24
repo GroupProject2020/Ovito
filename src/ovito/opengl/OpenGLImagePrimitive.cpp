@@ -24,23 +24,21 @@
 #include "OpenGLImagePrimitive.h"
 #include "OpenGLSceneRenderer.h"
 
+#include <QOpenGLPaintDevice> 
+
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-OpenGLImagePrimitive::OpenGLImagePrimitive(OpenGLSceneRenderer* renderer) :
-	_contextGroup(QOpenGLContextGroup::currentContextGroup()),
-	_needTextureUpdate(true)
+OpenGLImagePrimitive::OpenGLImagePrimitive(OpenGLSceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
+	_contextGroup = QOpenGLContextGroup::currentContextGroup();
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
 	// Initialize OpenGL shader.
-#ifndef Q_OS_WASM
 	_shader = renderer->loadShaderProgram("image", ":/openglrenderer/glsl/image/image.vs", ":/openglrenderer/glsl/image/image.fs");
-#else
-	_shader = renderer->loadShaderProgram("image", ":/openglrenderer/glsl/gles/image/image.vs", ":/openglrenderer/glsl/gles/image/image.fs");
-#endif
 
 	// Create vertex buffer.
 	if(!_vertexBuffer.create(QOpenGLBuffer::DynamicDraw, 4))
@@ -48,6 +46,7 @@ OpenGLImagePrimitive::OpenGLImagePrimitive(OpenGLSceneRenderer* renderer) :
 
 	// Create OpenGL texture.
 	_texture.create();
+#endif
 }
 
 /******************************************************************************
@@ -55,9 +54,13 @@ OpenGLImagePrimitive::OpenGLImagePrimitive(OpenGLSceneRenderer* renderer) :
 ******************************************************************************/
 bool OpenGLImagePrimitive::isValid(SceneRenderer* renderer)
 {
+#ifndef Q_OS_WASM
 	OpenGLSceneRenderer* vpRenderer = qobject_cast<OpenGLSceneRenderer*>(renderer);
 	if(!vpRenderer) return false;
 	return (_contextGroup == vpRenderer->glcontext()->shareGroup()) && _texture.isCreated() && _vertexBuffer.isCreated();
+#else
+    return true;
+#endif
 }
 
 /******************************************************************************
@@ -79,20 +82,21 @@ void OpenGLImagePrimitive::renderViewport(SceneRenderer* renderer, const Point2&
 ******************************************************************************/
 void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& pos, const Vector2& size)
 {
-	OVITO_ASSERT(_contextGroup == QOpenGLContextGroup::currentContextGroup());
-	OVITO_ASSERT(_texture.isCreated());
 	OpenGLSceneRenderer* vpRenderer = dynamic_object_cast<OpenGLSceneRenderer>(renderer);
 
 	if(image().isNull() || !vpRenderer || renderer->isPicking())
 		return;
 
+#ifndef Q_OS_WASM
+	OVITO_ASSERT(_contextGroup == QOpenGLContextGroup::currentContextGroup());
+	OVITO_ASSERT(_texture.isCreated());
 	vpRenderer->rebindVAO();
 
 	// Prepare texture.
 	_texture.bind();
 
 	// Enable texturing when using compatibility OpenGL. In the core profile, this is enabled by default.
-	if(vpRenderer->isCoreProfile() == false)
+	if(vpRenderer->isCoreProfile() == false && !vpRenderer->glcontext()->isOpenGLES())
 		vpRenderer->glEnable(GL_TEXTURE_2D);
 
 	if(_needTextureUpdate) {
@@ -100,10 +104,8 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-#ifndef Q_OS_WASM
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, 0);
 		vpRenderer->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-#endif
 
 		// Upload texture data.
 		QImage textureImage = convertToGLFormat(image());
@@ -156,10 +158,22 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 	if(!wasBlendEnabled) vpRenderer->glDisable(GL_BLEND);
 
 	// Turn off texturing.
-	if(vpRenderer->isCoreProfile() == false)
+	if(vpRenderer->isCoreProfile() == false && !vpRenderer->glcontext()->isOpenGLES())
 		vpRenderer->glDisable(GL_TEXTURE_2D);
+#else
+    // Query the viewport size in device pixels.
+	GLint vc[4];
+	vpRenderer->glGetIntegerv(GL_VIEWPORT, vc);
+
+    // Use Qt's QOpenGLPaintDevice to paint the image into the framebuffer.
+    QOpenGLPaintDevice paintDevice(vc[2], vc[3]);
+    QPainter painter(&paintDevice);
+
+    painter.drawImage(QRectF(pos.x(), pos.y(), size.x(), size.y()), image());
+#endif
 }
 
+#ifndef Q_OS_WASM
 static inline QRgb qt_gl_convertToGLFormatHelper(QRgb src_pixel, GLenum texture_format)
 {
     if(texture_format == 0x80E1 /*GL_BGRA*/) {
@@ -283,6 +297,7 @@ QImage OpenGLImagePrimitive::convertToGLFormat(const QImage& img)
     convertToGLFormatHelper(res, img.convertToFormat(QImage::Format_ARGB32), GL_RGBA);
     return res;
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

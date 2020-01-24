@@ -42,11 +42,13 @@ public:
 	/// Constructor.
 	OpenGLImagePrimitive(OpenGLSceneRenderer* renderer);
 
+#ifndef Q_OS_WASM
 	/// \brief Sets the image to be rendered.
 	virtual void setImage(const QImage& image) override {
 		_needTextureUpdate = true;
 		ImagePrimitive::setImage(image);
 	}
+#endif
 
 	/// \brief Returns true if the geometry buffer is filled and can be rendered with the given renderer.
 	virtual bool isValid(SceneRenderer* renderer) override;
@@ -59,6 +61,7 @@ public:
 
 private:
 
+#ifndef Q_OS_WASM
 	/// Converts the QImage into the unnamed format expected by OpenGL functions such as glTexImage2D().
 	static QImage convertToGLFormat(const QImage& img);
 
@@ -75,11 +78,10 @@ private:
 	OpenGLTexture _texture;
 
 	/// Indicates that the texture needs to be updated.
-	bool _needTextureUpdate;
+	bool _needTextureUpdate = true;
+#endif
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

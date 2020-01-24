@@ -176,11 +176,11 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
 ******************************************************************************/
 void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 {
-	if(_contextMenuArea.contains(event->pos()) && !_cursorInContextMenuArea) {
+	if(_contextMenuArea.contains(event->localPos()) && !_cursorInContextMenuArea) {
 		_cursorInContextMenuArea = true;
 		viewport()->updateViewport();
 	}
-	else if(!_contextMenuArea.contains(event->pos()) && _cursorInContextMenuArea) {
+	else if(!_contextMenuArea.contains(event->localPos()) && _cursorInContextMenuArea) {
 		_cursorInContextMenuArea = false;
 		viewport()->updateViewport();
 	}
@@ -314,6 +314,9 @@ void ViewportWindow::renderGui()
 		// Render orientation tripod.
 		renderOrientationIndicator(_viewportRenderer);
 	}
+
+	// Render viewport caption.
+	_contextMenuArea = renderViewportTitle(_viewportRenderer, _cursorInContextMenuArea);
 }
 
 OVITO_END_INLINE_NAMESPACE

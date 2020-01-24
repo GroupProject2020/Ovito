@@ -69,7 +69,7 @@ protected:
 
     /// This method that takes care of freeing the shared OpenGL resources owned by this class.
     virtual void freeOpenGLResources() override {
-    	if(_id) {
+    	if(_id && QOpenGLContext::currentContext()) {
     		QOpenGLContext::currentContext()->functions()->glDeleteTextures(1, &_id);
 			_id = 0;
     	}
