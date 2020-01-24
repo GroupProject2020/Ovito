@@ -44,6 +44,7 @@ namespace Ovito {
 
     OVITO_BEGIN_INLINE_NAMESPACE(Gui)
         class MainWindow;
+        class WasmDataSetContainer;
 
 		OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 			class ViewportWindow;

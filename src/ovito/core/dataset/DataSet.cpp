@@ -134,7 +134,8 @@ OORef<ViewportConfiguration> DataSet::createDefaultViewportConfiguration()
 		}
 		else defaultViewportConfig->setMaximizedViewport(nullptr);
 #else
-		defaultViewportConfig->setMaximizedViewport(defaultViewportConfig->activeViewport());
+//		defaultViewportConfig->setMaximizedViewport(defaultViewportConfig->activeViewport());
+		defaultViewportConfig->setMaximizedViewport(nullptr);
 #endif
 	}
 

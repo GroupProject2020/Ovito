@@ -26,6 +26,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/app/Application.h>
 
+#include <QMetaObject>
 #ifdef Q_OS_UNIX
 	#include <csignal>
 #endif

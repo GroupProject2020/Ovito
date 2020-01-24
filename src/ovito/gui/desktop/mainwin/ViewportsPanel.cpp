@@ -43,7 +43,7 @@ ViewportsPanel::ViewportsPanel(MainWindow* parent) : QWidget(parent)
 	connect(&parent->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
 	connect(&parent->datasetContainer(), &DataSetContainer::animationSettingsReplaced, this, &ViewportsPanel::onAnimationSettingsReplaced);
 
-	// Track viewport input changes.
+	// Track viewport input mode changes.
 	connect(parent->viewportInputManager(), &ViewportInputManager::inputModeChanged, this, &ViewportsPanel::onInputModeChanged);
 }
 

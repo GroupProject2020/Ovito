@@ -257,7 +257,7 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
     initializeOpenGLFunctions();
     OVITO_REPORT_OPENGL_ERRORS(this);
 
-#if 1
+#if 0
 	static bool printedGLInfo = false;
 	if(!printedGLInfo) {
 		printedGLInfo = true;
@@ -424,9 +424,11 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 ******************************************************************************/
 void OpenGLSceneRenderer::makeContextCurrent()
 {
+#ifndef Q_OS_WASM
 	OVITO_ASSERT(glcontext());
 	if(!glcontext()->makeCurrent(_glsurface))
 		throwException(tr("Failed to make OpenGL context current."));
+#endif		
 }
 
 /******************************************************************************
@@ -730,24 +732,35 @@ void OpenGLSceneRenderer::activateVertexIDs(QOpenGLShaderProgram* shader, GLint 
 	// variable. Therefore we have to provide the IDs in a vertex buffer.
 	if(glformat().majorVersion() < 3 || alwaysUseVBO) {
 		if(!_glVertexIDBuffer.isCreated() || _glVertexIDBufferSize < vertexCount) {
+			OVITO_REPORT_OPENGL_ERRORS(this);
 			if(!_glVertexIDBuffer.isCreated()) {
 				// Create the ID buffer only once and keep it until the number of particles changes.
 				if(!_glVertexIDBuffer.create())
 					throwException(QStringLiteral("Failed to create OpenGL vertex ID buffer."));
 				_glVertexIDBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+				OVITO_REPORT_OPENGL_ERRORS(this);
 			}
 			if(!_glVertexIDBuffer.bind())
 				throwException(QStringLiteral("Failed to bind OpenGL vertex ID buffer."));
-			_glVertexIDBuffer.allocate(vertexCount * sizeof(GLfloat));
+			OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.allocate(vertexCount * sizeof(GLfloat)));
 			_glVertexIDBufferSize = vertexCount;
 			if(vertexCount > 0) {
-				GLfloat* bufferData = static_cast<GLfloat*>(_glVertexIDBuffer.map(QOpenGLBuffer::WriteOnly));
-				if(!bufferData)
-					throwException(QStringLiteral("Failed to map OpenGL vertex ID buffer to memory."));
-				GLfloat* bufferDataEnd = bufferData + vertexCount;
-				for(GLint index = 0; bufferData != bufferDataEnd; ++index, ++bufferData)
-					*bufferData = index;
-				_glVertexIDBuffer.unmap();
+				if(!glcontext()->isOpenGLES()) {
+					GLfloat* bufferData = static_cast<GLfloat*>(_glVertexIDBuffer.map(QOpenGLBuffer::WriteOnly));
+					if(!bufferData)
+						throwException(QStringLiteral("Failed to map OpenGL vertex ID buffer to memory."));
+					GLfloat* bufferDataEnd = bufferData + vertexCount;
+					for(GLint index = 0; bufferData != bufferDataEnd; ++index, ++bufferData)
+						*bufferData = index;
+					_glVertexIDBuffer.unmap();
+				}
+				else {
+					// OpenGL ES platform does not support memory mapping of VBOs.
+					std::vector<GLfloat> bufferData(vertexCount);
+					std::iota(bufferData.begin(), bufferData.end(), 0);
+					OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.allocate(bufferData.data(), vertexCount * sizeof(GLfloat)));
+//					OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.write(0, bufferData.data(), bufferData.size()));
+				}
 			}
 		}
 		else {
@@ -759,6 +772,7 @@ void OpenGLSceneRenderer::activateVertexIDs(QOpenGLShaderProgram* shader, GLint 
 		shader->enableAttributeArray("vertexID");
 		shader->setAttributeBuffer("vertexID", GL_FLOAT, 0, 1);
 		_glVertexIDBuffer.release();
+		OVITO_REPORT_OPENGL_ERRORS(this);
 	}
 }
 

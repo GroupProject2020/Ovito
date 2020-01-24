@@ -76,6 +76,9 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 	IF(BUILD_SHARED_LIBS)
 		ADD_DEPENDENCIES(Ovito ${plugin})
 	ELSE()
-		TARGET_LINK_LIBRARIES(Ovito PRIVATE ${plugin})
+		# When generating a static executable that contains all plugins, make sure
+		# the linker doesn't remove apparently unreferenced symbols. They are needed to
+		# have the plugin classes register themselves.
+		TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
 	ENDIF()
 ENDFOREACH()

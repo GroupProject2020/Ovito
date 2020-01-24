@@ -595,7 +595,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 
 		// Let GUI window render its own graphics on top of the scene.
 		if(!renderer->isPicking()) {
-			window()->renderGui();
+			window()->renderGui(renderer);
 		}
 
 		// Finish rendering.

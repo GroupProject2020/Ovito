@@ -326,19 +326,19 @@ void ViewportWindow::focusOutEvent(QFocusEvent* event)
 /******************************************************************************
 * Renders custom GUI elements in the viewport on top of the scene.
 ******************************************************************************/
-void ViewportWindow::renderGui()
+void ViewportWindow::renderGui(SceneRenderer* renderer)
 {
-	if(viewport()->renderPreviewMode(_viewportRenderer)) {
+	if(viewport()->renderPreviewMode(renderer)) {
 		// Render render frame.
 		renderRenderFrame();
 	}
 	else {
 		// Render orientation tripod.
-		renderOrientationIndicator(_viewportRenderer);
+		renderOrientationIndicator(renderer);
 	}
 
 	// Render viewport caption.
-	_contextMenuArea = renderViewportTitle(_viewportRenderer, _cursorInContextMenuArea);
+	_contextMenuArea = renderViewportTitle(renderer, _cursorInContextMenuArea);
 }
 
 /******************************************************************************

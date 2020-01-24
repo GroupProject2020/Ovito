@@ -50,6 +50,9 @@ public:
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking) override;
 
+	/// Returns a pointer to the main dataset container.
+	WasmDataSetContainer* datasetContainer() const;
+
 protected:
 
 	/// Defines the program's command line parameters.

@@ -44,6 +44,7 @@ PickingSceneRenderer::PickingSceneRenderer(DataSet* dataset) : ViewportSceneRend
 ******************************************************************************/
 void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp)
 {
+#if 0	
 	// Get the viewport's window.
 	ViewportWindowInterface* vpWindow = vp->window();
 	if(!vpWindow)
@@ -52,7 +53,7 @@ void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParame
 		throwException(tr("Viewport window is not visible."));
 
 	// Before making our GL context current, remember the old context that
-	// is currently active so we can restore it when we are done.
+	// is currently active so we can restore it after we are done.
 	_oldContext = QOpenGLContext::currentContext();
 	_oldSurface = _oldContext ? _oldContext->surface() : nullptr;
 
@@ -73,10 +74,10 @@ void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParame
 	if(!_framebufferObject->isValid())
 		throwException(tr("Failed to create OpenGL framebuffer object for offscreen rendering."));
 
-	// Bind OpenGL buffer.
+	// Bind OpenGL framebuffer.
 	if(!_framebufferObject->bind())
 		throwException(tr("Failed to bind OpenGL framebuffer object for offscreen rendering."));
-
+#endif
 	ViewportSceneRenderer::beginFrame(time, params, vp);
 }
 
@@ -88,9 +89,12 @@ void PickingSceneRenderer::initializeGLState()
 {
 	ViewportSceneRenderer::initializeGLState();
 
+#if 0
 	// Set up GL viewport.
 	setRenderingViewport(0, 0, _framebufferObject->width(), _framebufferObject->height());
+	// Fill framebuffer with zeros.
 	setClearColor(ColorA(0, 0, 0, 0));
+#endif	
 }
 
 /******************************************************************************
@@ -106,18 +110,25 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 		return false;
 
 	// Clear OpenGL error state, so we start fresh for the glReadPixels() call below.
-	while(glGetError() != GL_NO_ERROR);
+	while(this->glGetError() != GL_NO_ERROR);
 
+#if 0
 	// Fetch rendered image from OpenGL framebuffer.
 	QSize size = _framebufferObject->size();
+#ifndef Q_OS_WASM
 	_image = QImage(size, QImage::Format_ARGB32);
 	// Try GL_BGRA pixel format first. If not supported, use GL_RGBA instead and convert back to GL_BGRA.
-	glReadPixels(0, 0, size.width(), size.height(), 0x80E1 /*GL_BGRA*/, GL_UNSIGNED_BYTE, _image.bits());
-	if(glGetError() != GL_NO_ERROR) {
-		glReadPixels(0, 0, size.width(), size.height(), GL_RGBA, GL_UNSIGNED_BYTE, _image.bits());
+	this->glReadPixels(0, 0, size.width(), size.height(), 0x80E1 /*GL_BGRA*/, GL_UNSIGNED_BYTE, _image.bits());
+	if(this->glGetError() != GL_NO_ERROR) {
+		OVITO_CHECK_OPENGL(this, this->glReadPixels(0, 0, size.width(), size.height(), GL_RGBA, GL_UNSIGNED_BYTE, _image.bits()));
 		_image = _image.rgbSwapped();
 	}
+#else
+	_image = _framebufferObject->toImage(false);
+	qDebug() << "Read image from framebuffer:" << _image.size();
+#endif
 
+#ifndef Q_OS_WASM
 	// Also acquire OpenGL depth buffer data.
 	// The depth information is used to compute the XYZ coordinate of the point under the mouse cursor.
 	_depthBufferBits = glformat().depthBufferSize();
@@ -143,6 +154,8 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 		glReadPixels(0, 0, size.width(), size.height(), GL_DEPTH_COMPONENT, GL_FLOAT, _depthBuffer.get());
 		_depthBufferBits = 0;
 	}
+#endif	
+#endif
 
 	return !operation.isCanceled();
 }
@@ -156,6 +169,7 @@ void PickingSceneRenderer::endFrame(bool renderSuccessful)
 	_framebufferObject.reset();
 	ViewportSceneRenderer::endFrame(renderSuccessful);
 
+#if 0
 	// Reactivate old GL context.
 	if(_oldSurface && _oldContext) {
 		_oldContext->makeCurrent(_oldSurface);
@@ -166,6 +180,7 @@ void PickingSceneRenderer::endFrame(bool renderSuccessful)
 	}
 	_oldContext = nullptr;
 	_oldSurface = nullptr;
+#endif	
 }
 
 /******************************************************************************
@@ -232,6 +247,7 @@ std::tuple<const PickingSceneRenderer::ObjectRecord*, quint32> PickingSceneRende
 			quint32 green = qGreen(pixel);
 			quint32 blue = qBlue(pixel);
 			quint32 alpha = qAlpha(pixel);
+			qDebug() << "Pixel:" << pos << "value=" << red << green << blue << alpha;
 			quint32 objectID = red + (green << 8) + (blue << 16) + (alpha << 24);
 			const ObjectRecord* objRecord = lookupObjectRecord(objectID);
 			if(objRecord)

@@ -807,6 +807,7 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader);
 
 	shader->release();
+	renderer->glDisable(GL_CULL_FACE);
 #endif	
 }
 
@@ -927,6 +928,8 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 
 	if(particleShape() == SphericalShape && shadingMode() == NormalShading && !renderer->isPicking())
 		deactivateBillboardTexture(renderer);
+
+	renderer->glDisable(GL_CULL_FACE);
 #endif		
 }
 

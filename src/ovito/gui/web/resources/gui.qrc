@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/gui">
         <file>main.qml</file>
+
+        <file>B.obj</file>
     </qresource>
 </RCC>

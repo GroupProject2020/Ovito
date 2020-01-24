@@ -85,7 +85,7 @@ public:
 	}
 
 	/// Renders custom GUI elements in the viewport on top of the scene.
-	virtual void renderGui() override;
+	virtual void renderGui(SceneRenderer* renderer) override;
 
 	/// Makes the OpenGL context used by the viewport window for rendering the current context.
 	virtual void makeOpenGLContextCurrent() override { window()->openglContext()->makeCurrent(window()); }

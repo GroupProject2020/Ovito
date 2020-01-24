@@ -23,6 +23,7 @@
 #include <ovito/gui/web/GUIWeb.h>
 #include <ovito/gui/web/mainwin/MainWindow.h>
 #include <ovito/gui/web/viewport/ViewportWindow.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
@@ -37,8 +38,10 @@ ViewportsPanel::ViewportsPanel()
 {
 	// Activate the new viewport layout as soon as a new state file is loaded.
 	connect(this, &QQuickItem::windowChanged, this, [this](QQuickWindow* window) {
-		if(window)
+		if(window) {
 			connect(&mainWindow()->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
+			connect(mainWindow()->viewportInputManager(), &ViewportInputManager::inputModeChanged, this, &ViewportsPanel::onInputModeChanged);
+		}
 	});
 }
 
@@ -78,6 +81,33 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 		// Layout viewport windows.
 		layoutViewports();
 	}
+}
+
+/******************************************************************************
+* This is called when the current viewport input mode has changed.
+******************************************************************************/
+void ViewportsPanel::onInputModeChanged(ViewportInputMode* oldMode, ViewportInputMode* newMode)
+{
+	disconnect(_activeModeCursorChangedConnection);
+	if(newMode) {
+		_activeModeCursorChangedConnection = connect(newMode, &ViewportInputMode::curserChanged, this, &ViewportsPanel::viewportModeCursorChanged);
+		viewportModeCursorChanged(newMode->cursor());
+	}
+	else viewportModeCursorChanged(cursor());
+}
+
+/******************************************************************************
+* This is called when the mouse cursor of the active input mode has changed.
+******************************************************************************/
+void ViewportsPanel::viewportModeCursorChanged(const QCursor& cursor)
+{
+	if(!_viewportConfig) return;
+
+//	for(Viewport* vp : _viewportConfig->viewports()) {
+//		if(ViewportWindow* vpWindow = static_cast<ViewportWindow*>(vp->window())) {
+//			vpWindow->setCursor(cursor);
+//		}
+//	}
 }
 
 /******************************************************************************

@@ -161,6 +161,10 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 	if(vpRenderer->isCoreProfile() == false && !vpRenderer->glcontext()->isOpenGLES())
 		vpRenderer->glDisable(GL_TEXTURE_2D);
 #else
+    // Disable depth testing and blending.
+	bool wasDepthTestEnabled = vpRenderer->glIsEnabled(GL_DEPTH_TEST);
+	OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glDisable(GL_DEPTH_TEST));
+
     // Query the viewport size in device pixels.
 	GLint vc[4];
 	vpRenderer->glGetIntegerv(GL_VIEWPORT, vc);
@@ -170,6 +174,9 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
     QPainter painter(&paintDevice);
 
     painter.drawImage(QRectF(pos.x(), pos.y(), size.x(), size.y()), image());
+
+	// Restore old state.
+	if(wasDepthTestEnabled) vpRenderer->glEnable(GL_DEPTH_TEST);
 #endif
 }
 

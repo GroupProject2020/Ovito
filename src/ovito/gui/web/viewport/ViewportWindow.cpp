@@ -114,7 +114,6 @@ void ViewportWindow::processViewportUpdate()
 	}
 }
 
-
 /******************************************************************************
 * Handles double click events.
 ******************************************************************************/
@@ -231,7 +230,6 @@ ViewportPickResult ViewportWindow::pick(const QPointF& pos)
 {
 	ViewportPickResult result;
 
-#ifndef Q_OS_WASM
 	// Cannot perform picking while viewport is not visible or currently rendering or when updates are disabled.
 	if(isVisible() && pickingRenderer() && !viewport()->isRendering() && !viewport()->dataset()->viewportConfig()->isSuspended()) {
 		try {
@@ -256,7 +254,7 @@ ViewportPickResult ViewportWindow::pick(const QPointF& pos)
 			ex.reportError();
 		}
 	}
-#endif
+
 	return result;
 }
 
@@ -288,7 +286,8 @@ void ViewportWindow::renderViewport()
 
 	try {
 		// Let the Viewport class do the actual rendering work.
-		viewport()->renderInteractive(_viewportRenderer);
+		//viewport()->renderInteractive(_viewportRenderer);
+		viewport()->renderInteractive(_pickingRenderer);
 	}
 	catch(Exception& ex) {
 		if(ex.context() == nullptr) ex.setContext(viewport()->dataset());
@@ -304,19 +303,19 @@ void ViewportWindow::renderViewport()
 /******************************************************************************
 * Renders custom GUI elements in the viewport on top of the scene.
 ******************************************************************************/
-void ViewportWindow::renderGui()
+void ViewportWindow::renderGui(SceneRenderer* renderer)
 {
 	if(viewport()->renderPreviewMode()) {
 		// Render render frame.
-		renderRenderFrame(_viewportRenderer);
+		renderRenderFrame(renderer);
 	}
 	else {
 		// Render orientation tripod.
-		renderOrientationIndicator(_viewportRenderer);
+		renderOrientationIndicator(renderer);
 	}
 
 	// Render viewport caption.
-	_contextMenuArea = renderViewportTitle(_viewportRenderer, _cursorInContextMenuArea);
+	_contextMenuArea = renderViewportTitle(renderer, _cursorInContextMenuArea);
 }
 
 OVITO_END_INLINE_NAMESPACE

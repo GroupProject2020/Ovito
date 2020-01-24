@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,10 +26,9 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 
-#ifdef QT_NO_THREAD
+#if QT_FEATURE_thread > 0
 #include <QThreadPool>
 #endif
-#include <QMetaObject>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -67,11 +66,16 @@ public:
 		// Associate this TaskManager with the task.
 		task->_taskManager = this; 
 		// Submit the task for execution.
-#ifdef QT_NO_THREAD
+#if QT_FEATURE_thread > 0
 		QThreadPool::globalInstance()->start(task.get());
 #endif
 		// The task is now associated with this TaskManager.
 		registerTask(task);
+
+#if QT_FEATURE_thread <= 0
+		// If multi-threading has been disabled, run the task immediately in the current thread.
+		task->run();
+#endif
 		return task->future();
 	}
 

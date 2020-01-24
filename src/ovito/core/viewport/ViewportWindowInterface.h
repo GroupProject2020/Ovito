@@ -72,7 +72,7 @@ public:
 	virtual void destroyViewportWindow() = 0;
 
 	/// Renders custom GUI elements in the viewport on top of the scene.
-	virtual void renderGui() = 0;
+	virtual void renderGui(SceneRenderer* renderer) = 0;
 
 	/// Determines the object that is located under the given mouse cursor position.
 	virtual ViewportPickResult pick(const QPointF& pos) = 0;

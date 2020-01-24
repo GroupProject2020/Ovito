@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,9 +35,15 @@ OpenGLMeshPrimitive::OpenGLMeshPrimitive(OpenGLSceneRenderer* renderer) :
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
 	// Initialize OpenGL shader.
+#ifndef Q_OS_WASM
 	_shader = renderer->loadShaderProgram("mesh", ":/openglrenderer/glsl/mesh/mesh.vs", ":/openglrenderer/glsl/mesh/mesh.fs");
 	_pickingShader = renderer->loadShaderProgram("mesh.picking", ":/openglrenderer/glsl/mesh/picking/mesh.vs", ":/openglrenderer/glsl/mesh/picking/mesh.fs");
 	_lineShader = renderer->loadShaderProgram("wireframe_line", ":/openglrenderer/glsl/lines/line.vs", ":/openglrenderer/glsl/lines/line.fs");
+#else
+	_shader = renderer->loadShaderProgram("mesh", ":/openglrenderer/glsl/gles/mesh/mesh.vs", ":/openglrenderer/glsl/gles/mesh/mesh.fs");
+	_pickingShader = renderer->loadShaderProgram("mesh.picking", ":/openglrenderer/glsl/gles/mesh/picking/mesh.vs", ":/openglrenderer/glsl/gles/mesh/picking/mesh.fs");
+	_lineShader = renderer->loadShaderProgram("wireframe_line", ":/openglrenderer/glsl/gles/lines/line.vs", ":/openglrenderer/glsl/gles/lines/line.fs");
+#endif
 }
 
 /******************************************************************************
@@ -72,7 +78,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 	if(mesh.faceCount() == 0)
 		return;
 
-	ColoredVertexWithNormal* renderVertices = _vertexBuffer.map(QOpenGLBuffer::ReadWrite);
+	ColoredVertexWithNormal* renderVertices = _vertexBuffer.map(QOpenGLBuffer::WriteOnly);
 
 	if(!mesh.hasNormals()) {
 		quint32 allMask = 0;
@@ -214,7 +220,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor, 
 		}
 		// Allocate storage buffer for line elements.
 		_edgeLinesBuffer.create(QOpenGLBuffer::StaticDraw, numVisibleEdges, 2);
-		Point_3<float>* lineVertices = _edgeLinesBuffer.map(QOpenGLBuffer::ReadWrite);
+		Point_3<float>* lineVertices = _edgeLinesBuffer.map(QOpenGLBuffer::WriteOnly);
 
 		// Generate line elements.
 		for(const TriMeshFace& face : mesh.faces()) {
@@ -363,6 +369,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 	else {
 		vpRenderer->activateVertexIDs(_pickingShader, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement());
 	}
+	OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 	size_t numInstances = !_useInstancedRendering ? 1 : _perInstanceTMs.size();
 	for(size_t instance = 0; instance < numInstances; instance++) {
@@ -393,7 +400,10 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		}
 		else {
 			if(!_useInstancedRendering) {
-				_pickingShader->setUniformValue("pickingBaseID", (GLint)vpRenderer->registerSubObjectIDs(faceCount()));
+				int pickingBaseId = vpRenderer->registerSubObjectIDs(faceCount());
+				qDebug() << "OpenGLMeshPrimitive: picking base id=" << pickingBaseId;
+				_pickingShader->setUniformValue("pickingBaseID", (GLint)pickingBaseId);
+				//_pickingShader->setUniformValue("pickingBaseID", (GLint)vpRenderer->registerSubObjectIDs(faceCount()));
 				_pickingShader->setUniformValue("vertexIdDivisor", (GLint)3);
 			}
 			else {
@@ -401,6 +411,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 				_pickingShader->setUniformValue("vertexIdDivisor", (GLint)faceCount()*3);
 			}
 		}
+		OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 		if(!renderer->isPicking() && _alpha != 1.0 && !_triangleCoordinates.empty()) {
 			OVITO_ASSERT(_triangleCoordinates.size() == faceCount());
@@ -431,6 +442,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		}
 		else {
 			// Render faces in arbitrary order.
+			OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 			OVITO_CHECK_OPENGL(vpRenderer, vpRenderer->glDrawArrays(GL_TRIANGLES, 0, _vertexBuffer.elementCount() * _vertexBuffer.verticesPerElement()));
 		}
 	}
@@ -458,7 +470,6 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		vpRenderer->glDisable(GL_CULL_FACE);
 		vpRenderer->glCullFace(GL_BACK);
 	}
-
 }
 
 OVITO_END_INLINE_NAMESPACE

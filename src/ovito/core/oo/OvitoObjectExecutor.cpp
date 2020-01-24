@@ -41,9 +41,11 @@ OvitoObjectExecutor::WorkEventBase::WorkEventBase(const OvitoObject* obj) :
 ******************************************************************************/
 void OvitoObjectExecutor::WorkEventBase::activateExecutionContext()
 {
-    Application::ExecutionContext previousContext = Application::instance()->executionContext();
-    Application::instance()->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
-    _executionContext = static_cast<int>(previousContext);
+    if(Application* app = Application::instance()) {
+        Application::ExecutionContext previousContext = app->executionContext();
+        app->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
+        _executionContext = static_cast<int>(previousContext);
+    }
 }
 
 /******************************************************************************
@@ -51,9 +53,11 @@ void OvitoObjectExecutor::WorkEventBase::activateExecutionContext()
 ******************************************************************************/
 void OvitoObjectExecutor::WorkEventBase::restoreExecutionContext()
 {
-    Application::ExecutionContext previousContext = Application::instance()->executionContext();
-    Application::instance()->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
-    _executionContext = static_cast<int>(previousContext);
+    if(Application* app = Application::instance()) {
+        Application::ExecutionContext previousContext = app->executionContext();
+        app->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
+        _executionContext = static_cast<int>(previousContext);
+    }
 }
 
 /******************************************************************************

@@ -708,6 +708,8 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader, true);
 
 	shader->release();
+
+	renderer->glDisable(GL_CULL_FACE);
 }
 
 /******************************************************************************
@@ -795,6 +797,8 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 		renderer->deactivateVertexIDs(shader, true);
 
 	shader->release();
+
+	renderer->glDisable(GL_CULL_FACE);
 }
 
 OVITO_END_INLINE_NAMESPACE

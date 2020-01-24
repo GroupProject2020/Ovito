@@ -106,6 +106,11 @@
 	<file>glsl/mesh/picking/mesh.fs</file>
 	<file>glsl/mesh/picking/mesh.vs</file>
 
+	<file>glsl/gles/mesh/mesh.fs</file>
+	<file>glsl/gles/mesh/mesh.vs</file>
+	<file>glsl/gles/mesh/picking/mesh.fs</file>
+	<file>glsl/gles/mesh/picking/mesh.vs</file>
+
 	<file>glsl/lines/line.vs</file>
 	<file>glsl/lines/line.fs</file>
 	<file>glsl/lines/thick_line.vs</file>

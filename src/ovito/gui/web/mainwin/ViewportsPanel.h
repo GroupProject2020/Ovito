@@ -56,10 +56,17 @@ private Q_SLOTS:
 	/// This is called when a new viewport configuration has been loaded.
 	void onViewportConfigurationReplaced(ViewportConfiguration* newViewportConfiguration);
 
+	/// This is called when the current viewport input mode has changed.
+	void onInputModeChanged(ViewportInputMode* oldMode, ViewportInputMode* newMode);
+
+	/// This is called when the mouse cursor of the active input mode has changed.
+	void viewportModeCursorChanged(const QCursor& cursor);
+
 private:
 
 	QMetaObject::Connection _activeViewportChangedConnection;
 	QMetaObject::Connection _maximizedViewportChangedConnection;
+	QMetaObject::Connection _activeModeCursorChangedConnection;
 
 	OORef<ViewportConfiguration> _viewportConfig;
 };

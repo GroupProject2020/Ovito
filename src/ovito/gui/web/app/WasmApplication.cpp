@@ -41,6 +41,14 @@
 namespace Ovito {
 
 /******************************************************************************
+* Returns a pointer to the main dataset container.
+******************************************************************************/
+WasmDataSetContainer* WasmApplication::datasetContainer() const 
+{
+	return static_cast<WasmDataSetContainer*>(StandaloneApplication::datasetContainer()); 
+}
+
+/******************************************************************************
 * Defines the program's command line parameters.
 ******************************************************************************/
 void WasmApplication::registerCommandLineParameters(QCommandLineParser& parser)
@@ -85,6 +93,16 @@ void WasmApplication::postStartupInitialization()
 		OORef<DataSet> newSet = new DataSet();
 		newSet->loadUserDefaults();
 		datasetContainer()->setCurrentSet(newSet);
+
+		// Import sample data.
+		QUrl importURL(Application::instance()->fileManager()->urlFromUserInput(":/gui/B.obj"));
+		try {
+			datasetContainer()->importFile(importURL);
+		}
+		catch(const Exception& ex) {
+			ex.reportError();
+		}
+		newSet->undoStack().setClean();
 	}
 
 	StandaloneApplication::postStartupInitialization();
