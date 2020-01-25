@@ -103,11 +103,9 @@ void ViewportsPanel::viewportModeCursorChanged(const QCursor& cursor)
 {
 	if(!_viewportConfig) return;
 
-//	for(Viewport* vp : _viewportConfig->viewports()) {
-//		if(ViewportWindow* vpWindow = static_cast<ViewportWindow*>(vp->window())) {
-//			vpWindow->setCursor(cursor);
-//		}
-//	}
+	for(ViewportWindow* window : findChildren<ViewportWindow*>()) {
+		window->setCursor(cursor);
+	}
 }
 
 /******************************************************************************

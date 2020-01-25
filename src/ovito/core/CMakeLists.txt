@@ -156,6 +156,14 @@ ELSE()
 	MESSAGE("Libssh library not found. OVITO will be built without built-in SSH client.")
 ENDIF()
 
+# Make use of the zlib library provided by Emscripten.
+IF(NOT ZLIB_FOUND AND EMSCRIPTEN)
+	MESSAGE("Using Emscripten port of zlib library.")
+	ADD_LIBRARY(ZLIB::ZLIB INTERFACE IMPORTED)
+	TARGET_COMPILE_OPTIONS(ZLIB::ZLIB INTERFACE "SHELL:-s USE_ZLIB=1")
+	SET(ZLIB_FOUND TRUE)
+ENDIF()
+
 # Include optional Gzip file support.
 IF(ZLIB_FOUND)
 	LIST(APPEND SourceFiles

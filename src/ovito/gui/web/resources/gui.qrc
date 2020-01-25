@@ -3,5 +3,8 @@
         <file>main.qml</file>
 
         <file>B.obj</file>
+        <file>water.start.data</file>
+        <file>test.data</file>
+        <file>dump.ellipsoid.gz</file>
     </qresource>
 </RCC>

@@ -69,7 +69,7 @@ public:
 	/// Writes a 64-bit unsigned integer number to the text-based output file.
 	CompressedTextWriter& operator<<(quint64 i);
 
-#if !defined(Q_OS_WIN) && (QT_POINTER_SIZE != 4)
+#if (!defined(Q_OS_WIN) && (QT_POINTER_SIZE != 4)) || defined(Q_OS_WASM)
 	/// Writes an unsigned integer number to the text-based output file.
 	CompressedTextWriter& operator<<(size_t i);
 #endif

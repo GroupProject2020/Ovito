@@ -146,6 +146,11 @@ bool OpenGLSceneRenderer::contextSharingEnabled(bool forceDefaultSetting)
 ******************************************************************************/
 bool OpenGLSceneRenderer::pointSpritesEnabled(bool forceDefaultSetting)
 {
+#ifdef Q_OS_WASM
+	// Don't use point sprites on WebAssembly platform for now. 
+	return false;
+#endif
+
 	if(!forceDefaultSetting) {
 		// The user can override the use of point sprites.
 		QVariant userSetting = QSettings().value("display/use_point_sprites");
@@ -565,6 +570,7 @@ QOpenGLShaderProgram* OpenGLSceneRenderer::loadShaderProgram(const QString& id, 
 		loadShader(program.data(), QOpenGLShader::Geometry, geometryShaderFile);
 	}
 
+	// Compile the shader program.
 	if(!program->link()) {
 		Exception ex(QString("The OpenGL shader program %1 failed to link.").arg(id));
 		ex.appendDetailMessage(program->log());
@@ -590,7 +596,7 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 
 	// Insert GLSL version string at the top.
 	// Pick GLSL language version based on current OpenGL version.
-#ifndef Q_OS_WASM	
+#ifndef Q_OS_WASM
 	if((glformat().majorVersion() >= 3 && glformat().minorVersion() >= 2) || glformat().majorVersion() > 3)
 		shaderSource.append("#version 150\n");
 	else if(glformat().majorVersion() >= 3)
@@ -603,7 +609,7 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 
 	// Preprocess shader source while reading it from the file.
 	//
-	// This is a workaround for some older OpenGL driver, which do not perform the
+	// This is a workaround for some older OpenGL drivers, which do not perform the
 	// preprocessing of shader source files correctly (probably the __VERSION__ macro is not working).
 	//
 	// Here, in our own simple preprocessor implementation, we only handle
@@ -734,7 +740,7 @@ void OpenGLSceneRenderer::activateVertexIDs(QOpenGLShaderProgram* shader, GLint 
 		if(!_glVertexIDBuffer.isCreated() || _glVertexIDBufferSize < vertexCount) {
 			OVITO_REPORT_OPENGL_ERRORS(this);
 			if(!_glVertexIDBuffer.isCreated()) {
-				// Create the ID buffer only once and keep it until the number of particles changes.
+				// Create the ID buffer only once and keep it until the number of element grows.
 				if(!_glVertexIDBuffer.create())
 					throwException(QStringLiteral("Failed to create OpenGL vertex ID buffer."));
 				_glVertexIDBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
@@ -755,11 +761,10 @@ void OpenGLSceneRenderer::activateVertexIDs(QOpenGLShaderProgram* shader, GLint 
 					_glVertexIDBuffer.unmap();
 				}
 				else {
-					// OpenGL ES platform does not support memory mapping of VBOs.
+					// OpenGL ES does not support memory mapping of VBOs.
 					std::vector<GLfloat> bufferData(vertexCount);
 					std::iota(bufferData.begin(), bufferData.end(), 0);
-					OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.allocate(bufferData.data(), vertexCount * sizeof(GLfloat)));
-//					OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.write(0, bufferData.data(), bufferData.size()));
+					OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.write(0, bufferData.data(), bufferData.size() * sizeof(GLfloat)));
 				}
 			}
 		}
@@ -768,11 +773,10 @@ void OpenGLSceneRenderer::activateVertexIDs(QOpenGLShaderProgram* shader, GLint 
 				throwException(QStringLiteral("Failed to bind OpenGL vertex ID buffer."));
 		}
 
-		// This vertex attribute will be mapped to the gl_VertexID variable.
-		shader->enableAttributeArray("vertexID");
-		shader->setAttributeBuffer("vertexID", GL_FLOAT, 0, 1);
-		_glVertexIDBuffer.release();
-		OVITO_REPORT_OPENGL_ERRORS(this);
+		// Make this vertex attribute available to vertex shaders.
+		OVITO_CHECK_OPENGL(this, shader->enableAttributeArray("vertexID"));
+		OVITO_CHECK_OPENGL(this, shader->setAttributeBuffer("vertexID", GL_FLOAT, 0, 1));
+		OVITO_CHECK_OPENGL(this, _glVertexIDBuffer.release());
 	}
 }
 

@@ -95,9 +95,12 @@ void WasmApplication::postStartupInitialization()
 		datasetContainer()->setCurrentSet(newSet);
 
 		// Import sample data.
-		QUrl importURL(Application::instance()->fileManager()->urlFromUserInput(":/gui/B.obj"));
 		try {
-			datasetContainer()->importFile(importURL);
+			QUrl importURL1(Application::instance()->fileManager()->urlFromUserInput(":/gui/B.obj"));
+//			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/water.start.data"));
+			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/dump.ellipsoid.gz"));
+			datasetContainer()->importFile(importURL1);
+			datasetContainer()->importFile(importURL2);
 		}
 		catch(const Exception& ex) {
 			ex.reportError();

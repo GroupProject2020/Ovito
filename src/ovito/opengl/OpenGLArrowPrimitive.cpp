@@ -42,22 +42,12 @@ OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowP
 			if(!_usingGeometryShader) {
 				_shader = renderer->loadShaderProgram(
 						"cylinder_raytraced",
-#ifndef Q_OS_WASM
 						":/openglrenderer/glsl/cylinder/cylinder_raytraced_tri.vs",
 						":/openglrenderer/glsl/cylinder/cylinder_raytraced.fs");
-#else
-						":/openglrenderer/glsl/gles/cylinder/cylinder_raytraced_tri.vs",
-						":/openglrenderer/glsl/gles/cylinder/cylinder_raytraced.fs");
-#endif
 				_pickingShader = renderer->loadShaderProgram(
 						"cylinder_raytraced_picking",
-#ifndef Q_OS_WASM
 						":/openglrenderer/glsl/cylinder/picking/cylinder_raytraced_tri.vs",
 						":/openglrenderer/glsl/cylinder/picking/cylinder_raytraced.fs");
-#else
-						":/openglrenderer/glsl/gles/cylinder/picking/cylinder_raytraced_tri.vs",
-						":/openglrenderer/glsl/gles/cylinder/picking/cylinder_raytraced.fs");
-#endif
 			}
 			else {
 				_shader = renderer->loadShaderProgram(
@@ -75,44 +65,24 @@ OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowP
 		else {
 			_shader = renderer->loadShaderProgram(
 					"arrow_shaded",
-#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/shaded.vs",
 					":/openglrenderer/glsl/arrows/shaded.fs");
-#else
-					":/openglrenderer/glsl/gles/arrows/shaded.vs",
-					":/openglrenderer/glsl/gles/arrows/shaded.fs");
-#endif
 			_pickingShader = renderer->loadShaderProgram(
 					"arrow_shaded_picking",
-#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/picking/shaded.vs",
 					":/openglrenderer/glsl/arrows/picking/shaded.fs");
-#else
-					":/openglrenderer/glsl/gles/arrows/picking/shaded.vs",
-					":/openglrenderer/glsl/gles/arrows/picking/shaded.fs");
-#endif
 		}
 	}
 	else if(shadingMode == FlatShading) {
 		if(!_usingGeometryShader || shape != CylinderShape) {
 			_shader = renderer->loadShaderProgram(
 					"arrow_flat",
-#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/flat_tri.vs",
 					":/openglrenderer/glsl/arrows/flat.fs");
-#else
-					":/openglrenderer/glsl/gles/arrows/flat_tri.vs",
-					":/openglrenderer/glsl/gles/arrows/flat.fs");
-#endif
 			_pickingShader = renderer->loadShaderProgram(
 					"arrow_flat_picking",
-#ifndef Q_OS_WASM
 					":/openglrenderer/glsl/arrows/picking/flat_tri.vs",
 					":/openglrenderer/glsl/arrows/picking/flat.fs");
-#else
-					":/openglrenderer/glsl/gles/arrows/picking/flat_tri.vs",
-					":/openglrenderer/glsl/gles/arrows/picking/flat.fs");
-#endif
 		}
 		else {
 			_shader = renderer->loadShaderProgram(
@@ -279,12 +249,12 @@ void OpenGLArrowPrimitive::setElement(int index, const Point3& pos, const Vector
 		if(!_verticesWithNormals.empty()) {
 			if(_mappedChunkIndex != -1)
 				_verticesWithNormals[_mappedChunkIndex].unmap();
-			_mappedVerticesWithNormals = _verticesWithNormals[chunkIndex].map(QOpenGLBuffer::WriteOnly);
+			_mappedVerticesWithNormals = _verticesWithNormals[chunkIndex].map();
 		}
 		else if(!_verticesWithElementInfo.empty()) {
 			if(_mappedChunkIndex != -1)
 				_verticesWithElementInfo[_mappedChunkIndex].unmap();
-			_mappedVerticesWithElementInfo = _verticesWithElementInfo[chunkIndex].map(QOpenGLBuffer::WriteOnly);
+			_mappedVerticesWithElementInfo = _verticesWithElementInfo[chunkIndex].map();
 		}
 		_mappedChunkIndex = chunkIndex;
 	}
@@ -667,6 +637,7 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 		pickingBaseID = renderer->registerSubObjectIDs(elementCount());
 		renderer->activateVertexIDs(shader, _chunkSize * _verticesPerElement, true);
 	}
+	OVITO_REPORT_OPENGL_ERRORS(renderer);
 
 	for(int chunkIndex = 0; chunkIndex < _verticesWithNormals.size(); chunkIndex++) {
 		int chunkStart = chunkIndex * _chunkSize;
@@ -674,6 +645,7 @@ void OpenGLArrowPrimitive::renderWithNormals(OpenGLSceneRenderer* renderer)
 
 		if(renderer->isPicking()) {
 			shader->setUniformValue("pickingBaseID", pickingBaseID);
+			OVITO_REPORT_OPENGL_ERRORS(renderer);
 			pickingBaseID += _chunkSize;
 		}
 

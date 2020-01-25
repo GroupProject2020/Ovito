@@ -36,17 +36,10 @@ OpenGLLinePrimitive::OpenGLLinePrimitive(OpenGLSceneRenderer* renderer) :
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
 	// Initialize OpenGL shaders.
-#ifndef Q_OS_WASM
 	_shader = renderer->loadShaderProgram("line", ":/openglrenderer/glsl/lines/line.vs", ":/openglrenderer/glsl/lines/line.fs");
 	_pickingShader = renderer->loadShaderProgram("line.picking", ":/openglrenderer/glsl/lines/picking/line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
 	_thickLineShader = renderer->loadShaderProgram("thick_line", ":/openglrenderer/glsl/lines/thick_line.vs", ":/openglrenderer/glsl/lines/line.fs");
 	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/lines/picking/thick_line.vs", ":/openglrenderer/glsl/lines/picking/line.fs");
-#else
-	_shader = renderer->loadShaderProgram("line", ":/openglrenderer/glsl/gles/lines/line.vs", ":/openglrenderer/glsl/gles/lines/line.fs");
-	_pickingShader = renderer->loadShaderProgram("line.picking", ":/openglrenderer/glsl/gles/lines/picking/line.vs", ":/openglrenderer/glsl/gles/lines/picking/line.fs");
-	_thickLineShader = renderer->loadShaderProgram("thick_line", ":/openglrenderer/glsl/gles/lines/thick_line.vs", ":/openglrenderer/glsl/gles/lines/line.fs");
-	_thickLinePickingShader = renderer->loadShaderProgram("thick_line.picking", ":/openglrenderer/glsl/gles/lines/picking/thick_line.vs", ":/openglrenderer/glsl/gles/lines/picking/line.fs");
-#endif
 
 	// Use VBO to store glDrawElements() indices only on a real core profile implementation.
 	_useIndexVBO = (renderer->glformat().profile() == QSurfaceFormat::CoreProfile);
@@ -80,7 +73,7 @@ void OpenGLLinePrimitive::setVertexCount(int vertexCount, FloatType lineWidth)
 		GLuint* indices;
 		if(_useIndexVBO) {
 			_indicesBuffer.create(QOpenGLBuffer::StaticDraw, vertexCount * 6 / 2);
-			indices = _indicesBuffer.map(QOpenGLBuffer::WriteOnly);
+			indices = _indicesBuffer.map();
 		}
 		else {
 			_indicesBufferClient.resize(vertexCount * 6 / 2);
@@ -107,7 +100,7 @@ void OpenGLLinePrimitive::setVertexPositions(const Point3* coordinates)
 	_positionsBuffer.fill(coordinates);
 
 	if(_lineWidth != 1) {
-		Vector_3<float>* vectors = _vectorsBuffer.map(QOpenGLBuffer::WriteOnly);
+		Vector_3<float>* vectors = _vectorsBuffer.map();
 		Vector_3<float>* vectors_end = vectors + _vectorsBuffer.elementCount() * _vectorsBuffer.verticesPerElement();
 		for(; vectors != vectors_end; vectors += 4, coordinates += 2) {
 			vectors[3] = vectors[0] = (Vector_3<float>)(coordinates[1] - coordinates[0]);
@@ -188,10 +181,13 @@ void OpenGLLinePrimitive::renderLines(OpenGLSceneRenderer* renderer)
 		_colorsBuffer.bindColors(renderer, shader, 4);
 	}
 	else {
+		OVITO_REPORT_OPENGL_ERRORS(renderer);
 		shader->setUniformValue("pickingBaseID", (GLint)renderer->registerSubObjectIDs(vertexCount() / 2));
+		OVITO_REPORT_OPENGL_ERRORS(renderer);
 		renderer->activateVertexIDs(shader, _positionsBuffer.elementCount() * _positionsBuffer.verticesPerElement());
 	}
 
+	OVITO_REPORT_OPENGL_ERRORS(renderer);
 	OVITO_CHECK_OPENGL(renderer, renderer->glDrawArrays(GL_LINES, 0, _positionsBuffer.elementCount() * _positionsBuffer.verticesPerElement()));
 
 	_positionsBuffer.detachPositions(renderer, shader);
@@ -230,7 +226,9 @@ void OpenGLLinePrimitive::renderThickLines(OpenGLSceneRenderer* renderer)
 		_colorsBuffer.bindColors(renderer, shader, 4);
 	}
 	else {
+		OVITO_REPORT_OPENGL_ERRORS(renderer);
 		shader->setUniformValue("pickingBaseID", (GLint)renderer->registerSubObjectIDs(vertexCount() / 2));
+		OVITO_REPORT_OPENGL_ERRORS(renderer);
 		renderer->activateVertexIDs(shader, _positionsBuffer.elementCount() * _positionsBuffer.verticesPerElement());
 	}
 
@@ -240,6 +238,7 @@ void OpenGLLinePrimitive::renderThickLines(OpenGLSceneRenderer* renderer)
 	shader->setUniformValue("line_width", GLfloat(_lineWidth / param));
 	shader->setUniformValue("is_perspective", renderer->projParams().isPerspective);
 
+	OVITO_REPORT_OPENGL_ERRORS(renderer);
 	_vectorsBuffer.bind(renderer, shader, "vector", GL_FLOAT, 0, 3);
 
 	if(_useIndexVBO) {

@@ -64,6 +64,7 @@ ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager,
 
 	// Receive mouse input events.
 	setAcceptedMouseButtons(Qt::AllButtons);
+//	setAcceptHoverEvents(true);
 }
 
 /******************************************************************************
@@ -286,8 +287,7 @@ void ViewportWindow::renderViewport()
 
 	try {
 		// Let the Viewport class do the actual rendering work.
-		//viewport()->renderInteractive(_viewportRenderer);
-		viewport()->renderInteractive(_pickingRenderer);
+		viewport()->renderInteractive(_viewportRenderer);
 	}
 	catch(Exception& ex) {
 		if(ex.context() == nullptr) ex.setContext(viewport()->dataset());

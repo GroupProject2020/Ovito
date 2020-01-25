@@ -30,6 +30,10 @@ add_link_options("SHELL:-s ALLOW_MEMORY_GROWTH=1")
 # https://emscripten.org/docs/optimizing/Optimizing-Code.html#c-exceptions
 add_link_options("SHELL:-s DISABLE_EXCEPTION_CATCHING=0")
 
+# Activate zlib port
+# https://emscripten.org/docs/compiling/Building-Projects.html
+add_link_options("SHELL:-s USE_ZLIB=1")
+
 # Generate HTML file for each executable
 #SET(CMAKE_EXECUTABLE_SUFFIX ".html")
 

@@ -50,10 +50,7 @@ class OVITO_OPENGLRENDERER_EXPORT OpenGLSceneRenderer : public SceneRenderer, pr
 public:
 
 	/// Default constructor.
-	OpenGLSceneRenderer(DataSet* dataset) : SceneRenderer(dataset),
-		_glcontext(nullptr),
-		_modelViewTM(AffineTransformation::Identity()),
-		_glVertexIDBufferSize(-1) {}
+	explicit OpenGLSceneRenderer(DataSet* dataset) : SceneRenderer(dataset) {}
 
 	/// Renders the current animation frame.
 	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation) override;
@@ -277,13 +274,13 @@ protected:
 private:
 
 	/// The OpenGL context this renderer uses.
-	QOpenGLContext* _glcontext;
+	QOpenGLContext* _glcontext = nullptr;
 
 	/// The GL context group this renderer uses.
 	QPointer<QOpenGLContextGroup> _glcontextGroup;
 
 	/// The surface used by the GL context.
-	QSurface* _glsurface;
+	QSurface* _glsurface = nullptr;
 
 #ifndef Q_OS_WASM
 
@@ -305,28 +302,28 @@ private:
 	QSurfaceFormat _glformat;
 
 	/// Indicates whether the current OpenGL implementation is based on the core or the compatibility profile.
-	bool _isCoreProfile;
+	bool _isCoreProfile = false;
 
 	/// Indicates whether it is okay to use OpenGL point sprites. Otherwise emulate them using explicit triangle geometry.
-	bool _usePointSprites;
+	bool _usePointSprites = false;
 
 	/// Indicates whether it is okay to use GLSL geometry shaders.
-	bool _useGeometryShaders;
+	bool _useGeometryShaders = false;
 
 	/// The current model-to-world transformation matrix.
-	AffineTransformation _modelWorldTM;
+	AffineTransformation _modelWorldTM = AffineTransformation::Identity();
 
 	/// The current model-to-view transformation matrix.
-	AffineTransformation _modelViewTM;
+	AffineTransformation _modelViewTM = AffineTransformation::Identity();
 
 	/// The internal OpenGL vertex buffer that stores vertex IDs.
 	QOpenGLBuffer _glVertexIDBuffer;
 
 	/// The number of IDs stored in the OpenGL buffer.
-	GLint _glVertexIDBufferSize;
+	GLint _glVertexIDBufferSize = 0;
 
 	/// Indicates that we are currently rendering the translucent objects during a second rendering pass.
-	bool _translucentPass;
+	bool _translucentPass = false;
 
 	/// List of translucent graphics primitives collected during the first rendering pass, which
 	/// need to be rendered during the second pass.

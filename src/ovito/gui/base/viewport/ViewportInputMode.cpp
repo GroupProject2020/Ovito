@@ -152,7 +152,10 @@ void ViewportInputMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEve
 void ViewportInputMode::wheelEvent(ViewportWindowInterface* vpwin, QWheelEvent* event)
 {
 	_lastMousePressEvent.reset();
-	inputManager()->zoomMode()->zoom(vpwin->viewport(), (FloatType)event->delta());
+
+	FloatType delta = event->angleDelta().y();
+	if(event->inverted()) delta = -delta;
+	inputManager()->zoomMode()->zoom(vpwin->viewport(), delta);
 	event->accept();
 }
 

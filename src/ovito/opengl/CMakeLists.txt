@@ -21,7 +21,11 @@
 #######################################################################################
 
 # Compile resources.
-QT5_ADD_RESOURCES(ResourceFiles resources/opengl.qrc OPTIONS ${OVITO_QT5_RESOURCE_OPTIONS})
+IF(NOT EMSCRIPTEN)
+	QT5_ADD_RESOURCES(ResourceFiles resources/opengl.qrc OPTIONS ${OVITO_QT5_RESOURCE_OPTIONS})
+ELSE()
+	QT5_ADD_RESOURCES(ResourceFiles resources_gles/opengl.qrc OPTIONS ${OVITO_QT5_RESOURCE_OPTIONS})
+ENDIF()
 
 # Define plugin module.
 OVITO_STANDARD_PLUGIN(OpenGLRenderer

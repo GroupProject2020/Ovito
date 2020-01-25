@@ -32,6 +32,16 @@
 	<file>glsl/particles/imposter/sphere/picking/without_depth_tri.vs</file>
 	<file>glsl/particles/imposter/sphere/picking/without_depth.gs</file>
 
+	<file>glsl/gles/particles/imposter/sphere/flat_shading.fs</file>
+	<file>glsl/gles/particles/imposter/sphere/with_depth.fs</file>
+	<file>glsl/gles/particles/imposter/sphere/with_depth_tri.vs</file>
+	<file>glsl/gles/particles/imposter/sphere/without_depth.fs</file>
+	<file>glsl/gles/particles/imposter/sphere/without_depth_tri.vs</file>
+	<file>glsl/gles/particles/imposter/sphere/picking/flat_shading.fs</file>
+	<file>glsl/gles/particles/imposter/sphere/picking/with_depth.fs</file>
+	<file>glsl/gles/particles/imposter/sphere/picking/with_depth_tri.vs</file>
+	<file>glsl/gles/particles/imposter/sphere/picking/without_depth_tri.vs</file>
+
 	<file>glsl/particles/geometry/sphere/sphere.fs</file>
 	<file>glsl/particles/geometry/sphere/sphere.vs</file>
 	<file>glsl/particles/geometry/sphere/sphere.gs</file>
@@ -63,6 +73,23 @@
 	<file>glsl/particles/geometry/ellipsoid/picking/ellipsoid.vs</file>
 	<file>glsl/particles/geometry/ellipsoid/picking/ellipsoid_tristrip.vs</file>
 	<file>glsl/particles/geometry/ellipsoid/picking/ellipsoid.gs</file>
+
+	<file>glsl/gles/particles/geometry/sphere/sphere.fs</file>
+	<file>glsl/gles/particles/geometry/sphere/sphere_tristrip.vs</file>
+	<file>glsl/gles/particles/geometry/sphere/picking/sphere.fs</file>
+	<file>glsl/gles/particles/geometry/sphere/picking/sphere_tristrip.vs</file>
+
+	<file>glsl/gles/particles/geometry/cube/cube.fs</file>
+	<file>glsl/gles/particles/geometry/cube/cube_tristrip.vs</file>
+	<file>glsl/gles/particles/geometry/cube/picking/cube.fs</file>
+	<file>glsl/gles/particles/geometry/cube/picking/cube_tristrip.vs</file>
+	<file>glsl/gles/particles/geometry/box/box_tristrip.vs</file>
+	<file>glsl/gles/particles/geometry/box/picking/box_tristrip.vs</file>
+
+	<file>glsl/gles/particles/geometry/ellipsoid/ellipsoid.fs</file>
+	<file>glsl/gles/particles/geometry/ellipsoid/ellipsoid_tristrip.vs</file>
+	<file>glsl/gles/particles/geometry/ellipsoid/picking/ellipsoid.fs</file>
+	<file>glsl/gles/particles/geometry/ellipsoid/picking/ellipsoid_tristrip.vs</file>
 
 	<file>glsl/arrows/flat.fs</file>
 	<file>glsl/arrows/flat_tri.vs</file>

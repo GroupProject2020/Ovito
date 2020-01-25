@@ -94,7 +94,7 @@ public:
 	}
 
 	/// Maps the contents of this buffer into the application's memory space and returns a pointer to it.
-	T* map(QOpenGLBuffer::Access access) {
+	T* map(QOpenGLBuffer::Access access = QOpenGLBuffer::WriteOnly) {
 		OVITO_ASSERT(isCreated());
 		if(elementCount() == 0)
 			return nullptr;
@@ -110,7 +110,7 @@ public:
 		return data;
 #else
 		// WebGL may not support memory mapping a GL buffer.
-		// Need to emulate the map() method by providing a host machine memory buffer. 
+		// Need to emulate the map() method by providing a temporary memory buffer on the host. 
 		OVITO_ASSERT(access == QOpenGLBuffer::WriteOnly);
 		_temporaryBuffer.resize(elementCount() * verticesPerElement());
 		return _temporaryBuffer.data();
@@ -121,18 +121,22 @@ public:
 	void unmap() {
 		if(elementCount() == 0)
 			return;
-#ifndef Q_OS_WASM			
+#ifndef Q_OS_WASM
 		if(!_buffer.unmap())
 			throw Exception(QStringLiteral("Failed to unmap OpenGL vertex buffer from memory."));
 		_buffer.release();
 #else
+		// Upload the data in the temporary memory buffer to graphics memory.
 		if(!_buffer.bind()) {
 			qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::unmap()";
+			qWarning() << "Parameters: elementCount =" << _elementCount << "verticesPerElement =" << _verticesPerElement;
 			throw Exception(QStringLiteral("Failed to bind OpenGL vertex buffer."));
 		}
 		OVITO_ASSERT(_temporaryBuffer.size() == _elementCount * _verticesPerElement);
-		_buffer.allocate(_temporaryBuffer.data(), sizeof(T) * _elementCount * _verticesPerElement);
+		_buffer.write(0, _temporaryBuffer.data(), sizeof(T) * _elementCount * _verticesPerElement);
 		_buffer.release();
+		// Free temporary buffer.
+		decltype(_temporaryBuffer)().swap(_temporaryBuffer);
 #endif
 	}
 
@@ -156,8 +160,8 @@ public:
 			T* bufferData = map(QOpenGLBuffer::WriteOnly);
 			const U* endData = data + _elementCount;
 			for(; data != endData; ++data) {
-				for(int i = 0; i < _verticesPerElement; i++, ++bufferData) {
-					*bufferData = static_cast<T>(*data);
+				for(int i = 0; i < _verticesPerElement; i++) {
+					*bufferData++ = static_cast<T>(*data);
 				}
 			}
 			unmap();

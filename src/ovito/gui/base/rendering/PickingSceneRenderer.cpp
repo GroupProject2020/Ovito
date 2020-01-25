@@ -44,7 +44,6 @@ PickingSceneRenderer::PickingSceneRenderer(DataSet* dataset) : ViewportSceneRend
 ******************************************************************************/
 void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp)
 {
-#if 0	
 	// Get the viewport's window.
 	ViewportWindowInterface* vpWindow = vp->window();
 	if(!vpWindow)
@@ -77,7 +76,7 @@ void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParame
 	// Bind OpenGL framebuffer.
 	if(!_framebufferObject->bind())
 		throwException(tr("Failed to bind OpenGL framebuffer object for offscreen rendering."));
-#endif
+
 	ViewportSceneRenderer::beginFrame(time, params, vp);
 }
 
@@ -89,12 +88,10 @@ void PickingSceneRenderer::initializeGLState()
 {
 	ViewportSceneRenderer::initializeGLState();
 
-#if 0
 	// Set up GL viewport.
 	setRenderingViewport(0, 0, _framebufferObject->width(), _framebufferObject->height());
 	// Fill framebuffer with zeros.
 	setClearColor(ColorA(0, 0, 0, 0));
-#endif	
 }
 
 /******************************************************************************
@@ -112,7 +109,6 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 	// Clear OpenGL error state, so we start fresh for the glReadPixels() call below.
 	while(this->glGetError() != GL_NO_ERROR);
 
-#if 0
 	// Fetch rendered image from OpenGL framebuffer.
 	QSize size = _framebufferObject->size();
 #ifndef Q_OS_WASM
@@ -125,7 +121,6 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 	}
 #else
 	_image = _framebufferObject->toImage(false);
-	qDebug() << "Read image from framebuffer:" << _image.size();
 #endif
 
 #ifndef Q_OS_WASM
@@ -154,7 +149,6 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 		glReadPixels(0, 0, size.width(), size.height(), GL_DEPTH_COMPONENT, GL_FLOAT, _depthBuffer.get());
 		_depthBufferBits = 0;
 	}
-#endif	
 #endif
 
 	return !operation.isCanceled();
@@ -169,7 +163,6 @@ void PickingSceneRenderer::endFrame(bool renderSuccessful)
 	_framebufferObject.reset();
 	ViewportSceneRenderer::endFrame(renderSuccessful);
 
-#if 0
 	// Reactivate old GL context.
 	if(_oldSurface && _oldContext) {
 		_oldContext->makeCurrent(_oldSurface);
@@ -180,7 +173,6 @@ void PickingSceneRenderer::endFrame(bool renderSuccessful)
 	}
 	_oldContext = nullptr;
 	_oldSurface = nullptr;
-#endif	
 }
 
 /******************************************************************************
@@ -247,7 +239,6 @@ std::tuple<const PickingSceneRenderer::ObjectRecord*, quint32> PickingSceneRende
 			quint32 green = qGreen(pixel);
 			quint32 blue = qBlue(pixel);
 			quint32 alpha = qAlpha(pixel);
-			qDebug() << "Pixel:" << pos << "value=" << red << green << blue << alpha;
 			quint32 objectID = red + (green << 8) + (blue << 16) + (alpha << 24);
 			const ObjectRecord* objRecord = lookupObjectRecord(objectID);
 			if(objRecord)

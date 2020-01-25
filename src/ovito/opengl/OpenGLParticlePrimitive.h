@@ -92,11 +92,6 @@ public:
 	/// \brief Changes the display shape of particles.
 	virtual bool setParticleShape(ParticleShape shape) override { return (shape == particleShape()); }
 
-	/// \brief Specifies an optional list of indices into the particles buffer which should be rendered.
-	virtual void setIndexedRenderingList(std::vector<int> indicesToRender) {
-
-	}
-
 protected:
 
 	/// Creates the texture used for billboard rendering of particles.
@@ -130,13 +125,13 @@ private:
 	};
 
 	/// The maximum size (in bytes) of a single VBO buffer.
-	int _maxVBOSize;
+	int _maxVBOSize = 4 * 1024 * 1024;
 
 	/// The maximum number of render elements per VBO buffer.
-	int _chunkSize;
+	int _chunkSize = 0;
 
 	/// The number of particles stored in the class.
-	int _particleCount;
+	int _particleCount = -1;
 
 	/// The internal OpenGL vertex buffer that stores the particle positions.
 	std::vector<OpenGLBuffer<Point_3<float>>> _positionsBuffers;
@@ -159,17 +154,22 @@ private:
 	/// The OpenGL texture that is used for billboard rendering of particles.
 	OpenGLTexture _billboardTexture;
 
+#ifndef Q_OS_WASM
 	/// This array contains the start indices of primitives and is passed to glMultiDrawArrays().
 	std::vector<GLint> _primitiveStartIndices;
 
 	/// This array contains the vertex counts of primitives and is passed to glMultiDrawArrays().
 	std::vector<GLsizei> _primitiveVertexCounts;
+#else
+	/// Vertex indices passed to glDrawElements() using GL_TRIANGLES primitives.
+	std::vector<GLuint> _trianglePrimitiveVertexIndices;
+#endif
 
 	/// The OpenGL shader program that is used to render the particles.
-	QOpenGLShaderProgram* _shader;
+	QOpenGLShaderProgram* _shader = nullptr;
 
 	/// The OpenGL shader program that is used to render the particles in picking mode.
-	QOpenGLShaderProgram* _pickingShader;
+	QOpenGLShaderProgram* _pickingShader = nullptr;
 
 	/// The technique used to render particles. This depends on settings such as rendering quality, shading etc.
 	RenderingTechnique _renderingTechnique;
@@ -185,5 +185,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

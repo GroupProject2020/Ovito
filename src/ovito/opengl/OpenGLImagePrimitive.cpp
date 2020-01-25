@@ -127,7 +127,7 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 	QRectF rect2(x, y, w, h);
 	GLint vc[4];
 	vpRenderer->glGetIntegerv(GL_VIEWPORT, vc);
-    Point_3<GLfloat>* vertices = _vertexBuffer.map(QOpenGLBuffer::WriteOnly);
+    Point_3<GLfloat>* vertices = _vertexBuffer.map();
     vertices[0] = Point_3<GLfloat>(rect2.left() / vc[2] * 2 - 1, 1 - rect2.bottom() / vc[3] * 2, 0);
     vertices[1] = Point_3<GLfloat>(rect2.right() / vc[2] * 2 - 1, 1 - rect2.bottom() / vc[3] * 2, 1);
     vertices[2] = Point_3<GLfloat>(rect2.left() / vc[2] * 2 - 1, 1 - rect2.top() / vc[3] * 2, 2);
