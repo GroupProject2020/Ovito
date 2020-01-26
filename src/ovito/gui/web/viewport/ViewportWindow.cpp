@@ -36,10 +36,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager, MainWindow* mainWindow, QQuickItem* parentItem) : 
-	QQuickFramebufferObject(parentItem),
-	ViewportWindowInterface(mainWindow, vp),
-	_inputManager(inputManager)
+ViewportWindow::ViewportWindow() : ViewportWindowInterface(nullptr, nullptr)
 {
 	// Show the FBO contents upside down.
 	setMirrorVertically(true);
@@ -47,6 +44,18 @@ ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager,
 	// Determine OpenGL vendor string so other parts of the code can decide
 	// which OpenGL features are safe to use.
 	OpenGLSceneRenderer::determineOpenGLInfo();
+
+	// Receive mouse input events.
+	setAcceptedMouseButtons(Qt::AllButtons);
+	setAcceptHoverEvents(true);
+}
+
+/******************************************************************************
+* Associates this window with a viewport.
+******************************************************************************/
+void ViewportWindow::setViewport(Viewport* vp)
+{
+	ViewportWindowInterface::setViewport(vp);
 
 	// Create the viewport renderer.
 	// It is shared by all viewports of a dataset.
@@ -62,19 +71,9 @@ ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager,
 	// Create the object picking renderer.
 	_pickingRenderer = new PickingSceneRenderer(vp->dataset());
 
-	// Receive mouse input events.
-	setAcceptedMouseButtons(Qt::AllButtons);
-//	setAcceptHoverEvents(true);
-}
-
-/******************************************************************************
-* Destructor.
-******************************************************************************/
-ViewportWindow::~ViewportWindow()
-{
-	// Detach from Viewport instance.
-	if(viewport())
-		viewport()->setWindow(nullptr);
+	// Notify users of the window of changes of the viewport's title.
+	connect(vp, &Viewport::viewportTitleChanged, this, &ViewportWindow::viewportTitleChanged);
+	Q_EMIT viewportTitleChanged();
 }
 
 /******************************************************************************
@@ -82,7 +81,7 @@ ViewportWindow::~ViewportWindow()
 ******************************************************************************/
 ViewportInputManager* ViewportWindow::inputManager() const
 {
-	return _inputManager.data();
+	return mainWindow() ? mainWindow()->viewportInputManager() : nullptr;
 }
 
 /******************************************************************************
@@ -176,15 +175,6 @@ void ViewportWindow::mouseReleaseEvent(QMouseEvent* event)
 ******************************************************************************/
 void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 {
-	if(_contextMenuArea.contains(event->localPos()) && !_cursorInContextMenuArea) {
-		_cursorInContextMenuArea = true;
-		viewport()->updateViewport();
-	}
-	else if(!_contextMenuArea.contains(event->localPos()) && _cursorInContextMenuArea) {
-		_cursorInContextMenuArea = false;
-		viewport()->updateViewport();
-	}
-
 	if(inputManager()) {
 		if(ViewportInputMode* mode = inputManager()->activeMode()) {
 			try {
@@ -196,6 +186,15 @@ void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 			}
 		}
 	}
+}
+
+/******************************************************************************
+* Handles hover move events.
+******************************************************************************/
+void ViewportWindow::hoverMoveEvent(QHoverEvent* event)
+{
+	QMouseEvent mouseEvent(QEvent::MouseMove, event->posF(), Qt::NoButton, Qt::NoButton, event->modifiers());
+	mouseMoveEvent(&mouseEvent);
 }
 
 /******************************************************************************
@@ -291,7 +290,7 @@ void ViewportWindow::renderViewport()
 	}
 	catch(Exception& ex) {
 		if(ex.context() == nullptr) ex.setContext(viewport()->dataset());
-		ex.prependGeneralMessage(tr("An unexpected error occurred while rendering the viewport contents. The program will quit."));
+		ex.prependGeneralMessage(tr("An unexpected error occurred while rendering the viewport contents. The program will quit now."));
 		viewport()->dataset()->viewportConfig()->suspendViewportUpdates();
 		ex.reportError();
 	}
@@ -313,9 +312,6 @@ void ViewportWindow::renderGui(SceneRenderer* renderer)
 		// Render orientation tripod.
 		renderOrientationIndicator(renderer);
 	}
-
-	// Render viewport caption.
-	_contextMenuArea = renderViewportTitle(renderer, _cursorInContextMenuArea);
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -72,11 +72,12 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 	if(newViewportConfiguration) {
 
 		// Create windows for the new viewports.
+		MainWindow* mainWindow = static_cast<MainWindow*>(parentWidget());
 		try {
 			ViewportInputManager* inputManager = MainWindow::fromDataset(newViewportConfiguration->dataset())->viewportInputManager();
 			for(Viewport* vp : newViewportConfiguration->viewports()) {
 				OVITO_ASSERT(vp->window() == nullptr);
-				ViewportWindow* viewportWindow = new ViewportWindow(vp, inputManager, this);
+				ViewportWindow* viewportWindow = new ViewportWindow(vp, inputManager, mainWindow, this);
 			}
 		}
 		catch(const Exception& ex) {

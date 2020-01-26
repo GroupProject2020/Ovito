@@ -25,8 +25,8 @@
 #include <ovito/crystalanalysis/objects/Microstructure.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/gui/desktop/actions/ViewportModeAction.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
-#include <ovito/gui/rendering/ViewportSceneRenderer.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "DislocationInspectionApplet.h"
 
@@ -203,7 +203,7 @@ QVariant DislocationInspectionApplet::DislocationTableModel::data(const QModelIn
 /******************************************************************************
 * Handles the mouse up events for a Viewport.
 ******************************************************************************/
-void DislocationInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void DislocationInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
 		int pickedDislocationIndex = pickDislocation(vpwin, event->pos());
@@ -224,7 +224,7 @@ void DislocationInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow*
 /******************************************************************************
 * Determines the dislocation under the mouse cursor.
 ******************************************************************************/
-int DislocationInspectionApplet::PickingMode::pickDislocation(ViewportWindow* vpwin, const QPoint& pos) const
+int DislocationInspectionApplet::PickingMode::pickDislocation(ViewportWindowInterface* vpwin, const QPoint& pos) const
 {
 	ViewportPickResult vpPickResult = vpwin->pick(pos);
 
@@ -243,7 +243,7 @@ int DislocationInspectionApplet::PickingMode::pickDislocation(ViewportWindow* vp
 /******************************************************************************
 * Handles the mouse move event for the given viewport.
 ******************************************************************************/
-void DislocationInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void DislocationInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	// Change mouse cursor while hovering over a dislocation.
 	if(pickDislocation(vpwin, event->pos()) != -1)
@@ -257,7 +257,7 @@ void DislocationInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vp
 /******************************************************************************
 * Lets the input mode render its overlay content in a viewport.
 ******************************************************************************/
-void DislocationInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
+void DislocationInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, SceneRenderer* renderer)
 {
 	if(!_applet->_sceneNode) return;
 

@@ -32,7 +32,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 /**
  * \brief The main window of the application.
  */
-class OVITO_GUIWEB_EXPORT MainWindow : public QQuickWindow, public MainWindowInterface
+class OVITO_GUIWEB_EXPORT MainWindow : public QQuickItem, public MainWindowInterface
 {
 	Q_OBJECT
 
@@ -44,11 +44,18 @@ public:
 	/// Destructor.
 	virtual ~MainWindow();
 
-	/// Returns the Qt Quick window associated with this MainWindow instance.
-	QQuickWindow* quickWindow() { return this; }
-
 	/// Returns the container that keeps a reference to the current dataset.
 	WasmDataSetContainer& datasetContainer() { return _datasetContainer; }
+
+public Q_SLOTS:
+
+	/// Lets the user select a file on the local computer to be imported into the scene.
+	void importDataFile();
+
+Q_SIGNALS:
+
+	/// This is emitted to display an error message to the user.
+	void error(const QString& message);
 
 private:
 

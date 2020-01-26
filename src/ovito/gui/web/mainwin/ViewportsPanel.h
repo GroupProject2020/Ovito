@@ -34,6 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 class ViewportsPanel : public QQuickItem
 {
 	Q_OBJECT
+	Q_PROPERTY(Ovito::ViewportWindow* activeViewport READ activeViewport);
 
 public:
 
@@ -41,10 +42,15 @@ public:
 	ViewportsPanel();
 
 	/// Returns the main window this panel is part of.
-	MainWindow* mainWindow() const { return static_cast<MainWindow*>(window()); }
+	MainWindow* mainWindow() const {
+		return static_cast<MainWindow*>(parentItem()); 
+	}
 
 	/// Arranges the viewport windows within the container.
 	void layoutViewports();
+
+	/// Returns the window of the active viewport.
+	ViewportWindow* activeViewport() const;
 
 protected:
 
@@ -68,6 +74,7 @@ private:
 	QMetaObject::Connection _maximizedViewportChangedConnection;
 	QMetaObject::Connection _activeModeCursorChangedConnection;
 
+	QQmlComponent* _viewportComponent = nullptr;
 	OORef<ViewportConfiguration> _viewportConfig;
 };
 

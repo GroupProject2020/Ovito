@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #extension GL_EXT_frag_depth : enable
-precision mediump float; 
+precision highp float; 
 
 // Input from calling program:
 uniform mat4 projection_matrix;

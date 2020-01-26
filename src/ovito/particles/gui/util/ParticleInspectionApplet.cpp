@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/gui/desktop/actions/ViewportModeAction.h>
 #include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "ParticleInspectionApplet.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -220,7 +220,7 @@ void ParticleInspectionApplet::deactivate(MainWindow* mainWindow)
 /******************************************************************************
 * Handles the mouse up events for a Viewport.
 ******************************************************************************/
-void ParticleInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void ParticleInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
 		PickResult pickResult;
@@ -257,7 +257,7 @@ void ParticleInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vp
 /******************************************************************************
 * Handles the mouse move event for the given viewport.
 ******************************************************************************/
-void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	// Change mouse cursor while hovering over a particle.
 	PickResult pickResult;
@@ -272,7 +272,7 @@ void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin
 /******************************************************************************
 * Lets the input mode render its overlay content in a viewport.
 ******************************************************************************/
-void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
+void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, SceneRenderer* renderer)
 {
 	if(!renderer->isInteractive() || renderer->isPicking())
 		return;

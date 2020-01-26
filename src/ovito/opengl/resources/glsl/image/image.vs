@@ -29,8 +29,8 @@ out vec2 tex_coords;
 
 void main()
 {
-	gl_Position = vec4(positions.xy, 0, 1);
-	tex_coords = uvcoords[int(positions.z)];
+	gl_Position = vec4(position.xy, 0, 1);
+	tex_coords = uvcoords[int(position.z)];
 }
 
 #else

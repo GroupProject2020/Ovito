@@ -35,7 +35,7 @@ IF(OVITO_BUILD_GUI)
 ENDIF()
 IF(OVITO_BUILD_WEBGUI)
 	# The user interface is implemented using Qt Qml and Quick when running inside a web browser.
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Qml Quick)
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Qml Quick Svg)
 ENDIF()
 
 # Find the required Qt5 modules.

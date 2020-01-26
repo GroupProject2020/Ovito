@@ -286,6 +286,11 @@ public:
 	/// This is an internal method, which should not be called by user code.
 	void renderInteractive(SceneRenderer* renderer);
 
+Q_SIGNALS:
+
+	/// This signal is emitted when the title of the viewport has changed.
+	void viewportTitleChanged();
+
 protected:
 
 	/// Is called when the value of a property field of this object has changed.

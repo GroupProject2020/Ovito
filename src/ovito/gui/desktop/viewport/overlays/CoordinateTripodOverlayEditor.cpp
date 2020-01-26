@@ -31,7 +31,7 @@
 #include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
 #include <ovito/gui/desktop/properties/IntegerRadioButtonParameterUI.h>
 #include <ovito/gui/desktop/actions/ViewportModeAction.h>
-#include <ovito/gui/viewport/overlays/MoveOverlayInputMode.h>
+#include <ovito/gui/desktop/viewport/overlays/MoveOverlayInputMode.h>
 #include <ovito/core/viewport/overlays/CoordinateTripodOverlay.h>
 #include "CoordinateTripodOverlayEditor.h"
 

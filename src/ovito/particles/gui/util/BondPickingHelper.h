@@ -51,7 +51,7 @@ public:
 	/// \param time The animation at which hit testing is performed.
 	/// \param result The output structure that receives information about the picked bond.
 	/// \return \c true if a bond has been picked; \c false otherwise.
-	bool pickBond(ViewportWindow* vpwin, const QPoint& clickPoint, PickResult& result);
+	bool pickBond(ViewportWindowInterface* vpwin, const QPoint& clickPoint, PickResult& result);
 };
 
 OVITO_END_INLINE_NAMESPACE

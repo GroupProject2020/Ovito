@@ -38,9 +38,8 @@
 #include <ovito/gui/desktop/properties/Vector3ParameterUI.h>
 #include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include <ovito/gui/desktop/properties/ModifierDelegateListParameterUI.h>
-#include <ovito/gui/rendering/ViewportSceneRenderer.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
-#include <ovito/gui/viewport/input/XFormModes.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "SliceModifierEditor.h"
 
 namespace Ovito { namespace StdMod {
@@ -268,7 +267,7 @@ void SliceModifierEditor::onCenterOfBox()
 void PickPlanePointsInputMode::activated(bool temporary)
 {
 	ViewportInputMode::activated(temporary);
-	inputManager()->mainWindow()->statusBar()->showMessage(tr("Pick three points to define a new slicing plane."));
+	inputManager()->mainWindow()->showStatusBarMessage(tr("Pick three points to define a new slicing plane."));
 	if(!temporary)
 		_numPickedPoints = 0;
 	inputManager()->addViewportGizmo(this);
@@ -283,7 +282,7 @@ void PickPlanePointsInputMode::deactivated(bool temporary)
 		_numPickedPoints = 0;
 		_hasPreliminaryPoint = false;
 	}
-	inputManager()->mainWindow()->statusBar()->clearMessage();
+	inputManager()->mainWindow()->clearStatusBarMessage();
 	inputManager()->removeViewportGizmo(this);
 	ViewportInputMode::deactivated(temporary);
 }
@@ -291,7 +290,7 @@ void PickPlanePointsInputMode::deactivated(bool temporary)
 /******************************************************************************
 * Handles the mouse events for a Viewport.
 ******************************************************************************/
-void PickPlanePointsInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void PickPlanePointsInputMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	ViewportInputMode::mouseMoveEvent(vpwin, event);
 
@@ -312,7 +311,7 @@ void PickPlanePointsInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent
 /******************************************************************************
 * Handles the mouse events for a Viewport.
 ******************************************************************************/
-void PickPlanePointsInputMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void PickPlanePointsInputMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
 
@@ -392,7 +391,7 @@ void PickPlanePointsInputMode::alignPlane(SliceModifier* mod)
 /******************************************************************************
 * Lets the input mode render its overlay content in a viewport.
 ******************************************************************************/
-void PickPlanePointsInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
+void PickPlanePointsInputMode::renderOverlay3D(Viewport* vp, SceneRenderer* renderer)
 {
 	if(renderer->isPicking())
 		return;

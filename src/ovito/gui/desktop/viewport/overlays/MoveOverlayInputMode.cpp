@@ -21,12 +21,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui/desktop/GUI.h>
-#include <ovito/core/viewport/Viewport.h>
-#include <ovito/core/viewport/overlays/ViewportOverlay.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
+#include <ovito/gui/desktop/viewport/ViewportWindow.h>
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/core/viewport/Viewport.h>
+#include <ovito/core/viewport/overlays/ViewportOverlay.h>
 #include "MoveOverlayInputMode.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
@@ -48,9 +48,9 @@ MoveOverlayInputMode::MoveOverlayInputMode(PropertiesEditor* editor) :
 ******************************************************************************/
 void MoveOverlayInputMode::deactivated(bool temporary)
 {
-	if(_viewport) {
+	if(viewport()) {
 		// Restore old state if change has not been committed.
-		_viewport->dataset()->undoStack().endCompoundOperation(false);
+		viewport()->dataset()->undoStack().endCompoundOperation(false);
 		_viewport = nullptr;
 	}
 	ViewportInputMode::deactivated(temporary);
@@ -59,23 +59,23 @@ void MoveOverlayInputMode::deactivated(bool temporary)
 /******************************************************************************
 * Handles the mouse down events for a Viewport.
 ******************************************************************************/
-void MoveOverlayInputMode::mousePressEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void MoveOverlayInputMode::mousePressEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
-		if(_viewport == nullptr) {
+		if(viewport() == nullptr) {
 			ViewportOverlay* layer = dynamic_object_cast<ViewportOverlay>(_editor->editObject());
 			if(layer && (vpwin->viewport()->overlays().contains(layer) || vpwin->viewport()->underlays().contains(layer))) {
 				_viewport = vpwin->viewport();
 				_startPoint = event->localPos();
-				_viewport->dataset()->undoStack().beginCompoundOperation(tr("Move overlay"));
+				viewport()->dataset()->undoStack().beginCompoundOperation(tr("Move overlay"));
 			}
 		}
 		return;
 	}
 	else if(event->button() == Qt::RightButton) {
-		if(_viewport != nullptr) {
+		if(viewport()) {
 			// Restore old state when aborting the move operation.
-			_viewport->dataset()->undoStack().endCompoundOperation(false);
+			viewport()->dataset()->undoStack().endCompoundOperation(false);
 			_viewport = nullptr;
 			return;
 		}
@@ -86,7 +86,7 @@ void MoveOverlayInputMode::mousePressEvent(ViewportWindow* vpwin, QMouseEvent* e
 /******************************************************************************
 * Handles the mouse move events for a Viewport.
 ******************************************************************************/
-void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void MoveOverlayInputMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	// Get the viewport layer being moved.
 	ViewportOverlay* layer = dynamic_object_cast<ViewportOverlay>(_editor->editObject());
@@ -97,7 +97,7 @@ void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* ev
 			// Take the current mouse cursor position to make the input mode
 			// look more responsive. The cursor position recorded when the mouse event was
 			// generates may be too old.
-			_currentPoint = vpwin->mapFromGlobal(QCursor::pos());
+			_currentPoint = static_cast<ViewportWindow*>(vpwin)->mapFromGlobal(QCursor::pos());
 
 			// Reset the layer's position first before moving it again below.
 			viewport()->dataset()->undoStack().resetCurrentCompoundOperation();
@@ -131,11 +131,11 @@ void MoveOverlayInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* ev
 /******************************************************************************
 * Handles the mouse up events for a Viewport.
 ******************************************************************************/
-void MoveOverlayInputMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void MoveOverlayInputMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
-	if(_viewport) {
+	if(viewport()) {
 		// Commit change.
-		_viewport->dataset()->undoStack().endCompoundOperation();
+		viewport()->dataset()->undoStack().endCompoundOperation();
 		_viewport = nullptr;
 	}
 	ViewportInputMode::mouseReleaseEvent(vpwin, event);

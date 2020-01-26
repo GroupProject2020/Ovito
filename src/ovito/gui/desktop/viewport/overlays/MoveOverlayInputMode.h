@@ -24,9 +24,9 @@
 
 
 #include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/base/viewport/ViewportInputMode.h>
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/pipeline/PipelineStatus.h>
-#include <ovito/gui/viewport/input/ViewportInputMode.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
 
@@ -46,13 +46,13 @@ public:
 	virtual void deactivated(bool temporary) override;
 
 	/// Handles the mouse down events for a Viewport.
-	virtual void mousePressEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+	virtual void mousePressEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 	/// Handles the mouse move events for a Viewport.
-	virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+	virtual void mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 	/// Handles the mouse up events for a Viewport.
-	virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+	virtual void mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 	/// Returns the current viewport we are working in.
 	Viewport* viewport() const { return _viewport; }

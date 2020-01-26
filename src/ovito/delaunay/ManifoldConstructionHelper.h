@@ -480,7 +480,6 @@ private:
 		HalfEdgeMesh::face_index adjacentFace = findCellFace(mirrorFacet);
 		if(adjacentFace == HalfEdgeMesh::InvalidIndex)
 			throw Exception("Cannot construct mesh for this input dataset. Adjacent cell face not found.");
-
 		return adjacentFace;
 	}
 
@@ -551,7 +550,6 @@ private:
 					}
 				}
 			}
-
 			++tet;
 		}
 		OVITO_ASSERT(tet == _tetrahedraFaceList.cend());
@@ -583,7 +581,7 @@ private:
 	}
 
 	static void reorderFaceVertices(std::array<size_t,3>& vertexIndices) {
-#if !defined(Q_OS_MACOS)
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WASM)
 		// Shift the order of vertices so that the smallest index is at the front.
 		std::rotate(std::begin(vertexIndices), std::min_element(std::begin(vertexIndices), std::end(vertexIndices)), std::end(vertexIndices));
 #else

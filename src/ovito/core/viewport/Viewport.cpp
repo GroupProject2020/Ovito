@@ -455,6 +455,7 @@ void Viewport::updateViewportTitle()
 		default: OVITO_ASSERT(false); // unknown viewport type
 	}
 	_viewportTitle.set(this, PROPERTY_FIELD(viewportTitle), std::move(newTitle));
+	Q_EMIT viewportTitleChanged();
 }
 
 /******************************************************************************

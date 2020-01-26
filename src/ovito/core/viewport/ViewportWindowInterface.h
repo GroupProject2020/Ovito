@@ -42,8 +42,17 @@ public:
 	/// Constructor which associates this window with the given viewport instance.
 	ViewportWindowInterface(MainWindowInterface* mainWindow, Viewport* vp);
 
+	/// Destructor.
+	~ViewportWindowInterface();
+
+	/// Associates this window with a viewport.
+	void setViewport(Viewport* vp);
+
 	/// Returns the viewport associated with this window.
 	Viewport* viewport() const { return _viewport; }
+
+	/// Sets the main window hosting this viewport.
+	void setMainWindow(MainWindowInterface* mainWindow) { _mainWindow = mainWindow; }
 
 	/// Returns the main window hosting this viewport window.
 	MainWindowInterface* mainWindow() const { return _mainWindow; }

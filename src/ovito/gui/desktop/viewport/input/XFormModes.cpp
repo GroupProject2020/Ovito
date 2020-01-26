@@ -23,8 +23,9 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/gui/desktop/widgets/display/CoordinateDisplayWidget.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
 #include <ovito/gui/desktop/dialogs/AnimationKeyEditorDialog.h>
+#include <ovito/gui/desktop/viewport/ViewportWindow.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
 #include <ovito/core/dataset/UndoStack.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/animation/controller/PRSTransformationController.h>
@@ -32,7 +33,7 @@
 #include <ovito/core/dataset/scene/SelectionSet.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/viewport/Viewport.h>
-#include "ViewportInputManager.h"
+#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "XFormModes.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -58,10 +59,10 @@ void XFormMode::activated(bool temporaryActivation)
 ******************************************************************************/
 void XFormMode::deactivated(bool temporary)
 {
-	if(_viewport) {
+	if(viewport()) {
 		// Restore old state if change has not been committed.
-		_viewport->dataset()->undoStack().endCompoundOperation(false);
-		_viewport->dataset()->undoStack().endCompoundOperation(false);
+		viewport()->dataset()->undoStack().endCompoundOperation(false);
+		viewport()->dataset()->undoStack().endCompoundOperation(false);
 		_viewport = nullptr;
 	}
 	disconnect(&inputManager()->datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &XFormMode::onSelectionChangeComplete);
@@ -76,7 +77,8 @@ void XFormMode::deactivated(bool temporary)
 ******************************************************************************/
 void XFormMode::onSelectionChangeComplete(SelectionSet* selection)
 {
-	CoordinateDisplayWidget* coordDisplay = inputManager()->mainWindow() ? inputManager()->mainWindow()->coordinateDisplay() : nullptr;
+	MainWindow* mainWindow = static_cast<MainWindow*>(inputManager()->mainWindow());
+	CoordinateDisplayWidget* coordDisplay = mainWindow ? mainWindow->coordinateDisplay() : nullptr;
 
 	if(selection) {
 		if(selection->nodes().size() == 1) {
@@ -104,8 +106,8 @@ void XFormMode::onSelectionChangeComplete(SelectionSet* selection)
 void XFormMode::onSceneNodeEvent(const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TransformationChanged) {
-		if(inputManager()->mainWindow())
-			updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
+		if(MainWindow* mainWindow = static_cast<MainWindow*>(inputManager()->mainWindow()))
+			updateCoordinateDisplay(mainWindow->coordinateDisplay());
 	}
 }
 
@@ -114,8 +116,8 @@ void XFormMode::onSceneNodeEvent(const ReferenceEvent& event)
 ******************************************************************************/
 void XFormMode::onTimeChanged(TimePoint time)
 {
-	if(inputManager()->mainWindow())
-		updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
+	if(MainWindow* mainWindow = static_cast<MainWindow*>(inputManager()->mainWindow()))
+		updateCoordinateDisplay(mainWindow->coordinateDisplay());
 }
 
 /******************************************************************************
@@ -124,26 +126,26 @@ void XFormMode::onTimeChanged(TimePoint time)
 void XFormMode::mousePressEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
-		if(_viewport == nullptr) {
+		if(viewport() == nullptr) {
 
 			// Select object under mouse cursor.
 			ViewportPickResult pickResult = vpwin->pick(event->localPos());
 			if(pickResult.isValid()) {
 				_viewport = vpwin->viewport();
 				_startPoint = event->localPos();
-				_viewport->dataset()->undoStack().beginCompoundOperation(undoDisplayName());
-				_viewport->dataset()->selection()->setNode(pickResult.pipelineNode());
-				_viewport->dataset()->undoStack().beginCompoundOperation(undoDisplayName());
+				viewport()->dataset()->undoStack().beginCompoundOperation(undoDisplayName());
+				viewport()->dataset()->selection()->setNode(pickResult.pipelineNode());
+				viewport()->dataset()->undoStack().beginCompoundOperation(undoDisplayName());
 				startXForm();
 			}
 		}
 		return;
 	}
 	else if(event->button() == Qt::RightButton) {
-		if(_viewport != nullptr) {
+		if(viewport()) {
 			// Restore old state when aborting the operation.
-			_viewport->dataset()->undoStack().endCompoundOperation(false);
-			_viewport->dataset()->undoStack().endCompoundOperation(false);
+			viewport()->dataset()->undoStack().endCompoundOperation(false);
+			viewport()->dataset()->undoStack().endCompoundOperation(false);
 			_viewport = nullptr;
 			return;
 		}
@@ -156,10 +158,10 @@ void XFormMode::mousePressEvent(ViewportWindowInterface* vpwin, QMouseEvent* eve
 ******************************************************************************/
 void XFormMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
-	if(_viewport) {
+	if(viewport()) {
 		// Commit change.
-		_viewport->dataset()->undoStack().endCompoundOperation();
-		_viewport->dataset()->undoStack().endCompoundOperation();
+		viewport()->dataset()->undoStack().endCompoundOperation();
+		viewport()->dataset()->undoStack().endCompoundOperation();
 		_viewport = nullptr;
 	}
 	ViewportInputMode::mouseReleaseEvent(vpwin, event);
@@ -170,17 +172,17 @@ void XFormMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* e
 ******************************************************************************/
 void XFormMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
-	if(_viewport == vpwin->viewport()) {
+	if(viewport() == vpwin->viewport()) {
 		// Take the current mouse cursor position to make the input mode
 		// look more responsive. The cursor position recorded when the mouse event was
 		// generates may be too old.
-		_currentPoint = vpwin->mapFromGlobal(QCursor::pos());
+		_currentPoint = static_cast<ViewportWindow*>(vpwin)->mapFromGlobal(QCursor::pos());
 
-		_viewport->dataset()->undoStack().resetCurrentCompoundOperation();
+		viewport()->dataset()->undoStack().resetCurrentCompoundOperation();
 		doXForm();
 
 		// Force immediate viewport repaints.
-		_viewport->dataset()->viewportConfig()->processViewportUpdates();
+		viewport()->dataset()->viewportConfig()->processViewportUpdates();
 	}
 	else {
 		// Change mouse cursor while hovering over an object.
@@ -194,10 +196,10 @@ void XFormMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* even
 ******************************************************************************/
 void XFormMode::focusOutEvent(ViewportWindowInterface* vpwin, QFocusEvent* event)
 {
-	if(_viewport) {
+	if(viewport()) {
 		// Restore old state if change has not been committed.
-		_viewport->dataset()->undoStack().endCompoundOperation(false);
-		_viewport->dataset()->undoStack().endCompoundOperation(false);
+		viewport()->dataset()->undoStack().endCompoundOperation(false);
+		viewport()->dataset()->undoStack().endCompoundOperation(false);
 		_viewport = nullptr;
 	}
 }
@@ -327,7 +329,8 @@ void MoveMode::onAnimateTransformationButton()
 		if(prs_ctrl) {
 			KeyframeController* ctrl = dynamic_object_cast<KeyframeController>(prs_ctrl->positionController());
 			if(ctrl) {
-				AnimationKeyEditorDialog dlg(ctrl, &PROPERTY_FIELD(PRSTransformationController::positionController), inputManager()->mainWindow(), inputManager()->mainWindow());
+				MainWindow* mainWindow = static_cast<MainWindow*>(inputManager()->mainWindow());
+				AnimationKeyEditorDialog dlg(ctrl, &PROPERTY_FIELD(PRSTransformationController::positionController), mainWindow, mainWindow);
 				dlg.exec();
 			}
 		}
@@ -429,7 +432,8 @@ void RotateMode::onCoordinateValueEntered(int component, FloatType value)
 			TimeInterval iv;
 			Vector3 translation;
 			DataSet* dataset = _selectedNode.target()->dataset();
-			CoordinateDisplayWidget* coordDisplay = inputManager()->mainWindow()->coordinateDisplay();
+			MainWindow* mainWindow = static_cast<MainWindow*>(inputManager()->mainWindow());
+			CoordinateDisplayWidget* coordDisplay = mainWindow->coordinateDisplay();
 			Vector3 euler = coordDisplay->getValues();
 			Rotation rotation = Rotation::fromEuler(Vector3(euler[2], euler[1], euler[0]), Matrix3::szyx);
 			ctrl->setRotationValue(dataset->animationSettings()->time(), rotation, true);
@@ -448,7 +452,8 @@ void RotateMode::onAnimateTransformationButton()
 		if(prs_ctrl) {
 			KeyframeController* ctrl = dynamic_object_cast<KeyframeController>(prs_ctrl->rotationController());
 			if(ctrl) {
-				AnimationKeyEditorDialog dlg(ctrl, &PROPERTY_FIELD(PRSTransformationController::rotationController), inputManager()->mainWindow(), inputManager()->mainWindow());
+				MainWindow* mainWindow = static_cast<MainWindow*>(inputManager()->mainWindow());
+				AnimationKeyEditorDialog dlg(ctrl, &PROPERTY_FIELD(PRSTransformationController::rotationController), mainWindow, mainWindow);
 				dlg.exec();
 			}
 		}

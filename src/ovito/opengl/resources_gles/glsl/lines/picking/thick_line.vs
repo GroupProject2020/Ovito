@@ -20,7 +20,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-precision mediump float;
+precision highp float;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;

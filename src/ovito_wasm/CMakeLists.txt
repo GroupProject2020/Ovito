@@ -27,12 +27,12 @@ ELSE()
 	ADD_EXECUTABLE(Ovito MACOSX_BUNDLE Main.cpp)
 ENDIF()
 
-# Copy in Qt HTML/JS launch files.
+# Copy in HTML/JS launch files.
 SET(APPNAME "ovito")
 IF(EMSCRIPTEN)
-	CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/wasm_shell.html" "${OVITO_BINARY_DIRECTORY}/Ovito.html")
 	CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/qtloader.js" "${OVITO_BINARY_DIRECTORY}/qtloader.js" COPYONLY)
-	CONFIGURE_FILE("${_qt5Core_install_prefix}/plugins/platforms/qtlogo.svg" "${OVITO_BINARY_DIRECTORY}/qtlogo.svg" COPYONLY)
+	CONFIGURE_FILE("wasm_shell.html" "${OVITO_BINARY_DIRECTORY}/index.html")
+	CONFIGURE_FILE("../ovito/gui/base/resources/mainwin/window_icon_256.png" "${OVITO_BINARY_DIRECTORY}/ovito_logo.png" COPYONLY)
 ENDIF()
 
 # The executable depends on the core and the gui modules, of course.
@@ -45,7 +45,7 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_
 SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "${APPNAME}")
 
 # Link Qt5.
-TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick)
+TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Svg)
 
 IF(EMSCRIPTEN)
 	# Link to missing Qt libraries (the order does matter).
@@ -53,11 +53,18 @@ IF(EMSCRIPTEN)
 		"${_qt5Core_install_prefix}/qml/QtQuick.2/libqtquick2plugin.a"      # QtQuick2Plugin
 		"${_qt5Core_install_prefix}/qml/QtQuick/Window.2/libwindowplugin.a" # QtQuick2WindowPlugin
 		"${_qt5Core_install_prefix}/qml/QtQuick/Layouts/libqquicklayoutsplugin.a" # QtQuick2LayoutsPlugin
+		"${_qt5Core_install_prefix}/qml/QtQuick/Controls.2/libqtquickcontrols2plugin.a" # QtQuickControls2Plugin
+		"${_qt5Core_install_prefix}/qml/QtQuick/Templates.2/libqtquicktemplates2plugin.a" # QtQuickTemplates2Plugin
+		"${_qt5Core_install_prefix}/lib/libQt5QuickControls2.a" 
+		"${_qt5Core_install_prefix}/lib/libQt5QuickTemplates2.a" 
+		"${_qt5Core_install_prefix}/plugins/iconengines/libqsvgicon.a"		# SVG Icon engine plugin
+		"${_qt5Core_install_prefix}/plugins/imageformats/libqsvg.a"			# SVG image format plugin
 		"${_qt5Core_install_prefix}/plugins/platforms/libqwasm.a"       	# No longer needed in Qt 5.14
 		"${_qt5Core_install_prefix}/lib/libQt5Quick.a"						# No longer needed in Qt 5.14
 		"${_qt5Core_install_prefix}/lib/libQt5EventDispatcherSupport.a"		# No longer needed in Qt 5.14
 		"${_qt5Core_install_prefix}/lib/libQt5FontDatabaseSupport.a"		# No longer needed in Qt 5.14
 		"${_qt5Core_install_prefix}/lib/libqtfreetype.a"					# No longer needed in Qt 5.14
+		"${_qt5Core_install_prefix}/lib/libQt5Svg.a"						# No longer needed in Qt 5.14
 	)
 ELSE()
 	IF(APPLE)

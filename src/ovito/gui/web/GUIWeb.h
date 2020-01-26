@@ -34,6 +34,7 @@
 ******************************************************************************/
 #include <QResource>
 #include <QQmlProperty>
+#include <QQmlContext>
 #include <QQuickWindow>
 #include <QQuickFramebufferObject>
 

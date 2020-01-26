@@ -35,6 +35,10 @@
 	Q_IMPORT_PLUGIN(QtQuick2Plugin)       	// QtQuick
 	Q_IMPORT_PLUGIN(QtQuick2WindowPlugin) 	// QtQuick.Window
 	Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin) 	// QtQuick.Layouts
+	Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)// QtQuick.Templates
+	Q_IMPORT_PLUGIN(QtQuickControls2Plugin) // QtQuick.Controls2
+	Q_IMPORT_PLUGIN(QSvgPlugin) 			// SVG image format plugin
+	Q_IMPORT_PLUGIN(QSvgIconPlugin) 		// SVG icon engine plugin
 	Q_IMPORT_PLUGIN(QWasmIntegrationPlugin)	// Note: This plugin is no longer needed in Qt 5.14
 #endif
 
@@ -68,15 +72,20 @@ bool WasmApplication::startupApplication()
 	// Make the C++ classes available as a Qt Quick items in QML. 
 	qmlRegisterType<MainWindow>("org.ovito", 1, 0, "MainWindow");
 	qmlRegisterType<ViewportsPanel>("org.ovito", 1, 0, "ViewportsPanel");
-	qmlRegisterType<ViewportWindow>();
+	qmlRegisterType<ViewportWindow>("org.ovito", 1, 0, "ViewportWindow");
 
 	// Initialize the Qml engine.
 	_qmlEngine = new QQmlApplicationEngine(this);
 	_qmlEngine->load(QStringLiteral(":/gui/main.qml"));
+	if(_qmlEngine->rootObjects().empty())
+		return false;
 
 	// Look up the main window in the Qt Quick scene.
-	MainWindow* mainWin = qobject_cast<MainWindow*>(_qmlEngine->rootObjects().front());
-	OVITO_ASSERT(mainWin);
+	MainWindow* mainWin = _qmlEngine->rootObjects().front()->findChild<MainWindow*>();
+	if(!mainWin) {
+		qWarning() << "WARNING: No MainWindow instance found.";
+		return false;
+	}
 
 	_datasetContainer = &mainWin->datasetContainer();
 
@@ -96,11 +105,10 @@ void WasmApplication::postStartupInitialization()
 
 		// Import sample data.
 		try {
-			QUrl importURL1(Application::instance()->fileManager()->urlFromUserInput(":/gui/B.obj"));
-//			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/water.start.data"));
-			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/dump.ellipsoid.gz"));
-			datasetContainer()->importFile(importURL1);
-			datasetContainer()->importFile(importURL2);
+			datasetContainer()->importFile(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/test.data"));
+//			QUrl importURL1(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/B.obj"));
+//			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/water.start.data"));
+//			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/oxdna-5bp-double.conf"));
 		}
 		catch(const Exception& ex) {
 			ex.reportError();

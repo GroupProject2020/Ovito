@@ -29,8 +29,8 @@
 #include <ovito/gui/desktop/properties/Vector3ParameterUI.h>
 #include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
 #include <ovito/gui/desktop/properties/CustomParameterUI.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
-#include <ovito/gui/viewport/overlays/MoveOverlayInputMode.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/gui/desktop/viewport/overlays/MoveOverlayInputMode.h>
 #include <ovito/gui/desktop/actions/ViewportModeAction.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>

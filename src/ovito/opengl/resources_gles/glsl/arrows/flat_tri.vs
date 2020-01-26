@@ -20,7 +20,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-precision mediump float;
+precision highp float;
 
 uniform mat4 modelview_projection_matrix;
 uniform bool is_perspective;

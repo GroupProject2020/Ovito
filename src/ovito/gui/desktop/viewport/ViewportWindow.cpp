@@ -25,22 +25,21 @@
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/app/Application.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
-#include <ovito/gui/rendering/ViewportSceneRenderer.h>
-#include <ovito/gui/viewport/picking/PickingSceneRenderer.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
+#include <ovito/gui/base/rendering/PickingSceneRenderer.h>
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "ViewportWindow.h"
 #include "ViewportMenu.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager, QWidget* parentWidget) : 
+ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager, MainWindow* mainWindow, QWidget* parentWidget) : 
 		QOpenGLWidget(parentWidget),
-		ViewportWindowInterface(vp),
+		ViewportWindowInterface(mainWindow, vp),
 		_inputManager(inputManager)
 {
 	setMouseTracking(true);
@@ -63,16 +62,6 @@ ViewportWindow::ViewportWindow(Viewport* vp, ViewportInputManager* inputManager,
 
 	// Create the object picking renderer.
 	_pickingRenderer = new PickingSceneRenderer(viewport()->dataset());
-}
-
-/******************************************************************************
-* Destructor.
-******************************************************************************/
-ViewportWindow::~ViewportWindow()
-{
-	// Detach from Viewport class.
-	if(viewport())
-		viewport()->setWindow(nullptr);
 }
 
 /******************************************************************************
@@ -99,8 +88,8 @@ void ViewportWindow::renderLater()
 void ViewportWindow::processViewportUpdate()
 {
 	if(_updateRequested) {
-		OVITO_ASSERT_MSG(!_viewport->isRendering(), "ViewportWindow::processUpdateRequest()", "Recursive viewport repaint detected.");
-		OVITO_ASSERT_MSG(!_viewport->dataset()->viewportConfig()->isRendering(), "ViewportWindow::processUpdateRequest()", "Recursive viewport repaint detected.");
+		OVITO_ASSERT_MSG(!viewport()->isRendering(), "ViewportWindow::processUpdateRequest()", "Recursive viewport repaint detected.");
+		OVITO_ASSERT_MSG(!viewport()->dataset()->viewportConfig()->isRendering(), "ViewportWindow::processUpdateRequest()", "Recursive viewport repaint detected.");
 		repaint();
 	}
 }
@@ -171,8 +160,8 @@ void ViewportWindow::initializeGL()
 ******************************************************************************/
 void ViewportWindow::paintGL()
 {
-	OVITO_ASSERT_MSG(!_viewport->isRendering(), "ViewportWindow::paintGL()", "Recursive viewport repaint detected.");
-	OVITO_ASSERT_MSG(!_viewport->dataset()->viewportConfig()->isRendering(), "ViewportWindow::paintGL()", "Recursive viewport repaint detected.");
+	OVITO_ASSERT_MSG(!viewport()->isRendering(), "ViewportWindow::paintGL()", "Recursive viewport repaint detected.");
+	OVITO_ASSERT_MSG(!viewport()->dataset()->viewportConfig()->isRendering(), "ViewportWindow::paintGL()", "Recursive viewport repaint detected.");
 	renderNow();
 }
 
@@ -302,7 +291,7 @@ void ViewportWindow::leaveEvent(QEvent* event)
 		viewport()->updateViewport();
 	}
 	if(_inputManager && _inputManager->mainWindow())
-		_inputManager->mainWindow()->statusBar()->clearMessage();
+		_inputManager->mainWindow()->clearStatusBarMessage();
 }
 
 /******************************************************************************
@@ -328,9 +317,9 @@ void ViewportWindow::focusOutEvent(QFocusEvent* event)
 ******************************************************************************/
 void ViewportWindow::renderGui(SceneRenderer* renderer)
 {
-	if(viewport()->renderPreviewMode(renderer)) {
+	if(viewport()->renderPreviewMode()) {
 		// Render render frame.
-		renderRenderFrame();
+		renderRenderFrame(renderer);
 	}
 	else {
 		// Render orientation tripod.
@@ -365,7 +354,7 @@ void ViewportWindow::renderNow()
 		static bool errorMessageShown = false;
 		if(!errorMessageShown) {
 			errorMessageShown = true;
-			_viewport->dataset()->viewportConfig()->suspendViewportUpdates();
+			viewport()->dataset()->viewportConfig()->suspendViewportUpdates();
 			Exception ex(tr(
 					"The OpenGL graphics driver installed on this system does not support OpenGL version %6.%7 or newer.\n\n"
 					"Ovito requires modern graphics hardware and up-to-date graphics drivers to display 3D content. Your current system configuration is not compatible with Ovito and the application will quit now.\n\n"
@@ -431,7 +420,7 @@ void ViewportWindow::renderNow()
 	}
 	else {
 		// Make sure viewport gets refreshed as soon as updates are enabled again.
-		_viewport->dataset()->viewportConfig()->updateViewports();
+		viewport()->dataset()->viewportConfig()->updateViewports();
 	}
 }
 

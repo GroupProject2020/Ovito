@@ -24,11 +24,9 @@
 
 
 #include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
+#include <ovito/gui/base/rendering/PickingSceneRenderer.h>
 #include <ovito/core/viewport/ViewportWindowInterface.h>
-#include <ovito/core/rendering/SceneRenderer.h>
-#include <ovito/core/rendering/TextPrimitive.h>
-#include <ovito/core/rendering/ImagePrimitive.h>
-#include <ovito/core/rendering/LinePrimitive.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -42,10 +40,7 @@ class OVITO_GUI_EXPORT ViewportWindow : public QOpenGLWidget, public ViewportWin
 public:
 
 	/// Constructor.
-	ViewportWindow(Viewport* vp, ViewportInputManager* inputManager, QWidget* parentWidget);
-
-	/// Destructor.
-	virtual ~ViewportWindow();
+	ViewportWindow(Viewport* vp, ViewportInputManager* inputManager, MainWindow* mainWindow, QWidget* parentWidget);
 
 	/// Returns the input manager handling mouse events of the viewport (if any).
 	ViewportInputManager* inputManager() const;

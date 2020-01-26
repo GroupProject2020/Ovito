@@ -24,11 +24,9 @@
 
 
 #include <ovito/gui/web/GUIWeb.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
+#include <ovito/gui/base/rendering/PickingSceneRenderer.h>
 #include <ovito/core/viewport/ViewportWindowInterface.h>
-#include <ovito/core/rendering/SceneRenderer.h>
-#include <ovito/core/rendering/TextPrimitive.h>
-#include <ovito/core/rendering/ImagePrimitive.h>
-#include <ovito/core/rendering/LinePrimitive.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -38,14 +36,15 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 class OVITO_GUIWEB_EXPORT ViewportWindow : public QQuickFramebufferObject, public ViewportWindowInterface
 {
 	Q_OBJECT
+	Q_PROPERTY(QString title READ title NOTIFY viewportTitleChanged);
 
 public:
 
 	/// Constructor.
-	ViewportWindow(Viewport* vp, ViewportInputManager* inputManager, MainWindow* mainWindow, QQuickItem* parentItem);
-
-	/// Destructor.
-	virtual ~ViewportWindow();
+	ViewportWindow();
+	
+	/// Associates this window with a viewport.
+	void setViewport(Viewport* vp);
 
 	/// Returns the input manager handling mouse events of the viewport (if any).
 	ViewportInputManager* inputManager() const;
@@ -106,6 +105,21 @@ public:
 	/// Returns whether the viewport window is currently visible on screen.
 	virtual bool isVisible() const override { return QQuickFramebufferObject::isVisible(); }
 
+	/// Returns the title string of the viewport.
+	QString title() const { return viewport() ? viewport()->viewportTitle() : QString(); }
+
+public Q_SLOTS:
+
+	/// Changes the zoom of the viewport such that the entire scene becomes visible.
+	void zoomSceneExtents() {
+		if(viewport()) viewport()->zoomToSceneExtents();
+	}
+
+Q_SIGNALS:
+
+	/// This signal is emitted when the title of the viewport changes.
+	void viewportTitleChanged();
+
 private:
 
 	class Renderer : public QQuickFramebufferObject::Renderer 
@@ -151,21 +165,13 @@ protected:
 	/// Handles mouse wheel events.
 	virtual void wheelEvent(QWheelEvent* event) override;
 
+	/// Handles hover move events.
+	virtual void hoverMoveEvent(QHoverEvent* event) override;
+
 private:
 
 	/// A flag that indicates that a viewport update has been requested.
 	bool _updateRequested = false;
-
-	/// The zone in the upper left corner of the viewport where
-	/// the context menu can be activated by the user.
-	QRectF _contextMenuArea;
-
-	/// Indicates that the mouse cursor is currently positioned inside the
-	/// viewport area that activates the viewport context menu.
-	bool _cursorInContextMenuArea = false;
-
-	/// The input manager handling mouse events of the viewport.
-	QPointer<ViewportInputManager> _inputManager;
 
 	/// This is the renderer of the interactive viewport.
 	OORef<ViewportSceneRenderer> _viewportRenderer;
@@ -177,3 +183,5 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
+
+QML_DECLARE_TYPE(Ovito::ViewportWindow);

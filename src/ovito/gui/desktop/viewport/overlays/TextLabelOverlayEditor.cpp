@@ -30,7 +30,7 @@
 #include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include <ovito/gui/desktop/widgets/general/AutocompleteTextEdit.h>
 #include <ovito/gui/desktop/actions/ViewportModeAction.h>
-#include <ovito/gui/viewport/overlays/MoveOverlayInputMode.h>
+#include <ovito/gui/desktop/viewport/overlays/MoveOverlayInputMode.h>
 #include <ovito/core/viewport/overlays/TextLabelOverlay.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>

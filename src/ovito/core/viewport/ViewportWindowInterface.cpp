@@ -35,11 +35,33 @@ ViewportWindowInterface::ViewportWindowInterface(MainWindowInterface* mainWindow
 	_mainWindow(mainWindow),
 	_viewport(vp)
 {
-	OVITO_ASSERT(mainWindow);
-	OVITO_ASSERT(vp);
-
 	// Associate the viewport with this window.
-	vp->setWindow(this);
+	if(vp)
+		vp->setWindow(this);
+}
+
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+ViewportWindowInterface::~ViewportWindowInterface()
+{
+	// Detach from Viewport instance.
+	if(viewport())
+		viewport()->setWindow(nullptr);
+}
+
+/******************************************************************************
+* Associates this window with a viewport.
+******************************************************************************/
+void ViewportWindowInterface::setViewport(Viewport* vp)
+{
+	// Detach from old Viewport instance.
+	if(viewport())
+		viewport()->setWindow(nullptr);
+	// Associate with new Viewport instance.
+	_viewport = vp;
+	if(vp)
+		vp->setWindow(this);
 }
 
 /******************************************************************************

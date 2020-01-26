@@ -20,7 +20,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-precision mediump float;
+precision highp float; 
 
 // Inputs from calling program:
 uniform mat4 modelview_matrix;

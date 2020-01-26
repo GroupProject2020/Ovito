@@ -38,7 +38,7 @@ ViewportsPanel::ViewportsPanel()
 {
 	// Activate the new viewport layout as soon as a new state file is loaded.
 	connect(this, &QQuickItem::windowChanged, this, [this](QQuickWindow* window) {
-		if(window) {
+		if(window && mainWindow()) {
 			connect(&mainWindow()->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
 			connect(mainWindow()->viewportInputManager(), &ViewportInputManager::inputModeChanged, this, &ViewportsPanel::onInputModeChanged);
 		}
@@ -60,11 +60,30 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 	_viewportConfig = newViewportConfiguration;
 	if(newViewportConfiguration) {
 
+		// Load the QML component for creating new viewport window instances.
+		if(!_viewportComponent) {
+			_viewportComponent = new QQmlComponent(qmlContext(this)->engine(), QUrl::fromLocalFile(":/gui/ui/ViewportWindow.qml"));
+			if(_viewportComponent->isError())
+          		qWarning() << _viewportComponent->errors();
+		}
+
 		// Create windows for the new viewports.
 		try {
 			for(Viewport* vp : newViewportConfiguration->viewports()) {
-				OVITO_ASSERT(vp->window() == nullptr);
-				new ViewportWindow(vp, mainWindow()->viewportInputManager(), mainWindow(), this);
+
+				// Create the window for the viewport.
+				ViewportWindow* vpwin = qobject_cast<ViewportWindow*>(_viewportComponent->create());
+				if(!vpwin) {
+					qWarning() << "Creation of ViewportWindow instance failed.";
+					break;
+				}
+
+				// Associate the window with the viewport.
+				vpwin->setMainWindow(mainWindow());
+				vpwin->setViewport(vp);
+
+				// Insert viewport into Qt Quick scene.
+				vpwin->setParentItem(this);
 			}
 		}
 		catch(const Exception& ex) {
@@ -106,6 +125,16 @@ void ViewportsPanel::viewportModeCursorChanged(const QCursor& cursor)
 	for(ViewportWindow* window : findChildren<ViewportWindow*>()) {
 		window->setCursor(cursor);
 	}
+}
+
+/******************************************************************************
+* Returns the window of the active viewport.
+******************************************************************************/
+ViewportWindow* ViewportsPanel::activeViewport() const
+{
+	if(_viewportConfig && _viewportConfig->activeViewport())
+		return static_cast<ViewportWindow*>(_viewportConfig->activeViewport()->window());
+	return nullptr;
 }
 
 /******************************************************************************
@@ -159,7 +188,10 @@ void ViewportsPanel::layoutViewports()
 		rect.translate(clientRect.width() * x / columns, clientRect.height() * y / rows);
 		rect.setWidth((clientRect.width() * (x+1) / columns) - rect.x());
 		rect.setHeight((clientRect.height() * (y+1) / rows) - rect.y());
-		rect.adjust(2,2,-2,-2);
+		if(x != 0) rect.setLeft(rect.left() + 1.0);
+		if(y != 0) rect.setTop(rect.top() + 1.0);
+		if(x != columns-1) rect.setRight(rect.right() - 1.0);
+		if(y != rows-1) rect.setBottom(rect.bottom() - 1.0);
 
 		vpwin->setX(rect.x());
 		vpwin->setY(rect.y());
