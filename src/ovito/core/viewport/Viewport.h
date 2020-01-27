@@ -82,6 +82,11 @@ class OVITO_CORE_EXPORT Viewport : public RefTarget
 	Q_OBJECT
 	OVITO_CLASS(Viewport)
 
+	Q_PROPERTY(QString title READ viewportTitle NOTIFY viewportChanged);
+	Q_PROPERTY(bool gridVisible READ isGridVisible WRITE setGridVisible NOTIFY viewportChanged);
+	Q_PROPERTY(bool previewMode READ renderPreviewMode WRITE setRenderPreviewMode NOTIFY viewportChanged);
+	Q_PROPERTY(Ovito::Viewport::ViewType viewType READ viewType WRITE setViewType NOTIFY viewportChanged);
+
 public:
 
 	/// View types.
@@ -225,15 +230,6 @@ public:
 	/// The returned box is given in viewport coordinates (interval [-1,+1]).
 	Box2 renderFrameRect() const;
 
-	/// \brief Zooms to the extents of the scene.
-	Q_INVOKABLE void zoomToSceneExtents();
-
-	/// \brief Zooms to the extents of the currently selected nodes.
-	Q_INVOKABLE void zoomToSelectionExtents();
-
-	/// \brief Zooms to the extents of the given bounding box.
-	Q_INVOKABLE void zoomToBox(const Box3& box);
-
 	/// \brief Returns a color value for drawing something in the viewport. The user can configure the color for each element.
 	/// \param which The enum constant that specifies what type of element to draw.
 	/// \return The color that should be used for the given element type.
@@ -286,10 +282,21 @@ public:
 	/// This is an internal method, which should not be called by user code.
 	void renderInteractive(SceneRenderer* renderer);
 
+public Q_SLOTS:
+
+	/// \brief Zooms to the extents of the scene.
+	void zoomToSceneExtents();
+
+	/// \brief Zooms to the extents of the currently selected nodes.
+	void zoomToSelectionExtents();
+
+	/// \brief Zooms to the extents of the given bounding box.
+	void zoomToBox(const Box3& box);
+
 Q_SIGNALS:
 
-	/// This signal is emitted when the title of the viewport has changed.
-	void viewportTitleChanged();
+	/// This signal is emitted whenever any of the UI properties of the viewport change.
+	void viewportChanged();
 
 protected:
 

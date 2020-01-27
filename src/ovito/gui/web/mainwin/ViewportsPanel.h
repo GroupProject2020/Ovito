@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 class ViewportsPanel : public QQuickItem
 {
 	Q_OBJECT
-	Q_PROPERTY(Ovito::ViewportWindow* activeViewport READ activeViewport);
+	Q_PROPERTY(Ovito::ViewportConfiguration* viewportConfiguration READ viewportConfiguration NOTIFY viewportConfigurationReplaced);
 
 public:
 
@@ -49,8 +49,13 @@ public:
 	/// Arranges the viewport windows within the container.
 	void layoutViewports();
 
-	/// Returns the window of the active viewport.
-	ViewportWindow* activeViewport() const;
+	/// Returns the current viewport configuration object.
+	ViewportConfiguration* viewportConfiguration() const { return _viewportConfig; }
+
+Q_SIGNALS:
+
+	/// This signal is emitted whenever a new ViewportConfiguration became active.
+	void viewportConfigurationReplaced(ViewportConfiguration* configuration);
 
 protected:
 

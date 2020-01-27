@@ -5,11 +5,13 @@ import QtQuick.Controls 2.12
 import org.ovito 1.0
 
 ViewportWindow {
+	id: viewportWindow
+
 	Button {
 		id: control
 		anchors.top: parent.top
 		anchors.left: parent.left
-		text: parent.title
+		text: parent.viewport ? parent.viewport.title : "inactive"
 		flat: true
 		font.weight: Font.Bold
 
@@ -32,12 +34,27 @@ ViewportWindow {
 
 	Menu {
 		id: viewportMenu
-		MenuItem { text: "Preview Mode" }
-		MenuItem { text: "Show Grid" }
-		MenuItem { text: "Constrain Rotation" }
+		MenuItem { 
+			text: qsTr("Preview Mode")
+			checkable: true
+			checked: viewportWindow.viewport && viewportWindow.viewport.previewMode 
+			onToggled: viewportWindow.viewport.previewMode = checked
+		}
+		MenuItem { 
+			text: qsTr("Show Grid")
+			checkable: true
+			checked: viewportWindow.viewport && viewportWindow.viewport.gridVisible 
+			onToggled: viewportWindow.viewport.gridVisible = checked
+		}
+		MenuItem {
+			text: qsTr("Constrain Rotation")
+			checkable: true
+			enabled: false
+		}
 		MenuSeparator {}
 		Menu {
 			title: qsTr("View Type")
+			enabled: false
 			MenuItem { text: "Top" }
 			MenuItem { text: "Bottom" }
 			MenuItem { text: "Front" }

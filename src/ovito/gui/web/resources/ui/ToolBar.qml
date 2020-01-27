@@ -68,18 +68,20 @@ ToolBar {
 				ToolTip.visible: hovered
 				ToolTip.delay: 500
 				display: AbstractButton.IconOnly
-				onClicked: viewportsPanel.activeViewport.zoomSceneExtents()
+				enabled: viewportsPanel.viewportConfiguration && viewportsPanel.viewportConfiguration.activeViewport
+				onClicked: viewportsPanel.viewportConfiguration.activeViewport.zoomToSceneExtents()
 			}
 			ToolButton {
 				id: maximizeViewportButton
-				enabled: false
 				checkable: true
+				checked: viewportsPanel.viewportConfiguration && viewportsPanel.viewportConfiguration.maximizedViewport
+				enabled: viewportsPanel.viewportConfiguration
 				icon.source: "qrc:/gui/actions/viewport/maximize_viewport.bw.svg"
 				ToolTip.text: qsTr("Maximize active viewport")
 				ToolTip.visible: hovered
 				ToolTip.delay: 500
 				display: AbstractButton.IconOnly
-//				onClicked: aboutDialog.open()
+				onToggled: viewportsPanel.viewportConfiguration.maximizedViewport = checked ? viewportsPanel.viewportConfiguration.activeViewport : null
 			}
 			ToolSeparator {
 				contentItem.visible: viewportRow.y === aboutRow.y

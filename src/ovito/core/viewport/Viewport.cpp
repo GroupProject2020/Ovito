@@ -419,6 +419,9 @@ void Viewport::propertyChanged(const PropertyFieldDescriptor& field)
 		// Update view matrix when the up-vector has been changed.
 		setCameraDirection(cameraDirection());
 	}
+	else if(field == PROPERTY_FIELD(isGridVisible) || field == PROPERTY_FIELD(renderPreviewMode) || field == PROPERTY_FIELD(stereoscopicMode)) {
+		Q_EMIT viewportChanged();
+	}
 	updateViewport();
 }
 
@@ -455,7 +458,7 @@ void Viewport::updateViewportTitle()
 		default: OVITO_ASSERT(false); // unknown viewport type
 	}
 	_viewportTitle.set(this, PROPERTY_FIELD(viewportTitle), std::move(newTitle));
-	Q_EMIT viewportTitleChanged();
+	Q_EMIT viewportChanged();
 }
 
 /******************************************************************************

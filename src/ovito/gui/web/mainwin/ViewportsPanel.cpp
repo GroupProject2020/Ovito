@@ -58,7 +58,7 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 		delete window;
 
 	_viewportConfig = newViewportConfiguration;
-	if(newViewportConfiguration) {
+	if(viewportConfiguration()) {
 
 		// Load the QML component for creating new viewport window instances.
 		if(!_viewportComponent) {
@@ -69,7 +69,7 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 
 		// Create windows for the new viewports.
 		try {
-			for(Viewport* vp : newViewportConfiguration->viewports()) {
+			for(Viewport* vp : viewportConfiguration()->viewports()) {
 
 				// Create the window for the viewport.
 				ViewportWindow* vpwin = qobject_cast<ViewportWindow*>(_viewportComponent->create());
@@ -92,14 +92,16 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 		}
 
 		// Repaint the viewport borders when another viewport has been activated.
-		_activeViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::activeViewportChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
+		_activeViewportChangedConnection = connect(viewportConfiguration(), &ViewportConfiguration::activeViewportChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
 
 		// Update layout when a viewport has been maximized.
-		_maximizedViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::maximizedViewportChanged, this, &ViewportsPanel::layoutViewports);
+		_maximizedViewportChangedConnection = connect(viewportConfiguration(), &ViewportConfiguration::maximizedViewportChanged, this, &ViewportsPanel::layoutViewports);
 
 		// Layout viewport windows.
 		layoutViewports();
 	}
+
+	Q_EMIT viewportConfigurationReplaced(viewportConfiguration());
 }
 
 /******************************************************************************
@@ -125,16 +127,6 @@ void ViewportsPanel::viewportModeCursorChanged(const QCursor& cursor)
 	for(ViewportWindow* window : findChildren<ViewportWindow*>()) {
 		window->setCursor(cursor);
 	}
-}
-
-/******************************************************************************
-* Returns the window of the active viewport.
-******************************************************************************/
-ViewportWindow* ViewportsPanel::activeViewport() const
-{
-	if(_viewportConfig && _viewportConfig->activeViewport())
-		return static_cast<ViewportWindow*>(_viewportConfig->activeViewport()->window());
-	return nullptr;
 }
 
 /******************************************************************************

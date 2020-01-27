@@ -71,9 +71,7 @@ void ViewportWindow::setViewport(Viewport* vp)
 	// Create the object picking renderer.
 	_pickingRenderer = new PickingSceneRenderer(vp->dataset());
 
-	// Notify users of the window of changes of the viewport's title.
-	connect(vp, &Viewport::viewportTitleChanged, this, &ViewportWindow::viewportTitleChanged);
-	Q_EMIT viewportTitleChanged();
+	Q_EMIT viewportReplaced(viewport());
 }
 
 /******************************************************************************

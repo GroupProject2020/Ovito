@@ -14,6 +14,6 @@ Dialog {
 
 		text: 
 			  qsTr("<p><img src=\"qrc:/gui/mainwin/window_icon_128.png\" width=\"48\" height=\"48\" /></p><p></p><h3>Ovito (Open Visualization Tool)</h3><p></p><p>Version %1</p>").arg(Qt.application.version)
-			+ qsTr("<p>A scientific visualization and analysis software for atomistic simulation data.</p><p></p><p>Copyright (C) 2020, Alexander Stukowski</p><p>This is free, open-source software, and you are welcome to redistribute according to the terms of the GNU General Public License.</p>")
+			+ qsTr("<p>A scientific data visualization and analysis software for particle simulations.</p><p></p><p>Copyright (C) 2020, Alexander Stukowski</p><p>This is free, open-source software, and you are welcome to redistribute it according to the terms of the GNU General Public License.</p>")
 	}
 }

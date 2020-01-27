@@ -36,7 +36,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 class OVITO_GUIWEB_EXPORT ViewportWindow : public QQuickFramebufferObject, public ViewportWindowInterface
 {
 	Q_OBJECT
-	Q_PROPERTY(QString title READ title NOTIFY viewportTitleChanged);
+	Q_PROPERTY(Ovito::Viewport* viewport READ viewport NOTIFY viewportReplaced);
 
 public:
 
@@ -105,20 +105,10 @@ public:
 	/// Returns whether the viewport window is currently visible on screen.
 	virtual bool isVisible() const override { return QQuickFramebufferObject::isVisible(); }
 
-	/// Returns the title string of the viewport.
-	QString title() const { return viewport() ? viewport()->viewportTitle() : QString(); }
-
-public Q_SLOTS:
-
-	/// Changes the zoom of the viewport such that the entire scene becomes visible.
-	void zoomSceneExtents() {
-		if(viewport()) viewport()->zoomToSceneExtents();
-	}
-
 Q_SIGNALS:
 
-	/// This signal is emitted when the title of the viewport changes.
-	void viewportTitleChanged();
+	/// This signal is emitted whenever a new Viewport is associated with this window.
+	void viewportReplaced(Viewport* viewport);
 
 private:
 
@@ -185,3 +175,4 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 QML_DECLARE_TYPE(Ovito::ViewportWindow);
+QML_DECLARE_TYPE(Ovito::Viewport);
