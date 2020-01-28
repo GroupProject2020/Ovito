@@ -50,7 +50,7 @@ class OVITO_GALAMOST_EXPORT GALAMOSTImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("GALAMOST Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(GALAMOSTImporter, OOMetaClass)
@@ -65,8 +65,8 @@ public:
 	virtual QString objectTitle() const override { return tr("GALAMOST"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 private:
@@ -83,7 +83,7 @@ private:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QIODevice& file) override;
 
 		/// Is called by the XML parser whenever a new XML element is read.
 		virtual bool startElement(const QString& namespaceURI, const QString& localName, const QString& qName, const QXmlAttributes& atts) override;

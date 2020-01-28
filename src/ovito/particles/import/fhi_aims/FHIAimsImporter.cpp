@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(FHIAimsImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool FHIAimsImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool FHIAimsImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -72,7 +72,7 @@ bool FHIAimsImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUr
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

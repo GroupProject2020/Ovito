@@ -67,10 +67,10 @@ protected:
 	/// Is called at program startup once the event loop is running.
 	virtual void postStartupInitialization() override;
 
-private:
+	/// Creates the global FileManager class instance.
+	virtual FileManager* createFileManager() override;
 
-	/// List of errors to be displayed by showErrorMessages().
-	std::deque<Exception> _errorList;
+private:
 
 	/// The global Qml engine.
 	QQmlApplicationEngine* _qmlEngine = nullptr;

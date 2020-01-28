@@ -42,7 +42,7 @@ static bool isalpha_ascii(char c)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -78,7 +78,7 @@ bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(QFileDevice& input, c
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

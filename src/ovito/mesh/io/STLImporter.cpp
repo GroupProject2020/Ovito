@@ -41,7 +41,7 @@ bool STLImporter::OOMetaClass::supportsDataType(const DataObject::OOMetaClass& d
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool STLImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool STLImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -66,7 +66,7 @@ bool STLImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 /******************************************************************************
 * Parses the given input file and stores the data in the given container object.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr STLImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr STLImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

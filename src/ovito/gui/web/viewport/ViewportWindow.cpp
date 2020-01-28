@@ -277,10 +277,19 @@ void ViewportWindow::renderViewport()
 	// Invalidate picking buffer every time the visible contents of the viewport change.
 	_pickingRenderer->reset();
 
-	// Dpn't render anything if viewport updates are currently suspended. 
-	if(viewport()->dataset()->viewportConfig()->isSuspended()) {
+	// Don't render anything if viewport updates are currently suspended. 
+	if(viewport()->dataset()->viewportConfig()->isSuspended())
 		return;
+
+#ifdef Q_OS_WASM
+	// Verify that the EXT_frag_depth OpenGL ES 2.0 extension is available.
+	static bool hasCheckedFragDepthExtension = false;
+	if(!hasCheckedFragDepthExtension) {
+		hasCheckedFragDepthExtension = true;
+		if(QOpenGLContext::currentContext()->hasExtension("EXT_frag_depth") == false) 
+			Q_EMIT viewportError(tr("WARNING: WebGL extension 'EXT_frag_depth' is not supported by your browser.\nWithout this capability, visual artifacts will likely appear in the display."));
 	}
+#endif
 
 	try {
 		// Let the Viewport class do the actual rendering work.
@@ -290,6 +299,7 @@ void ViewportWindow::renderViewport()
 		if(ex.context() == nullptr) ex.setContext(viewport()->dataset());
 		ex.prependGeneralMessage(tr("An unexpected error occurred while rendering the viewport contents. The program will quit now."));
 		viewport()->dataset()->viewportConfig()->suspendViewportUpdates();
+		Q_EMIT viewportError(ex.messages().join(QChar('\n')));
 		ex.reportError();
 	}
 

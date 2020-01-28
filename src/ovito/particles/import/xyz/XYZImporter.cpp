@@ -53,7 +53,7 @@ void XYZImporter::setColumnMapping(const InputColumnMapping& mapping)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool XYZImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool XYZImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -107,9 +107,9 @@ Future<InputColumnMapping> XYZImporter::inspectFileHeader(const Frame& frame)
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void XYZImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
@@ -118,14 +118,13 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
 	int frameNumber = 0;
+	QString filename = sourceUrl.fileName();
+	Frame frame(sourceUrl, file);
 
 	while(!stream.eof() && !isCanceled()) {
-		qint64 byteOffset = stream.byteOffset();
-		int lineNumber = stream.lineNumber();
+		frame.byteOffset = stream.byteOffset();
+		frame.lineNumber = stream.lineNumber();
 
 		// Parse number of atoms.
 		stream.readLine();
@@ -144,11 +143,6 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		}
 
 		// Create a new record for the time step.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = byteOffset;
-		frame.lineNumber = lineNumber;
-		frame.lastModificationTime = lastModified;
 		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 		frames.push_back(frame);
 
@@ -240,7 +234,7 @@ inline bool parseBool(const char* s, int& d)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

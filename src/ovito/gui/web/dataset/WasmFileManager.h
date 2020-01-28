@@ -23,48 +23,21 @@
 #pragma once
 
 
-#include <ovito/gui/web/GUIWeb.h>
-#include <ovito/gui/web/dataset/WasmDataSetContainer.h>
-#include <ovito/gui/base/mainwin/MainWindowInterface.h>
+#include <ovito/core/Core.h>
+#include <ovito/core/utilities/io/FileManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
 /**
- * \brief The main window of the application.
+ * \brief The file manager provides transparent access to remote files.
  */
-class OVITO_GUIWEB_EXPORT MainWindow : public QQuickItem, public MainWindowInterface
+class WasmFileManager : public FileManager
 {
 	Q_OBJECT
 
 public:
-
-	/// Constructor of the main window class.
-	MainWindow();
-
-	/// Destructor.
-	virtual ~MainWindow();
-
-	/// Returns the container that keeps a reference to the current dataset.
-	WasmDataSetContainer& datasetContainer() { return _datasetContainer; }
-
-	/// Displays an error message in the window.
-	void showErrorMessage(const Exception& exception);
-
-public Q_SLOTS:
-
-	/// Lets the user select a file on the local computer to be imported into the scene.
-	void importDataFile();
-
-Q_SIGNALS:
-
-	/// This signal is emitted to display an error message to the user.
-	void error(const QString& message, const QString& detailedText);
-
-private:
-
-	/// Container managing the current dataset.
-	WasmDataSetContainer _datasetContainer;
 };
 
+OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

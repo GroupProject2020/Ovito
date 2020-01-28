@@ -101,7 +101,7 @@ private:
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool ParcasFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool ParcasFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	if(!input.open(QIODevice::ReadOnly))
@@ -123,7 +123,7 @@ bool ParcasFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	setProgressText(tr("Reading Parcas file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 

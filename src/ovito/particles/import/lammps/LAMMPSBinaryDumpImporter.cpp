@@ -151,7 +151,7 @@ void LAMMPSBinaryDumpImporter::setColumnMapping(const InputColumnMapping& mappin
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool LAMMPSBinaryDumpImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool LAMMPSBinaryDumpImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	if(!input.open(QIODevice::ReadOnly))
@@ -180,23 +180,21 @@ Future<InputColumnMapping> LAMMPSBinaryDumpImporter::inspectFileHeader(const Fra
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	// Open input file in binary mode for reading.
 	if(!file.open(QIODevice::ReadOnly))
 		throw Exception(tr("Failed to open binary LAMMPS dump file: %1.").arg(file.errorString()));
 
-	QFileInfo fileInfo(file.fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(sourceUrl, file);
 
 	setProgressText(tr("Scanning binary LAMMPS dump file %1").arg(filename));
 	setProgressMaximum(file.size());
 
 	while(!file.atEnd() && !isCanceled()) {
-		qint64 byteOffset = file.pos();
+		frame.byteOffset = file.pos();
 
 		// Parse file header.
 		LAMMPSBinaryDumpHeader header;
@@ -222,10 +220,6 @@ void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, co
 		}
 
 		// Create a new record for the time step.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = byteOffset;
-		frame.lastModificationTime = lastModified;
 		frame.label = QString("Timestep %1").arg(header.ntimestep);
 		frames.push_back(frame);
 	}
@@ -326,7 +320,7 @@ bool LAMMPSBinaryDumpHeader::parse(QIODevice& input)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	setProgressText(tr("Reading binary LAMMPS dump file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 

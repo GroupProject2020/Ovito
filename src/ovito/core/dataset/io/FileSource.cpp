@@ -388,7 +388,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 			// Retrieve the file.
 			Future<PipelineFlowState> loadFrameFuture = Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frameInfo.sourceFile)
-				.then(executor(), [this, frameInfo, frame, interval](const QString& filename) -> Future<PipelineFlowState> {
+				.then(executor(), [this, frameInfo, frame, interval](const FileHandle& fileHandle) -> Future<PipelineFlowState> {
 
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {
@@ -397,7 +397,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					}
 
 					// Create the frame loader for the requested frame.
-					FileSourceImporter::FrameLoaderPtr frameLoader = importer()->createFrameLoader(frameInfo, filename);
+					FileSourceImporter::FrameLoaderPtr frameLoader = importer()->createFrameLoader(frameInfo, fileHandle);
 					OVITO_ASSERT(frameLoader);
 
 					// Execute the loader in a background thread.

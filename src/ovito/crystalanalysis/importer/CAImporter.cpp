@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(CAImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool CAImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool CAImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -54,9 +54,9 @@ bool CAImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& so
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void CAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void CAImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning CA file %1").arg(stream.filename()));
@@ -103,7 +103,7 @@ void CAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sour
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

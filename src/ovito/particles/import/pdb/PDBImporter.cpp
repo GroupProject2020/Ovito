@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(PDBImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool PDBImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool PDBImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -51,20 +51,17 @@ bool PDBImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void PDBImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void PDBImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning PDB file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
-	auto byteOffset = stream.byteOffset();
-	auto lineNumber = stream.lineNumber();
-
+	Frame frame(sourceUrl, file);
+	frame.byteOffset = stream.byteOffset();
+	frame.lineNumber = stream.lineNumber();
 	while(!stream.eof()) {
 
 		if(isCanceled())
@@ -79,32 +76,22 @@ void PDBImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 			return;
 
 		if(stream.lineStartsWithToken("ENDMDL")) {
-			Frame frame;
-			frame.sourceFile = sourceUrl;
-			frame.byteOffset = byteOffset;
-			frame.lineNumber = lineNumber;
-			frame.lastModificationTime = lastModified;
 			frames.push_back(frame);
-			byteOffset = stream.byteOffset();
-			lineNumber = stream.lineNumber();
+			frame.byteOffset = stream.byteOffset();
+			frame.lineNumber = stream.lineNumber();
 		}
 	}
 
 	if(frames.empty()) {
 		// It's not a trajectory file. Report just a single frame.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = 0;
-		frame.lineNumber = 0;
-		frame.lastModificationTime = lastModified;
-		frames.push_back(frame);
+		frames.push_back(Frame(sourceUrl, file));
 	}
 }
 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

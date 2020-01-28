@@ -110,6 +110,9 @@ Q_SIGNALS:
 	/// This signal is emitted whenever a new Viewport is associated with this window.
 	void viewportReplaced(Viewport* viewport);
 
+	/// This signal is emitted when an error state is detected in the viewport window.
+	void viewportError(const QString& message);
+
 private:
 
 	class Renderer : public QQuickFramebufferObject::Renderer 

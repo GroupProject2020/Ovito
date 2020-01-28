@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -272,9 +272,9 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 
 		// Fetch file.
 		return Application::instance()->fileManager()->fetchUrl(dataset()->taskManager(), sourceUrl)
-			.then(executor(), [this, sourceUrl](const QString& filename) {
+			.then(executor(), [this](const FileHandle& file) {
 				// Scan file.
-				if(FrameFinderPtr frameFinder = createFrameFinder(sourceUrl, filename))
+				if(FrameFinderPtr frameFinder = createFrameFinder(file))
 					return dataset()->taskManager().runTaskAsync(frameFinder);
 				else
 					return Future<QVector<Frame>>::createImmediateEmplace();
@@ -311,11 +311,8 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 void FileSourceImporter::FrameFinder::perform()
 {
 	QVector<Frame> frameList;
-
-	// Scan file.
-	try {
-		QFile file(_localFilename);
-		discoverFramesInFile(file, _sourceUrl, frameList);
+	try {		
+		discoverFramesInFile(frameList);
 	}
 	catch(const Exception&) {
 		// Silently ignore parsing and I/O errors if at least two frames have been read.
@@ -325,18 +322,16 @@ void FileSourceImporter::FrameFinder::perform()
 		else
 			frameList.pop_back();		// Remove last discovered frame because it may be corrupted or only partially written.
 	}
-
 	setResult(std::move(frameList));
 }
 
 /******************************************************************************
 * Scans the given file for source frames
 ******************************************************************************/
-void FileSourceImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void FileSourceImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	// By default, register a single frame.
-	QFileInfo fileInfo(file.fileName());
-	frames.push_back({ sourceUrl, 0, 1, fileInfo.lastModified(), fileInfo.fileName() });
+	frames.push_back(Frame(fileHandle()));
 }
 
 /******************************************************************************

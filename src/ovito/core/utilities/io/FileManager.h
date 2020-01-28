@@ -36,6 +36,31 @@ namespace Ssh {
 }
 
 /**
+ * \brief A handle to a file manages by the FileManager.
+ */
+class OVITO_CORE_EXPORT FileHandle 
+{
+public:
+
+	/// Constructor for files located in the local file system.
+	explicit FileHandle(const QUrl& sourceUrl, const QString& localFilePath) : _sourceUrl(sourceUrl), _localFilePath(localFilePath) {}
+
+	/// Returns the URL denoting the source location of the data file.
+	const QUrl& sourceUrl() const { return _sourceUrl; }
+
+	/// Returns the path to the file in the local file system (may be empty). 
+	const QString& localFilePath() const { return _localFilePath; }
+
+private:
+
+	/// The URL denoting the data source.
+	QUrl _sourceUrl;
+
+	/// A path to the file in the local file system. 
+	QString _localFilePath;
+};
+
+/**
  * \brief The file manager provides transparent access to remote files.
  */
 class OVITO_CORE_EXPORT FileManager : public QObject
@@ -50,9 +75,9 @@ public:
 	/// Destructor.
 	~FileManager();
 
-	/// \brief Makes a file available on this computer.
-	/// \return A Future that will provide the local file name of the downloaded file.
-	SharedFuture<QString> fetchUrl(TaskManager& taskManager, const QUrl& url);
+	/// \brief Makes a file available locally.
+	/// \return A Future that will provide access to the file contents after it has been fetched from the remote location.
+	SharedFuture<FileHandle> fetchUrl(TaskManager& taskManager, const QUrl& url);
 
 	/// \brief Removes a cached remote file so that it will be downloaded again next time it is requested.
 	void removeFromCache(const QUrl& url);

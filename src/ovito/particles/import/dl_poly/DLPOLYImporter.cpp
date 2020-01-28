@@ -33,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(DLPOLYImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool DLPOLYImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool DLPOLYImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -87,9 +87,9 @@ bool DLPOLYImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void DLPOLYImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void DLPOLYImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning DL_POLY file %1").arg(stream.filename()));
@@ -106,11 +106,10 @@ void DLPOLYImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 	if(stream.eof() || sscanf(stream.readLine(), "%u %u %llu %u", &levcfg, &imcon, &expectedAtomCount, &frame_count) < 2 || levcfg < 0 || levcfg > 2 || imcon < 0 || imcon > 6)
 		throw Exception(tr("Invalid record line %1 in DL_POLY file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
-	auto byteOffset = stream.byteOffset();
-	auto lineNumber = stream.lineNumber();
+	Frame frame(sourceUrl, file);
+	QString filename = sourceUrl.fileName();
+	frame.byteOffset = stream.byteOffset();
+	frame.lineNumber = stream.lineNumber();
 
 	// Look for "timestep" record.
 	stream.readLine();
@@ -122,15 +121,10 @@ void DLPOLYImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 
 		for(int frameIndex = 0; frameIndex < frame_count; frameIndex++) {
 			if(frameIndex != 0) {
-				byteOffset = stream.byteOffset();
-				lineNumber = stream.lineNumber();
+				frame.byteOffset = stream.byteOffset();
+				frame.lineNumber = stream.lineNumber();
 				stream.readLine();
 			}
-			Frame frame;
-			frame.sourceFile = sourceUrl;
-			frame.byteOffset = byteOffset;
-			frame.lineNumber = lineNumber;
-			frame.lastModificationTime = lastModified;
 			int nstep;
 			qlonglong megatm;
 			int keytrj;
@@ -163,19 +157,14 @@ void DLPOLYImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 	}
 	else {
 		// It's not a trajectory file. Report just a single frame.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = 0;
-		frame.lineNumber = 0;
-		frame.lastModificationTime = lastModified;
-		frames.push_back(frame);
+		frames.push_back(Frame(sourceUrl, file));
 	}
 }
 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

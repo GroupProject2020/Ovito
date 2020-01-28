@@ -29,6 +29,7 @@ OVITO_STANDARD_PLUGIN(GuiWeb
 		GUIWeb.cpp
 		app/WasmApplication.cpp
 		dataset/WasmDataSetContainer.cpp
+		dataset/WasmFileManager.cpp
 		mainwin/MainWindow.cpp
 		mainwin/ViewportsPanel.cpp
 		viewport/ViewportWindow.cpp

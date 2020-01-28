@@ -59,14 +59,17 @@ void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool GSDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool GSDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
-	QString filename = QDir::toNativeSeparators(input.fileName());
-
-	gsd_handle handle;
-	if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == 0) {
-		::gsd_close(&handle);
-		return true;
+	if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(&input)) {
+		QString filename = QDir::toNativeSeparators(fileDevice->fileName());
+		if(!filename.isEmpty()) {
+			gsd_handle handle;
+			if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == 0) {
+				::gsd_close(&handle);
+				return true;
+			}
+		}
 	}
 
 	return false;
@@ -95,7 +98,7 @@ TriMeshPtr GSDImporter::lookupParticleShapeInCache(const QByteArray& jsonString)
 /******************************************************************************
 * Scans the input file for simulation timesteps.
 ******************************************************************************/
-void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void GSDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
@@ -121,12 +124,15 @@ void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	setProgressText(tr("Reading GSD file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Open GSD file for reading.
-	QString filename = QDir::toNativeSeparators(file.fileName());
+	QFileDevice* fileDevice = qobject_cast<QFileDevice*>(&file);
+	if(!fileDevice)
+		throw Exception(tr("The GSD file reader supports reading only from physical files. Cannot read data from an in-memory buffer."));
+	QString filename = QDir::toNativeSeparators(fileDevice->fileName());
 	GSDFile gsd(filename.toLocal8Bit().constData());
 
 	// Check schema name.

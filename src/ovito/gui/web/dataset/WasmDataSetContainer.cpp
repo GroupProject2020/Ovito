@@ -53,12 +53,12 @@ bool WasmDataSetContainer::importFile(const QUrl& url, const FileImporterClass* 
 	if(!importerType) {
 
 		// Download file so we can determine its format.
-		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager(), url);
+		SharedFuture<FileHandle> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager(), url);
 		if(!taskManager().waitForFuture(fetchFileFuture))
 			return false;
 
 		// Detect file format.
-		importer = FileImporter::autodetectFileFormat(currentSet(), fetchFileFuture.result(), url.path());
+		importer = FileImporter::autodetectFileFormat(currentSet(), fetchFileFuture.result());
 		if(!importer)
 			currentSet()->throwException(tr("Could not detect the format of the file to be imported. The format might not be supported."));
 	}

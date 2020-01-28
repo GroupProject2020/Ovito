@@ -28,7 +28,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /******************************************************************************
 * Opens the stream for reading.
 ******************************************************************************/
-CompressedTextReader::CompressedTextReader(QFileDevice& input, const QString& originalFilePath) :
+CompressedTextReader::CompressedTextReader(QIODevice& input, const QString& originalFilePath) :
 #ifdef OVITO_ZLIB_SUPPORT
 	_device(input), _uncompressor(&input, 6, 0x100000)
 #else
@@ -38,8 +38,8 @@ CompressedTextReader::CompressedTextReader(QFileDevice& input, const QString& or
 	// Try to find out what the filename is.
 	if(!originalFilePath.isEmpty())
 		_filename = QFileInfo(originalFilePath).fileName();
-	else
-		_filename = input.fileName();
+	else if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(&input))
+		_filename = fileDevice->fileName();
 
 	// Check if file is compressed (i.e. filename ends with .gz).
 	if(_filename.endsWith(".gz", Qt::CaseInsensitive)) {
@@ -112,8 +112,10 @@ const char* CompressedTextReader::readLine(int maxSize)
 std::pair<const char*, const char*> CompressedTextReader::mmap(qint64 offset, qint64 size)
 {
 	OVITO_ASSERT(_mmapPointer == nullptr);
-	if(!isCompressed())
-		_mmapPointer = device().map(underlyingByteOffset(), size);
+	if(!isCompressed()) {
+		if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(&device()))
+			_mmapPointer = fileDevice->map(underlyingByteOffset(), size);
+	}
 	return std::make_pair(
 			reinterpret_cast<const char*>(_mmapPointer),
 			reinterpret_cast<const char*>(_mmapPointer) + size);
@@ -125,7 +127,8 @@ std::pair<const char*, const char*> CompressedTextReader::mmap(qint64 offset, qi
 void CompressedTextReader::munmap()
 {
 	OVITO_ASSERT(_mmapPointer != nullptr);
-	device().unmap(_mmapPointer);
+	if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(&device()))
+		fileDevice->unmap(_mmapPointer);
 	_mmapPointer = nullptr;
 }
 

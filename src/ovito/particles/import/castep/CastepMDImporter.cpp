@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(CastepMDImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool CastepMDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool CastepMDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -53,9 +53,9 @@ bool CastepMDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QU
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void CastepMDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning CASTEP file %1").arg(stream.filename()));
@@ -75,22 +75,16 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 			return;
 	}
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(sourceUrl, file);
+	QString filename = sourceUrl.fileName();
 	int frameNumber = 0;
 
 	while(!stream.eof()) {
-		auto byteOffset = stream.byteOffset();
-		auto lineNumber = stream.lineNumber();
+		frame.byteOffset = stream.byteOffset();
+		frame.lineNumber = stream.lineNumber();
 		stream.readLine();
 		if(stream.lineEndsWith("<-- h")) {
-			Frame frame;
-			frame.sourceFile = sourceUrl;
-			frame.byteOffset = byteOffset;
-			frame.lineNumber = lineNumber;
-			frame.lastModificationTime = lastModified;
-			frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
+			frame.label = tr("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 			frames.push_back(frame);
 			// Skip the two other lines of the cell matrix
 			stream.readLine();
@@ -105,7 +99,7 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

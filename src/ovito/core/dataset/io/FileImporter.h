@@ -55,11 +55,10 @@ public:
 
 	/// \brief Checks if the given file has format that can be read by this importer.
 	/// \param input The file that contains the data to check.
-	/// \param sourceLocation The original source location of the file if it was loaded from a remote location.
 	/// \return \c true if the data can be parsed.
 	//	        \c false if the data has some unknown format.
 	/// \throw Exception when the check has failed.
-	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const {
+	virtual bool checkFileFormat(const FileHandle& input) const {
 		return false;
 	}
 
@@ -117,7 +116,7 @@ public:
 
 	/// \brief Tries to detect the format of the given file.
 	/// \return The importer class that can handle the given file. If the file format could not be recognized then NULL is returned.
-	static OORef<FileImporter> autodetectFileFormat(DataSet* dataset, const QString& localFile, const QUrl& sourceLocation = QUrl());
+	static OORef<FileImporter> autodetectFileFormat(DataSet* dataset, const FileHandle& file);
 
 	/// Helper function that is called by sub-classes prior to file parsing in order to
 	/// activate the default "C" locale.

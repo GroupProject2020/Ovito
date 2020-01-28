@@ -48,7 +48,7 @@ class OVITO_MESH_EXPORT VTKFileImporter : public FileSourceImporter
 		virtual QString fileFilterDescription() const override { return tr("VTK Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 
 		/// Returns whether this importer class supports importing data of the given type.
 		virtual bool supportsDataType(const DataObject::OOMetaClass& dataObjectType) const override;
@@ -66,9 +66,9 @@ public:
 	virtual QString objectTitle() const override { return tr("VTK"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename);
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 protected:
@@ -84,7 +84,7 @@ protected:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QIODevice& file) override;
 
 		/// Reads from the input stream and throws an exception if the given keyword is not present.
 		static void expectKeyword(CompressedTextReader& stream, const char* keyword);

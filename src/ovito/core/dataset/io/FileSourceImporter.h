@@ -28,6 +28,7 @@
 #include <ovito/core/dataset/pipeline/PipelineStatus.h>
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/utilities/concurrent/AsynchronousTask.h>
+#include <ovito/core/utilities/io/FileManager.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
@@ -48,8 +49,15 @@ public:
 		Frame() = default;
 
 		/// Initialization constructor.
-		Frame(QUrl url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString(), qint64 parserInfo = 0)	:
-			sourceFile(std::move(url)), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name), parserData(parserInfo) {}
+		explicit Frame(const FileHandle& fileHandle, qint64 offset = 0, int linenum = 1, const QString& name = QString(), qint64 parserInfo = 0) :
+				sourceFile(fileHandle.sourceUrl()), byteOffset(offset), lineNumber(linenum), label(name.isEmpty() ? fileHandle.sourceUrl().fileName() : name), parserData(parserInfo) {
+			if(!fileHandle.localFilePath().isEmpty())
+				lastModificationTime = QFileInfo(fileHandle.localFilePath()).lastModified();
+		}
+
+		/// Initialization constructor.
+		explicit Frame(const QUrl& url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString(), qint64 parserInfo = 0) :
+			sourceFile(url), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name), parserData(parserInfo) {}
 
 		/// The source file that contains the data of the animation frame.
 		QUrl sourceFile;
@@ -127,7 +135,7 @@ public:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) = 0;
+		virtual FrameDataPtr loadFile(QIODevice& file) = 0;
 
 	private:
 
@@ -149,27 +157,23 @@ public:
 	public:
 
 		/// Constructor.
-		FrameFinder(const QUrl& sourceUrl, const QString& filename) :
-			_sourceUrl(sourceUrl), _localFilename(filename) {}
+		FrameFinder(const FileHandle& file) : _file(file) {}
 
-		/// Returns the source file information.
-		const QUrl& sourceUrl() const { return _sourceUrl; }
+		/// Returns the data file to scan.
+		const FileHandle& fileHandle() const { return _file; }
 
 		/// Scans the source URL for input frames.
 		virtual void perform() override;
 
 	protected:
 
-		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<Frame>& frames);
+		/// Scans the data file and builds a list of source frames.
+		virtual void discoverFramesInFile(QVector<Frame>& frames);
 
 	private:
 
-		/// The source file information.
-		QUrl _sourceUrl;
-
-		/// The local copy of the file.
-		QString _localFilename;
+		/// The data file to scan.
+		const FileHandle& _file;
 	};
 
 	/// A managed pointer to a FrameFinder instance.
@@ -226,10 +230,10 @@ public:
 	void requestFramesUpdate();
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual FrameLoaderPtr createFrameLoader(const Frame& frame, const QString& localFilename) = 0;
+	virtual FrameLoaderPtr createFrameLoader(const Frame& frame, const FileHandle& file) = 0;
 
 	/// Creates an asynchronous frame discovery object that scans a file for contained animation frames.
-	virtual FrameFinderPtr createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) { return {}; }
+	virtual FrameFinderPtr createFrameFinder(const FileHandle& file) { return {}; }
 
 protected:
 

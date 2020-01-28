@@ -737,11 +737,11 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 		vertexBuffer.detach(this, shader, "position");
 		colorBuffer.detachColors(this, shader);
 	}
-#ifndef Q_OS_WASM	
+#ifndef Q_OS_WASM
 	else if(oldGLFunctions()) {
 		OVITO_CHECK_OPENGL(this, oldGLFunctions()->glDisableClientState(GL_VERTEX_ARRAY));
 	}
-#endif	
+#endif
 	shader->release();
 	if(wasDepthTestEnabled) 
 		OVITO_CHECK_OPENGL(this, this->glEnable(GL_DEPTH_TEST));

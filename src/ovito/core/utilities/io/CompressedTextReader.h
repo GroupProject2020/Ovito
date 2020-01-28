@@ -50,13 +50,18 @@ public:
 	/// \param input The underlying Qt input device from which data should be read.
 	/// \param originalFilePath The file path of the file being read. This is used to determine if the file is compressed (ends with .gz suffix).
 	/// \throw Exception if an I/O error has occurred.
-	CompressedTextReader(QFileDevice& input, const QString& originalFilePath);
+	explicit CompressedTextReader(QIODevice& input, const QString& originalFilePath);
+
+	/// Opens the given file for reading.
+	/// \param input The file handle to open.
+	/// \throw Exception if an I/O error has occurred.
+	explicit CompressedTextReader(const FileHandle& input);
 
 	/// Returns the name of the input file (without the path), which was passed to the constructor.
 	const QString& filename() const { return _filename; }
 
 	/// Returns the underlying I/O device.
-	QFileDevice& device() { return _device; }
+	QIODevice& device() { return _device; }
 
 	/// Indicates whether the input file is compressed.
 	bool isCompressed() const { return _stream != &_device; }
@@ -192,7 +197,7 @@ private:
 	qint64 _byteOffset = 0;
 
 	/// The underlying input device.
-	QFileDevice& _device;
+	QIODevice& _device;
 
 #ifdef OVITO_ZLIB_SUPPORT
 	/// The uncompressing filter stream.

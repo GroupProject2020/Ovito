@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -49,9 +49,9 @@ Future<OORef<FileImporter>> FileImporter::autodetectFileFormat(DataSet* dataset,
 
 		// Download file so we can determine its format.
 		return Application::instance()->fileManager()->fetchUrl(dataset->taskManager(), urls.front())
-			.then(dataset->executor(), [dataset, url = urls.front()](const QString& filename) {
+			.then(dataset->executor(), [dataset, url = urls.front()](const FileHandle& file) {
 				// Detect file format.
-				return autodetectFileFormat(dataset, filename, url);
+				return autodetectFileFormat(dataset, file);
 			});
 	});
 }
@@ -59,12 +59,11 @@ Future<OORef<FileImporter>> FileImporter::autodetectFileFormat(DataSet* dataset,
 /******************************************************************************
 * Tries to detect the format of the given file.
 ******************************************************************************/
-OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const QString& localFile, const QUrl& sourceLocation)
+OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const FileHandle& file)
 {
 	for(const FileImporterClass* importerClass : PluginManager::instance().metaclassMembers<FileImporter>()) {
 		try {
-			QFile file(localFile);
-			if(importerClass->checkFileFormat(file, sourceLocation)) {
+			if(importerClass->checkFileFormat(file)) {
 				return static_object_cast<FileImporter>(importerClass->createInstance(dataset));
 			}
 		}

@@ -49,7 +49,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT ParaDiSImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("ParaDiS data files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(ParaDiSImporter, OOMetaClass)
@@ -64,8 +64,8 @@ public:
 	virtual QString objectTitle() const override { return tr("ParaDiS File"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 protected:
@@ -116,7 +116,7 @@ protected:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QIODevice& file) override;
 
     private:
 

@@ -55,17 +55,17 @@ FileManager::~FileManager()
 /******************************************************************************
 * Makes a file available on this computer.
 ******************************************************************************/
-SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl& url)
+SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.isLocalFile()) {
 		// Nothing to do to fetch local files. Simply return a finished Future object.
 
 		// But first check if the file exists.
 		QString filePath = url.toLocalFile();
-		if(!QFileInfo(url.toLocalFile()).exists())
-			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), taskManager.datasetContainer()));
+		if(!QFileInfo(filePath).exists())
+			return Future<FileHandle>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), taskManager.datasetContainer()));
 
-		return filePath;
+		return FileHandle(url, std::move(filePath));
 	}
 	else if(url.scheme() == QStringLiteral("sftp")) {
 #ifdef OVITO_SSH_CLIENT
@@ -94,11 +94,11 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		new DownloadRemoteFileJob(url, std::move(promise));
 		return future;
 #else
-		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
+		return Future<FileHandle>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
 #endif
 	}
 	else {
-		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
+		return Future<FileHandle>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
 	}
 }
 

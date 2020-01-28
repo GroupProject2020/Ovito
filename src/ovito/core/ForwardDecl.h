@@ -38,6 +38,7 @@ namespace Ovito {
 	class Application;
 	OVITO_BEGIN_INLINE_NAMESPACE(Util)
 		OVITO_BEGIN_INLINE_NAMESPACE(IO)
+			class FileHandle;
 			class FileManager;
 			class ObjectSaveStream;
 			class ObjectLoadStream;

@@ -60,7 +60,7 @@ static const char* chemical_symbols[] = {
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool GaussianCubeImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool GaussianCubeImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -101,7 +101,7 @@ bool GaussianCubeImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());

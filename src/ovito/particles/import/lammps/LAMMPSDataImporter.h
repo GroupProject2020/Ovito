@@ -49,7 +49,7 @@ class OVITO_PARTICLES_EXPORT LAMMPSDataImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("LAMMPS Data Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(LAMMPSDataImporter, OOMetaClass)
@@ -94,9 +94,9 @@ public:
 	virtual QString objectTitle() const override { return tr("LAMMPS Data"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), atomStyle());
+		return std::make_shared<FrameLoader>(frame, std::move(file), sortParticles(), atomStyle());
 	}
 
 	/// Inspects the header of the given file and returns the detected LAMMPS atom style.
@@ -153,7 +153,7 @@ private:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QIODevice& file) override;
 
 		/// Sets up the mapping of data file columns to internal particle properties based on the selected LAMMPS atom style.
 		static InputColumnMapping createColumnMapping(LAMMPSAtomStyle atomStyle, bool includeImageFlags);

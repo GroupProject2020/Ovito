@@ -7,6 +7,21 @@ import org.ovito 1.0
 ViewportWindow {
 	id: viewportWindow
 
+	onViewportError: {
+		viewportErrorDisplay.text = message
+		viewportErrorDisplay.visible = true
+	}
+
+	Text {
+		id: viewportErrorDisplay
+		anchors.right: parent.right
+		anchors.bottom: parent.bottom
+		color: "red"
+		horizontalAlignment: Text.AlignRight
+		padding: 2.0
+		visible: false
+	}
+
 	Button {
 		id: control
 		anchors.top: parent.top

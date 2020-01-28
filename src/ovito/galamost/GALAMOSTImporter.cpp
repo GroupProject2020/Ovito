@@ -39,7 +39,7 @@ IMPLEMENT_OVITO_CLASS(GALAMOSTImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool GALAMOSTImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool GALAMOSTImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file and test whether it's an XML file.
 	{
@@ -77,7 +77,7 @@ bool GALAMOSTImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QU
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr GALAMOSTImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr GALAMOSTImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	setProgressText(tr("Reading GALAMOST file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 

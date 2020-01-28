@@ -23,6 +23,7 @@
 #include <ovito/gui/web/GUIWeb.h>
 #include <ovito/gui/web/mainwin/MainWindow.h>
 #include <ovito/gui/web/mainwin/ViewportsPanel.h>
+#include <ovito/gui/web/dataset/WasmFileManager.h>
 #include <ovito/gui/web/viewport/ViewportWindow.h>
 #include <ovito/core/utilities/io/FileManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
@@ -123,6 +124,14 @@ bool WasmApplication::startupApplication()
 }
 
 /******************************************************************************
+* Creates the global FileManager class instance.
+******************************************************************************/
+FileManager* WasmApplication::createFileManager()
+{
+	return new WasmFileManager();
+}
+
+/******************************************************************************
 * Is called at program startup once the event loop is running.
 ******************************************************************************/
 void WasmApplication::postStartupInitialization()
@@ -152,10 +161,30 @@ void WasmApplication::postStartupInitialization()
 /******************************************************************************
 * Handler function for exceptions used in GUI mode.
 ******************************************************************************/
-void WasmApplication::reportError(const Exception& ex, bool blocking)
+void WasmApplication::reportError(const Exception& exception, bool blocking)
 {
-	// Always display errors in the terminal window.
-	StandaloneApplication::reportError(ex, blocking);
+	// Always display errors on the console.
+	StandaloneApplication::reportError(exception, blocking);
+
+	// If the exception has been thrown within the context of a DataSet or a DataSetContainer,
+	// show the message box under the corresponding window.
+	MainWindow* mainWindow;
+	if(DataSet* dataset = qobject_cast<DataSet*>(exception.context())) {
+		if(WasmDataSetContainer* container = qobject_cast<WasmDataSetContainer*>(dataset->container()))
+			mainWindow = container->mainWindow();
+		else
+			mainWindow = nullptr;
+	}
+	else if(WasmDataSetContainer* datasetContainer = qobject_cast<WasmDataSetContainer*>(exception.context())) {
+		mainWindow = datasetContainer->mainWindow();
+	}
+	else {
+		mainWindow = qobject_cast<MainWindow*>(exception.context());
+	}
+
+	if(mainWindow) {
+		mainWindow->showErrorMessage(exception);
+	}
 }
 
 }	// End of namespace

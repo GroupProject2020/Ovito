@@ -41,7 +41,7 @@ IMPLEMENT_OVITO_CLASS(DislocImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool DislocImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool DislocImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
@@ -87,7 +87,7 @@ void DislocImporter::setupPipeline(PipelineSceneNode* pipeline, FileSource* impo
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	setProgressText(tr("Reading disloc file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 

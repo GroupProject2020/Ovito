@@ -1,4 +1,4 @@
-import QtQuick 2.3
+import QtQuick 2.12
 import QtQuick.Layouts 1.11
 import QtQuick.Controls 2.12
 
@@ -18,9 +18,9 @@ ApplicationWindow {
 		objectName: "toolBar"
 	}
 
-//	MessageDialog {
-//       id: errorDialog
-//    }
+	Ui.ErrorDialog {
+		id: errorDialog
+	}
 
 	Ui.AboutDialog {
 		id: aboutDialog
@@ -35,9 +35,9 @@ ApplicationWindow {
 			anchors.fill: parent
 		}
 
-//		onError: {
-  //          errorDialog.text = message
-    //        errorDialog.visible = true
-      //  }
+		onError: {
+            errorDialog.text = message
+            errorDialog.open()
+        }
 	}
 }

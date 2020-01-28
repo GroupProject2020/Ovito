@@ -83,7 +83,7 @@ void AMBERNetCDFImporter::setCustomColumnMapping(const InputColumnMapping& mappi
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool AMBERNetCDFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool AMBERNetCDFImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
@@ -137,9 +137,9 @@ Future<InputColumnMapping> AMBERNetCDFImporter::inspectFileHeader(const Frame& f
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void AMBERNetCDFImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void AMBERNetCDFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker(this);
@@ -308,7 +308,7 @@ bool AMBERNetCDFImporter::FrameLoader::detectDims(int movieFrame, int particleCo
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	setProgressText(tr("Reading NetCDF file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 

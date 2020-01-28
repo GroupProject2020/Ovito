@@ -56,6 +56,22 @@ MainWindow::~MainWindow()
 }
 
 /******************************************************************************
+* Displays an error message in the window.
+******************************************************************************/
+void MainWindow::showErrorMessage(const Exception& exception)
+{
+	// If the exception is associated with additional message strings,
+	// show them in the Details section of the message box dialog.
+	QString detailedText;
+	if(exception.messages().size() > 1) {
+		for(int i = 1; i < exception.messages().size(); i++)
+			detailedText += exception.messages()[i] + QStringLiteral("\n");
+	}
+
+	Q_EMIT error(exception.message(), detailedText);
+}
+
+/******************************************************************************
 * Lets the user select a file on the local computer to be imported into the scene.
 ******************************************************************************/
 void MainWindow::importDataFile()
@@ -67,7 +83,7 @@ void MainWindow::importDataFile()
 
 		// Call fileDataReadyCallback() to make sure the emscripten linker does not
         // optimize it away, which may happen if the function is called from JavaScript
-        // only. Set g_qtFileDataReadyCallback to null to make it a a no-op.
+        // only. Set g_qtFileDataReadyCallback to null to make it a no-op.
 //        ::g_qtFileDataReadyCallback = nullptr;
  //       fileDataReadyCallback(nullptr, 0, nullptr);
 #else

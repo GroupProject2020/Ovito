@@ -41,7 +41,7 @@ bool WavefrontOBJImporter::OOMetaClass::supportsDataType(const DataObject::OOMet
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
@@ -81,7 +81,7 @@ bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 /******************************************************************************
 * Parses the given input file and stores the data in the given container object.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QIODevice& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
