@@ -29,6 +29,34 @@ uniform mat4 modelviewprojection_matrix;
 uniform int pickingBaseID;
 uniform vec3 cubeVerts[14];
 
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+
+// The particle data:
+in vec3 position;
+in float particle_radius;
+
+// Outputs to fragment shader
+flat out vec4 particle_color_fs;
+
+void main()
+{
+	// Compute sub-object ID from vertex ID.
+	int objectID = pickingBaseID + gl_VertexID / 14;
+
+	// Encode sub-object ID as an RGBA color in the rendered image.
+	particle_color_fs = vec4(
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
+		float((objectID >> 24) & 0xFF) / 255.0);
+
+	// Transform and project vertex.
+	int cubeCorner = gl_VertexID % 14;
+	gl_Position = modelviewprojection_matrix * vec4(position + cubeVerts[cubeCorner] * particle_radius, 1.0);
+}
+
+#else // OpenGL ES 2.0
+
 // The particle data:
 attribute vec3 position;
 attribute float particle_radius;
@@ -51,5 +79,7 @@ void main()
 
 	// Transform and project vertex.
 	int cubeCorner = int(mod(vertexID, 14.0));
-	gl_Position = modelviewprojection_matrix * vec4(position + cubeVerts[cubeCorner] * particle_radius, 1);
+	gl_Position = modelviewprojection_matrix * vec4(position + cubeVerts[cubeCorner] * particle_radius, 1.0);
 }
+
+#endif

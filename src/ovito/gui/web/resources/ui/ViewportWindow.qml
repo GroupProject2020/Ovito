@@ -14,6 +14,7 @@ ViewportWindow {
 		text: parent.viewport ? parent.viewport.title : "inactive"
 		flat: true
 		font.weight: Font.Bold
+		hoverEnabled: true
 
 		contentItem: Text {
 			text: control.text

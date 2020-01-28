@@ -22,37 +22,21 @@
 
 precision highp float;
 
-// Inputs from calling program:
-uniform mat4 modelview_projection_matrix;
-uniform mat3 normal_matrix;
+uniform vec2 uvcoords[4];
 
-#if __VERSION__ >= 300 // OpenGL ES 3.0
+#if __VERSION__ >= 300
 
-	// Vertex shader inputs:
 	in vec3 position;
-	in vec3 normal;
-	in vec4 color;
+	out vec2 tex_coords;
 
-	// Vertex shader outputs to fragment shader:
-	out vec4 vertex_color_fs;
-	out vec3 vertex_normal_fs;
+#else
 
-#else // OpenGL ES 2.0:
-
-	// Vertex shader inputs:
 	attribute vec3 position;
-	attribute vec3 normal;
-	attribute vec4 color;
-
-	// Vertex shader outputs to fragment shader:
-	varying vec4 vertex_color_fs;
-	varying vec3 vertex_normal_fs;
 
 #endif
 
 void main()
 {
-	vertex_color_fs = color;
-	vertex_normal_fs = normalize(normal_matrix * normal);
-	gl_Position = modelview_projection_matrix * vec4(position, 1.0);
+	gl_Position = vec4(position.xy, 0, 1);
+	tex_coords = uvcoords[int(position.z)];
 }

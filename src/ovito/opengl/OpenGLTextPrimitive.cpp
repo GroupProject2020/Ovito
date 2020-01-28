@@ -67,6 +67,7 @@ void OpenGLTextPrimitive::renderWindow(SceneRenderer* renderer, const Point2& po
 		return;
 
 	OpenGLSceneRenderer* vpRenderer = static_object_cast<OpenGLSceneRenderer>(renderer);
+    OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 	if(_needImageUpdate) {
 		_needImageUpdate = false;
 
@@ -96,6 +97,7 @@ void OpenGLTextPrimitive::renderWindow(SceneRenderer* renderer, const Point2& po
 
 		_imageBuffer->setImage(textureImage);
 	}
+    OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 	Point2 alignedPos = pos;
 	Vector2 size = Vector2(_imageBuffer->image().width(), _imageBuffer->image().height()) * (FloatType)vpRenderer->antialiasingLevelInternal();

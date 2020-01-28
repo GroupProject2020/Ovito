@@ -29,24 +29,59 @@ uniform float modelview_uniform_scale;
 uniform int pickingBaseID;
 uniform int verticesPerElement;
 
-// The vertex data:
-attribute vec3 position;
-attribute float vertexID;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
 
-// The cylinder data:
-attribute vec3 cylinder_base;				// The position of the cylinder in model coordinates.
-attribute vec3 cylinder_axis;				// The axis of the cylinder in model coordinates.
-attribute float cylinder_radius;			// The radius of the cylinder in model coordinates.
+	// The vertex data:
+	in vec3 position;
 
-// Outputs to fragment shader
-varying vec4 cylinder_color_fs;		// The base color of the cylinder.
-varying vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
-varying vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
-varying float cylinder_radius_sq_fs;	// The squared radius of the cylinder
-varying float cylinder_length;			// The length of the cylinder
+	// The cylinder data:
+	in vec3 cylinder_base;				// The position of the cylinder in model coordinates.
+	in vec3 cylinder_axis;				// The axis of the cylinder in model coordinates.
+	in float cylinder_radius;			// The radius of the cylinder in model coordinates.
+
+	// Outputs to fragment shader
+	flat out vec4 cylinder_color_fs;		// The base color of the cylinder.
+	flat out vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
+	flat out vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
+	flat out float cylinder_radius_sq_fs;	// The squared radius of the cylinder
+	flat out float cylinder_length;			// The length of the cylinder
+
+#else // OpenGL ES 2.0:
+
+	// The vertex data:
+	attribute vec3 position;
+	attribute float vertexID;
+
+	// The cylinder data:
+	attribute vec3 cylinder_base;				// The position of the cylinder in model coordinates.
+	attribute vec3 cylinder_axis;				// The axis of the cylinder in model coordinates.
+	attribute float cylinder_radius;			// The radius of the cylinder in model coordinates.
+
+	// Outputs to fragment shader
+	varying vec4 cylinder_color_fs;			// The base color of the cylinder.
+	varying vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
+	varying vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
+	varying float cylinder_radius_sq_fs;	// The squared radius of the cylinder
+	varying float cylinder_length;			// The length of the cylinder
+
+#endif
 
 void main()
 {
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+
+	// Compute sub-object ID from vertex ID.
+	int objectID = pickingBaseID + gl_VertexID / verticesPerElement;
+
+	// Encode sub-object ID as an RGBA color in the rendered image.
+	cylinder_color_fs = vec4(
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
+		float((objectID >> 24) & 0xFF) / 255.0);
+
+#else // OpenGL ES 2.0:
+
 	// Compute sub-object ID from vertex ID.
 	float objectID = float(pickingBaseID + int(vertexID) / verticesPerElement);
 
@@ -56,6 +91,8 @@ void main()
 		floor(mod(objectID / 256.0, 256.0)) / 255.0,
 		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
 		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
+
+#endif
 
 	// Transform and project vertex position.
 	gl_Position = modelview_projection_matrix * vec4(position, 1.0);

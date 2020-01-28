@@ -22,16 +22,29 @@
 
 precision highp float;
 
+// Inputs from calling program:
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 uniform bool is_perspective;
 uniform float line_width;
 
-attribute vec3 position;
-attribute vec4 color;
-attribute vec3 vector;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
 
-varying vec4 vertex_color_fs;
+	in vec3 position;
+	in vec4 color;
+	in vec3 vector;
+
+	out vec4 vertex_color_fs;
+
+#else // OpenGL ES 2.0:
+
+	attribute vec3 position;
+	attribute vec4 color;
+	attribute vec3 vector;
+
+	varying vec4 vertex_color_fs;
+
+#endif
 
 void main()
 {

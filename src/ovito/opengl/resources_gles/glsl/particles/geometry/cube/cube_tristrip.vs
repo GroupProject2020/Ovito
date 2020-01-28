@@ -30,6 +30,32 @@ uniform mat3 normal_matrix;
 uniform vec3 cubeVerts[14];
 uniform vec3 normals[14];
 
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+
+// The particle data:
+in vec3 position;
+in vec4 color;
+in float particle_radius;
+
+// Outputs to fragment shader
+flat out vec4 particle_color_fs;
+flat out vec3 surface_normal_fs;
+
+void main()
+{
+	// Forward color to fragment shader.
+	particle_color_fs = color;
+
+	// Transform and project vertex.
+	int cubeCorner = gl_VertexID % 14;
+	gl_Position = modelviewprojection_matrix * vec4(position + cubeVerts[cubeCorner] * particle_radius, 1.0);
+
+	// Determine face normal.
+	surface_normal_fs = normal_matrix * normals[cubeCorner];
+}
+
+#else // OpenGL ES 2.0
+
 // The particle data:
 attribute vec3 position;
 attribute vec4 color;
@@ -52,3 +78,5 @@ void main()
 	// Determine face normal.
 	surface_normal_fs = normal_matrix * normals[cubeCorner];
 }
+
+#endif

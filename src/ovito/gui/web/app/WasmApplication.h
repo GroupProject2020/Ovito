@@ -47,6 +47,9 @@ public:
 		_headlessMode = false;
 	}
 
+	/// Create the global instance of the right QCoreApplication derived class.
+	virtual void createQtApplication(int& argc, char** argv) override;
+
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking) override;
 

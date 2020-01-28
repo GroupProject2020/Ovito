@@ -20,7 +20,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#extension GL_EXT_frag_depth : enable
+// OpenGL ES 2.0 has no built-in support for gl_FragDepth. 
+// Need to request EXT_frag_depth extension in such a case.
+#if __VERSION__ < 300
+	#extension GL_EXT_frag_depth : enable
+	#define gl_FragDepth gl_FragDepthEXT
+#endif
+
 precision highp float; 
 
 // Inputs from calling program
@@ -30,13 +36,24 @@ uniform bool is_perspective;			// Specifies the projection mode.
 uniform vec2 viewport_origin;			// Specifies the transformation from screen coordinates to viewport coordinates.
 uniform vec2 inverse_viewport_size;		// Specifies the transformation from screen coordinates to viewport coordinates.
 
-// Inputs from vertex shader
-varying vec4 cylinder_color_fs;			// The base color of the cylinder.
-varying vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
-varying vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
-varying float cylinder_radius_sq_fs;	// The squared radius of the cylinder
-varying float cylinder_length;			// The length of the cylinder
+// Inputs from vertex shader;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	flat in vec4 cylinder_color_fs;			// The base color of the cylinder.
+	flat in vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
+	flat in vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
+	flat in float cylinder_radius_sq_fs;	// The squared radius of the cylinder
+	flat in float cylinder_length;			// The length of the cylinder
+	out vec4 FragColor;
+	#define gl_FragColor FragColor
+#else
+	varying vec4 cylinder_color_fs;			// The base color of the cylinder.
+	varying vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
+	varying vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
+	varying float cylinder_radius_sq_fs;	// The squared radius of the cylinder
+	varying float cylinder_length;			// The length of the cylinder
+#endif
 
+// Constants:
 const float ambient = 0.4;
 const float diffuse_strength = 1.0 - ambient;
 const float shininess = 6.0;
@@ -142,8 +159,10 @@ void main()
 	// rather than the depth of the bounding box polygons.
 	// The eye coordinate Z value must be transformed to normalized device
 	// coordinates before being assigned as the final fragment depth.
+#if __VERSION__ >= 300 || defined(GL_EXT_frag_depth)
 	vec4 projected_intersection = projection_matrix * vec4(view_intersection_pnt, 1.0);
-	gl_FragDepthEXT = ((gl_DepthRange.diff * (projected_intersection.z / projected_intersection.w)) + gl_DepthRange.near + gl_DepthRange.far) * 0.5;
+	gl_FragDepth = ((gl_DepthRange.diff * (projected_intersection.z / projected_intersection.w)) + gl_DepthRange.near + gl_DepthRange.far) * 0.5;
+#endif
 
 	surface_normal = normalize(surface_normal);
 	float diffuse = abs(surface_normal.z) * diffuse_strength;

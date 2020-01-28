@@ -28,6 +28,68 @@ uniform mat4 projection_matrix;
 uniform mat4 modelviewprojection_matrix;
 uniform vec3 cubeVerts[14];
 
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+
+// The particle data:
+in vec3 position;
+in vec4 color;
+in vec3 shape;
+in vec4 orientation;
+in float particle_radius;
+
+// Outputs to fragment shader
+flat out vec4 particle_color_fs;
+flat out mat3 particle_quadric_fs;
+flat out vec3 particle_view_pos_fs;
+
+void main()
+{
+	mat3 rot;
+	if(orientation != vec4(0)) {
+		// Normalize quaternion.
+		vec4 quat = normalize(orientation);
+		rot = mat3(
+			1.0 - 2.0*(quat.y*quat.y + quat.z*quat.z),
+			2.0*(quat.x*quat.y + quat.w*quat.z),
+			2.0*(quat.x*quat.z - quat.w*quat.y),
+			2.0*(quat.x*quat.y - quat.w*quat.z),
+			1.0 - 2.0*(quat.x*quat.x + quat.z*quat.z),
+			2.0*(quat.y*quat.z + quat.w*quat.x),
+			2.0*(quat.x*quat.z + quat.w*quat.y),
+			2.0*(quat.y*quat.z - quat.w*quat.x),
+			1.0 - 2.0*(quat.x*quat.x + quat.y*quat.y)
+		);
+	}
+	else {
+		rot = mat3(1.0);
+	}
+
+	vec3 shape2 = shape;
+	if(shape2.x == 0.0) shape2.x = particle_radius;
+	if(shape2.y == 0.0) shape2.y = particle_radius;
+	if(shape2.z == 0.0) shape2.z = particle_radius;
+
+	mat3 qmat = mat3(1.0/(shape2.x*shape2.x), 0, 0,
+			 		 0, 1.0/(shape2.y*shape2.y), 0,
+			  		 0, 0, 1.0/(shape2.z*shape2.z));
+
+	mat3 view_rot = mat3(modelview_matrix) * rot;
+
+    particle_quadric_fs = view_rot * qmat * transpose(view_rot);
+
+	// Forward color to fragment shader.
+	particle_color_fs = color;
+
+	// Transform and project vertex.
+	int cubeCorner = gl_VvertexID % 14;
+	vec3 delta = cubeVerts[cubeCorner] * shape2;
+	gl_Position = modelviewprojection_matrix * vec4(position + rot * delta, 1);
+
+	particle_view_pos_fs = (modelview_matrix * vec4(position, 1)).xyz;
+}
+
+#else // OpenGL ES 2.0
+
 // The particle data:
 attribute vec3 position;
 attribute vec4 color;
@@ -101,3 +163,5 @@ void main()
 
 	particle_view_pos_fs = (modelview_matrix * vec4(position, 1)).xyz;
 }
+
+#endif

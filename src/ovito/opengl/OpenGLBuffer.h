@@ -98,7 +98,7 @@ public:
 		OVITO_ASSERT(isCreated());
 		if(elementCount() == 0)
 			return nullptr;
-#ifndef Q_OS_WASM			
+#ifndef Q_OS_WASM
 		if(!_buffer.bind()) {
 			qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::map()";
 			qWarning() << "Parameters: access =" << access << "elementCount =" << _elementCount << "verticesPerElement =" << _verticesPerElement;
@@ -109,7 +109,7 @@ public:
 			throw Exception(QStringLiteral("Failed to map OpenGL vertex buffer to memory."));
 		return data;
 #else
-		// WebGL may not support memory mapping a GL buffer.
+		// WebGL 1/OpenGL ES 2.0 does not support mapping a GL buffer to memory.
 		// Need to emulate the map() method by providing a temporary memory buffer on the host. 
 		OVITO_ASSERT(access == QOpenGLBuffer::WriteOnly);
 		_temporaryBuffer.resize(elementCount() * verticesPerElement());

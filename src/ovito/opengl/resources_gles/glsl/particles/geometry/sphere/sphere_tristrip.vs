@@ -29,6 +29,31 @@ uniform mat4 modelviewprojection_matrix;
 uniform vec3 cubeVerts[14];
 uniform float radius_scalingfactor;
 
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+
+// The particle data:
+in vec3 position;
+in vec4 color;
+in float particle_radius;
+
+// Outputs to fragment shader:
+flat out vec4 particle_color_fs;
+flat out float particle_radius_squared_fs;
+flat out vec3 particle_view_pos_fs;
+
+void main()
+{
+	particle_color_fs = color;
+	particle_radius_squared_fs = particle_radius * particle_radius * radius_scalingfactor * radius_scalingfactor;
+	particle_view_pos_fs = vec3(modelview_matrix * vec4(position, 1.0));
+
+	// Transform and project vertex.
+	int cubeCorner = gl_VertexID % 14;
+	gl_Position = modelviewprojection_matrix * vec4(position + cubeVerts[cubeCorner] * (particle_radius * radius_scalingfactor), 1.0);
+}
+
+#else // OpenGL ES 2.0
+
 // The particle data:
 attribute vec3 position;
 attribute vec4 color;
@@ -50,3 +75,5 @@ void main()
 	int cubeCorner = int(mod(vertexID, 14.0));
 	gl_Position = modelviewprojection_matrix * vec4(position + cubeVerts[cubeCorner] * (particle_radius * radius_scalingfactor), 1.0);
 }
+
+#endif

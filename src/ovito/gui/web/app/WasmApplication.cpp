@@ -29,6 +29,10 @@
 #include <ovito/core/app/ApplicationService.h>
 #include "WasmApplication.h"
 
+#ifndef Q_OS_WASM
+	#include <QApplication>
+#endif
+
 #if QT_FEATURE_static > 0
 	#include <QtPlugin>
 	// Explicitly import Qt plugins (needed for CMake builds)
@@ -62,6 +66,32 @@ void WasmApplication::registerCommandLineParameters(QCommandLineParser& parser)
 	// Only needed for compatibility with the desktop application. 
 	// The core module expects this command option to be defined. 
 	parser.addOption(QCommandLineOption(QStringList{{"noviewports"}}, tr("Do not create any viewports (for debugging purposes only).")));
+}
+
+/******************************************************************************
+* Create the global instance of the right QCoreApplication derived class.
+******************************************************************************/
+void WasmApplication::createQtApplication(int& argc, char** argv)
+{
+#ifdef Q_OS_WASM
+
+	// Let the base class create a QtGui application object.
+	StandaloneApplication::createQtApplication(argc, argv);
+
+#else
+
+	// On desktop platforms, enable high-resolution toolbar icons for high-dpi screens.
+	QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+	// Create a QtWidget application object.
+	new QApplication(argc, argv);
+
+#endif
+
+	// Specify the default OpenGL surface format.
+	// When running in a web brwoser, try to obtain a WebGL 2.0 context if supported by the web browser.
+	QSurfaceFormat::setDefaultFormat(OpenGLSceneRenderer::getDefaultSurfaceFormat());
 }
 
 /******************************************************************************

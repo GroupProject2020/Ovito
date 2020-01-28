@@ -24,10 +24,17 @@ precision highp float;
 
 uniform mat4 modelview_projection_matrix;
 
-attribute vec3 position;
-attribute vec4 color;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	in vec3 position;
+	in vec4 color;
 
-varying vec4 vertex_color_fs;
+	flat out vec4 vertex_color_fs;
+#else // OpenGL ES 2.0:
+	attribute vec3 position;
+	attribute vec4 color;
+
+	varying vec4 vertex_color_fs;
+#endif
 
 void main()
 {

@@ -22,17 +22,31 @@
 
 precision highp float;
 
+// Inputs from calling program:
 uniform mat4 modelview_projection_matrix;
 uniform bool is_perspective;
 uniform vec3 parallel_view_dir;
 uniform vec3 eye_pos;
 
-attribute vec3 position;
-attribute vec4 color;
-attribute vec3 cylinder_base;
-attribute vec3 cylinder_axis;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
 
-varying vec4 vertex_color_out;
+	in vec3 position;
+	in vec4 color;
+	in vec3 cylinder_base;
+	in vec3 cylinder_axis;
+
+	flat out vec4 vertex_color_out;
+
+#else // OpenGL ES 2.0
+
+	attribute vec3 position;
+	attribute vec4 color;
+	attribute vec3 cylinder_base;
+	attribute vec3 cylinder_axis;
+
+	varying vec4 vertex_color_out;
+
+#endif
 
 void main()
 {

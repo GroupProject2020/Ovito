@@ -20,17 +20,32 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#extension GL_EXT_frag_depth : enable
+// OpenGL ES 2.0 has no built-in support for gl_FragDepth. 
+// Need to request EXT_frag_depth extension in such a case.
+#if __VERSION__ < 300 
+	#extension GL_EXT_frag_depth : enable
+	#define gl_FragDepth gl_FragDepthEXT
+#endif
+
 precision highp float; 
 
 // Input from calling program:
 uniform mat4 projection_matrix;
 
-// Input from vertex shader:
-varying vec4 particle_color_fs;
-varying float particle_radius_fs;
-varying float ze0;				// The particle's Z coordinate in eye coordinates.
-varying vec2 texcoords;
+// Inputs from vertex shader:
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	flat in vec4 particle_color_fs;
+	flat in float particle_radius_fs;
+	flat in float ze0;				// The particle's Z coordinate in eye coordinates.
+	in vec2 texcoords;
+	out vec4 FragColor;
+	#define gl_FragColor FragColor
+#else // OpenGL ES 2.0
+	varying vec4 particle_color_fs;
+	varying float particle_radius_fs;
+	varying float ze0;				// The particle's Z coordinate in eye coordinates.
+	varying vec2 texcoords;
+#endif
 
 void main()
 {
@@ -40,9 +55,11 @@ void main()
 
 	gl_FragColor = particle_color_fs;
 
+#if __VERSION__ >= 300 || defined(GL_EXT_frag_depth)
 	// Vary the depth value across the imposter to obtain proper intersections between particles.
 	float dz = sqrt(1.0 - 4.0 * rsq) * particle_radius_fs;
 	float ze = ze0 + dz;
 	float zn = (projection_matrix[2][2] * ze + projection_matrix[3][2]) / (projection_matrix[2][3] * ze + projection_matrix[3][3]);
-	gl_FragDepthEXT = 0.5 * (zn * gl_DepthRange.diff + (gl_DepthRange.far + gl_DepthRange.near));
+	gl_FragDepth = 0.5 * (zn * gl_DepthRange.diff + (gl_DepthRange.far + gl_DepthRange.near));
+#endif
 }

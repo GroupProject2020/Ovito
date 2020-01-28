@@ -27,22 +27,45 @@ uniform mat4 modelview_matrix;
 uniform mat4 modelview_projection_matrix;
 uniform float modelview_uniform_scale;
 
-// The vertex data:
-attribute vec3 position;
-attribute vec3 normal;
-attribute vec4 color;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
 
-// The cylinder data:
-attribute vec3 cylinder_base;				// The position of the cylinder in model coordinates.
-attribute vec3 cylinder_axis;				// The axis of the cylinder in model coordinates.
-attribute float cylinder_radius;			// The radius of the cylinder in model coordinates.
+	// The vertex data:
+	in vec3 position;
+	in vec3 normal;
+	in vec4 color;
 
-// Outputs to fragment shader
-varying vec4 cylinder_color_fs;			// The base color of the cylinder.
-varying vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
-varying vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
-varying float cylinder_radius_sq_fs;	// The squared radius of the cylinder
-varying float cylinder_length;			// The length of the cylinder
+	// The cylinder data:
+	in vec3 cylinder_base;				// The position of the cylinder in model coordinates.
+	in vec3 cylinder_axis;				// The axis of the cylinder in model coordinates.
+	in float cylinder_radius;			// The radius of the cylinder in model coordinates.
+
+	// Outputs to fragment shader
+	flat out vec4 cylinder_color_fs;			// The base color of the cylinder.
+	flat out vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
+	flat out vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
+	flat out float cylinder_radius_sq_fs;	// The squared radius of the cylinder
+	flat out float cylinder_length;			// The length of the cylinder
+
+#else // OpenGL ES 2.0:
+
+	// The vertex data:
+	attribute vec3 position;
+	attribute vec3 normal;
+	attribute vec4 color;
+
+	// The cylinder data:
+	attribute vec3 cylinder_base;				// The position of the cylinder in model coordinates.
+	attribute vec3 cylinder_axis;				// The axis of the cylinder in model coordinates.
+	attribute float cylinder_radius;			// The radius of the cylinder in model coordinates.
+
+	// Outputs to fragment shader
+	varying vec4 cylinder_color_fs;			// The base color of the cylinder.
+	varying vec3 cylinder_view_base;		// Transformed cylinder position in view coordinates
+	varying vec3 cylinder_view_axis;		// Transformed cylinder axis in view coordinates
+	varying float cylinder_radius_sq_fs;	// The squared radius of the cylinder
+	varying float cylinder_length;			// The length of the cylinder
+
+#endif
 
 void main()
 {

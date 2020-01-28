@@ -22,6 +22,7 @@
 
 precision highp float;
 
+// Inputs from calling program:
 uniform mat4 modelview_projection_matrix;
 uniform bool is_perspective;
 uniform vec3 parallel_view_dir;
@@ -29,16 +30,43 @@ uniform vec3 eye_pos;
 uniform int pickingBaseID;
 uniform int verticesPerElement;
 
-attribute vec3 position;
-attribute float vertexID;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
 
-attribute vec3 cylinder_base;
-attribute vec3 cylinder_axis;
+	in vec3 position;
 
-varying vec4 vertex_color_out;
+	in vec3 cylinder_base;
+	in vec3 cylinder_axis;
+
+	flat out vec4 vertex_color_out;
+
+#else // OpenGL ES 2.0
+
+	attribute vec3 position;
+	attribute float vertexID;
+
+	attribute vec3 cylinder_base;
+	attribute vec3 cylinder_axis;
+
+	varying vec4 vertex_color_out;
+
+#endif
 
 void main()
 {
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+
+	// Compute sub-object ID from vertex ID.
+	int objectID = pickingBaseID + gl_VertexID / verticesPerElement;
+
+	// Encode sub-object ID as an RGBA color in the rendered image.
+	vertex_color_out = vec4(
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
+		float((objectID >> 24) & 0xFF) / 255.0);
+
+#else
+
 	// Compute sub-object ID from vertex ID.
 	float objectID = float(pickingBaseID + int(vertexID) / verticesPerElement);
 
@@ -48,6 +76,8 @@ void main()
 		floor(mod(objectID / 256.0, 256.0)) / 255.0,
 		floor(mod(objectID / 65536.0, 256.0)) / 255.0,
 		floor(mod(objectID / 16777216.0, 256.0)) / 255.0);
+
+#endif
 
 	if(cylinder_axis != vec3(0)) {
 

@@ -22,7 +22,13 @@
 
 precision highp float;
 
-varying vec4 vertex_color_fs;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	flat in vec4 vertex_color_fs;
+	out vec4 FragColor;
+	#define gl_FragColor FragColor
+#else // OpenGL ES 2.0
+	varying vec4 vertex_color_fs;
+#endif
 
 void main()
 {

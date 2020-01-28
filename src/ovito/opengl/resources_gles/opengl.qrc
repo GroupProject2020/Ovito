@@ -62,6 +62,9 @@
 	<file>glsl/markers/picking/marker.fs</file>
 	<file>glsl/markers/picking/box_lines.vs</file>
 
+	<file>glsl/image/image.fs</file>
+	<file>glsl/image/image.vs</file>
+
 </qresource>
 
 </RCC>

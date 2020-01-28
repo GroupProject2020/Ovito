@@ -30,13 +30,26 @@ uniform mat4 modelview_matrix;
 uniform vec3 cubeVerts[24];
 uniform float marker_size;
 
-// The marker data:
-attribute vec3 position;
-attribute vec4 color;
-attribute float vertexID;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
 
-// Outputs to fragment shader
-varying vec4 vertex_color_fs;
+	// The marker data:
+	in vec3 position;
+	in vec4 color;
+	
+	// Outputs to fragment shader
+	flat out vec4 vertex_color_fs;
+
+#else // OpenGL ES 2.0:
+
+	// The marker data:
+	attribute vec3 position;
+	attribute vec4 color;
+	attribute float vertexID;
+
+	// Outputs to fragment shader
+	varying vec4 vertex_color_fs;
+
+#endif
 
 void main()
 {
@@ -49,9 +62,13 @@ void main()
 			+ projection_matrix[2][3] * view_position.z + projection_matrix[3][3];
 
 	// Transform and project vertex.
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	int cubeCorner = gl_VertexID % 24;
+#else
 	int cubeCorner = int(mod(vertexID, 24.0));
+#endif
 	vec3 delta = cubeVerts[cubeCorner] * (w * marker_size);
-	vec3 ec_pos = (model_matrix * vec4(position, 1)).xyz;
+	vec3 ec_pos = (model_matrix * vec4(position, 1.0)).xyz;
 
 	gl_Position = viewprojection_matrix * vec4(ec_pos + delta, 1.0);
 }

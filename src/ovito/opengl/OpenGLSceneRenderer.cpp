@@ -212,6 +212,7 @@ bool OpenGLSceneRenderer::geometryShadersEnabled(bool forceDefaultSetting)
 QSurfaceFormat OpenGLSceneRenderer::getDefaultSurfaceFormat()
 {
 	QSurfaceFormat format;
+#ifndef Q_OS_WASM
 	format.setDepthBufferSize(24);
 	format.setSwapInterval(0);
 	format.setMajorVersion(OVITO_OPENGL_REQUESTED_VERSION_MAJOR);
@@ -224,6 +225,11 @@ QSurfaceFormat OpenGLSceneRenderer::getDefaultSurfaceFormat()
 	format.setOption(QSurfaceFormat::DeprecatedFunctions);
 #endif
 	format.setStencilBufferSize(1);
+#else
+	// When running in a web browser, try to request a context that supports OpenGL ES 2.0 (WebGL 1).
+	format.setMajorVersion(2);
+	format.setMinorVersion(0);
+#endif
 	return format;
 }
 
@@ -262,7 +268,7 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
     initializeOpenGLFunctions();
     OVITO_REPORT_OPENGL_ERRORS(this);
 
-#if 0
+#if 1
 	static bool printedGLInfo = false;
 	if(!printedGLInfo) {
 		printedGLInfo = true;
@@ -272,18 +278,18 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 		_openGLSLVersion = reinterpret_cast<const char*>(_glcontext->functions()->glGetString(GL_SHADING_LANGUAGE_VERSION));
 		_openglSupportsGeomShaders = QOpenGLShader::hasOpenGLShaders(QOpenGLShader::Geometry);
 		_openglSurfaceFormat = QOpenGLContext::currentContext()->format();
-		qDebug() << "OpenGL version: " << _glcontext->format().majorVersion() << QStringLiteral(".") << _glcontext->format().minorVersion();
-		qDebug() << "OpenGL profile: " << (_glcontext->format().profile() == QSurfaceFormat::CoreProfile ? "core" : (_glcontext->format().profile() == QSurfaceFormat::CompatibilityProfile ? "compatibility" : "none"));
-		qDebug() << "OpenGL vendor: " << QString(OpenGLSceneRenderer::openGLVendor());
-		qDebug() << "OpenGL renderer: " << QString(OpenGLSceneRenderer::openGLRenderer());
-		qDebug() << "OpenGL version string: " << QString(OpenGLSceneRenderer::openGLVersion());
-		qDebug() << "OpenGL shading language: " << QString(OpenGLSceneRenderer::openGLSLVersion());
-		qDebug() << "OpenGL shader programs: " << QOpenGLShaderProgram::hasOpenGLShaderPrograms();
-		qDebug() << "OpenGL geometry shaders: " << QOpenGLShader::hasOpenGLShaders(QOpenGLShader::Geometry, _glcontext);
-		qDebug() << "isOpenGLES:" << _glcontext->isOpenGLES();
-		qDebug() << "Extensions:";
+		qInfo() << "OpenGL version: " << _glcontext->format().majorVersion() << QStringLiteral(".") << _glcontext->format().minorVersion();
+		qInfo() << "OpenGL profile: " << (_glcontext->format().profile() == QSurfaceFormat::CoreProfile ? "core" : (_glcontext->format().profile() == QSurfaceFormat::CompatibilityProfile ? "compatibility" : "none"));
+		qInfo() << "OpenGL vendor: " << QString(OpenGLSceneRenderer::openGLVendor());
+		qInfo() << "OpenGL renderer: " << QString(OpenGLSceneRenderer::openGLRenderer());
+		qInfo() << "OpenGL version string: " << QString(OpenGLSceneRenderer::openGLVersion());
+		qInfo() << "OpenGL shading language: " << QString(OpenGLSceneRenderer::openGLSLVersion());
+		qInfo() << "OpenGL shader programs: " << QOpenGLShaderProgram::hasOpenGLShaderPrograms();
+		qInfo() << "OpenGL geometry shaders: " << QOpenGLShader::hasOpenGLShaders(QOpenGLShader::Geometry, _glcontext);
+		qInfo() << "isOpenGLES:" << _glcontext->isOpenGLES();
+		qInfo() << "Extensions:";
 		for(const QByteArray& e : _glcontext->extensions())
-			qDebug() << e;
+			qInfo() << e;
 	}
 #endif
 
@@ -393,12 +399,15 @@ void OpenGLSceneRenderer::endFrame(bool renderSuccessful)
 bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
 {
 	OVITO_ASSERT(_glcontext == QOpenGLContext::currentContext());
+    OVITO_REPORT_OPENGL_ERRORS(this);
 
 	// Set up poor man's stereosopic rendering using red/green filtering.
-	if(stereoTask == StereoscopicLeft)
-		this->glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
-	else if(stereoTask == StereoscopicRight)
-		this->glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
+	if(stereoTask == StereoscopicLeft) {
+		OVITO_CHECK_OPENGL(this, this->glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE));
+	}
+	else if(stereoTask == StereoscopicRight) {
+		OVITO_CHECK_OPENGL(this, this->glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE));
+	}
 
 	// Render the 3D scene objects.
 	if(renderScene(operation)) {
@@ -418,8 +427,7 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 	}
 
 	// Restore default OpenGL state.
-	this->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	OVITO_REPORT_OPENGL_ERRORS(this);
+	OVITO_CHECK_OPENGL(this, this->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
 
 	return !operation.isCanceled();
 }
@@ -604,8 +612,11 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 	else
 		shaderSource.append("#version 120\n");
 #else
-//	shaderSource.append("#version 300 es\n");
+	if(glformat().majorVersion() >= 3)
+		shaderSource.append("#version 300 es\n");
 #endif
+
+#ifndef Q_OS_WASM
 
 	// Preprocess shader source while reading it from the file.
 	//
@@ -655,6 +666,12 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 		}
 	}
 
+#else
+
+	shaderSource += shaderSourceFile.readAll();
+
+#endif
+
 	// Load and compile vertex shader source.
 	if(!program->addShaderFromSourceCode(shaderType, shaderSource)) {
 		Exception ex(QString("The shader source file %1 failed to compile.").arg(filename));
@@ -683,7 +700,7 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 		throwException(tr("Failed to bind OpenGL shader."));
 
 	bool wasDepthTestEnabled = this->glIsEnabled(GL_DEPTH_TEST);
-	this->glDisable(GL_DEPTH_TEST);
+	OVITO_CHECK_OPENGL(this, this->glDisable(GL_DEPTH_TEST));
 
 	GLint vc[4];
 	this->glGetIntegerv(GL_VIEWPORT, vc);
@@ -726,7 +743,8 @@ void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, cons
 	}
 #endif	
 	shader->release();
-	if(wasDepthTestEnabled) this->glEnable(GL_DEPTH_TEST);
+	if(wasDepthTestEnabled) 
+		OVITO_CHECK_OPENGL(this, this->glEnable(GL_DEPTH_TEST));
 }
 
 /******************************************************************************
@@ -785,8 +803,9 @@ void OpenGLSceneRenderer::activateVertexIDs(QOpenGLShaderProgram* shader, GLint 
 ******************************************************************************/
 void OpenGLSceneRenderer::deactivateVertexIDs(QOpenGLShaderProgram* shader, bool alwaysUseVBO)
 {
-	if(glformat().majorVersion() < 3 || alwaysUseVBO)
-		shader->disableAttributeArray("vertexID");
+	if(glformat().majorVersion() < 3 || alwaysUseVBO) {
+		OVITO_CHECK_OPENGL(this, shader->disableAttributeArray("vertexID"));
+	}
 }
 
 /******************************************************************************
@@ -839,8 +858,12 @@ void OpenGLSceneRenderer::clearFrameBuffer(bool clearDepthBuffer, bool clearSten
 ******************************************************************************/
 void OpenGLSceneRenderer::setDepthTestEnabled(bool enabled)
 {
-	if(enabled) this->glEnable(GL_DEPTH_TEST);
-	else this->glDisable(GL_DEPTH_TEST);
+	if(enabled) {
+		OVITO_CHECK_OPENGL(this, this->glEnable(GL_DEPTH_TEST));
+	}
+	else {
+		OVITO_CHECK_OPENGL(this, this->glDisable(GL_DEPTH_TEST));
+	}
 }
 
 /******************************************************************************

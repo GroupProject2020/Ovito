@@ -22,8 +22,16 @@
 
 precision highp float; 
 
-varying vec4 particle_color_fs;
-varying vec2 texcoords;
+// Inputs from vertex shader:
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	flat in vec4 particle_color_fs;
+	in vec2 texcoords;
+	out vec4 FragColor;
+	#define gl_FragColor FragColor
+#else // OpenGL ES 2.0
+	varying vec4 particle_color_fs;
+	varying vec2 texcoords;
+#endif
 
 void main()
 {

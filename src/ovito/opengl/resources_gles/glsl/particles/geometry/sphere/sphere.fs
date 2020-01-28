@@ -20,20 +20,36 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#extension GL_EXT_frag_depth : enable
+// OpenGL ES 2.0 has no built-in support for gl_FragDepth. 
+// Need to request EXT_frag_depth extension in such a case.
+#if __VERSION__ < 300 
+	#extension GL_EXT_frag_depth : enable
+	#define gl_FragDepth gl_FragDepthEXT
+#endif
+
 precision highp float; 
 
-// Input from calling program:
+// Inputs from calling program:
 uniform mat4 projection_matrix;
 uniform mat4 inverse_projection_matrix;
 uniform bool is_perspective;
 uniform vec2 viewport_origin;		// Specifies the transformation from screen coordinates to viewport coordinates.
 uniform vec2 inverse_viewport_size;	// Specifies the transformation from screen coordinates to viewport coordinates.
 
-varying vec4 particle_color_fs;
-varying float particle_radius_squared_fs;
-varying vec3 particle_view_pos_fs;
+// Inputs from vertex shader:
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	flat in vec4 particle_color_fs;
+	flat in float particle_radius_squared_fs;
+	flat in vec3 particle_view_pos_fs;
+	out vec4 FragColor;
+	#define gl_FragColor FragColor
+#else // OpenGL ES 2.0
+	varying vec4 particle_color_fs;
+	varying float particle_radius_squared_fs;
+	varying vec3 particle_view_pos_fs;
+#endif
 
+// Constants:
 const float ambient = 0.4;
 const float diffuse_strength = 1.0 - ambient;
 const float shininess = 6.0;
@@ -83,8 +99,10 @@ void main()
 	// rather than the depth of the bounding box polygons.
 	// The eye coordinate Z value must be transformed to normalized device
 	// coordinates before being assigned as the final fragment depth.
+#if __VERSION__ >= 300 || defined(GL_EXT_frag_depth)
 	vec4 projected_intersection = projection_matrix * vec4(view_intersection_pnt, 1.0);
-	gl_FragDepthEXT = (projected_intersection.z / projected_intersection.w + 1.0) * 0.5;
+	gl_FragDepth = (projected_intersection.z / projected_intersection.w + 1.0) * 0.5;
+#endif
 
 	// Calculate surface normal in view coordinate system.
 	vec3 surface_normal = normalize(view_intersection_pnt - particle_view_pos_fs);

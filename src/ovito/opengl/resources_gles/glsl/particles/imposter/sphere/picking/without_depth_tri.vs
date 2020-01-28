@@ -30,6 +30,41 @@ uniform vec4 imposter_voffsets[6];
 uniform float radius_scalingfactor;
 uniform int pickingBaseID;
 
+#if __VERSION__ >= 300 // OpenGL ES 3.0:
+
+// The input particle data:
+in vec3 position;
+in float particle_radius;
+
+// Outputs to fragment shader.
+flat out vec4 particle_color_fs;
+out vec2 texcoords;
+
+void main()
+{
+	// Compute sub-object ID from vertex ID.
+	int objectID = pickingBaseID + gl_VertexID / 6;
+
+	// Encode sub-object ID as an RGBA color in the rendered image.
+	particle_color_fs = vec4(
+		float(objectID & 0xFF) / 255.0,
+		float((objectID >> 8) & 0xFF) / 255.0,
+		float((objectID >> 16) & 0xFF) / 255.0,
+		float((objectID >> 24) & 0xFF) / 255.0);
+
+	// Transform and project particle position.
+	vec4 eye_position = modelview_matrix * vec4(position, 1.0);
+
+	// Assign texture coordinates.
+	int cornerIndex = gl_VertexID % 6;
+	texcoords = imposter_texcoords[cornerIndex];
+
+	// Transform and project particle position.
+	gl_Position = projection_matrix * (eye_position + (particle_radius * radius_scalingfactor) * imposter_voffsets[cornerIndex]);
+}
+
+#else // OpenGL ES 2.0:
+
 // The input particle data:
 attribute vec3 position;
 attribute float particle_radius;
@@ -61,3 +96,5 @@ void main()
 	// Transform and project particle position.
 	gl_Position = projection_matrix * (eye_position + (particle_radius * radius_scalingfactor) * imposter_voffsets[cornerIndex]);
 }
+
+#endif

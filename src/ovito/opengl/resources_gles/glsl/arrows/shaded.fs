@@ -22,9 +22,17 @@
 
 precision highp float;
 
-varying vec4 vertex_color_fs;
-varying vec3 vertex_normal_fs;
+#if __VERSION__ >= 300 // OpenGL ES 3.0
+	flat in vec4 vertex_color_fs;
+	in vec3 vertex_normal_fs;
+	out vec4 FragColor;
+	#define gl_FragColor FragColor
+#else // OpenGL ES 2.0
+	varying vec4 vertex_color_fs;
+	varying vec3 vertex_normal_fs;
+#endif
 
+// Constants:
 const float ambient = 0.4;
 const float diffuse_strength = 0.6;
 const float shininess = 6.0;
