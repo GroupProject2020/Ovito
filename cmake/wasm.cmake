@@ -34,8 +34,5 @@ add_link_options("SHELL:-s DISABLE_EXCEPTION_CATCHING=0")
 # https://emscripten.org/docs/compiling/Building-Projects.html
 add_link_options("SHELL:-s USE_ZLIB=1")
 
-# Generate HTML file for each executable
-#SET(CMAKE_EXECUTABLE_SUFFIX ".html")
-
 # Also search for packages beneath filesystem root (in addition to /emsdk_portable/sdk/system)
 list(APPEND CMAKE_FIND_ROOT_PATH "/")

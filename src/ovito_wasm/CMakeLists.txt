@@ -45,7 +45,7 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_
 SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "${APPNAME}")
 
 # Link Qt5.
-TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::Svg)
+TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::Core Qt5::Gui Qt5::Qml Qt5::Quick Qt5::QuickControls2 Qt5::QuickTemplates2 Qt5::Svg)
 
 IF(EMSCRIPTEN)
 	# Link to missing Qt libraries (the order does matter).
@@ -55,16 +55,16 @@ IF(EMSCRIPTEN)
 		"${_qt5Core_install_prefix}/qml/QtQuick/Layouts/libqquicklayoutsplugin.a" # QtQuick2LayoutsPlugin
 		"${_qt5Core_install_prefix}/qml/QtQuick/Controls.2/libqtquickcontrols2plugin.a" # QtQuickControls2Plugin
 		"${_qt5Core_install_prefix}/qml/QtQuick/Templates.2/libqtquicktemplates2plugin.a" # QtQuickTemplates2Plugin
-		"${_qt5Core_install_prefix}/lib/libQt5QuickControls2.a" 
-		"${_qt5Core_install_prefix}/lib/libQt5QuickTemplates2.a" 
-		"${_qt5Core_install_prefix}/plugins/iconengines/libqsvgicon.a"		# SVG Icon engine plugin
-		"${_qt5Core_install_prefix}/plugins/imageformats/libqsvg.a"			# SVG image format plugin
-		"${_qt5Core_install_prefix}/plugins/platforms/libqwasm.a"       	# No longer needed in Qt 5.14
-		"${_qt5Core_install_prefix}/lib/libQt5Quick.a"						# No longer needed in Qt 5.14
-		"${_qt5Core_install_prefix}/lib/libQt5EventDispatcherSupport.a"		# No longer needed in Qt 5.14
-		"${_qt5Core_install_prefix}/lib/libQt5FontDatabaseSupport.a"		# No longer needed in Qt 5.14
-		"${_qt5Core_install_prefix}/lib/libqtfreetype.a"					# No longer needed in Qt 5.14
-		"${_qt5Core_install_prefix}/lib/libQt5Svg.a"						# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/plugins/iconengines/libqsvgicon.a"		# SVG Icon engine plugin
+#		"${_qt5Core_install_prefix}/plugins/imageformats/libqsvg.a"			# SVG image format plugin
+#		"${_qt5Core_install_prefix}/plugins/platforms/libqwasm.a"       	# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libQt5QuickControls2.a" 			# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libQt5QuickTemplates2.a" 			# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libQt5Quick.a"						# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libQt5EventDispatcherSupport.a"		# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libQt5FontDatabaseSupport.a"		# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libqtfreetype.a"					# No longer needed in Qt 5.14
+#		"${_qt5Core_install_prefix}/lib/libQt5Svg.a"						# No longer needed in Qt 5.14
 	)
 ELSE()
 	IF(APPLE)
@@ -86,6 +86,7 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 		# When generating a static executable that contains all plugins, make sure
 		# the linker doesn't remove apparently unreferenced symbols. They are needed to
 		# have the plugin classes register themselves.
-		TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
+#		TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
+		TARGET_LINK_LIBRARIES(Ovito PRIVATE ${plugin})
 	ENDIF()
 ENDFOREACH()

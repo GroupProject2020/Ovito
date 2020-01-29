@@ -38,7 +38,7 @@ OVITO_STANDARD_PLUGIN(GuiWeb
 		OpenGLRenderer
 		GuiBase
 	LIB_DEPENDENCIES
-		Qt5::Qml Qt5::Quick
+		Qt5::Qml Qt5::Quick Qt5::QuickControls2 Qt5::QuickTemplates2
 )
 
 IF(NOT EMSCRIPTEN)

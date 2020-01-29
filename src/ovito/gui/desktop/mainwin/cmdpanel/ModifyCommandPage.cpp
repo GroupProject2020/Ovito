@@ -32,6 +32,7 @@
 #include <ovito/core/app/Application.h>
 #include <ovito/core/oo/CloneHelper.h>
 #include <ovito/gui/desktop/actions/ActionManager.h>
+#include <ovito/gui/desktop/app/GuiApplication.h>
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/gui/desktop/dialogs/ModifierTemplatesPage.h>
 #include <ovito/gui/desktop/widgets/selection/SceneNodeSelectionBox.h>
@@ -541,7 +542,7 @@ void ModifyCommandPage::createAboutPanel()
 				.arg(QString(id.toHex()))
 				.arg(operatingSystemString)
 				.arg(QT_POINTER_SIZE*8);
-		QNetworkAccessManager* networkAccessManager = Application::instance()->networkAccessManager();
+		QNetworkAccessManager* networkAccessManager = GuiApplication::instance()->networkAccessManager();
 		QNetworkReply* networkReply = networkAccessManager->get(QNetworkRequest(QUrl(urlString)));
 		connect(networkReply, &QNetworkReply::finished, this, &ModifyCommandPage::onWebRequestFinished);
 	}

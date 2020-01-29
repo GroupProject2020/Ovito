@@ -219,6 +219,16 @@ void GuiApplication::postStartupInitialization()
 }
 
 /******************************************************************************
+* Returns the application-wide network manager object.
+******************************************************************************/
+QNetworkAccessManager* GuiApplication::networkAccessManager()
+{
+	if(!_networkAccessManager)
+		_networkAccessManager = new QNetworkAccessManager(this);
+	return _networkAccessManager;
+}
+
+/******************************************************************************
 * Handles events sent to the Qt application object.
 ******************************************************************************/
 bool GuiApplication::eventFilter(QObject* watched, QEvent* event)

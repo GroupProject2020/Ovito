@@ -240,14 +240,4 @@ void Application::reportError(const Exception& exception, bool /*blocking*/)
 	std::cerr << std::flush;
 }
 
-/******************************************************************************
-* Returns the application-wide network manager object.
-******************************************************************************/
-QNetworkAccessManager* Application::networkAccessManager()
-{
-	if(!_networkAccessManager)
-		_networkAccessManager = new QNetworkAccessManager(this);
-	return _networkAccessManager;
-}
-
 }	// End of namespace

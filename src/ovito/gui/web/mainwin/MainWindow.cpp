@@ -56,22 +56,6 @@ MainWindow::~MainWindow()
 }
 
 /******************************************************************************
-* Displays an error message in the window.
-******************************************************************************/
-void MainWindow::showErrorMessage(const Exception& exception)
-{
-	// If the exception is associated with additional message strings,
-	// show them in the Details section of the message box dialog.
-	QString detailedText;
-	if(exception.messages().size() > 1) {
-		for(int i = 1; i < exception.messages().size(); i++)
-			detailedText += exception.messages()[i] + QStringLiteral("\n");
-	}
-
-	Q_EMIT error(exception.message(), detailedText);
-}
-
-/******************************************************************************
 * Lets the user select a file on the local computer to be imported into the scene.
 ******************************************************************************/
 void MainWindow::importDataFile()

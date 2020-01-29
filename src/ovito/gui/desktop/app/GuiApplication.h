@@ -34,13 +34,21 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
  */
 class OVITO_GUI_EXPORT GuiApplication : public StandaloneApplication
 {
+	Q_OBJECT
+
 public:
+
+	/// Returns the one and only instance of this class.
+	inline static GuiApplication* instance() { return static_cast<GuiApplication*>(Application::instance()); }
 
 	/// Create the global instance of the right QCoreApplication derived class.
 	virtual void createQtApplication(int& argc, char** argv) override;
 
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking) override;
+
+	/// Returns the application-wide network access manager object.
+	QNetworkAccessManager* networkAccessManager();
 
 protected:
 
@@ -75,7 +83,8 @@ private:
 	/// List of errors to be displayed by showErrorMessages().
 	std::deque<Exception> _errorList;
 
-	Q_OBJECT
+	/// The application-wide network manager object.
+	QNetworkAccessManager* _networkAccessManager = nullptr;
 };
 
 OVITO_END_INLINE_NAMESPACE

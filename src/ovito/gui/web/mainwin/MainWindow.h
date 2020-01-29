@@ -47,13 +47,15 @@ public:
 	/// Returns the container that keeps a reference to the current dataset.
 	WasmDataSetContainer& datasetContainer() { return _datasetContainer; }
 
-	/// Displays an error message in the window.
-	void showErrorMessage(const Exception& exception);
-
 public Q_SLOTS:
 
 	/// Lets the user select a file on the local computer to be imported into the scene.
 	void importDataFile();
+
+	/// This slot function displays an error popup in the main window.
+	void showErrorMessage(const QString& message, const QString& detailedText) {
+		Q_EMIT error(message, detailedText);
+	}
 
 Q_SIGNALS:
 

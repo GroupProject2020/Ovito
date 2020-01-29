@@ -41,6 +41,7 @@
 #include <QtDebug>
 #include <QtGui>
 #include <QCommandLineParser>
+#include <QNetworkAccessManager>
 
 /*! \namespace Ovito::Gui
     \brief This namespace contains the graphical user interface classes.

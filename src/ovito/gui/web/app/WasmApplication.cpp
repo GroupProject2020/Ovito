@@ -42,9 +42,9 @@
 	Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin) 	// QtQuick.Layouts
 	Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)// QtQuick.Templates
 	Q_IMPORT_PLUGIN(QtQuickControls2Plugin) // QtQuick.Controls2
-	Q_IMPORT_PLUGIN(QSvgPlugin) 			// SVG image format plugin
-	Q_IMPORT_PLUGIN(QSvgIconPlugin) 		// SVG icon engine plugin
-	Q_IMPORT_PLUGIN(QWasmIntegrationPlugin)	// Note: This plugin is no longer needed in Qt 5.14
+//	Q_IMPORT_PLUGIN(QSvgIconPlugin) 		// SVG icon engine plugin
+//	Q_IMPORT_PLUGIN(QSvgPlugin) 			// Note: No longer needed in Qt 5.14
+//	Q_IMPORT_PLUGIN(QWasmIntegrationPlugin)	// Note: No longer needed in Qt 5.14
 #endif
 
 namespace Ovito {
@@ -107,7 +107,7 @@ bool WasmApplication::startupApplication()
 
 	// Initialize the Qml engine.
 	_qmlEngine = new QQmlApplicationEngine(this);
-	_qmlEngine->load(QStringLiteral(":/gui/main.qml"));
+	_qmlEngine->load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
 	if(_qmlEngine->rootObjects().empty())
 		return false;
 
@@ -183,7 +183,14 @@ void WasmApplication::reportError(const Exception& exception, bool blocking)
 	}
 
 	if(mainWindow) {
-		mainWindow->showErrorMessage(exception);
+		// If the exception is associated with additional message strings,
+		// show them in the "Details" section of the message popup.
+		QString detailedText;
+		if(exception.messages().size() > 1) {
+			for(int i = 1; i < exception.messages().size(); i++)
+				detailedText += exception.messages()[i] + QStringLiteral("\n");
+		}
+		QMetaObject::invokeMethod(mainWindow, "showErrorMessage", Qt::QueuedConnection, Q_ARG(const QString&, exception.message()), Q_ARG(const QString&, detailedText));
 	}
 }
 

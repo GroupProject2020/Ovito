@@ -179,7 +179,7 @@ QT5_ADD_RESOURCES(ResourceFiles resources/core.qrc)
 # Define library target.
 OVITO_STANDARD_PLUGIN(Core
 	SOURCES Core.cpp ${SourceFiles} ${ResourceFiles}
-	LIB_DEPENDENCIES Boost::boost Qt5::Network
+	LIB_DEPENDENCIES Boost::boost
 )
 
 # Link to zlib.

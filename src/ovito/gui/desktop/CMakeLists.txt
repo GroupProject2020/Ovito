@@ -128,8 +128,7 @@ OVITO_STANDARD_PLUGIN(Gui
 		OpenGLRenderer
 		GuiBase
 	LIB_DEPENDENCIES
-		Qt5::Widgets
-	PRIVATE_LIB_DEPENDENCIES
+		Qt5::Widgets 
 		Qt5::Network
 )
 
