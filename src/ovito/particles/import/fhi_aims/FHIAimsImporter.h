@@ -65,7 +65,7 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, std::move(file));
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 private:
@@ -80,8 +80,8 @@ private:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 	};
 };
 

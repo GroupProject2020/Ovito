@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -153,12 +153,13 @@ void LAMMPSBinaryDumpImporter::setColumnMapping(const InputColumnMapping& mappin
 ******************************************************************************/
 bool LAMMPSBinaryDumpImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
-	// Open input file.
-	if(!input.open(QIODevice::ReadOnly))
+	// Open input file for reading.
+	std::unique_ptr<QIODevice> device = file.createIODevice();
+	if(!device->open(QIODevice::ReadOnly))
 		return false;
 
 	LAMMPSBinaryDumpHeader header;
-	return header.parse(input);
+	return header.parse(*device);
 }
 
 /******************************************************************************
@@ -168,10 +169,10 @@ Future<InputColumnMapping> LAMMPSBinaryDumpImporter::inspectFileHeader(const Fra
 {
 	// Retrieve file.
 	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
-		.then(executor(), [this, frame](const QString& filename) {
+		.then(executor(), [this, frame](const FileHandle& fileHandle) {
 
 			// Start task that inspects the file header to determine the contained data columns.
-			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, fileHandle);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedColumnMapping();
@@ -185,34 +186,34 @@ Future<InputColumnMapping> LAMMPSBinaryDumpImporter::inspectFileHeader(const Fra
 void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	// Open input file in binary mode for reading.
-	if(!file.open(QIODevice::ReadOnly))
-		throw Exception(tr("Failed to open binary LAMMPS dump file: %1.").arg(file.errorString()));
+	std::unique_ptr<QIODevice> file = fileHandle().createIODevice();
+	if(!file->open(QIODevice::ReadOnly))
+		throw Exception(tr("Failed to open binary LAMMPS dump file: %1.").arg(file->errorString()));
 
-	Frame frame(sourceUrl, file);
+	setProgressText(tr("Scanning binary LAMMPS dump file %1").arg(fileHandle().toString()));
+	setProgressMaximum(file->size());
 
-	setProgressText(tr("Scanning binary LAMMPS dump file %1").arg(filename));
-	setProgressMaximum(file.size());
-
-	while(!file.atEnd() && !isCanceled()) {
-		frame.byteOffset = file.pos();
+	Frame frame(fileHandle());
+	while(!file->atEnd() && !isCanceled()) {
+		frame.byteOffset = file->pos();
 
 		// Parse file header.
 		LAMMPSBinaryDumpHeader header;
-		if(!header.parse(file))
+		if(!header.parse(*file))
 			throw Exception(tr("Failed to read binary LAMMPS dump file: Invalid file header."));
 
 		// Skip particle data.
-		qint64 filePos = file.pos();
+		qint64 filePos = file->pos();
 		for(int chunki = 0; chunki < header.nchunk; chunki++) {
 
 			// Read chunk size.
-			int n = header.parseInt(file);
+			int n = header.parseInt(*file);
 			if(n < 0 || n > header.natoms * header.size_one)
 				throw Exception(tr("Invalid data chunk size: %1").arg(n));
 
 			// Skip chunk data.
 			filePos += sizeof(n) + n * sizeof(double);
-			if(!file.seek(filePos))
+			if(!file->seek(filePos))
 				throw Exception(tr("Unexpected end of file."));
 
 			if(!setProgressValue(filePos))
@@ -220,7 +221,7 @@ void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QVector<FileSou
 		}
 
 		// Create a new record for the time step.
-		frame.label = QString("Timestep %1").arg(header.ntimestep);
+		frame.label = tr("Timestep %1").arg(header.ntimestep);
 		frames.push_back(frame);
 	}
 }
@@ -320,21 +321,22 @@ bool LAMMPSBinaryDumpHeader::parse(QIODevice& input)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile()
 {
-	setProgressText(tr("Reading binary LAMMPS dump file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading binary LAMMPS dump file %1").arg(fileHandle().toString()));
 
 	// Open input file for reading.
-	if(!file.open(QIODevice::ReadOnly))
-		throw Exception(tr("Failed to open binary LAMMPS dump file: %1.").arg(file.errorString()));
+	std::unique_ptr<QIODevice> file = fileHandle().createIODevice();
+	if(!file->open(QIODevice::ReadOnly))
+		throw Exception(tr("Failed to open binary LAMMPS dump file: %1.").arg(file->errorString()));
 
 	// Seek to byte offset.
-	if(frame().byteOffset && !file.seek(frame().byteOffset))
+	if(frame().byteOffset != 0 && !file->seek(frame().byteOffset))
 		throw Exception(tr("Failed to read binary LAMMPS dump file: Could not jump to start byte offset."));
 
 	// Parse file header.
 	LAMMPSBinaryDumpHeader header;
-	if(!header.parse(file))
+	if(!header.parse(*file))
 		throw Exception(tr("Failed to read binary LAMMPS dump file: Invalid file header."));
 
 	// Create the destination container for loaded data.
@@ -375,7 +377,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 		for(int chunki = 0; chunki < header.nchunk; chunki++) {
 
 			// Read chunk size.
-			int n = header.parseInt(file);
+			int n = header.parseInt(*file);
 			if(n < 0 || n > header.natoms * header.size_one)
 				throw Exception(tr("Invalid data chunk size: %1").arg(n));
 			if(n == 0)
@@ -383,7 +385,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 
 			// Read chunk data.
 			chunkData.resize(n);
-			if(file.read(reinterpret_cast<char*>(chunkData.data()), n * sizeof(double)) != n * sizeof(double))
+			if(file->read(reinterpret_cast<char*>(chunkData.data()), n * sizeof(double)) != n * sizeof(double))
 				throw Exception(tr("Unexpected end of file."));
 
 			// If necessary, convert endianess of floating-point values.
@@ -413,7 +415,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 		}
 	}
 	catch(Exception& ex) {
-		throw ex.prependGeneralMessage(tr("Parsing error at byte offset %1 of binary LAMMPS dump file.").arg(file.pos()));
+		throw ex.prependGeneralMessage(tr("Parsing error at byte offset %1 of binary LAMMPS dump file.").arg(file->pos()));
 	}
 
 	// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
@@ -436,7 +438,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 	}
 
 	// Detect if there are more simulation frames following in the file.
-	if(!file.atEnd())
+	if(!file->atEnd())
 		frameData->signalAdditionalFrames();
 
 	// Sort particles by ID.

@@ -45,7 +45,7 @@ static bool isalpha_ascii(char c)
 bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Maximum number of lines we are going to read from the input file before giving up.
 	int numLinesToRead = 20;
@@ -78,11 +78,11 @@ bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(const FileHandle& fil
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading Quantum Espresso file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading Quantum Espresso file %1").arg(fileHandle().toString()));
 
 	// Create the storage container for the data being loaded.
 	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();

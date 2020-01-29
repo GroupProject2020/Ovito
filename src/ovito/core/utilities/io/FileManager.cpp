@@ -74,13 +74,13 @@ SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const Q
 
 		// Check if requested URL is already in the cache.
 		if(auto cacheEntry = _cachedFiles.object(normalizedUrl)) {
-			return cacheEntry->fileName();
+			return FileHandle(url, cacheEntry->fileName());
 		}
 
 		// Check if requested URL is already being loaded.
 		auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 		if(inProgressEntry != _pendingFiles.end()) {
-			SharedFuture<QString> future = inProgressEntry->second.lock();
+			SharedFuture<FileHandle> future = inProgressEntry->second.lock();
 			if(future.isValid())
 				return future;
 			else
@@ -88,8 +88,8 @@ SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const Q
 		}
 
 		// Start the background download job.
-		Promise<QString> promise = taskManager.createMainThreadOperation<QString>(false);
-		SharedFuture<QString> future(promise.future());
+		Promise<FileHandle> promise = taskManager.createMainThreadOperation<FileHandle>(false);
+		SharedFuture<FileHandle> future(promise.future());
 		_pendingFiles.emplace(normalizedUrl, future);
 		new DownloadRemoteFileJob(url, std::move(promise));
 		return future;

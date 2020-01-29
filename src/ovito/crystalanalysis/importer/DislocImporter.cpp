@@ -43,12 +43,16 @@ IMPLEMENT_OVITO_CLASS(DislocImporter);
 ******************************************************************************/
 bool DislocImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
+	QString filename = QDir::toNativeSeparators(file.localFilePath());
+	if(filename.isEmpty())
+		return false;
+
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
 
 	// Check if we can open the input file for reading.
 	int ncid;
-	int err = nc_open(QDir::toNativeSeparators(input.fileName()).toLocal8Bit().constData(), NC_NOWRITE, &ncid);
+	int err = nc_open(filename.toLocal8Bit().constData(), NC_NOWRITE, &ncid);
 	if(err == NC_NOERR) {
 
 		// Make sure we have the right file conventions.
@@ -87,9 +91,13 @@ void DislocImporter::setupPipeline(PipelineSceneNode* pipeline, FileSource* impo
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile()
 {
-	setProgressText(tr("Reading disloc file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading disloc file %1").arg(fileHandle().toString()));
+
+	QString filename = QDir::toNativeSeparators(fileHandle().localFilePath());
+	if(filename.isEmpty())
+		throw Exception(tr("The disloc file reader supports reading only from physical files. Cannot read data from an in-memory buffer."));
 
 	// Create the container structures for holding the loaded data.
 	auto frameData = std::make_shared<DislocFrameData>();
@@ -110,7 +118,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QIODevice
 	int root_ncid = 0;
 	try {
 		// Open the input file for reading.
-		NCERR(nc_open(qPrintable(file.fileName()), NC_NOWRITE, &root_ncid));
+		NCERR(nc_open(qPrintable(filename), NC_NOWRITE, &root_ncid));
 
 		// Make sure we have the right file conventions
 		size_t len;

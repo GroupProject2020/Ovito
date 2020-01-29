@@ -44,7 +44,7 @@ bool STLImporter::OOMetaClass::supportsDataType(const DataObject::OOMetaClass& d
 bool STLImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read first line.
 	stream.readLine(256);
@@ -66,11 +66,11 @@ bool STLImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 /******************************************************************************
 * Parses the given input file and stores the data in the given container object.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr STLImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr STLImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading STL file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading STL file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Jump to byte offset.

@@ -78,13 +78,13 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, std::move(file), sortParticles(), columnMapping(), autoRescaleCoordinates());
+		return std::make_shared<FrameLoader>(frame, file, sortParticles(), columnMapping(), autoRescaleCoordinates());
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, std::move(file));
+		return std::make_shared<FrameFinder>(file);
 	}
 
 	/// Inspects the header of the given file and returns the number of file columns.
@@ -116,21 +116,21 @@ private:
 	public:
 
 		/// Normal constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles, const InputColumnMapping& columnMapping, bool autoRescaleCoordinates)
-		  : FileSourceImporter::FrameLoader(frame, filename),
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file, bool sortParticles, const InputColumnMapping& columnMapping, bool autoRescaleCoordinates)
+		  : FileSourceImporter::FrameLoader(frame, file),
 		  	_parseFileHeaderOnly(false),
 			_sortParticles(sortParticles),
 			_columnMapping(columnMapping),
 			_autoRescaleCoordinates(autoRescaleCoordinates) {}
 
 		/// Constructor used when reading only the file header information.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-		  : FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(true) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+		  : FileSourceImporter::FrameLoader(frame, file), _parseFileHeaderOnly(true) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 
@@ -179,5 +179,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

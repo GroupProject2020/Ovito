@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(ParaDiSImporter);
 bool ParaDiSImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read just the first line of the file.
 	stream.readLine(20);
@@ -53,11 +53,11 @@ bool ParaDiSImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr ParaDiSImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr ParaDiSImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading ParaDiS file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading ParaDiS file %1").arg(fileHandle().toString()));
     setProgressMaximum(stream.underlyingSize());
 
 	// Create the container structures for holding the loaded data.

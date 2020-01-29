@@ -37,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(FHIAimsImporter);
 bool FHIAimsImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 	activateCLocale();
 
 	// Look for 'atom' or 'atom_frac' keywords.
@@ -72,11 +72,11 @@ bool FHIAimsImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading FHI-aims geometry file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading FHI-aims geometry file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

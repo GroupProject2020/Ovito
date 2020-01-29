@@ -29,87 +29,95 @@
 ###############################################################################
 
 # Locate the HDF5 library.
-FIND_PACKAGE(HDF5 REQUIRED COMPONENTS C HL)
+FIND_PACKAGE(HDF5 COMPONENTS C HL)
 
 # Locate the NetCDF library.
-FIND_PACKAGE(NetCDF REQUIRED)
+FIND_PACKAGE(NetCDF)
 
-# Build library.
-ADD_LIBRARY(NetCDFIntegration NetCDFIntegration.cpp)
+IF(HDF5_FOUND AND TARGET netcdf)
 
-# Give our library file a name to not confuse it with any system versions of the library.
-SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES OUTPUT_NAME "ovito_netcdf")
+	# Build library.
+	ADD_LIBRARY(NetCDFIntegration NetCDFIntegration.cpp)
 
-# Link to Qt5.
-TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC Qt5::Core)
+	# Give our library file a name to not confuse it with any system versions of the library.
+	SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES OUTPUT_NAME "ovito_netcdf")
 
-# This library depends on the Core module of OVITO.
-TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC Core)
+	# Link to Qt5.
+	TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC Qt5::Core)
 
-# Define macro for symbol export from the shared library.
-IF(BUILD_SHARED_LIBS)
-	TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PRIVATE "OVITO_NETCDF_INTEGRATION_EXPORT=Q_DECL_EXPORT")
-	TARGET_COMPILE_DEFINITIONS(NetCDFIntegration INTERFACE "OVITO_NETCDF_INTEGRATION_EXPORT=Q_DECL_IMPORT")
+	# This library depends on the Core module of OVITO.
+	TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC Core)
+
+	# Define macro for symbol export from the shared library.
+	IF(BUILD_SHARED_LIBS)
+		TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PRIVATE "OVITO_NETCDF_INTEGRATION_EXPORT=Q_DECL_EXPORT")
+		TARGET_COMPILE_DEFINITIONS(NetCDFIntegration INTERFACE "OVITO_NETCDF_INTEGRATION_EXPORT=Q_DECL_IMPORT")
+	ELSE()
+		TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PUBLIC "OVITO_NETCDF_INTEGRATION_EXPORT=")
+	ENDIF()
+
+	# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+	SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+	SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
+	# Link in the NetCDF library
+	TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC netcdf)
+	TARGET_INCLUDE_DIRECTORIES(NetCDFIntegration PUBLIC "${netcdf_INCLUDE_DIRS}")
+	IF(WIN32)
+		TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PUBLIC DLL_NETCDF)
+	ENDIF()
+
+	IF(NOT BUILD_SHARED_LIBS AND OVITO_BUILD_PYTHON_PACKAGE)
+		# Since we will link this library into the dynamically loaded Python extension module, we need to use the fPIC flag.
+		SET_PROPERTY(TARGET NetCDFIntegration PROPERTY POSITION_INDEPENDENT_CODE ON)
+	ENDIF()
+
+	# Export this target.
+	INSTALL(TARGETS NetCDFIntegration EXPORT OVITO
+		RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+		LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
+
+	IF(NOT APPLE)
+
+		# Deploy NetCDF shared library.
+		GET_TARGET_PROPERTY(NETCDF_LIBRARY netcdf LOCATION)
+		OVITO_INSTALL_SHARED_LIB("${NETCDF_LIBRARY}" ".")
+
+		# Deploy HDF5 shared library, which is required by NetCDF lib.
+		IF(TARGET hdf5-shared)
+			GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5-shared IMPORTED_LOCATION_RELEASE)
+		ENDIF()
+		IF(NOT HDF5_LIBRARY AND TARGET hdf5::hdf5-shared)
+			GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5::hdf5-shared IMPORTED_LOCATION_RELEASE)
+		ENDIF()
+		IF(NOT HDF5_LIBRARY AND UNIX)
+			LIST(GET HDF5_LIBRARIES 0 HDF5_LIBRARY)
+		ENDIF()
+		IF(NOT HDF5_LIBRARY)
+			MESSAGE(FATAL_ERROR "CMake target for the HDF5 library does not exist. Please check you HDF5 installation.")
+		ENDIF()
+		OVITO_INSTALL_SHARED_LIB("${HDF5_LIBRARY}" ".")
+
+		# Deploy HDF5_HL shared library, which is required by NetCDF lib.
+		IF(TARGET hdf5_hl-shared)
+			GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
+		ENDIF()
+		IF(NOT HDF5_HL_LIBRARY AND TARGET hdf5::hdf5_hl-shared)
+			GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5::hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
+		ENDIF()
+		IF(NOT HDF5_HL_LIBRARY AND UNIX)
+					LIST(GET HDF5_HL_LIBRARIES 0 HDF5_HL_LIBRARY)
+		ENDIF()
+		IF(NOT HDF5_HL_LIBRARY)
+			MESSAGE(FATAL_ERROR "CMake target for the HDF5_HL library does not exist. Please check you HDF5 installation.")
+		ENDIF()
+		OVITO_INSTALL_SHARED_LIB("${HDF5_HL_LIBRARY}" ".")
+
+	ENDIF()
+
 ELSE()
-	TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PUBLIC "OVITO_NETCDF_INTEGRATION_EXPORT=")
-ENDIF()
 
-# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
-SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-
-# Link in the NetCDF library
-TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC netcdf)
-TARGET_INCLUDE_DIRECTORIES(NetCDFIntegration PUBLIC "${netcdf_INCLUDE_DIRS}")
-IF(WIN32)
-	TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PUBLIC DLL_NETCDF)
-ENDIF()
-
-IF(NOT BUILD_SHARED_LIBS AND OVITO_BUILD_PYTHON_PACKAGE)
-	# Since we will link this library into the dynamically loaded Python extension module, we need to use the fPIC flag.
-	SET_PROPERTY(TARGET NetCDFIntegration PROPERTY POSITION_INDEPENDENT_CODE ON)
-ENDIF()
-
-# Export this target.
-INSTALL(TARGETS NetCDFIntegration EXPORT OVITO
-	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
-	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
-	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
-
-IF(NOT APPLE)
-
-	# Deploy NetCDF shared library.
-	GET_TARGET_PROPERTY(NETCDF_LIBRARY netcdf LOCATION)
-	OVITO_INSTALL_SHARED_LIB("${NETCDF_LIBRARY}" ".")
-
-	# Deploy HDF5 shared library, which is required by NetCDF lib.
-	IF(TARGET hdf5-shared)
-		GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5-shared IMPORTED_LOCATION_RELEASE)
-	ENDIF()
-	IF(NOT HDF5_LIBRARY AND TARGET hdf5::hdf5-shared)
-		GET_TARGET_PROPERTY(HDF5_LIBRARY hdf5::hdf5-shared IMPORTED_LOCATION_RELEASE)
-	ENDIF()
-	IF(NOT HDF5_LIBRARY AND UNIX)
-		LIST(GET HDF5_LIBRARIES 0 HDF5_LIBRARY)
-	ENDIF()
-	IF(NOT HDF5_LIBRARY)
-		MESSAGE(FATAL_ERROR "CMake target for the HDF5 library does not exist. Please check you HDF5 installation.")
-	ENDIF()
-	OVITO_INSTALL_SHARED_LIB("${HDF5_LIBRARY}" ".")
-
-	# Deploy HDF5_HL shared library, which is required by NetCDF lib.
-	IF(TARGET hdf5_hl-shared)
-		GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
-	ENDIF()
-	IF(NOT HDF5_HL_LIBRARY AND TARGET hdf5::hdf5_hl-shared)
-		GET_TARGET_PROPERTY(HDF5_HL_LIBRARY hdf5::hdf5_hl-shared IMPORTED_LOCATION_RELEASE)
-	ENDIF()
-	IF(NOT HDF5_HL_LIBRARY AND UNIX)
-                LIST(GET HDF5_HL_LIBRARIES 0 HDF5_HL_LIBRARY)
-	ENDIF()
-	IF(NOT HDF5_HL_LIBRARY)
-		MESSAGE(FATAL_ERROR "CMake target for the HDF5_HL library does not exist. Please check you HDF5 installation.")
-	ENDIF()
-	OVITO_INSTALL_SHARED_LIB("${HDF5_HL_LIBRARY}" ".")
+	MESSAGE("HDF5/NetCDF libraries not found. OVITO will be built without support for NetCDF-based file formats.")
 
 ENDIF()

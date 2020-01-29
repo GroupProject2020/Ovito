@@ -83,8 +83,8 @@ protected:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 	};
 };
 

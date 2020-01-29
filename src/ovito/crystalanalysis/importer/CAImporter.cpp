@@ -41,7 +41,7 @@ IMPLEMENT_OVITO_CLASS(CAImporter);
 bool CAImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read first line.
 	stream.readLine(20);
@@ -58,40 +58,33 @@ bool CAImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 ******************************************************************************/
 void CAImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning CA file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	int frameNumber = 0;
-	qint64 byteOffset;
 
 	while(!stream.eof() && !isCanceled()) {
 
 		if(frameNumber == 0) {
-			byteOffset = stream.byteOffset();
+			frame.byteOffset = stream.byteOffset();
 			stream.readLine();
 		}
-		int startLineNumber = stream.lineNumber();
 
 		if(stream.line()[0] == '\0') break;
 		if(!stream.lineStartsWith("CA_FILE_VERSION "))
 			throw Exception(tr("Failed to parse file. This is not a proper file written by the Crystal Analysis Tool or OVITO."));
 
 		// Create a new record for the frame.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = byteOffset;
-		frame.lineNumber = startLineNumber;
-		frame.lastModificationTime = lastModified;
+		frame.lineNumber = stream.lineNumber();
 		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 		frames.push_back(frame);
 
 		// Seek to end of frame record.
 		while(!stream.eof()) {
-			byteOffset = stream.byteOffset();
+			frame.byteOffset = stream.byteOffset();
 			stream.readLineTrimLeft();
 			if(stream.lineStartsWith("CA_FILE_VERSION ")) break;
 			if((stream.lineNumber() % 4096) == 0)
@@ -103,11 +96,11 @@ void CAImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::F
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading CA file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading CA file %1").arg(fileHandle().toString()));
 
 	// Read file header.
 	stream.readLine();

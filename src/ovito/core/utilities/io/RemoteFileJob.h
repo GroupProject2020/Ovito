@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -109,7 +109,7 @@ class DownloadRemoteFileJob : public RemoteFileJob
 public:
 
 	/// Constructor.
-	DownloadRemoteFileJob(QUrl url, Promise<QString>&& promise) :
+	DownloadRemoteFileJob(QUrl url, Promise<FileHandle>&& promise) :
 		RemoteFileJob(std::move(url), promise.task()), _promise(std::move(promise)) {}
 
 protected:
@@ -149,7 +149,7 @@ private:
 	uchar* _fileMapping = nullptr;
 
 	/// The promise through which the result of this download job is returned.
-	Promise<QString> _promise;
+	Promise<FileHandle> _promise;
 };
 
 /**

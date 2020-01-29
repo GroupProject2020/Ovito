@@ -36,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(DLPOLYImporter);
 bool DLPOLYImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Ignore first comment line (record 1).
 	stream.readLine(1024);
@@ -91,7 +91,7 @@ bool DLPOLYImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 ******************************************************************************/
 void DLPOLYImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning DL_POLY file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
@@ -106,8 +106,8 @@ void DLPOLYImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporte
 	if(stream.eof() || sscanf(stream.readLine(), "%u %u %llu %u", &levcfg, &imcon, &expectedAtomCount, &frame_count) < 2 || levcfg < 0 || levcfg > 2 || imcon < 0 || imcon > 6)
 		throw Exception(tr("Invalid record line %1 in DL_POLY file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-	Frame frame(sourceUrl, file);
-	QString filename = sourceUrl.fileName();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	frame.byteOffset = stream.byteOffset();
 	frame.lineNumber = stream.lineNumber();
 
@@ -157,18 +157,18 @@ void DLPOLYImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporte
 	}
 	else {
 		// It's not a trajectory file. Report just a single frame.
-		frames.push_back(Frame(sourceUrl, file));
+		frames.push_back(Frame(fileHandle()));
 	}
 }
 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading DL_POLY file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading DL_POLY file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Create the destination container for loaded data.

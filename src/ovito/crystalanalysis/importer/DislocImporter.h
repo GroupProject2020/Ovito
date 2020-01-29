@@ -122,8 +122,8 @@ protected:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Connects the slip faces to form two-dimensional manifolds.
 		static void connectSlipFaces(MicrostructureData& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap);

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(POSCARImporter);
 bool POSCARImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Skip comment line
 	stream.readLine();
@@ -93,17 +93,17 @@ bool POSCARImporter::shouldScanFileForFrames(const QUrl& sourceUrl)
 ******************************************************************************/
 void POSCARImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	int frameNumber = 0;
 	QStringList atomTypeNames;
 	QVector<int> atomCounts;
-	QString filename = sourceUrl.fileName();
+	QString filename = fileHandle().sourceUrl().fileName();
 
 	// Read frames.
-	Frame frame(sourceUrl, file);
+	Frame frame(fileHandle());
 	while(!stream.eof() && !isCanceled()) {
 		frame.byteOffset = stream.byteOffset();
 		frame.lineNumber = stream.lineNumber();
@@ -173,11 +173,11 @@ void POSCARImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporte
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading VASP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading VASP file %1").arg(fileHandle().toString()));
 
 	// Create the destination container for loaded data.
 	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();

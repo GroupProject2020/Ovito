@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,6 +42,9 @@ class OVITO_CORE_EXPORT FileHandle
 {
 public:
 
+	/// Default constructor creating an invalid file handle.
+	FileHandle() = default;
+
 	/// Constructor for files located in the local file system.
 	explicit FileHandle(const QUrl& sourceUrl, const QString& localFilePath) : _sourceUrl(sourceUrl), _localFilePath(localFilePath) {}
 
@@ -50,6 +53,16 @@ public:
 
 	/// Returns the path to the file in the local file system (may be empty). 
 	const QString& localFilePath() const { return _localFilePath; }
+
+	/// Create a QIODevice that permits reading data from the file referred to by this handle.
+	std::unique_ptr<QIODevice> createIODevice() const {
+		return std::make_unique<QFile>(localFilePath());
+	}
+
+	/// Returns a human-readable representation of the source location referred to by this file handle.
+	QString toString() const { 
+		return _sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded); 
+	}
 
 private:
 
@@ -153,7 +166,7 @@ private:
 private:
 
 	/// The remote files that are currently being fetched.
-	std::map<QUrl, WeakSharedFuture<QString>> _pendingFiles;
+	std::map<QUrl, WeakSharedFuture<FileHandle>> _pendingFiles;
 
 	/// Cache holding the remote files that have already been downloaded.
 	QCache<QUrl, QTemporaryFile> _cachedFiles{std::numeric_limits<int>::max()};

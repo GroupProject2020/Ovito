@@ -66,7 +66,7 @@ static const char* chemical_symbols[] = {
 bool XSFImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for 'ATOMS', 'BEGIN_BLOCK_DATAGRID' or other XSF-specific keywords.
 	// One of them must appear within the first 40 lines of the file.
@@ -93,7 +93,7 @@ bool XSFImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 ******************************************************************************/
 void XSFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning XSF file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
@@ -111,8 +111,8 @@ void XSFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::
 		setProgressValueIntermittent(stream.underlyingByteOffset());
 	}
 
-	Frame frame(sourceUrl, file);
-	QString filename = sourceUrl.fileName();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	for(int i = 0; i < nFrames; i++) {
 		frame.lineNumber = i;
 		frame.label = tr("%1 (Frame %2)").arg(filename).arg(i);
@@ -123,11 +123,11 @@ void XSFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading XSF file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading XSF file %1").arg(fileHandle().toString()));
 
 	// Create the destination container for the loaded data.
 	auto frameData = std::make_shared<ParticleFrameData>();

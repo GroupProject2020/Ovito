@@ -63,7 +63,7 @@ static const char* chemical_symbols[] = {
 bool GaussianCubeImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Ignore two comment lines.
 	stream.readLine(1024);
@@ -101,11 +101,11 @@ bool GaussianCubeImporter::OOMetaClass::checkFileFormat(const FileHandle& file) 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading Gaussian Cube file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading Gaussian Cube file %1").arg(fileHandle().toString()));
 
 	// Create the destination container for loaded data.
 	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();

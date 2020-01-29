@@ -251,16 +251,15 @@ bool FileSourceEditor::importNewFile(FileSource* fileSource, const QUrl& url, Ov
 	// Create file importer instance.
 	if(!importerType) {
 
-		// Download file so we can determine its format.
-		TaskManager& taskManager = fileSource->dataset()->taskManager();
-		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager, url);
-		if(!fileSource->dataset()->taskManager().waitForFuture(fetchFileFuture))
+		// Detect file format.
+		Future<OORef<FileImporter>> importerFuture = FileImporter::autodetectFileFormat(fileSource->dataset(), url);
+		if(!fileSource->dataset()->taskManager().waitForFuture(importerFuture))
 			return false;
 
-		// Inspect file to detect its format.
-		fileimporter = FileImporter::autodetectFileFormat(fileSource->dataset(), fetchFileFuture.result(), url.path());
+		fileimporter = importerFuture.result();
 		if(!fileimporter)
 			fileSource->throwException(tr("Could not detect the format of the file to be imported. The format might not be supported."));
+
 	}
 	else {
 		// Caller has provided a specific importer type.

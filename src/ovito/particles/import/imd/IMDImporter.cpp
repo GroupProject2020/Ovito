@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(IMDImporter);
 bool IMDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read first header line.
 	stream.readLine(1024);
@@ -50,11 +50,11 @@ bool IMDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading IMD file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading IMD file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

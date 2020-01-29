@@ -37,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(CastepMDImporter);
 bool CastepMDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for string 'BEGIN header' to occur on first line.
 	if(!boost::algorithm::istarts_with(stream.readLineTrimLeft(32), "BEGIN header"))
@@ -57,7 +57,7 @@ bool CastepMDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) cons
 ******************************************************************************/
 void CastepMDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning CASTEP file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
@@ -75,8 +75,8 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImpor
 			return;
 	}
 
-	Frame frame(sourceUrl, file);
-	QString filename = sourceUrl.fileName();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	int frameNumber = 0;
 
 	while(!stream.eof()) {
@@ -99,11 +99,11 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImpor
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading CASTEP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading CASTEP file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

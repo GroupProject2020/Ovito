@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(FHIAimsLogFileImporter);
 bool FHIAimsLogFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for 'Invoking FHI-aims' message.
 	// It must appear within the first 20 lines of the file.
@@ -56,15 +56,15 @@ bool FHIAimsLogFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file
 ******************************************************************************/
 void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	Frame frame(sourceUrl, file);
-	QString filename = sourceUrl.fileName();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	int frameNumber = 0;
 
 	while(!stream.eof() && !isCanceled()) {
@@ -84,11 +84,11 @@ void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QVector<FileSourc
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading FHI-aims log file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading FHI-aims log file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

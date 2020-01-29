@@ -46,25 +46,19 @@ class OVITO_CORE_EXPORT CompressedTextReader : public QObject
 {
 public:
 
-	/// Opens the given I/O device for reading.
-	/// \param input The underlying Qt input device from which data should be read.
-	/// \param originalFilePath The file path of the file being read. This is used to determine if the file is compressed (ends with .gz suffix).
-	/// \throw Exception if an I/O error has occurred.
-	explicit CompressedTextReader(QIODevice& input, const QString& originalFilePath);
-
 	/// Opens the given file for reading.
-	/// \param input The file handle to open.
+	/// \param input The file handle the data should be reade from.
 	/// \throw Exception if an I/O error has occurred.
 	explicit CompressedTextReader(const FileHandle& input);
 
-	/// Returns the name of the input file (without the path), which was passed to the constructor.
+	/// Returns the name of the input file (without the path).
 	const QString& filename() const { return _filename; }
 
 	/// Returns the underlying I/O device.
-	QIODevice& device() { return _device; }
+	QIODevice& device() { return *_device; }
 
 	/// Indicates whether the input file is compressed.
-	bool isCompressed() const { return _stream != &_device; }
+	bool isCompressed() const { return _stream != _device.get(); }
 
 	/// Reads the next line of text from the input file.
 	/// \throw Exception if an I/O error has occurred of if there is no more line to read.
@@ -160,12 +154,12 @@ public:
 	/// Returns the current read position in the input file (which may be a compressed data stream).
 	/// \sa byteOffset()
 	qint64 underlyingByteOffset() const {
-		return _device.pos();
+		return _device->pos();
 	}
 
 	/// Returns the size of the input file in bytes (the compressed size if file is gzipped).
 	qint64 underlyingSize() const {
-		return _device.size();
+		return _device->size();
 	}
 
 	/// Maps the input file to memory, starting at the current offset and to end of the file.
@@ -197,7 +191,7 @@ private:
 	qint64 _byteOffset = 0;
 
 	/// The underlying input device.
-	QIODevice& _device;
+	std::unique_ptr<QIODevice> _device;
 
 #ifdef OVITO_ZLIB_SUPPORT
 	/// The uncompressing filter stream.

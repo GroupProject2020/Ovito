@@ -21,24 +21,25 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/core/Core.h>
+#include <ovito/core/utilities/io/FileManager.h>
 #include "CompressedTextReader.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
 /******************************************************************************
-* Opens the stream for reading.
+* Opens the given I/O device for reading.
 ******************************************************************************/
-CompressedTextReader::CompressedTextReader(QIODevice& input, const QString& originalFilePath) :
+CompressedTextReader::CompressedTextReader(const FileHandle& input) :
 #ifdef OVITO_ZLIB_SUPPORT
-	_device(input), _uncompressor(&input, 6, 0x100000)
+	_device(input.createIODevice()), _uncompressor(_device.get(), 6, 0x100000)
 #else
-	_device(input)
+	_device(input.createIODevice())
 #endif
 {
 	// Try to find out what the filename is.
-	if(!originalFilePath.isEmpty())
-		_filename = QFileInfo(originalFilePath).fileName();
-	else if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(&input))
+	if(!input.sourceUrl().isEmpty())
+		_filename = input.sourceUrl().fileName();
+	else if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(_device.get()))
 		_filename = fileDevice->fileName();
 
 	// Check if file is compressed (i.e. filename ends with .gz).
@@ -55,9 +56,9 @@ CompressedTextReader::CompressedTextReader(QIODevice& input, const QString& orig
 	}
 	else {
 		// Open uncompressed file for reading.
-		if(!input.open(QIODevice::ReadOnly))
-			throw Exception(tr("Failed to open input file: %1").arg(input.errorString()));
-		_stream = &input;
+		if(!_device->open(QIODevice::ReadOnly))
+			throw Exception(tr("Failed to open input file: %1").arg(_device->errorString()));
+		_stream = _device.get();
 	}
 }
 

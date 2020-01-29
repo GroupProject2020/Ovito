@@ -83,8 +83,8 @@ protected:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Reads from the input stream and throws an exception if the given keyword is not present.
 		static void expectKeyword(CompressedTextReader& stream, const char* keyword);

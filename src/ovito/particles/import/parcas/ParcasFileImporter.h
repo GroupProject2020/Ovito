@@ -64,7 +64,7 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
-		return std::make_shared<FrameLoader>(frame, std::move(file), sortParticles());
+		return std::make_shared<FrameLoader>(frame, file, sortParticles());
 	}
 
 private:
@@ -75,13 +75,13 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles)
-			: FileSourceImporter::FrameLoader(frame, filename), _sortParticles(sortParticles) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file, bool sortParticles)
+			: FileSourceImporter::FrameLoader(frame, file), _sortParticles(sortParticles) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 
@@ -93,5 +93,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

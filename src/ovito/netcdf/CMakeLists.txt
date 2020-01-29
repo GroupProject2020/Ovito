@@ -20,6 +20,13 @@
 #
 #######################################################################################
 
+IF(NOT TARGET NetCDFIntegration)
+	MESSAGE(FATAL_ERROR 
+		"The NetCDF file reader/writer plugin cannot be built without the HDF5 and NetCDF libraries. "
+		"Please disable the plugin by setting OVITO_BUILD_PLUGIN_NETCDFPLUGIN to OFF, "
+		"or make sure the required HDF5 and NetCDF libraries are found by the CMake script.")
+ENDIF()
+
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(NetCDFPlugin
 	SOURCES

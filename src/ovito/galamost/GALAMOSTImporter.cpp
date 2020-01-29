@@ -43,11 +43,10 @@ bool GALAMOSTImporter::OOMetaClass::checkFileFormat(const FileHandle& file) cons
 {
 	// Open input file and test whether it's an XML file.
 	{
-		CompressedTextReader stream(input, sourceLocation.path());
+		CompressedTextReader stream(file);
 		const char* line = stream.readLineTrimLeft(1024);
 		if(!boost::algorithm::istarts_with(line, "<?xml "))
 			return false;
-		input.seek(0);
 	}
 
 	// Now use a full XML parser to check the schema of the XML file. First XML element must be <galamost_xml>.
@@ -65,7 +64,8 @@ bool GALAMOSTImporter::OOMetaClass::checkFileFormat(const FileHandle& file) cons
 	};
 
 	// Set up XML data source and reader.
-	QXmlInputSource source(&input);
+	std::unique_ptr<QIODevice> device = file.createIODevice();
+	QXmlInputSource source(device.get());
 	QXmlSimpleReader reader;
 	ContentHandler contentHandler;
 	reader.setContentHandler(&contentHandler);
@@ -77,15 +77,16 @@ bool GALAMOSTImporter::OOMetaClass::checkFileFormat(const FileHandle& file) cons
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr GALAMOSTImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr GALAMOSTImporter::FrameLoader::loadFile()
 {
-	setProgressText(tr("Reading GALAMOST file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading GALAMOST file %1").arg(fileHandle().toString()));
 
 	// Create the container for the particle data to be loaded.
 	_frameData = std::make_shared<ParticleFrameData>();
 
 	// Set up XML data source and reader, then parse the file.
-	QXmlInputSource source(&file);
+	std::unique_ptr<QIODevice> device = fileHandle().createIODevice();
+	QXmlInputSource source(device.get());
 	QXmlSimpleReader reader;
 	reader.setContentHandler(this);
 	reader.setErrorHandler(this);

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -123,27 +123,30 @@ public:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename) :
-			_frame(frame), _localFilename(filename) {}
+		FrameLoader(const Frame& frame, const FileHandle& fileHandle) :
+			_frame(frame), _fileHandle(fileHandle) {}
 
 		/// Returns the source file information.
 		const Frame& frame() const { return _frame; }
 
-		/// Fetches the source URL and calls loadFile().
+		/// Returns the local handle to the input data file.
+		const FileHandle& fileHandle() const { return _fileHandle; }
+
+		/// Calls loadFile() and sets the returned frame data as result of the asynchronous task.
 		virtual void perform() override;
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) = 0;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() = 0;
 
 	private:
 
 		/// The source file information.
 		Frame _frame;
 
-		/// The local copy of the input file.
-		QString _localFilename;
+		/// The local handle to the input file.
+		FileHandle _fileHandle;
 	};
 
 	/// A managed pointer to a FrameLoader instance.

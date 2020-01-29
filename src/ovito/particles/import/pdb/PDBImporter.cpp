@@ -35,7 +35,7 @@ IMPLEMENT_OVITO_CLASS(PDBImporter);
 bool PDBImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read the first N lines.
 	for(int i = 0; i < 20 && !stream.eof(); i++) {
@@ -55,11 +55,11 @@ bool PDBImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 ******************************************************************************/
 void PDBImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning PDB file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
-	Frame frame(sourceUrl, file);
+	Frame frame(fileHandle());
 	frame.byteOffset = stream.byteOffset();
 	frame.lineNumber = stream.lineNumber();
 	while(!stream.eof()) {
@@ -84,18 +84,18 @@ void PDBImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::
 
 	if(frames.empty()) {
 		// It's not a trajectory file. Report just a single frame.
-		frames.push_back(Frame(sourceUrl, file));
+		frames.push_back(Frame(fileHandle()));
 	}
 }
 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading PDB file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading PDB file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

@@ -68,12 +68,14 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
+		activateCLocale();
 		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
-		return std::make_shared<FrameFinder>(sourceUrl, file);
+		activateCLocale();
+		return std::make_shared<FrameFinder>(file);
 	}
 
 protected:
@@ -160,8 +162,8 @@ protected:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames.

@@ -73,7 +73,7 @@ public:
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, std::move(file));
+		return std::make_shared<FrameFinder>(file);
 	}
 
 private:
@@ -84,13 +84,13 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles)
-		  : FileSourceImporter::FrameLoader(frame, filename), _sortParticles(sortParticles) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file, bool sortParticles)
+		  : FileSourceImporter::FrameLoader(frame, file), _sortParticles(sortParticles) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 

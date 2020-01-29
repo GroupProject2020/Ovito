@@ -71,13 +71,13 @@ public:
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
 		bool isInteractiveContext = (Application::instance()->executionContext() == Application::ExecutionContext::Interactive);
-		return std::make_shared<FrameLoader>(frame, localFilename, topologyFileUrl(), isInteractiveContext);
+		return std::make_shared<FrameLoader>(frame, file, topologyFileUrl(), isInteractiveContext);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, file);
+		return std::make_shared<FrameFinder>(file);
 	}
 
 private:
@@ -88,15 +88,15 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename, const QUrl& userSpecifiedTopologyUrl, bool isInteractiveContext) :
-			FileSourceImporter::FrameLoader(frame, filename), 
+		FrameLoader(const Frame& frame, const FileHandle& file, const QUrl& userSpecifiedTopologyUrl, bool isInteractiveContext) :
+			FileSourceImporter::FrameLoader(frame, file), 
 			_userSpecifiedTopologyUrl(userSpecifiedTopologyUrl), 
 			_isInteractiveContext(isInteractiveContext) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// URL of the topology file if explicitly specified by the user.
 		QUrl _userSpecifiedTopologyUrl;

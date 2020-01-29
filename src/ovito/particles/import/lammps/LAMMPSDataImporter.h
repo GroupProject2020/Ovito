@@ -96,7 +96,7 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, std::move(file), sortParticles(), atomStyle());
+		return std::make_shared<FrameLoader>(frame, file, sortParticles(), atomStyle());
 	}
 
 	/// Inspects the header of the given file and returns the detected LAMMPS atom style.
@@ -138,11 +138,11 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename,
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file,
 				bool sortParticles,
 				LAMMPSAtomStyle atomStyle = AtomStyle_Unknown,
 				bool detectAtomStyle = false)
-			: FileSourceImporter::FrameLoader(frame, filename),
+			: FileSourceImporter::FrameLoader(frame, file),
 				_atomStyle(atomStyle),
 				_detectAtomStyle(detectAtomStyle),
 				_sortParticles(sortParticles) {}
@@ -152,8 +152,8 @@ private:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Sets up the mapping of data file columns to internal particle properties based on the selected LAMMPS atom style.
 		static InputColumnMapping createColumnMapping(LAMMPSAtomStyle atomStyle, bool includeImageFlags);

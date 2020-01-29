@@ -77,7 +77,7 @@ public:
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
-		return std::make_shared<FrameFinder>(sourceUrl, std::move(file));
+		return std::make_shared<FrameFinder>(file);
 	}
 
 	/// Stores the particle shape geometry generated from a JSON string in the internal cache.
@@ -111,13 +111,13 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename, GSDImporter* importer, int roundingResolution)
-			: FileSourceImporter::FrameLoader(frame, filename), _importer(importer), _roundingResolution(roundingResolution) {}
+		FrameLoader(const Frame& frame, const FileHandle& file, GSDImporter* importer, int roundingResolution)
+			: FileSourceImporter::FrameLoader(frame, file), _importer(importer), _roundingResolution(roundingResolution) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Reads the values of a particle or bond property from the GSD file.
 		PropertyStorage* readOptionalProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numElements, int propertyType, bool isBondProperty, const std::shared_ptr<ParticleFrameData>& frameData);

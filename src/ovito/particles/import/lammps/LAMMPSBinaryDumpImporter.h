@@ -74,12 +74,12 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
-		return std::make_shared<FrameLoader>(frame, std::move(file), sortParticles(), _columnMapping);
+		return std::make_shared<FrameLoader>(frame, file, sortParticles(), _columnMapping);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
-		return std::make_shared<FrameFinder>(sourceUrl, std::move(file));
+		return std::make_shared<FrameFinder>(file);
 	}
 
 	/// Inspects the header of the given file and returns the number of file columns.
@@ -111,20 +111,20 @@ private:
 	public:
 
 		/// Normal constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles, const InputColumnMapping& columnMapping)
-			: FileSourceImporter::FrameLoader(frame, filename), _sortParticles(sortParticles), _parseFileHeaderOnly(false), _columnMapping(columnMapping) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file, bool sortParticles, const InputColumnMapping& columnMapping)
+			: FileSourceImporter::FrameLoader(frame, file), _sortParticles(sortParticles), _parseFileHeaderOnly(false), _columnMapping(columnMapping) {}
 
 		/// Constructor used when reading only the file header information.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(true) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+			: FileSourceImporter::FrameLoader(frame, file), _parseFileHeaderOnly(true) {}
 
 		/// Returns the file column mapping used to load the file.
 		const InputColumnMapping& columnMapping() const { return _columnMapping; }
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 

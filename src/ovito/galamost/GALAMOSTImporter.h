@@ -77,13 +77,13 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-			: FileSourceImporter::FrameLoader(frame, filename) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+			: FileSourceImporter::FrameLoader(frame, file) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Is called by the XML parser whenever a new XML element is read.
 		virtual bool startElement(const QString& namespaceURI, const QString& localName, const QString& qName, const QXmlAttributes& atts) override;

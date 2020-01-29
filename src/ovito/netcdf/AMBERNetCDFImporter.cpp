@@ -85,12 +85,16 @@ void AMBERNetCDFImporter::setCustomColumnMapping(const InputColumnMapping& mappi
 ******************************************************************************/
 bool AMBERNetCDFImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
+	QString filename = QDir::toNativeSeparators(file.localFilePath());
+	if(filename.isEmpty())
+		return false;
+
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
 
 	// Check if we can open the input file for reading.
 	int tmp_ncid;
-	int err = nc_open(QDir::toNativeSeparators(input.fileName()).toLocal8Bit().constData(), NC_NOWRITE, &tmp_ncid);
+	int err = nc_open(filename.toLocal8Bit().constData(), NC_NOWRITE, &tmp_ncid);
 	if(err == NC_NOERR) {
 
 		// Particle data may be stored in a subgroup named "AMBER" instead of the root group.
@@ -125,10 +129,10 @@ Future<InputColumnMapping> AMBERNetCDFImporter::inspectFileHeader(const Frame& f
 {
 	// Retrieve file.
 	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
-		.then(executor(), [this, frame](const QString& filename) {
+		.then(executor(), [this, frame](const FileHandle& fileHandle) {
 
 			// Start task that inspects the file header to determine the contained data columns.
-			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, fileHandle);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<FrameData*>(frameData.get())->detectedColumnMapping();
@@ -141,11 +145,13 @@ Future<InputColumnMapping> AMBERNetCDFImporter::inspectFileHeader(const Frame& f
 ******************************************************************************/
 void AMBERNetCDFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
+	QString filename = QDir::toNativeSeparators(fileHandle().localFilePath());
+	if(filename.isEmpty())
+		throw Exception(tr("The NetCDF file reader supports reading only from physical files. Cannot read data from an in-memory buffer."));
+
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker(this);
 	if(!locker.isLocked()) return;
-
-	QString filename = QDir::toNativeSeparators(file.fileName());
 
 	// Open the input NetCDF file.
 	int ncid;
@@ -166,14 +172,9 @@ void AMBERNetCDFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceIm
 	NCERR( nc_inq_dimlen(ncid, frame_dim, &nFrames) );
 	NCERR( nc_close(root_ncid) );
 
-	QFileInfo fileInfo(file.fileName());
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
 	for(size_t i = 0; i < nFrames; i++) {
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = 0;
 		frame.lineNumber = i;
-		frame.lastModificationTime = lastModified;
 		frame.label = tr("Frame %1").arg(i);
 		frames.push_back(frame);
 	}
@@ -308,9 +309,13 @@ bool AMBERNetCDFImporter::FrameLoader::detectDims(int movieFrame, int particleCo
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile()
 {
-	setProgressText(tr("Reading NetCDF file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading NetCDF file %1").arg(fileHandle().toString()));
+
+	QString filename = QDir::toNativeSeparators(fileHandle().localFilePath());
+	if(filename.isEmpty())
+		throw Exception(tr("The NetCDF file reader supports reading only from physical files. Cannot read data from an in-memory buffer."));
 
 	// Get frame number.
 	size_t movieFrame = frame().lineNumber;
@@ -323,7 +328,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QIOD
 	if(!locker.isLocked()) return {};
 
 	try {
-		openNetCDF(file.fileName(), frameData.get());
+		openNetCDF(filename, frameData.get());
 
 		// Scan NetCDF and iterate supported column names.
 		InputColumnMapping columnMapping;

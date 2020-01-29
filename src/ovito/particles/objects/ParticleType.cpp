@@ -59,17 +59,22 @@ ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset),
 /******************************************************************************
  * Loads a user-defined display shape from a geometry file and assigns it to this particle type.
  ******************************************************************************/
-bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& operation, const FileImporterClass* importerType)
+bool ParticleType::loadShapeMesh(const QUrl& sourceUrl, AsyncOperation&& operation, const FileImporterClass* importerType)
 {
-    operation.setProgressText(tr("Loading mesh geometry file %1").arg(filepath));
+    operation.setProgressText(tr("Loading mesh geometry file %1").arg(sourceUrl.fileName()));
 
 	// Temporarily disable undo recording while loading the geometry data.
 	UndoSuspender noUndo(this);
 
 	OORef<FileSourceImporter> importer;
 	if(!importerType) {
+
 		// Inspect input file to detect its format.
-		importer = dynamic_object_cast<FileSourceImporter>(FileImporter::autodetectFileFormat(dataset(), filepath, filepath));
+		Future<OORef<FileImporter>> importerFuture = FileImporter::autodetectFileFormat(dataset(), sourceUrl);
+		if(!operation.waitForFuture(importerFuture))
+			return false;
+
+		importer = dynamic_object_cast<FileSourceImporter>(importerFuture.result());
 	}
 	else {
 		importer = dynamic_object_cast<FileSourceImporter>(importerType->createInstance(dataset()));
@@ -79,7 +84,7 @@ bool ParticleType::loadShapeMesh(const QString& filepath, AsyncOperation&& opera
 
 	// Create a temporary FileSource for loading the geometry data from the file.
 	OORef<FileSource> fileSource = new FileSource(dataset());
-	fileSource->setSource({ QUrl::fromLocalFile(filepath) }, importer, false);
+	fileSource->setSource({sourceUrl}, importer, false);
 	SharedFuture<PipelineFlowState> stateFuture = fileSource->evaluate(PipelineEvaluationRequest(0));
 	if(!operation.waitForFuture(stateFuture))
 		return false;

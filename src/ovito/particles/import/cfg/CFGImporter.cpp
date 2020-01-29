@@ -51,7 +51,7 @@ struct CFGHeader {
 bool CFGImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for the magic string 'Number of particles'.
 	// It must appear within the first 20 lines of the CFG file.
@@ -163,11 +163,11 @@ void CFGHeader::parse(CompressedTextReader& stream)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading CFG file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading CFG file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

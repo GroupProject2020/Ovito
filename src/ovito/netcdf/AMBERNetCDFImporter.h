@@ -75,12 +75,12 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
-		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), useCustomColumnMapping(), customColumnMapping());
+		return std::make_shared<FrameLoader>(frame, file, sortParticles(), useCustomColumnMapping(), customColumnMapping());
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
-		return std::make_shared<FrameFinder>(sourceUrl, file);
+		return std::make_shared<FrameFinder>(file);
 	}
 
 	/// Inspects the header of the given file and returns the number of file columns.
@@ -109,14 +109,14 @@ private:
 	public:
 
 		/// Normal constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename,
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file,
 				bool sortParticles,
 				bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping)
-			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(false), _sortParticles(sortParticles), _useCustomColumnMapping(useCustomColumnMapping), _customColumnMapping(customColumnMapping) {}
+			: FileSourceImporter::FrameLoader(frame, file), _parseFileHeaderOnly(false), _sortParticles(sortParticles), _useCustomColumnMapping(useCustomColumnMapping), _customColumnMapping(customColumnMapping) {}
 
 		/// Constructor used when reading only the file header information.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(true), _useCustomColumnMapping(false) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+			: FileSourceImporter::FrameLoader(frame, file), _parseFileHeaderOnly(true), _useCustomColumnMapping(false) {}
 
 		/// Returns the file column mapping used to load the file.
 		const InputColumnMapping& columnMapping() const { return _customColumnMapping; }
@@ -126,8 +126,8 @@ private:
         /// Map dimensions from NetCDF file to internal representation.
         bool detectDims(int movieFrame, int particleCount, int nDims, int *dimIds, int& nDimsDetected, size_t& componentCount, size_t *startp, size_t *countp);
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QIODevice& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 

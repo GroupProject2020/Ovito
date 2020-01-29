@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -265,7 +265,7 @@ void DownloadRemoteFileJob::shutdown(bool success)
 		_localFile->close();
 	}
 	if(_localFile && success)
-		_promise.setResults(_localFile->fileName());
+		_promise.setResults(FileHandle(url(), _localFile->fileName()));
 	else
 		_localFile.reset();
 
@@ -273,7 +273,7 @@ void DownloadRemoteFileJob::shutdown(bool success)
 	RemoteFileJob::shutdown(success);
 
 	// Hand downloaded file over to FileManager cache.
-	Application::instance()->fileManager()->fileFetched(_url, _localFile.take());
+	Application::instance()->fileManager()->fileFetched(url(), _localFile.take());
 }
 
 /******************************************************************************

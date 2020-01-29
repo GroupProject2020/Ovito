@@ -478,13 +478,13 @@ LoadStream& operator>>(LoadStream& stream, FileSourceImporter::Frame& frame)
 }
 
 /******************************************************************************
-* Fetches the source URL and calls loadFile().
+* Calls loadFile() and sets the returned frame data as result of the 
+* asynchronous task.
 ******************************************************************************/
 void FileSourceImporter::FrameLoader::perform()
 {
 	// Let the subclass implementation parse the file.
-	QFile file(_localFilename);
-	setResult(loadFile(file));
+	setResult(loadFile());
 }
 
 OVITO_END_INLINE_NAMESPACE

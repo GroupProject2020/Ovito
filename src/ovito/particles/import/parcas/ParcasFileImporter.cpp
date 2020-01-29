@@ -104,15 +104,16 @@ private:
 bool ParcasFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	if(!input.open(QIODevice::ReadOnly))
+	std::unique_ptr<QIODevice> input = file.createIODevice();
+	if(!input->open(QIODevice::ReadOnly))
 		return false;
 
 	int32_t prot_real = 0;
 	int32_t prot_int = 0;
 
 	// Read prototypes.
-	input.read(reinterpret_cast<char*>(&prot_real), sizeof(prot_real));
-	input.read(reinterpret_cast<char*>(&prot_int), sizeof(prot_int));
+	input->read(reinterpret_cast<char*>(&prot_real), sizeof(prot_real));
+	input->read(reinterpret_cast<char*>(&prot_int), sizeof(prot_int));
 
 	if(prot_int == 0x11223344 || SWAP32(prot_int) == 0x11223344)
 		return true;
@@ -123,16 +124,17 @@ bool ParcasFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file) co
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QIODevice& file)
+FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile()
 {
-	setProgressText(tr("Reading Parcas file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading Parcas file %1").arg(fileHandle().toString()));
 
 	// Open input file for reading.
-	if(!file.open(QIODevice::ReadOnly))
-		throw Exception(tr("Failed to open PARCAS file: %1.").arg(file.errorString()));
+	std::unique_ptr<QIODevice> device = fileHandle().createIODevice();
+	if(!device->open(QIODevice::ReadOnly))
+		throw Exception(tr("Failed to open PARCAS file: %1.").arg(device->errorString()));
 
 	// Read in the static part of the header.
-	ParcaseFileParserStream stream(file);
+	ParcaseFileParserStream stream(*device);
 
 	int32_t prot_real = stream.get_int32();
 	int32_t prot_int  = stream.get_int32();
@@ -249,13 +251,13 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QIODe
     }
 
 	// The actual header is now parsed. Check the offsets.
-    qint64 file_off = file.pos();
+    qint64 file_off = device->pos();
     if(file_off > (qint64)desc_off || file_off > (qint64)atom_off || desc_off > atom_off)
     	throw Exception(tr("PARCAS file parsing error: Corrupt offsets"));
 
     // Seek to the start of atom data.
-    if(!file.seek((qint64)atom_off))
-    	throw Exception(tr("PARCAS file parsing error: Seek error: %1").arg(file.errorString()));
+    if(!device->seek((qint64)atom_off))
+    	throw Exception(tr("PARCAS file parsing error: Seek error: %1").arg(device->errorString()));
 
 	setProgressMaximum(numAtoms);
 
