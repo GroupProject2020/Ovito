@@ -216,8 +216,7 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 	// in the file selection dialog.
 	if(_isNewFile) {
 		for(int frameIndex = 0; frameIndex < _frames.size(); frameIndex++) {
-			QFileInfo fileInfo(_frames[frameIndex].sourceFile.path());
-			if(fileInfo.fileName() == _originallySelectedFilename) {
+			if(_frames[frameIndex].sourceFile.fileName() == _originallySelectedFilename) {
 				TimePoint jumpToTime = sourceFrameToAnimationTime(frameIndex);
 				AnimationSettings* animSettings = dataset()->animationSettings();
 				if(animSettings->animationInterval().contains(jumpToTime))

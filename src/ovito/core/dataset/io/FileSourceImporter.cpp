@@ -167,11 +167,6 @@ OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> source
 	if(!fileSource)
 		fileSource = new FileSource(dataset());
 
-	// Set the input location and importer.
-	if(!fileSource->setSource(std::move(sourceUrls), this, autodetectFileSequences)) {
-		return {};
-	}
-
 	// Create a new object node in the scene for the linked data.
 	OORef<PipelineSceneNode> pipeline;
 	if(existingPipeline == nullptr) {
@@ -195,6 +190,10 @@ OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> source
 	// Select new node.
 	if(importMode != DontAddToScene)
 		dataset()->selection()->setNode(pipeline);
+
+	// Set the input location and importer.
+	if(!fileSource->setSource(std::move(sourceUrls), this, autodetectFileSequences))
+		return {};
 
 	if(importMode != ReplaceSelected && importMode != DontAddToScene) {
 		// Adjust viewports to completely show the newly imported object.
