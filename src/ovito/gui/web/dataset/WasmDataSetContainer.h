@@ -47,10 +47,29 @@ public:
 	/// Imports a given file into the scene.
 	bool importFile(const QUrl& url, const FileImporterClass* importerType = nullptr);
 
+Q_SIGNALS:
+
+	/// Is emitted whenever the scene of the current dataset has been changed and is being made ready for rendering.
+	void scenePreparationBegin();
+
+	/// Is emitted whenever the scene of the current dataset became ready for rendering.
+	void scenePreparationEnd();
+
+protected:
+
+	/// Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
+
 private:
+
+	/// Is called when scene of the current dataset is ready to be displayed.
+	void sceneBecameReady();
 
 	/// The window this dataset container is linked to.
 	MainWindow* _mainWindow;
+
+	/// Indicates whether we are already waiting for the scene to become ready.
+	bool _sceneReadyScheduled = false;
 };
 
 }	// End of namespace

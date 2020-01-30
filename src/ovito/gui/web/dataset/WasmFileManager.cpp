@@ -306,7 +306,7 @@ void WasmFileManager::importedFileDataReady()
     QUrl url;
     url.setScheme(QStringLiteral("imported"));
     url.setHost(QString::number(QDateTime::currentMSecsSinceEpoch()));
-    url.setPath(QStringLiteral("/") + url.fileName(), QUrl::DecodedMode);
+    url.setPath(QStringLiteral("/") + fileUrl.fileName(), QUrl::DecodedMode);
 
     // Store the file content in the cache for subsequent access by other parts of the program.
     _importedFiles[url] = std::move(fileContent);

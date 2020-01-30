@@ -30,10 +30,11 @@ ToolBar {
 			}
 			*/
 			ToolSeparator {
-				contentItem.visible: fileRow.y === editRow.y
+				contentItem.visible: fileRow.y === viewportRow.y
 			}
 		}
 
+/*
 		Row {
 			id: editRow
 			ToolButton {
@@ -58,6 +59,7 @@ ToolBar {
 				contentItem.visible: editRow.y === viewportRow.y
 			}
 		}
+*/
 
 		Row {
 			id: viewportRow
@@ -72,16 +74,16 @@ ToolBar {
 				onClicked: viewportsPanel.viewportConfiguration.activeViewport.zoomToSceneExtents()
 			}
 			ToolButton {
-				id: maximizeViewportButton
+				id: multiViewportButton
 				checkable: true
-				checked: viewportsPanel.viewportConfiguration && viewportsPanel.viewportConfiguration.maximizedViewport
+				checked: viewportsPanel.viewportConfiguration && viewportsPanel.viewportConfiguration.maximizedViewport == null
 				enabled: viewportsPanel.viewportConfiguration
-				icon.source: "qrc:/gui/actions/viewport/maximize_viewport.bw.svg"
-				ToolTip.text: qsTr("Maximize active viewport")
+				icon.source: "qrc:/gui/actions/viewport/multi_viewports.svg"
+				ToolTip.text: qsTr("Show multiple viewports")
 				ToolTip.visible: hovered
 				ToolTip.delay: 500
 				display: AbstractButton.IconOnly
-				onToggled: viewportsPanel.viewportConfiguration.maximizedViewport = checked ? viewportsPanel.viewportConfiguration.activeViewport : null
+				onToggled: viewportsPanel.viewportConfiguration.maximizedViewport = checked ? null : viewportsPanel.viewportConfiguration.activeViewport
 			}
 			ToolSeparator {
 				contentItem.visible: viewportRow.y === aboutRow.y

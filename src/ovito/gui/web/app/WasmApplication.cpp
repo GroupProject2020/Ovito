@@ -106,6 +106,11 @@ bool WasmApplication::startupApplication()
 	qmlRegisterType<MainWindow>("org.ovito", 1, 0, "MainWindow");
 	qmlRegisterType<ViewportsPanel>("org.ovito", 1, 0, "ViewportsPanel");
 	qmlRegisterType<ViewportWindow>("org.ovito", 1, 0, "ViewportWindow");
+	qmlRegisterUncreatableType<Viewport>("org.ovito", 1, 0, "Viewport", tr("Viewports cannot be created from QML."));
+	qmlRegisterSingletonType<ViewportSettings>("org.ovito", 1, 0, "ViewportSettings", [](QQmlEngine* eng, QJSEngine*) -> QObject* {
+		eng->setObjectOwnership(&ViewportSettings::getSettings(), QQmlEngine::CppOwnership);
+		return &ViewportSettings::getSettings();
+	});
 
 	// Initialize the Qml engine.
 	_qmlEngine = new QQmlApplicationEngine(this);
@@ -157,6 +162,23 @@ void WasmApplication::postStartupInitialization()
 	}
 
 	StandaloneApplication::postStartupInitialization();
+}
+
+/******************************************************************************
+* This is called on program shutdown.
+******************************************************************************/
+void WasmApplication::shutdown()
+{
+	// Release dataset and all contained objects.
+	if(datasetContainer()) {
+		datasetContainer()->setCurrentSet(nullptr);
+		datasetContainer()->taskManager().cancelAllAndWait();
+	}
+
+	// Shut down QML engine.
+	delete _qmlEngine;
+
+	StandaloneApplication::shutdown();
 }
 
 /******************************************************************************

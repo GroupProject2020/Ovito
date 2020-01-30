@@ -50,6 +50,9 @@ public:
 	/// Create the global instance of the right QCoreApplication derived class.
 	virtual void createQtApplication(int& argc, char** argv) override;
 
+	/// This is called from main() before the application exits.
+	void shutdown();
+
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking) override;
 

@@ -176,7 +176,7 @@ public:
 	private:
 
 		/// The data file to scan.
-		const FileHandle& _file;
+		FileHandle _file;
 	};
 
 	/// A managed pointer to a FrameFinder instance.

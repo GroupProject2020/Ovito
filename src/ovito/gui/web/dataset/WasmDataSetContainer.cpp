@@ -37,6 +37,58 @@ IMPLEMENT_OVITO_CLASS(WasmDataSetContainer);
 WasmDataSetContainer::WasmDataSetContainer(MainWindow* mainWindow) :
 	_mainWindow(mainWindow)
 {
+	// Prepare scene for display whenever a new dataset becomes active.
+	if(Application::instance()->guiMode()) {
+		connect(this, &DataSetContainer::dataSetChanged, this, [this](DataSet* dataset) {
+			if(dataset) {
+				_sceneReadyScheduled = true;
+				Q_EMIT scenePreparationBegin();
+				dataset->whenSceneReady().finally(executor(), [this]() {
+					_sceneReadyScheduled = false;
+					sceneBecameReady();
+				});
+			}
+		});
+	}
+}
+
+/******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool WasmDataSetContainer::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+{
+	if(source == currentSet()) {
+		if(Application::instance()->guiMode()) {
+			if(event.type() == ReferenceEvent::TargetChanged) {
+				// Update viewports as soon as the scene becomes ready.
+				if(!_sceneReadyScheduled) {
+					_sceneReadyScheduled = true;
+					Q_EMIT scenePreparationBegin();
+					currentSet()->whenSceneReady().finally(executor(), [this]() {
+						_sceneReadyScheduled = false;
+						sceneBecameReady();
+					});
+				}
+			}
+			else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
+				// Update viewports when a new preliminiary state from one of the data pipelines
+				// becomes available (unless we are playing an animation).
+				if(currentSet()->animationSettings()->isPlaybackActive() == false)
+					currentSet()->viewportConfig()->updateViewports();
+			}
+		}
+	}
+	return DataSetContainer::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Is called when scene of the current dataset is ready to be displayed.
+******************************************************************************/
+void WasmDataSetContainer::sceneBecameReady()
+{
+	if(currentSet())
+		currentSet()->viewportConfig()->updateViewports();
+	Q_EMIT scenePreparationEnd();
 }
 
 /******************************************************************************
@@ -71,7 +123,7 @@ bool WasmDataSetContainer::importFile(const QUrl& url, const FileImporterClass* 
 	importer->loadUserDefaults();
 
 	// Specify how the file's data should be inserted into the current scene.
-	FileImporter::ImportMode importMode = FileImporter::AddToScene;
+	FileImporter::ImportMode importMode = FileImporter::ResetScene;
 
 	return importer->importFile({url}, importMode, true);
 }

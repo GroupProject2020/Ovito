@@ -58,9 +58,7 @@ public:
 	/// If the application has been started in console mode then this method does nothing.
 	int runApplication();
 
-	/// \brief Releases everything.
-	///
-	/// This is called before the application exits.
+	/// This is called from main() before the application exits.
 	void shutdown();
 
 	/// \brief Returns the command line options passed to the program.

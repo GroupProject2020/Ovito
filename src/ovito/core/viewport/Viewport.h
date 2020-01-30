@@ -102,7 +102,7 @@ public:
 		VIEW_PERSPECTIVE,
 		VIEW_SCENENODE,
 	};
-	Q_ENUMS(ViewType);
+	Q_ENUM(ViewType);
 
 public:
 
@@ -383,8 +383,5 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-Q_DECLARE_METATYPE(Ovito::Viewport::ViewType);
-Q_DECLARE_TYPEINFO(Ovito::Viewport::ViewType, Q_PRIMITIVE_TYPE);
 
 #include <ovito/core/rendering/SceneRenderer.h>

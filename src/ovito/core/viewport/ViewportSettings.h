@@ -25,8 +25,6 @@
 
 #include <ovito/core/Core.h>
 
-#include <QFont>
-
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
 
 /**
@@ -34,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
  */
 class OVITO_CORE_EXPORT ViewportSettings : public QObject
 {
+	Q_OBJECT
+	Q_PROPERTY(bool constrainCameraRotation READ constrainCameraRotation WRITE setConstrainCameraRotation NOTIFY settingsChanged);
+
 public:
 
 	/// Standard colors for drawing various things in the viewports.
@@ -164,8 +165,6 @@ private:
 	/// The type of viewport that is initially in the maximized state.
 	/// Or -1 if no viewport is initially maximized.
 	int _defaultMaximizedViewportType = 0;
-
-	Q_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -65,20 +65,84 @@ ViewportWindow {
 		MenuItem {
 			text: qsTr("Constrain Rotation")
 			checkable: true
-			enabled: false
+			checked: ViewportSettings.constrainCameraRotation
+			onToggled: ViewportSettings.constrainCameraRotation = checked
 		}
 		MenuSeparator {}
 		Menu {
 			title: qsTr("View Type")
-			enabled: false
-			MenuItem { text: "Top" }
-			MenuItem { text: "Bottom" }
-			MenuItem { text: "Front" }
-			MenuItem { text: "Back" }
-			MenuItem { text: "Left" }
-			MenuItem { text: "Right" }
-			MenuItem { text: "Ortho" }
-			MenuItem { text: "Perspective" }
+			MenuItem { 
+				text: "Top" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_TOP 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_TOP
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem { 
+				text: "Bottom" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_BOTTOM 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_BOTTOM
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem { 
+				text: "Front" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_FRONT 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_FRONT
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem { 
+				text: "Back" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_BACK 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_BACK
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem { 
+				text: "Left" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_LEFT 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_LEFT
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem { 
+				text: "Right" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_RIGHT 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_RIGHT
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem { 
+				text: "Ortho" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_ORTHO 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_ORTHO
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
+			MenuItem {
+				text: "Perspective" 
+				checkable: true
+				checked: viewportWindow.viewport && viewportWindow.viewport.viewType == Viewport.VIEW_PERSPECTIVE 
+				onToggled: {
+					viewportWindow.viewport.viewType = Viewport.VIEW_PERSPECTIVE
+					viewportWindow.viewport.zoomToSceneExtents()
+				}
+			}
 		}
 	}
 }
