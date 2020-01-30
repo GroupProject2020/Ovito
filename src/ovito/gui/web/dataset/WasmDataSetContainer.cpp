@@ -23,6 +23,7 @@
 #include <ovito/gui/web/GUIWeb.h>
 #include <ovito/gui/web/mainwin/MainWindow.h>
 #include <ovito/core/app/Application.h>
+#include <ovito/core/app/PluginManager.h>
 #include <ovito/core/dataset/io/FileImporter.h>
 #include <ovito/core/utilities/io/FileManager.h>
 #include "WasmDataSetContainer.h"
@@ -110,8 +111,13 @@ bool WasmDataSetContainer::importFile(const QUrl& url, const FileImporterClass* 
 			return false;
 
 		importer = importerFuture.result();
-		if(!importer)
-			currentSet()->throwException(tr("Could not detect the format of the file to be imported. The format might not be supported."));
+		if(!importer) {
+			QString fileFormatList;
+			for(const FileImporterClass* importerClass : PluginManager::instance().metaclassMembers<FileImporter>()) {
+				fileFormatList += QStringLiteral("<li>%1</li>").arg(importerClass->fileFilterDescription().toHtmlEscaped());
+			}
+			currentSet()->throwException(tr("<p>Could not detect the format of the imported file. This version of OVITO supports the following formats:</p><p><ul>%1</ul></p>").arg(fileFormatList));
+		}
 	}
 	else {
 		importer = static_object_cast<FileImporter>(importerType->createInstance(currentSet()));

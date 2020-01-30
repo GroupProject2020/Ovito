@@ -40,4 +40,9 @@ ApplicationWindow {
             errorDialog.open()
         }
 	}
+
+	footer: Ui.AnimationBar {
+		id: animationBar
+		objectName: "animationBar"
+	}
 }

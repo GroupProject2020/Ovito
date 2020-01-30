@@ -149,7 +149,6 @@ void WasmApplication::postStartupInitialization()
 		newSet->loadUserDefaults();
 		datasetContainer()->setCurrentSet(newSet);
 
-#if 0
 		// Import sample data.
 		try {
 			datasetContainer()->importFile(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/test.data"));
@@ -158,7 +157,6 @@ void WasmApplication::postStartupInitialization()
 			ex.reportError();
 		}
 		newSet->undoStack().setClean();
-#endif
 	}
 
 	StandaloneApplication::postStartupInitialization();
