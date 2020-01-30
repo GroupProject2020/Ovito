@@ -21,6 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui/web/GUIWeb.h>
+#include <ovito/gui/web/mainwin/MainWindow.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/app/Application.h>
@@ -99,7 +100,6 @@ void WasmFileManager::importedFileDataReady(char* content, size_t contentSize, c
     url.setScheme(QStringLiteral("imported"));
     url.setHost(QString::number(QDateTime::currentMSecsSinceEpoch()));
     url.setPath(QStringLiteral("/") + QString::fromUtf8(fileName), QUrl::DecodedMode);
-    qInfo() << "Imported file" << QString::fromUtf8(fileName) << "into memory storage under URL" << url.toString();
 
     // Store the file content in the cache for subsequent access by other parts of the program.
     _importedFiles[url] = std::move(fileContent);
@@ -235,13 +235,107 @@ void WasmFileManager::importFileIntoMemory(MainWindow* mainWindow, const QString
 * Opens a file dialog in the browser allowing the user to import a file from 
 * the local computer into the application. 
 ******************************************************************************/
-QUrl WasmFileManager::importFileIntoMemory(MainWindow* mainWindow, const QString& acceptedFileTypes)
+void WasmFileManager::importFileIntoMemory(MainWindow* mainWindow, const QString& acceptedFileTypes, std::function<void(const QUrl&)> callback)
 {
-    _viewportComponent = new QQmlComponent(qmlContext(mainWindow)->engine(), ("QtQuick.Dialogs.FileDialog"));
-    if(_viewportComponent->isError())
-        qWarning() << _viewportComponent->errors();
+    // Use the FileDialog QML component to let the user select a file for import.
 
-    return {};
+    QQmlComponent fileDialogComponent(qmlContext(mainWindow)->engine(), QUrl::fromLocalFile(":/gui/ui/ImportDialog.qml"), QQmlComponent::PreferSynchronous);
+    if(fileDialogComponent.isError()) {
+        qWarning() << "WasmFileManager::importFileIntoMemory():" << fileDialogComponent.errors();
+        callback(QUrl());
+        return;
+    }
+
+    QObject* importDialog = fileDialogComponent.create();
+    if(!importDialog) {
+        qWarning() << "WasmFileManager::importFileIntoMemory(): Creation of FileDialog component failed.";
+        callback(QUrl());
+        return;
+    }
+
+    // Generate a unique ID for this import operation.
+    static int fileImportId = 1;
+
+    // Store away the callback function, which will get called upon success of the import operation.
+    WasmFileManager* this_ = static_cast<WasmFileManager*>(Application::instance()->fileManager());
+    QMutexLocker locker(&this_->mutex());
+    this_->_importOperationCallbacks[fileImportId] = std::move(callback);
+
+    importDialog->setParent(mainWindow);
+    importDialog->setProperty("importFileId", fileImportId++);
+
+    QObject::connect(importDialog, SIGNAL(accepted()), this_, SLOT(importedFileDataReady()));
+    QObject::connect(importDialog, SIGNAL(accepted()), importDialog, SLOT(deleteLater()));
+    QObject::connect(importDialog, SIGNAL(rejected()), this_, SLOT(importedFileDataCanceled()));
+    QObject::connect(importDialog, SIGNAL(rejected()), importDialog, SLOT(deleteLater()));
+    
+    QMetaObject::invokeMethod(importDialog, "open");
+}
+
+/******************************************************************************
+* Internal callback method. JavaScript will call this function when the 
+* imported file data is ready.
+******************************************************************************/
+void WasmFileManager::importedFileDataReady()
+{
+    QObject* importDialog = sender();
+    int fileImportId = importDialog->property("importFileId").toInt();
+
+    // Look up the callback registered for the import operation.
+    QMutexLocker locker(&mutex());
+    auto callbackIter = _importOperationCallbacks.find(fileImportId);
+    if(callbackIter == _importOperationCallbacks.end())
+        return;
+    auto callback = std::move(callbackIter->second);
+    _importOperationCallbacks.erase(callbackIter);
+
+    // Read file data into a QByteArray.
+    QUrl fileUrl = importDialog->property("fileUrl").toUrl();
+    QFile file(fileUrl.toLocalFile());
+    if(!file.open(QIODevice::ReadOnly)) {
+        MainWindow* mainWindow = static_cast<MainWindow*>(importDialog->parent());
+        mainWindow->showErrorMessage(tr("Could not read file '%1'.").arg(file.fileName()), file.errorString());
+        callback(QUrl());
+        return;
+    }
+    QByteArray fileContent = file.readAll();
+    
+    // Generate a unique ID for the file to avoid name clashes if 
+    // the user imports several different files having the same filename.
+    // Generate the URL under which the imported file will be accessible in the application.
+    QUrl url;
+    url.setScheme(QStringLiteral("imported"));
+    url.setHost(QString::number(QDateTime::currentMSecsSinceEpoch()));
+    url.setPath(QStringLiteral("/") + url.fileName(), QUrl::DecodedMode);
+
+    // Store the file content in the cache for subsequent access by other parts of the program.
+    _importedFiles[url] = std::move(fileContent);
+    locker.unlock();
+
+    // Notify callback function that the import operation has been completed.
+    callback(url);
+}
+
+/******************************************************************************
+* Internal callback method. JavaScript will call this function when the file 
+* import operation has been canceled by the user.
+******************************************************************************/
+void WasmFileManager::importedFileDataCanceled()
+{
+    QObject* importDialog = sender();
+    int fileImportId = importDialog->property("importFileId").toInt();
+
+    // Look up the callback registered for the import operation.
+    QMutexLocker locker(&mutex());
+    auto callbackIter = _importOperationCallbacks.find(fileImportId);
+    if(callbackIter == _importOperationCallbacks.end())
+        return;
+    auto callback = std::move(callbackIter->second);
+    _importOperationCallbacks.erase(callbackIter);
+    locker.unlock();
+
+    // Notify callback function that the operation has been canceled by the user.
+    callback(QUrl());
 }
 
 #endif

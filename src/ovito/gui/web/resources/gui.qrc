@@ -4,6 +4,7 @@
         <file>ui/qmldir</file>
         <file>ui/AboutDialog.qml</file>
         <file>ui/ErrorDialog.qml</file>
+        <file>ui/ImportDialog.qml</file>
         <file>ui/ToolBar.qml</file>
         <file>ui/ViewportWindow.qml</file>
 

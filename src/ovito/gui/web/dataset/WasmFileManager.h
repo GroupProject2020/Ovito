@@ -48,6 +48,8 @@ public:
 	/// \brief Opens a file dialog in the browser allowing the user to import a file from the local computer into the application. 
 	static void importFileIntoMemory(MainWindow* mainWindow, const QString& acceptedFileTypes, std::function<void(const QUrl&)> callback);
 
+#ifdef Q_OS_WASM
+
 public:
 
 	/// Internal callback method. JavaScript will call this function when the imported file data is ready.
@@ -56,6 +58,18 @@ public:
 	/// Internal callback method. JavaScript will call this function when the file import operation has been canceled by the user.
 	void importedFileDataCanceled(int fileImportId);
 
+#else
+
+private Q_SLOTS:
+
+	/// Internal callback method. 
+	void importedFileDataReady();
+
+	/// Internal callback method. 
+	void importedFileDataCanceled();
+
+#endif
+
 private:
 
 	/// In-memory cache for files that have been imported into the application through the web browser interface.
@@ -63,7 +77,6 @@ private:
 
 	/// Callback functions for file import operations in progress.
 	std::map<int, std::function<void(const QUrl&)>> _importOperationCallbacks;
-
 };
 
 OVITO_END_INLINE_NAMESPACE
