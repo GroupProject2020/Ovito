@@ -15,11 +15,6 @@
         <file>actions/viewport/maximize_viewport.bw.svg</file>
         <file>actions/viewport/zoom_scene_extents.bw.svg</file>
 
-        <file>samples/B.obj</file>
-        <file>samples/water.start.data</file>
         <file>samples/test.data</file>
-        <file>samples/dump.ellipsoid.gz</file>
-        <file>samples/oxdna-5bp-double.conf</file>
-        <file>samples/oxdna-5bp-double.top</file>
     </qresource>
 </RCC>

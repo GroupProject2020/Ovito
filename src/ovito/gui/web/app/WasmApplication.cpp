@@ -42,9 +42,11 @@
 	Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin) 	// QtQuick.Layouts
 	Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)// QtQuick.Templates
 	Q_IMPORT_PLUGIN(QtQuickControls2Plugin) // QtQuick.Controls2
-//	Q_IMPORT_PLUGIN(QSvgIconPlugin) 		// SVG icon engine plugin
-//	Q_IMPORT_PLUGIN(QSvgPlugin) 			// Note: No longer needed in Qt 5.14
-//	Q_IMPORT_PLUGIN(QWasmIntegrationPlugin)	// Note: No longer needed in Qt 5.14
+	Q_IMPORT_PLUGIN(QSvgIconPlugin) 		// SVG icon engine plugin
+	#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+		Q_IMPORT_PLUGIN(QSvgPlugin)
+		Q_IMPORT_PLUGIN(QWasmIntegrationPlugin)
+	#endif
 #endif
 
 namespace Ovito {
@@ -142,17 +144,16 @@ void WasmApplication::postStartupInitialization()
 		newSet->loadUserDefaults();
 		datasetContainer()->setCurrentSet(newSet);
 
+#if 0
 		// Import sample data.
 		try {
 			datasetContainer()->importFile(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/test.data"));
-//			QUrl importURL1(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/B.obj"));
-//			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/water.start.data"));
-//			QUrl importURL2(Application::instance()->fileManager()->urlFromUserInput(":/gui/samples/oxdna-5bp-double.conf"));
 		}
 		catch(const Exception& ex) {
 			ex.reportError();
 		}
 		newSet->undoStack().setClean();
+#endif
 	}
 
 	StandaloneApplication::postStartupInitialization();
@@ -183,8 +184,8 @@ void WasmApplication::reportError(const Exception& exception, bool blocking)
 	}
 
 	if(mainWindow) {
-		// If the exception is associated with additional message strings,
-		// show them in the "Details" section of the message popup.
+		// If the exception has additional message strings attached,
+		// show them in the "Details" section of the popup dialog.
 		QString detailedText;
 		if(exception.messages().size() > 1) {
 			for(int i = 1; i < exception.messages().size(); i++)

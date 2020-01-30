@@ -21,20 +21,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui/web/GUIWeb.h>
+#include <ovito/gui/web/dataset/WasmFileManager.h>
 #include <ovito/gui/base/viewport/ViewportInputManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include "MainWindow.h"
-
-/******************************************************************************
-* Global user file data ready callback and C helper function. JavaScript will
-* call this function when the file data is ready; the helper then forwards
-* the call to the current handler function. This means there can be only one
-* file open in proress at a given time.
-******************************************************************************/
-//extern "C" EMSCRIPTEN_KEEPALIVE void fileDataReadyCallback(char *content, size_t contentSize, const char *fileName)
-//{
-
-//}
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 
@@ -60,24 +50,15 @@ MainWindow::~MainWindow()
 ******************************************************************************/
 void MainWindow::importDataFile()
 {
-	try {
-#ifdef Q_OS_WASM
-//		if(::g_qtFileDataReadyCallback)
-//			qWarning() << "Warning: Concurrent file imports are not supported. Cancelling earlier import operation.";
-
-		// Call fileDataReadyCallback() to make sure the emscripten linker does not
-        // optimize it away, which may happen if the function is called from JavaScript
-        // only. Set g_qtFileDataReadyCallback to null to make it a no-op.
-//        ::g_qtFileDataReadyCallback = nullptr;
- //       fileDataReadyCallback(nullptr, 0, nullptr);
-#else
-//		QFileDialog()
-#endif
-//		datasetContainer().importFile(fileUrl);
-	}
-	catch(const Exception& ex) {
-		ex.reportError();
-	}
+	WasmFileManager::importFileIntoMemory(this, QStringLiteral("*"), [this](const QUrl& url) {
+		try {
+			if(url.isValid())
+				datasetContainer().importFile(url);
+		}
+		catch(const Exception& ex) {
+			ex.reportError();
+		}
+	});
 }
 
 OVITO_END_INLINE_NAMESPACE

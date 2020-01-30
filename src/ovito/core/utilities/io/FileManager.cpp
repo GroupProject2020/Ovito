@@ -30,13 +30,27 @@
 #include "FileManager.h"
 #include "RemoteFileJob.h"
 
-#include <QTemporaryFile>
-
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
 #ifdef OVITO_SSH_CLIENT
 using namespace Ovito::Ssh;
 #endif
+
+/******************************************************************************
+* Create a QIODevice that permits reading data from the file referred to by this handle.
+******************************************************************************/
+std::unique_ptr<QIODevice> FileHandle::createIODevice() const 
+{
+	if(!localFilePath().isEmpty()) {
+		return std::make_unique<QFile>(localFilePath());
+	}
+	else {
+		auto buffer = std::make_unique<QBuffer>();
+		buffer->setData(_fileData);
+		OVITO_ASSERT(buffer->data().constData() == _fileData.constData()); // Rely on a shallow copy of the buffer being created.
+		return buffer;
+	}
+}
 
 /******************************************************************************
 * Destructor.
@@ -70,10 +84,10 @@ SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const Q
 	else if(url.scheme() == QStringLiteral("sftp")) {
 #ifdef OVITO_SSH_CLIENT
 		QUrl normalizedUrl = normalizeUrl(url);
-		QMutexLocker lock(&_mutex);
+		QMutexLocker lock(&mutex());
 
 		// Check if requested URL is already in the cache.
-		if(auto cacheEntry = _cachedFiles.object(normalizedUrl)) {
+		if(auto cacheEntry = _downloadedFiles.object(normalizedUrl)) {
 			return FileHandle(url, cacheEntry->fileName());
 		}
 
@@ -129,7 +143,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 void FileManager::removeFromCache(const QUrl& url)
 {
 	QMutexLocker lock(&_mutex);
-	_cachedFiles.remove(normalizeUrl(url));
+	_downloadedFiles.remove(normalizeUrl(url));
 }
 
 /******************************************************************************
@@ -138,7 +152,7 @@ void FileManager::removeFromCache(const QUrl& url)
 void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 {
 	QUrl normalizedUrl = normalizeUrl(std::move(url));
-	QMutexLocker lock(&_mutex);
+	QMutexLocker lock(&mutex());
 
 	auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 	if(inProgressEntry != _pendingFiles.end())
@@ -148,7 +162,7 @@ void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 		// Store downloaded file in local cache.
 		OVITO_ASSERT(localFile->thread() == this->thread());
 		localFile->setParent(this);
-		if(!_cachedFiles.insert(normalizedUrl, localFile, 0))
+		if(!_downloadedFiles.insert(normalizedUrl, localFile, 0))
 			throw Exception(tr("Failed to insert downloaded file into file cache."));
 	}
 }

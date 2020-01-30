@@ -54,9 +54,9 @@ void main()
 	float rsq = dot(shifted_coords, shifted_coords);
 	if(rsq >= 0.25) discard;
 #if __VERSION__ >= 300
-	vec4 texValue = texture2D(tex, texcoords);
-#else
 	vec4 texValue = texture(tex, texcoords);
+#else
+	vec4 texValue = texture2D(tex, texcoords);
 #endif
 
 	// Specular highlights are stored in the green channel of the texture.

@@ -40,9 +40,9 @@ void main()
 	vec2 shifted_coords = texcoords - vec2(0.5, 0.5);
 	if(dot(shifted_coords, shifted_coords) >= 0.25) discard;
 #if __VERSION__ >= 300
-	vec4 texValue = texture2D(tex, texcoords);
-#else
 	vec4 texValue = texture(tex, texcoords);
+#else
+	vec4 texValue = texture2D(tex, texcoords);
 #endif
 
 	// Specular highlights are stored in the green channel of the texture.

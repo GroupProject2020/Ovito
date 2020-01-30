@@ -62,7 +62,7 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 
 		// Load the QML component for creating new viewport window instances.
 		if(!_viewportComponent) {
-			_viewportComponent = new QQmlComponent(qmlContext(this)->engine(), QUrl::fromLocalFile(":/gui/ui/ViewportWindow.qml"));
+			_viewportComponent = new QQmlComponent(qmlContext(this)->engine(), QUrl::fromLocalFile(":/gui/ui/ViewportWindow.qml"), QQmlComponent::PreferSynchronous, this);
 			if(_viewportComponent->isError())
           		qWarning() << _viewportComponent->errors();
 		}

@@ -21,13 +21,230 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/gui/web/GUIWeb.h>
+#include <ovito/core/utilities/concurrent/TaskManager.h>
+#include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/app/Application.h>
 #include "WasmFileManager.h"
+
+#ifdef Q_OS_WASM
+    #include <emscripten.h>
+    #include <emscripten/html5.h>
+#endif
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
 /******************************************************************************
-* Asks the user for the login password for a SSH server.
+* Makes a file available on this computer.
 ******************************************************************************/
+SharedFuture<FileHandle> WasmFileManager::fetchUrl(TaskManager& taskManager, const QUrl& url)
+{
+	if(url.scheme() == QStringLiteral("imported")) {
+		QUrl normalizedUrl = normalizeUrl(url);
+		QMutexLocker lock(&mutex());
+
+		// Check if requested URL is in the file cache.
+        const auto& cacheEntry = _importedFiles.find(normalizedUrl);
+		if(cacheEntry == _importedFiles.end())
+            return Future<FileHandle>::createFailed(Exception(tr("Requested file does not exist in imported file set:\n%1").arg(url.fileName()), taskManager.datasetContainer()));
+
+        // Return a file handle referring to the file data buffer previously loaded into application memory.
+        return FileHandle(url, cacheEntry->second);
+	}
+    return FileManager::fetchUrl(taskManager, url);
+}
+
+/******************************************************************************
+* Lists all files in a remote directory.
+******************************************************************************/
+Future<QStringList> WasmFileManager::listDirectoryContents(TaskManager& taskManager, const QUrl& url)
+{
+	if(url.scheme() == QStringLiteral("imported")) {
+		QUrl normalizedUrl = normalizeUrl(url);
+		QMutexLocker lock(&mutex());
+
+        QStringList fileList;
+        for(const auto& importEntry : _importedFiles) {
+            if(importEntry.first.host() == url.host() && importEntry.first.path().startsWith(url.path()))
+                fileList.push_back(importEntry.first.fileName());
+        }
+        return std::move(fileList);
+	}
+    return FileManager::listDirectoryContents(taskManager, url);
+}
+
+#ifdef Q_OS_WASM
+
+/******************************************************************************
+* Internal callback method. JavaScript will call this function when the 
+* imported file data is ready.
+******************************************************************************/
+void WasmFileManager::importedFileDataReady(char* content, size_t contentSize, const char* fileName, int fileImportId)
+{
+    // Copy file data into a QByteArray and free buffer that was allocated on the JavaScript side.
+    QByteArray fileContent(content, contentSize);
+    ::free(content);
+
+    // Look up the callback registered for the import operation.
+    QMutexLocker locker(&mutex());
+    auto callbackIter = _importOperationCallbacks.find(fileImportId);
+    if(callbackIter == _importOperationCallbacks.end())
+        return;
+    auto callback = std::move(callbackIter->second);
+    _importOperationCallbacks.erase(callbackIter);
+
+    // Generate a unique ID for the file to avoid name clashes if 
+    // the user imports several different files having the same filename.
+    // Generate the URL under which the imported file will be accessible in the application.
+    QUrl url;
+    url.setScheme(QStringLiteral("imported"));
+    url.setHost(QString::number(QDateTime::currentMSecsSinceEpoch()));
+    url.setPath(QStringLiteral("/") + QString::fromUtf8(fileName), QUrl::DecodedMode);
+    qInfo() << "Imported file" << QString::fromUtf8(fileName) << "into memory storage under URL" << url.toString();
+
+    // Store the file content in the cache for subsequent access by other parts of the program.
+    _importedFiles[url] = std::move(fileContent);
+    locker.unlock();
+
+    // Notify callback function that the import operation has been completed.
+    callback(url);
+}
+
+/******************************************************************************
+* Internal callback method. JavaScript will call this function when the file 
+* import operation has been canceled by the user.
+******************************************************************************/
+void WasmFileManager::importedFileDataCanceled(int fileImportId)
+{
+    // Look up the callback registered for the import operation.
+    QMutexLocker locker(&mutex());
+    auto callbackIter = _importOperationCallbacks.find(fileImportId);
+    if(callbackIter == _importOperationCallbacks.end())
+        return;
+    auto callback = std::move(callbackIter->second);
+    _importOperationCallbacks.erase(callbackIter);
+    locker.unlock();
+
+    // Notify callback function that the operation has been canceled by the user.
+    callback(QUrl());
+}
+
+/******************************************************************************
+* Global user file data ready callback and C helper function. JavaScript will
+* call this function when the file data is ready.
+******************************************************************************/
+extern "C" EMSCRIPTEN_KEEPALIVE void ovitoFileDataReady(char* content, size_t contentSize, const char* fileName, int fileImportId)
+{
+    // Forward call to WasmFileManager class method:
+    static_cast<WasmFileManager*>(Application::instance()->fileManager())->importedFileDataReady(content, contentSize, fileName, fileImportId);
+}
+
+/******************************************************************************
+* Global callback function called by the JavaScript side if the user has 
+* canceled the file import operation. 
+******************************************************************************/
+extern "C" EMSCRIPTEN_KEEPALIVE void ovitoFileDataCanceled(int fileImportId)
+{
+    // Forward call to WasmFileManager class method:
+    static_cast<WasmFileManager*>(Application::instance()->fileManager())->importedFileDataCanceled(fileImportId);
+}
+
+/******************************************************************************
+* Opens a file dialog in the browser allowing the user to import a file from 
+* the local computer into the application. 
+******************************************************************************/
+void WasmFileManager::importFileIntoMemory(MainWindow* mainWindow, const QString& acceptedFileTypes, std::function<void(const QUrl&)> callback)
+{
+    QByteArray acceptedFileTypesUtf8 = acceptedFileTypes.toUtf8();
+
+    // Generate a unique ID for this import operation.
+    static int fileImportId = 0;
+
+    // Store away the callback function, which will get called upon success of the import operation.
+    WasmFileManager* this_ = static_cast<WasmFileManager*>(Application::instance()->fileManager());
+    QMutexLocker locker(&this_->mutex());
+    this_->_importOperationCallbacks[fileImportId] = std::move(callback);
+
+    EM_ASM_({
+        const accept = UTF8ToString($0);
+        const fileId = $1;
+
+        // Create file input element, which will display the native file dialog.
+        var fileElement = document.createElement("input");
+        fileElement.type = "file";
+        fileElement.style = "display:none";
+        fileElement.accept = accept;
+        fileElement.onchange = function(event) {
+            const files = event.target.files;
+
+            // Notify the C++ side in case the user has not selected any file.
+            // Note: This doesn't work yet, because the browser won't invoke onchange() if the user
+            // presses the cancel button of the file selection dialog.
+            if(files.length == 0) {
+                ccall("ovitoFileDataCanceled", null, ["number"], [fileId]);
+            }
+
+            // Read selected file(s).
+            for(var i = 0; i < files.length; i++) {
+                const file = files[i];
+                var reader = new FileReader();
+                reader.onload = function() {
+                    const name = file.name;
+                    var contentArray = new Uint8Array(reader.result);
+                    const contentSize = reader.result.byteLength;
+
+                    // Copy the file content to the C++ heap.
+                    // Note: this could be simplified by passing the content as an
+                    // "array" type to ccall and then let it copy to C++ memory.
+                    // However, this built-in solution does not handle files larger
+                    // than ~15M (Chrome). Instead, allocate memory manually and
+                    // pass a pointer to the C++ side (which will free() it when done).
+
+                    // TODO: consider slice()ing the file to read it piecewise and
+                    // then assembling it in a QByteArray on the C++ side.
+
+                    const heapPointer = _malloc(contentSize);
+                    const heapBytes = new Uint8Array(Module.HEAPU8.buffer, heapPointer, contentSize);
+                    heapBytes.set(contentArray);
+
+                    // Null out the first data copy to enable GC
+                    reader = null;
+                    contentArray = null;
+
+                    // Call the C++ file data ready callback.
+                    ccall("ovitoFileDataReady", null,
+                        ["number", "number", "string", "number"], [heapPointer, contentSize, name, fileId]);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            // Clean up document.
+            document.body.removeChild(fileElement);
+
+        }; // onchange callback
+
+        // Trigger file dialog open.
+        document.body.appendChild(fileElement);
+        fileElement.click();
+
+    }, acceptedFileTypesUtf8.constData(), fileImportId++);
+}
+
+#else  // !Q_OS_WASM
+
+/******************************************************************************
+* Opens a file dialog in the browser allowing the user to import a file from 
+* the local computer into the application. 
+******************************************************************************/
+QUrl WasmFileManager::importFileIntoMemory(MainWindow* mainWindow, const QString& acceptedFileTypes)
+{
+    _viewportComponent = new QQmlComponent(qmlContext(mainWindow)->engine(), ("QtQuick.Dialogs.FileDialog"));
+    if(_viewportComponent->isError())
+        qWarning() << _viewportComponent->errors();
+
+    return {};
+}
+
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

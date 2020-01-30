@@ -268,7 +268,7 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
     initializeOpenGLFunctions();
     OVITO_REPORT_OPENGL_ERRORS(this);
 
-#if 1
+#if 0
 	static bool printedGLInfo = false;
 	if(!printedGLInfo) {
 		printedGLInfo = true;

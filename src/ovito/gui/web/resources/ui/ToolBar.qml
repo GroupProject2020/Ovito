@@ -3,6 +3,7 @@ import QtQuick.Controls 2.12
 
 ToolBar {
 	leftPadding: 8
+	hoverEnabled: true
 
 	Flow {
 		id: flow
@@ -16,7 +17,6 @@ ToolBar {
 				ToolTip.text: qsTr("Import local file")
 				ToolTip.visible: hovered
 				ToolTip.delay: 500
-				enabled: false
 				onClicked: mainWindow.importDataFile()
 			}
 			/*

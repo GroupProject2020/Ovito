@@ -86,6 +86,7 @@
 #include <QTemporaryFile>
 #include <QElapsedTimer>
 #include <QtMath>
+#include <QBuffer>
 #ifndef Q_OS_WASM
 #include <QException>
 #endif
