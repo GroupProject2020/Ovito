@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -65,6 +65,12 @@ const PipelineFlowState& PipelineCache::getAt(TimePoint time) const
 ******************************************************************************/
 bool PipelineCache::insert(PipelineFlowState state, const RefTarget* ownerObject)
 {
+	state.intersectStateValidity(_restrictedValidityOfNextInsertedState);
+	if(state.stateValidity().isEmpty()) {
+		qDebug() << "PipelineCache::insert: rejecting state";
+		return false;
+	}
+
 	OVITO_ASSERT(ownerObject);
 	if(state.stateValidity().contains(ownerObject->dataset()->animationSettings()->time()))
 		_currentAnimState = state;
@@ -76,16 +82,15 @@ bool PipelineCache::insert(PipelineFlowState state, const RefTarget* ownerObject
 /******************************************************************************
 * Puts the given pipeline state into the cache when it comes available.
 * Depending on the given state validity interval, the cache may decide not to
-* cache the state, in which case the method returns false.
+* cache the state.
 ******************************************************************************/
-bool PipelineCache::insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject)
+void PipelineCache::insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject)
 {
 	// Wait for computation to complete, then cache the results.
 	stateFuture = stateFuture.then(ownerObject->executor(), [this, ownerObject](PipelineFlowState&& state) {
 		insert(state, ownerObject);
 		return std::move(state);
 	});
-	return true;
 }
 
 /******************************************************************************

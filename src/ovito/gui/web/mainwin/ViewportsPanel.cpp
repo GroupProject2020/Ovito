@@ -39,7 +39,8 @@ ViewportsPanel::ViewportsPanel()
 	// Activate the new viewport layout as soon as a new state file is loaded.
 	connect(this, &QQuickItem::windowChanged, this, [this](QQuickWindow* window) {
 		if(window && mainWindow()) {
-			connect(&mainWindow()->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
+			connect(mainWindow()->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
+			connect(mainWindow()->datasetContainer(), &DataSetContainer::animationSettingsReplaced, this, &ViewportsPanel::onAnimationSettingsReplaced);
 			connect(mainWindow()->viewportInputManager(), &ViewportInputManager::inputModeChanged, this, &ViewportsPanel::onInputModeChanged);
 		}
 	});
@@ -102,6 +103,19 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 	}
 
 	Q_EMIT viewportConfigurationReplaced(viewportConfiguration());
+}
+
+/******************************************************************************
+* This is called when new animation settings have been loaded.
+******************************************************************************/
+void ViewportsPanel::onAnimationSettingsReplaced(AnimationSettings* newAnimationSettings)
+{
+	disconnect(_timeChangeCompleteConnection);
+	_animSettings = newAnimationSettings;
+
+	if(newAnimationSettings) {
+		_timeChangeCompleteConnection = connect(newAnimationSettings, &AnimationSettings::timeChangeComplete, this, &ViewportsPanel::update);
+	}
 }
 
 /******************************************************************************

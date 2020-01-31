@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -52,12 +52,12 @@ public:
 	/// Constructor.
 	GSDFile(const char* filename, const gsd_open_flag flags = GSD_OPEN_READONLY) {
 		switch(::gsd_open(&_handle, filename, flags)) {
-			case 0: break; // Success
-			case -1: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. I/O error."));
-			case -2: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Not a GSD file."));
-			case -3: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Invalid GSD file version."));
-			case -4: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Corrupt file."));
-			case -5: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Unable to allocate memory."));
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. I/O error."));
+			case gsd_error::GSD_ERROR_NOT_A_GSD_FILE: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Not a GSD file."));
+			case gsd_error::GSD_ERROR_INVALID_GSD_FILE_VERSION: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Invalid GSD file version."));
+			case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Corrupt file."));
+			case gsd_error::GSD_ERROR_MEMORY_ALLOCATION_FAILED: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Unable to allocate memory."));
 			default: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. Unknown error."));
 		}
 	}
@@ -65,8 +65,9 @@ public:
 	/// Creates a new GSD file and opens it for writing.
 	static std::unique_ptr<GSDFile> create(const char* filename, const char* application, const char* schema, unsigned int schema_version_major, unsigned int schema_version_minor) {
 		switch(::gsd_create(filename, application, schema, ::gsd_make_version(schema_version_major, schema_version_minor))) {
-			case 0: break; // Success
-			case -1: throw Exception(GSDImporter::tr("Failed to create GSD file. I/O error."));
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("Failed to create GSD file. I/O error."));
+			case gsd_error::GSD_ERROR_MEMORY_ALLOCATION_FAILED: throw Exception(GSDImporter::tr("Failed to create GSD file. Unable to allocate memory."));
 			default: throw Exception(GSDImporter::tr("Failed to create GSD file. Unknown error."));
 		}
 		return std::make_unique<GSDFile>(filename, GSD_OPEN_APPEND);
@@ -136,10 +137,11 @@ public:
 				throw Exception(GSDImporter::tr("GSD file I/O error: Data type of chunk '%1' is not %2 but %3.").arg(chunkName).arg(gsdDataType<T>()).arg(chunk->type));
 			OVITO_ASSERT(::gsd_sizeof_type(gsdDataType<T>()) == sizeof(defaultValue));
 			switch(::gsd_read_chunk(&_handle, &defaultValue, chunk)) {
-				case 0: break; // Success
-				case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
-				case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
-				case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+				case gsd_error::GSD_SUCCESS: break;
+				case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("GSD file I/O error."));
+				case gsd_error::GSD_ERROR_INVALID_ARGUMENT: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid argument."));
+				case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("GSD file I/O error: File is corrupt."));
+				case gsd_error::GSD_ERROR_FILE_MUST_BE_READABLE: throw Exception(GSDImporter::tr("GSD file I/O error: File must be readable."));
 				default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 			}
 		}
@@ -153,7 +155,7 @@ public:
 		if(!chunk && frame != 0) chunk = ::gsd_find_chunk(&_handle, 0, chunkName);
 		if(!chunk)
 			throw Exception(GSDImporter::tr("GSD file I/O error: Chunk '%1' does not exist at frame %2 (or the initial frame).").arg(chunkName).arg(frame));
-		int errCode = -1;
+		int errCode = gsd_error::GSD_ERROR_IO;
 		QVariant result;
 		if(chunk->type == GSD_TYPE_INT8 && chunk->M == 1) {
 			// Special handling for char arrays, which need to be converted to a string object.
@@ -270,10 +272,11 @@ public:
 			}
 		}
 		switch(errCode) {
-			case 0: break; // Success
-			case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
-			case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
-			case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("GSD file I/O error."));
+			case gsd_error::GSD_ERROR_INVALID_ARGUMENT: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid argument."));
+			case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("GSD file I/O error: File is corrupt."));
+			case gsd_error::GSD_ERROR_FILE_MUST_BE_READABLE: throw Exception(GSDImporter::tr("GSD file I/O error: File must be readable."));
 			default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 		}
 		return result;
@@ -292,10 +295,11 @@ public:
 				throw Exception(GSDImporter::tr("GSD file I/O error: Data type of chunk '%1' is not %2 but %3.").arg(chunkName).arg(gsdDataType<T>()).arg(chunk->type));
 			OVITO_ASSERT(::gsd_sizeof_type(gsdDataType<T>()) == sizeof(a[0]));
 			switch(::gsd_read_chunk(&_handle, a.data(), chunk)) {
-				case 0: break; // Success
-				case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
-				case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
-				case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+				case gsd_error::GSD_SUCCESS: break;
+				case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("GSD file I/O error."));
+				case gsd_error::GSD_ERROR_INVALID_ARGUMENT: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid argument."));
+				case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("GSD file I/O error: File is corrupt."));
+				case gsd_error::GSD_ERROR_FILE_MUST_BE_READABLE: throw Exception(GSDImporter::tr("GSD file I/O error: File must be readable."));
 				default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 			}
 		}
@@ -312,10 +316,11 @@ public:
 				throw Exception(GSDImporter::tr("GSD file I/O error: Data type of chunk '%1' is not GSD_TYPE_UINT8 but %2.").arg(chunkName).arg(chunk->type));
 			std::vector<char> buffer(chunk->N * chunk->M);
 			switch(::gsd_read_chunk(&_handle, buffer.data(), chunk)) {
-				case 0: break; // Success
-				case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
-				case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
-				case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+				case gsd_error::GSD_SUCCESS: break;
+				case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("GSD file I/O error."));
+				case gsd_error::GSD_ERROR_INVALID_ARGUMENT: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid argument."));
+				case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("GSD file I/O error: File is corrupt."));
+				case gsd_error::GSD_ERROR_FILE_MUST_BE_READABLE: throw Exception(GSDImporter::tr("GSD file I/O error: File must be readable."));
 				default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 			}
 			for(uint64_t i = 0; i < chunk->N; i++) {
@@ -365,10 +370,11 @@ public:
 		}
 #endif
 		switch(errCode) {
-			case 0: break; // Success
-			case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
-			case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
-			case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("GSD file I/O error."));
+			case gsd_error::GSD_ERROR_INVALID_ARGUMENT: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid argument."));
+			case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("GSD file I/O error: File is corrupt."));
+			case gsd_error::GSD_ERROR_FILE_MUST_BE_READABLE: throw Exception(GSDImporter::tr("GSD file I/O error: File must be readable."));
 			default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 		}
 	}
@@ -439,10 +445,11 @@ public:
 			else errCode = -1;
 		}
 		switch(errCode) {
-			case 0: break; // Success
-			case -1: throw Exception(GSDImporter::tr("GSD file I/O error."));
-			case -2: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid input."));
-			case -3: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid file data."));
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_IO: throw Exception(GSDImporter::tr("GSD file I/O error."));
+			case gsd_error::GSD_ERROR_INVALID_ARGUMENT: throw Exception(GSDImporter::tr("GSD file I/O error: Invalid argument."));
+			case gsd_error::GSD_ERROR_FILE_CORRUPT: throw Exception(GSDImporter::tr("GSD file I/O error: File is corrupt."));
+			case gsd_error::GSD_ERROR_FILE_MUST_BE_READABLE: throw Exception(GSDImporter::tr("GSD file I/O error: File must be readable."));
 			default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 		}
 	}
@@ -450,7 +457,8 @@ public:
 	/// Moves on to writing the next frame and flushes the cached chunk index to disk.
 	void endFrame() {
 		switch(::gsd_end_frame(&_handle)) {
-			case 0: break; // Success
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_MEMORY_ALLOCATION_FAILED: throw Exception(GSDImporter::tr("GSD file I/O error. Unable to allocate memory."));
 			default: throw Exception(GSDImporter::tr("GSD file I/O error. Failed to close frame."));
 		}
 	}
@@ -459,7 +467,9 @@ public:
 	template<typename T>
 	void writeChunk(const char* chunkName, uint64_t N, uint32_t M, const void* data) {
 		switch(::gsd_write_chunk(&_handle, chunkName, gsdDataType<T>(), N, M, 0, data)) {
-			case 0: break; // Success
+			case gsd_error::GSD_SUCCESS: break;
+			case gsd_error::GSD_ERROR_NAMELIST_FULL: throw Exception(GSDImporter::tr("GSD file I/O error. The GSD file cannot store any additional unique chunk names."));
+			case gsd_error::GSD_ERROR_MEMORY_ALLOCATION_FAILED: throw Exception(GSDImporter::tr("GSD file I/O error. Unable to allocate memory."));
 			default: throw Exception(GSDImporter::tr("GSD file I/O error."));
 		}
 	}

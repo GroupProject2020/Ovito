@@ -161,16 +161,14 @@ OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> source
 	// Do not create any animation keys during import.
 	AnimationSuspender animSuspender(this);
 
+	// Pause viewport updates while updating the scene.
+	ViewportSuspender noUpdates(dataset());
+
 	OORef<FileSource> fileSource = existingFileSource;
 
 	// Create the object that will insert the imported data into the scene.
 	if(!fileSource)
 		fileSource = new FileSource(dataset());
-
-	// Set the input location and importer.
-	if(!fileSource->setSource(std::move(sourceUrls), this, autodetectFileSequences)) {
-		return {};
-	}
 
 	// Create a new object node in the scene for the linked data.
 	OORef<PipelineSceneNode> pipeline;
@@ -195,6 +193,10 @@ OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> source
 	// Select new node.
 	if(importMode != DontAddToScene)
 		dataset()->selection()->setNode(pipeline);
+
+	// Set the input location and importer.
+	if(!fileSource->setSource(std::move(sourceUrls), this, autodetectFileSequences))
+		return {};
 
 	if(importMode != ReplaceSelected && importMode != DontAddToScene) {
 		// Adjust viewports to completely show the newly imported object.

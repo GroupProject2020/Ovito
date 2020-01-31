@@ -35,6 +35,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 class OVITO_GUIWEB_EXPORT MainWindow : public QQuickItem, public MainWindowInterface
 {
 	Q_OBJECT
+	Q_PROPERTY(Ovito::WasmDataSetContainer* datasetContainer READ datasetContainer CONSTANT);
 
 public:
 
@@ -45,7 +46,7 @@ public:
 	virtual ~MainWindow();
 
 	/// Returns the container that keeps a reference to the current dataset.
-	WasmDataSetContainer& datasetContainer() { return _datasetContainer; }
+	WasmDataSetContainer* datasetContainer() { return &_datasetContainer; }
 
 public Q_SLOTS:
 

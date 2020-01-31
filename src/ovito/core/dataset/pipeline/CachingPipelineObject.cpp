@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,8 +41,14 @@ CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(
 ******************************************************************************/
 void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 {
+	qDebug() << "CachingPipelineObject::invalidatePipelineCache keepInterval=" << keepInterval;
+
 	// Reduce the cache validity to the interval to be kept.
 	_pipelineCache.invalidate(false, keepInterval);
+
+	// Prevent the cache from getting filled again with an outdated pipeline result if
+	// an evaluation is currently in progress.
+	_pipelineCache.restrictValidityOfNextInsertedState(keepInterval);
 
 	// Abort any pipeline evaluation currently in progress unless it
 	// falls inside the time interval that should be kept.
@@ -57,6 +63,8 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 ******************************************************************************/
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEvaluationRequest& request)
 {
+	qDebug() << "CachingPipelineObject::evaluate:" << request.time();
+
 	// Check if we can immediately serve the request from the internal cache.
 	//
 	// Workaround for bug #150: Force FileSource to reload the frame data after the current
@@ -72,19 +80,22 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEv
 		}
 	}
 
+	// Reset any cache validity restrictions. The results of the evaluation are now going to be stored in the cache
+	// unless we receive a call to invalidatePipelineCache() during the evaluation.
+	_pipelineCache.resetValidityRestriction();
+
 	// Let the subclass perform the actual pipeline evaluation.
 	Future<PipelineFlowState> stateFuture = evaluateInternal(request);
 
 	// Cache the results in our local pipeline cache.
-	if(_pipelineCache.insert(stateFuture, request.time(), this)) {
-		// If the cache was updated, we also have a new preliminary state.
-		// Inform the pipeline about it.
-		if(performPreliminaryUpdateAfterEvaluation() && request.time() == dataset()->animationSettings()->time()) {
-			stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
-				notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
-				return std::move(state);
-			});
-		}
+	_pipelineCache.insert(stateFuture, request.time(), this);
+
+	// We also have a new preliminary state. Inform the pipeline about it.
+	if(performPreliminaryUpdateAfterEvaluation() && request.time() == dataset()->animationSettings()->time()) {
+		stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
+			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
+			return std::move(state);
+		});
 	}
 	OVITO_ASSERT(stateFuture.isValid());
 

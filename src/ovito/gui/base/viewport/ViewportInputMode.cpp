@@ -155,6 +155,10 @@ void ViewportInputMode::wheelEvent(ViewportWindowInterface* vpwin, QWheelEvent* 
 
 	FloatType delta = event->angleDelta().y();
 	if(event->inverted()) delta = -delta;
+#ifdef Q_OS_WASM
+	// In the web browser, the wheel direction seems to be inverted. 
+	delta = -delta;
+#endif	
 	inputManager()->zoomMode()->zoom(vpwin->viewport(), delta);
 	event->accept();
 }

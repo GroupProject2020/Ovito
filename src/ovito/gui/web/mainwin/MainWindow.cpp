@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 MainWindow::MainWindow() : _datasetContainer(this)
 {
 	// Create the object that manages the input modes of the viewports.
-	setViewportInputManager(new ViewportInputManager(this, this, datasetContainer()));
+	setViewportInputManager(new ViewportInputManager(this, this, *datasetContainer()));
 }
 
 /******************************************************************************
@@ -42,7 +42,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 ******************************************************************************/
 MainWindow::~MainWindow()
 {
-	datasetContainer().setCurrentSet(nullptr);
+	datasetContainer()->setCurrentSet(nullptr);
 }
 
 /******************************************************************************
@@ -53,7 +53,7 @@ void MainWindow::importDataFile()
 	WasmFileManager::importFileIntoMemory(this, QStringLiteral("*"), [this](const QUrl& url) {
 		try {
 			if(url.isValid())
-				datasetContainer().importFile(url);
+				datasetContainer()->importFile(url);
 		}
 		catch(const Exception& ex) {
 			ex.reportError();

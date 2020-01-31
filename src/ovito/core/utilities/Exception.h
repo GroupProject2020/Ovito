@@ -82,7 +82,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
  * \endcode
  *
  */
-#ifndef Q_OS_WASM
+#ifndef OVITO_DISABLE_THREADING
 	class OVITO_CORE_EXPORT Exception : public QException
 #else
 	class OVITO_CORE_EXPORT Exception
@@ -173,5 +173,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// namespace Ovito
-
-

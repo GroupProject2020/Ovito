@@ -56,8 +56,10 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
  */
 class OVITO_CORE_EXPORT DataSet : public RefTarget
 {
-	OVITO_CLASS(DataSet)
 	Q_OBJECT
+	OVITO_CLASS(DataSet)
+	Q_PROPERTY(Ovito::AnimationSettings* animationSettings READ animationSettings WRITE setAnimationSettings NOTIFY animationSettingsReplaced);
+	Q_PROPERTY(Ovito::ViewportConfiguration* viewportConfiguration READ viewportConfig WRITE setViewportConfig NOTIFY viewportConfigReplaced);
 
 public:
 

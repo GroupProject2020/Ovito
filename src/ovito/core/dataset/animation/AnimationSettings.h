@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -61,7 +61,13 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
 class OVITO_CORE_EXPORT AnimationSettings : public RefTarget
 {
 	Q_OBJECT
-	OVITO_CLASS(AnimationSettings)
+	OVITO_CLASS(AnimationSettings);
+	Q_PROPERTY(int time READ time WRITE setTime NOTIFY timeChanged);
+	Q_PROPERTY(int currentFrame READ currentFrame WRITE setCurrentFrame NOTIFY timeChanged);
+	Q_PROPERTY(bool singleFrame READ isSingleFrame NOTIFY intervalChanged);
+	Q_PROPERTY(int firstFrame READ firstFrame WRITE setFirstFrame NOTIFY intervalChanged);
+	Q_PROPERTY(int lastFrame READ lastFrame WRITE setLastFrame NOTIFY intervalChanged);
+	Q_PROPERTY(bool playbackActive READ isPlaybackActive WRITE setAnimationPlayback NOTIFY playbackChanged);
 
 public:
 
@@ -177,6 +183,9 @@ public:
 
 	/// Returns whether the animation is currently being played back in the viewports.
 	bool isPlaybackActive() const { return _activePlaybackRate != 0; }
+
+	/// Returns whether the current animation interval consists of a one static frame only.
+	bool isSingleFrame() const { return animationInterval().duration() == 0; }
 
 public Q_SLOTS:
 
@@ -338,6 +347,7 @@ public:
 	}
 
 private:
+
 	QPointer<AnimationSettings> _animSettings;
 };
 

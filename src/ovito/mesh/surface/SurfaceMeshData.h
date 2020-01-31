@@ -340,7 +340,7 @@ public:
         OVITO_ASSERT(areRegionPropertiesMutable());
         OVITO_ASSERT(areFacePropertiesMutable());
         OVITO_ASSERT(region >= 0 && region < regionCount());
-        OVITO_ASSERT(std::none_of(topology()->begin_faces(), topology()->end_faces(), [&](auto face) { return faceRegion(face) == region; } ));
+        OVITO_ASSERT(std::none_of(topology()->begin_faces(), topology()->end_faces(), [&](auto face) { return this->faceRegion(face) == region; } ));
         if(region < regionCount() - 1) {
             // Move the last region to the index of the region being deleted.
             for(auto& prop : _regionProperties) {

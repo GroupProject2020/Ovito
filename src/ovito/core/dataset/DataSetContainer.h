@@ -38,6 +38,7 @@ class OVITO_CORE_EXPORT DataSetContainer : public RefMaker
 {
 	Q_OBJECT
 	OVITO_CLASS(DataSetContainer)
+	Q_PROPERTY(Ovito::DataSet* currentSet READ currentSet WRITE setCurrentSet NOTIFY dataSetChanged);
 
 public:
 

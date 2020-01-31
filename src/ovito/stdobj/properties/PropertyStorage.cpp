@@ -38,6 +38,7 @@ template class ConstPropertyAccess<Color>;
 template class ConstPropertyAccess<Vector3I>;
 template class ConstPropertyAccess<std::array<qlonglong,2>>;
 template class ConstPropertyAccess<int, true>;
+template class ConstPropertyAccess<qlonglong, true>;
 template class ConstPropertyAccess<FloatType, true>;
 template class ConstPropertyAccess<void, true>;
 template class PropertyAccess<int>;
@@ -49,6 +50,7 @@ template class PropertyAccess<Color>;
 template class PropertyAccess<Vector3I>;
 template class PropertyAccess<std::array<qlonglong,2>>;
 template class PropertyAccess<int, true>;
+template class PropertyAccess<qlonglong, true>;
 template class PropertyAccess<FloatType, true>;
 template class PropertyAccess<void, true>;
 

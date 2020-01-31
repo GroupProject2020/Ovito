@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -64,7 +64,7 @@ bool GSDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 	QString filename = QDir::toNativeSeparators(file.localFilePath());
 	if(!filename.isEmpty()) {
 		gsd_handle handle;
-		if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == 0) {
+		if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == gsd_error::GSD_SUCCESS) {
 			::gsd_close(&handle);
 			return true;
 		}

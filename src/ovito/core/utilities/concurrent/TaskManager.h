@@ -26,8 +26,8 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 
-#if QT_FEATURE_thread > 0
-#include <QThreadPool>
+#ifndef OVITO_DISABLE_THREADING
+	#include <QThreadPool>
 #endif
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
@@ -66,13 +66,13 @@ public:
 		// Associate this TaskManager with the task.
 		task->_taskManager = this; 
 		// Submit the task for execution.
-#if QT_FEATURE_thread > 0
+#ifndef OVITO_DISABLE_THREADING
 		QThreadPool::globalInstance()->start(task.get());
 #endif
 		// The task is now associated with this TaskManager.
 		registerTask(task);
 
-#if QT_FEATURE_thread <= 0
+#ifdef OVITO_DISABLE_THREADING
 		// If multi-threading has been disabled, run the task immediately in the current thread.
 		task->run();
 #endif

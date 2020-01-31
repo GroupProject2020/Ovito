@@ -252,19 +252,25 @@ void PropertyExpressionEvaluator::evaluate(const std::function<void(size_t,size_
 		_variables = worker._variables;
 		_referencedVariablesKnown = true;
 		worker.run(0, elementCount(), callback, filter);
-		if(worker._errorMsg.isEmpty() == false)
+		if(!worker._errorMsg.isEmpty())
 			throw Exception(worker._errorMsg);
 	}
 	else if(nthreads > 1) {
-		parallelForChunks(elementCount(), [this, &callback, &filter](size_t startIndex, size_t chunkSize) {
-			Worker worker(*this);
+		Worker worker0(*this);
+		_variables = worker0._variables;
+		_referencedVariablesKnown = true;
+		parallelForChunks(elementCount(), [this, &callback, &filter, &worker0](size_t startIndex, size_t chunkSize) {
 			if(startIndex == 0) {
-				_variables = worker._variables;
-				_referencedVariablesKnown = true;
+				worker0.run(startIndex, startIndex + chunkSize, callback, filter);
+				if(!worker0._errorMsg.isEmpty())
+					throw Exception(worker0._errorMsg);
 			}
-			worker.run(startIndex, startIndex + chunkSize, callback, filter);
-			if(worker._errorMsg.isEmpty() == false)
-				throw Exception(worker._errorMsg);
+			else {
+				Worker worker(*this);
+				worker.run(startIndex, startIndex + chunkSize, callback, filter);
+				if(!worker._errorMsg.isEmpty())
+					throw Exception(worker._errorMsg);
+			}
 		});
 	}
 }

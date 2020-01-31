@@ -74,6 +74,7 @@ OPTION(OVITO_REDISTRIBUTABLE_PACKAGE "Create a redistributable program package t
 OPTION(OVITO_BUILD_APPSTORE_VERSION "Build binaries for the Apple App Store and Windows Store." "OFF")
 OPTION(OVITO_RUN_CLANG_TIDY "Run the clang-tidy tool to check code." "OFF")
 OPTION(OVITO_USE_PRECOMPILED_HEADERS "Use precompiled C++ headers to speed up build." "ON")
+OPTION(OVITO_DISABLE_THREADING "Disable multi-threading code (meant only for development purposes)." "OFF")
 
 # Define user options that control the building of OVITO's standard plugins.
 OPTION(OVITO_BUILD_PLUGIN_STDOBJ "Build the standard objects plugin." "ON")

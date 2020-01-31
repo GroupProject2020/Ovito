@@ -26,5 +26,7 @@
         <file>actions/animation/stop_animation.bw.svg</file>
 
         <file>samples/test.data</file>
+        <file>samples/animation.dump</file>
+        <file>samples/trajectory.xyz</file>
     </qresource>
 </RCC>

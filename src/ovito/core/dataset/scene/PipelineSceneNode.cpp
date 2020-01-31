@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -61,11 +61,17 @@ PipelineSceneNode::~PipelineSceneNode() // NOLINT
 ******************************************************************************/
 void PipelineSceneNode::invalidatePipelineCache()
 {
+	qDebug() << "PipelineSceneNode::invalidatePipelineCache()";
 	// Invalidate data caches.
 	_pipelineCache.invalidate(false);
 	_pipelineRenderingCache.invalidate(true);	// Do not completely discard these cached objects,
 												// because we might be able to re-use the transformed data objects.
 	_pipelinePreliminaryCache.reset();
+
+	// Prevent the pipeline cache from getting filled again with an outdated pipeline result if
+	// a pipeline evaluation is currently in progress.
+	_pipelineRenderingCache.restrictValidityOfNextInsertedState();
+	_pipelineCache.restrictValidityOfNextInsertedState();
 
 	// Also mark the cached bounding box of this node as invalid.
 	invalidateBoundingBox();
@@ -77,6 +83,7 @@ void PipelineSceneNode::invalidatePipelineCache()
 const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool includeVisElements) const
 {
 	TimePoint time = dataset()->animationSettings()->time();
+	qDebug() << "-------PipelineSceneNode::evaluatePipelinePreliminary" << time << "_pipelineRenderingCache:" << _pipelineRenderingCache.getStaleContents().stateValidity() << "_pipelinePreliminaryCache:" << _pipelinePreliminaryCache.stateValidity();
 
 	// First check if our real caches can serve the request.
 	if(includeVisElements) {
@@ -93,6 +100,7 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 		return _pipelinePreliminaryCache;
 	}
 
+	qDebug() << "-------PipelineSceneNode::evaluatePipelinePreliminary not cached -> evaluating pipepine";
 	// If not, update the preliminary state cache from the pipeline.
 	if(dataProvider()) {
 		_pipelinePreliminaryCache = dataProvider()->evaluatePreliminary();
@@ -112,6 +120,8 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 ******************************************************************************/
 SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(const PipelineEvaluationRequest& request) const
 {
+	qDebug() << "-------PipelineSceneNode::evaluatePipeline" << request.time() << "_pipelineCache:" << _pipelineCache.getStaleContents().stateValidity();
+
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineCache.contains(request.time()))
 		return _pipelineCache.getAt(request.time());
@@ -119,6 +129,12 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(const Pipeli
 	// Without a data provider, we cannot serve any requests.
 	if(!dataProvider())
 		return Future<PipelineFlowState>::createImmediateEmplace();
+
+	qDebug() << "-------PipelineSceneNode::evaluatePipeline cache invalid -> evaluating pipeline";
+
+	// Reset any cache validity restrictions. The results of the pipeline evaluation are now going to be stored in the pipeline cache
+	// unless we receive a TargetChanged signal during the pipeline evaluation.
+	_pipelineCache.resetValidityRestriction();
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return dataProvider()->evaluate(request)
@@ -144,9 +160,15 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(const Pipeli
 ******************************************************************************/
 SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(const PipelineEvaluationRequest& request) const
 {
+	qDebug() << "-------PipelineSceneNode::evaluateRenderingPipeline" << request.time() << "_pipelineRenderingCache:" << _pipelineRenderingCache.getStaleContents().stateValidity();
+
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineRenderingCache.contains(request.time()))
 		return _pipelineRenderingCache.getAt(request.time());
+
+	// Reset any cache validity restrictions. The results of the pipeline evaluation are now going to be stored in the pipeline cache
+	// unless we receive a TargetChanged signal during the pipeline evaluation.
+	_pipelineRenderingCache.resetValidityRestriction();
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return evaluatePipeline(request)
@@ -255,6 +277,7 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 {
 	if(source == dataProvider()) {
 		if(event.type() == ReferenceEvent::TargetChanged) {
+			qDebug() << "PipelineSceneNode::referenceEvent: ReferenceEvent::TargetChanged";
 			invalidatePipelineCache();
 		}
 		else if(event.type() == ReferenceEvent::TargetDeleted) {
@@ -286,6 +309,7 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 			if(dynamic_object_cast<TransformingDataVis>(source)) {
 				// Do not completely discard these cached objects, because we might be able to re-use the transformed data objects.
 				_pipelineRenderingCache.invalidate(true);
+				_pipelineRenderingCache.restrictValidityOfNextInsertedState(true);
 
 				// Trigger a pipeline re-evaluation.
 				notifyTargetChanged(&PROPERTY_FIELD(visElements));

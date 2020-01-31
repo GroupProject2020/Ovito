@@ -87,8 +87,8 @@
 #include <QElapsedTimer>
 #include <QtMath>
 #include <QBuffer>
-#ifndef Q_OS_WASM
-#include <QException>
+#ifndef OVITO_DISABLE_THREADING
+    #include <QException>
 #endif
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -139,8 +139,9 @@ bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* imp
 	_isNewFile = true;
 
 	// Trigger a reload of the current frame.
-	invalidateFrameCache();
 	_frames.clear();
+	invalidateFrameCache();
+	invalidatePipelineCache();
 
 	// Scan the input source for animation frames.
 	updateListOfFrames();
@@ -182,6 +183,7 @@ void FileSource::updateListOfFrames()
 void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 {
 	_framesListFuture.reset();
+	qDebug() << "FileSource::setListOfFrames" << frames.size() << "old count:" << _frames.size();
 
 	// If there are too many frames, time tick values may overflow. Warn the user in this case.
 	if(frames.size() >= animationTimeToSourceFrame(TimePositiveInfinity())) {
@@ -189,25 +191,34 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 			"Note: You can increase the limit by setting the animation frames-per-second parameter to a higher value.";
 	}
 
+	// Determine the new validity of the existing pipeline state in the cache.
+	TimeInterval remainingCacheValidity = TimeInterval::infinite();
+
 	// Invalidate all cached frames that are no longer present.
+	if(frames.size() < _frames.size())
+		remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(frames.size())-1));
 	for(int frameIndex = frames.size(); frameIndex < _frames.size(); frameIndex++)
-		invalidateFrameCache(frameIndex);
+		invalidateFrameCache(frameIndex);	
 
 	// When adding additional frames to the end, the cache validity interval of the last frame must be reduced.
-	if(frames.size() > _frames.size()) {
-		invalidatePipelineCache({ TimeNegativeInfinity(), sourceFrameToAnimationTime(_frames.size())-1 });
-	}
+	if(frames.size() > _frames.size())
+		remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(_frames.size())-1));
 
 	// Invalidate all cached frames that have changed.
 	for(int frameIndex = 0; frameIndex < _frames.size() && frameIndex < frames.size(); frameIndex++) {
-		if(frames[frameIndex] != _frames[frameIndex])
+		if(frames[frameIndex] != _frames[frameIndex]) {
 			invalidateFrameCache(frameIndex);
+			remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(frameIndex)-1));
+		}
 	}
 
 	// Replace our internal list of frames.
 	_frames = std::move(frames);
 	// Reset cached frame label list. It will be rebuilt upon request by the method animationFrameLabels().
 	_frameLabels.clear();
+
+	// Update cache validity.
+	invalidatePipelineCache(remainingCacheValidity);
 
 	// Adjust the animation length to match the number of source frames.
 	notifyDependents(ReferenceEvent::AnimationFramesChanged);
@@ -216,8 +227,7 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 	// in the file selection dialog.
 	if(_isNewFile) {
 		for(int frameIndex = 0; frameIndex < _frames.size(); frameIndex++) {
-			QFileInfo fileInfo(_frames[frameIndex].sourceFile.path());
-			if(fileInfo.fileName() == _originallySelectedFilename) {
+			if(_frames[frameIndex].sourceFile.fileName() == _originallySelectedFilename) {
 				TimePoint jumpToTime = sourceFrameToAnimationTime(frameIndex);
 				AnimationSettings* animSettings = dataset()->animationSettings();
 				if(animSettings->animationInterval().contains(jumpToTime))
@@ -289,6 +299,7 @@ PipelineStatus FileSource::status() const
 ******************************************************************************/
 Future<PipelineFlowState> FileSource::evaluateInternal(const PipelineEvaluationRequest& request)
 {
+	qDebug() << "FileSource::evaluateInternal:" << request.time();
 	// Convert the animation time to a frame number.
 	int frame = animationTimeToSourceFrame(request.time());
 	int frameCount = numberOfSourceFrames();
@@ -306,6 +317,7 @@ Future<PipelineFlowState> FileSource::evaluateInternal(const PipelineEvaluationR
 ******************************************************************************/
 SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame)
 {
+	qDebug() << "FileSource::requestFrameList" << forceRescan << forceReloadOfCurrentFrame;
 	// Without an importer object the list of frames is empty.
 	if(!importer())
 		return Future<QVector<FileSourceImporter::Frame>>::createImmediateEmplace();
@@ -330,8 +342,10 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 			setListOfFrames(frameList);
 
 			// If update was triggered by user, also reload the current frame.
-			if(forceReloadOfCurrentFrame)
+			if(forceReloadOfCurrentFrame) {
+				qDebug() << "FileSource::requestFrameList: notifyTargetChanged()";
 				notifyTargetChanged();
+			}
 
 			// Simply forward the frame list to the caller.
 			return std::move(frameList);
@@ -383,6 +397,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				interval.setEnd(std::max(sourceFrameToAnimationTime(frame + 1) - 1, sourceFrameToAnimationTime(frame)));
 			OVITO_ASSERT(frame >= 0);
 			OVITO_ASSERT(!interval.isEmpty());
+			qDebug() << "FileSource: interval=" << interval;
 
 			const FileSourceImporter::Frame& frameInfo = sourceFrames[frame];
 
@@ -497,6 +512,7 @@ void FileSource::reloadFrame(int frameIndex)
 		Application::instance()->fileManager()->removeFromCache(frames()[frameIndex].sourceFile);
 
 	invalidateFrameCache(frameIndex);
+	invalidatePipelineCache();
 	notifyTargetChanged();
 }
 
@@ -508,7 +524,6 @@ void FileSource::invalidateFrameCache(int frameIndex)
 	if(frameIndex == -1 || frameIndex == storedFrameIndex()) {
 		setStoredFrameIndex(-1);
 	}
-	invalidatePipelineCache();
 }
 
 /******************************************************************************

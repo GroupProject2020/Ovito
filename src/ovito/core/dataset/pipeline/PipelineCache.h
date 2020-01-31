@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -52,9 +52,8 @@ public:
 	bool insert(PipelineFlowState state, const RefTarget* ownerObject);
 
 	/// Puts the given pipeline state into the cache when it comes available.
-	/// Depending on the given state validity interval, the cache may decide not to cache the state,
-	/// in which case the method returns false.
-	bool insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject);
+	/// Depending on the given state validity interval, the cache may decide not to cache the state.
+	void insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject);
 
 	/// Marks the contents of the cache as outdated and throws away the stored data.
 	///
@@ -64,6 +63,14 @@ public:
 	///                     will be reduced to this interval.
 	void invalidate(bool keepStaleContents = false, TimeInterval keepInterval = TimeInterval::empty());
 
+	/// Requests that the validity interval of the next pipeline state being stored in the cache should be restriced to the given interval (which may be empty).
+	/// This method can be called by the cache owner upon receiving a TargetChanged event while a pipeline evaluation is in progress.
+	void restrictValidityOfNextInsertedState(TimeInterval iv = TimeInterval::empty()) { _restrictedValidityOfNextInsertedState.intersect(iv); }
+
+	/// Resets the validity interval restriction set by restrictValidityOfNextInsertedState().
+	/// This method should be called prior to a new pipeline evaluation in order to accept the generated pipeline state into the cache.
+	void resetValidityRestriction() { _restrictedValidityOfNextInsertedState.setInfinite(); }
+
 private:
 
 	/// Keeps the most recently inserted state.
@@ -71,6 +78,10 @@ private:
 
 	/// Keeps the state for the current animation time.
 	PipelineFlowState _currentAnimState;
+
+	/// This interval is set to a finite or empty range if a TargetChanged signal is received by the cache owner while a pipeline evaluation is in progress.
+	/// It restricts the validity of (or completely invalidates) the next pipeline state that will be inserted into the cache.
+	TimeInterval _restrictedValidityOfNextInsertedState = TimeInterval::infinite();
 };
 
 OVITO_END_INLINE_NAMESPACE
