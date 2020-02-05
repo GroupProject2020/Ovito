@@ -43,8 +43,8 @@ RefTargetExecutor::WorkEventBase::WorkEventBase(const RefTarget* obj) :
     QEvent(workEventType()),
     _obj(const_cast<RefTarget*>(obj)),
     _executionContext(static_cast<int>(Application::instance()->executionContext()))
-{
-    OVITO_ASSERT(!_obj->dataset()->undoStack().isRecording());
+{    
+//    OVITO_ASSERT(!_obj->dataset()->undoStack().isRecording());
 }
 
 /******************************************************************************
@@ -56,11 +56,11 @@ void RefTargetExecutor::WorkEventBase::activateExecutionContext()
         Application::ExecutionContext previousContext = app->executionContext();
         app->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
         _executionContext = static_cast<int>(previousContext);
-    }
 
-    // In the current implementation, deferred work is always executed without undo recording.
-    // Thus, we should suspend the undo stack while running the work function.
-    _obj->dataset()->undoStack().suspend();
+        // In the current implementation, deferred work is always executed without undo recording.
+        // Thus, we should suspend the undo stack while running the work function.    
+        _obj->dataset()->undoStack().suspend();
+    }
 }
 
 /******************************************************************************
@@ -72,10 +72,10 @@ void RefTargetExecutor::WorkEventBase::restoreExecutionContext()
         Application::ExecutionContext previousContext = app->executionContext();
         app->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
         _executionContext = static_cast<int>(previousContext);
-    }
 
-    // Restore undo recording state.
-    _obj->dataset()->undoStack().resume();
+        // Restore undo recording state.
+        _obj->dataset()->undoStack().resume();
+    }
 }
 
 /******************************************************************************

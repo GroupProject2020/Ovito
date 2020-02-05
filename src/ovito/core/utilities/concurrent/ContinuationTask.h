@@ -55,7 +55,7 @@ public:
 
 	/// Cancels this task.
 	virtual void cancel() noexcept override {
-		TaskWithResultStorage<Task, tuple_type>::cancel();
+		super_class::cancel();
 
 		// Clear the dependency on the parent task.
 		_continuedTask.reset();

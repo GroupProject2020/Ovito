@@ -44,7 +44,7 @@ WasmDataSetContainer::WasmDataSetContainer(MainWindow* mainWindow) :
 			if(dataset) {
 				_sceneReadyScheduled = true;
 				Q_EMIT scenePreparationBegin();
-				dataset->whenSceneReady().finally(executor(), [this]() {
+				dataset->whenSceneReady().finally(dataset->executor(), [this]() {
 					_sceneReadyScheduled = false;
 					sceneBecameReady();
 				});
@@ -65,7 +65,7 @@ bool WasmDataSetContainer::referenceEvent(RefTarget* source, const ReferenceEven
 				if(!_sceneReadyScheduled) {
 					_sceneReadyScheduled = true;
 					Q_EMIT scenePreparationBegin();
-					currentSet()->whenSceneReady().finally(executor(), [this]() {
+					currentSet()->whenSceneReady().finally(currentSet()->executor(), [this]() {
 						_sceneReadyScheduled = false;
 						sceneBecameReady();
 					});
