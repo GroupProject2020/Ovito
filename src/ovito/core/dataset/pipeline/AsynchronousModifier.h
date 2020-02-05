@@ -107,8 +107,8 @@ public:
 	/// Constructor.
 	AsynchronousModifier(DataSet* dataset);
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Suppress preliminary viewport updates when a parameter of the asynchronous modifier changes.
 	virtual bool performPreliminaryUpdateAfterChange() override { return false; }

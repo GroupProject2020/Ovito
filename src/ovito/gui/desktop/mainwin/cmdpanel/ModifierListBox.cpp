@@ -308,13 +308,13 @@ void ModifierListBox::updateApplicableModifiersList()
 
 	PipelineFlowState inputState;
 	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(currentItem->object())) {
-		inputState = modApp->evaluatePreliminary();
+		inputState = modApp->evaluateSynchronous();
 	}
 	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(currentItem->object())) {
-		inputState = pipelineObject->evaluatePreliminary();
+		inputState = pipelineObject->evaluateSynchronous();
 	}
 	else if(PipelineSceneNode* node = _pipelineList->selectedNode()) {
-		inputState = node->evaluatePipelinePreliminary(false);
+		inputState = node->evaluatePipelineSynchronous(false);
 	}
 
 	// Update state of combo box items.

@@ -209,7 +209,7 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 		_expandCollapseButton->setToolTip(tr("Collapse"));
 		if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 			const PipelineFlowState& pipelineState = _selectedNodeListener.target() ?
-				_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
+				_selectedNodeListener.target()->evaluatePipelineSynchronous(true) :
 				PipelineFlowState();
 			_applets[_activeAppletIndex]->updateDisplay(pipelineState, _selectedNodeListener.target());
 		}
@@ -233,7 +233,7 @@ void DataInspectorPanel::updateInspector()
 {
 	// Obtain the pipeline output of the currently selected scene node.
 	const PipelineFlowState& pipelineState = _selectedNodeListener.target() ?
-		_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
+		_selectedNodeListener.target()->evaluatePipelineSynchronous(true) :
 		PipelineFlowState();
 
 	// Update the list of displayed tabs.
@@ -328,7 +328,7 @@ void DataInspectorPanel::onCurrentPageChanged(int index)
 	if(_inspectorActive && _activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 		// Obtain the pipeline output of the currently selected scene node.
 		const PipelineFlowState& pipelineState = _selectedNodeListener.target() ?
-			_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
+			_selectedNodeListener.target()->evaluatePipelineSynchronous(true) :
 			PipelineFlowState();
 		_applets[_activeAppletIndex]->updateDisplay(pipelineState, _selectedNodeListener.target());
 	}
@@ -343,7 +343,7 @@ bool DataInspectorPanel::selectDataObject(PipelineObject* dataSource, const QStr
 		return false;
 
 	// Obtain the output of the currently selected pipeline.
-	const PipelineFlowState& pipelineState = _selectedNodeListener.target()->evaluatePipelinePreliminary(true);
+	const PipelineFlowState& pipelineState = _selectedNodeListener.target()->evaluatePipelineSynchronous(true);
 
 	// Update the list of displayed tabs.
 	updateTabs(pipelineState.data());

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,6 +28,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/utilities/concurrent/TaskWatcher.h>
 #include <ovito/core/utilities/concurrent/Future.h>
+#include <ovito/core/app/Application.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -56,12 +57,29 @@ ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObje
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval ModifierApplication::validityInterval(const PipelineEvaluationRequest& request) const
+{
+	TimeInterval iv = CachingPipelineObject::validityInterval(request);
+
+	// Take into account the validity interval of the input state.
+	if(input())
+		iv.intersect(input()->validityInterval(request));
+
+	// Let the modifier determine the local validity interval.
+	if(modifier() && modifier()->isEnabled()) 
+		iv.intersect(modifier()->validityInterval(request, this));
+
+	return iv;
+}
+
+/******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
 bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
-
 		// If modifier provides animation frames, the animation interval might change when the
 		// modifier gets enabled/disabled.
 		if(!isBeingLoaded())
@@ -70,6 +88,8 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 		if(!modifier()->isEnabled()) {
 			// Ignore modifier's status if it is currently disabled.
 			setStatus(PipelineStatus(PipelineStatus::Success, tr("Modifier is currently disabled.")));
+			// Also clear pipeline cache in order to reduce memory footprint when modifier is disabled.
+			pipelineCache().invalidate();
 		}
 		else {
 			// Propagate enabled/disabled notification events from the modifier.
@@ -86,7 +106,7 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 	}
 	else if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when the modifier or the upstream pipeline change.
-		invalidatePipelineCache();
+		pipelineCache().invalidate();
 		// Trigger a preliminary viewport update if desired by the modifier.
 		if(source == modifier() && modifier()->performPreliminaryUpdateAfterChange()) {
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
@@ -140,7 +160,7 @@ void ModifierApplication::notifyDependentsImpl(const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when this modifier application changes.
-		invalidatePipelineCache();
+		pipelineCache().invalidate();
 	}
 	CachingPipelineObject::notifyDependentsImpl(event);
 }
@@ -171,6 +191,19 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(const Pipelin
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
+SharedFuture<PipelineFlowState> ModifierApplication::evaluate(const PipelineEvaluationRequest& request)
+{
+	// If modifier is disabled, pass through results from downstream pipeline.
+	if(input() && (!modifier() || modifier()->isEnabled() == false))
+		return input()->evaluate(request);
+	
+	// Otherwise, let the base class call our evaluateInternal() method.
+	return CachingPipelineObject::evaluate(request);
+}
+
+/******************************************************************************
+* Asks the object for the result of the data pipeline.
+******************************************************************************/
 Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEvaluationRequest& request)
 {
 	// Obtain input data and pass it on to the modifier.
@@ -189,11 +222,8 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 
 			// Without a modifier, this ModifierApplication becomes a no-op.
 			// The same is true when the Modifier is disabled or if the input data is invalid.
-			if(!modifier() || !modifier()->isEnabled() || inputData.isEmpty())
+			if(!modifier() || !modifier()->isEnabled() || !inputData)
 				return inputData;
-
-			// We don't want to create any undo records while performing the data modifications.
-			UndoSuspender noUndo(this);
 
 			Future<PipelineFlowState> future;
 			try {
@@ -205,7 +235,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			}
 
 			// Change status to 'in progress' during long-running modifier evaluation.
-			if(!future.isFinished()) {
+			if(!future.isFinished() && Application::instance()->guiMode()) {
 				if(_numEvaluationsInProgress++ == 0)
 					notifyDependents(ReferenceEvent::ObjectStatusChanged);
 				// Reset the pending status after the Future is fulfilled.
@@ -217,19 +247,14 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			}
 
 			// Post-process the modifier results before returning them to the caller.
-			//
-			//  - Turn any exception that was thrown during modifier evaluation into a
-			//    valid pipeline state with an error code.
-			//
-			//  - Restrict the validity interval of the returned state to the validity interval of the modifier.
-			//
+			// Turn any exception that was thrown during modifier evaluation into a
+			// valid pipeline state with an error code.
 			return future.then_future(executor(), [this, time = request.time(), inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {
 					try {
 						PipelineFlowState state = future.result();
-						if(modifier()) state.intersectStateValidity(modifier()->modifierValidity(time));
 						if(inputData.status().type() != PipelineStatus::Error || state.status().type() == PipelineStatus::Success)
 							setStatus(state.status());
 						else
@@ -266,28 +291,24 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 }
 
 /******************************************************************************
-* Returns the results of an immediate and preliminary evaluation of the data pipeline.
+* Lets the pipeline stage compute a preliminary result in a synchronous fashion.
 ******************************************************************************/
-PipelineFlowState ModifierApplication::evaluatePreliminary()
+PipelineFlowState ModifierApplication::evaluateInternalSynchronous()
 {
-	// Use our real state cache if it is up to date.
-	PipelineFlowState state = CachingPipelineObject::evaluatePreliminary();
-	if(state.stateValidity().contains(dataset()->animationSettings()->time())) {
-		return state;
-	}
-
+	PipelineFlowState state;
+	
 	// If not, ask the modifier to perform a preliminary evaluation.
-	if(modifier() && input()) {
+	if(input()) {
 		UndoSuspender noUndo(this);
 		// First get the preliminary results from the upstream pipeline.
-		state = input()->evaluatePreliminary();
+		state = input()->evaluateSynchronous();
 		try {
 			if(!state.data())
 				throwException(tr("Modifier input is empty."));
 
 			// Apply modifier:
-			if(modifier()->isEnabled())
-				modifier()->evaluatePreliminary(dataset()->animationSettings()->time(), this, state);
+			if(modifier() && modifier()->isEnabled())
+				modifier()->evaluateSynchronous(dataset()->animationSettings()->time(), this, state);
 		}
 		catch(const Exception& ex) {
 			// Turn exceptions thrown during modifier evaluation into an error pipeline state.
@@ -303,7 +324,7 @@ PipelineFlowState ModifierApplication::evaluatePreliminary()
 			state.setStatus(PipelineStatus(PipelineStatus::Error, tr("Exception: %1").arg(QString::fromLatin1(ex.what()))));
 		}
 		catch(...) {
-			OVITO_ASSERT_MSG(false, "ModifierApplication::evaluatePreliminary()", "Caught an unexpected exception type during preliminary modifier evaluation.");
+			OVITO_ASSERT_MSG(false, "ModifierApplication::evaluateSynchronous()", "Caught an unexpected exception type during preliminary modifier evaluation.");
 			// Turn exceptions thrown during modifier evaluation into an error pipeline state.
 			state.setStatus(PipelineStatus(PipelineStatus::Error, tr("Unknown exception caught during evaluation of modifier '%1'.").arg(modifier()->objectTitle())));
 		}

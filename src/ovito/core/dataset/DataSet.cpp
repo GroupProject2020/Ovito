@@ -164,8 +164,8 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			// If any of the scene nodes change, we should interrupt the pipeline evaluation that is in progress.
 			// Ignore messages from visual elements, because they usually don't require a pipeline re-evaluation.
 			if(_pipelineEvaluation.isValid() && dynamic_object_cast<DataVis>(event.sender()) == nullptr) {
-				// Restart pipeline evaluation immediately:
-				makeSceneReady(true);
+				// Restart pipeline evaluation:
+				makeSceneReadyLater(true);
 			}
 		}
 		else if(source == animationSettings()) {
@@ -173,8 +173,8 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			if(_pipelineEvaluation.isValid() && _pipelineEvaluation.time() != animationSettings()->time()) {
 				_pipelineEvaluationWatcher.reset();
 				_pipelineEvaluation.reset();
-				// Restart pipeline evaluation immediately:
-				makeSceneReady(false);
+				// Restart pipeline evaluation:
+				makeSceneReadyLater(false);
 			}
 		}
 
@@ -281,7 +281,7 @@ SharedFuture<> DataSet::whenSceneReady()
 		_sceneReadyPromise = SignalPromise::create(true);
 		_sceneReadyFuture = _sceneReadyPromise.future();
 		_sceneReadyTime = animationSettings()->time();
-		makeSceneReady(false);
+		makeSceneReadyLater(false);
 	}
 
 	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
@@ -332,8 +332,10 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 
 	sceneRoot()->visitObjectNodes([&](PipelineSceneNode* pipeline) {
 		// Request visual elements too.
-		_pipelineEvaluation.execute(pipeline, true);
+		qDebug() << "DataSet::makeSceneReady: evaluating pipeline at time" << animationSettings()->time();
+		_pipelineEvaluation = pipeline->evaluateRenderingPipeline(animationSettings()->time());
 		if(!_pipelineEvaluation.isFinished()) {
+			qDebug() << "DataSet::makeSceneReady: evaluation future is" << _pipelineEvaluation.task().get() << "share count=" << _pipelineEvaluation.task()->shareCount();
 			// Wait for this state to become available and return a pending future.
 			return false;
 		}
@@ -348,13 +350,16 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 		return true;
 	});
 
-	if(oldEvaluation.isValid())
+	if(oldEvaluation.isValid()) {
+		qDebug() << "DataSet::makeSceneReady: Canceling old evaluation future " << oldEvaluation.task().get() << "share count=" << oldEvaluation.task()->shareCount();
 		oldEvaluation.cancelRequest();
+	}
 
 	// If all pipelines are already complete, we are done.
 	if(!_pipelineEvaluation.isValid()) {
 		_sceneReadyPromise.setFinished();
 		OVITO_ASSERT(_sceneReadyFuture.isFinished());
+		qDebug() << "DataSet::makeSceneReady: --------- IS READY -----------";
 	}
 	else {
 		_pipelineEvaluationWatcher.watch(_pipelineEvaluation.task());
@@ -366,7 +371,7 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 ******************************************************************************/
 void DataSet::onViewportUpdatesResumed()
 {
-	makeSceneReady(true);
+	makeSceneReadyLater(true);
 }
 
 /******************************************************************************

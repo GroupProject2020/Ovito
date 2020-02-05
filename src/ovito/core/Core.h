@@ -38,6 +38,7 @@
 #include <stack>
 #include <array>
 #include <vector>
+#include <forward_list>
 #include <map>
 #include <unordered_map>
 #include <set>

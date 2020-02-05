@@ -74,8 +74,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE CombineDatasetsModifier(DataSet* dataset);
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Modifies the input data.
 	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;

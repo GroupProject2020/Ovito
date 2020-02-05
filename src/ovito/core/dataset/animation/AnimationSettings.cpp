@@ -105,10 +105,10 @@ OORef<RefTarget> AnimationSettings::clone(bool deepCopy, CloneHelper& cloneHelpe
 ******************************************************************************/
 void AnimationSettings::onTimeChanged()
 {
+	Q_EMIT timeChanged(time());
 	if(_isTimeChanging)
 		return;
 	_isTimeChanging = true;
-	Q_EMIT timeChanged(time());
 
 	// Wait until scene is complete, then generate a timeChangeComplete event.
 	dataset()->whenSceneReady().finally(executor(), [this]() {

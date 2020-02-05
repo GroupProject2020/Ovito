@@ -261,7 +261,7 @@ void DislocationInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Sce
 {
 	if(!_applet->_sceneNode) return;
 
-	const PipelineFlowState& flowState = _applet->_sceneNode->evaluatePipelinePreliminary(true);
+	const PipelineFlowState& flowState = _applet->_sceneNode->evaluatePipelineSynchronous(true);
 	const DislocationNetworkObject* dislocationObj = flowState.getObject<DislocationNetworkObject>();
 	if(!dislocationObj) return;
 	DislocationVis* vis = dynamic_object_cast<DislocationVis>(dislocationObj->visElement());

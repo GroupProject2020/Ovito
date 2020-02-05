@@ -78,7 +78,7 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(const Pipeline
 		// Obtain the subsequent input frame.
 		// Check if we already have the state in our cache available.
 		if(InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp)) {
-			if(!myModApp->frameCache().isEmpty() && myModApp->frameCache().data()->sourceFrame() == nextFrame) {
+			if(myModApp->frameCache() && myModApp->frameCache().data()->sourceFrame() == nextFrame) {
 				nextStateFuture = myModApp->frameCache();
 			}
 		}
@@ -92,18 +92,17 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(const Pipeline
 	// Wait for the reference configuration to become available.
 	return nextStateFuture.then(executor(), [this, time = request.time(), modApp, state = input, nextFrame](const PipelineFlowState& nextState) mutable {
 		if(InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp)) {
-			UndoSuspender noUndo(this);
 
 			// Make sure the obtained reference configuration is valid and ready to use.
 			if(nextState.status().type() == PipelineStatus::Error)
 				throwException(tr("Input state is not available: %1").arg(nextState.status().text()));
 
-			if(!nextState.isEmpty() && nextState.data()->sourceFrame() == nextFrame) {
+			if(nextState && nextState.data()->sourceFrame() == nextFrame) {
 				// Cache the next source frame in the ModifierApplication.
 				myModApp->updateFrameCache(nextState);
 
 				// Perform the actual interpolation.
-				evaluatePreliminary(time, modApp, state);
+				evaluateSynchronous(time, modApp, state);
 				return std::move(state);
 			}
 
@@ -115,9 +114,9 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(const Pipeline
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void InterpolateTrajectoryModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
 	// If the source frame attribute is not present, fall back to inferring it from the current animation time.
@@ -134,7 +133,7 @@ void InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint time, Modifier
 	// Retrieve the state of the second frame stored in the ModifierApplication.
 	int nextFrame = currentFrame + 1;
 	InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp);
-	if(!myModApp || myModApp->frameCache().isEmpty() || myModApp->frameCache().data()->sourceFrame() != nextFrame)
+	if(!myModApp || !myModApp->frameCache() || myModApp->frameCache().data()->sourceFrame() != nextFrame)
 		throwException(tr("No frame state stored."));
 
 	const PipelineFlowState& secondState = myModApp->frameCache();

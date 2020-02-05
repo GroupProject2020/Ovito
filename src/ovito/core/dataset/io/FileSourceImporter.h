@@ -185,7 +185,7 @@ public:
 public:
 
 	/// \brief Constructs a new instance of this class.
-	FileSourceImporter(DataSet* dataset) : FileImporter(dataset) {}
+	FileSourceImporter(DataSet* dataset) : FileImporter(dataset), _isMultiTimestepFile(false) {}
 
 	///////////////////////////// from FileImporter /////////////////////////////
 
@@ -199,9 +199,9 @@ public:
 	//////////////////////////// Specific methods ////////////////////////////////
 
 	/// This method indicates whether a wildcard pattern should be automatically generated
-	/// when the user picks a new input filename. The default implementation returns true.
+	/// when the user picks a new input filename. The default implementation returns if isMultiTimestepFile is set to false.
 	/// Subclasses can override this method to disable generation of wildcard patterns.
-	virtual bool autoGenerateWildcardPattern() { return true; }
+	virtual bool autoGenerateWildcardPattern() { return !isMultiTimestepFile(); }
 
 	/// Scans the given external path(s) (which may be a directory and a wild-card pattern,
 	/// or a single file containing multiple frames) to find all available animation frames.
@@ -227,7 +227,7 @@ public:
 	static Future<std::vector<QUrl>> findWildcardMatches(const QUrl& sourceUrl, DataSet* dataset);
 
 	/// \brief Sends a request to the FileSource owning this importer to reload the input file.
-	void requestReload(int frame = -1);
+	void requestReload(bool refetchFiles = false, int frame = -1);
 
 	/// \brief Sends a request to the FileSource owning this importer to refresh the animation frame sequence.
 	void requestFramesUpdate();
@@ -240,6 +240,9 @@ public:
 
 protected:
 
+	/// \brief Is called when the value of a property of this object has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+
 	/// This method is called when the pipeline scene node for the FileSource is created.
 	/// It can be overwritten by importer subclasses to customize the initial pipeline, add modifiers, etc.
 	/// The default implementation does nothing.
@@ -249,11 +252,16 @@ protected:
 	static bool matchesWildcardPattern(const QString& pattern, const QString& filename);
 
 	/// Determines whether the input file should be scanned to discover all contained frames.
-	/// The default implementation returns false.
-	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) { return false; }
+	/// The default implementation returns the value of isMultiTimestepFile().
+	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) const { return isMultiTimestepFile(); }
 
 	/// Determines whether the URL contains a wildcard pattern.
 	static bool isWildcardPattern(const QUrl& sourceUrl);
+
+private:
+
+	/// Indicates that the input file contains multiple timesteps.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, isMultiTimestepFile, setMultiTimestepFile, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 /// \brief Writes an animation frame information record to a binary output stream.

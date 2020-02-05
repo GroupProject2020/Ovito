@@ -63,6 +63,19 @@ DelegatingModifier::DelegatingModifier(DataSet* dataset) : Modifier(dataset)
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval DelegatingModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	TimeInterval iv = Modifier::validityInterval(request, modApp);
+
+	if(delegate() && delegate()->isEnabled())
+		iv.intersect(delegate()->validityInterval(request, modApp));
+
+	return iv;
+}
+
+/******************************************************************************
 * Creates a default delegate for this modifier.
 ******************************************************************************/
 void DelegatingModifier::createDefaultModifierDelegate(const OvitoClass& delegateType, const QString& defaultDelegateTypeName)
@@ -96,9 +109,9 @@ bool DelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& input
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void DelegatingModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void DelegatingModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Apply the modifier delegate to the input data.
 	applyDelegate(state, time, modApp);
@@ -142,6 +155,22 @@ MultiDelegatingModifier::MultiDelegatingModifier(DataSet* dataset) : Modifier(da
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval MultiDelegatingModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	TimeInterval iv = Modifier::validityInterval(request, modApp);
+
+	for(const ModifierDelegate* delegate : delegates()) {
+		if(delegate->isEnabled()) {
+			iv.intersect(delegate->validityInterval(request, modApp));
+		}
+	}
+
+	return iv;
+}
+
+/******************************************************************************
 * Creates the list of delegate objects for this modifier.
 ******************************************************************************/
 void MultiDelegatingModifier::createModifierDelegates(const OvitoClass& delegateType)
@@ -170,9 +199,9 @@ bool MultiDelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& 
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void MultiDelegatingModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void MultiDelegatingModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Apply all enabled modifier delegates to the input data.
 	applyDelegates(state, time, modApp);

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -72,7 +72,7 @@ namespace detail
 
 	/// Determines the Future type that results from a continuation function.
 	///
-	///     Future<...> func(...)   ->   Future<...>
+	///     Future<...> func(...)   ->   Future<...>  (automatic unwrapping)
 	///               T func(...)   ->   Future<T>
 	///            void func(...)   ->   Future<>
 	///
@@ -82,26 +82,18 @@ namespace detail
 						typename continuation_func_return_type<FC,Args>::type,
 						typename future_type_from_value_type<typename continuation_func_return_type<FC,Args>::type>::type> {};
 
-	/// Determines the type of shared state returned by Future::then() etc.
-	///
-	///     Future<...> func(...)   ->   TrackingTask
-	///               T func(...)   ->   ContinuationTask<tuple<T>>
-	///            void func(...)   ->   ContinuationTask<tuple<>>
-	///
-	template<typename FC, typename Args>
-	struct continuation_state_type : public std::conditional<
-		!is_future<typename continuation_func_return_type<FC,Args>::type>::value,
-		ContinuationTask<typename resulting_future_type<FC,Args>::type::tuple_type>,
-		TrackingTask> {};
-
 	/// The simplest implementation of the Executor concept.
 	/// The inline executor runs a work function immediately and in place.
-	/// See OvitoObjectExecutor for another implementation of the executor concept.
+	/// See RefTargetExecutor for another implementation of the executor concept.
 	struct InlineExecutor {
 		template<typename F>
-		static constexpr decltype(auto) createWork(F&& f) {
-			return std::bind(std::forward<F>(f), false);
+		static constexpr auto createWork(F&& f) noexcept {
+			return [f = std::forward<F>(f)](bool defer) mutable {
+				OVITO_ASSERT_MSG(!defer, "InlineExecutor", "Execution of work scheduled with the InlineExecutor cannot be deferred.");
+				std::move(f)();
+			};
 		}
+		static constexpr TaskManager* taskManager() { return nullptr; }
 	};
 
 } // End of namespace

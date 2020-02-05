@@ -40,9 +40,9 @@ bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const DataCollectio
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void WrapPeriodicImagesModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	const SimulationCellObject* simCellObj = state.expectObject<SimulationCellObject>();
 	std::array<bool, 3> pbc = simCellObj->pbcFlags();

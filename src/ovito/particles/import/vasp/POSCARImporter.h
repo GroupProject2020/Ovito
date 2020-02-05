@@ -77,7 +77,7 @@ public:
 protected:
 
 	/// \brief Determines whether the input file should be scanned to discover all contained frames.
-	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) override;
+	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) const override;
 
 	/// \brief Parses the list of atom types from the POSCAR file.
 	static void parseAtomTypeNamesAndCounts(CompressedTextReader& stream, QStringList& atomTypeNames, QVector<int>& atomCounts);

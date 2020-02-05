@@ -54,19 +54,19 @@ bool UnwrapTrajectoriesModifier::OOMetaClass::isApplicableTo(const DataCollectio
 Future<PipelineFlowState> UnwrapTrajectoriesModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	if(!output.isEmpty())
+	if(output)
 		unwrapParticleCoordinates(request.time(), modApp, output);
 	return Future<PipelineFlowState>::createImmediate(std::move(output));
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void UnwrapTrajectoriesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void UnwrapTrajectoriesModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	if(state.isEmpty()) return;
+	if(!state) return;
 
-	// The pipeline system may call evaluatePreliminary() with an outdated trajectory frame, which doesn't match the current
+	// The pipeline system may call evaluateSynchronous() with an outdated trajectory frame, which doesn't match the current
 	// animation time. This would lead to artifacts, because particles might get unwrapped even though they haven't crossed
 	// a periodic cell boundary yet. To avoid this from happening, we try to determine the true animation time to which the
 	// current input data collection belongs.
@@ -79,7 +79,7 @@ void UnwrapTrajectoriesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
 void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {

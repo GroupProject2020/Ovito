@@ -52,7 +52,7 @@ GuiDataSetContainer::GuiDataSetContainer(MainWindow* mainWindow) : DataSetContai
 			if(dataset) {
 				_sceneReadyScheduled = true;
 				Q_EMIT scenePreparationBegin();
-				dataset->whenSceneReady().finally(executor(), [this]() {
+				dataset->whenSceneReady().finally(dataset->executor(), [this]() {
 					_sceneReadyScheduled = false;
 					sceneBecameReady();
 				});
@@ -73,13 +73,14 @@ bool GuiDataSetContainer::referenceEvent(RefTarget* source, const ReferenceEvent
 				if(!_sceneReadyScheduled) {
 					_sceneReadyScheduled = true;
 					Q_EMIT scenePreparationBegin();
-					currentSet()->whenSceneReady().finally(executor(), [this]() {
+					currentSet()->whenSceneReady().finally(currentSet()->executor(), [this]() {
 						_sceneReadyScheduled = false;
 						sceneBecameReady();
 					});
 				}
 			}
 			else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
+				qDebug() << ">>>>>> ReferenceEvent::PreliminaryStateAvailable -> refreshing viewports";
 				// Update viewports when a new preliminiary state from one of the data pipelines
 				// becomes available (unless we are playing an animation).
 				if(currentSet()->animationSettings()->isPlaybackActive() == false)

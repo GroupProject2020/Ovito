@@ -48,13 +48,13 @@ SET(SourceFiles
 	oo/CloneHelper.cpp
 	oo/OvitoClass.cpp
 	oo/OvitoObject.cpp
-	oo/OvitoObjectExecutor.cpp
 	oo/PropertyFieldDescriptor.cpp
 	oo/PropertyField.cpp
 	oo/RefMaker.cpp
 	oo/RefMakerClass.cpp
 	oo/RefTarget.cpp
 	oo/RefTargetListener.cpp
+	oo/RefTargetExecutor.cpp
 	dataset/animation/AnimationSettings.cpp
 	dataset/animation/controller/Controller.cpp
 	dataset/animation/controller/ConstantControllers.cpp
@@ -109,7 +109,6 @@ SET(SourceFiles
 	utilities/concurrent/MainThreadTask.cpp
 	utilities/concurrent/ProgressiveTask.cpp
 	utilities/concurrent/ThreadSafeTask.cpp
-	utilities/concurrent/TrackingTask.cpp
 	utilities/concurrent/TaskManager.cpp
 	utilities/concurrent/AsynchronousTask.cpp
 	utilities/concurrent/AsyncOperation.cpp

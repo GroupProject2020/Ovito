@@ -148,7 +148,7 @@ public:
 	/// Sets the context object for this exception or error.
 	void setContext(QObject* context) { _context = context; }
 
-#ifndef Q_OS_WASM
+#ifndef OVITO_DISABLE_THREADING
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// The following two functions are required by the base class QException

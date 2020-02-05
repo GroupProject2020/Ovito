@@ -95,7 +95,7 @@ bool ParticleType::loadShapeMesh(const QUrl& sourceUrl, AsyncOperation&& operati
 		operation.cancel();
 		return false;
 	}
-	if(state.isEmpty())
+	if(!state)
 		throwException(tr("The loaded geometry file does not provide any valid mesh data."));
 	const TriMeshObject* meshObj = state.expectObject<TriMeshObject>();
 	if(!meshObj->mesh())

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,8 +41,9 @@ class OVITO_CORE_EXPORT MainThreadTask : public ProgressiveTask
 public:
 
 	/// Constructor.
-	MainThreadTask(State initialState, TaskManager& taskManager) :
-		ProgressiveTask(initialState), _taskManager(taskManager) {}
+	explicit MainThreadTask(State initialState, TaskManager* taskManager) : ProgressiveTask(initialState) {
+		setTaskManager(taskManager);
+	}
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
@@ -58,13 +59,6 @@ public:
 	/// Creates a child operation.
 	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
 	virtual Promise<> createSubTask() override;
-
-	/// Blocks execution until the given future enters the completed state.
-	virtual bool waitForFuture(const FutureBase& future) override;
-
-protected:
-
-	TaskManager& _taskManager;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -46,6 +46,14 @@ Modifier::Modifier(DataSet* dataset) : RefTarget(dataset),
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval Modifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	return TimeInterval::infinite();
+}
+
+/******************************************************************************
 * Create a new modifier application that refers to this modifier instance.
 ******************************************************************************/
 OORef<ModifierApplication> Modifier::createModifierApplication()
@@ -75,8 +83,8 @@ OORef<ModifierApplication> Modifier::createModifierApplication()
 Future<PipelineFlowState> Modifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	if(!output.isEmpty())
-		evaluatePreliminary(request.time(), modApp, output);
+	if(output)
+		evaluateSynchronous(request.time(), modApp, output);
 	return Future<PipelineFlowState>::createImmediate(std::move(output));
 }
 
@@ -105,21 +113,6 @@ ModifierApplication* Modifier::someModifierApplication() const
 			return modApp;
 	}
 	return nullptr;
-}
-
-/******************************************************************************
-* Asks the modifier for its validity interval at the given time.
-******************************************************************************/
-TimeInterval Modifier::modifierValidity(TimePoint time)
-{
-#if 0
-	// Return an empty validity interval if the modifier is currently being edited
-	// to let the system create a pipeline cache point just before the modifier.
-	// This will speed up re-evaluation of the pipeline if the user adjusts this modifier's parameters interactively.
-	if(isObjectBeingEdited())
-		return TimeInterval::empty();
-#endif
-	return TimeInterval::infinite();
 }
 
 /******************************************************************************

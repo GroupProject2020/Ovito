@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -67,14 +67,17 @@ public:
 	/// \brief Constructs a modifier application.
 	Q_INVOKABLE explicit ModifierApplication(DataSet* dataset);
 
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request) const override;
+
 	/// \brief Asks the object for the result of the upstream data pipeline.
 	SharedFuture<PipelineFlowState> evaluateInput(const PipelineEvaluationRequest& request);
 
-	/// \brief Returns the results of an immediate evaluation of the upstream data pipeline.
-	PipelineFlowState evaluateInputPreliminary() const { return input() ? input()->evaluatePreliminary() : PipelineFlowState(); }
+	/// \brief Requests the preliminary computation results from the upstream data pipeline.
+	PipelineFlowState evaluateInputSynchronous() const { return input() ? input()->evaluateSynchronous() : PipelineFlowState(); }
 
-	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
-	virtual PipelineFlowState evaluatePreliminary() override;
+	/// \brief Asks the object for the result of the data pipeline.
+	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
@@ -106,6 +109,9 @@ protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
 	virtual Future<PipelineFlowState> evaluateInternal(const PipelineEvaluationRequest& request) override;
+
+	/// \brief Lets the pipeline stage compute a preliminary result in a synchronous fashion.
+	virtual PipelineFlowState evaluateInternalSynchronous() override;
 
 	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been
 	///        evaluated but before the rest of the pipeline is complete.

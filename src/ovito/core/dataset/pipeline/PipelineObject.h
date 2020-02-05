@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -43,11 +43,14 @@ public:
 	/// \brief Constructor.
 	explicit PipelineObject(DataSet* dataset);
 
-	/// \brief Asks the object for the result of the data pipeline.
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request) const { return TimeInterval::infinite(); }
+
+	/// \brief Asks the pipeline stage to compute the results.
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) = 0;
 
-	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
-	virtual PipelineFlowState evaluatePreliminary() { return {}; }
+	/// \brief Asks the pipeline stage to compute the preliminary results in a synchronous fashion.
+	virtual PipelineFlowState evaluateSynchronous() { return {}; }
 
 	/// \brief Returns a list of pipeline nodes that have this object in their pipeline.
 	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.

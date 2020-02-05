@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,14 +24,17 @@
 
 
 #include <ovito/core/Core.h>
+#include <ovito/core/utilities/concurrent/Future.h>
+#include <ovito/core/utilities/concurrent/Promise.h>
+#include <ovito/core/utilities/concurrent/MainThreadTask.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
 /**
- * \brief An executor that can be used with Future<>::then() which runs the closure
- *        routine in the context (and in the thread) of this OvitoObject.
+ * \brief An executor that can be used with Future<>::then(), which runs the closure
+ *        routine in the context (and in the thread) of this RefTarget.
  */
-class OVITO_CORE_EXPORT OvitoObjectExecutor
+class OVITO_CORE_EXPORT RefTargetExecutor
 {
 private:
 
@@ -42,7 +45,7 @@ private:
 	protected:
 
 		/// Constructor.
-		explicit WorkEventBase(const OvitoObject* obj);
+		explicit WorkEventBase(const RefTarget* obj);
 
 		/// Determines whether work can be executed in the context of the OvitoObject or not.
 		bool needToCancelWork() const;
@@ -53,23 +56,23 @@ private:
 		/// Restores the execution context as it was before the work was executed.
 		void restoreExecutionContext();
 
-		/// Weak pointer to the OvitoObject which provides the context for the work
+		/// Weak pointer to the RefTarget which provides the context for the work
 		/// to perform.
-		QPointer<OvitoObject> _obj;
+		QPointer<RefTarget> _obj;
 
 		/// The execution context (interactive or scripting) under which the work has been submitted.
 		int _executionContext;
 	};
 
 	/// Helper class that is used by this executor to transmit a callable object
-	/// to the UI thread where it is executed in the context on an OvitoObject.
+	/// to the UI thread where it is executed in the context on a RefTarget.
 	template<typename F>
 	class WorkEvent : public WorkEventBase
 	{
 	public:
 
 		/// Constructor.
-		WorkEvent(const OvitoObject* obj, F&& callable) :
+		WorkEvent(const RefTarget* obj, F&& callable) :
 			WorkEventBase(obj), _callable(std::move(callable)) {}
 
 		/// Destructor.
@@ -79,7 +82,8 @@ private:
 			/// Activate the original execution context under which the work was submitted.
 			activateExecutionContext();
 			// Execute the work function.
-			std::move(_callable)(needToCancelWork());
+			if(!needToCancelWork())
+				std::move(_callable)();
 			/// Restore the execution context as it was before the work was executed.
 			restoreExecutionContext();
 		}
@@ -90,44 +94,48 @@ private:
 
 public:
 
+	/**
+	 * Represents a work that will be scheduled for execution later
+	 * by invoking the class' call operator.
+	 */
 	class OVITO_CORE_EXPORT Work
 	{
 	public:
-		Work(std::unique_ptr<WorkEventBase> event) : _event(std::move(event)) {}
+		explicit Work(std::unique_ptr<WorkEventBase> event) : _event(std::move(event)) {}
 		Work(Work&& other) = default;
-		~Work() { OVITO_ASSERT(!_event); }
+#ifdef OVITO_DEBUG
+		~Work() { OVITO_ASSERT_MSG(!_event, "RefTargetExecutor::Work", "Work has not been executed by invoking the call operator or the post() method."); }
+#endif
+		Work& operator=(Work&&) = default;
 
-		// Need to implement copy constructor and copy assignement operator, because std::function requires them.
-		// However, a Work object cannot be copied, only moved. We help ourselves by moving the internal event pointer.
-		// Note that the copy source becomes invalid as a result.
-		Work(const Work& other) noexcept : _event(std::move(const_cast<Work&>(other)._event)) {}
+		/// Schedules the work function stored in this object for execution; or executes the work immediately if possible. 
+		/// If defer==true, the work will be executed at a later time, even if an immediate execution
+		/// would be possible. 
+		void operator()(bool defer);
 
-		Work& operator=(const Work& other) noexcept {
-			_event = std::move(const_cast<Work&>(other)._event);
-			return *this;
-		}
-
-		void operator()();
-		void post() &&;
 	private:
+
 		std::unique_ptr<WorkEventBase> _event;
 	};
 
 public:
 
 	/// \brief Constructor.
-	OvitoObjectExecutor(const OvitoObject* obj) noexcept : _obj(obj) { OVITO_ASSERT(obj); }
+	RefTargetExecutor(const RefTarget* obj) noexcept : _obj(obj) { OVITO_ASSERT(obj); }
 
 	/// \brief Create some work that can be submitted for execution later.
 	template<typename F>
 	Work createWork(F&& f) {
 		OVITO_ASSERT(_obj != nullptr);
-		return Work(std::make_unique<WorkEvent<F>>(_obj, std::move(f)));
+		return Work(std::make_unique<WorkEvent<F>>(_obj, std::forward<F>(f)));
 	}
 
-	/// Returns the OvitoObject this executor is associated with.
-	/// Work submitted to this executor will be executed in the context of the OvitoObject.
-	const OvitoObject* object() const { return _obj; }
+	/// \brief Returns the task manager that provides the context for tasks created by this executor.
+	TaskManager* taskManager() const;
+
+	/// Returns the RefTarget this executor is associated with.
+	/// Work submitted to this executor will be executed in the context of the RefTarget.
+	const RefTarget* object() const { return _obj; }
 
 	/// Returns the unique Qt event type ID used by this class to schedule asynchronous work.
 	static QEvent::Type workEventType() {
@@ -137,7 +145,7 @@ public:
 
 private:
 
-	const OvitoObject* _obj = nullptr;
+	const RefTarget* _obj = nullptr;
 
 	friend class Application;
 };

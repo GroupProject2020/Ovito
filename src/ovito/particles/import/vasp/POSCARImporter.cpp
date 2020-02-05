@@ -83,7 +83,7 @@ bool POSCARImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 /******************************************************************************
 * Determines whether the input file should be scanned to discover all contained frames.
 ******************************************************************************/
-bool POSCARImporter::shouldScanFileForFrames(const QUrl& sourceUrl)
+bool POSCARImporter::shouldScanFileForFrames(const QUrl& sourceUrl) const
 {
 	return sourceUrl.fileName().contains(QStringLiteral("XDATCAR"));
 }

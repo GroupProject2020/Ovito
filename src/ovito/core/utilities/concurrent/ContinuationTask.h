@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,82 +26,138 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 #include "FutureDetail.h"
+#include "ThreadSafeTask.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
 /******************************************************************************
 * This shared state is returned by the Future::then() method.
 ******************************************************************************/
-template<typename tuple_type>
-class ContinuationTask : public TaskWithResultStorage<Task, tuple_type>
+template<typename promise_type>
+class ContinuationTask : public TaskWithResultStorage<ThreadSafeTask, typename promise_type::tuple_type>
 {
 public:
+	using tuple_type = typename promise_type::tuple_type;
+	using super_class = TaskWithResultStorage<ThreadSafeTask, tuple_type>;
 
 	/// Constructor.
-	ContinuationTask(TaskDependency creatorState) :
-		TaskWithResultStorage<Task, tuple_type>(typename TaskWithResultStorage<Task, tuple_type>::no_result_init_t()),
-		_creatorState(std::move(creatorState)) {}
+	ContinuationTask(TaskDependency continuedTask, TaskManager* taskManager) :
+		super_class(typename super_class::no_result_init_t()),
+		_continuedTask(std::move(continuedTask)) 
+	{
+		this->setTaskManager(taskManager);
+	}
 
-	/// Cancels this promise.
+	/// Moves the dependencies on the continued task out of this continuation task.
+	TaskDependency takeContinuedTask() { 
+		return std::move(_continuedTask); 
+	}
+
+	/// Cancels this task.
 	virtual void cancel() noexcept override {
-		if(!this->isCanceled()) {
-			TaskWithResultStorage<Task, tuple_type>::cancel();
-			this->setStarted();
-			this->setFinished();
-		}
+		TaskWithResultStorage<Task, tuple_type>::cancel();
+
+		// Clear the dependency on the parent task.
+		_continuedTask.reset();
 	}
 
-	/// Marks this promise as fulfilled.
-	virtual void setFinished() override {
-		// Our reference to the creator state is no longer needed.
-		_creatorState.reset();
-		TaskWithResultStorage<Task, tuple_type>::setFinished();
+#ifdef OVITO_DEBUG
+    /// Switches the task into the 'finished' state.
+    virtual void setFinished() override {
+		super_class::setFinished();
+		OVITO_ASSERT(!_continuedTask);
 	}
+#endif
 
-	/// Returns the promise that created this promise as a continuation.
-	const TaskPtr& creatorState() const { return _creatorState.get(); }
-
+	/// This overload is used for continuation functions returning void.
 	template<typename FC, typename Args>
-	auto fulfillWith(FC&& cont, Args&& params) noexcept
+	auto fulfillWith(promise_type promise, FC&& cont, Args&& params) noexcept
 		-> std::enable_if_t<Ovito::detail::is_void_continuation_func<FC,Args>::value>
 	{
+		OVITO_ASSERT(!_continuedTask);
 		try {
-			// Call the continuation function with the results of the fulfilled promise.
+			// Call the continuation function with the results of the finished task.
 			this->setStarted();
 			Ovito::detail::apply(std::forward<FC>(cont), std::forward<Args>(params));
-			this->setFinished();
 		}
 		catch(...) {
 			this->captureException();
-			this->setFinished();
 		}
+		this->setFinished();
 	}
 
+	/// This overload is used for continuation functions returning a result value.
 	template<typename FC, typename Args>
-	auto fulfillWith(FC&& cont, Args&& params) noexcept
-		-> std::enable_if_t<!Ovito::detail::is_void_continuation_func<FC,Args>::value>
+	auto fulfillWith(promise_type promise, FC&& cont, Args&& params) noexcept
+		-> std::enable_if_t<!Ovito::detail::is_void_continuation_func<FC,Args>::value
+			&& !Ovito::detail::is_future<typename Ovito::detail::continuation_func_return_type<FC,Args>::type>::value>
 	{
+		OVITO_ASSERT(!_continuedTask);
 		try {
-			// Call the continuation function with the results of the fulfilled promise.
+			// Call the continuation function with the results of the finished task.
 			this->setStarted();
 			setResultsDirect(Ovito::detail::apply(std::forward<FC>(cont), std::forward<Args>(params)));
-			this->setFinished();
+		}
+		catch(...) {
+			this->captureException();
+		}
+		this->setFinished();
+	}
+
+	/// This overload is used for continuation functions returning a future.
+	template<typename FC, typename Args>
+	auto fulfillWith(promise_type promise, FC&& cont, Args&& params) noexcept
+		-> std::enable_if_t<!Ovito::detail::is_void_continuation_func<FC,Args>::value
+			&& Ovito::detail::is_future<typename Ovito::detail::continuation_func_return_type<FC,Args>::type>::value>
+	{
+		OVITO_ASSERT(!_continuedTask);
+		try {
+			// Call the continuation function with the results of the finished task.
+			// The continuation function returns another future, which will provide the final results.
+			this->setStarted();
+			auto future = Ovito::detail::apply(std::forward<FC>(cont), std::forward<Args>(params));
+			OVITO_ASSERT(future.isValid());
+			// Make this task dependent on the future's task.
+			_continuedTask = future.takeTaskDependency();
+			// Get results from the future's task once it completes and use it as the results of this continuation task.
+			_continuedTask->finally(Ovito::detail::InlineExecutor(), false, [this,promise = std::move(promise)]() {
+				if(TaskDependency finishedTask = this->takeContinuedTask()) {
+					if(!finishedTask->isCanceled()) {
+						if(finishedTask->_exceptionStore)
+							this->setException(std::exception_ptr(finishedTask->_exceptionStore));
+						else
+							this->setResultsDirect(finishedTask->template getResults<tuple_type>());
+						this->setFinished();
+					}
+				}
+				// Note: Promise destructor will put this task into the finished state if it isn't already.
+			});
 		}
 		catch(...) {
 			this->captureException();
 			this->setFinished();
 		}
-	}
+	}	
 
-protected:
+private:
 
 	/// Assigns a result to this shared state.
-	template<typename source_tuple_type>
-	auto setResultsDirect(source_tuple_type&& results) -> typename std::enable_if<std::tuple_size<source_tuple_type>::value>::type {
+	template<typename... R>
+	auto setResultsDirect(std::tuple<R...>&& results) {
+		using source_tuple_type = std::tuple<R...>;
 		static_assert(std::tuple_size<tuple_type>::value != 0, "Must not be an empty tuple");
 		static_assert(std::is_same<tuple_type, std::decay_t<source_tuple_type>>::value, "Must assign a compatible tuple");
-		this->template setResults<tuple_type>(std::forward<source_tuple_type>(results));
+		this->template setResults<tuple_type>(std::move(results));
 	}
+
+	/// Assigns a result to this shared state.
+	template<typename... R>
+	auto setResultsDirect(const std::tuple<R...>& results) {
+		using source_tuple_type = std::tuple<R...>;
+		static_assert(std::tuple_size<tuple_type>::value != 0, "Must not be an empty tuple");
+		static_assert(std::is_same<tuple_type, std::decay_t<source_tuple_type>>::value, "Must assign a compatible tuple");
+		this->template setResults<tuple_type>(results);
+	}	
 
 	/// Assigns a result to this shared state.
 	template<typename value_type>
@@ -110,14 +166,10 @@ protected:
 		this->template setResults<tuple_type>(std::forward_as_tuple(std::forward<value_type>(result)));
 	}
 
-	/// The shared state that created this shared state as a continuation.
-	TaskDependency _creatorState;
-
-	template<typename... R2> friend class Future;
+	/// The task that spawned this task as a continuation.
+	TaskDependency _continuedTask;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

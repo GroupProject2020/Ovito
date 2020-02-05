@@ -130,7 +130,7 @@ public:
 protected:
 
 	/// Lets the vis element transform a data object in preparation for rendering.
-	virtual Future<PipelineFlowState> transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState) override;
+	virtual Future<PipelineFlowState> transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState) override;
 
 	/// Clips a dislocation line at the periodic box boundaries.
 	void clipDislocationLine(const std::deque<Point3>& line, const SimulationCell& simulationCell, const QVector<Plane3>& clippingPlanes, const std::function<void(const Point3&, const Point3&, bool)>& segmentCallback);

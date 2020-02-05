@@ -73,7 +73,7 @@ DislocationVis::DislocationVis(DataSet* dataset) : TransformingDataVis(dataset),
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> DislocationVis::transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState)
+Future<PipelineFlowState> DislocationVis::transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState)
 {
 	// Get the input object.
 	const PeriodicDomainDataObject* periodicDomainObj = dynamic_object_cast<PeriodicDomainDataObject>(dataObject);

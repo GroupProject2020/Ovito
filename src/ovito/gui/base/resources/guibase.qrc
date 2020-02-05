@@ -1,6 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 
-<qresource prefix="/gui">
+<qresource prefix="/guibase">
 
 	<file>mainwin/window_icon.png</file>
 	<file>mainwin/window_icon_16.png</file>

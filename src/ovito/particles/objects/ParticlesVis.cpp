@@ -459,7 +459,6 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	// Get input data.
 	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack.back());
 	if(!particles) return;
-	qDebug() << "ParticlesVis::render: time" << time << particles;
 	particles->verifyIntegrity();
 	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);

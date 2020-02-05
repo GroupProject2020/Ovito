@@ -67,8 +67,6 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(const PipelineEvalua
 	// Wait for the data to become available.
 	return secondaryStateFuture.then(executor(), [this, state = input, time = request.time(), modApp = OORef<ModifierApplication>(modApp)](const PipelineFlowState& secondaryState) mutable {
 
-		UndoSuspender noUndo(this);
-
 		// Make sure the obtained dataset is valid and ready to use.
 		if(secondaryState.status().type() == PipelineStatus::Error) {
 			if(FileSource* fileSource = dynamic_object_cast<FileSource>(secondaryDataSource())) {
@@ -79,14 +77,14 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(const PipelineEvalua
 			return std::move(state);
 		}
 
-		if(secondaryState.isEmpty())
+		if(!secondaryState)
 			throwException(tr("Secondary data source has not been specified yet or is empty. Please pick an input file to be merged."));
 
 		// Merge validity intervals of primary and secondary datasets.
 		state.intersectStateValidity(secondaryState.stateValidity());
 
 		// Merge global attributes of primary and secondary datasets.
-		if(!state.isEmpty() && !secondaryState.isEmpty()) {
+		if(state && secondaryState) {
 			for(const DataObject* obj : secondaryState.data()->objects()) {
 				if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
 					if(state.getAttributeValue(attribute->identifier()).isNull())
@@ -103,29 +101,27 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(const PipelineEvalua
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void CombineDatasetsModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void CombineDatasetsModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Get the secondary data source.
 	if(!secondaryDataSource())
 		return;
 
 	// Acquire the state to be merged.
-	const PipelineFlowState& secondaryState = secondaryDataSource()->evaluatePreliminary();
-	if(secondaryState.isEmpty())
+	const PipelineFlowState& secondaryState = secondaryDataSource()->evaluateSynchronous();
+	if(!secondaryState)
 		return;
 
 	// Merge validity intervals of primary and secondary datasets.
 	state.intersectStateValidity(secondaryState.stateValidity());
 
 	// Merge global attributes of primary and secondary datasets.
-	if(!secondaryState.isEmpty()) {
-		for(const DataObject* obj : secondaryState.data()->objects()) {
-			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
-				if(state.getAttributeValue(attribute->identifier()).isNull())
-					state.addObject(attribute);
-			}
+	for(const DataObject* obj : secondaryState.data()->objects()) {
+		if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+			if(state.getAttributeValue(attribute->identifier()).isNull())
+				state.addObject(attribute);
 		}
 	}
 

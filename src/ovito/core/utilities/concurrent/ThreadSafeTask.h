@@ -86,12 +86,10 @@ protected:
 
     virtual void registerWatcher(TaskWatcher* watcher) override;
     virtual void unregisterWatcher(TaskWatcher* watcher) override;
-    virtual void registerTracker(TrackingTask* tracker) override;
-	virtual void addContinuationImpl(std::function<void()>&& cont) override;
+	virtual void addContinuationImpl(fu2::unique_function<void(bool)>&& cont, bool defer) override;
 
 	QMutex _mutex;
 };
-
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

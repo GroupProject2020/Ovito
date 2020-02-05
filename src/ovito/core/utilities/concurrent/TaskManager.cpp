@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/oo/RefTargetExecutor.h>
 #include <ovito/core/app/Application.h>
 
 #include <QMetaObject>
@@ -90,10 +91,18 @@ TaskWatcher* TaskManager::addTaskInternal(const TaskPtr& task)
     // In this case, a TaskWatcher must exist for the task that has been added as a child object to the TaskManager.
 	for(QObject* childObject : children()) {
 		if(TaskWatcher* watcher = qobject_cast<TaskWatcher*>(childObject)) {
-			if(watcher->task() == task)
+			if(watcher->task() == task) {
+				OVITO_ASSERT(task->taskManager() == this);
 				return watcher;
+			}
 		}
 	}
+
+	// The task should not be registered with more than one TaskManager.
+	OVITO_ASSERT(task->taskManager() == nullptr || task->taskManager() == this);
+
+	// Associate this TaskManager with the task.
+	task->setTaskManager(this);
 
 	// Create a task watcher, which will generate start/stop notification signals.
 	TaskWatcher* watcher = new TaskWatcher(this);
@@ -170,7 +179,7 @@ void TaskManager::waitForAll()
 	if(!QCoreApplication::closingDown()) {
 		do {
 			QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-			QCoreApplication::sendPostedEvents(nullptr, OvitoObjectExecutor::workEventType());
+			QCoreApplication::sendPostedEvents(nullptr, RefTargetExecutor::workEventType());
 		}
 		while(!runningTasks().empty());
 	}
@@ -207,16 +216,16 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 	if(task->isFinished()) {
 		return !task->isCanceled();
 	}
+
+	// Also not need for the dependent task to wait if it has been canceled. 
 	if(dependentTask && dependentTask->isCanceled()) {
 		return false;
 	}
 
 	// Use different waiting schemes depending on the thread we are currently in.
-	bool result;
-	if(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread())
-		result = waitForTaskUIThread(task, dependentTask);
-	else
-		result = waitForTaskNonUIThread(task, dependentTask);
+	bool result = (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread()) ?
+		waitForTaskUIThread(task, dependentTask) :
+		waitForTaskNonUIThread(task, dependentTask);
 	if(!result)
 		return false;
 
@@ -262,6 +271,7 @@ bool TaskManager::waitForTaskUIThread(const TaskPtr& task, const TaskPtr& depend
 	if(dependentTask) {
 		TaskWatcher* dependentWatcher = addTaskInternal(dependentTask);
 		connect(dependentWatcher, &TaskWatcher::canceled, watcher, [dependentTask, watcher]() {
+			qDebug() << "TaskManager::waitForTaskUIThread: Dependent task" << dependentTask.get() << "fgot canceled. Canceling other task" << watcher->task().get();
 			watcher->task()->cancelIfSingleFutureLeft();
 		});
 		connect(dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);

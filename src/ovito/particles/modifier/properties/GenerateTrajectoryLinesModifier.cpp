@@ -84,9 +84,9 @@ bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const DataColl
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void GenerateTrajectoryLinesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void GenerateTrajectoryLinesModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Inject the precomputed trajectory lines, which are stored in the modifier application, into the pipeline.
 	if(GenerateTrajectoryLinesModifierApplication* myModApp = dynamic_object_cast<GenerateTrajectoryLinesModifierApplication>(modApp)) {

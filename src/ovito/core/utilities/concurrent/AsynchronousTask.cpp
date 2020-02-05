@@ -55,18 +55,6 @@ void AsynchronousTaskBase::run()
 	this->setFinished();
 }
 
-/******************************************************************************
-* Blocks execution until the given future reaches the completed state.
-******************************************************************************/
-bool AsynchronousTaskBase::waitForFuture(const FutureBase& future)
-{
-	if(!taskManager().waitForTask(future.task(), shared_from_this())) {
-		cancel();
-		return false;
-	}
-	return true;
-}
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

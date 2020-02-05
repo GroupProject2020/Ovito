@@ -30,8 +30,9 @@
 
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
+#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/oo/RefTarget.h>
-#include <ovito/core/viewport/Viewport.h>
+#include <ovito/core/viewport/ViewportProjectionParameters.h>
 #include "LinePrimitive.h"
 #include "ParticlePrimitive.h"
 #include "TextPrimitive.h"

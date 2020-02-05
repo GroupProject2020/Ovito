@@ -50,8 +50,7 @@ public:
 	/// This method asks the overlay to paint its contents over the rendered image.
 	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
 		if(sourceNode()) {
-			PipelineEvaluationFuture pipelineEvaluation(time);
-			pipelineEvaluation.execute(sourceNode());
+			PipelineEvaluationFuture pipelineEvaluation = sourceNode()->evaluatePipeline(time);
 			if(!operation.waitForFuture(pipelineEvaluation))
 				return;
 			QPainter painter(&frameBuffer->image());
@@ -65,7 +64,7 @@ public:
 
 	/// This method asks the overlay to paint its contents over the given interactive viewport.
 	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
-		const PipelineFlowState& flowState = sourceNode() ? sourceNode()->evaluatePipelinePreliminary(true) : PipelineFlowState();
+		const PipelineFlowState& flowState = sourceNode() ? sourceNode()->evaluatePipelineSynchronous(true) : PipelineFlowState();
 		renderImplementation(painter, renderSettings, flowState);
 	}
 

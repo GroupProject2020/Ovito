@@ -337,8 +337,8 @@ public:
 	/// application's settings store.
 	virtual void loadUserDefaults() override;
 
-	/// Asks the modifier for its validity interval at the given time.
-	virtual TimeInterval modifierValidity(TimePoint time) override;
+	/// Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
 
 	/// Returns the range start value.
 	FloatType startValue() const { return startValueController() ? startValueController()->currentFloatValue() : 0; }

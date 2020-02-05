@@ -26,53 +26,13 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
-#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/viewport/overlays/ViewportOverlay.h>
+#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include "ViewportSettings.h"
 #include "ViewportWindowInterface.h"
+#include "ViewportProjectionParameters.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
-
-/******************************************************************************
-* This data structure describes a projection parameters used to render
-* the 3D contents in a viewport.
-******************************************************************************/
-struct ViewProjectionParameters
-{
-	/// The aspect ratio (height/width) of the viewport.
-	FloatType aspectRatio;
-
-	/// Indicates whether this is a orthogonal or perspective projection.
-	bool isPerspective;
-
-	/// The distance of the front clipping plane in world units.
-	FloatType znear;
-
-	/// The distance of the back clipping plane in world units.
-	FloatType zfar;
-
-	/// For orthogonal projections this is the vertical field of view in world units.
-	/// For perspective projections this is the vertical field of view angle in radians.
-	FloatType fieldOfView;
-
-	/// The world to view space transformation matrix.
-	AffineTransformation viewMatrix;
-
-	/// The view space to world space transformation matrix.
-	AffineTransformation inverseViewMatrix;
-
-	/// The view space to screen space projection matrix.
-	Matrix4 projectionMatrix;
-
-	/// The screen space to view space transformation matrix.
-	Matrix4 inverseProjectionMatrix;
-
-	/// The bounding box of the scene.
-	Box3 boundingBox;
-
-	/// Specifies the time interval during which the stored parameters stay constant.
-	TimeInterval validityInterval;
-};
 
 /**
  * \brief A viewport window that displays the current scene.
@@ -383,5 +343,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-#include <ovito/core/rendering/SceneRenderer.h>

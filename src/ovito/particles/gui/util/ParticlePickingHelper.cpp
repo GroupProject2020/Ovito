@@ -83,7 +83,7 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, SceneRenderer* r
 	if(!renderer->isInteractive() || renderer->isPicking())
 		return;
 
-	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelinePreliminary(true);
+	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelineSynchronous(true);
 	const ParticlesObject* particles = flowState.getObject<ParticlesObject>();
 	if(!particles) return;
 

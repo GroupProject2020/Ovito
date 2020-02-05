@@ -49,15 +49,11 @@ protected:
 
 public:
 
-	/// \brief Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}
+	/// \brief Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}
 
-	/// \brief Asks the modifier for its validity interval at the given time.
-	/// \param time The animation at which the validity interval should be computed.
-	/// \return The maximum time interval that contains \a time and during which the modifier's
-	///         parameters do not change. This does not include the validity interval of the
-	///         modifier's input object.
-	virtual TimeInterval modifierValidity(TimePoint time);
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const;
 
 	/// \brief Lets the modifier render itself into a viewport.
 	/// \param time The animation time at which to render the modifier.

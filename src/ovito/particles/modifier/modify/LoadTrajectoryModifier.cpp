@@ -62,7 +62,7 @@ bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const DataCollection& i
 ******************************************************************************/
 Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	OVITO_ASSERT(!input.isEmpty());
+	OVITO_ASSERT(input);
 
 	// Get the trajectory data source.
 	if(!trajectorySource())
@@ -73,7 +73,6 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 
 	// Wait for the data to become available.
 	return trajStateFuture.then(modApp->executor(), [state = input, modApp](const PipelineFlowState& trajState) mutable {
-		UndoSuspender noUndo(modApp);
 
 		// Make sure the obtained configuration is valid and ready to use.
 		if(trajState.status().type() == PipelineStatus::Error) {
@@ -87,7 +86,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(const PipelineEvaluat
 			return std::move(state);
 		}
 
-		if(trajState.isEmpty())
+		if(!trajState)
 			modApp->throwException(tr("Data source has not been specified yet or is empty. Please pick a trajectory file."));
 
 		// Merge validity intervals of topology and trajectory datasets.

@@ -57,13 +57,14 @@ CreateIsosurfaceModifier::CreateIsosurfaceModifier(DataSet* dataset) : Asynchron
 }
 
 /******************************************************************************
-* Asks the modifier for its validity interval at the given time.
+* Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
-TimeInterval CreateIsosurfaceModifier::modifierValidity(TimePoint time)
+TimeInterval CreateIsosurfaceModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
 {
-	TimeInterval interval = AsynchronousModifier::modifierValidity(time);
-	if(isolevelController()) interval.intersect(isolevelController()->validityInterval(time));
-	return interval;
+	TimeInterval iv = AsynchronousModifier::validityInterval(request, modApp);
+	if(isolevelController()) 
+		iv.intersect(isolevelController()->validityInterval(request.time()));
+	return iv;
 }
 
 /******************************************************************************
@@ -84,7 +85,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available voxel grid from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
 		if(const VoxelGrid* grid = input.getObject<VoxelGrid>()) {
 			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
 		}
@@ -92,7 +93,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available property from the input grid as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
 		if(const VoxelGrid* grid = dynamic_object_cast<VoxelGrid>(input.getLeafObject(subject()))) {
 			for(const PropertyObject* property : grid->properties()) {
 				setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));

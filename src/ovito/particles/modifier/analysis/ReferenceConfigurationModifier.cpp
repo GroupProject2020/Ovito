@@ -70,6 +70,21 @@ bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const DataColle
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval ReferenceConfigurationModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	TimeInterval iv = AsynchronousModifier::validityInterval(request, modApp);
+
+	if(useReferenceFrameOffset()) {
+		// Results will only be valid for the duration of the current frame when using a relative offset.
+		iv.intersect(request.time());
+	}
+
+	return iv;
+}
+
+/******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -140,7 +155,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 		// Make sure the obtained reference configuration is valid and ready to use.
 		if(referenceInput.status().type() == PipelineStatus::Error)
 			throwException(tr("Reference configuration is not available: %1").arg(referenceInput.status().text()));
-		if(referenceInput.isEmpty())
+		if(!referenceInput)
 			throwException(tr("Reference configuration has not been specified yet or is empty. Please pick a reference simulation file."));
 
 		// Make sure we really got back the requested reference frame.

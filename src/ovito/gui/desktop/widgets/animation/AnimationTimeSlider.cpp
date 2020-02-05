@@ -261,6 +261,7 @@ void AnimationTimeSlider::mouseMoveEvent(QMouseEvent* event)
 
 		// Force immediate viewport update.
 		_mainWindow->processViewportUpdates();
+		repaint();
 	}
 	else if(interval.duration() > 0) {
 		if(thumbRectangle().contains(event->pos()) == false) {
@@ -275,7 +276,7 @@ void AnimationTimeSlider::mouseMoveEvent(QMouseEvent* event)
 			if(!frameName.isEmpty())
 				tooltipText = QString("%1 - %2").arg(newFrame).arg(frameName);
 			else
-				tooltipText = QString("%1").arg(newFrame);
+				tooltipText = QString::number(newFrame);
 			QToolTip::showText(mapToGlobal(pos), tooltipText, this);
 		}
 		else QToolTip::hideText();

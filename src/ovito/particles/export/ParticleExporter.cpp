@@ -102,7 +102,7 @@ bool ParticleExporter::exportFrame(int frameNumber, TimePoint time, const QStrin
 {
 	// Retreive the particle data to be exported.
 	const PipelineFlowState& state = getParticleData(time, operation);
-	if(operation.isCanceled() || state.isEmpty())
+	if(operation.isCanceled() || !state)
 		return false;
 
 	// Set progress display.

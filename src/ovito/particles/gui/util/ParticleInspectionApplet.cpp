@@ -135,7 +135,7 @@ void ParticleInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 ******************************************************************************/
 void ParticleInspectionApplet::updateDistanceTable()
 {
-	if(currentState().isEmpty()) return;
+	if(!currentState()) return;
 
 	// Limit distance computation to the first 4 particles:
 	int n = std::min(4, visibleElementCount());
@@ -170,7 +170,7 @@ void ParticleInspectionApplet::updateDistanceTable()
 ******************************************************************************/
 void ParticleInspectionApplet::updateAngleTable()
 {
-	if(currentState().isEmpty()) return;
+	if(!currentState()) return;
 
 	// Limit angle computation to the first 3 particles:
 	int n = std::min(3, visibleElementCount());
@@ -290,7 +290,7 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, SceneR
 		std::array<Point3,4> vertices;
 		auto outVertex = vertices.begin();
 		for(auto& element : _pickedElements) {
-			const PipelineFlowState& flowState = element.objNode->evaluatePipelinePreliminary(true);
+			const PipelineFlowState& flowState = element.objNode->evaluatePipelineSynchronous(true);
 			if(const ParticlesObject* particles = flowState.getObject<ParticlesObject>()) {
 				// If particle selection is based on ID, find particle with the given ID.
 				size_t particleIndex = element.particleIndex;

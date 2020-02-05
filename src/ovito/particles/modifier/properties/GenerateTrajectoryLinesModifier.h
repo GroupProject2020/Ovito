@@ -58,8 +58,8 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE GenerateTrajectoryLinesModifier(DataSet* dataset);
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Returns the the custom time interval.
 	TimeInterval customInterval() const { return TimeInterval(_customIntervalStart, _customIntervalEnd); }

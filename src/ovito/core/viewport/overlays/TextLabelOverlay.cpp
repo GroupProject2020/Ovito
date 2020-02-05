@@ -86,7 +86,7 @@ void TextLabelOverlay::renderImplementation(QPainter& painter, const RenderSetti
 	QString textString = labelText();
 
 	// Resolve global attributes referenced by placeholders in the text string.
-	if(!flowState.isEmpty()) {
+	if(flowState) {
 		const QVariantMap attributes = flowState.data()->buildAttributesMap();
 		for(auto a = attributes.cbegin(); a != attributes.cend(); ++a) {
 			textString.replace(QStringLiteral("[") + a.key() + QStringLiteral("]"), a.value().toString());

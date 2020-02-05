@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -46,11 +46,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE FileSource(DataSet* dataset);
 
-	/// \brief Asks the object for the result of the data pipeline.
-	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
-
-	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
-	virtual PipelineFlowState evaluatePreliminary() override;
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request) const override;
 
 	/// \brief Sets the source location(s) for importing data.
 	/// \param sourceUrls The new source location(s).
@@ -59,9 +56,10 @@ public:
 	/// \return false if the operation has been canceled by the user.
 	bool setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* importer, bool autodetectFileSequences);
 
-	/// \brief This triggers a reload of input data from the external file for the given frame.
+	/// \brief This triggers a reload of input data from the external file for the given frame or all frames.
+	/// \param refetchFiles Clears the remote file cache so that file data will be retreived again from the remote location. 
 	/// \param frameIndex The index of the input frame to refresh; or -1 to refresh all frames.
-	void reloadFrame(int frameIndex = -1);
+	void reloadFrame(bool refetchFiles, int frameIndex = -1);
 
 	/// \brief Scans the external file source and updates the internal frame list.
 	/// Note: This method operates asynchronously.
@@ -71,8 +69,8 @@ public:
 	/// This is an implementation detail. Please use the high-level method updateListOfFrames() instead.
 	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame);
 
-	/// \brief Returns the index of the input frame currently stored by this source object.
-	int storedFrameIndex() const { return _storedFrameIndex; }
+	/// \brief Returns the source frame that is currently used as a sub-object data collection.
+	int dataCollectionFrame() const { return _dataCollectionFrame; }
 
 	/// \brief Returns the list of animation frames in the input file(s).
 	const QVector<FileSourceImporter::Frame>& frames() const { return _frames; }
@@ -121,15 +119,12 @@ private:
 	/// Requests a source frame from the input sequence.
 	Future<PipelineFlowState> requestFrameInternal(int frame);
 
-	/// Sets which frame is currently stored by this source object.
-	void setStoredFrameIndex(int frameIndex);
+	/// Sets which frame is currently stored in the data collection sub-object.
+	void setDataCollectionFrame(int frameIndex);
 
 	/// Updates the internal list of input frames.
 	/// Invalidates cached frames in case they did change.
 	void setListOfFrames(QVector<FileSourceImporter::Frame> frames);
-
-	/// Clears the cache entry for the given input frame.
-	void invalidateFrameCache(int frameIndex = -1);
 
 private:
 
@@ -160,25 +155,22 @@ private:
 	/// The active future if loading the list of frames is in progress.
 	SharedFuture<QVector<FileSourceImporter::Frame>> _framesListFuture;
 
-	/// The number of frame loading operatiosn currently in progress.
+	/// The number of frame load operations currently in progress.
 	int _numActiveFrameLoaders = 0;
 
-	/// The index of the loaded source frame that is currently stored.
-	int _storedFrameIndex = -1;
+	/// The source frame that is currently used as a sub-object data collection.
+	int _dataCollectionFrame = -1;
 
-	/// Flag indicating that the file being loaded has been newly selected by the user.
-	/// If not, then the file being loaded is just another frame from the existing sequence.
+	/// Indicates that the file currently being loaded has been newly selected by the user.
+	/// Otherwise it is is just another frame from the already loaded trajectory.
 	bool _isNewFile = false;
 
-	/// The file that was originally selected by the user when importing the input file.
+	/// The file that was originally selected by the user for import.
+	/// The animation time slider will automatically be positioned to show the frame corresponding to this file.
 	QString _originallySelectedFilename;
 
-	/// Indicates whether the data from a frame loader is currently being handed over to the FileSource.
+	/// Indicates that the data from a frame loader is currently being handed over to the FileSource.
 	bool _handOverInProgress = false;
-
-	/// Indicates that the cached pipeline state should be updated with the current contents of the data collection
-	/// of this FileSource.
-	bool _updateCacheWithDataCollection = false;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -43,8 +43,8 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ClearSelectionModifier(DataSet* dataset);
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 };
 
 }	// End of namespace

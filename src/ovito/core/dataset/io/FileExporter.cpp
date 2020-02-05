@@ -137,7 +137,7 @@ void FileExporter::selectDefaultExportableData()
 bool FileExporter::isSuitableNode(SceneNode* node) const
 {
 	if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(node)) {
-		return isSuitablePipelineOutput(pipeline->evaluatePipelinePreliminary(true));
+		return isSuitablePipelineOutput(pipeline->evaluatePipelineSynchronous(true));
 	}
 	return false;
 }
@@ -150,7 +150,7 @@ bool FileExporter::isSuitableNode(SceneNode* node) const
 ******************************************************************************/
 bool FileExporter::isSuitablePipelineOutput(const PipelineFlowState& state) const
 {
-	if(state.isEmpty()) return false;
+	if(!state) return false;
 	std::vector<DataObjectClassPtr> objClasses = exportableDataObjectClass();
 	if(objClasses.empty())
 		return true;
@@ -171,8 +171,7 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 		throwException(tr("The scene object to be exported is not a data pipeline."));
 
 	// Evaluate pipeline.
-	PipelineEvaluationFuture future(time, !ignorePipelineErrors());
-	future.execute(pipeline, requestRenderState);
+	PipelineEvaluationFuture future = pipeline->evaluatePipeline(PipelineEvaluationRequest(time, !ignorePipelineErrors()));
 	if(!operation.waitForFuture(future))
 		return {};
 	PipelineFlowState state = future.result();
@@ -182,7 +181,7 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 			.arg(dataset()->animationSettings()->timeToFrame(time))
 			.arg(state.status().text()));
 
-	if(state.isEmpty())
+	if(!state)
 		throwException(tr("The data collection to be exported is empty."));
 
 	return state;
@@ -306,7 +305,7 @@ void FileExporter::activateCLocale()
 QString FileExporter::getAvailableDataObjectList(const PipelineFlowState& state, const DataObject::OOMetaClass& objectType) const
 {
 	QString str;
-	if(!state.isEmpty()) {
+	if(state) {
 		for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(objectType)) {
 			QString pathString = dataPath.toString();
 			if(!pathString.isEmpty()) {

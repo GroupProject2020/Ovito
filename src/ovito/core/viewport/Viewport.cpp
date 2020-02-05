@@ -217,7 +217,7 @@ ViewProjectionParameters Viewport::computeProjectionParameters(TimePoint time, F
 		params.viewMatrix = params.inverseViewMatrix.inverse();
 
 		// Get camera settings (FOV etc.)
-		const PipelineFlowState& state = viewNode()->evaluatePipelinePreliminary(false);
+		const PipelineFlowState& state = viewNode()->evaluatePipelineSynchronous(false);
 		if(const AbstractCameraObject* camera = state.data() ? state.data()->getObject<AbstractCameraObject>() : nullptr) {
 			// Get remaining parameters from camera object.
 			camera->projectionParameters(time, params);

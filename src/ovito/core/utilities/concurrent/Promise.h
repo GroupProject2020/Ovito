@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -174,6 +174,7 @@ public:
 
 	using tuple_type = std::tuple<R...>;
 	using future_type = Future<R...>;
+	using shared_future_type = SharedFuture<R...>;
 
 	/// Default constructor.
 #ifndef Q_CC_MSVC
@@ -271,6 +272,8 @@ protected:
 #endif
 
 	friend class TaskManager;
+	template<typename... R2> friend class Future;
+	template<typename... R2> friend class SharedFuture;
 };
 
 OVITO_END_INLINE_NAMESPACE

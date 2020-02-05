@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,9 +22,9 @@
 
 #include <ovito/core/Core.h>
 #include "Task.h"
-#include "TrackingTask.h"
 #include "Future.h"
 #include "TaskWatcher.h"
+#include "TaskManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -39,7 +39,6 @@ Task::~Task()
 
 	// Shared states must always end up in the finished state.
 	OVITO_ASSERT(isFinished());
-	OVITO_ASSERT(!_trackers);
 
 #ifdef OVITO_DEBUG
 	_instanceCounter.fetch_sub(1);
@@ -60,21 +59,20 @@ void Task::cancelIfSingleFutureLeft() noexcept
 {
 	// Cancels this task if there is only a single future left that depends on it.
     // This is an internal method used by TaskManager::waitForTask() to cancel subtasks right away if their parent task got canceled.
-	if(_shareCount.load() <= 1)
+	if(_shareCount.load() == 0)
 		cancel();
-	OVITO_ASSERT(_shareCount.load() <= 1);
+	//OVITO_ASSERT(_shareCount.load() <= 1);
 }
 
 void Task::cancel() noexcept
 {
 	if(isCanceled() || isFinished()) return;
+	qDebug() << "  Canceling task" << this;
 
 	_state = State(_state | Canceled);
 
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseCanceled", Qt::QueuedConnection);
-	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get())
-		tracker->cancel();
 }
 
 bool Task::setStarted()
@@ -88,8 +86,6 @@ bool Task::setStarted()
 
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseStarted", Qt::QueuedConnection);
-	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get())
-		tracker->setStarted();
 
 	return true;
 }
@@ -118,29 +114,15 @@ void Task::setFinishedNoSelfLock()
 		"Task::setFinishedNoSelfLock()",
 		qPrintable(QStringLiteral("Result has not been set for the promise state. Please check program code setting the promise state. Progress text: %1").arg(progressText())));
 
-	// Run the continuation functions.
-	for(auto& cont : _continuations)
-		std::move(cont)();
-	_continuations.clear();
-
-	// Inform promise watchers.
+	// Inform task watchers.
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList) {
 		QMetaObject::invokeMethod(watcher, "promiseFinished", Qt::QueuedConnection);
 	}
 
-	// Inform promise trackers.
-	while(_trackers) {
-		_trackers->_resultsTuple = _resultsTuple;
-#ifdef OVITO_DEBUG
-		_trackers->_resultSet.store(this->_resultSet.load());
-#endif
-		_trackers->_exceptionStore = _exceptionStore;
-		_trackers->setFinished();
-		std::shared_ptr<TrackingTask> next = std::move(_trackers->_nextInList);
-		_trackers.swap(next);
-	}
-
-	OVITO_ASSERT(isFinished());
+	// Run the continuation functions.
+	for(auto& cont : _continuations)
+		std::move(cont)(false);
+	_continuations.clear();
 }
 
 void Task::setException(std::exception_ptr&& ex)
@@ -183,39 +165,13 @@ void Task::unregisterWatcher(TaskWatcher* watcher)
 	}
 }
 
-void Task::registerTracker(TrackingTask* tracker)
-{
-	OVITO_ASSERT(!tracker->_nextInList);
-
-	if(isStarted())
-		tracker->setStarted();
-
-	if(isCanceled())
-		tracker->cancel();
-
-	if(isFinished()) {
-		OVITO_ASSERT(!_trackers);
-		tracker->_resultsTuple = _resultsTuple;
-#ifdef OVITO_DEBUG
-		tracker->_resultSet.store(this->_resultSet.load());
-#endif
-		tracker->_exceptionStore = _exceptionStore;
-		tracker->setFinished();
-	}
-	else {
-		// Insert the tracker into the linked list of trackers.
-		tracker->_nextInList = std::move(_trackers);
-		_trackers = static_pointer_cast<TrackingTask>(tracker->shared_from_this());
-	}
-}
-
-void Task::addContinuationImpl(std::function<void()>&& cont)
+void Task::addContinuationImpl(fu2::unique_function<void(bool)>&& cont, bool defer)
 {
 	if(!isFinished()) {
 		_continuations.push_back(std::move(cont));
 	}
 	else {
-		std::move(cont)();
+		std::move(cont)(defer);
 	}
 }
 
@@ -227,8 +183,13 @@ Promise<> Task::createSubTask()
 
 bool Task::waitForFuture(const FutureBase& future)
 {
-	OVITO_ASSERT(false);
-	throw Exception(QStringLiteral("Internal error: Calling waitForFuture() on this type of Task is not allowed."));
+	OVITO_ASSERT_MSG(taskManager() != nullptr, "Task::waitForFuture()", "Calling waitForFuture() on this type of Task is not allowed.");
+
+	if(!taskManager()->waitForTask(future.task(), shared_from_this())) {
+		cancel();
+		return false;
+	}
+	return true;
 }
 
 OVITO_END_INLINE_NAMESPACE

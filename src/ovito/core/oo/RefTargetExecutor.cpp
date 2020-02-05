@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,55 +21,73 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/core/Core.h>
+#include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/app/Application.h>
-#include "OvitoObjectExecutor.h"
+#include <ovito/core/dataset/DataSet.h>
+#include "RefTargetExecutor.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
 /******************************************************************************
+* Returns the task manager that provides the context for tasks created by this executor.
+******************************************************************************/
+TaskManager* RefTargetExecutor::taskManager() const
+{
+    return &object()->dataset()->taskManager();
+}
+
+/******************************************************************************
 * Event class constructor.
 ******************************************************************************/
-OvitoObjectExecutor::WorkEventBase::WorkEventBase(const OvitoObject* obj) :
+RefTargetExecutor::WorkEventBase::WorkEventBase(const RefTarget* obj) :
     QEvent(workEventType()),
-    _obj(const_cast<OvitoObject*>(obj)),
+    _obj(const_cast<RefTarget*>(obj)),
     _executionContext(static_cast<int>(Application::instance()->executionContext()))
 {
+    OVITO_ASSERT(!_obj->dataset()->undoStack().isRecording());
 }
 
 /******************************************************************************
 * Activates the original execution context under which the work was submitted.
 ******************************************************************************/
-void OvitoObjectExecutor::WorkEventBase::activateExecutionContext()
+void RefTargetExecutor::WorkEventBase::activateExecutionContext()
 {
     if(Application* app = Application::instance()) {
         Application::ExecutionContext previousContext = app->executionContext();
         app->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
         _executionContext = static_cast<int>(previousContext);
     }
+
+    // In the current implementation, deferred work is always executed without undo recording.
+    // Thus, we should suspend the undo stack while running the work function.
+    _obj->dataset()->undoStack().suspend();
 }
 
 /******************************************************************************
 * Restores the execution context as it was before the work was executed.
 ******************************************************************************/
-void OvitoObjectExecutor::WorkEventBase::restoreExecutionContext()
+void RefTargetExecutor::WorkEventBase::restoreExecutionContext()
 {
     if(Application* app = Application::instance()) {
         Application::ExecutionContext previousContext = app->executionContext();
         app->switchExecutionContext(static_cast<Application::ExecutionContext>(_executionContext));
         _executionContext = static_cast<int>(previousContext);
     }
+
+    // Restore undo recording state.
+    _obj->dataset()->undoStack().resume();
 }
 
 /******************************************************************************
 * Submits the work for execution.
 ******************************************************************************/
-void OvitoObjectExecutor::Work::operator()()
+void RefTargetExecutor::Work::operator()(bool defer)
 {
     OVITO_ASSERT(_event);
 
-    if(!QCoreApplication::closingDown() && QThread::currentThread() != QCoreApplication::instance()->thread()) {
+    if(defer || (!QCoreApplication::closingDown() && QThread::currentThread() != QCoreApplication::instance()->thread())) {
         // Schedule work for later execution in the main thread.
-        std::move(*this).post();
+        QCoreApplication::postEvent(Application::instance(), _event.release());
     }
     else {
         // Execute work immediately by calling the event destructor.
@@ -78,21 +96,11 @@ void OvitoObjectExecutor::Work::operator()()
 }
 
 /******************************************************************************
-* Posts the work for execution at a later time.
+* Determines whether work can be executed in the context of the RefTarget or not.
 ******************************************************************************/
-void OvitoObjectExecutor::Work::post() &&
+bool RefTargetExecutor::WorkEventBase::needToCancelWork() const
 {
-    OVITO_ASSERT(!QCoreApplication::closingDown());
-    OVITO_ASSERT(_event);
-    QCoreApplication::postEvent(Application::instance(), _event.release());
-}
-
-/******************************************************************************
-* Determines whether work can be executed in the context of the OvitoObject or not.
-******************************************************************************/
-bool OvitoObjectExecutor::WorkEventBase::needToCancelWork() const
-{
-    // The OvitoObject must still be alive and the application may not be in
+    // The RefTarget must still be alive and the application may not be in
     // the process of shutting down for the work to be executable.
     return _obj.isNull() || QCoreApplication::closingDown();
 }

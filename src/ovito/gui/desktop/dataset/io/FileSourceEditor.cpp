@@ -221,8 +221,8 @@ void FileSourceEditor::onPickRemoteInputFile()
 			// Let the user select a new URL.
 			ImportRemoteFileDialog dialog(importerClasses, dataset(), container()->window(), tr("Pick source"));
 			QUrl oldUrl;
-			if(fileSource->storedFrameIndex() >= 0 && fileSource->storedFrameIndex() < fileSource->frames().size())
-				oldUrl = fileSource->frames()[fileSource->storedFrameIndex()].sourceFile;
+			if(fileSource->dataCollectionFrame() >= 0 && fileSource->dataCollectionFrame() < fileSource->frames().size())
+				oldUrl = fileSource->frames()[fileSource->dataCollectionFrame()].sourceFile;
 			else if(!fileSource->sourceUrls().empty())
 				oldUrl = fileSource->sourceUrls().front();
 			dialog.selectFile(oldUrl);
@@ -301,7 +301,10 @@ bool FileSourceEditor::importNewFile(FileSource* fileSource, const QUrl& url, Ov
 void FileSourceEditor::onReloadFrame()
 {
 	if(FileSource* fileSource = static_object_cast<FileSource>(editObject())) {
-		fileSource->reloadFrame(fileSource->storedFrameIndex());
+		// Request a complete reloading of the current frame from the external file,
+		// including a refresh of the file from the remote location if it is not a 
+		// local file.
+		fileSource->reloadFrame(true, fileSource->dataCollectionFrame());
 	}
 }
 
@@ -384,7 +387,7 @@ void FileSourceEditor::updateInformationLabel()
 	_wildcardPatternTextbox->setText(wildcardPattern);
 	_wildcardPatternTextbox->setEnabled(true);
 
-	int frameIndex = fileSource->storedFrameIndex();
+	int frameIndex = fileSource->dataCollectionFrame();
 	if(frameIndex >= 0 && frameIndex < fileSource->frames().size()) {
 		const FileSourceImporter::Frame& frameInfo = fileSource->frames()[frameIndex];
 		if(frameInfo.sourceFile.isLocalFile()) {
@@ -416,7 +419,7 @@ void FileSourceEditor::updateInformationLabel()
 
 	if(_timeSeriesLabel) {
 		if(!fileSource->frames().empty())
-			_timeSeriesLabel->setText(tr("Showing frame %1 of %2").arg(fileSource->storedFrameIndex()+1).arg(fileSource->frames().count()));
+			_timeSeriesLabel->setText(tr("Showing frame %1 of %2").arg(fileSource->dataCollectionFrame()+1).arg(fileSource->frames().count()));
 		else
 			_timeSeriesLabel->setText(tr("No frames available"));
 	}

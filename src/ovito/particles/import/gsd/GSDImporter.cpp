@@ -46,6 +46,8 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(GSDImporter, roundingResolution, IntegerParam
 ******************************************************************************/
 void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
 {
+	ParticleImporter::propertyChanged(field);
+
 	if(field == PROPERTY_FIELD(roundingResolution)) {
 		// Clear shape cache and reload GSD file when the rounding resolution is changed.
 		_cacheSynchronization.lockForWrite();
@@ -53,7 +55,6 @@ void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
 		_cacheSynchronization.unlock();
 		requestReload();
 	}
-	ParticleImporter::propertyChanged(field);
 }
 
 /******************************************************************************

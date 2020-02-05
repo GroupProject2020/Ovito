@@ -77,16 +77,11 @@ void ThreadSafeTask::unregisterWatcher(TaskWatcher* watcher)
 	ProgressiveTask::unregisterWatcher(watcher);
 }
 
-void ThreadSafeTask::registerTracker(TrackingTask* tracker)
+void ThreadSafeTask::addContinuationImpl(fu2::unique_function<void(bool)>&& cont, bool defer)
 {
 	QMutexLocker locker(&_mutex);
-	ProgressiveTask::registerTracker(tracker);
-}
-
-void ThreadSafeTask::addContinuationImpl(std::function<void()>&& cont)
-{
-	QMutexLocker locker(&_mutex);
-	ProgressiveTask::addContinuationImpl(std::move(cont));
+	if(isFinished()) locker.unlock();
+	ProgressiveTask::addContinuationImpl(std::move(cont), defer);
 }
 
 void ThreadSafeTask::setProgressMaximum(qlonglong maximum)

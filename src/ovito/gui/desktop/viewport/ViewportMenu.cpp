@@ -118,7 +118,7 @@ void ViewportMenu::onShowViewTypeMenu()
 
 	// Find all camera nodes in the scene.
 	_viewport->dataset()->sceneRoot()->visitObjectNodes([this, viewNodeGroup](PipelineSceneNode* node) -> bool {
-		const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
+		const PipelineFlowState& state = node->evaluatePipelineSynchronous(false);
 		if(state.data() && state.data()->containsObject<AbstractCameraObject>()) {
 			// Add a menu entry for this camera node.
 			QAction* action = viewNodeGroup->addAction(node->nodeName());

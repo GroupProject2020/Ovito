@@ -37,25 +37,20 @@ CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(
 }
 
 /******************************************************************************
-* Throws away the cached pipeline state.
+* Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
-void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
+TimeInterval CachingPipelineObject::validityInterval(const PipelineEvaluationRequest& request) const
 {
-	qDebug() << "CachingPipelineObject::invalidatePipelineCache keepInterval=" << keepInterval;
+	TimeInterval iv = PipelineObject::validityInterval(request);
 
-	// Reduce the cache validity to the interval to be kept.
-	_pipelineCache.invalidate(false, keepInterval);
-
-	// Prevent the cache from getting filled again with an outdated pipeline result if
-	// an evaluation is currently in progress.
-	_pipelineCache.restrictValidityOfNextInsertedState(keepInterval);
-
-	// Abort any pipeline evaluation currently in progress unless it
-	// falls inside the time interval that should be kept.
-	if(!keepInterval.contains(_inProgressEvalTime)) {
-		_inProgressEvalFuture.reset();
-		_inProgressEvalTime = TimeNegativeInfinity();
-	}
+	// If the requested frame is available in the cache, restrict the returned validity interval to 
+	// the validity interval of the cached state. Otherwise assume that a new pipeline computation 
+	// will be performed and let the sub-class determine the actual validity interval.
+	const PipelineFlowState& state = pipelineCache().getAt(request.time());
+	if(state.stateValidity().contains(request.time()))
+		iv.intersect(state.stateValidity());
+	
+	return iv;
 }
 
 /******************************************************************************
@@ -63,48 +58,16 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 ******************************************************************************/
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEvaluationRequest& request)
 {
-	qDebug() << "CachingPipelineObject::evaluate:" << request.time();
+	return pipelineCache().evaluatePipelineStage(request, this);
+}
 
-	// Check if we can immediately serve the request from the internal cache.
-	//
-	// Workaround for bug #150: Force FileSource to reload the frame data after the current
-	// animation frame has changed, even if it the data is available in the cache.
-	if(_pipelineCache.contains(request.time(), request.time() == dataset()->animationSettings()->time()))
-		return _pipelineCache.getAt(request.time());
-
-	// Check if there is already an evaluation in progress whose shared future we can return to the caller.
-	if(_inProgressEvalTime == request.time()) {
-		SharedFuture<PipelineFlowState> sharedFuture = _inProgressEvalFuture.lock();
-		if(sharedFuture.isValid() && !sharedFuture.isCanceled()) {
-			return sharedFuture;
-		}
-	}
-
-	// Reset any cache validity restrictions. The results of the evaluation are now going to be stored in the cache
-	// unless we receive a call to invalidatePipelineCache() during the evaluation.
-	_pipelineCache.resetValidityRestriction();
-
-	// Let the subclass perform the actual pipeline evaluation.
-	Future<PipelineFlowState> stateFuture = evaluateInternal(request);
-
-	// Cache the results in our local pipeline cache.
-	_pipelineCache.insert(stateFuture, request.time(), this);
-
-	// We also have a new preliminary state. Inform the pipeline about it.
-	if(performPreliminaryUpdateAfterEvaluation() && request.time() == dataset()->animationSettings()->time()) {
-		stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
-			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
-			return std::move(state);
-		});
-	}
-	OVITO_ASSERT(stateFuture.isValid());
-
-	// Keep a weak reference to the future to be able to serve several simultaneous requests.
-	SharedFuture<PipelineFlowState> sharedFuture(std::move(stateFuture));
-	_inProgressEvalFuture = sharedFuture;
-	_inProgressEvalTime = request.time();
-
-	return sharedFuture;
+/******************************************************************************
+* Returns the results of an immediate and preliminary evaluation of the data pipeline.
+******************************************************************************/
+PipelineFlowState CachingPipelineObject::evaluateSynchronous()
+{
+	TimePoint time = dataset()->animationSettings()->time();
+	return pipelineCache().evaluatePipelineStageSynchronous(this, time);
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -66,6 +66,9 @@ public:
 	/// Constructor.
 	ReferenceConfigurationModifier(DataSet* dataset);
 
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
+
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
@@ -212,7 +215,6 @@ private:
 
 	/// The validity of the cache.
 	TimeInterval _cacheValidity = TimeInterval::empty();
-
 };
 
 OVITO_END_INLINE_NAMESPACE

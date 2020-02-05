@@ -25,6 +25,7 @@
 #include <ovito/core/dataset/pipeline/PipelineStatus.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/dataset/data/TransformedDataObject.h>
+#include <ovito/core/app/Application.h>
 #include "TransformingDataVis.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
@@ -41,24 +42,20 @@ TransformingDataVis::TransformingDataVis(DataSet* dataset) : DataVis(dataset)
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState)
+Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const std::vector<OORef<TransformedDataObject>>& cachedTransformedDataObjects)
 {
+	// We don't want to create any undo records while performing the data transformation.
+	OVITO_ASSERT(dataset()->undoStack().isRecording() == false);
+
 	// Check if the cache state already contains a transformed data object that we have
 	// created earlier for the same input object. If yes, we can immediately return it.
-	if(cachedState.data()) {
-		for(const DataObject* o : cachedState.data()->objects()) {
-			if(const TransformedDataObject* transformedDataObject = dynamic_object_cast<TransformedDataObject>(o)) {
-				if(transformedDataObject->sourceDataObject() == dataObject && transformedDataObject->visElement() == this && transformedDataObject->visElementRevision() == revisionNumber()) {
-					PipelineFlowState outputState = flowState;
-					outputState.mutableData()->addObject(transformedDataObject);
-					return std::move(outputState);
-				}
-			}
+	for(const auto& transformedDataObject : cachedTransformedDataObjects) {
+		if(transformedDataObject->sourceDataObject() == dataObject && transformedDataObject->visElement() == this && transformedDataObject->visElementRevision() == revisionNumber()) {
+			qDebug() << "TransformingDataVis::transformData: reusing existing output for " << dataObject;
+			flowState.mutableData()->addObject(transformedDataObject);
+			return std::move(flowState);
 		}
 	}
-
-	// We don't want to create any undo records while performing the data transformation.
-	UndoSuspender noUndo(this);
 
 	// Clear the status of the input unless it is an error.
 	if(flowState.status().type() != PipelineStatus::Error) {
@@ -76,15 +73,16 @@ Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvalu
 	Future<PipelineFlowState> future;
 	try {
 		// Let the transforming vis element do its job.
-		future = transformDataImpl(request, dataObject, std::move(flowState), cachedState);
+		future = transformDataImpl(request, dataObject, std::move(flowState));
 	}
 	catch(...) {
 		future = Future<PipelineFlowState>::createFailed(std::current_exception());
 	}
 
 	// Post-process the results before returning them to the caller.
-	// Turn any exception that was thrown during modifier evaluation into a valid pipeline state with an error code.
+	// Turn any exception that was thrown during evaluation into a valid pipeline state with an error code.
 	future = future.then_future(executor(), [this, inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
+		OVITO_ASSERT(!future.isCanceled());
 		try {
 			try {
 				PipelineFlowState state = future.result();
@@ -122,7 +120,7 @@ Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvalu
 	});
 
 	// Change status to 'in progress' during long-running operations.
-	if(!future.isFinished()) {
+	if(!future.isFinished() && Application::instance()->guiMode()) {
 		_activeTransformationsCount++;
 		setStatus(PipelineStatus::Pending);
 		// Reset the pending status after the Future is fulfilled.

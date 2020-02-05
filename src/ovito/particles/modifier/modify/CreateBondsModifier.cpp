@@ -131,7 +131,7 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 	// Adopt the upstream BondsVis object if there already is one.
 	// Also initialize the numeric ID of the type ID to not conflict with any existing bond types.
 	int bondTypeId = 1;
-	const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+	const PipelineFlowState& input = modApp->evaluateInputSynchronous();
 	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
 		if(particles->bonds()) {
 			if(BondsVis* bondsVis = particles->bonds()->visElement<BondsVis>()) {

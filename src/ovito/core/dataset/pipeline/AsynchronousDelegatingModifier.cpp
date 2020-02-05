@@ -56,6 +56,19 @@ AsynchronousDelegatingModifier::AsynchronousDelegatingModifier(DataSet* dataset)
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval AsynchronousDelegatingModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	TimeInterval iv = AsynchronousModifier::validityInterval(request, modApp);
+
+	if(delegate())
+		iv.intersect(delegate()->validityInterval(request, modApp));
+
+	return iv;
+}
+
+/******************************************************************************
 * Creates a default delegate for this modifier.
 ******************************************************************************/
 void AsynchronousDelegatingModifier::createDefaultModifierDelegate(const OvitoClass& delegateType, const QString& defaultDelegateTypeName)

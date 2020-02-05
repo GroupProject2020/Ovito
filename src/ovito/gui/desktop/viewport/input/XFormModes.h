@@ -137,7 +137,7 @@ class OVITO_GUI_EXPORT MoveMode : public XFormMode
 public:
 
 	/// Constructor.
-	MoveMode(QObject* parent) : XFormMode(parent, QStringLiteral(":/gui/cursor/editing/cursor_mode_move.png")) {}
+	MoveMode(QObject* parent) : XFormMode(parent, QStringLiteral(":/guibase/cursor/editing/cursor_mode_move.png")) {}
 
 protected:
 
@@ -186,7 +186,7 @@ class OVITO_GUI_EXPORT RotateMode : public XFormMode
 public:
 
 	/// Constructor.
-	RotateMode(QObject* parent) : XFormMode(parent, QStringLiteral(":/gui/cursor/editing/cursor_mode_rotate.png")) {}
+	RotateMode(QObject* parent) : XFormMode(parent, QStringLiteral(":/guibase/cursor/editing/cursor_mode_rotate.png")) {}
 
 protected:
 

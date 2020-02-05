@@ -125,11 +125,11 @@ bool GuiApplication::startupApplication()
 
 		// Set the application icon.
 		QIcon mainWindowIcon;
-		mainWindowIcon.addFile(":/gui/mainwin/window_icon_256.png");
-		mainWindowIcon.addFile(":/gui/mainwin/window_icon_128.png");
-		mainWindowIcon.addFile(":/gui/mainwin/window_icon_48.png");
-		mainWindowIcon.addFile(":/gui/mainwin/window_icon_32.png");
-		mainWindowIcon.addFile(":/gui/mainwin/window_icon_16.png");
+		mainWindowIcon.addFile(":/guibase/mainwin/window_icon_256.png");
+		mainWindowIcon.addFile(":/guibase/mainwin/window_icon_128.png");
+		mainWindowIcon.addFile(":/guibase/mainwin/window_icon_48.png");
+		mainWindowIcon.addFile(":/guibase/mainwin/window_icon_32.png");
+		mainWindowIcon.addFile(":/guibase/mainwin/window_icon_16.png");
 		QApplication::setWindowIcon(mainWindowIcon);
 
 		// Create the main window.

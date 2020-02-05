@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,6 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/NativePropertyFieldDescriptor.h>
 #include <ovito/core/oo/PropertyField.h>
+#include <ovito/core/oo/RefTargetExecutor.h>
 #include "RefMaker.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
@@ -262,6 +263,10 @@ public:
 
 	/// \brief Determines if this object's properties are currently being edited in an editor.
 	bool isObjectBeingEdited() const;
+
+	/// Returns an executor object to be used with Future<>::then(), which executes work
+	/// in the context (and the thread) of this object.
+	RefTargetExecutor executor() const { return RefTargetExecutor(this); }
 
 private:
 

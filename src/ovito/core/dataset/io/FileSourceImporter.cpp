@@ -36,18 +36,34 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
 IMPLEMENT_OVITO_CLASS(FileSourceImporter);
+DEFINE_PROPERTY_FIELD(FileSourceImporter, isMultiTimestepFile);
+SET_PROPERTY_FIELD_LABEL(FileSourceImporter, isMultiTimestepFile, "File contains multiple timesteps");
+
+/******************************************************************************
+* Is called when the value of a property of this object has changed.
+******************************************************************************/
+void FileSourceImporter::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	FileImporter::propertyChanged(field);
+
+	if(field == PROPERTY_FIELD(isMultiTimestepFile)) {
+		// Automatically rescan input file for animation frames when this option has been changed.
+		requestFramesUpdate();
+	}
+}
 
 /******************************************************************************
 * Sends a request to the FileSource owning this importer to reload
 * the input file.
 ******************************************************************************/
-void FileSourceImporter::requestReload(int frame)
+void FileSourceImporter::requestReload(bool refetchFiles, int frame)
 {
 	// Retrieve the FileSource that owns this importer by looking it up in the list of dependents.
 	for(RefMaker* refmaker : dependents()) {
 		if(FileSource* fileSource = dynamic_object_cast<FileSource>(refmaker)) {
 			try {
-				fileSource->reloadFrame(frame);
+				qDebug() << "FileSourceImporter::requestReload refetchFiles=" << refetchFiles << "frame=" << frame;
+				fileSource->reloadFrame(refetchFiles, frame);
 			}
 			catch(const Exception& ex) {
 				ex.reportError();

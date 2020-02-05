@@ -90,7 +90,7 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
@@ -116,9 +116,9 @@ void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void HistogramModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No data element type set."));

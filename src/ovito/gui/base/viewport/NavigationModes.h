@@ -118,7 +118,7 @@ public:
 	/// \brief Constructor.
 	OrbitMode(QObject* parent) : NavigationMode(parent) {
 #ifndef Q_OS_WASM
-		setCursor(QCursor(QPixmap(":/gui/cursor/viewport/cursor_orbit.png")));
+		setCursor(QCursor(QPixmap(":/guibase/cursor/viewport/cursor_orbit.png")));
 #else
 		// WebAssembly platform does not support custom cursor shapes. Have to use one of the built-in shapes.
 		setCursor(Qt::PointingHandCursor);
@@ -143,7 +143,7 @@ public:
 	/// \brief Constructor.
 	PanMode(QObject* parent) : NavigationMode(parent) {
 #ifndef Q_OS_WASM
-		setCursor(QCursor(QPixmap(":/gui/cursor/viewport/cursor_pan.png")));
+		setCursor(QCursor(QPixmap(":/guibase/cursor/viewport/cursor_pan.png")));
 #else
 		// WebAssembly platform does not support custom cursor shapes. Have to use one of the built-in shapes.
 		setCursor(Qt::PointingHandCursor);
@@ -169,7 +169,7 @@ public:
 	/// \brief Constructor.
 	ZoomMode(QObject* parent) : NavigationMode(parent) {
 #ifndef Q_OS_WASM
-		setCursor(QCursor(QPixmap(":/gui/cursor/viewport/cursor_zoom.png")));
+		setCursor(QCursor(QPixmap(":/guibase/cursor/viewport/cursor_zoom.png")));
 #else
 		// WebAssembly platform does not support custom cursor shapes. Have to use one of the built-in shapes.
 		setCursor(Qt::PointingHandCursor);
@@ -201,7 +201,7 @@ public:
 	/// \brief Protected constructor to prevent the creation of second instances.
 	FOVMode(QObject* parent) : NavigationMode(parent) {
 #ifndef Q_OS_WASM
-		setCursor(QCursor(QPixmap(":/gui/cursor/viewport/cursor_fov.png")));
+		setCursor(QCursor(QPixmap(":/guibase/cursor/viewport/cursor_fov.png")));
 #else
 		// WebAssembly platform does not support custom cursor shapes. Have to use one of the built-in shapes.
 		setCursor(Qt::PointingHandCursor);
@@ -226,7 +226,7 @@ public:
 	/// Constructor.
 	PickOrbitCenterMode(QObject* parent) : ViewportInputMode(parent) {
 #ifndef Q_OS_WASM
-		_hoverCursor = QCursor(QPixmap(":/gui/cursor/editing/cursor_mode_select.png"));
+		_hoverCursor = QCursor(QPixmap(":/guibase/cursor/editing/cursor_mode_select.png"));
 #else
 		// WebAssembly platform does not support custom cursor shapes. Have to use one of the built-in shapes.
 		setCursor(Qt::PointingHandCursor);

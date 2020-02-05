@@ -59,7 +59,7 @@ public:
 	static QCursor selectionCursor() {
 		if(!_hoverCursor)
 #ifndef Q_OS_WASM
-			_hoverCursor = QCursor(QPixmap(QStringLiteral(":/gui/cursor/editing/cursor_mode_select.png")));
+			_hoverCursor = QCursor(QPixmap(QStringLiteral(":/guibase/cursor/editing/cursor_mode_select.png")));
 #else
 			// WebAssembly platform does not support custom cursor shapes. Have to use one of the built-in shapes.
 			_hoverCursor = QCursor(Qt::CrossCursor);

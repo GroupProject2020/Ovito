@@ -123,7 +123,7 @@ bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* imp
 			_oldImporter = importer;
 		}
 		QString displayName() const override {
-			return QStringLiteral("Set file source url");
+			return QStringLiteral("Set file source URL");
 		}
 	private:
 		std::vector<QUrl> _oldUrls;
@@ -140,8 +140,8 @@ bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* imp
 
 	// Trigger a reload of the current frame.
 	_frames.clear();
-	invalidateFrameCache();
-	invalidatePipelineCache();
+	qDebug() << "FileSource::setSourceURL: invalidating cache";
+	pipelineCache().invalidate();
 
 	// Scan the input source for animation frames.
 	updateListOfFrames();
@@ -161,19 +161,19 @@ void FileSource::updateListOfFrames()
 	// Update the list of frames.
 	SharedFuture<QVector<FileSourceImporter::Frame>> framesFuture = requestFrameList(true, true);
 
-	// Show progress in the main window status bar.
-	dataset()->taskManager().registerFuture(framesFuture);
-
 	// Catch exceptions and display error messages.
-	framesFuture.finally_future(executor(), [](SharedFuture<QVector<FileSourceImporter::Frame>> future) {
+	framesFuture.on_error(executor(), [](const std::exception_ptr& ex_ptr) {
 		try {
-			if(!future.isCanceled())
-				future.results();
+			std::rethrow_exception(ex_ptr);
 		}
 		catch(const Exception& ex) {
 			ex.reportError();
 		}
+		catch(...) {}
 	});
+
+	// Show progress in the main window status bar.
+	dataset()->taskManager().registerFuture(framesFuture);
 }
 
 /******************************************************************************
@@ -183,7 +183,6 @@ void FileSource::updateListOfFrames()
 void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 {
 	_framesListFuture.reset();
-	qDebug() << "FileSource::setListOfFrames" << frames.size() << "old count:" << _frames.size();
 
 	// If there are too many frames, time tick values may overflow. Warn the user in this case.
 	if(frames.size() >= animationTimeToSourceFrame(TimePositiveInfinity())) {
@@ -197,8 +196,6 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 	// Invalidate all cached frames that are no longer present.
 	if(frames.size() < _frames.size())
 		remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(frames.size())-1));
-	for(int frameIndex = frames.size(); frameIndex < _frames.size(); frameIndex++)
-		invalidateFrameCache(frameIndex);	
 
 	// When adding additional frames to the end, the cache validity interval of the last frame must be reduced.
 	if(frames.size() > _frames.size())
@@ -207,7 +204,6 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 	// Invalidate all cached frames that have changed.
 	for(int frameIndex = 0; frameIndex < _frames.size() && frameIndex < frames.size(); frameIndex++) {
 		if(frames[frameIndex] != _frames[frameIndex]) {
-			invalidateFrameCache(frameIndex);
 			remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(frameIndex)-1));
 		}
 	}
@@ -218,7 +214,8 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 	_frameLabels.clear();
 
 	// Update cache validity.
-	invalidatePipelineCache(remainingCacheValidity);
+	qDebug() << "FileSource::setListOfFrames: invalidating cache (remainingCacheValidity=" << remainingCacheValidity << ")";
+	pipelineCache().invalidate(remainingCacheValidity);
 
 	// Adjust the animation length to match the number of source frames.
 	notifyDependents(ReferenceEvent::AnimationFramesChanged);
@@ -295,11 +292,27 @@ PipelineStatus FileSource::status() const
 }
 
 /******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval FileSource::validityInterval(const PipelineEvaluationRequest& request) const
+{
+	TimeInterval iv = CachingPipelineObject::validityInterval(request);
+
+	// Restrict the validity interval to the duration of the requested source frame.
+	int frame = animationTimeToSourceFrame(request.time());
+	if(frame > 0)
+		iv.intersect(TimeInterval(sourceFrameToAnimationTime(frame), TimePositiveInfinity()));
+	if(frame < numberOfSourceFrames() - 1)
+		iv.intersect(TimeInterval(TimeNegativeInfinity(), std::max(sourceFrameToAnimationTime(frame + 1) - 1, sourceFrameToAnimationTime(frame))));
+
+	return iv;
+}
+
+/******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
 Future<PipelineFlowState> FileSource::evaluateInternal(const PipelineEvaluationRequest& request)
 {
-	qDebug() << "FileSource::evaluateInternal:" << request.time();
 	// Convert the animation time to a frame number.
 	int frame = animationTimeToSourceFrame(request.time());
 	int frameCount = numberOfSourceFrames();
@@ -317,10 +330,11 @@ Future<PipelineFlowState> FileSource::evaluateInternal(const PipelineEvaluationR
 ******************************************************************************/
 SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame)
 {
-	qDebug() << "FileSource::requestFrameList" << forceRescan << forceReloadOfCurrentFrame;
 	// Without an importer object the list of frames is empty.
 	if(!importer())
 		return Future<QVector<FileSourceImporter::Frame>>::createImmediateEmplace();
+
+	qDebug() << "FileSource::requestFrameList: _framesListFuture:" << (_framesListFuture.isValid() ? _framesListFuture.task().get() : nullptr) << "forceRescan:" << forceRescan << "_frames:" << _frames.size();
 
 	// Return the active future when the frame loading process is currently in progress.
 	if(_framesListFuture.isValid()) {
@@ -338,12 +352,10 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 	// Intercept future results when they become available and cache them.
 	_framesListFuture = importer()->discoverFrames(sourceUrls())
 		.then(executor(), [this, forceReloadOfCurrentFrame](QVector<FileSourceImporter::Frame>&& frameList) {
-			UndoSuspender noUndo(this);
 			setListOfFrames(frameList);
 
 			// If update was triggered by user, also reload the current frame.
 			if(forceReloadOfCurrentFrame) {
-				qDebug() << "FileSource::requestFrameList: notifyTargetChanged()";
 				notifyTargetChanged();
 			}
 
@@ -373,8 +385,9 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 {
 	// First request the list of source frames and wait until it becomes available.
-	return requestFrameList(false, false)
+	auto future = requestFrameList(false, false)
 		.then(executor(), [this, frame](const QVector<FileSourceImporter::Frame>& sourceFrames) -> Future<PipelineFlowState> {
+			qDebug() << "FileSource::requestFrameInternal: source frames list is available -> fetching data file";
 
 			// Is the requested frame out of range?
 			if(frame >= sourceFrames.size()) {
@@ -397,13 +410,13 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				interval.setEnd(std::max(sourceFrameToAnimationTime(frame + 1) - 1, sourceFrameToAnimationTime(frame)));
 			OVITO_ASSERT(frame >= 0);
 			OVITO_ASSERT(!interval.isEmpty());
-			qDebug() << "FileSource: interval=" << interval;
 
 			const FileSourceImporter::Frame& frameInfo = sourceFrames[frame];
 
 			// Retrieve the file.
 			Future<PipelineFlowState> loadFrameFuture = Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frameInfo.sourceFile)
 				.then(executor(), [this, frameInfo, frame, interval](const FileHandle& fileHandle) -> Future<PipelineFlowState> {
+					qDebug() << "FileSource::requestFrameInternal: data file is available -> creating frame loader";
 
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {
@@ -417,11 +430,10 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 					// Execute the loader in a background thread.
 					// Collect results from the loader in the UI thread once it has finished running.
-					return dataset()->container()->taskManager().runTaskAsync(frameLoader)
+					auto future = dataset()->container()->taskManager().runTaskAsync(frameLoader)
 						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) {
+							qDebug() << "FileSource::requestFrameInternal: frame loader has finished -> storing frame data";
 							OVITO_ASSERT_MSG(frameData, "FileSource::requestFrameInternal()", "File importer did not return a FrameData object.");
-
-							UndoSuspender noUndo(this);
 
 							// Let the file importer work with the data collection of this FileSource if there is one from a previous load operation.
 							OORef<DataCollection> oldData = dataCollection();
@@ -447,10 +459,10 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 								// FileSource, which appears in the pipeline editor.
 								if(interval.contains(dataset()->animationSettings()->time())) {
 									setDataCollection(loadedData);
-									setStoredFrameIndex(frame);
+									setDataCollectionFrame(frame);
 								}
 
-								// Build and return the result pipeline state.
+								// Return the result pipeline state.
 								return PipelineFlowState(std::move(loadedData), frameData->status(), interval);
 							}
 							catch(...) {
@@ -458,10 +470,13 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 								throw;
 							}
 						});
+					qDebug() << "FileSource::requestFrameInternal: scheduled frame loader execution";
+					return future;
 				});
+			qDebug() << "FileSource::requestFrameInternal: scheduled file fetch operation";
 
 			// Change status to 'pending' during long-running load operations.
-			if(!loadFrameFuture.isFinished()) {
+			if(!loadFrameFuture.isFinished() && Application::instance()->guiMode()) {
 				if(_numActiveFrameLoaders++ == 0)
 					notifyDependents(ReferenceEvent::ObjectStatusChanged);
 
@@ -472,6 +487,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 						notifyDependents(ReferenceEvent::ObjectStatusChanged);
 				});
 			}
+			qDebug() << "FileSource::requestFrameInternal: returning future to file fetch operation";
 
 			return loadFrameFuture;
 		})
@@ -481,6 +497,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 		//    valid pipeline state with an error code.
 		//
 		.then_future(executor(), [this, frame](Future<PipelineFlowState> future) {
+				qDebug() << "FileSource::requestFrameInternal: post-processing frame loader results";
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {
@@ -496,43 +513,44 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar(' '))), sourceFrameToAnimationTime(frame));
 				}
 			});
+	qDebug() << "FileSource::requestFrameInternal: scheduled request frames list operation";
+	return future;
 }
 
 /******************************************************************************
 * This will trigger a reload of an animation frame upon next request.
 ******************************************************************************/
-void FileSource::reloadFrame(int frameIndex)
+void FileSource::reloadFrame(bool refetchFiles, int frameIndex)
 {
+	qDebug() << "FileSource::reloadFrame: frameIndex=" << frameIndex;
 	if(!importer())
 		return;
 
-	// Remove source file from file cache so that it will be downloaded again
-	// if it came from a remote location.
-	if(frameIndex >= 0 && frameIndex < frames().size())
-		Application::instance()->fileManager()->removeFromCache(frames()[frameIndex].sourceFile);
+	// Remove source files from file cache so that they will be downloaded again
+	// if they came from a remote location.
+	if(refetchFiles) {
+		if(frameIndex >= 0 && frameIndex < frames().size()) {
+			Application::instance()->fileManager()->removeFromCache(frames()[frameIndex].sourceFile);
+		}
+		else if(frameIndex == -1) {
+			for(const FileSourceImporter::Frame& frame : frames())
+				Application::instance()->fileManager()->removeFromCache(frame.sourceFile);
+		}
+	}
 
-	invalidateFrameCache(frameIndex);
-	invalidatePipelineCache();
+	// TODO: Only invalidate one frame of the cache if frameIndex != -1.
+	pipelineCache().invalidate();
+
 	notifyTargetChanged();
 }
 
 /******************************************************************************
-* Clears the cache entry for the given input frame.
+* Sets which frame is currently stored in the data collection sub-object.
 ******************************************************************************/
-void FileSource::invalidateFrameCache(int frameIndex)
+void FileSource::setDataCollectionFrame(int frameIndex)
 {
-	if(frameIndex == -1 || frameIndex == storedFrameIndex()) {
-		setStoredFrameIndex(-1);
-	}
-}
-
-/******************************************************************************
-* Sets which frame is currently stored in this object.
-******************************************************************************/
-void FileSource::setStoredFrameIndex(int frameIndex)
-{
-	if(_storedFrameIndex != frameIndex) {
-		_storedFrameIndex = frameIndex;
+	if(_dataCollectionFrame != frameIndex) {
+		_dataCollectionFrame = frameIndex;
 		notifyDependents(ReferenceEvent::ObjectStatusChanged);
 	}
 }
@@ -565,7 +583,7 @@ void FileSource::loadFromStream(ObjectLoadStream& stream)
 QString FileSource::objectTitle() const
 {
 	QString filename;
-	int frameIndex = storedFrameIndex();
+	int frameIndex = dataCollectionFrame();
 	if(frameIndex >= 0 && frameIndex < frames().size()) {
 		filename = QFileInfo(frames()[frameIndex].sourceFile.path()).fileName();
 	}
@@ -603,11 +621,8 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		}
 		else if(!event.sender()->isBeingLoaded()) {
 			// Whenever the user actively edits the data collection of this FileSource,
-			// cached pipeline states become (mostly) invalid.
-			invalidatePipelineCache(TimeInterval(dataset()->animationSettings()->time()));
-
-			// Next time the cached state is accessed, make sure we update it with the contents of the current data collection.
-			_updateCacheWithDataCollection = true;
+			// the cached pipeline states become (mostly) invalid and is replaced with the data collection.
+			pipelineCache().overrideCache(dataCollection());
 
 			// Inform the pipeline that we have a new preliminary input state.
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
@@ -615,36 +630,6 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 	}
 
 	return CachingPipelineObject::referenceEvent(source, event);
-}
-
-/******************************************************************************
-* Asks the object for the result of the data pipeline.
-******************************************************************************/
-SharedFuture<PipelineFlowState> FileSource::evaluate(const PipelineEvaluationRequest& request)
-{
-	if(_updateCacheWithDataCollection) {
-		_updateCacheWithDataCollection = false;
-		if(pipelineCache().contains(request.time())) {
-			UndoSuspender noUndo(this);
-			const PipelineFlowState& oldCachedState = pipelineCache().getAt(request.time());
-			pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
-		}
-	}
-	return CachingPipelineObject::evaluate(request);
-}
-
-/******************************************************************************
-* Returns the results of an immediate and preliminary evaluation of the data pipeline.
-******************************************************************************/
-PipelineFlowState FileSource::evaluatePreliminary()
-{
-	if(_updateCacheWithDataCollection) {
-		_updateCacheWithDataCollection = false;
-		UndoSuspender noUndo(this);
-		const PipelineFlowState& oldCachedState = pipelineCache().getStaleContents();
-		pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
-	}
-	return CachingPipelineObject::evaluatePreliminary();
 }
 
 OVITO_END_INLINE_NAMESPACE

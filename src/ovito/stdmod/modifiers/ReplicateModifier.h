@@ -75,8 +75,8 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ReplicateModifier(DataSet* dataset);
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Helper function that returns the range of replicated boxes.
 	Box3I replicaRange() const;

@@ -225,8 +225,7 @@ void FileExporterSettingsDialog::updateDataObjectList()
 	std::vector<DataObjectClassPtr> objClasses = _exporter->exportableDataObjectClass();
 	if(!objClasses.empty()) {
 		if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_exporter->nodeToExport())) {
-			const PipelineFlowState& state = pipeline->evaluatePipelinePreliminary(true);
-			if(!state.isEmpty()) {
+			if(const PipelineFlowState& state = pipeline->evaluatePipelineSynchronous(true)) {
 				for(DataObjectClassPtr clazz : objClasses) {
 					OVITO_ASSERT(clazz != nullptr);
 					for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(*clazz)) {

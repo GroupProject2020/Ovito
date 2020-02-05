@@ -208,7 +208,12 @@ private:
 	OORef<ViewportConfiguration> createDefaultViewportConfiguration();
 
 	/// Requests the (re-)evaluation of all data pipelines in the current scene.
-	void makeSceneReady(bool forceReevaluation);
+	Q_INVOKABLE void makeSceneReady(bool forceReevaluation);
+
+	/// Requests the (re-)evaluation of all data pipelines next time execution returns to the event loop.
+	void makeSceneReadyLater(bool forceReevaluation) { 
+		QMetaObject::invokeMethod(this, "makeSceneReady", Qt::QueuedConnection, Q_ARG(bool, forceReevaluation));
+	}
 
 private Q_SLOTS:
 

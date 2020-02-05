@@ -106,7 +106,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, particles, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
 
 	// Make sure the renderer and the offscreen surface stay alive until the compute engine finished.
-	engine->task()->finally(dataset()->executor(), [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
+	engine->task()->finally(dataset()->executor(), false, [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
 
 	return engine;
 }

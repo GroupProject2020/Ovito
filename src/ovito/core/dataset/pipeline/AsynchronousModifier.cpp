@@ -83,8 +83,6 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 							asyncModApp->setLastComputeResults(engine);
 						}
 
-						UndoSuspender noUndo(this);
-
 						// Apply the computed results to the input data.
 						engine->emitResults(time, modApp, state);
 						state.intersectStateValidity(engine->validityInterval());
@@ -96,9 +94,9 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void AsynchronousModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void AsynchronousModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
@@ -108,7 +106,7 @@ void AsynchronousModifier::evaluatePreliminary(TimePoint time, ModifierApplicati
 			state.intersectStateValidity(lastResults->validityInterval());
 		}
 	}
-	Modifier::evaluatePreliminary(time, modApp, state);
+	Modifier::evaluateSynchronous(time, modApp, state);
 }
 
 /******************************************************************************

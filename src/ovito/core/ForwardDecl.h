@@ -56,7 +56,6 @@ namespace Ovito {
 			class TaskManager;
 			class TaskWatcher;
 			class AsynchronousTaskBase;
-			class TrackingTask;
 			class MainThreadTask;
 			class AsyncOperation;
 			template<typename tuple_type> class ContinuationTask;
@@ -116,6 +115,7 @@ namespace Ovito {
 			class SceneNode;
 			class DataObject;
 			class DataObjectReference;
+			class TransformedDataObject;
 			class AttributeDataObject;
 			class RootSceneNode;
 			class SelectionSet;

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -44,8 +44,11 @@ protected:
 
 public:
 
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, PipelineSceneNode* pipeline) const { return TimeInterval::infinite(); }
+
 	/// Lets the vis element transform a data object in preparation for rendering.
-	Future<PipelineFlowState> transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState);
+	Future<PipelineFlowState> transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const std::vector<OORef<TransformedDataObject>>& cachedTransformedDataObjects);
 
 	/// Returns the revision counter of this vis element, which is incremented each time one of its parameters changes.
 	unsigned int revisionNumber() const { return _revisionNumber; }
@@ -59,7 +62,7 @@ public:
 protected:
 
 	/// Lets the vis element transform a data object in preparation for rendering.
-	virtual Future<PipelineFlowState> transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState) = 0;
+	virtual Future<PipelineFlowState> transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState) = 0;
 
 private:
 

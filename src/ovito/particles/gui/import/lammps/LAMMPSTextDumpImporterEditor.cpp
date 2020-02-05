@@ -126,8 +126,8 @@ void LAMMPSTextDumpImporterEditor::onEditColumnMapping()
 		if(!fileSource || fileSource->frames().empty()) return;
 
 		QUrl sourceUrl;
-		if(fileSource->storedFrameIndex() >= 0)
-			sourceUrl = fileSource->frames()[fileSource->storedFrameIndex()].sourceFile;
+		if(fileSource->dataCollectionFrame() >= 0)
+			sourceUrl = fileSource->frames()[fileSource->dataCollectionFrame()].sourceFile;
 		else
 			sourceUrl = fileSource->frames().front().sourceFile;
 

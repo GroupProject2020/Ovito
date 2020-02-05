@@ -62,17 +62,12 @@ public:
 	template<class TaskType>
 	auto runTaskAsync(const std::shared_ptr<TaskType>& task) {
 		OVITO_ASSERT(task);
-		OVITO_ASSERT(task->_taskManager == nullptr);
-		// Associate this TaskManager with the task.
-		task->_taskManager = this; 
-		// Submit the task for execution.
-#ifndef OVITO_DISABLE_THREADING
-		QThreadPool::globalInstance()->start(task.get());
-#endif
-		// The task is now associated with this TaskManager.
+		// Associate the task with this TaskManager.
 		registerTask(task);
-
-#ifdef OVITO_DISABLE_THREADING
+#ifndef OVITO_DISABLE_THREADING
+		// Submit the task for execution in a background thread.
+		QThreadPool::globalInstance()->start(task.get());
+#else
 		// If multi-threading has been disabled, run the task immediately in the current thread.
 		task->run();
 #endif
@@ -113,7 +108,7 @@ public:
 		using tuple_type = typename promise_type::tuple_type;
 		promise_type promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
 			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
-			startedState ? Task::State(Task::Started) : Task::NoState, *this));
+			startedState ? Task::State(Task::Started) : Task::NoState, this));
 		addTaskInternal(promise.task());
 		return promise;
 	}

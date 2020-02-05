@@ -120,7 +120,7 @@ void FileColumnParticleExporterEditor::updateParticlePropertiesList()
 		ProgressDialog progressDialog(container(), exporter->dataset()->container()->taskManager());
 		AsyncOperation asyncOperation(progressDialog.taskManager());
 		PipelineFlowState state = exporter->getParticleData(exporter->dataset()->animationSettings()->time(), asyncOperation);
-		if(state.isEmpty())
+		if(!state)
 			throw Exception(tr("Operation has been canceled by the user."));
 
 		bool hasParticleIdentifiers = false;

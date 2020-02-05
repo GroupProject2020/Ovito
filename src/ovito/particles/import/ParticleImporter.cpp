@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,9 +26,7 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
 IMPLEMENT_OVITO_CLASS(ParticleImporter);
-DEFINE_PROPERTY_FIELD(ParticleImporter, isMultiTimestepFile);
 DEFINE_PROPERTY_FIELD(ParticleImporter, sortParticles);
-SET_PROPERTY_FIELD_LABEL(ParticleImporter, isMultiTimestepFile, "File contains multiple timesteps");
 SET_PROPERTY_FIELD_LABEL(ParticleImporter, sortParticles, "Sort particles by ID");
 
 /******************************************************************************
@@ -36,15 +34,15 @@ SET_PROPERTY_FIELD_LABEL(ParticleImporter, sortParticles, "Sort particles by ID"
 ******************************************************************************/
 void ParticleImporter::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	if(field == PROPERTY_FIELD(isMultiTimestepFile)) {
-		// Automatically rescan input file for animation frames when this option has been changed.
-		requestFramesUpdate();
-	}
-	else if(field == PROPERTY_FIELD(sortParticles)) {
-		// Automatically reload input file when this option has been changed.
+	qDebug() << "ParticleImporter::propertyChanged field=" << field.identifier();
+	FileSourceImporter::propertyChanged(field);
+
+	if(field == PROPERTY_FIELD(sortParticles)) {
+		// Reload input file(s) when this option has been changed.
+		// But no need to refetch the files from the remote location. Reparsing the cached files is sufficient.
+		qDebug() << "ParticleImporter::propertyChanged calling requestReload()";
 		requestReload();
 	}
-	FileSourceImporter::propertyChanged(field);
 }
 
 OVITO_END_INLINE_NAMESPACE
