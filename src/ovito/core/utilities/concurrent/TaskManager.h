@@ -68,8 +68,8 @@ public:
 		// Submit the task for execution in a background thread.
 		QThreadPool::globalInstance()->start(task.get());
 #else
-		// If multi-threading has been disabled, run the task immediately in the current thread.
-		task->run();
+		// If multi-threading is not available, run the task in the main thread as soon as execution returns to the event loop.
+		QTimer::singleShot(0, this, [task]() { task->run(); });
 #endif
 		return task->future();
 	}

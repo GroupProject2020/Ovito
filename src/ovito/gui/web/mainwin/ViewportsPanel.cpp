@@ -93,7 +93,7 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 		}
 
 		// Repaint the viewport borders when another viewport has been activated.
-		_activeViewportChangedConnection = connect(viewportConfiguration(), &ViewportConfiguration::activeViewportChanged, this, (void (ViewportsPanel::*)())&ViewportsPanel::update);
+		_activeViewportChangedConnection = connect(viewportConfiguration(), &ViewportConfiguration::activeViewportChanged, this, &ViewportsPanel::updateViewportWindows);
 
 		// Update layout when a viewport has been maximized.
 		_maximizedViewportChangedConnection = connect(viewportConfiguration(), &ViewportConfiguration::maximizedViewportChanged, this, &ViewportsPanel::layoutViewports);
@@ -114,7 +114,7 @@ void ViewportsPanel::onAnimationSettingsReplaced(AnimationSettings* newAnimation
 	_animSettings = newAnimationSettings;
 
 	if(newAnimationSettings) {
-		_timeChangeCompleteConnection = connect(newAnimationSettings, &AnimationSettings::timeChangeComplete, this, &ViewportsPanel::update);
+		_timeChangeCompleteConnection = connect(newAnimationSettings, &AnimationSettings::timeChangeComplete, this, &ViewportsPanel::updateViewportWindows);
 	}
 }
 
@@ -140,6 +140,16 @@ void ViewportsPanel::viewportModeCursorChanged(const QCursor& cursor)
 
 	for(ViewportWindow* window : findChildren<ViewportWindow*>()) {
 		window->setCursor(cursor);
+	}
+}
+
+/******************************************************************************
+* Repaints all viewport windows.
+******************************************************************************/
+void ViewportsPanel::updateViewportWindows()
+{
+	for(ViewportWindow* window : findChildren<ViewportWindow*>()) {
+		window->update();
 	}
 }
 

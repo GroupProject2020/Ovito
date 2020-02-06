@@ -51,7 +51,6 @@ Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvalu
 	// created earlier for the same input object. If yes, we can immediately return it.
 	for(const auto& transformedDataObject : cachedTransformedDataObjects) {
 		if(transformedDataObject->sourceDataObject() == dataObject && transformedDataObject->visElement() == this && transformedDataObject->visElementRevision() == revisionNumber()) {
-			qDebug() << "TransformingDataVis::transformData: reusing existing output for " << dataObject;
 			flowState.mutableData()->addObject(transformedDataObject);
 			return std::move(flowState);
 		}

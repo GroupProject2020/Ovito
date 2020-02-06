@@ -76,6 +76,9 @@ private Q_SLOTS:
 	/// This is called when the mouse cursor of the active input mode has changed.
 	void viewportModeCursorChanged(const QCursor& cursor);
 
+	/// Repaints all viewport windows.
+	void updateViewportWindows();
+
 private:
 
 	QMetaObject::Connection _activeViewportChangedConnection;

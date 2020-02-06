@@ -34,13 +34,11 @@ SET_PROPERTY_FIELD_LABEL(ParticleImporter, sortParticles, "Sort particles by ID"
 ******************************************************************************/
 void ParticleImporter::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	qDebug() << "ParticleImporter::propertyChanged field=" << field.identifier();
 	FileSourceImporter::propertyChanged(field);
 
 	if(field == PROPERTY_FIELD(sortParticles)) {
 		// Reload input file(s) when this option has been changed.
 		// But no need to refetch the files from the remote location. Reparsing the cached files is sufficient.
-		qDebug() << "ParticleImporter::propertyChanged calling requestReload()";
 		requestReload();
 	}
 }

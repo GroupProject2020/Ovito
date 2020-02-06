@@ -266,11 +266,16 @@ protected:
     /// Head of linked list of TaskWatchers currently monitoring this shared state.
     TaskWatcher* _watchers = nullptr;
 
-    /// Pointer to a std::tuple<R...> storing the results of this task.
+    /// Pointer to a std::tuple<...> storing the results of this task.
     void* _resultsTuple = nullptr;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0) // Note: QVarLengthArray support for move-only types was added in Qt 5.9.
     /// List of continuation functions that will be called when this shared state enters the 'finished' state.
     QVarLengthArray<fu2::unique_function<void(bool)>, 1> _continuations;
+#else
+    /// List of continuation functions that will be called when this shared state enters the 'finished' state.
+    std::vector<fu2::unique_function<void(bool)>> _continuations;
+#endif
 
     /// Holds the exception object when this shared state is in the failed state.
     std::exception_ptr _exceptionStore;
