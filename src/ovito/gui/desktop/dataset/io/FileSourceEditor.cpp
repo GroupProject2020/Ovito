@@ -314,7 +314,12 @@ void FileSourceEditor::onReloadFrame()
 void FileSourceEditor::onReloadAnimation()
 {
 	if(FileSource* fileSource = static_object_cast<FileSource>(editObject())) {
-		fileSource->updateListOfFrames();
+		int oldFrameCount = fileSource->frames().size();
+		SharedFuture<QVector<FileSourceImporter::Frame>> frameListFuture = fileSource->updateListOfFrames();
+		Future<> theFuture = frameListFuture.then(fileSource->executor(), [fileSource,oldFrameCount](const QVector<FileSourceImporter::Frame>& frames) {
+			qDebug() << "Old frame count:" << oldFrameCount << "new frame count:" << frames.size();
+		});
+		fileSource->dataset()->taskManager().registerFuture(theFuture);
 	}
 }
 

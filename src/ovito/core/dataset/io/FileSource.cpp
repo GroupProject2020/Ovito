@@ -154,7 +154,7 @@ bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* imp
 /******************************************************************************
 * Scans the input source for animation frames and updates the internal list of frames.
 ******************************************************************************/
-void FileSource::updateListOfFrames()
+SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::updateListOfFrames()
 {
 	// Update the list of frames.
 	SharedFuture<QVector<FileSourceImporter::Frame>> framesFuture = requestFrameList(true);
@@ -172,6 +172,8 @@ void FileSource::updateListOfFrames()
 
 	// Show progress in the main window status bar.
 	dataset()->taskManager().registerFuture(framesFuture);
+
+	return framesFuture;
 }
 
 /******************************************************************************
