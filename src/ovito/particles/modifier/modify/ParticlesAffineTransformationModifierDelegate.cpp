@@ -50,6 +50,7 @@ QVector<DataObjectReference> ParticlesAffineTransformationModifierDelegate::OOMe
 PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
+		inputParticles->verifyIntegrity();
 
 		// Make sure we can safely modify the particles object.
 		ParticlesObject* outputParticles = state.makeMutable(inputParticles);
@@ -87,6 +88,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 					p = tm * p;
 			}
 		}
+		outputParticles->verifyIntegrity();
 	}
 
 	return PipelineStatus::Success;

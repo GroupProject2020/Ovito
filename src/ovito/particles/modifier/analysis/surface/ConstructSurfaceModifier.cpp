@@ -431,6 +431,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::emitResults(TimePoint time, Mod
 
 	if(surfaceParticleSelection()) {
 		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
+		particles->verifyIntegrity();
 		particles->createProperty(surfaceParticleSelection());
 	}
 

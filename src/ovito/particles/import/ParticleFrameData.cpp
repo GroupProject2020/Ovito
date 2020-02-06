@@ -271,6 +271,8 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 				insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
 			}
 		}
+
+		particles->verifyIntegrity();
 	}
 
 	// Transfer voxel data.

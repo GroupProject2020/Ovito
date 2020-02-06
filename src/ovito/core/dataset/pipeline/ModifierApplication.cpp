@@ -106,13 +106,14 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 	}
 	else if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when the modifier or the upstream pipeline change.
-		pipelineCache().invalidate();
+		pipelineCache().invalidate(static_cast<const TargetChangedEvent&>(event).unchangedInterval());
 		// Trigger a preliminary viewport update if desired by the modifier.
 		if(source == modifier() && modifier()->performPreliminaryUpdateAfterChange()) {
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 		}
 	}
 	else if(event.type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
+		pipelineCache().invalidateSynchronousState();
 		// Inform modifier that the input state has changed.
 		if(modifier())
 			modifier()->notifyDependents(ReferenceEvent::ModifierInputChanged);
@@ -160,7 +161,7 @@ void ModifierApplication::notifyDependentsImpl(const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when this modifier application changes.
-		pipelineCache().invalidate();
+		pipelineCache().invalidate(static_cast<const TargetChangedEvent&>(event).unchangedInterval());
 	}
 	CachingPipelineObject::notifyDependentsImpl(event);
 }

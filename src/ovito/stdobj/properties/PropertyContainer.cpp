@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -337,9 +337,37 @@ void PropertyContainer::verifyIntegrity() const
 {
 	size_t c = elementCount();
 	for(const PropertyObject* property : properties()) {
+		OVITO_ASSERT_MSG(property->size() == c, "PropertyContainer::verifyIntegrity()", qPrintable(QString("Property array '%1' has wrong length. It does not match the number of elements in the parent %2 container.").arg(property->name()).arg(getOOMetaClass().propertyClassDisplayName())));
 		if(property->size() != c) {
 			throwException(tr("Property array '%1' has wrong length. It does not match the number of elements in the parent %2 container.").arg(property->name()).arg(getOOMetaClass().propertyClassDisplayName()));
 		}
+	}
+}
+
+/******************************************************************************
+* Saves the class' contents to the given stream.
+******************************************************************************/
+void PropertyContainer::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
+{
+	DataObject::saveToStream(stream, excludeRecomputableData);
+	stream.beginChunk(0x01);
+	stream << excludeRecomputableData;
+	stream.endChunk();
+}
+
+/******************************************************************************
+* Loads the class' contents from the given stream.
+******************************************************************************/
+void PropertyContainer::loadFromStream(ObjectLoadStream& stream)
+{
+	DataObject::loadFromStream(stream);
+	if(stream.formatVersion() >= 30004) {
+		stream.expectChunk(0x01);
+		bool excludeRecomputableData;
+		stream >> excludeRecomputableData;
+		if(excludeRecomputableData)
+			setElementCount(0);
+		stream.closeChunk();
 	}
 }
 

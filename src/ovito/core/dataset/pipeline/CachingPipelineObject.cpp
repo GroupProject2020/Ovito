@@ -58,7 +58,7 @@ TimeInterval CachingPipelineObject::validityInterval(const PipelineEvaluationReq
 ******************************************************************************/
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEvaluationRequest& request)
 {
-	return pipelineCache().evaluatePipelineStage(request, this);
+	return pipelineCache().evaluatePipeline(request, this, nullptr, false);
 }
 
 /******************************************************************************

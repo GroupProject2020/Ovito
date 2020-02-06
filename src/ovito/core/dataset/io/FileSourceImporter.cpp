@@ -62,7 +62,6 @@ void FileSourceImporter::requestReload(bool refetchFiles, int frame)
 	for(RefMaker* refmaker : dependents()) {
 		if(FileSource* fileSource = dynamic_object_cast<FileSource>(refmaker)) {
 			try {
-				qDebug() << "FileSourceImporter::requestReload refetchFiles=" << refetchFiles << "frame=" << frame;
 				fileSource->reloadFrame(refetchFiles, frame);
 			}
 			catch(const Exception& ex) {

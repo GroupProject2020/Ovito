@@ -79,13 +79,14 @@ private:
 		virtual ~WorkEvent() {
 			// Qt events should only be destroyed in the main thread.
 			OVITO_ASSERT(QCoreApplication::closingDown() || QThread::currentThread() == QCoreApplication::instance()->thread());
-			/// Activate the original execution context under which the work was submitted.
-			activateExecutionContext();
-			// Execute the work function.
-			if(!needToCancelWork())
+			if(!needToCancelWork()) {
+				/// Activate the original execution context under which the work was submitted.
+				activateExecutionContext();
+				// Execute the work function.
 				std::move(_callable)();
-			/// Restore the execution context as it was before the work was executed.
-			restoreExecutionContext();
+				/// Restore the execution context as it was before the work was executed.
+				restoreExecutionContext();
+			}
 		}
 
 	private:

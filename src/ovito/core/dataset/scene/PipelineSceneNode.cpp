@@ -60,7 +60,7 @@ PipelineSceneNode::~PipelineSceneNode() // NOLINT
 * Performs a synchronous evaluation of the pipeline yielding only preliminary results.
 ******************************************************************************/
 const PipelineFlowState& PipelineSceneNode::evaluatePipelineSynchronous(bool includeVisElements)
-{
+{	
 	TimePoint time = dataset()->animationSettings()->time();
 	return includeVisElements ? 
 		_pipelineRenderingCache.evaluatePipelineSynchronous(this, time) : 
@@ -72,7 +72,7 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelineSynchronous(bool inc
 ******************************************************************************/
 PipelineEvaluationFuture PipelineSceneNode::evaluatePipeline(const PipelineEvaluationRequest& request)
 {
-	return PipelineEvaluationFuture(request, _pipelineCache.evaluatePipeline(request, this, false), this);
+	return PipelineEvaluationFuture(request, _pipelineCache.evaluatePipeline(request, nullptr, this, false), this);
 }
 
 /******************************************************************************
@@ -80,7 +80,7 @@ PipelineEvaluationFuture PipelineSceneNode::evaluatePipeline(const PipelineEvalu
 ******************************************************************************/
 PipelineEvaluationFuture PipelineSceneNode::evaluateRenderingPipeline(const PipelineEvaluationRequest& request)
 {
-	return PipelineEvaluationFuture(request, _pipelineRenderingCache.evaluatePipeline(request, this, true), this);
+	return PipelineEvaluationFuture(request, _pipelineRenderingCache.evaluatePipeline(request, nullptr, this, true), this);
 }
 
 /******************************************************************************
@@ -156,8 +156,7 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 {
 	if(source == dataProvider()) {
 		if(event.type() == ReferenceEvent::TargetChanged) {
-			qDebug() << "PipelineSceneNode::referenceEvent: TargetChanged event sent from" << event.sender() << "-> invalidating pipeline cache";
-			invalidatePipelineCache();
+			invalidatePipelineCache(static_cast<const TargetChangedEvent&>(event).unchangedInterval());
 		}
 		else if(event.type() == ReferenceEvent::TargetDeleted) {
 			// Reduce memory footprint when the pipeline's data provider gets deleted.

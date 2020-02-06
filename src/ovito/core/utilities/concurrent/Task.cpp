@@ -61,13 +61,12 @@ void Task::cancelIfSingleFutureLeft() noexcept
     // This is an internal method used by TaskManager::waitForTask() to cancel subtasks right away if their parent task got canceled.
 	if(_shareCount.load() == 0)
 		cancel();
-	//OVITO_ASSERT(_shareCount.load() <= 1);
+	OVITO_ASSERT(_shareCount.load() <= 1);
 }
 
 void Task::cancel() noexcept
 {
 	if(isCanceled() || isFinished()) return;
-	qDebug() << "  Canceling task" << this;
 
 	_state = State(_state | Canceled);
 

@@ -199,7 +199,13 @@ public:
 
 	/// \brief Sends a ReferenceEvent::TargetChanged event to all dependents of this RefTarget.
 	inline void notifyTargetChanged(const PropertyFieldDescriptor* field = nullptr) const {
-		const_cast<RefTarget*>(this)->notifyDependentsImpl(PropertyFieldEvent(ReferenceEvent::TargetChanged, const_cast<RefTarget*>(this), field));
+		const_cast<RefTarget*>(this)->notifyDependentsImpl(TargetChangedEvent(const_cast<RefTarget*>(this), field));
+	}
+
+	/// \brief Notifies the dependents that this object's state has changed outside of the given animation time interval
+	///        but remained the same within the interval.
+	inline void notifyTargetChangedOutsideInterval(const TimeInterval& interval) const {
+		const_cast<RefTarget*>(this)->notifyDependentsImpl(TargetChangedEvent(const_cast<RefTarget*>(this), nullptr, interval));
 	}
 
 	////////////////////////////////// Dependency graph ///////////////////////////////////////

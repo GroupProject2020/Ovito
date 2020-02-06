@@ -45,10 +45,7 @@ public:
 	~PipelineCache();
 
 	/// Starts a pipeline evaluation or returns a reference to an existing evaluation that is currently in progress. 
-	SharedFuture<PipelineFlowState> evaluatePipeline(const PipelineEvaluationRequest& request, PipelineSceneNode* pipeline, bool includeVisElements);
-
-	/// Starts an evaluation of a pipeline stage or returns a reference to an existing evaluation that is currently in progress. 
-	SharedFuture<PipelineFlowState> evaluatePipelineStage(const PipelineEvaluationRequest& request, CachingPipelineObject* pipelineObject);
+	SharedFuture<PipelineFlowState> evaluatePipeline(const PipelineEvaluationRequest& request, CachingPipelineObject* pipelineObject, PipelineSceneNode* pipeline, bool includeVisElements);
 
 	/// Performs a synchronous pipeline evaluation.
 	const PipelineFlowState& evaluatePipelineSynchronous(PipelineSceneNode* pipeline, TimePoint time);

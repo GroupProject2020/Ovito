@@ -271,7 +271,6 @@ bool TaskManager::waitForTaskUIThread(const TaskPtr& task, const TaskPtr& depend
 	if(dependentTask) {
 		TaskWatcher* dependentWatcher = addTaskInternal(dependentTask);
 		connect(dependentWatcher, &TaskWatcher::canceled, watcher, [dependentTask, watcher]() {
-			qDebug() << "TaskManager::waitForTaskUIThread: Dependent task" << dependentTask.get() << "fgot canceled. Canceling other task" << watcher->task().get();
 			watcher->task()->cancelIfSingleFutureLeft();
 		});
 		connect(dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);

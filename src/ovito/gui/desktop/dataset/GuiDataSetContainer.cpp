@@ -80,7 +80,6 @@ bool GuiDataSetContainer::referenceEvent(RefTarget* source, const ReferenceEvent
 				}
 			}
 			else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
-				qDebug() << ">>>>>> ReferenceEvent::PreliminaryStateAvailable -> refreshing viewports";
 				// Update viewports when a new preliminiary state from one of the data pipelines
 				// becomes available (unless we are playing an animation).
 				if(currentSet()->animationSettings()->isPlaybackActive() == false)

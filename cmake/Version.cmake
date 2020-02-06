@@ -1,6 +1,6 @@
 #######################################################################################
 #
-#  Copyright 2019 Alexander Stukowski
+#  Copyright 2020 Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -29,7 +29,7 @@ SET(OVITO_VERSION_REVISION		"0")
 
 # Increment the following version counter every time the .ovito file format
 # changes in a backward-incompatible way.
-SET(OVITO_FILE_FORMAT_VERSION	"30003")
+SET(OVITO_FILE_FORMAT_VERSION	"30004")
 
 # Extract revision number from Git repository in order to tag development builds of OVITO.
 FIND_PACKAGE(Git)

@@ -50,10 +50,11 @@ PipelineCache::~PipelineCache() // NOLINT
 * Starts a pipeline evaluation or returns a reference to an existing evaluation 
 * that is currently in progress. 
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEvaluationRequest& request, PipelineSceneNode* pipeline, bool includeVisElements)
+SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEvaluationRequest& request, CachingPipelineObject* pipelineObject, PipelineSceneNode* pipeline, bool includeVisElements)
 {
 	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-	OVITO_ASSERT(pipeline != nullptr);
+	OVITO_ASSERT(pipeline != nullptr || pipelineObject != nullptr);
+	OVITO_ASSERT(pipeline != nullptr || includeVisElements == false);
 	OVITO_ASSERT_MSG(_preparingEvaluation == false, "PipelineCache::evaluatePipeline", "Function is not reentrant.");
 
 	// Check if we can serve request immediately using the cached state(s).
@@ -62,11 +63,9 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 			return Future<PipelineFlowState>::createImmediateEmplace(state);
 		}
 	}
-	qDebug() << "PipelineCache::evaluatePipeline (includeVisElements=" << includeVisElements << ") evaluations In Progress:";
 
 	// Check if there already is an evaluation in progress that is compatible with the new request.
 	for(const EvaluationInProgress& evaluation : _evaluationsInProgress) {
-		qDebug() << "  evaluation.validityInterval:" << evaluation.validityInterval << "id=" << &evaluation.validityInterval << "(active:" << (evaluation.future.lock().isValid()) << ")";
 		if(evaluation.validityInterval.contains(request.time())) {
 			SharedFuture<PipelineFlowState> future = evaluation.future.lock();
 			if(future.isValid()) {
@@ -76,29 +75,38 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 		}
 	}
 	
-	// Without a pipeline data source, the results will be an empty data collection.
-	if(!pipeline->dataProvider())
-		return Future<PipelineFlowState>::createImmediateEmplace(nullptr, PipelineStatus::Success);
+	SharedFuture<PipelineFlowState> future;
+	TimeInterval preliminaryValidityInterval;
 
 #ifdef OVITO_DEBUG
 	// This flag is set here to detect unexpected calls to invalidate().
 	_preparingEvaluation = true; 
 #endif
 
-	SharedFuture<PipelineFlowState> future;
-	if(!includeVisElements) {
-		// When requesting the pipeline output without the effect of visualization elements, 
-		// delegate the evaluation to the head node of the pipeline.
-		future = pipeline->dataProvider()->evaluate(request);
+	if(!pipelineObject) {
+		// Without a pipeline data source, the results will be an empty data collection.
+		if(!pipeline->dataProvider())
+			return Future<PipelineFlowState>::createImmediateEmplace(nullptr, PipelineStatus::Success);
+		
+		preliminaryValidityInterval = pipeline->dataProvider()->validityInterval(request);
+		if(!includeVisElements) {
+			// When requesting the pipeline output without the effect of visualization elements, 
+			// delegate the evaluation to the head node of the pipeline.
+			future = pipeline->dataProvider()->evaluate(request);
+		}
+		else {
+			// When requesting the pipeline output with the effect of visualization elements, 
+			// delegate the evaluation to the pipeline's other cache.
+			future = pipeline->evaluatePipeline(request);
+		}
 	}
 	else {
-		// When requesting the pipeline output with the effect of visualization elements, 
-		// delegate the evaluation to the pipeline's other cache.
-		future = pipeline->evaluatePipeline(request);
+		preliminaryValidityInterval = pipelineObject->validityInterval(request);
+		future = pipelineObject->evaluateInternal(request);
 	}
 
 	// Pre-register the evaluation operation.
-	_evaluationsInProgress.push_front({ pipeline->dataProvider()->validityInterval(request) });
+	_evaluationsInProgress.push_front({ preliminaryValidityInterval });
 	auto evaluation = _evaluationsInProgress.begin();
 	OVITO_ASSERT(!evaluation->validityInterval.isEmpty());
 
@@ -128,6 +136,7 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 				}
 			}
 			if(!stateFuture.isValid()) {
+				_cachedTransformedDataObjects.clear();
 				stateFuture = Future<PipelineFlowState>::createImmediate(state);
 			}
 			else {
@@ -142,7 +151,7 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 	}
 
 	// Store evaluation results in this cache.
-	future = future.then(pipeline->executor(), [this, pipeline, evaluation, includeVisElements](PipelineFlowState state) {
+	future = future.then(pipeline ? pipeline->executor() : pipelineObject->executor(), [this, pipeline, pipelineObject, evaluation, includeVisElements](PipelineFlowState state) {
 		// The pipeline should never return a state without proper validity interval.
 		OVITO_ASSERT(!state.stateValidity().isEmpty());
 		OVITO_ASSERT(!evaluation->validityInterval.isEmpty());
@@ -152,103 +161,28 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 
 		// Let the cache decide whether the state should be stored or not.
 		if(!state.stateValidity().isEmpty()) {
-			insertState(state, pipeline);
+			if(pipeline) {
+				insertState(state, pipeline);
 
-			// Let the pipeline update its list of vis elements based on the new pipeline results.
-			if(!includeVisElements)
-				pipeline->updateVisElementList(state);
-		}
-
-		// Return state to caller.
-		return std::move(state);
-	});
-	qDebug() << "Starting pipeline evaluation (preliminary validity interval:" << evaluation->validityInterval << ", id=" << &evaluation->validityInterval << ", task=" << future.task().get() << ", includeVisElements=" << includeVisElements << ")";
-
-	// Keep a weak reference to the future.
-	evaluation->future = future;
-
-#ifdef OVITO_DEBUG
-	// From now on, it is okay again to call invalidate().
-	_preparingEvaluation = false; 
-#endif
-
-	// Remove evaluation record from the list of ongoing evaluations once it is finished (successfully or not).
-	future.finally(pipeline->executor(), [this, evaluation]() {
-		cleanupEvaluation(evaluation);
-	});
-
-	OVITO_ASSERT(future.isValid());
-	return future;
-}
-
-/******************************************************************************
-* Starts an evaluation of a pipeline stage or returns a reference to an 
-* existing evaluation that is currently in progress.
-******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineCache::evaluatePipelineStage(const PipelineEvaluationRequest& request, CachingPipelineObject* pipelineObject)
-{
-	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
-	OVITO_ASSERT(pipelineObject != nullptr);
-	OVITO_ASSERT_MSG(_preparingEvaluation == false, "PipelineCache::evaluatePipelineStage", "Function is not reentrant.");
-
-	// Check if we can serve request immediately using the cached state(s).
-	for(const PipelineFlowState& state : _cachedStates) {
-		if(state.stateValidity().contains(request.time())) {
-			return Future<PipelineFlowState>::createImmediateEmplace(state);
-		}
-	}
-
-	// Check if there already is an evaluation in progress that is compatible with the new request.
-	for(const EvaluationInProgress& evaluation : _evaluationsInProgress) {
-		if(evaluation.validityInterval.contains(request.time())) {
-			SharedFuture<PipelineFlowState> future = evaluation.future.lock();
-			if(future.isValid()) {
-				OVITO_ASSERT(!future.isCanceled());
-				return future;
+				// Let the pipeline update its list of vis elements based on the new pipeline results.
+				if(!includeVisElements)
+					pipeline->updateVisElementList(state);
 			}
-		}
-	}
+			else {
+				insertState(state, pipelineObject);
 
-#ifdef OVITO_DEBUG
-	// This flag is set here to detect unexpected calls to invalidate().
-	_preparingEvaluation = true; 
-#endif
-
-	// Let the pipeline state evaluate itself.
-	Future<PipelineFlowState> future = pipelineObject->evaluateInternal(request);
-
-	// Pre-register the evaluation operation.
-	_evaluationsInProgress.push_front({ pipelineObject->validityInterval(request) });
-	auto evaluation = _evaluationsInProgress.begin();
-	OVITO_ASSERT(!evaluation->validityInterval.isEmpty());
-
-	// Store evaluation results in this cache.
-	future = future.then(pipelineObject->executor(), [this, pipelineObject, evaluation](PipelineFlowState&& state) {
-		qDebug() << "Received results for stage evaluation (id:" << &evaluation->validityInterval << ", state validity:" << state.stateValidity() << ", evaluation validity:" << evaluation->validityInterval << ")";
-
-		// The pipeline stage should never return a state without proper validity interval.
-		OVITO_ASSERT(!state.stateValidity().isEmpty());
-		OVITO_ASSERT(!evaluation->validityInterval.isEmpty());
-
-		// Restrict the validity of the state.
-		state.intersectStateValidity(evaluation->validityInterval);
-
-		// Let the cache decide whether the state should be stored or not.
-		if(!state.stateValidity().isEmpty()) {
-			insertState(state, pipelineObject);
-			
-			// We also have a new preliminary state. Inform the upstream pipeline about it.
-			if(pipelineObject->performPreliminaryUpdateAfterEvaluation() && Application::instance()->guiMode()) {
-				if(state.stateValidity().contains(pipelineObject->dataset()->animationSettings()->time())) {
-					pipelineObject->notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
+				// We also have a new preliminary state. Inform the upstream pipeline about it.
+				if(pipelineObject->performPreliminaryUpdateAfterEvaluation() && Application::instance()->guiMode()) {
+					if(state.stateValidity().contains(pipelineObject->dataset()->animationSettings()->time())) {
+						pipelineObject->notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
+					}
 				}
 			}
 		}
 
 		// Return state to caller.
-		return state;
+		return std::move(state);
 	});
-	qDebug() << "Starting stage evaluation (preliminary validity interval:" << evaluation->validityInterval << ", id=" << &evaluation->validityInterval << ", task=" << future.task().get() << ")";
 
 	// Keep a weak reference to the future.
 	evaluation->future = future;
@@ -259,7 +193,7 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipelineStage(const Pipel
 #endif
 
 	// Remove evaluation record from the list of ongoing evaluations once it is finished (successfully or not).
-	future.finally(pipelineObject->executor(), [this, evaluation]() {
+	future.finally(pipeline ? pipeline->executor() : pipelineObject->executor(), [this, evaluation]() {
 		cleanupEvaluation(evaluation);
 	});
 
@@ -276,7 +210,6 @@ void PipelineCache::cleanupEvaluation(std::forward_list<EvaluationInProgress>::i
 	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
 	for(auto iter = _evaluationsInProgress.before_begin(), next = iter++; next != _evaluationsInProgress.end(); iter = next++) {
 		if(next == evaluation) {
-			qDebug() << "Cleaning up evaluation" << &evaluation->validityInterval;
 			_evaluationsInProgress.erase_after(iter);
 			return;
 		}
@@ -331,12 +264,15 @@ const PipelineFlowState& PipelineCache::evaluatePipelineSynchronous(PipelineScen
 			if(pipeline->dataProvider()) {
 				// Adopt new state produced by the pipeline if it is not empty. 
 				// Otherwise stick with the old state from our own cache.
+				UndoSuspender noUndo(pipeline);
 				if(PipelineFlowState newPreliminaryState = pipeline->dataProvider()->evaluateSynchronous()) {
 					_synchronousState = std::move(newPreliminaryState);
 
 					// Add the transformed data objects cached from the last pipeline evaluation.
-					for(const auto& obj : _cachedTransformedDataObjects)
-						_synchronousState.addObject(obj);
+					if(_synchronousState) {
+						for(const auto& obj : _cachedTransformedDataObjects)
+							_synchronousState.addObject(obj);
+					}
 				}
 			}
 			else {
@@ -366,8 +302,10 @@ const PipelineFlowState& PipelineCache::evaluatePipelineStageSynchronous(Caching
 			// If no cached results are available, re-evaluate the pipeline.
 			// Adopt new state produced by the pipeline if it is not empty. 
 			// Otherwise stick with the old state from our own cache.
-			if(PipelineFlowState newState = pipelineObject->evaluateInternalSynchronous())
+			UndoSuspender noUndo(pipelineObject);
+			if(PipelineFlowState newState = pipelineObject->evaluateInternalSynchronous()) {
 				_synchronousState = std::move(newState);
+			}
 
 			// The preliminary state cache is time-independent.
 			_synchronousState.setStateValidity(TimeInterval::infinite());
@@ -383,7 +321,6 @@ void PipelineCache::invalidate(TimeInterval keepInterval, bool resetSynchronousC
 {
 	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
 	OVITO_ASSERT_MSG(_preparingEvaluation == false, "PipelineCache::invalidate", "Cannot invalidate cache while preparing to evaluate the pipeline.");
-//	qDebug() << "Invalidate cache (remaining validity interval:" << keepInterval << ")";
 
 	// Reduce the validity of ongoing evaluations.
 	for(EvaluationInProgress& evaluation : _evaluationsInProgress) {

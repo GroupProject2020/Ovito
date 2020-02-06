@@ -148,6 +148,14 @@ public:
 	/// If this is not the case, the method throws an exception.
 	void verifyIntegrity() const;
 
+protected:
+
+	/// Saves the class' contents to the given stream.
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
+
+	/// Loads the class' contents from the given stream.
+	virtual void loadFromStream(ObjectLoadStream& stream) override;
+
 private:
 
 	/// Holds the list of properties.

@@ -27,7 +27,6 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
-#include <ovito/core/utilities/concurrent/ThreadSafeTask.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -38,10 +37,10 @@ class OVITO_CORE_EXPORT PipelineEvaluationRequest
 {
 public:
 
-	/// Constructs a pipeline evaluation object for the given animation time.
+	/// Constructs a pipeline evaluation request for the given animation time.
 	PipelineEvaluationRequest(TimePoint time = 0, bool breakOnError = false) : _time(time), _breakOnError(breakOnError) {}
 
-	/// Constructs a pipeline evaluation object for the given animation time and inherits all other settings from another request object.
+	/// Constructs a pipeline evaluation request for the given animation time and inherits all other settings from another request.
 	explicit PipelineEvaluationRequest(TimePoint time, const PipelineEvaluationRequest& other) : _time(time), _breakOnError(other.breakOnError()) {}
 
 	/// Returns the animation time at which the pipeline is being evaluated.

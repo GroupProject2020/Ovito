@@ -49,6 +49,7 @@ QVector<DataObjectReference> ParticlesSliceModifierDelegate::OOMetaClass::getApp
 PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	const ParticlesObject* inputParticles = state.expectObject<ParticlesObject>();
+	inputParticles->verifyIntegrity();
 	QString statusMessage = tr("%n input particles", 0, inputParticles->elementCount());
 
 	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
@@ -131,6 +132,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, Pipelin
 		statusMessage += tr("\n%n particles selected", 0, numSelected);
 		statusMessage += tr("\n%n particles unselected", 0, outputParticles->elementCount() - numSelected);
 	}
+	outputParticles->verifyIntegrity();
 
 	return PipelineStatus(PipelineStatus::Success, statusMessage);
 }

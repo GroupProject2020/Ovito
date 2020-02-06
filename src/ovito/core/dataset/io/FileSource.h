@@ -65,10 +65,6 @@ public:
 	/// Note: This method operates asynchronously.
 	void updateListOfFrames();
 
-	/// \brief Implementation method for scanning the external data file to find all contained frames.
-	/// This is an implementation detail. Please use the high-level method updateListOfFrames() instead.
-	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame);
-
 	/// \brief Returns the source frame that is currently used as a sub-object data collection.
 	int dataCollectionFrame() const { return _dataCollectionFrame; }
 
@@ -122,9 +118,16 @@ private:
 	/// Sets which frame is currently stored in the data collection sub-object.
 	void setDataCollectionFrame(int frameIndex);
 
+	/// \brief Scans the external data file(s) to find all contained frames.
+	/// This method is an implementation detail. Please use the high-level method updateListOfFrames() instead.
+	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan);
+
 	/// Updates the internal list of input frames.
 	/// Invalidates cached frames in case they did change.
 	void setListOfFrames(QVector<FileSourceImporter::Frame> frames);
+
+	/// Computes the time interval covered on the time line by the given source source.
+	TimeInterval frameTimeInterval(int frame) const;
 
 private:
 
