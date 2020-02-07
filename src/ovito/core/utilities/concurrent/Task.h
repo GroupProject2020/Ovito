@@ -269,7 +269,7 @@ protected:
     /// Pointer to a std::tuple<...> storing the results of this task.
     void* _resultsTuple = nullptr;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0) // Note: QVarLengthArray support for move-only types was added in Qt 5.9.
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0) // Note: QVarLengthArray fully supports move-only types since Qt 5.12
     /// List of continuation functions that will be called when this shared state enters the 'finished' state.
     QVarLengthArray<fu2::unique_function<void(bool)>, 1> _continuations;
 #else
