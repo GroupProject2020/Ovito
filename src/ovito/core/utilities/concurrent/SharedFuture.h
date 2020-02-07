@@ -98,37 +98,55 @@ public:
 	/// Returns a new future that, upon the fulfillment of this future, will be fulfilled by running the given continuation function.
 	/// The provided continuation function must accept the results of this future as an input parameter.
 	template<typename FC, class Executor>
-	typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const tuple_type>>::type then(Executor&& executor, bool defer, FC&& cont);
+	typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const tuple_type>>::type 
+	then(Executor&& executor, bool defer, FC&& cont) noexcept;
 
 	/// Overload of the function above allowing eager execution of the continuation function.
 	template<typename FC, class Executor>
-	typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const tuple_type>>::type then(Executor&& executor, FC&& cont) { return then(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
+	typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const tuple_type>>::type 
+	then(Executor&& executor, FC&& cont) noexcept { return then(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
 
 	/// Overload of the function above using the default inline executor.
 	template<typename FC>
-	typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const tuple_type>>::type then(FC&& cont) { return then(Ovito::detail::InlineExecutor(), std::forward<FC>(cont)); }
+	typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const tuple_type>>::type 
+	then(FC&& cont) noexcept { return then(Ovito::detail::InlineExecutor(), std::forward<FC>(cont)); }
+
+	/// Runs the given continuation function upon fulfillment of this future. The function creates a strong 
+	/// reference to this future in order to keep it going even if this future object is destroyed.
+	/// The provided continuation function must accept the results of this future as an input parameter.
+	template<typename FC, class Executor>
+	void force_then(Executor&& executor, bool defer, FC&& cont) noexcept;
+
+	/// Overload of the function above allowing eager execution of the continuation function.
+	template<typename FC, class Executor>
+	void force_then(Executor&& executor, FC&& cont) noexcept { force_then(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
 
 	/// Returns a new future that, upon the fulfillment of this future, will be fulfilled by running the specified continuation function.
 	/// The provided continuation function must accept this shared future as an input parameter.
 	template<typename FC, class Executor>
-	typename Ovito::detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, bool defer, FC&& cont);
+	typename Ovito::detail::resulting_future_type<FC,std::tuple<this_type>>::type 
+	then_future(Executor&& executor, bool defer, FC&& cont) noexcept;
 
 	/// Overload of the function above allowing eager execution of the continuation function.
 	template<typename FC, class Executor>
-	typename Ovito::detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, FC&& cont) { return then_future(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
+	typename Ovito::detail::resulting_future_type<FC,std::tuple<this_type>>::type 
+	then_future(Executor&& executor, FC&& cont) noexcept { return then_future(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
 
 	/// Returns a new future that, upon the fulfillment of this future, will be fulfilled by running the given continuation function.
 	/// The provided continuation function must accept a Task object and the results of this future as two input parameters.
 	template<typename FC, class Executor>
-	typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const tuple_type>>()))>::type then_task(Executor&& executor, bool defer, FC&& cont);
+	typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const tuple_type>>()))>::type 
+	then_task(Executor&& executor, bool defer, FC&& cont) noexcept;
 
 	/// Overload of the function above allowing eager execution of the continuation function.
 	template<typename FC, class Executor>
-	typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const tuple_type>>()))>::type then_task(Executor&& executor, FC&& cont) { return then_promise(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
+	typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const tuple_type>>()))>::type 
+	then_task(Executor&& executor, FC&& cont) noexcept { return then_task(std::forward<Executor>(executor), false, std::forward<FC>(cont)); }
 
 	/// Overload of the function above using the default inline executor.
 	template<typename FC>
-	typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const tuple_type>>()))>::type then_task(FC&& cont) { return then_promise(Ovito::detail::InlineExecutor(), std::forward<FC>(cont)); }
+	typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const tuple_type>>()))>::type 
+	then_task(FC&& cont) noexcept { return then_task(Ovito::detail::InlineExecutor(), std::forward<FC>(cont)); }
 
 protected:
 
@@ -145,7 +163,7 @@ protected:
 /// The provided continuation function must accept the results of this future as an input parameter.
 template<typename... R>
 template<typename FC, class Executor>
-typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const typename SharedFuture<R...>::tuple_type>>::type SharedFuture<R...>::then(Executor&& executor, bool defer, FC&& cont)
+typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<const typename SharedFuture<R...>::tuple_type>>::type SharedFuture<R...>::then(Executor&& executor, bool defer, FC&& cont) noexcept
 {
 	// Infer the exact future/promise/task types to create.
 	using result_future_type = typename Ovito::detail::resulting_future_type<FC,tuple_type>::type;
@@ -162,7 +180,7 @@ typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<con
 	result_future_type future = promise.future();
 
 	// Register continuation function with the current task.
-	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), promise = std::move(promise)]() mutable {
+	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), promise = std::move(promise)]() mutable noexcept {
 
 		// Get the task that is about to continue.
 		continuation_task_type* continuationTask = static_cast<continuation_task_type*>(promise.task().get());
@@ -194,11 +212,38 @@ typename Ovito::detail::resulting_future_type<FC,std::add_lvalue_reference_t<con
 	return future;
 }
 
+/// Runs the given continuation function upon fulfillment of this future. The function creates a strong 
+/// reference to this future in order to keep it going even if this future object is destroyed.
+/// The provided continuation function must accept the results of this future as an input parameter.
+template<typename... R>
+template<typename FC, class Executor>
+void SharedFuture<R...>::force_then(Executor&& executor, bool defer, FC&& cont) noexcept
+{
+	// This future must be valid for force_then() to work.
+	OVITO_ASSERT_MSG(isValid(), "SharedFuture::force_then()", "Future must be valid.");
+
+	// Register continuation function with the current task.
+	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), task = TaskDependency(task())]() mutable noexcept {
+		OVITO_ASSERT(task->isFinished());
+
+		// Don't need to run continuation function when the task has been canceled in the meantime.
+		if(task->isCanceled())
+			return;
+
+		// Don't run continuation function either in case of an exception state.
+		if(task->_exceptionStore)
+			return;
+
+		// Now it's time to execute the continuation function.
+		Ovito::detail::apply(std::forward<FC>(cont), task->template getResults<tuple_type>());
+	});
+}
+
 /// Returns a new future that, upon the fulfillment of this future, will be fulfilled by running the specified continuation function.
 /// The provided continuation function must accept this shared future as an input parameter.
 template<typename... R>
 template<typename FC, class Executor>
-typename Ovito::detail::resulting_future_type<FC,std::tuple<SharedFuture<R...>>>::type SharedFuture<R...>::then_future(Executor&& executor, bool defer, FC&& cont)
+typename Ovito::detail::resulting_future_type<FC,std::tuple<SharedFuture<R...>>>::type SharedFuture<R...>::then_future(Executor&& executor, bool defer, FC&& cont) noexcept
 {
 	// Infer the exact future/promise/task types to create.
 	using result_future_type = typename Ovito::detail::resulting_future_type<FC,tuple_type>::type;
@@ -215,7 +260,7 @@ typename Ovito::detail::resulting_future_type<FC,std::tuple<SharedFuture<R...>>>
 	result_future_type future = promise.future();
 
 	// Register continuation function with the current task.
-	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), promise = std::move(promise)]() mutable {
+	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), promise = std::move(promise)]() mutable noexcept {
 
 		// Get the task that is about to continue.
 		continuation_task_type* continuationTask = static_cast<continuation_task_type*>(promise.task().get());
@@ -242,7 +287,7 @@ typename Ovito::detail::resulting_future_type<FC,std::tuple<SharedFuture<R...>>>
 /// The provided continuation function must accept a Task object and the results of this future as two input parameters.
 template<typename... R>
 template<typename FC, class Executor>
-typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const typename SharedFuture<R...>::tuple_type>>()))>::type SharedFuture<R...>::then_task(Executor&& executor, bool defer, FC&& cont)
+typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::declval<std::tuple<Task&>>(), std::declval<std::add_lvalue_reference_t<const typename SharedFuture<R...>::tuple_type>>()))>::type SharedFuture<R...>::then_task(Executor&& executor, bool defer, FC&& cont) noexcept
 {
 	// Infer the exact future/promise/task types to create.
 	using result_future_type = typename Ovito::detail::resulting_future_type<FC,tuple_type>::type;
@@ -259,7 +304,7 @@ typename Ovito::detail::resulting_future_type<FC,decltype(std::tuple_cat(std::de
 	result_future_type future = promise.future();
 
 	// Register continuation function with the current task.
-	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), promise = std::move(promise)]() mutable {
+	task()->finally(std::forward<Executor>(executor), defer, [cont = std::forward<FC>(cont), promise = std::move(promise)]() mutable noexcept {
 
 		// Get the task that is about to continue.
 		continuation_task_type* continuationTask = static_cast<continuation_task_type*>(promise.task().get());

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,11 +32,13 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
  */
 class OVITO_CORE_EXPORT TaskWatcher : public QObject
 {
+	Q_OBJECT
+
 public:
 
 	/// Constructor that creates a watcher that is not associated with
 	/// any future/promise yet.
-	TaskWatcher(QObject* parent = nullptr) : QObject(parent) {}
+	explicit TaskWatcher(QObject* parent = nullptr) : QObject(parent) {}
 
 	/// Destructor.
 	virtual ~TaskWatcher() {
@@ -103,8 +105,6 @@ private:
 
 	/// Linked list pointer for list of registered watchers of the current shared state.
 	TaskWatcher* _nextInList;
-
-	Q_OBJECT
 
 	friend class Task;
 	friend class ProgressiveTask;

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -314,12 +314,15 @@ void FileSourceEditor::onReloadFrame()
 void FileSourceEditor::onReloadAnimation()
 {
 	if(FileSource* fileSource = static_object_cast<FileSource>(editObject())) {
+		// Let the FileSource update the list of source animation frames.
+		// After the update is complete, jump to the last of the newly added animation frames.
 		int oldFrameCount = fileSource->frames().size();
-		SharedFuture<QVector<FileSourceImporter::Frame>> frameListFuture = fileSource->updateListOfFrames();
-		Future<> theFuture = frameListFuture.then(fileSource->executor(), [fileSource,oldFrameCount](const QVector<FileSourceImporter::Frame>& frames) {
-			qDebug() << "Old frame count:" << oldFrameCount << "new frame count:" << frames.size();
+		fileSource->updateListOfFrames().force_then(fileSource->executor(), [fileSource, oldFrameCount](const QVector<FileSourceImporter::Frame>& frames) {
+			if(frames.size() > oldFrameCount) {
+				TimePoint time = fileSource->sourceFrameToAnimationTime(frames.size() - 1);
+				fileSource->dataset()->animationSettings()->setTime(time);
+			}
 		});
-		fileSource->dataset()->taskManager().registerFuture(theFuture);
 	}
 }
 
