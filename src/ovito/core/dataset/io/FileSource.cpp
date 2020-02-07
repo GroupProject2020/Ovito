@@ -502,7 +502,9 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				OVITO_ASSERT(!future.isCanceled());
 				try {
 					PipelineFlowState state = future.result();
-					setStatus(state.status());
+					// Update the UI status display of the FileSource (only when loading the data of the current animation frame).
+					if(state.stateValidity().contains(dataset()->animationSettings()->time()))
+						setStatus(state.status());
 					return state;
 				}
 				catch(Exception& ex) {

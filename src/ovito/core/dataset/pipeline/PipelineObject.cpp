@@ -97,6 +97,8 @@ void PipelineObject::setStatus(const PipelineStatus& status)
 ******************************************************************************/
 int PipelineObject::animationTimeToSourceFrame(TimePoint time) const
 {
+	OVITO_ASSERT(time != TimeNegativeInfinity());
+	OVITO_ASSERT(time != TimePositiveInfinity());
 	return dataset()->animationSettings()->timeToFrame(time);
 }
 

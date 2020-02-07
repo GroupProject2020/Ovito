@@ -55,6 +55,9 @@ public:
 	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const;
 
+	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) {}
+
 	/// \brief Lets the modifier render itself into a viewport.
 	/// \param time The animation time at which to render the modifier.
 	/// \param contextNode The node context used to render the modifier.

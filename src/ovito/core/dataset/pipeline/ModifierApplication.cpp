@@ -207,16 +207,23 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluate(const PipelineEval
 ******************************************************************************/
 Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEvaluationRequest& request)
 {
+	// Set up the evaluation request for the downstream pipeline.
+	PipelineEvaluationRequest downstreamRequest(request);
+
+	// Ask the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	if(modifier() && modifier()->isEnabled())
+		modifier()->inputCachingHints(downstreamRequest.modifiableCachingIntervals(), this);
+
 	// Obtain input data and pass it on to the modifier.
-	return evaluateInput(request)
-		.then(executor(), [this, request](PipelineFlowState inputData) -> Future<PipelineFlowState> {
+	return evaluateInput(downstreamRequest)
+		.then(executor(), [this, downstreamRequest](PipelineFlowState inputData) -> Future<PipelineFlowState> {
 
 			// Clear the status of the input unless it is an error.
 			if(inputData.status().type() != PipelineStatus::Error) {
 				OVITO_ASSERT(inputData.status().type() != PipelineStatus::Pending);
 				inputData.setStatus(PipelineStatus());
 			}
-			else if(request.breakOnError()) {
+			else if(downstreamRequest.breakOnError()) {
 				// Skip all following modifiers once an error has occured along the pipeline.
 				return inputData;
 			}
@@ -229,7 +236,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			Future<PipelineFlowState> future;
 			try {
 				// Let the modifier do its job.
-				future = modifier()->evaluate(request, this, inputData);
+				future = modifier()->evaluate(downstreamRequest, this, inputData);
 			}
 			catch(...) {
 				future = Future<PipelineFlowState>::createFailed(std::current_exception());
@@ -250,7 +257,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			// Post-process the modifier results before returning them to the caller.
 			// Turn any exception that was thrown during modifier evaluation into a
 			// valid pipeline state with an error code.
-			return future.then_future(executor(), [this, time = request.time(), inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
+			return future.then_future(executor(), [this, time = downstreamRequest.time(), inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {

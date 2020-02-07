@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,7 +33,6 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(ReferenceConfigurationModifier);
-IMPLEMENT_OVITO_CLASS(ReferenceConfigurationModifierApplication);
 DEFINE_REFERENCE_FIELD(ReferenceConfigurationModifier, referenceConfiguration);
 DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, affineMapping);
 DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, useMinimumImageConvention);
@@ -47,7 +46,9 @@ SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, useReferenceFrameOffset
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameNumber, "Reference frame number");
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameOffset, "Reference frame offset");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ReferenceConfigurationModifier, referenceFrameNumber, IntegerParameterUnit, 0);
-SET_MODIFIER_APPLICATION_TYPE(ReferenceConfigurationModifier, ReferenceConfigurationModifierApplication);
+
+// May be removed in a future version of OVITO:
+IMPLEMENT_OVITO_CLASS(ReferenceConfigurationModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -85,7 +86,36 @@ TimeInterval ReferenceConfigurationModifier::validityInterval(const PipelineEval
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
+* Asks the modifier for the set of animation time intervals that should be 
+* cached by the downstream pipeline.
+******************************************************************************/
+void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp)
+{
+	AsynchronousModifier::inputCachingHints(cachingIntervals);
+
+	// Only need to communicate caching hints when reference configuration is provided by the downstream pipeline.
+	if(!referenceConfiguration()) {
+		if(useReferenceFrameOffset()) {
+			// When using a relative reference configuration, we need to build the corresponding set of shifted time intervals. 
+			PipelineEvaluationRequest::CachingHintsList originalIntervals = cachingIntervals;
+			for(const TimeInterval& iv : originalIntervals) {
+				int startFrame = modApp->animationTimeToSourceFrame(iv.start());
+				int endFrame = modApp->animationTimeToSourceFrame(iv.end());
+				TimePoint shiftedStartTime = modApp->sourceFrameToAnimationTime(startFrame + referenceFrameOffset());
+				TimePoint shiftedEndTime = modApp->sourceFrameToAnimationTime(endFrame + referenceFrameOffset());
+				cachingIntervals.add(TimeInterval(shiftedStartTime, shiftedEndTime));
+			}
+		}
+		else if() {
+			// When using a static reference configuration, ask the downstream pipeline to cache the corresponding animation frame.
+			cachingIntervals.add(modApp->sourceFrameToAnimationTime(referenceFrameNumber()));
+		}
+	}
+}
+
+/******************************************************************************
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
@@ -110,47 +140,38 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 		referenceFrame = referenceFrameNumber();
 	}
 
-	// Get the reference positions of the particles.
+	// Obtain the reference positions of the particles, either from the downstream pipeline or from a user-specified reference data source.
 	SharedFuture<PipelineFlowState> refState;
+	if(!referenceConfiguration()) {
+		// Convert frame to animation time.
+		TimePoint referenceTime = modApp->sourceFrameToAnimationTime(referenceFrame);
+		
+		// Set up the pipeline request for obtaining.
+		PipelineEvaluationRequest referenceRequest(referenceTime, request.breakOnError());
+		referenceRequest.
 
-	// First, check our state cache in the ModifierApplication.
-	if(ReferenceConfigurationModifierApplication* myModApp = dynamic_object_cast<ReferenceConfigurationModifierApplication>(modApp)) {
-		if(myModApp->referenceCacheValidity().contains(time)) {
-			refState = myModApp->referenceCache();
-		}
+		// Issue the request to the downstream pipeline.
+		refState = modApp->evaluateInput(referenceRequest);
 	}
-
-	// If not in cache, we need to obtain the reference state from the source.
-	if(!refState.isValid()) {
-		if(!referenceConfiguration()) {
-			// Convert frame to animation time.
-			refState = modApp->evaluateInput(PipelineEvaluationRequest(modApp->sourceFrameToAnimationTime(referenceFrame)));
+	else {
+		if(referenceConfiguration()->numberOfSourceFrames() > 0) {
+			if(referenceFrame < 0 || referenceFrame >= referenceConfiguration()->numberOfSourceFrames()) {
+				if(referenceFrame > 0)
+					throwException(tr("Requested reference frame number %1 is out of range. "
+						"The loaded reference configuration contains only %2 frame(s).").arg(referenceFrame).arg(referenceConfiguration()->numberOfSourceFrames()));
+				else
+					throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
+			}
+			refState = referenceConfiguration()->evaluate(PipelineEvaluationRequest(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame)));
 		}
 		else {
-			if(referenceConfiguration()->numberOfSourceFrames() > 0) {
-				if(referenceFrame < 0 || referenceFrame >= referenceConfiguration()->numberOfSourceFrames()) {
-					if(referenceFrame > 0)
-						throwException(tr("Requested reference frame number %1 is out of range. "
-							"The loaded reference configuration contains only %2 frame(s).").arg(referenceFrame).arg(referenceConfiguration()->numberOfSourceFrames()));
-					else
-						throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
-				}
-				refState = referenceConfiguration()->evaluate(PipelineEvaluationRequest(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame)));
-			}
-			else {
-				// Create an empty state for the reference configuration if it is yet to be specified by the user.
-				refState = Future<PipelineFlowState>::createImmediateEmplace();
-			}
+			// Create an empty state for the reference configuration if it is yet to be specified by the user.
+			refState = Future<PipelineFlowState>::createImmediateEmplace();
 		}
 	}
 
 	// Wait for the reference configuration to become available.
 	return refState.then(executor(), [this, time, modApp, input = input, referenceFrame, validityInterval](const PipelineFlowState& referenceInput) {
-
-		// Cache the reference configuration state in ModifierApplication.
-		if(ReferenceConfigurationModifierApplication* myModApp = dynamic_object_cast<ReferenceConfigurationModifierApplication>(modApp)) {
-			myModApp->updateReferenceCache(referenceInput, useReferenceFrameOffset() ? validityInterval : TimeInterval::infinite());
-		}
 
 		// Make sure the obtained reference configuration is valid and ready to use.
 		if(referenceInput.status().type() == PipelineStatus::Error)
@@ -298,19 +319,6 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 	}
 
 	return !task()->isCanceled();
-}
-
-/******************************************************************************
-* Is called when a RefTarget referenced by this object has generated an event.
-******************************************************************************/
-bool ReferenceConfigurationModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(event.type() == ReferenceEvent::TargetChanged) {
-		// Invalidate cached state.
-		_referenceCache.reset();
-		_cacheValidity.setEmpty();
-	}
-	return AsynchronousModifierApplication::referenceEvent(source, event);
 }
 
 OVITO_END_INLINE_NAMESPACE

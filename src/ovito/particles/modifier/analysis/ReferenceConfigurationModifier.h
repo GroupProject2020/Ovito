@@ -69,6 +69,9 @@ public:
 	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
 
+	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) override;
+
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
@@ -175,7 +178,8 @@ protected:
 };
 
 /**
- * Used by the ReferenceConfigurationModifier to cache the reference configuration.
+ * This class is no longer used as 02/2020. It's only here for backward compatibility with files written by older OVITO versions.
+ * The class can be removed in the future.
  */
 class OVITO_PARTICLES_EXPORT ReferenceConfigurationModifierApplication : public AsynchronousModifierApplication
 {
@@ -186,35 +190,6 @@ public:
 
 	/// Constructor.
 	Q_INVOKABLE ReferenceConfigurationModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
-
-	/// Returns the validity interval of the cached reference state.
-	const TimeInterval& referenceCacheValidity() const {
-		return _cacheValidity;
-	}
-
-	/// Returns the cached reference state.
-	const PipelineFlowState& referenceCache() const {
-		return _referenceCache;
-	}
-
-	/// Replaces the cached reference state.
-	void updateReferenceCache(PipelineFlowState state, TimeInterval cacheValidity) {
-		_referenceCache = std::move(state);
-		_cacheValidity = cacheValidity;
-	}
-
-protected:
-
-	/// Is called when a RefTarget referenced by this object has generated an event.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
-private:
-
-	/// The cached reference configuration.
-	PipelineFlowState _referenceCache;
-
-	/// The validity of the cache.
-	TimeInterval _cacheValidity = TimeInterval::empty();
 };
 
 OVITO_END_INLINE_NAMESPACE

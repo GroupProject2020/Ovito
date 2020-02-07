@@ -37,17 +37,20 @@ class OVITO_CORE_EXPORT PipelineEvaluationRequest
 {
 public:
 
-	/// Constructs a pipeline evaluation request for the given animation time.
-	PipelineEvaluationRequest(TimePoint time = 0, bool breakOnError = false) : _time(time), _breakOnError(breakOnError) {}
-
-	/// Constructs a pipeline evaluation request for the given animation time and inherits all other settings from another request.
-	explicit PipelineEvaluationRequest(TimePoint time, const PipelineEvaluationRequest& other) : _time(time), _breakOnError(other.breakOnError()) {}
+	/// Constructs a request object that will evaluate the pipeline at the given animation time.
+	PipelineEvaluationRequest(TimePoint time = 0, bool breakOnError = false) : _time(time), _breakOnError(breakOnError), _cachingIntervals(time) {}
 
 	/// Returns the animation time at which the pipeline is being evaluated.
 	TimePoint time() const { return _time; }
 
 	/// Returns whether the pipeline system should stop the evaluation as soon as a first error occurs in one of the modifiers.
 	bool breakOnError() const { return _breakOnError; }
+
+	/// Returns the animation time intervals over which the pipeline should pre-cache the state.
+	const TimeIntervalUnion& cachingIntervals() const { return _cachingIntervals; }
+
+	/// Returns a non-const reference to the animation time intervals over which the pipeline should pre-cache the state.
+	TimeIntervalUnion& modifiableCachingIntervals() { return _cachingIntervals; }
 
 private:
 
@@ -56,6 +59,9 @@ private:
 
 	/// Makes the pipeline system stop the evaluation as soon as a first error occurs in one of the modifiers.
 	bool _breakOnError = false;
+
+	/// Indicates to the downstream stages of the pipeline which animation frames they should keep in the cache.
+	TimeIntervalUnion _cachingIntervals;
 };
 
 /**

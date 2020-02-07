@@ -231,10 +231,74 @@ inline QDebug operator<<(QDebug stream, const TimeInterval& iv)
 	return stream.space();
 }
 
+/**
+ * This data structure manages the union of multiple, non-overlapping animation time intervals.
+ */
+class TimeIntervalUnion
+{
+private:
+
+	/// This underlying list of non-overlapping time intervals.
+	QVarLengthArray<TimeInterval, 2> _intervals;
+
+public:
+
+	using const_iterator = decltype(_intervals)::const_iterator;
+	using reverse_iterator = decltype(_intervals)::reverse_iterator;
+	using iterator = decltype(_intervals)::iterator;
+	using reference = decltype(_intervals)::reference;
+	using size_type = decltype(_intervals)::size_type;
+	using value_type = decltype(_intervals)::value_type;
+
+	/// Constructs an empty union of intervals.
+	TimeIntervalUnion() = default;
+
+	/// Constructs a union that includes only the given animation time instant.
+	explicit TimeIntervalUnion(TimePoint time) : _intervals{{ TimeInterval(time) }} {}
+
+	/// Add a time interval to the union.
+	void add(TimeInterval iv) {
+		if(iv.isEmpty()) return;
+
+		// Subtract existing intervals from interval to be added.
+		for(iterator iter = _intervals.begin(); iter != _intervals.end(); ) {
+			// Erase existing intervals that are completely contained in the interval to be added.
+			if(iv.start() <= iter->start() && iv.end() >= iter->end()) {
+				iter = _intervals.erase(iter);
+			}
+			else {
+				if(iv.start() >= iter->start() && iv.start() <= iter->end())
+					iv.setStart(iter->end() + 1);
+				if(iv.end() >= iter->start() && iv.end() <= iter->end())
+					iv.setEnd(iter->start() - 1);
+				if(iv.start() > iv.end())
+					return;
+				++iter;
+			}
+		}
+		_intervals.push_back(iv);
+
+		// TODO: Merge adjacent time intervals.
+	}
+
+	// Inherited const methods from QVarLengthArray.
+	auto begin() const { return _intervals.begin(); }
+	auto end() const { return _intervals.end(); }
+	auto cbegin() const { return _intervals.cbegin(); }
+	auto cend() const { return _intervals.cend(); }
+	auto rbegin() const { return _intervals.rbegin(); }
+	auto rend() const { return _intervals.rend(); }
+	auto crbegin() const { return _intervals.crbegin(); }
+	auto crend() const { return _intervals.crend(); }
+	void clear() { _intervals.clear(); }
+	size_type size() { return _intervals.size(); }
+	bool empty() const { return _intervals.empty(); }
+	const value_type& front() const { return _intervals.front(); }
+	const value_type& back() const { return _intervals.back(); }
+};
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::TimeInterval);
 Q_DECLARE_TYPEINFO(Ovito::TimeInterval, Q_MOVABLE_TYPE);
-
-
