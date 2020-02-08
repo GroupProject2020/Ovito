@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -63,10 +63,10 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 	}
 
 	// Let the subclass create the computation engine based on the input data.
-	Future<ComputeEnginePtr> engineFuture = createEngine(request.time(), modApp, input);
-	return engineFuture.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
+	return createEngine(request, modApp, input)
+		.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
 
-			// Explicitly create a local copy of the shared_ptr to keep the task object alive for some time.
+			// Explicitly create a local copy of the shared_ptr to keep the task alive for some extra time.
 			auto task = engine->task();
 
 			// Execute the engine in a worker thread.
@@ -86,9 +86,8 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 						// Apply the computed results to the input data.
 						engine->emitResults(time, modApp, state);
 						state.intersectStateValidity(engine->validityInterval());
-						return std::move(state);
 					}
-					else return std::move(state);
+					return std::move(state);
 				});
 		});
 }

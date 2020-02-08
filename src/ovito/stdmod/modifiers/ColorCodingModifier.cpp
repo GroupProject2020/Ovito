@@ -131,7 +131,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 
 	// When the modifier is inserted, automatically select the most recently added property from the input.
 	if(sourceProperty().isNull() && delegate() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const PropertyContainer* container = input.getLeafObject(delegate()->inputContainerRef())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
@@ -213,7 +213,7 @@ bool ColorCodingModifier::adjustRange()
 	// Loop over all input data.
 	bool success = false;
 	for(ModifierApplication* modApp : modifierApplications()) {
-		const PipelineFlowState& inputState = modApp->evaluateInputSynchronous();
+		const PipelineFlowState& inputState = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 
 		// Determine the minimum and maximum values of the selected property.
 		success |= determinePropertyValueRange(inputState, minValue, maxValue);

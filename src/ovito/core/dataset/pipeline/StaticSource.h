@@ -47,7 +47,7 @@ public:
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
-	virtual PipelineFlowState evaluateSynchronous() override;
+	virtual PipelineFlowState evaluateSynchronous(TimePoint time) override;
 
 	/// Returns the list of data objects that are managed by this data source.
 	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.

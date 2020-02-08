@@ -67,7 +67,7 @@ bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const DataCollection&
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(Application::instance()->headlessMode())
 		throwException(tr("The ambient occlusion modifier requires OpenGL support and cannot be used when program is running in headless mode. "

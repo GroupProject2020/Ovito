@@ -244,7 +244,7 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Get the input simulation cell to initially place the cutting plane in
 	// the center of the cell.
-	const PipelineFlowState& input = modApp->evaluateInputSynchronous();
+	const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 	if(const SimulationCellObject* cell = input.getObject<SimulationCellObject>()) {
 		TimeInterval iv;
 		if(distanceController() && distanceController()->getFloatValue(0, iv) == 0) {

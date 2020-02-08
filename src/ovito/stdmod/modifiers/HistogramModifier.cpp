@@ -90,7 +90,7 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {

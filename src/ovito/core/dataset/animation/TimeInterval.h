@@ -189,6 +189,14 @@ public:
 		}
 	}
 
+	/// Tests if two time interval overlap (either full or partially).
+	Q_DECL_CONSTEXPR bool overlap(const TimeInterval& iv) const noexcept {
+		if(isEmpty() || iv.isEmpty()) return false;
+		if(start() >= iv.start() && start() <= iv.end()) return true;
+		if(end() >= iv.start() && end() <= iv.end()) return true;
+		return (iv.start() >= start() && iv.start() <= end());
+	}
+
 	/// Return the infinite time interval that contains all time values.
 	static Q_DECL_CONSTEXPR TimeInterval infinite() noexcept { return TimeInterval(TimeNegativeInfinity(), TimePositiveInfinity()); }
 

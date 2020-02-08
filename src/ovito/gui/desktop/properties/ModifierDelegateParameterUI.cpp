@@ -114,7 +114,7 @@ void ModifierDelegateParameterUI::updateUI()
 		// Obtain modifier inputs.
 		std::vector<OORef<DataCollection>> modifierInputs;
 		for(ModifierApplication* modApp : mod->modifierApplications()) {
-			const PipelineFlowState& state = modApp->evaluateInputSynchronous();
+			const PipelineFlowState& state = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 			if(state.data())
 				modifierInputs.push_back(state.data());
 		}

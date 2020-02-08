@@ -95,7 +95,7 @@ void PropertyContainerParameterUI::updateUI()
 		bool currentContainerFilteredOut = false;
 		if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 			for(ModifierApplication* modApp : mod->modifierApplications()) {
-				const PipelineFlowState& state = modApp->evaluateInputSynchronous();
+				const PipelineFlowState& state = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 				std::vector<ConstDataObjectPath> containers = state.getObjectsRecursive(PropertyContainer::OOClass());
 				for(const ConstDataObjectPath& path : containers) {
 					const PropertyContainer* container = static_object_cast<PropertyContainer>(path.back());

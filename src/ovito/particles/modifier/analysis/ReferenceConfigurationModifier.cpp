@@ -47,7 +47,7 @@ SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameNumber, "
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameOffset, "Reference frame offset");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ReferenceConfigurationModifier, referenceFrameNumber, IntegerParameterUnit, 0);
 
-// May be removed in a future version of OVITO:
+// This class can be removed in a future version of OVITO:
 IMPLEMENT_OVITO_CLASS(ReferenceConfigurationModifierApplication);
 
 /******************************************************************************
@@ -81,7 +81,6 @@ TimeInterval ReferenceConfigurationModifier::validityInterval(const PipelineEval
 		// Results will only be valid for the duration of the current frame when using a relative offset.
 		iv.intersect(request.time());
 	}
-
 	return iv;
 }
 
@@ -91,13 +90,13 @@ TimeInterval ReferenceConfigurationModifier::validityInterval(const PipelineEval
 ******************************************************************************/
 void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp)
 {
-	AsynchronousModifier::inputCachingHints(cachingIntervals);
+	AsynchronousModifier::inputCachingHints(cachingIntervals, modApp);
 
 	// Only need to communicate caching hints when reference configuration is provided by the downstream pipeline.
 	if(!referenceConfiguration()) {
 		if(useReferenceFrameOffset()) {
 			// When using a relative reference configuration, we need to build the corresponding set of shifted time intervals. 
-			PipelineEvaluationRequest::CachingHintsList originalIntervals = cachingIntervals;
+			TimeIntervalUnion originalIntervals = cachingIntervals;
 			for(const TimeInterval& iv : originalIntervals) {
 				int startFrame = modApp->animationTimeToSourceFrame(iv.start());
 				int endFrame = modApp->animationTimeToSourceFrame(iv.end());
@@ -106,7 +105,7 @@ void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachin
 				cachingIntervals.add(TimeInterval(shiftedStartTime, shiftedEndTime));
 			}
 		}
-		else if() {
+		else {
 			// When using a static reference configuration, ask the downstream pipeline to cache the corresponding animation frame.
 			cachingIntervals.add(modApp->sourceFrameToAnimationTime(referenceFrameNumber()));
 		}
@@ -114,26 +113,55 @@ void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachin
 }
 
 /******************************************************************************
+* Is called by the ModifierApplication to let the modifier adjust the 
+* time interval of a TargetChanged event received from the downstream pipeline 
+* before it is propagated to the upstream pipeline.
+******************************************************************************/
+void ReferenceConfigurationModifier::restrictInputValidityInterval(TimeInterval& iv) const
+{
+	AsynchronousModifier::restrictInputValidityInterval(iv);
+
+	if(!referenceConfiguration()) {
+		// If the downstream pipeline changes, all computed output frames of the modifier become invalid.
+		iv.setEmpty();
+	}
+}
+
+/******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool ReferenceConfigurationModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+{
+	if(event.type() == ReferenceEvent::TargetChanged && source == referenceConfiguration()) {
+		// If the reference configuration state changes in some way, all output frames of the modifier 
+		// become invalid --over the entire animation time interval.
+		notifyTargetChanged();
+		return false;
+	}
+	return AsynchronousModifier::referenceEvent(source, event);
+}
+
+/******************************************************************************
 * Creates and initializes a computation engine that will compute the 
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// What is the reference frame number to use?
 	TimeInterval validityInterval = input.stateValidity();
 	int referenceFrame;
 	if(useReferenceFrameOffset()) {
-		// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
+		// Determine the current frame, preferably from the marker attribute stored in the pipeline flow state.
 		// If the source frame attribute is not present, fall back to inferring it from the current animation time.
 		int currentFrame = input.data() ? input.data()->sourceFrame() : -1;
 		if(currentFrame < 0)
-			currentFrame = modApp->animationTimeToSourceFrame(time);
+			currentFrame = modApp->animationTimeToSourceFrame(request.time());
 
 		// Use frame offset relative to current configuration.
 		referenceFrame = currentFrame + referenceFrameOffset();
 
 		// Results will only be valid for the duration of the current frame.
-		validityInterval.intersect(time);
+		validityInterval.intersect(request.time());
 	}
 	else {
 		// Use a constant, user-specified frame as reference configuration.
@@ -146,11 +174,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 		// Convert frame to animation time.
 		TimePoint referenceTime = modApp->sourceFrameToAnimationTime(referenceFrame);
 		
-		// Set up the pipeline request for obtaining.
-		PipelineEvaluationRequest referenceRequest(referenceTime, request.breakOnError());
-		referenceRequest.
+		// Set up the pipeline request for obtaining the reference configuration.
+		PipelineEvaluationRequest referenceRequest = request;
+		referenceRequest.setTime(referenceTime);
+		inputCachingHints(referenceRequest.modifiableCachingIntervals(), modApp);
 
-		// Issue the request to the downstream pipeline.
+		// Send the request to the downstream pipeline.
 		refState = modApp->evaluateInput(referenceRequest);
 	}
 	else {
@@ -162,7 +191,15 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 				else
 					throwException(tr("Requested reference frame %1 is out of range. Cannot perform calculation at the current animation time.").arg(referenceFrame));
 			}
-			refState = referenceConfiguration()->evaluate(PipelineEvaluationRequest(referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame)));
+
+			// Convert frame to animation time.
+			TimePoint referenceTime = referenceConfiguration()->sourceFrameToAnimationTime(referenceFrame);
+
+			// Set up the pipeline request for obtaining the reference configuration.
+			PipelineEvaluationRequest referenceRequest(referenceTime, request.breakOnError());
+
+			// Send the request to the pipeline branch.
+			refState = referenceConfiguration()->evaluate(referenceRequest);
 		}
 		else {
 			// Create an empty state for the reference configuration if it is yet to be specified by the user.
@@ -171,7 +208,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 	}
 
 	// Wait for the reference configuration to become available.
-	return refState.then(executor(), [this, time, modApp, input = input, referenceFrame, validityInterval](const PipelineFlowState& referenceInput) {
+	return refState.then(executor(), [this, request, modApp, input = input, referenceFrame, validityInterval](const PipelineFlowState& referenceInput) {
 
 		// Make sure the obtained reference configuration is valid and ready to use.
 		if(referenceInput.status().type() == PipelineStatus::Error)
@@ -188,7 +225,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 		}
 
 		// Let subclass create the compute engine.
-		return createEngineWithReference(time, modApp, std::move(input), referenceInput, validityInterval);
+		return createEngineInternal(request, modApp, std::move(input), referenceInput, validityInterval);
 	});
 }
 

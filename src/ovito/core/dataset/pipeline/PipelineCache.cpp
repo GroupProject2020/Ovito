@@ -57,7 +57,10 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 	OVITO_ASSERT(pipeline != nullptr || includeVisElements == false);
 	OVITO_ASSERT_MSG(_preparingEvaluation == false, "PipelineCache::evaluatePipeline", "Function is not reentrant.");
 
-	// Check if we can serve request immediately using the cached state(s).
+	// Update the times for which we should keep computed pipeline outputs.
+	_requestedIntervals = request.cachingIntervals();
+
+	// Check if we can serve the request immediately using the cached state(s).
 	for(const PipelineFlowState& state : _cachedStates) {
 		if(state.stateValidity().contains(request.time())) {
 			return Future<PipelineFlowState>::createImmediateEmplace(state);
@@ -68,8 +71,7 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 	for(const EvaluationInProgress& evaluation : _evaluationsInProgress) {
 		if(evaluation.validityInterval.contains(request.time())) {
 			SharedFuture<PipelineFlowState> future = evaluation.future.lock();
-			if(future.isValid()) {
-				OVITO_ASSERT(!future.isCanceled());
+			if(future.isValid() && !future.isCanceled()) {
 				return future;
 			}
 		}
@@ -153,8 +155,8 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 	// Store evaluation results in this cache.
 	future = future.then(pipeline ? pipeline->executor() : pipelineObject->executor(), [this, pipeline, pipelineObject, evaluation, includeVisElements](PipelineFlowState state) {
 		// The pipeline should never return a state without proper validity interval.
-		OVITO_ASSERT(!state.stateValidity().isEmpty());
-		OVITO_ASSERT(!evaluation->validityInterval.isEmpty());
+		//OVITO_ASSERT(!state.stateValidity().isEmpty());
+		//OVITO_ASSERT(!evaluation->validityInterval.isEmpty());
 
 		// Restrict the validity of the state.
 		state.intersectStateValidity(evaluation->validityInterval);
@@ -224,23 +226,22 @@ void PipelineCache::insertState(const PipelineFlowState& state, RefTarget* owner
 {
 	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
 	OVITO_ASSERT(ownerObject != nullptr);
+	OVITO_ASSERT(!ownerObject->dataset()->undoStack().isRecording());
 
-	// Decide whether to store the given state in the cache or not.
+	// Keep only cached states that overlap with the previously requested time interval.
+	// Throw away existing cached states that do not overlap with the requested time intervals,
+	// or which *do* overlap with the newly computed state and are now outdated.
+	_cachedStates.erase(std::remove_if(_cachedStates.begin(), _cachedStates.end(), [&](const PipelineFlowState& cachedState) {
+		if(cachedState.stateValidity().overlap(state.stateValidity()))
+			return true;
+		return !std::any_of(_requestedIntervals.cbegin(), _requestedIntervals.cend(), 
+			std::bind(&TimeInterval::overlap, cachedState.stateValidity(), std::placeholders::_1));
+	}), _cachedStates.end());
 
-	// Always cache states that are for the current animation time when running in a GUI.
-	bool doCache = false;
-	if(Application::instance()->guiMode()) {
-		TimePoint currentTime = ownerObject->dataset()->animationSettings()->time();
-		if(state.stateValidity().contains(currentTime)) {
-			doCache = true;
-		}
-	}
-
-	// TODO: Implement actual caching strategy. For now, we always keep exactly one state in the cache.
-	_cachedStates.clear();
-	doCache = true;
-
-	if(doCache) {
+	// Decide whether to store the newly computed state in the cache or not. 
+	// To keep it, its validity interval must overlap with one of the requested time intervals.
+	if(std::any_of(_requestedIntervals.cbegin(), _requestedIntervals.cend(), 
+			std::bind(&TimeInterval::overlap, state.stateValidity(), std::placeholders::_1))) {
 		_cachedStates.push_back(state);
 	}
 
@@ -254,7 +255,9 @@ const PipelineFlowState& PipelineCache::evaluatePipelineSynchronous(PipelineScen
 {
 	// First, check if we can serve the request from the asynchronous evaluation cache.
 	if(const PipelineFlowState& cachedState = getAt(time)) {
-		_synchronousState = cachedState;
+		if(cachedState.stateValidity().contains(pipeline->dataset()->animationSettings()->time()))
+			_synchronousState = cachedState;
+		return cachedState;
 	}
 	else {
 		// Otherwise, try to serve the request from the synchronous evaluation cache.
@@ -265,7 +268,7 @@ const PipelineFlowState& PipelineCache::evaluatePipelineSynchronous(PipelineScen
 				// Adopt new state produced by the pipeline if it is not empty. 
 				// Otherwise stick with the old state from our own cache.
 				UndoSuspender noUndo(pipeline);
-				if(PipelineFlowState newPreliminaryState = pipeline->dataProvider()->evaluateSynchronous()) {
+				if(PipelineFlowState newPreliminaryState = pipeline->dataProvider()->evaluateSynchronous(time)) {
 					_synchronousState = std::move(newPreliminaryState);
 
 					// Add the transformed data objects cached from the last pipeline evaluation.
@@ -282,9 +285,8 @@ const PipelineFlowState& PipelineCache::evaluatePipelineSynchronous(PipelineScen
 			// The preliminary state cache is time-independent.
 			_synchronousState.setStateValidity(TimeInterval::infinite());
 		}
+		return _synchronousState;
 	}
-
-	return _synchronousState;
 }
 
 /******************************************************************************
@@ -294,7 +296,9 @@ const PipelineFlowState& PipelineCache::evaluatePipelineStageSynchronous(Caching
 {
 	// First, check if we can serve the request from the asynchronous evaluation cache.
 	if(const PipelineFlowState& cachedState = getAt(time)) {
-		_synchronousState = cachedState;
+		if(cachedState.stateValidity().contains(pipelineObject->dataset()->animationSettings()->time()))
+			_synchronousState = cachedState;
+		return cachedState;
 	}
 	else {
 		// Otherwise, try to serve the request from the synchronous evaluation cache.
@@ -303,7 +307,7 @@ const PipelineFlowState& PipelineCache::evaluatePipelineStageSynchronous(Caching
 			// Adopt new state produced by the pipeline if it is not empty. 
 			// Otherwise stick with the old state from our own cache.
 			UndoSuspender noUndo(pipelineObject);
-			if(PipelineFlowState newState = pipelineObject->evaluateInternalSynchronous()) {
+			if(PipelineFlowState newState = pipelineObject->evaluateInternalSynchronous(time)) {
 				_synchronousState = std::move(newState);
 			}
 

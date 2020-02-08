@@ -85,7 +85,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available voxel grid from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const VoxelGrid* grid = input.getObject<VoxelGrid>()) {
 			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
 		}
@@ -93,7 +93,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available property from the input grid as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const VoxelGrid* grid = dynamic_object_cast<VoxelGrid>(input.getLeafObject(subject()))) {
 			for(const PropertyObject* property : grid->properties()) {
 				setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
@@ -107,7 +107,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(!subject())
 		throwException(tr("No input voxel grid set."));
@@ -139,7 +139,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 				.arg(voxelGrid->shape()[0]).arg(voxelGrid->shape()[1]).arg(voxelGrid->shape()[2]));
 
 	TimeInterval validityInterval = input.stateValidity();
-	FloatType isolevel = isolevelController() ? isolevelController()->getFloatValue(time, validityInterval) : 0;
+	FloatType isolevel = isolevelController() ? isolevelController()->getFloatValue(request.time(), validityInterval) : 0;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, voxelGrid->shape(), property->storage(),

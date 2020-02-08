@@ -106,11 +106,23 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 	}
 	else if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when the modifier or the upstream pipeline change.
-		pipelineCache().invalidate(static_cast<const TargetChangedEvent&>(event).unchangedInterval());
+		TimeInterval validityInterval = static_cast<const TargetChangedEvent&>(event).unchangedInterval();
+
+		// Let the modifier reduce the remaining validity interval if the modifier depends on other animation times.
+		if(modifier() && source == input())
+			modifier()->restrictInputValidityInterval(validityInterval);
+
+		// Propagate change event to upstream pipeline.
+		// Note that this will invoke ModifierApplication::notifyDependentsImpl(), which
+		// takes care of invalidating the pipeline cache.
+		notifyTargetChangedOutsideInterval(validityInterval);
+
 		// Trigger a preliminary viewport update if desired by the modifier.
 		if(source == modifier() && modifier()->performPreliminaryUpdateAfterChange()) {
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 		}
+
+		return false;
 	}
 	else if(event.type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
 		pipelineCache().invalidateSynchronousState();
@@ -160,7 +172,7 @@ void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field
 void ModifierApplication::notifyDependentsImpl(const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetChanged) {
-		// Invalidate cached results when this modifier application changes.
+		// Invalidate cached results when this modifier application or the modifier changes.
 		pipelineCache().invalidate(static_cast<const TargetChangedEvent&>(event).unchangedInterval());
 	}
 	CachingPipelineObject::notifyDependentsImpl(event);
@@ -208,7 +220,7 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluate(const PipelineEval
 Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEvaluationRequest& request)
 {
 	// Set up the evaluation request for the downstream pipeline.
-	PipelineEvaluationRequest downstreamRequest(request);
+	PipelineEvaluationRequest downstreamRequest = request;
 
 	// Ask the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
 	if(modifier() && modifier()->isEnabled())
@@ -301,7 +313,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 /******************************************************************************
 * Lets the pipeline stage compute a preliminary result in a synchronous fashion.
 ******************************************************************************/
-PipelineFlowState ModifierApplication::evaluateInternalSynchronous()
+PipelineFlowState ModifierApplication::evaluateInternalSynchronous(TimePoint time)
 {
 	PipelineFlowState state;
 	
@@ -309,14 +321,14 @@ PipelineFlowState ModifierApplication::evaluateInternalSynchronous()
 	if(input()) {
 		UndoSuspender noUndo(this);
 		// First get the preliminary results from the upstream pipeline.
-		state = input()->evaluateSynchronous();
+		state = input()->evaluateSynchronous(time);
 		try {
 			if(!state.data())
 				throwException(tr("Modifier input is empty."));
 
 			// Apply modifier:
 			if(modifier() && modifier()->isEnabled())
-				modifier()->evaluateSynchronous(dataset()->animationSettings()->time(), this, state);
+				modifier()->evaluateSynchronous(time, this, state);
 		}
 		catch(const Exception& ex) {
 			// Turn exceptions thrown during modifier evaluation into an error pipeline state.

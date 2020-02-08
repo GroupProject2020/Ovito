@@ -99,7 +99,7 @@ void SelectTypeModifierEditor::updateElementTypeList()
 
 		// Populate types list based on the selected input property.
 		for(ModifierApplication* modApp : modifierApplications()) {
-			const PipelineFlowState& inputState = modApp->evaluateInputSynchronous();
+			const PipelineFlowState& inputState = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 			if(const PropertyContainer* container = inputState.getLeafObject(mod->subject())) {
 				if(const PropertyObject* inputProperty = mod->sourceProperty().findInContainer(container)) {
 					for(const ElementType* type : inputProperty->elementTypes()) {

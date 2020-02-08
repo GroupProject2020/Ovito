@@ -74,7 +74,7 @@ public:
 	SharedFuture<PipelineFlowState> evaluateInput(const PipelineEvaluationRequest& request);
 
 	/// \brief Requests the preliminary computation results from the upstream data pipeline.
-	PipelineFlowState evaluateInputSynchronous() const { return input() ? input()->evaluateSynchronous() : PipelineFlowState(); }
+	PipelineFlowState evaluateInputSynchronous(TimePoint time) const { return input() ? input()->evaluateSynchronous(time) : PipelineFlowState(); }
 
 	/// \brief Asks the object for the result of the data pipeline.
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
@@ -111,7 +111,7 @@ protected:
 	virtual Future<PipelineFlowState> evaluateInternal(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Lets the pipeline stage compute a preliminary result in a synchronous fashion.
-	virtual PipelineFlowState evaluateInternalSynchronous() override;
+	virtual PipelineFlowState evaluateInternalSynchronous(TimePoint time) override;
 
 	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been
 	///        evaluated but before the rest of the pipeline is complete.

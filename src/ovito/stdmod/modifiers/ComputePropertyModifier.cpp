@@ -102,7 +102,7 @@ void ComputePropertyModifier::referenceReplaced(const PropertyFieldDescriptor& f
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the delegate object that will take of the specific details.
 	if(!delegate())
@@ -119,7 +119,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	size_t nelements = container->elementCount();
 
 	// The current animation frame number.
-	int currentFrame = dataset()->animationSettings()->timeToFrame(time);
+	int currentFrame = dataset()->animationSettings()->timeToFrame(request.time());
 
 	// Get input selection property and existing property data.
 	ConstPropertyPtr selectionProperty;
@@ -158,7 +158,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	TimeInterval validityInterval = input.stateValidity();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = delegate()->createEngine(time, input,
+	auto engine = delegate()->createEngine(request.time(), input,
 			container, std::move(outp),
 			std::move(selectionProperty),
 			expressions());
@@ -168,7 +168,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	// to the current time.
 	if(engine->isTimeDependent()) {
 		TimeInterval iv = engine->validityInterval();
-		iv.intersect(time);
+		iv.intersect(request.time());
 		engine->setValidityInterval(iv);
 	}
 

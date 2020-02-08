@@ -110,7 +110,7 @@ void CombineDatasetsModifier::evaluateSynchronous(TimePoint time, ModifierApplic
 		return;
 
 	// Acquire the state to be merged.
-	const PipelineFlowState& secondaryState = secondaryDataSource()->evaluateSynchronous();
+	const PipelineFlowState& secondaryState = secondaryDataSource()->evaluateSynchronous(time);
 	if(!secondaryState)
 		return;
 

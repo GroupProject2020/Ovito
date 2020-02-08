@@ -66,19 +66,26 @@ public:
 	/// Constructor.
 	ReferenceConfigurationModifier(DataSet* dataset);
 
-	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	/// Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
 
-	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	/// Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
 	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) override;
+
+	/// Is called by the ModifierApplication to let the modifier adjust the time interval of a TargetChanged event 
+	/// received from the downstream pipeline before it is propagated to the upstream pipeline.
+	virtual void restrictInputValidityInterval(TimeInterval& iv) const override;
 
 protected:
 
-	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	/// Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) = 0;
+	virtual Future<ComputeEnginePtr> createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngineInternal(const PipelineEvaluationRequest& request, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) = 0;
 
 	/// Base class for compute engines that make use of a reference configuration.
 	class OVITO_PARTICLES_EXPORT RefConfigEngineBase : public ComputeEngine

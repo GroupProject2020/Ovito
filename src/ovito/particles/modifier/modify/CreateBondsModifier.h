@@ -145,7 +145,7 @@ protected:
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual Future<ComputeEnginePtr> createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Looks up a particle type in the type list based on the name or the numeric ID.
 	static const ElementType* lookupParticleType(const PropertyObject* typeProperty, const QVariant& typeSpecification);

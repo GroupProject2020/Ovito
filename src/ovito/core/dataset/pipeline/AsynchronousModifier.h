@@ -136,7 +136,7 @@ protected:
 	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
+	virtual Future<ComputeEnginePtr> createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
 };
 
 // Export this class template specialization from the DLL under Windows.

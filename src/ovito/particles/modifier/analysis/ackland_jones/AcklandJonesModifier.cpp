@@ -50,7 +50,7 @@ AcklandJonesModifier::AcklandJonesModifier(DataSet* dataset) : StructureIdentifi
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> AcklandJonesModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> AcklandJonesModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));

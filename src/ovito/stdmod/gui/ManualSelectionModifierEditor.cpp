@@ -276,7 +276,7 @@ void ManualSelectionModifierEditor::resetSelection()
 
 	undoableTransaction(tr("Reset selection"), [this,mod]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			mod->resetSelection(modApp, modApp->evaluateInputSynchronous());
+			mod->resetSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	});
 }
@@ -291,7 +291,7 @@ void ManualSelectionModifierEditor::selectAll()
 
 	undoableTransaction(tr("Select all"), [this,mod]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			mod->selectAll(modApp, modApp->evaluateInputSynchronous());
+			mod->selectAll(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	});
 }
@@ -306,7 +306,7 @@ void ManualSelectionModifierEditor::clearSelection()
 
 	undoableTransaction(tr("Clear selection"), [this,mod]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			mod->clearSelection(modApp, modApp->evaluateInputSynchronous());
+			mod->clearSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	});
 }
@@ -327,7 +327,7 @@ void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pi
 				continue;
 
 			// Get the modifier's input data.
-			const PipelineFlowState& modInput = modApp->evaluateInputSynchronous();
+			const PipelineFlowState& modInput = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 			const ConstDataObjectPath& inputObjectPath = modInput.expectObject(mod->subject());
 
 			// Look up the right element in the modifier's input.
@@ -358,7 +358,7 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 		for(ModifierApplication* modApp : modifierApplications()) {
 
 			// Get the modifier's input data.
-			const PipelineFlowState& modInput = modApp->evaluateInputSynchronous();
+			const PipelineFlowState& modInput = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 			const ConstDataObjectPath& inputObjectPath = modInput.expectObject(mod->subject());
 
 			// Iterate of the nodes that use this pipeline.

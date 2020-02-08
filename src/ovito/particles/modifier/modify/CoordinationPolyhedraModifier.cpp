@@ -64,7 +64,7 @@ bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const DataCollec
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();

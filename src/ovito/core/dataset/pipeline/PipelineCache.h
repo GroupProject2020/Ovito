@@ -92,6 +92,9 @@ private:
 	/// Results from the last synchronous pipeline evaluation, which is used for interactive viewport rendering.
 	PipelineFlowState _synchronousState;
 
+	/// The union of time intervals for which this cache should maintain pipeline states.
+	TimeIntervalUnion _requestedIntervals;
+
 	/// The set of activate pipeline evaluations.
 	std::forward_list<EvaluationInProgress> _evaluationsInProgress;
 

@@ -123,7 +123,7 @@ QVector<ModifierApplication*> ModifierPropertiesEditor::modifierApplications()
 PipelineFlowState ModifierPropertiesEditor::getModifierInput()
 {
 	if(ModifierApplication* modApp = modifierApplication()) {
-		return modApp->evaluateInputSynchronous();
+		return modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 	}
 	return {};
 }
@@ -135,7 +135,7 @@ PipelineFlowState ModifierPropertiesEditor::getModifierInput()
 PipelineFlowState ModifierPropertiesEditor::getModifierOutput()
 {
 	if(ModifierApplication* modApp = modifierApplication()) {
-		return modApp->evaluateSynchronous();
+		return modApp->evaluateSynchronous(dataset()->animationSettings()->time());
 	}
 	return {};
 }

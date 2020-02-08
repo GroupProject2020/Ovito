@@ -50,7 +50,7 @@ public:
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngineInternal(const PipelineEvaluationRequest& request, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) override;
 
 private:
 

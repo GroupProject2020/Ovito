@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -68,7 +68,7 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputSynchronous();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			for(PropertyObject* property : container->properties()) {
 				setSourceProperty(PropertyReference(subject().dataClass(), property));
@@ -107,8 +107,12 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(const PipelineEvaluat
 		}
 	}
 
-	// Request the frozen state from the pipeline.
-	return modApp->evaluateInput(PipelineEvaluationRequest(freezeTime(), request))
+	// Set up the downstream pipeline request.
+	PipelineEvaluationRequest downstreamRequest = request;
+	downstreamRequest.setTime(freezeTime());
+
+	// Request the frozen state from the downstream pipeline.
+	return modApp->evaluateInput(downstreamRequest)
 		.then(executor(), [this, time = request.time(), modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
 
 			// Extract the input property.
@@ -260,8 +264,19 @@ void FreezePropertyModifierApplication::updateStoredData(const PropertyObject* p
 bool FreezePropertyModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetChanged) {
-		// Invalidate cached state.
-		invalidateFrozenState();
+		if(source == input()) {
+			if(FreezePropertyModifier* mod = dynamic_object_cast<FreezePropertyModifier>(modifier())) {
+				if(static_cast<const TargetChangedEvent&>(event).unchangedInterval().contains(mod->freezeTime()) == false) {
+					// Invalidate cached state.
+					invalidateFrozenState();
+					notifyTargetChanged();
+					return false;
+				}
+			}
+		}
+		else if(source == modifier()) {
+			invalidateFrozenState();
+		}
 	}
 	return ModifierApplication::referenceEvent(source, event);
 }

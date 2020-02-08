@@ -64,9 +64,8 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEv
 /******************************************************************************
 * Returns the results of an immediate and preliminary evaluation of the data pipeline.
 ******************************************************************************/
-PipelineFlowState CachingPipelineObject::evaluateSynchronous()
+PipelineFlowState CachingPipelineObject::evaluateSynchronous(TimePoint time)
 {
-	TimePoint time = dataset()->animationSettings()->time();
 	return pipelineCache().evaluatePipelineStageSynchronous(this, time);
 }
 

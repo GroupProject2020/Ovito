@@ -43,6 +43,9 @@ public:
 	/// Returns the animation time at which the pipeline is being evaluated.
 	TimePoint time() const { return _time; }
 
+	/// Sets a new animation time at which the pipeline should be evaluated.
+	void setTime(TimePoint time) { _time = time; }
+
 	/// Returns whether the pipeline system should stop the evaluation as soon as a first error occurs in one of the modifiers.
 	bool breakOnError() const { return _breakOnError; }
 

@@ -66,7 +66,7 @@ AtomicStrainModifier::AtomicStrainModifier(DataSet* dataset) : ReferenceConfigur
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngineInternal(const PipelineEvaluationRequest& request, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
 {
 	// Get the current particle positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();

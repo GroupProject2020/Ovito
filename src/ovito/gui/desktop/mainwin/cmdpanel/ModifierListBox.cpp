@@ -308,10 +308,10 @@ void ModifierListBox::updateApplicableModifiersList()
 
 	PipelineFlowState inputState;
 	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(currentItem->object())) {
-		inputState = modApp->evaluateSynchronous();
+		inputState = modApp->evaluateSynchronous(dataset->animationSettings()->time());
 	}
 	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(currentItem->object())) {
-		inputState = pipelineObject->evaluateSynchronous();
+		inputState = pipelineObject->evaluateSynchronous(dataset->animationSettings()->time());
 	}
 	else if(PipelineSceneNode* node = _pipelineList->selectedNode()) {
 		inputState = node->evaluatePipelineSynchronous(false);

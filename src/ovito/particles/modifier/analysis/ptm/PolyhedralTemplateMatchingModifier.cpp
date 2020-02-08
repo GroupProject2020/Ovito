@@ -107,7 +107,7 @@ void PolyhedralTemplateMatchingModifier::propertyChanged(const PropertyFieldDesc
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != PTMAlgorithm::NUM_STRUCTURE_TYPES)
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the data pipeline and insert it again."));

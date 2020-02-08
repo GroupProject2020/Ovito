@@ -50,7 +50,7 @@ public:
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
 	/// \brief Asks the pipeline stage to compute the preliminary results in a synchronous fashion.
-	virtual PipelineFlowState evaluateSynchronous() override;
+	virtual PipelineFlowState evaluateSynchronous(TimePoint time) override;
 
 	/// \brief Returns the internal output cache.
 	const PipelineCache& pipelineCache() const { return _pipelineCache; }
@@ -64,7 +64,7 @@ protected:
 	virtual Future<PipelineFlowState> evaluateInternal(const PipelineEvaluationRequest& request) = 0;
 
 	/// \brief Lets the pipeline stage compute a preliminary result in a synchronous fashion.
-	virtual PipelineFlowState evaluateInternalSynchronous() { 
+	virtual PipelineFlowState evaluateInternalSynchronous(TimePoint time) { 
 		return PipelineFlowState(getSourceDataCollection(), status()); 
 	}
 

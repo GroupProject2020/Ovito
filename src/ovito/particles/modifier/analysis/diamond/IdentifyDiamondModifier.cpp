@@ -52,7 +52,7 @@ IdentifyDiamondModifier::IdentifyDiamondModifier(DataSet* dataset) : StructureId
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the modification pipeline and insert it again."));

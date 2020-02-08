@@ -52,7 +52,7 @@ SharedFuture<PipelineFlowState> StaticSource::evaluate(const PipelineEvaluationR
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-PipelineFlowState StaticSource::evaluateSynchronous()
+PipelineFlowState StaticSource::evaluateSynchronous(TimePoint time)
 {
     // Note that the PipelineFlowState constructor creates deep copy of the data collection.
     // We always pass a copy of the data to the pipeline to avoid unexpected side effects when

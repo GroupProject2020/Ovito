@@ -50,7 +50,7 @@ public:
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) = 0;
 
 	/// \brief Asks the pipeline stage to compute the preliminary results in a synchronous fashion.
-	virtual PipelineFlowState evaluateSynchronous() { return {}; }
+	virtual PipelineFlowState evaluateSynchronous(TimePoint time) { return {}; }
 
 	/// \brief Returns a list of pipeline nodes that have this object in their pipeline.
 	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.

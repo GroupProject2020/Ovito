@@ -137,7 +137,7 @@ void PropertyReferenceParameterUI::updateUI()
 			if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 				for(ModifierApplication* modApp : mod->modifierApplications()) {
 					// Populate combo box with items from the upstream pipeline.
-					addItemsToComboBox(modApp->evaluateInputSynchronous());
+					addItemsToComboBox(modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 				}
 			}
 

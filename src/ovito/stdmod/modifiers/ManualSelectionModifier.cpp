@@ -55,7 +55,7 @@ void ManualSelectionModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Take a snapshot of the existing selection state at the time the modifier is created.
 	if(!getSelectionSet(modApp, false)) {
-		resetSelection(modApp, modApp->evaluateInputSynchronous());
+		resetSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 	}
 }
 
@@ -67,7 +67,7 @@ void ManualSelectionModifier::propertyChanged(const PropertyFieldDescriptor& fie
 	// Whenever the subject of this modifier is changed, reset the selection.
 	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded()) {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			resetSelection(modApp, modApp->evaluateInputSynchronous());
+			resetSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	}
 	GenericPropertyModifier::propertyChanged(field);

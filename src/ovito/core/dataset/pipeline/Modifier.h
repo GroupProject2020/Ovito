@@ -58,6 +58,11 @@ public:
 	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
 	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) {}
 
+	/// \brief This method is called by the ModifierApplication to let the modifier adjust the time interval
+	/// of a TargetChanged event received from the downstream pipeline before it is propagated to the 
+	/// upstream pipeline.
+	virtual void restrictInputValidityInterval(TimeInterval& iv) const {}
+
 	/// \brief Lets the modifier render itself into a viewport.
 	/// \param time The animation time at which to render the modifier.
 	/// \param contextNode The node context used to render the modifier.
