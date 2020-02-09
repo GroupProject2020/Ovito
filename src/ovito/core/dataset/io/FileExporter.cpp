@@ -256,7 +256,7 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 
 			operation.setProgressText(tr("Exporting frame %1 to file '%2'").arg(frameNumber).arg(filename));
 
-			exportFrame(frameNumber, exportTime, filename, operation.createSubTask());
+			exportFrame(frameNumber, exportTime, filename, operation.createSubOperation());
 
 			if(exportAnimation() && useWildcardFilename())
 				closeOutputFile(!operation.isCanceled());

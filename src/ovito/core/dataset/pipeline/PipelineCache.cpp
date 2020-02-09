@@ -296,8 +296,9 @@ const PipelineFlowState& PipelineCache::evaluatePipelineStageSynchronous(Caching
 {
 	// First, check if we can serve the request from the asynchronous evaluation cache.
 	if(const PipelineFlowState& cachedState = getAt(time)) {
-		if(cachedState.stateValidity().contains(pipelineObject->dataset()->animationSettings()->time()))
+		if(cachedState.stateValidity().contains(pipelineObject->dataset()->animationSettings()->time())) {
 			_synchronousState = cachedState;
+		}
 		return cachedState;
 	}
 	else {

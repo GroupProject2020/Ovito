@@ -55,14 +55,8 @@ public:
 
 	/// Changes the status text of this promise.
 	virtual void setProgressText(const QString& progressText) override;
-
-	/// Creates a child operation.
-	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-	virtual Promise<> createSubTask() override;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

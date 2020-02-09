@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,23 +26,35 @@
 #include <ovito/core/Core.h>
 #include "Promise.h"
 #include "Future.h"
+#include "TaskWatcher.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
 /**
- * Object passed to asynchronous functions.
+ * An object representing an asynchronous program operation that is executed in the main thread.
  */
 class OVITO_CORE_EXPORT AsyncOperation : public Promise<>
 {
 public:
 
-	/// Constructor.
-	AsyncOperation(Promise<>&& promise) : Promise(std::move(promise)) {}
+	/// Default constructor creating an invalid operation object.
+	AsyncOperation() = default;
 
-	/// Constructor.
-	AsyncOperation(TaskManager& taskManager);
+	/// Constructor creating a new operation, registering it with the given task manager,
+	/// and putting into the 'started' state.
+	explicit AsyncOperation(TaskManager& taskManager);
 
-	/// Destructor.
+	/// Creates a special async operation that can be used just for signaling the completion of 
+	/// an operation and which is not registered with a task manager.
+	static AsyncOperation createSignalOperation(bool startedState);
+
+	/// Move constructor.
+	AsyncOperation(AsyncOperation&& other) noexcept = default;
+
+	/// Move assignment operator.
+	AsyncOperation& operator=(AsyncOperation&& other) = default;
+
+	/// Destructor, which automatically puts the operation into the 'finished' state.
 	~AsyncOperation() {
 		// Automatically put the promise into the finished state.
 		if(isValid() && !isFinished()) {
@@ -50,6 +62,36 @@ public:
 			setFinished();
 		}
 	}
+
+	/// Returns the TaskWatcher automatically created by the TaskManager for this operation.
+	TaskWatcher* watcher();
+
+    /// Creates a child operation that executes within the context of this parent operation.
+    /// In case the child task gets canceled, this parent task gets canceled too --and vice versa.
+	AsyncOperation createSubOperation();
+
+	/// Runs the given callback function as soon as the given future reaches the fulfilled state.
+	/// The callback function must accept the future as a parameter.
+	/// If this parent operation gets canceled, the callback function may not be run.
+	template<typename future_type, typename Executor, typename FC>
+	void waitForFutureAsync(future_type&& future, Executor&& executor, bool defer, FC&& callback) {
+		OVITO_ASSERT(isValid());
+		OVITO_ASSERT(future.isValid());
+
+		// Run the callback function when the input future is finished.
+		auto continuation = std::forward<future_type>(future).then_future(std::forward<Executor>(executor), defer, std::forward<FC>(callback));
+
+		// Hold on to the strong dependency to keep the child operation alive until the parent task 
+		// finishes or gets canceled.
+		QObject::connect(watcher(), &TaskWatcher::canceled, [continuation = std::move(continuation)]() mutable {
+			continuation.reset();
+		});
+	}
+
+private:
+
+	/// Constructor that takes an existing task object.
+	AsyncOperation(TaskPtr&& p) noexcept : Promise<>(std::move(p)) {}
 };
 
 OVITO_END_INLINE_NAMESPACE

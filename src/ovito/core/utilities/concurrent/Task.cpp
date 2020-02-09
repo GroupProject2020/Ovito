@@ -174,12 +174,6 @@ void Task::addContinuationImpl(fu2::unique_function<void(bool)>&& cont, bool def
 	}
 }
 
-Promise<> Task::createSubTask()
-{
-	OVITO_ASSERT(false);
-	return Promise<>::createFailed(Exception(QStringLiteral("Internal error: Calling createSubTask() on this type of Task is not allowed.")));
-}
-
 bool Task::waitForFuture(const FutureBase& future)
 {
 	OVITO_ASSERT_MSG(taskManager() != nullptr, "Task::waitForFuture()", "Calling waitForFuture() on this type of Task is not allowed.");

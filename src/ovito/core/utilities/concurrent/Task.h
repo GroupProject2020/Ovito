@@ -153,12 +153,6 @@ public:
     /// \param ex The exception to store into the task object.
     virtual void setException(std::exception_ptr&& ex);
 
-    /// \brief Creates a child task that executes within the context of this parent task.
-    /// \return A promise which should be used to control the child task.
-    ///
-    /// In case the child task gets canceled, this parent task gets canceled too -and vice versa.
-	virtual Promise<> createSubTask();
-
     /// \brief Blocks execution until the given future enters the completed state.
     /// \param future The future to wait for.
     /// \return false if the either this task or the future have been canceled.

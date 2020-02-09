@@ -126,10 +126,6 @@ public:
 	/// while trying to fulfill it.
     void setException(std::exception_ptr&& ex) const { task()->setException(std::move(ex)); }
 
-	/// Creates a child operation.
-	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-	Promise<> createSubTask() const;
-
 	/// Blocks execution until the given future enters the completed state.
 	bool waitForFuture(const FutureBase& future) const { return task()->waitForFuture(future); }
 
@@ -219,7 +215,7 @@ public:
 		return Promise(std::make_shared<Task>(Task::State(Task::Started | Task::Canceled | Task::Finished)));
 	}
 
-	/// Returns a future that is associated with the same shared state as this promise.
+	/// Returns a Future that is associated with the same shared state as this promise.
 	future_type future() {
 #ifdef OVITO_DEBUG
 		OVITO_ASSERT_MSG(!_futureCreated, "Promise::future()", "Only a single Future may be created from a Promise.");
@@ -227,6 +223,11 @@ public:
 #endif
 		return future_type(TaskPtr(task()));
 	}
+
+	/// Returns a SharedFuture that is associated with the same shared state as this promise.
+	shared_future_type sharedFuture() {
+		return shared_future_type(TaskPtr(task()));
+	}	
 
 	/// Sets the result value of the promise.
 	template<typename... R2>

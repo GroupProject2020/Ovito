@@ -62,7 +62,7 @@ void ActionManager::on_RenderActiveViewport_triggered()
 		ProgressDialog progressDialog(frameBufferWindow, mainWindow()->datasetContainer().taskManager(), tr("Rendering"));
 
 		// Call high-level rendering function, which will take care of the rest.
-		_dataset->renderScene(settings, viewport, frameBuffer.get(), progressDialog.taskManager());
+		_dataset->renderScene(settings, viewport, frameBuffer.get(), AsyncOperation(progressDialog.taskManager()));
 	}
 	catch(const Exception& ex) {
 		ex.logError();

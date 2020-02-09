@@ -22,9 +22,7 @@
 
 #include <ovito/core/Core.h>
 #include "MainThreadTask.h"
-#include "Future.h"
 #include "TaskManager.h"
-#include "TaskWatcher.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -53,23 +51,6 @@ void MainThreadTask::setProgressText(const QString& progressText)
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running operation.
 	taskManager()->processEvents();
-}
-
-Promise<> MainThreadTask::createSubTask()
-{
-	OVITO_ASSERT(isStarted());
-	OVITO_ASSERT(!isFinished());
-
-	// Create a new promise for the sub-operation.
-	Promise<> subOperation = taskManager()->createMainThreadOperation<>(true);
-
-	// Ensure that the sub-operation gets canceled together with the parent operation.
-	TaskWatcher* parentOperationWatcher = taskManager()->addTaskInternal(shared_from_this());
-	TaskWatcher* subOperationWatcher = taskManager()->addTaskInternal(subOperation.task());
-	QObject::connect(parentOperationWatcher, &TaskWatcher::canceled, subOperationWatcher, &TaskWatcher::cancel);
-	QObject::connect(subOperationWatcher, &TaskWatcher::canceled, parentOperationWatcher, &TaskWatcher::cancel);
-
-	return subOperation;
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -156,6 +156,7 @@ protected:
 	/// Constructor that constructs a Future from an existing task dependency.
 	explicit SharedFuture(TaskDependency&& p) noexcept : FutureBase(std::move(p)) {}
 
+	template<typename... R2> friend class Promise;
 	template<typename... R2> friend class WeakSharedFuture;
 };
 

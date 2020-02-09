@@ -31,7 +31,6 @@
 #include <ovito/core/dataset/data/camera/AbstractCameraObject.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
-#include <ovito/core/utilities/concurrent/SignalPromise.h>
 
 /// The default field of view in world units used for orthogonal view types when the scene is empty.
 #define DEFAULT_ORTHOGONAL_FIELD_OF_VIEW		FloatType(200)
@@ -520,7 +519,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			adjustProjectionForRenderFrame(_projParams);
 
 		// This is the async operation object used when calling rendering functions in the following.
-		AsyncOperation renderOperation(SignalPromise::create(true));
+		AsyncOperation renderOperation = AsyncOperation::createSignalOperation(true);
 
 		// Determine scene bounding box.
 		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderOperation);

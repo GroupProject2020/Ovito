@@ -104,7 +104,6 @@ SET(SourceFiles
 	utilities/io/CompressedTextReader.cpp
 	utilities/io/CompressedTextWriter.cpp
 	utilities/concurrent/TaskWatcher.cpp
-	utilities/concurrent/Promise.cpp
 	utilities/concurrent/Task.cpp
 	utilities/concurrent/MainThreadTask.cpp
 	utilities/concurrent/ProgressiveTask.cpp

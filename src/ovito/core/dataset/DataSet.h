@@ -38,7 +38,7 @@
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/TaskWatcher.h>
-#include <ovito/core/utilities/concurrent/SignalPromise.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/MixedKeyCache.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
@@ -255,8 +255,8 @@ private:
 	/// This signal/slot connection updates the viewports when the animation time changes.
 	QMetaObject::Connection _updateViewportOnTimeChangeConnection;
 
-	/// The promise of the scene becoming ready.
-	SignalPromise _sceneReadyPromise;
+	/// The operation making the scene ready.
+	AsyncOperation _sceneReadyOperation;
 
 	/// The future of the scene becoming ready.
 	SharedFuture<> _sceneReadyFuture;

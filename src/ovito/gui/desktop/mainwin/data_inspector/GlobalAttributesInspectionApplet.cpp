@@ -143,7 +143,7 @@ void GlobalAttributesInspectionApplet::exportToFile()
 		ProgressDialog progressDialog(_mainWindow, tr("File export"));
 
 		// Let the exporter do its job.
-		exporter->doExport(progressDialog.taskManager().createMainThreadOperation<>(true));
+		exporter->doExport(AsyncOperation(progressDialog.taskManager()));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

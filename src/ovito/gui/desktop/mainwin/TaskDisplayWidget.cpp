@@ -45,17 +45,19 @@ TaskDisplayWidget::TaskDisplayWidget(MainWindow* mainWindow) : QWidget(nullptr),
 	_progressTextDisplay->setMargin(2);
 	_progressTextDisplay->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
 	_progressBar = new QProgressBar(this);
+#if 0
 	_cancelTaskButton = new QToolButton(this);
 	_cancelTaskButton->setText(tr("Cancel"));
 	QIcon cancelIcon(":/gui/mainwin/process-stop-16.png");
 	cancelIcon.addFile(":/gui/mainwin/process-stop-22.png");
 	_cancelTaskButton->setIcon(cancelIcon);
+#endif
 	progressWidgetLayout->addWidget(_progressBar);
-	progressWidgetLayout->addWidget(_cancelTaskButton);
+//	progressWidgetLayout->addWidget(_cancelTaskButton);
 	progressWidgetLayout->addStrut(_progressTextDisplay->sizeHint().height());
 	setMinimumHeight(_progressTextDisplay->minimumSizeHint().height());
 
-	connect(_cancelTaskButton, &QAbstractButton::clicked, &mainWindow->datasetContainer().taskManager(), &TaskManager::cancelAll);
+//	connect(_cancelTaskButton, &QAbstractButton::clicked, &mainWindow->datasetContainer().taskManager(), &TaskManager::cancelAll);
 	connect(&mainWindow->datasetContainer().taskManager(), &TaskManager::taskStarted, this, &TaskDisplayWidget::taskStarted);
 	connect(&mainWindow->datasetContainer().taskManager(), &TaskManager::taskFinished, this, &TaskDisplayWidget::taskFinished);
 	connect(this, &QObject::destroyed, _progressTextDisplay, &QObject::deleteLater);
@@ -123,7 +125,7 @@ void TaskDisplayWidget::updateIndicator()
 		_mainWindow->statusBar()->removeWidget(_progressTextDisplay);
 	}
 	else {
-		for(auto iter = taskManager.runningTasks().crbegin(); iter != taskManager.runningTasks().crend(); iter++) {
+		for(auto iter = taskManager.runningTasks().cbegin(); iter != taskManager.runningTasks().cend(); iter++) {
 			TaskWatcher* watcher = *iter;
 			qlonglong maximum = watcher->progressMaximum();
 			if(watcher->progressMaximum() != 0 || watcher->progressText().isEmpty() == false) {

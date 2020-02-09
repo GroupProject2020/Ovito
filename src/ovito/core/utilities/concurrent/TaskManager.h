@@ -187,8 +187,7 @@ private:
 	/// The dataset container owning this task manager (may be NULL).
 	DataSetContainer* _datasetContainer;
 
-	// Needed by MainThreadTask::createSubTask():
-	friend class MainThreadTask;
+	friend class AsyncOperation; // Needed by AsyncOperation::watcher()
 };
 
 OVITO_END_INLINE_NAMESPACE

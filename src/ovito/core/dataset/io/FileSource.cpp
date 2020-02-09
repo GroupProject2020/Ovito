@@ -412,7 +412,6 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 			// Retrieve the file.
 			Future<PipelineFlowState> loadFrameFuture = Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), sourceFrames[frame].sourceFile)
 				.then(executor(), [this, frame](const FileHandle& fileHandle) -> Future<PipelineFlowState> {
-					qDebug() << "FileSource::requestFrameInternal: frame=" << frame << "file:" << fileHandle.toString();
 
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {

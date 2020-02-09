@@ -323,7 +323,7 @@ PipelineFlowState ModifierApplication::evaluateInternalSynchronous(TimePoint tim
 		// First get the preliminary results from the upstream pipeline.
 		state = input()->evaluateSynchronous(time);
 		try {
-			if(!state.data())
+			if(!state)
 				throwException(tr("Modifier input is empty."));
 
 			// Apply modifier:

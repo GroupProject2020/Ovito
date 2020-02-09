@@ -112,7 +112,7 @@ public:
 	virtual bool performPreliminaryUpdateAfterEvaluation() { return true; }
 
 	/// \brief Decides whether a preliminary viewport update is performed every time the modifier
-	///        iself changes. This makes mostly sense for synchronous modifiers.
+	///        itself changes.
 	virtual bool performPreliminaryUpdateAfterChange() { return true; }
 
 	/// \brief Returns the number of animation frames this modifier can provide.

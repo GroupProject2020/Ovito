@@ -135,7 +135,6 @@ OORef<ViewportConfiguration> DataSet::createDefaultViewportConfiguration()
 		else defaultViewportConfig->setMaximizedViewport(nullptr);
 #else
 		defaultViewportConfig->setMaximizedViewport(defaultViewportConfig->activeViewport());
-//		defaultViewportConfig->setMaximizedViewport(nullptr);
 #endif
 	}
 
@@ -156,7 +155,7 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			// If any of the scene pipelines change, the scene-ready state needs to be reset (unless it's still unfulfilled).
 			if(_sceneReadyFuture.isValid() && _sceneReadyFuture.isFinished()) {
 				_sceneReadyFuture.reset();
-				_sceneReadyPromise.reset();
+				_sceneReadyOperation.reset();
 				OVITO_ASSERT(!_pipelineEvaluation.isValid());
 				OVITO_ASSERT(!_pipelineEvaluation.pipeline());
 			}
@@ -270,16 +269,16 @@ SharedFuture<> DataSet::whenSceneReady()
 	OVITO_CHECK_OBJECT_POINTER(animationSettings());
 	OVITO_CHECK_OBJECT_POINTER(viewportConfig());
 	OVITO_ASSERT(!viewportConfig()->isRendering());
-	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
+	OVITO_ASSERT(_sceneReadyOperation.isValid() == _sceneReadyFuture.isValid());
 
 	if(_sceneReadyFuture.isValid() && _sceneReadyFuture.isFinished() && _sceneReadyTime != animationSettings()->time()) {
 		_sceneReadyFuture.reset();
-		_sceneReadyPromise.reset();
+		_sceneReadyOperation.reset();
 	}
 
 	if(!_sceneReadyFuture.isValid()) {
-		_sceneReadyPromise = SignalPromise::create(true);
-		_sceneReadyFuture = _sceneReadyPromise.future();
+		_sceneReadyOperation = AsyncOperation::createSignalOperation(true);
+		_sceneReadyFuture = _sceneReadyOperation.sharedFuture();
 		_sceneReadyTime = animationSettings()->time();
 		makeSceneReadyLater(false);
 	}
@@ -293,7 +292,7 @@ SharedFuture<> DataSet::whenSceneReady()
 ******************************************************************************/
 void DataSet::makeSceneReady(bool forceReevaluation)
 {
-	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
+	OVITO_ASSERT(_sceneReadyOperation.isValid() == _sceneReadyFuture.isValid());
 
 	// Make sure whenSceneReady() was called before.
 	if(!_sceneReadyFuture.isValid()) {
@@ -354,7 +353,7 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 
 	// If all pipelines are already complete, we are done.
 	if(!_pipelineEvaluation.isValid()) {
-		_sceneReadyPromise.setFinished();
+		_sceneReadyOperation.setFinished();
 		OVITO_ASSERT(_sceneReadyFuture.isFinished());
 	}
 	else {
@@ -376,7 +375,7 @@ void DataSet::onViewportUpdatesResumed()
 void DataSet::pipelineEvaluationFinished()
 {
 	OVITO_ASSERT(_sceneReadyFuture.isValid());
-	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
+	OVITO_ASSERT(_sceneReadyOperation.isValid() == _sceneReadyFuture.isValid());
 	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
 	OVITO_ASSERT(_pipelineEvaluation.isValid());
 	OVITO_ASSERT(_pipelineEvaluation.pipeline());
@@ -485,7 +484,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 					operation.setProgressValue(frameIndex);
 					operation.setProgressText(tr("Rendering animation (frame %1 of %2)").arg(frameIndex+1).arg(numberOfFrames));
 
-					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubTask());
+					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubOperation());
 					if(operation.isCanceled())
 						break;
 
