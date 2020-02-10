@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -50,7 +50,7 @@ SceneNodesListModel::SceneNodesListModel(DataSetContainer& datasetContainer, QWi
 ******************************************************************************/
 int SceneNodesListModel::rowCount(const QModelIndex& parent) const
 {
-	return _nodeListener.targets().size();
+	return _nodeListener.targets().size() + 1;
 }
 
 /******************************************************************************
@@ -59,12 +59,26 @@ int SceneNodesListModel::rowCount(const QModelIndex& parent) const
 QVariant SceneNodesListModel::data(const QModelIndex& index, int role) const
 {
 	if(role == Qt::DisplayRole) {
-		return QVariant::fromValue(_nodeListener.targets()[index.row()]->objectTitle());
+		if(index.row() == 0)
+			return tr("Pipelines:");
+		return QVariant::fromValue(_nodeListener.targets()[index.row() - 1]->objectTitle());
 	}
 	else if(role == Qt::UserRole) {
-		return QVariant::fromValue(_nodeListener.targets()[index.row()]);
+		if(index.row() != 0)
+			return QVariant::fromValue(_nodeListener.targets()[index.row() - 1]);
 	}
 	return QVariant();
+}
+
+/******************************************************************************
+* Returns the item flags for the given index.
+******************************************************************************/
+Qt::ItemFlags SceneNodesListModel::flags(const QModelIndex& index) const
+{
+	if(index.row() == 0)
+		return Qt::NoItemFlags | Qt::ItemNeverHasChildren;
+
+	return QAbstractListModel::flags(index);
 }
 
 /******************************************************************************
@@ -103,12 +117,12 @@ void SceneNodesListModel::onNodeNotificationEvent(RefTarget* source, const Refer
 		const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
 		if(refEvent.field() == &PROPERTY_FIELD(SceneNode::children)) {
 			if(SceneNode* node = dynamic_object_cast<SceneNode>(refEvent.newTarget())) {
-				beginInsertRows(QModelIndex(), _nodeListener.targets().size(), _nodeListener.targets().size());
+				beginInsertRows(QModelIndex(), _nodeListener.targets().size() + 1, _nodeListener.targets().size() + 1);
 				_nodeListener.push_back(node);
 				endInsertRows();
 				// Add all child nodes too.
 				node->visitChildren([this](SceneNode* node) -> bool {
-					beginInsertRows(QModelIndex(), _nodeListener.targets().size(), _nodeListener.targets().size());
+					beginInsertRows(QModelIndex(), _nodeListener.targets().size() + 1, _nodeListener.targets().size() + 1);
 					_nodeListener.push_back(node);
 					endInsertRows();
 					return true;
@@ -127,7 +141,7 @@ void SceneNodesListModel::onNodeNotificationEvent(RefTarget* source, const Refer
 	if(event.type() == ReferenceEvent::TitleChanged) {
 		int index = _nodeListener.targets().indexOf(static_cast<SceneNode*>(source));
 		if(index >= 0) {
-			QModelIndex modelIndex = createIndex(index, 0, source);
+			QModelIndex modelIndex = createIndex(index + 1, 0, source);
 			dataChanged(modelIndex, modelIndex);
 		}
 	}

@@ -68,6 +68,16 @@ public:
 	/// The default method implementation does nothing.
 	virtual void moveLayerInViewport(const Vector2& delta) {}
 
+	/// \brief Returns the title of this layer object.
+	virtual QString objectTitle() const override {
+		if(title().isEmpty()) return RefTarget::objectTitle();
+		else return title();
+	}
+
+	/// \brief Changes the title of this layer.
+	/// \undoable
+	void setObjectTitle(const QString& title) { setTitle(title); }
+
 protected:
 
 	/// \brief Is called when the value of a non-animatable property field of this RefMaker has changed.
@@ -84,6 +94,9 @@ private:
 	/// Option for rendering the overlay contents behind the three-dimensional content.
 	/// Note: This field exists only for backward compatibility with OVITO 2.9.0. 
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderBehindScene, setRenderBehindScene);
+
+	/// The user-defined title of this viewport overlay.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 };
 
 OVITO_END_INLINE_NAMESPACE

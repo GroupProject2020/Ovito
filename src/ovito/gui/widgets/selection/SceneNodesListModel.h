@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -46,6 +46,9 @@ public:
 	/// Returns the model's data stored under the given role for the item referred to by the index.
 	virtual QVariant data(const QModelIndex & index, int role) const override;
 
+	/// Returns the item flags for the given index.
+	virtual Qt::ItemFlags flags(const QModelIndex& index) const override;
+
 private Q_SLOTS:
 
 	/// This is called when a new dataset has been loaded.
@@ -72,5 +75,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

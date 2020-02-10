@@ -29,11 +29,14 @@ IMPLEMENT_OVITO_CLASS(ViewportOverlay);
 DEFINE_PROPERTY_FIELD(ViewportOverlay, renderBehindScene);
 DEFINE_PROPERTY_FIELD(ViewportOverlay, isEnabled);
 DEFINE_PROPERTY_FIELD(ViewportOverlay, status);
+DEFINE_PROPERTY_FIELD(ViewportOverlay, title);
 SET_PROPERTY_FIELD_LABEL(ViewportOverlay, renderBehindScene, "Draw behind scene");
 SET_PROPERTY_FIELD_LABEL(ViewportOverlay, isEnabled, "Enabled");
 SET_PROPERTY_FIELD_LABEL(ViewportOverlay, status, "Status");
+SET_PROPERTY_FIELD_LABEL(ViewportOverlay, title, "Name");
 SET_PROPERTY_FIELD_CHANGE_EVENT(ViewportOverlay, isEnabled, ReferenceEvent::TargetEnabledOrDisabled);
 SET_PROPERTY_FIELD_CHANGE_EVENT(ViewportOverlay, status, ReferenceEvent::ObjectStatusChanged);
+SET_PROPERTY_FIELD_CHANGE_EVENT(ViewportOverlay, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.

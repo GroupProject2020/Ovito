@@ -50,20 +50,46 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	QGridLayout* layout = new QGridLayout(this);
 	layout->setContentsMargins(2,2,2,2);
 	layout->setSpacing(4);
-	layout->setColumnStretch(1,1);
+	layout->setColumnStretch(0,1);
 
 	SceneNodeSelectionBox* nodeSelBox = new SceneNodeSelectionBox(_datasetContainer, this);
-	layout->addWidget(nodeSelBox, 0, 0, 1, 2);
+	layout->addWidget(nodeSelBox, 0, 0, 1, 1);
+	QMenu* pipelineMenu = new QMenu(this);
+	pipelineMenu->addAction(_actionManager->getAction(ACTION_EDIT_RENAME_PIPELINE));
+	pipelineMenu->addAction(_actionManager->getAction(ACTION_EDIT_CLONE_PIPELINE));
+	pipelineMenu->addSeparator();
+	pipelineMenu->addAction(_actionManager->getAction(ACTION_EDIT_DELETE));
+	QToolButton* pipelineMenuButton = new QToolButton(this);
+	pipelineMenuButton->setStyleSheet(
+		"QToolButton { padding: 0px; margin: 0px; border: none; background-color: transparent; } "
+		"QToolButton::menu-indicator { image: none; } ");
+	pipelineMenuButton->setPopupMode(QToolButton::InstantPopup);
+	pipelineMenuButton->setIcon(QIcon(":/gui/actions/edit/pipeline_menu.svg"));
+	pipelineMenuButton->setMenu(pipelineMenu);
+	pipelineMenuButton->setEnabled(nodeSelBox->isEnabled());
+	pipelineMenuButton->setToolTip(tr("Pipeline menu"));
+	layout->addWidget(pipelineMenuButton, 0, 1, 1, 1);
+	connect(nodeSelBox, &SceneNodeSelectionBox::enabledChanged, pipelineMenuButton, &QToolButton::setEnabled);
 
 	_pipelineListModel = new PipelineListModel(_datasetContainer, this);
 	_modifierSelector = new ModifierListBox(this, _pipelineListModel);
-    layout->addWidget(_modifierSelector, 1, 0, 1, 2);
+    layout->addWidget(_modifierSelector, 1, 0, 1, 1);
     connect(_modifierSelector, (void (QComboBox::*)(int))&QComboBox::activated, this, &ModifyCommandPage::onModifierAdd);
 
 	class PipelineListView : public QListView {
 	public:
 		PipelineListView(QWidget* parent) : QListView(parent) {}
-		virtual QSize sizeHint() const { return QSize(256, 260); }
+		virtual QSize sizeHint() const override { return QSize(256, 260); }
+	protected:
+		virtual bool edit(const QModelIndex& index, QAbstractItemView::EditTrigger trigger, QEvent* event) override {
+			// Avoid triggering edit mode when user clicks the check box next to a list item.
+			if(trigger == QAbstractItemView::SelectedClicked && event->type() == QEvent::MouseButtonRelease) {
+				QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+				if(mouseEvent->pos().x() < visualRect(index).left() + 50)
+					trigger = QAbstractItemView::NoEditTriggers;
+			}
+			return QListView::edit(index, trigger, event);
+		}
 	};
 
 	QSplitter* splitter = new QSplitter(Qt::Vertical);
@@ -81,6 +107,7 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	_pipelineWidget->setAcceptDrops(true);
 	_pipelineWidget->setDragDropOverwriteMode(false);
 	_pipelineWidget->setDropIndicatorShown(true);
+	_pipelineWidget->setEditTriggers(QAbstractItemView::SelectedClicked);
 	_pipelineWidget->setModel(_pipelineListModel);
 	_pipelineWidget->setSelectionModel(_pipelineListModel->selectionModel());
 	connect(_pipelineListModel, &PipelineListModel::selectedItemChanged, this, &ModifyCommandPage::onSelectedItemChanged);

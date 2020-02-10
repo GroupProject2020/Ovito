@@ -66,6 +66,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 #define ACTION_EDIT_DELETE				"EditDelete"
 /// This action duplicates the selected scene object.
 #define ACTION_EDIT_CLONE_PIPELINE		"ClonePipeline"
+/// This action opens the rename pipeline dialog.
+#define ACTION_EDIT_RENAME_PIPELINE		"RenamePipeline"
 /// This action clears the current undo stack.
 #define ACTION_EDIT_CLEAR_UNDO_STACK	"EditClearUndoStack"
 
@@ -236,6 +238,7 @@ private Q_SLOTS:
 	void on_RenderActiveViewport_triggered();
 	void on_EditDelete_triggered();
 	void on_ClonePipeline_triggered();
+	void on_RenamePipeline_triggered();
 
 private:
 

@@ -59,6 +59,16 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	public:
 		OverlayListWidget(QWidget* parent) : QListView(parent) {}
 		virtual QSize sizeHint() const override { return QSize(256, 120); }
+	protected:
+		virtual bool edit(const QModelIndex& index, QAbstractItemView::EditTrigger trigger, QEvent* event) override {
+			// Avoid triggering edit mode when user clicks the check box next to a list item.
+			if(trigger == QAbstractItemView::SelectedClicked && event->type() == QEvent::MouseButtonRelease) {
+				QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+				if(mouseEvent->pos().x() < visualRect(index).left() + 50)
+					trigger = QAbstractItemView::NoEditTriggers;
+			}
+			return QListView::edit(index, trigger, event);
+		}
 	};
 
 	QWidget* upperContainer = new QWidget();
@@ -69,6 +79,7 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 
 	_overlayListWidget = new OverlayListWidget(upperContainer);
 	_overlayListModel = new OverlayListModel(this);
+	_overlayListWidget->setEditTriggers(QAbstractItemView::SelectedClicked);
 	_overlayListWidget->setModel(_overlayListModel);
 	_overlayListWidget->setSelectionModel(_overlayListModel->selectionModel());
 	subLayout->addWidget(_overlayListWidget);

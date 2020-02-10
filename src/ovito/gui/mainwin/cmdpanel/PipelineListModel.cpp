@@ -319,6 +319,9 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 	if(role == Qt::DisplayRole) {
 		return item->title();
 	}
+	else if(role == Qt::EditRole) {
+		return item->title();
+	}
 	else if(role == Qt::DecorationRole) {
 		if(item->object()) {
 			switch(item->status().type()) {
@@ -388,6 +391,17 @@ bool PipelineListModel::setData(const QModelIndex& index, const QVariant& value,
 			});
 		}
 	}
+	else if(role == Qt::EditRole) {
+		PipelineListItem* item = this->item(index.row());
+		if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
+			QString newName = value.toString();
+			if(modApp->modifier() && modApp->modifier()->objectTitle() != newName) {
+				UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Rename modifier"), [modApp, &newName]() {
+					modApp->modifier()->setObjectTitle(newName);
+				});
+			}
+		}
+	}
 	return QAbstractListModel::setData(index, value, role);
 }
 
@@ -409,7 +423,7 @@ Qt::ItemFlags PipelineListModel::flags(const QModelIndex& index) const
 #if 0
 				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
 #else
-				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable;
+				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsEditable;
 #endif
 			}
 		}

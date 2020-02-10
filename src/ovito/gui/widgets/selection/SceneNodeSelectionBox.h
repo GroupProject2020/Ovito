@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -40,6 +40,15 @@ public:
 	/// Constructs the widget.
 	SceneNodeSelectionBox(DataSetContainer& datasetContainer, QWidget* parent = 0);
 
+Q_SIGNALS:
+
+	void enabledChanged(bool isEnabled);
+
+protected:
+
+	/// Is called when the state of the widget changes.
+	void changeEvent(QEvent* event) override;
+
 protected Q_SLOTS:
 
 	/// This is called whenever the node selection has changed.
@@ -60,5 +69,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

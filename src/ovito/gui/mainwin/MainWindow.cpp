@@ -320,9 +320,6 @@ void MainWindow::createMainMenu()
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_CLEAR_UNDO_STACK));
 #endif
 	editMenu->addSeparator();
-	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_CLONE_PIPELINE));
-	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_DELETE));
-	editMenu->addSeparator();
 	editMenu->addAction(actionManager()->getAction(ACTION_SETTINGS_DIALOG));
 
 	// Build the help menu.

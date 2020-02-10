@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,7 +41,7 @@ SceneNodeSelectionBox::SceneNodeSelectionBox(DataSetContainer& datasetContainer,
 	setEditable(false);
 	setMinimumContentsLength(25);
 	setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-	setToolTip(tr("Object Selector"));
+	setToolTip(tr("Pipeline selector"));
 
 	// Listen for selection changes.
 	connect(&datasetContainer, &DataSetContainer::selectionChangeComplete, this, &SceneNodeSelectionBox::onSceneSelectionChanged);
@@ -65,7 +65,7 @@ void SceneNodeSelectionBox::onSceneSelectionChanged()
 		setCurrentText(tr("No selection"));
 	}
 	else if(selection->nodes().size() > 1) {
-		setCurrentText(tr("%i selected objects").arg(selection->nodes().size()));
+		setCurrentText(tr("%i selected pipelines").arg(selection->nodes().size()));
 	}
 	else {
 		int index = findData(QVariant::fromValue(selection->nodes().front()));
@@ -79,13 +79,10 @@ void SceneNodeSelectionBox::onSceneSelectionChanged()
 void SceneNodeSelectionBox::onItemActivated(int index)
 {
 	SceneNode* node = qobject_cast<SceneNode*>(itemData(index).value<QObject*>());
-	if(_datasetContainer.currentSet()) {
+	if(_datasetContainer.currentSet() && node) {
 		SelectionSet* selection = _datasetContainer.currentSet()->selection();
-		UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Select object"), [node, selection]() {
-			if(node)
-				selection->setNode(node);
-			else
-				selection->clear();
+		UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Select pipeline"), [node, selection]() {
+			selection->setNode(node);
 		});
 	}
 }
@@ -96,6 +93,17 @@ void SceneNodeSelectionBox::onItemActivated(int index)
 void SceneNodeSelectionBox::onNodeCountChanged()
 {
 	setEnabled(model()->rowCount() > 1);
+}
+
+/******************************************************************************
+* Is called when the state of the widget changes.
+******************************************************************************/
+void SceneNodeSelectionBox::changeEvent(QEvent* event)
+{
+	if(event->type() == QEvent::EnabledChange)
+		Q_EMIT enabledChanged(isEnabled());
+
+	QComboBox::changeEvent(event);
 }
 
 OVITO_END_INLINE_NAMESPACE

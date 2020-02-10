@@ -76,7 +76,10 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 			return true;
 		}
 	}
-	if(event.type() == ReferenceEvent::PipelineChanged && source == input()) {
+	else if(event.type() == ReferenceEvent::TitleChanged && source == modifier()) {
+		return true;
+	}
+	else if(event.type() == ReferenceEvent::PipelineChanged && source == input()) {
 		// Propagate pipeline changed events and updates to the preliminary state from upstream.
 		return true;
 	}

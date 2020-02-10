@@ -64,7 +64,8 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.bw.svg", tr("Redo the previously undone user action."), QKeySequence::Redo);
 	createCommandAction(ACTION_EDIT_CLEAR_UNDO_STACK, tr("Clear Undo Stack"), nullptr, tr("Discards all existing undo records."));
 
-	createCommandAction(ACTION_EDIT_CLONE_PIPELINE, tr("Clone Pipeline"), ":/gui/actions/edit/clone_pipeline.bw.svg", tr("Duplicates the current pipeline to show multiple datasets side by side."));
+	createCommandAction(ACTION_EDIT_CLONE_PIPELINE, tr("Clone Pipeline..."), ":/gui/actions/edit/clone_pipeline.bw.svg", tr("Duplicates the current pipeline to show multiple datasets side by side."));
+	createCommandAction(ACTION_EDIT_RENAME_PIPELINE, tr("Rename Pipeline..."), ":/gui/actions/edit/rename_pipeline.bw.svg", tr("Assign a new name to the selected pipeline."));
 	createCommandAction(ACTION_EDIT_DELETE, tr("Delete Pipeline"), ":/gui/actions/edit/edit_delete.bw.svg", tr("Deletes the selected object from the scene."));
 
 	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Application Settings..."), ":/gui/actions/file/preferences.bw.svg", QString(), QKeySequence::Preferences);
@@ -279,9 +280,26 @@ void ActionManager::on_EditDelete_triggered()
 ******************************************************************************/
 void ActionManager::on_ClonePipeline_triggered()
 {
-	if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(_dataset->selection()->firstNode())) {
-		ClonePipelineDialog dialog(node, mainWindow());
+	if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_dataset->selection()->firstNode())) {
+		ClonePipelineDialog dialog(pipeline, mainWindow());
 		dialog.exec();
+	}
+}
+
+/******************************************************************************
+* Handles ACTION_EDIT_RENAME_PIPELINE command
+******************************************************************************/
+void ActionManager::on_RenamePipeline_triggered()
+{
+	if(OORef<PipelineSceneNode> pipeline = dynamic_object_cast<PipelineSceneNode>(_dataset->selection()->firstNode())) {
+		QString oldPipelineName = pipeline->objectTitle();
+		bool ok;
+		QString pipelineName = QInputDialog::getText(mainWindow(), tr("Rename pipeline"), tr("Please enter a new name for the selected pipeline:"), QLineEdit::Normal, oldPipelineName, &ok).trimmed();
+		if(ok && pipelineName != oldPipelineName) {
+			UndoableTransaction::handleExceptions(_dataset->undoStack(), tr("Rename pipeline"), [&]() {
+				pipeline->setNodeName(pipelineName);
+			});
+		}
 	}
 }
 

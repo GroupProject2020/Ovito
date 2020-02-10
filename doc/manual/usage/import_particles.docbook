@@ -297,9 +297,9 @@
           <imagedata fileref="images/usage/importexport/pipeline_selector.png" format="PNG" scale="50" />
         </imageobject></mediaobject></screenshot>
       </informalfigure>
-      The <emphasis>pipeline selector</emphasis> box shown in the screenshot lists all objects of the current scene
-      and lets you switch the selection between them. Each dataset has its own data pipeline associated with it. Thus, you can apply different modifiers
-      to the individual datasets. The modifier pipeline of the currently selected dataset is displayed in the
+      The <emphasis>pipeline selector</emphasis> box shown in the screenshot lists all objects in the current scene
+      and lets you switch between them. Each imported dataset has its own data pipeline associated with it. Thus, you can apply different modifiers
+      to the individual datasets. The data pipeline of the currently selected dataset is displayed in the
       <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> beneath the pipeline selector box.
     </para>
 
@@ -344,8 +344,7 @@
       <para>
         Instead of importing several data files into OVITO, you can also duplicate a dataset right in OVITO in order
         to visualize the data in various different ways, for example by applying different sets of modifiers to the replica
-        of the dataset. This is done using the <link linkend="clone_pipeline">Clone Pipeline</link> function,
-        found under the <guimenu>Edit</guimenu> menu.
+        of the dataset. See the <link linkend="clone_pipeline">Clone Pipeline</link> function for more information.
       </para>
     </simplesect>
 
