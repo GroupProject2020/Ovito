@@ -11,13 +11,12 @@
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/clone_pipeline/clone_pipeline_menu_item.png" format="PNG" scale="45" />
+       <imagedata fileref="images/clone_pipeline/clone_pipeline_menu_item.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
     The <emphasis>Clone Pipeline</emphasis> function of OVITO lets you duplicate the currently selected <link linkend="usage.modification_pipeline">data pipeline</link>
-    in order to visualize multiple datasets side by side or visualize the same dataset in several different ways. The function can be invoked from the main menu by
-    selecting <menuchoice><guimenu>Edit</guimenu><guimenuitem>Clone Pipeline</guimenuitem></menuchoice> as depicted in the screenshot
-    on the right.
+    in order to visualize multiple datasets side by side or visualize the same dataset in several different ways. The function can be invoked by selecting 
+    <menuchoice><guimenuitem>Clone Pipeline</guimenuitem></menuchoice> from the pipeline menu depicted on the right.
   </para>
 
   <para>

@@ -354,7 +354,7 @@ public:
 
 	/// Sets the start and end value to the minimum and maximum value of the selected input property
 	/// determined over the entire animation sequence.
-	bool adjustRangeGlobal(Task& operation);
+	bool adjustRangeGlobal(AsyncOperation&& operation);
 
 	/// Returns the current delegate of this modifier.
 	ColorCodingModifierDelegate* delegate() const {

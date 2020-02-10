@@ -41,9 +41,7 @@ class OVITO_CORE_EXPORT MainThreadTask : public ProgressiveTask
 public:
 
 	/// Constructor.
-	explicit MainThreadTask(State initialState, TaskManager* taskManager) : ProgressiveTask(initialState) {
-		setTaskManager(taskManager);
-	}
+	explicit MainThreadTask(State initialState, TaskManager* taskManager) : ProgressiveTask(initialState, taskManager) {}
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.

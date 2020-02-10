@@ -52,17 +52,17 @@ ElementType::ElementType(DataSet* dataset) : DataObject(dataset),
 ******************************************************************************/
 const Color& ElementType::getDefaultColorForId(int typeClass, int typeId)
 {
-	// Initial standard colors assigned to new element types:
+	// Palette of standard colors initially assigned to new element types:
 	static const Color defaultTypeColors[] = {
-		Color(0.4,  1.0,  0.2),
-		Color(1.0,  0.4,  0.4),
-		Color(0.4,  0.4,  1.0),
-		Color(0.8,  1.0,  0.7),
-		Color(0.97, 0.97, 0.97),
-		Color(1.0,  1.0,  0.0),
-		Color(1.0,  0.4,  1.0),
-		Color(0.7,  0.0,  1.0),
-		Color(0.2,  1.0,  1.0),
+		Color(0.97, 0.97, 0.97),// 0
+		Color(1.0,  0.4,  0.4), // 1
+		Color(0.4,  0.4,  1.0), // 2
+		Color(1.0,  1.0,  0.0), // 3
+		Color(1.0,  0.4,  1.0), // 4
+		Color(0.4,  1.0,  0.2), // 5
+		Color(0.8,  1.0,  0.7), // 6
+		Color(0.7,  0.0,  1.0), // 7
+		Color(0.2,  1.0,  1.0), // 8
 	};
 	return defaultTypeColors[std::abs(typeId) % (sizeof(defaultTypeColors) / sizeof(defaultTypeColors[0]))];
 }

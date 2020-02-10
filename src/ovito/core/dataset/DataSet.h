@@ -93,10 +93,6 @@ public:
 	/// \brief Returns the manager of ParameterUnit objects.
 	UnitsManager& unitsManager() { return _unitsManager; }
 
-	/// \brief Returns a pointer to the main window in which this dataset is being edited.
-	/// \return The main window, or NULL if this data set is not being edited in any window.
-	//MainWindow* mainWindow() const;
-
 	/// \brief Returns the container this dataset belongs to.
 	DataSetContainer* container() const;
 
@@ -258,14 +254,14 @@ private:
 	/// The operation making the scene ready.
 	AsyncOperation _sceneReadyOperation;
 
-	/// The future of the scene becoming ready.
-	SharedFuture<> _sceneReadyFuture;
-
 	/// The last animation time at which the scene was made ready.
 	TimePoint _sceneReadyTime;
 
 	/// The current pipeline evaluation that is in progress.
 	PipelineEvaluationFuture _pipelineEvaluation;
+
+	/// The watcher object that is used to monitor the make-scene-ready task.
+	TaskWatcher _sceneReadyWatcher;
 
 	/// The watcher object that is used to monitor the evaluation of data pipelines in the scene.
 	TaskWatcher _pipelineEvaluationWatcher;

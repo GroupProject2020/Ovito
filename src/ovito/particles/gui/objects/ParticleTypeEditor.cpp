@@ -188,8 +188,9 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 					fileImporterType = fileDialog.selectedFileImporterType();
 				}
 				// Load the geometry from the selected file.
-				ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
-				ptype->loadShapeMesh(selectedFile, AsyncOperation(progressDialog.taskManager()), fileImporterType);
+				AsyncOperation loadOperation(ptype->dataset()->taskManager());
+				ProgressDialog progressDialog(container(), loadOperation.task(), tr("Loading mesh file"));
+				ptype->loadShapeMesh(selectedFile, std::move(loadOperation), fileImporterType);
 			});
 		}
 	});

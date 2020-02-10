@@ -66,6 +66,9 @@ DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 	setRenderSettings(new RenderSettings(this));
 
 	connect(&_pipelineEvaluationWatcher, &TaskWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
+	connect(&_sceneReadyWatcher, &TaskWatcher::canceled, this, [this]() {
+		_sceneReadyOperation.reset();
+	});
 }
 
 /******************************************************************************
@@ -75,8 +78,7 @@ DataSet::~DataSet()
 {
 	// Stop pipeline evaluation, which might still be in progress.
 	_pipelineEvaluationWatcher.reset();
-	if(_pipelineEvaluation.isValid())
-		_pipelineEvaluation.reset();
+	_pipelineEvaluation.reset();
 }
 
 /******************************************************************************
@@ -153,14 +155,12 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		if(source == sceneRoot()) {
 
 			// If any of the scene pipelines change, the scene-ready state needs to be reset (unless it's still unfulfilled).
-			if(_sceneReadyFuture.isValid() && _sceneReadyFuture.isFinished()) {
-				_sceneReadyFuture.reset();
+			if(_sceneReadyOperation.isValid() && _sceneReadyOperation.isFinished()) {
 				_sceneReadyOperation.reset();
 				OVITO_ASSERT(!_pipelineEvaluation.isValid());
-				OVITO_ASSERT(!_pipelineEvaluation.pipeline());
 			}
 
-			// If any of the scene nodes change, we should interrupt the pipeline evaluation that is in progress.
+			// If any of the scene pipelines change, we should interrupt the pipeline evaluation that is currently in progress.
 			// Ignore messages from visual elements, because they usually don't require a pipeline re-evaluation.
 			if(_pipelineEvaluation.isValid() && dynamic_object_cast<DataVis>(event.sender()) == nullptr) {
 				// Restart pipeline evaluation:
@@ -168,7 +168,7 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			}
 		}
 		else if(source == animationSettings()) {
-			// If the animation time changes, we should interrupt any pipeline evaluation that is in progress.
+			// If the animation time changes, we should interrupt any pipeline evaluation that is currently in progress.
 			if(_pipelineEvaluation.isValid() && _pipelineEvaluation.time() != animationSettings()->time()) {
 				_pipelineEvaluationWatcher.reset();
 				_pipelineEvaluation.reset();
@@ -269,22 +269,28 @@ SharedFuture<> DataSet::whenSceneReady()
 	OVITO_CHECK_OBJECT_POINTER(animationSettings());
 	OVITO_CHECK_OBJECT_POINTER(viewportConfig());
 	OVITO_ASSERT(!viewportConfig()->isRendering());
-	OVITO_ASSERT(_sceneReadyOperation.isValid() == _sceneReadyFuture.isValid());
 
-	if(_sceneReadyFuture.isValid() && _sceneReadyFuture.isFinished() && _sceneReadyTime != animationSettings()->time()) {
-		_sceneReadyFuture.reset();
-		_sceneReadyOperation.reset();
+	if(_sceneReadyOperation.isValid()) {
+		// Recreate async operation object if the animation time has changed.
+		if(_sceneReadyOperation.isFinished() && _sceneReadyTime != animationSettings()->time())
+			_sceneReadyOperation.reset();
+
+		// Recreate async operation object if was canceled before.
+		else if(_sceneReadyOperation.isCanceled())
+			_sceneReadyOperation.reset();
 	}
 
-	if(!_sceneReadyFuture.isValid()) {
-		_sceneReadyOperation = AsyncOperation::createSignalOperation(true);
-		_sceneReadyFuture = _sceneReadyOperation.sharedFuture();
+	// Create a new async operation object to represent the process of making the scene ready.
+	if(!_sceneReadyOperation.isValid()) {
+		_sceneReadyOperation = AsyncOperation::createSignalOperation(true, &taskManager());
+		_sceneReadyWatcher.watch(_sceneReadyOperation.task());
 		_sceneReadyTime = animationSettings()->time();
+
+		// This will call makeSceneReady() soon in order to evaluate all pipelines in the scene.
 		makeSceneReadyLater(false);
 	}
 
-	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
-	return _sceneReadyFuture;
+	return _sceneReadyOperation.sharedFuture();
 }
 
 /******************************************************************************
@@ -292,19 +298,13 @@ SharedFuture<> DataSet::whenSceneReady()
 ******************************************************************************/
 void DataSet::makeSceneReady(bool forceReevaluation)
 {
-	OVITO_ASSERT(_sceneReadyOperation.isValid() == _sceneReadyFuture.isValid());
-
 	// Make sure whenSceneReady() was called before.
-	if(!_sceneReadyFuture.isValid()) {
-		OVITO_ASSERT(!_pipelineEvaluation.pipeline());
-		OVITO_ASSERT(!_pipelineEvaluation.isValid());
+	if(!_sceneReadyOperation.isValid()) {
 		return;
 	}
 
-	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
-
 	// If scene is already ready, we are done.
-	if(_sceneReadyFuture.isFinished() && _pipelineEvaluation.time() == animationSettings()->time()) {
+	if(_sceneReadyOperation.isFinished() && _sceneReadyTime == animationSettings()->time()) {
 		return;
 	}
 
@@ -318,13 +318,12 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 	}
 
 	// If viewport updates are suspended, we simply wait until they get resumed.
-	if(viewportConfig()->isSuspended()) {
+	if(viewportConfig()->isSuspended())
 		return;
-	}
 
-	// Request result of the data pipeline of each scene node.
+	// Request results from all data pipelines in the scene.
 	// If at least one of them is not immediately available, we'll have to
-	// wait until its pipeline results become available.
+	// wait until its evaulation completes.
 	PipelineEvaluationFuture oldEvaluation = std::move(_pipelineEvaluation);
 	_pipelineEvaluationWatcher.reset();
 	_pipelineEvaluation.reset(animationSettings()->time());
@@ -354,7 +353,6 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 	// If all pipelines are already complete, we are done.
 	if(!_pipelineEvaluation.isValid()) {
 		_sceneReadyOperation.setFinished();
-		OVITO_ASSERT(_sceneReadyFuture.isFinished());
 	}
 	else {
 		_pipelineEvaluationWatcher.watch(_pipelineEvaluation.task());
@@ -374,15 +372,12 @@ void DataSet::onViewportUpdatesResumed()
 ******************************************************************************/
 void DataSet::pipelineEvaluationFinished()
 {
-	OVITO_ASSERT(_sceneReadyFuture.isValid());
-	OVITO_ASSERT(_sceneReadyOperation.isValid() == _sceneReadyFuture.isValid());
-	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
 	OVITO_ASSERT(_pipelineEvaluation.isValid());
 	OVITO_ASSERT(_pipelineEvaluation.pipeline());
 	OVITO_ASSERT(_pipelineEvaluation.isFinished());
 
 	// Query results of the pipeline evaluation to see if an exception has been thrown.
-	if(!_pipelineEvaluation.isCanceled()) {
+	if(_sceneReadyOperation.isValid() && !_pipelineEvaluation.isCanceled()) {
 		try {
 			_pipelineEvaluation.results();
 		}

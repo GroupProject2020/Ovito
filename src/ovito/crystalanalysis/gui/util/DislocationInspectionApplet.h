@@ -108,7 +108,7 @@ private:
 		/// Replaces the contents of this data model.
 		void setContents(const PipelineFlowState& state) {
 			beginResetModel();
-			if(!state.isEmpty()) {
+			if(state) {
 				_dislocationObj = state.getObject<DislocationNetworkObject>();
 				_microstructure = state.getObject<Microstructure>();
 			}

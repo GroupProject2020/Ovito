@@ -443,6 +443,7 @@ void UnwrapTrajectoriesModifierApplication::processNextFrame(int frame, TimePoin
 	}
 
 	_unwrappedUpToTime = time;
+	setStatus(tr("Processed input trajectory frame %1 of %2.").arg(frame).arg(numberOfSourceFrames()));
 }
 
 /******************************************************************************

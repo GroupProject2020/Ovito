@@ -44,7 +44,7 @@ public:
     };
 
     /// Constructor.
-    Task(State initialState = NoState) : _state(initialState) {
+    Task(State initialState = NoState, TaskManager* taskManager = nullptr) : _state(initialState), _taskManager(taskManager) {
 #ifdef OVITO_DEBUG
         _instanceCounter.fetch_add(1);
 #endif

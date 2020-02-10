@@ -118,8 +118,8 @@ void AttributeFileExporterEditor::updateAttributesList()
 
 	try {
 		QVariantMap attrMap;
-		ProgressDialog progressDialog(container(), exporter->dataset()->taskManager());
-		AsyncOperation asyncOperation(progressDialog.taskManager());
+		AsyncOperation asyncOperation(exporter->dataset()->taskManager());
+		ProgressDialog progressDialog(container(), asyncOperation.task());
 		if(!exporter->getAttributesMap(exporter->dataset()->animationSettings()->time(), attrMap, asyncOperation))
 			throw Exception(tr("Operation has been canceled by the user."));
 		for(const QString& attrName : attrMap.keys())

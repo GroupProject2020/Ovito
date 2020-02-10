@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -367,12 +367,13 @@ void ActionManager::on_FileExport_triggered()
 
 		// Wait until the scene is ready.
 		{
-			ProgressDialog progressDialog(mainWindow(), tr("File export"));
-			if(!progressDialog.taskManager().waitForFuture(_dataset->whenSceneReady()))
+			SharedFuture<> sceneReadyFuture = _dataset->whenSceneReady();
+			ProgressDialog progressDialog(mainWindow(), sceneReadyFuture.task(), tr("File export"));
+			if(!_dataset->taskManager().waitForFuture(sceneReadyFuture))
 				return;
 		}
 
-		// Choose the scene nodes to be exported.
+		// Choose the pipelines to be exported.
 		exporter->selectDefaultExportableData();
 
 		// Let the user adjust the settings of the exporter.
@@ -380,11 +381,14 @@ void ActionManager::on_FileExport_triggered()
 		if(settingsDialog.exec() != QDialog::Accepted)
 			return;
 
+		// Create an operation object for the export process.
+		AsyncOperation exportOperation(_dataset->taskManager());
+
 		// Show progress dialog.
-		ProgressDialog progressDialog(mainWindow(), tr("File export"));
+		ProgressDialog progressDialog(mainWindow(), exportOperation.task(), tr("File export"));
 
 		// Let the exporter do its work.
-		exporter->doExport(AsyncOperation(progressDialog.taskManager()));
+		exporter->doExport(std::move(exportOperation));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

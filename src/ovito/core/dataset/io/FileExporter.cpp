@@ -177,7 +177,7 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 	PipelineFlowState state = future.result();
 
 	if(!ignorePipelineErrors() && state.status().type() == PipelineStatus::Error)
-		throwException(tr("Export of frame %1 failed, because data pipeline evaluation did not succeed. Status message: %2")
+		throwException(tr("Export of animation frame %1 failed, because data pipeline evaluation did not succeed. Status message: %2")
 			.arg(dataset()->animationSettings()->timeToFrame(time))
 			.arg(state.status().text()));
 

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -139,11 +139,14 @@ void GlobalAttributesInspectionApplet::exportToFile()
 		if(settingsDialog.exec() != QDialog::Accepted)
 			return;
 
+		// Create an operation object for the export process.
+		AsyncOperation exportOperation(exporter->dataset()->taskManager());
+
 		// Show progress dialog.
-		ProgressDialog progressDialog(_mainWindow, tr("File export"));
+		ProgressDialog progressDialog(_mainWindow, exportOperation.task(), tr("File export"));
 
 		// Let the exporter do its job.
-		exporter->doExport(AsyncOperation(progressDialog.taskManager()));
+		exporter->doExport(std::move(exportOperation));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

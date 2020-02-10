@@ -75,9 +75,9 @@ AsyncOperation AsyncOperation::createSubOperation()
 * Creates a special async operation that can be used just for signaling the 
 * completion of an operation and which is not registered with a task manager.
 ******************************************************************************/
-AsyncOperation AsyncOperation::createSignalOperation(bool startedState)
+AsyncOperation AsyncOperation::createSignalOperation(bool startedState, TaskManager* taskManager)
 {
-	return AsyncOperation(std::make_shared<Task>(startedState ? Task::State(Task::Started) : Task::NoState));
+	return AsyncOperation(std::make_shared<Task>(Task::State(startedState ? Task::Started : Task::NoState), taskManager));
 }
 
 OVITO_END_INLINE_NAMESPACE

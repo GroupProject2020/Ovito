@@ -104,8 +104,9 @@ void VoroTopModifierEditor::onLoadFilter()
 		if(fileDialog.exec()) {
 			QStringList selectedFiles = fileDialog.selectedFiles();
 			if(!selectedFiles.empty()) {
-				ProgressDialog progressDialog(container(), mod->dataset()->taskManager(), tr("Loading filter"));
-				mod->loadFilterDefinition(selectedFiles.front(), progressDialog.taskManager());
+				AsyncOperation loadOperation(mod->dataset()->taskManager());
+				ProgressDialog progressDialog(container(), loadOperation.task(), tr("Loading filter"));
+				mod->loadFilterDefinition(selectedFiles.front(), std::move(loadOperation));
 			}
 		}
 	});

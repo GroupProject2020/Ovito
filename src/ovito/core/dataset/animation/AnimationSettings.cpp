@@ -244,11 +244,17 @@ void AnimationSettings::continuePlaybackAtTime(TimePoint time)
 	setTime(time);
 
 	if(isPlaybackActive()) {
-		TaskWatcher* watcher = new TaskWatcher(this);
-		connect(watcher, &TaskWatcher::finished, this, &AnimationSettings::scheduleNextAnimationFrame);
-		connect(watcher, &TaskWatcher::canceled, this, &AnimationSettings::stopAnimationPlayback);
-		connect(watcher, &TaskWatcher::finished, watcher, &QObject::deleteLater);	// Self-destruct watcher object when it's no longer needed.
-		watcher->watch(dataset()->whenSceneReady().task());
+		
+		// Tell DataSet to make the scene ready at the current animation frame.
+		SharedFuture<> playbackFrameReadyFuture = dataset()->whenSceneReady();
+
+		// Once the scene is ready, schedule the next animation frame.
+		playbackFrameReadyFuture.finally(executor(), false, [this, future = playbackFrameReadyFuture]() {
+			if(future.isCanceled())
+				stopAnimationPlayback();
+			else
+				scheduleNextAnimationFrame();
+		});
 	}
 }
 

@@ -87,8 +87,8 @@ public:
 protected:
 
 	/// Constructor.
-	ProgressiveTask(State initialState = NoState, const QString& progressText = QString()) :
-		Task(initialState), _progressText(progressText) {}
+	ProgressiveTask(State initialState = NoState, TaskManager* taskManager = nullptr, const QString& progressText = QString()) :
+		Task(initialState, taskManager), _progressText(progressText) {}
 
     void computeTotalProgress();
 

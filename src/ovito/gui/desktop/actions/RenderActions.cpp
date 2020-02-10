@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -58,11 +58,14 @@ void ActionManager::on_RenderActiveViewport_triggered()
 		// Show and activate frame buffer window.
 		frameBufferWindow->showAndActivateWindow();
 
+		// Create a task object for the rendering operation.
+		AsyncOperation renderingOperation(_dataset->taskManager());
+
 		// Show progress dialog.
-		ProgressDialog progressDialog(frameBufferWindow, mainWindow()->datasetContainer().taskManager(), tr("Rendering"));
+		ProgressDialog progressDialog(frameBufferWindow, renderingOperation.task(), tr("Rendering"));
 
 		// Call high-level rendering function, which will take care of the rest.
-		_dataset->renderScene(settings, viewport, frameBuffer.get(), AsyncOperation(progressDialog.taskManager()));
+		_dataset->renderScene(settings, viewport, frameBuffer.get(), std::move(renderingOperation));
 	}
 	catch(const Exception& ex) {
 		ex.logError();

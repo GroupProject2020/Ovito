@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,17 +30,18 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /******************************************************************************
 * Initializes the dialog window.
 ******************************************************************************/
-ProgressDialog::ProgressDialog(MainWindow* mainWindow, const QString& dialogTitle) : ProgressDialog(mainWindow, mainWindow->datasetContainer().taskManager(), dialogTitle)
-{
-}
-
-/******************************************************************************
-* Initializes the dialog window.
-******************************************************************************/
-ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const QString& dialogTitle) : QDialog(parent), _taskManager(taskManager)
+ProgressDialog::ProgressDialog(QWidget* parent, const TaskPtr& task, const QString& dialogTitle) : QDialog(parent)
 {
 	setWindowModality(Qt::WindowModal);
 	setWindowTitle(dialogTitle);
+
+	// Get the task manager.
+	_taskManager = task->taskManager();
+	OVITO_ASSERT(_taskManager != nullptr);
+
+	// Create the task watcher to monitor the running task.
+	_watcher = new TaskWatcher(this);
+	_watcher->watch(task);
 
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->addStretch(1);
@@ -48,8 +49,8 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
 	layout->addWidget(buttonBox);
 
-	// Cancel all currently running tasks when user presses the cancel button.
-	connect(buttonBox, &QDialogButtonBox::rejected, &taskManager, &TaskManager::cancelAll);
+	// Cancel the running task when user presses the cancel button.
+	connect(buttonBox, &QDialogButtonBox::rejected, _watcher, &TaskWatcher::cancel);
 
 	// Helper function that sets up the UI widgets in the dialog for a newly started task.
 	auto createUIForTask = [this, layout](TaskWatcher* taskWatcher) {
@@ -78,7 +79,7 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 	};
 
 	// Create UI for every running task.
-	for(TaskWatcher* watcher : taskManager.runningTasks()) {
+	for(TaskWatcher* watcher : _taskManager->runningTasks()) {
 		createUIForTask(watcher);
 	}
 
@@ -86,14 +87,14 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 	resize(450, height());
 
 	// Create a separate progress bar for every new active task.
-	connect(&taskManager, &TaskManager::taskStarted, this, createUIForTask);
+	connect(_taskManager, &TaskManager::taskStarted, this, std::move(createUIForTask));
 
 	// Show the dialog with a short delay.
 	// This prevents the dialog from showing up for short tasks that terminate very quickly.
 	QTimer::singleShot(100, this, &QDialog::show);
 
 	// Activate local event handling to keep the dialog responsive.
-	taskManager.startLocalEventHandling();
+	_taskManager->startLocalEventHandling();
 }
 
 /******************************************************************************
@@ -101,16 +102,7 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 ******************************************************************************/
 ProgressDialog::~ProgressDialog()
 {
-	_taskManager.stopLocalEventHandling();
-}
-
-/******************************************************************************
-* Is called whenever one of the tasks was canceled.
-******************************************************************************/
-void ProgressDialog::onTaskCanceled()
-{
-	// Cancel all tasks when one of the active tasks has been canceled.
-	taskManager().cancelAll();
+	_taskManager->stopLocalEventHandling();
 }
 
 /******************************************************************************
@@ -118,7 +110,7 @@ void ProgressDialog::onTaskCanceled()
 ******************************************************************************/
 void ProgressDialog::closeEvent(QCloseEvent* event)
 {
-	taskManager().cancelAll();
+	_watcher->cancel();
 	if(event->spontaneous())
 		event->ignore();
 	QDialog::closeEvent(event);
@@ -129,7 +121,7 @@ void ProgressDialog::closeEvent(QCloseEvent* event)
 ******************************************************************************/
 void ProgressDialog::reject()
 {
-	taskManager().cancelAll();
+	_watcher->cancel();
 }
 
 OVITO_END_INLINE_NAMESPACE

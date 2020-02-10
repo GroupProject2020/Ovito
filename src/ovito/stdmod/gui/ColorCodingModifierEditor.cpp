@@ -285,8 +285,9 @@ void ColorCodingModifierEditor::onAdjustRangeGlobal()
 	OVITO_CHECK_OBJECT_POINTER(mod);
 
 	undoableTransaction(tr("Adjust range"), [this, mod]() {
-		ProgressDialog progressDialog(container(), mod->dataset()->container()->taskManager(), tr("Determining property value range"));
-		mod->adjustRangeGlobal(*progressDialog.taskManager().createMainThreadOperation<>(true).task());
+		AsyncOperation adjustOperation(mod->dataset()->taskManager());
+		ProgressDialog progressDialog(container(), adjustOperation.task(), tr("Determining property value range"));
+		mod->adjustRangeGlobal(std::move(adjustOperation));
 	});
 }
 

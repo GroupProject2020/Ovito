@@ -180,6 +180,9 @@ QVariant OverlayListModel::data(const QModelIndex& index, int role) const
 	if(role == Qt::DisplayRole) {
 		return item->title(selectedViewport());
 	}
+	else if(role == Qt::EditRole) {
+		return item->title(selectedViewport());
+	}
 	else if(role == Qt::DecorationRole) {
 		if(item->overlay()) {
 			switch(item->status().type()) {
@@ -237,6 +240,17 @@ bool OverlayListModel::setData(const QModelIndex& index, const QVariant& value, 
 			});
 		}
 	}
+	else if(role == Qt::EditRole) {
+		OverlayListItem* item = this->item(index.row());
+		if(ViewportOverlay* overlay = item->overlay()) {
+			QString newName = value.toString();
+			if(overlay->objectTitle() != newName) {
+				UndoableTransaction::handleExceptions(overlay->dataset()->undoStack(), tr("Rename layer"), [overlay, &newName]() {
+					overlay->setObjectTitle(newName);
+				});
+			}
+		}
+	}
 	return QAbstractListModel::setData(index, value, role);
 }
 
@@ -247,7 +261,7 @@ Qt::ItemFlags OverlayListModel::flags(const QModelIndex& index) const
 {
 	if(index.row() >= 0 && index.row() < _items.size()) {
 		OverlayListItem* item = this->item(index.row());
-		return item->overlay() ? (QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable) : Qt::NoItemFlags;
+		return item->overlay() ? (QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsEditable) : Qt::NoItemFlags;
 	}
 	return QAbstractListModel::flags(index);
 }

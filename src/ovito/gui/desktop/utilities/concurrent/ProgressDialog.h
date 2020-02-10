@@ -33,16 +33,13 @@ class OVITO_GUI_EXPORT ProgressDialog : public QDialog
 public:
 
 	/// Constructor.
-	ProgressDialog(MainWindow* mainWindow, const QString& dialogTitle = QString());
+	ProgressDialog(QWidget* parent, const TaskPtr& task, const QString& dialogTitle = QString());
 
-	/// Constructor.
-	ProgressDialog(QWidget* parent, TaskManager& taskManager, const QString& dialogTitle = QString());
-
-	/// ~Destructor.
+	/// Destructor.
 	~ProgressDialog();
 
 	/// Returns the TaskManager that manages the running task displayed in this progress dialog.
-	TaskManager& taskManager() { return _taskManager; }
+	TaskManager* taskManager() { return _taskManager; }
 
 protected:
 
@@ -52,15 +49,13 @@ protected:
 	/// Is called when the user tries to close the dialog.
 	virtual void reject() override;
 
-private Q_SLOTS:
-
-	/// Is called whenever one of the tasks was canceled.
-	void onTaskCanceled();
-
 private:
 
 	/// The task manager.
-	TaskManager& _taskManager;
+	TaskManager* _taskManager;
+
+	/// The task watcher for the task whose progress is displayed.
+	TaskWatcher* _watcher;
 };
 
 OVITO_END_INLINE_NAMESPACE

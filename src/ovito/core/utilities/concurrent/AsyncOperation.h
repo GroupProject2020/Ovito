@@ -46,7 +46,7 @@ public:
 
 	/// Creates a special async operation that can be used just for signaling the completion of 
 	/// an operation and which is not registered with a task manager.
-	static AsyncOperation createSignalOperation(bool startedState);
+	static AsyncOperation createSignalOperation(bool startedState, TaskManager* taskManager);
 
 	/// Move constructor.
 	AsyncOperation(AsyncOperation&& other) noexcept = default;
@@ -83,8 +83,8 @@ public:
 
 		// Hold on to the strong dependency to keep the child operation alive until the parent task 
 		// finishes or gets canceled.
-		QObject::connect(watcher(), &TaskWatcher::canceled, [continuation = std::move(continuation)]() mutable {
-			continuation.reset();
+		QObject::connect(watcher(), &TaskWatcher::canceled, [task = continuation.takeTaskDependency()]() mutable {
+			task.reset();
 		});
 	}
 

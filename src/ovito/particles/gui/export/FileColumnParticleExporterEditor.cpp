@@ -117,8 +117,8 @@ void FileColumnParticleExporterEditor::updateParticlePropertiesList()
 
 	try {
 		// Determine the data that is available for export.
-		ProgressDialog progressDialog(container(), exporter->dataset()->container()->taskManager());
-		AsyncOperation asyncOperation(progressDialog.taskManager());
+		AsyncOperation asyncOperation(exporter->dataset()->taskManager());
+		ProgressDialog progressDialog(container(), asyncOperation.task());
 		PipelineFlowState state = exporter->getParticleData(exporter->dataset()->animationSettings()->time(), asyncOperation);
 		if(!state)
 			throw Exception(tr("Operation has been canceled by the user."));

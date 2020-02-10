@@ -38,7 +38,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
 
 IMPLEMENT_OVITO_CLASS(GSDImporter);
 DEFINE_PROPERTY_FIELD(GSDImporter, roundingResolution);
-SET_PROPERTY_FIELD_LABEL(GSDImporter, roundingResolution, "Rounding resolution");
+SET_PROPERTY_FIELD_LABEL(GSDImporter, roundingResolution, "Shape rounding resolution");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(GSDImporter, roundingResolution, IntegerParameterUnit, 1, 6);
 
 /******************************************************************************

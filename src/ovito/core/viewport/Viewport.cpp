@@ -519,7 +519,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			adjustProjectionForRenderFrame(_projParams);
 
 		// This is the async operation object used when calling rendering functions in the following.
-		AsyncOperation renderOperation = AsyncOperation::createSignalOperation(true);
+		AsyncOperation renderOperation = AsyncOperation::createSignalOperation(true, &dataset()->taskManager());
 
 		// Determine scene bounding box.
 		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderOperation);
