@@ -55,15 +55,6 @@ void Task::decrementShareCount() noexcept
 	}
 }
 
-void Task::cancelIfSingleFutureLeft() noexcept
-{
-	// Cancels this task if there is only a single future left that depends on it.
-    // This is an internal method used by TaskManager::waitForTask() to cancel subtasks right away if their parent task got canceled.
-	if(_shareCount.load() == 0)
-		cancel();
-	OVITO_ASSERT(_shareCount.load() <= 1);
-}
-
 void Task::cancel() noexcept
 {
 	if(isCanceled() || isFinished()) return;

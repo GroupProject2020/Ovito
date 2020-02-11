@@ -267,14 +267,9 @@ bool TaskManager::waitForTaskUIThread(const TaskPtr& task, const TaskPtr& depend
 	QEventLoop eventLoop;
 	connect(watcher, &TaskWatcher::finished, &eventLoop, &QEventLoop::quit);
 
-	// Stop the event loop when the dependent task gets canceled.
-	if(dependentTask) {
-		TaskWatcher* dependentWatcher = addTaskInternal(dependentTask);
-		connect(dependentWatcher, &TaskWatcher::canceled, watcher, [dependentTask, watcher]() {
-			watcher->task()->cancelIfSingleFutureLeft();
-		});
-		connect(dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
-	}
+	// Break out of the event loop when the dependent task gets canceled.
+	if(dependentTask)
+		connect(addTaskInternal(dependentTask), &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
 
 #ifdef Q_OS_UNIX
 	// Boolean flag which is set by the POSIX signal handler when user
@@ -334,10 +329,8 @@ bool TaskManager::waitForTaskNonUIThread(const TaskPtr& task, const TaskPtr& dep
 
 	// Stop the event loop when the dependent task gets canceled.
 	if(dependentTask) {
-		connect(&dependentWatcher, &TaskWatcher::canceled, &watcher, [task]() {
-			task->cancelIfSingleFutureLeft();
-		});
 		connect(&dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
+		dependentWatcher.watch(dependentTask);
 	}
 
 	// Start waiting phase.

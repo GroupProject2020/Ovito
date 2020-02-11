@@ -111,8 +111,9 @@ void AnimationSettings::onTimeChanged()
 	_isTimeChanging = true;
 
 	// Wait until scene is complete, then generate a timeChangeComplete event.
-	dataset()->whenSceneReady().finally(executor(), [this]() {
+	_sceneReadyFuture = dataset()->whenSceneReady().then(executor(), [this]() {
 		_isTimeChanging = false;
+		_sceneReadyFuture.reset();
 		Q_EMIT timeChangeComplete();
 	});
 }

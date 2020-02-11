@@ -253,10 +253,6 @@ protected:
     /// If the count reaches zero, the shared state is automatically canceled.
     void decrementShareCount() noexcept;
 
-    /// Cancels this task if there is only a single future that depends on it.
-    /// This is an internal method used by TaskManager::waitForTask().
-    void cancelIfSingleFutureLeft() noexcept;
-
     /// Head of linked list of TaskWatchers currently monitoring this shared state.
     TaskWatcher* _watchers = nullptr;
 

@@ -26,6 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/oo/RefTarget.h>
+#include <ovito/core/utilities/concurrent/SharedFuture.h>
 #include "TimeInterval.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
@@ -314,6 +315,9 @@ private:
 
 	/// Indicates that the animation is currently being played back in the viewports.
 	FloatType _activePlaybackRate = 0;
+
+	/// Task that prepares the scene after an animation time change.
+	SharedFuture<> _sceneReadyFuture;
 };
 
 /**

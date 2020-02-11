@@ -70,6 +70,9 @@ private:
 
 	/// Indicates whether we are already waiting for the scene to become ready.
 	bool _sceneReadyScheduled = false;
+
+	/// The task that makes the scene ready for interactive rendering in the viewports.
+	SharedFuture<> _sceneReadyFuture;
 };
 
 }	// End of namespace
