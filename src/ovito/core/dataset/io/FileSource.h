@@ -92,6 +92,10 @@ public:
 	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
 	virtual DataCollection* getSourceDataCollection() const override { return dataCollection(); }
 
+	/// \brief Scans the external data file(s) to find all contained frames.
+	/// This method is an implementation detail. Please use the high-level method updateListOfFrames() instead.
+	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan);
+
 protected:
 
 	/// Asks the object for the results of the data pipeline.
@@ -116,10 +120,6 @@ private:
 
 	/// Sets which frame is currently stored in the data collection sub-object.
 	void setDataCollectionFrame(int frameIndex);
-
-	/// \brief Scans the external data file(s) to find all contained frames.
-	/// This method is an implementation detail. Please use the high-level method updateListOfFrames() instead.
-	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan);
 
 	/// Updates the internal list of input frames.
 	/// Invalidates cached frames in case they did change.

@@ -52,7 +52,7 @@ PipelineCache::~PipelineCache() // NOLINT
 ******************************************************************************/
 SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEvaluationRequest& request, CachingPipelineObject* pipelineObject, PipelineSceneNode* pipeline, bool includeVisElements)
 {
-	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
 	OVITO_ASSERT(pipeline != nullptr || pipelineObject != nullptr);
 	OVITO_ASSERT(pipeline != nullptr || includeVisElements == false);
 	OVITO_ASSERT_MSG(_preparingEvaluation == false, "PipelineCache::evaluatePipeline", "Function is not reentrant.");
@@ -209,7 +209,7 @@ SharedFuture<PipelineFlowState> PipelineCache::evaluatePipeline(const PipelineEv
 void PipelineCache::cleanupEvaluation(std::forward_list<EvaluationInProgress>::iterator evaluation)
 {
 	OVITO_ASSERT(!_evaluationsInProgress.empty());
-	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
 	for(auto iter = _evaluationsInProgress.before_begin(), next = iter++; next != _evaluationsInProgress.end(); iter = next++) {
 		if(next == evaluation) {
 			_evaluationsInProgress.erase_after(iter);
@@ -224,7 +224,7 @@ void PipelineCache::cleanupEvaluation(std::forward_list<EvaluationInProgress>::i
 ******************************************************************************/
 void PipelineCache::insertState(const PipelineFlowState& state, RefTarget* ownerObject)
 {
-	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
 	OVITO_ASSERT(ownerObject != nullptr);
 	OVITO_ASSERT(!ownerObject->dataset()->undoStack().isRecording());
 
@@ -324,7 +324,7 @@ const PipelineFlowState& PipelineCache::evaluatePipelineStageSynchronous(Caching
 ******************************************************************************/
 void PipelineCache::invalidate(TimeInterval keepInterval, bool resetSynchronousCache)
 {
-	OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
 	OVITO_ASSERT_MSG(_preparingEvaluation == false, "PipelineCache::invalidate", "Cannot invalidate cache while preparing to evaluate the pipeline.");
 
 	// Reduce the validity of ongoing evaluations.

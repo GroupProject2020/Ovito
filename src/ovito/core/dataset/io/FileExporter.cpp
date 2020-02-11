@@ -171,7 +171,8 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 		throwException(tr("The scene object to be exported is not a data pipeline."));
 
 	// Evaluate pipeline.
-	PipelineEvaluationFuture future = pipeline->evaluatePipeline(PipelineEvaluationRequest(time, !ignorePipelineErrors()));
+	PipelineEvaluationRequest request(time, !ignorePipelineErrors());
+	PipelineEvaluationFuture future = requestRenderState ? pipeline->evaluateRenderingPipeline(request) : pipeline->evaluatePipeline(request);
 	if(!operation.waitForFuture(future))
 		return {};
 	PipelineFlowState state = future.result();

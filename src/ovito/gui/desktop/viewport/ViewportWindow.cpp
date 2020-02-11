@@ -290,8 +290,8 @@ void ViewportWindow::leaveEvent(QEvent* event)
 		_cursorInContextMenuArea = false;
 		viewport()->updateViewport();
 	}
-	if(_inputManager && _inputManager->mainWindow())
-		_inputManager->mainWindow()->clearStatusBarMessage();
+	if(mainWindow())
+		mainWindow()->clearStatusBarMessage();
 }
 
 /******************************************************************************
