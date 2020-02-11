@@ -393,7 +393,15 @@ bool PipelineListModel::setData(const QModelIndex& index, const QVariant& value,
 	}
 	else if(role == Qt::EditRole) {
 		PipelineListItem* item = this->item(index.row());
-		if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
+		if(DataVis* vis = dynamic_object_cast<DataVis>(item->object())) {
+			QString newName = value.toString();
+			if(vis->objectTitle() != newName) {
+				UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Rename visual element"), [vis, &newName]() {
+					vis->setObjectTitle(newName);
+				});
+			}
+		}
+		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
 			QString newName = value.toString();
 			if(modApp->modifier() && modApp->modifier()->objectTitle() != newName) {
 				UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Rename modifier"), [modApp, &newName]() {
@@ -417,7 +425,7 @@ Qt::ItemFlags PipelineListModel::flags(const QModelIndex& index) const
 		}
 		else {
 			if(dynamic_object_cast<DataVis>(item->object())) {
-				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable;
+				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsEditable;
 			}
 			else if(dynamic_object_cast<ModifierApplication>(item->object())) {
 #if 0
