@@ -305,7 +305,9 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 	std::map<BurgersVectorFamily*,int> segmentCounts;
 	std::map<BurgersVectorFamily*,MicrostructurePhase*> dislocationCrystalStructures;
 	MicrostructurePhase* defaultStructure = dislocationsObj->structureById(modifier->inputCrystalStructure());
+	BurgersVectorFamily* defaultFamily = nullptr;
 	if(defaultStructure) {
+		defaultFamily = defaultStructure->defaultBurgersVectorFamily();
 		for(BurgersVectorFamily* family : defaultStructure->burgersVectorFamilies()) {
 			dislocationLengths[family] = 0;
 			segmentCounts[family] = 0;
@@ -325,16 +327,21 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 		OVITO_ASSERT(cluster != nullptr);
 		MicrostructurePhase* structure = dislocationsObj->structureById(cluster->structure);
 		if(structure == nullptr) continue;
-		BurgersVectorFamily* family = structure->defaultBurgersVectorFamily();
-		for(BurgersVectorFamily* f : structure->burgersVectorFamilies()) {
-			if(f->isMember(segment->burgersVector.localVec(), structure)) {
-				family = f;
-				break;
+		BurgersVectorFamily* family = defaultFamily;
+		if(structure == defaultStructure) {
+			BurgersVectorFamily* family = structure->defaultBurgersVectorFamily();
+			for(BurgersVectorFamily* f : structure->burgersVectorFamilies()) {
+				if(f->isMember(segment->burgersVector.localVec(), structure)) {
+					family = f;
+					break;
+				}
 			}
 		}
-		segmentCounts[family]++;
-		dislocationLengths[family] += len;
-		dislocationCrystalStructures[family] = structure;
+		if(family) {
+			segmentCounts[family]++;
+			dislocationLengths[family] += len;
+			dislocationCrystalStructures[family] = structure;
+		}
 	}
 
 	// Output a data table with the dislocation line lengths.
