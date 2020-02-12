@@ -329,7 +329,7 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 		if(structure == nullptr) continue;
 		BurgersVectorFamily* family = defaultFamily;
 		if(structure == defaultStructure) {
-			BurgersVectorFamily* family = structure->defaultBurgersVectorFamily();
+			family = structure->defaultBurgersVectorFamily();
 			for(BurgersVectorFamily* f : structure->burgersVectorFamilies()) {
 				if(f->isMember(segment->burgersVector.localVec(), structure)) {
 					family = f;
