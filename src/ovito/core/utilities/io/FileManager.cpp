@@ -30,7 +30,7 @@
 #include "FileManager.h"
 #include "RemoteFileJob.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 #ifdef OVITO_SSH_CLIENT
 using namespace Ovito::Ssh;
@@ -400,6 +400,4 @@ bool FileManager::askUserForKeyPassphrase(const QString& hostname, const QString
 }
 #endif
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

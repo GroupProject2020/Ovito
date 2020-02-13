@@ -25,7 +25,7 @@
 #include "GzipIODevice.h"
 #include <zlib.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 using ZlibByte = Bytef;
 using ZlibSize = uInt;
@@ -441,5 +441,4 @@ qint64 GzipIODevice::writeData(const char* data, qint64 maxSize)
     return maxSize;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

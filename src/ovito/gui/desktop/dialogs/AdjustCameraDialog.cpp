@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "AdjustCameraDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * The constructor of the camera dialog.
@@ -255,6 +255,4 @@ void AdjustCameraDialog::onCancel()
 	reject();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

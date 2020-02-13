@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include "ModifierTemplatesPage.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ModifierTemplatesPage);
 
@@ -314,6 +314,4 @@ bool ModifierTemplatesPage::saveValues(ApplicationSettingsDialog* settingsDialog
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

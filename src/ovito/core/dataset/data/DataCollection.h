@@ -31,7 +31,7 @@
 #include <ovito/core/dataset/data/DataObjectReference.h>
 #include <ovito/core/oo/CloneHelper.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief This data structure holds the list of data objects that flows down a data pipeline.
@@ -375,8 +375,6 @@ private:
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(DataObject, objects, setObjects);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::ConstDataObjectPath);

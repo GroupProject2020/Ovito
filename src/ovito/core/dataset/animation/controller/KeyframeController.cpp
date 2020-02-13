@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include "KeyframeController.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(KeyframeController);
 DEFINE_REFERENCE_FIELD(KeyframeController, keys);
@@ -153,5 +153,4 @@ void KeyframeController::deleteKeys(const QVector<AnimationKey*> keysToDelete)
 	updateKeys();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

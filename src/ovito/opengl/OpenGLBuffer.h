@@ -30,7 +30,7 @@
 #include <QOpenGLShaderProgram>
 #include <qopengl.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief A wrapper for the QOpenGLBuffer class, which adds more features.
@@ -324,6 +324,4 @@ private:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

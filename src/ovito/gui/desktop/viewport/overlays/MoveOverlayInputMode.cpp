@@ -29,7 +29,7 @@
 #include <ovito/core/viewport/overlays/ViewportOverlay.h>
 #include "MoveOverlayInputMode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -141,5 +141,4 @@ void MoveOverlayInputMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMo
 	ViewportInputMode::mouseReleaseEvent(vpwin, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

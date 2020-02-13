@@ -29,7 +29,7 @@
 #include <ovito/core/app/PluginManager.h>
 #include <ovito/gui/desktop/dialogs/AnimationKeyEditorDialog.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ParameterUI);
 IMPLEMENT_OVITO_CLASS(PropertyParameterUI);
@@ -173,6 +173,4 @@ void PropertyParameterUI::openAnimationKeyEditor()
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -30,7 +30,7 @@
 #include <ovito/core/dataset/io/FileExporter.h>
 #include "FileExporterSettingsDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -276,6 +276,4 @@ void FileExporterSettingsDialog::onOk()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -24,7 +24,7 @@
 #include "DefaultImagePrimitive.h"
 #include "NonInteractiveSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /******************************************************************************
 * Returns true if the buffer is filled and can be rendered with the given renderer.
@@ -58,5 +58,4 @@ void DefaultImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& 
 	niRenderer->renderImage(*this, pos, size);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

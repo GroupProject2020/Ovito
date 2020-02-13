@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,14 +23,12 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "StatusWidget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-StatusWidget::StatusWidget(QWidget* parent) : QScrollArea(parent),
-	_statusWarningIcon(":/gui/mainwin/status/status_warning.png"),
-	_statusErrorIcon(":/gui/mainwin/status/status_error.png")
+StatusWidget::StatusWidget(QWidget* parent) : QScrollArea(parent)
 {
 	QWidget* container = new QWidget();
 	QHBoxLayout* layout = new QHBoxLayout(container);
@@ -60,10 +58,13 @@ void StatusWidget::setStatus(const PipelineStatus& status)
 
 	_textLabel->setText(status.text());
 
+	const static QPixmap statusWarningIcon(":/gui/mainwin/status/status_warning.png");
+	const static QPixmap statusErrorIcon(":/gui/mainwin/status/status_error.png");
+
 	if(status.type() == PipelineStatus::Warning)
-		_iconLabel->setPixmap(_statusWarningIcon);
+		_iconLabel->setPixmap(statusWarningIcon);
 	else if(status.type() == PipelineStatus::Error)
-		_iconLabel->setPixmap(_statusErrorIcon);
+		_iconLabel->setPixmap(statusErrorIcon);
 	else
 		_iconLabel->clear();
 }
@@ -92,6 +93,4 @@ QSize StatusWidget::sizeHint() const
 			frameWidth()*2 + widgetHeight);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -29,7 +29,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "StandardSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(StandardSceneRenderer);
 DEFINE_PROPERTY_FIELD(StandardSceneRenderer, antialiasingLevel);
@@ -168,5 +168,4 @@ void StandardSceneRenderer::endRender()
 	OpenGLSceneRenderer::endRender();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

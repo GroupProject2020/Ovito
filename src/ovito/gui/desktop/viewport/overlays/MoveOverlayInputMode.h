@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/pipeline/PipelineStatus.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /**
  * Viewport mouse input mode, which allows the user to interactively move a viewport overlay
@@ -78,7 +78,6 @@ private:
 	QCursor _forbiddenCursor;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

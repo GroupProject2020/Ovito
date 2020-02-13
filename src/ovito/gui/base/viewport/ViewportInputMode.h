@@ -25,7 +25,7 @@
 
 #include <ovito/gui/base/GUIBase.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(ViewportInput)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for viewport input modes that handle mouse input
@@ -172,6 +172,4 @@ private:
 	friend class ViewportInputManager;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

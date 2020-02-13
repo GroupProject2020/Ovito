@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "LoadImageFileDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the dialog window.
@@ -46,6 +46,4 @@ void LoadImageFileDialog::onFileSelected(const QString& file)
 	_imageInfo.setFilename(file);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

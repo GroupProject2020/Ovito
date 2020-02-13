@@ -28,7 +28,7 @@
 #include "FutureDetail.h"
 #include "ContinuationTask.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Generic base class for futures, which implements the basic state management,
@@ -373,6 +373,4 @@ typename Ovito::detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type
 	return future;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

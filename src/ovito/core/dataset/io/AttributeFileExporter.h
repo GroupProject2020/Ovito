@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/io/FileExporter.h>
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief File exporter class that writes out scalar attributes computed by the data pipeline to a text file.
@@ -95,5 +95,4 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QStringList, attributesToExport, setAttributesToExport);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

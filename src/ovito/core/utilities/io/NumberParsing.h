@@ -31,7 +31,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/version.hpp>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /******************************************************************************
  * Helper function that converts a string to a floating-point number.
@@ -100,6 +100,4 @@ inline bool parseBool(const char* s, const char* s_end, int& d)
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

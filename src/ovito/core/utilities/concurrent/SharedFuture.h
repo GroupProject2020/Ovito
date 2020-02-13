@@ -28,7 +28,7 @@
 #include "FutureDetail.h"
 #include "ContinuationTask.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * A future that provides access to the value computed by a Promise.
@@ -374,6 +374,4 @@ public:
 	}
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -38,7 +38,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * Handles the ACTION_QUIT command.
@@ -395,5 +395,4 @@ void ActionManager::on_FileExport_triggered()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

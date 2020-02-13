@@ -25,7 +25,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(ViewportInput)
+namespace Ovito {
 
 /**
  * An Qt action that activates a ViewportInputMode.
@@ -74,8 +74,6 @@ private:
 	ViewportInputManager& _viewportInputManager;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/widgets/general/ColorPickerWidget.h>
 #include "ParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * Allows the user to edit a color parameter in the properties panel.
@@ -88,8 +88,6 @@ protected:
 	QPointer<QLabel> _label;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

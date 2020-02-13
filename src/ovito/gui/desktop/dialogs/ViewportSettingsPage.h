@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/dialogs/ApplicationSettingsDialog.h>
 #include <ovito/core/viewport/ViewportSettings.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * Page of the application settings dialog, which hosts viewport-related program options.
@@ -62,6 +62,4 @@ private:
 	QButtonGroup* _colorScheme;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

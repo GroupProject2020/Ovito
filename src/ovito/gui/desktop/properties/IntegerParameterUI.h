@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "NumericalParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * A parameter UI for integer properties.
@@ -73,8 +73,6 @@ public:
 	Q_PROPERTY(int maxValue READ maxValue WRITE setMaxValue)
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

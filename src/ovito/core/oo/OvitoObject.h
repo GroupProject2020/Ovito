@@ -27,7 +27,7 @@
 #include <ovito/core/oo/OORef.h>
 #include <ovito/core/oo/OvitoClass.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 #ifdef OVITO_DEBUG
 	/// Checks whether a pointer to an OvitoObject is valid.
@@ -292,7 +292,6 @@ inline OORef<T> static_object_cast(const OORef<U>& obj) {
 	return static_pointer_cast<T>(obj);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_SMART_POINTER_METATYPE(Ovito::OORef);

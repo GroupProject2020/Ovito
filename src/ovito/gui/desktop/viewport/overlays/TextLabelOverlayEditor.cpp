@@ -37,7 +37,7 @@
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include "TextLabelOverlayEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(TextLabelOverlayEditor);
 SET_OVITO_OBJECT_EDITOR(TextLabelOverlay, TextLabelOverlayEditor);
@@ -209,6 +209,4 @@ void TextLabelOverlayEditor::updateEditorFields()
 	container()->updateRolloutsLater();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

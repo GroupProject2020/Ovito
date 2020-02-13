@@ -34,7 +34,7 @@
 #include <ovito/core/dataset/UndoStack.h>
 #include "FileSource.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileSource);
 DEFINE_REFERENCE_FIELD(FileSource, importer);
@@ -282,16 +282,6 @@ QMap<int, QString> FileSource::animationFrameLabels() const
 }
 
 /******************************************************************************
-* Returns the current status of the pipeline object.
-******************************************************************************/
-PipelineStatus FileSource::status() const
-{
-	PipelineStatus status = CachingPipelineObject::status();
-	if(_framesListFuture.isValid() || _numActiveFrameLoaders > 0) status.setType(PipelineStatus::Pending);
-	return status;
-}
-
-/******************************************************************************
 * Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
 TimeInterval FileSource::validityInterval(const PipelineEvaluationRequest& request) const
@@ -364,13 +354,7 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 		return std::move(_framesListFuture);
 
 	// The status of this pipeline object changes while loading is in progress.
-	notifyDependents(ReferenceEvent::ObjectStatusChanged);
-
-	// Reset the status after the Future is fulfilled.
-	_framesListFuture.finally(executor(), [this]() {
-		_framesListFuture.reset();
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	});
+	registerActiveFuture(_framesListFuture);
 
 	return _framesListFuture;
 }
@@ -468,18 +452,8 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					return future;
 				});
 
-			// Change status to 'pending' during long-running load operations.
-			if(!loadFrameFuture.isFinished() && Application::instance()->guiMode()) {
-				if(_numActiveFrameLoaders++ == 0)
-					notifyDependents(ReferenceEvent::ObjectStatusChanged);
-
-				// Reset the loading status after the Future is fulfilled.
-				loadFrameFuture.finally(executor(), [this]() {
-					OVITO_ASSERT(_numActiveFrameLoaders > 0);
-					if(--_numActiveFrameLoaders == 0)
-						notifyDependents(ReferenceEvent::ObjectStatusChanged);
-				});
-			}
+			// Change status during long-running load operations.
+			registerActiveFuture(loadFrameFuture);
 
 			return loadFrameFuture;
 		})
@@ -497,7 +471,6 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				catch(Exception& ex) {
 					ex.setContext(dataset());
 					ex.reportError();
-					ex.prependGeneralMessage(tr("File source reported:"));
 					return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar(' '))), sourceFrameToAnimationTime(frame));
 				}
 			});
@@ -656,5 +629,4 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 	return CachingPipelineObject::referenceEvent(source, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

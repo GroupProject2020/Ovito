@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,7 +32,7 @@
 #include "PipelineListModel.h"
 #include "ModifyCommandPage.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -320,8 +320,8 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 void PipelineListModel::iconAnimationFrameChanged()
 {
 	bool stopMovie = true;
-	for(int i = 0; i < _items.size(); i++) {
-		if(_items[i]->status().type() == PipelineStatus::Pending) {
+	for(int i = 0; i < items().size(); i++) {
+		if(item(i)->isObjectActive()) {
 			dataChanged(index(i), index(i), { Qt::DecorationRole });
 			stopMovie = false;
 		}
@@ -346,13 +346,14 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 		return item->title();
 	}
 	else if(role == Qt::DecorationRole) {
-		if(item->object()) {
+		if(item->isObjectActive()) {
+			const_cast<QMovie&>(_statusPendingIcon).start();
+			return QVariant::fromValue(_statusPendingIcon.currentPixmap());
+		}
+		else if(item->object()) {
 			switch(item->status().type()) {
 			case PipelineStatus::Warning: return QVariant::fromValue(_statusWarningIcon);
 			case PipelineStatus::Error: return QVariant::fromValue(_statusErrorIcon);
-			case PipelineStatus::Pending:
-				const_cast<QMovie&>(_statusPendingIcon).start();
-				return QVariant::fromValue(_statusPendingIcon.currentPixmap());
 			default: return QVariant::fromValue(_statusNoneIcon);
 			}
 		}
@@ -577,6 +578,4 @@ bool PipelineListModel::isSharedObject(RefTarget* obj)
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

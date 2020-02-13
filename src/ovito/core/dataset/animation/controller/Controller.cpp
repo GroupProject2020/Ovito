@@ -30,7 +30,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/DataSet.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(Controller);
 
@@ -143,5 +143,4 @@ OORef<Controller> ControllerManager::createTransformationController(DataSet* dat
 	return new PRSTransformationController(dataset);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

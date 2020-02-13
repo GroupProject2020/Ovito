@@ -29,7 +29,7 @@
 #include <ovito/gui/desktop/widgets/general/ElidedTextLabel.h>
 #include <ovito/gui/desktop/widgets/display/StatusWidget.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * A properties editor for the FileSource object.
@@ -94,8 +94,6 @@ private:
 	QComboBox* _framesListBox = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

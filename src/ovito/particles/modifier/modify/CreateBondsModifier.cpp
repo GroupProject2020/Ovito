@@ -31,7 +31,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "CreateBondsModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CreateBondsModifier);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode);
@@ -312,7 +312,5 @@ void CreateBondsModifier::BondsEngine::emitResults(TimePoint time, ModifierAppli
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

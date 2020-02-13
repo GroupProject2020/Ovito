@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include "AcklandJonesModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(AcklandJonesModifierEditor);
 SET_OVITO_OBJECT_EDITOR(AcklandJonesModifier, AcklandJonesModifierEditor);
@@ -65,8 +65,5 @@ void AcklandJonesModifierEditor::createUI(const RolloutInsertionParameters& roll
 	layout1->addWidget(label);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

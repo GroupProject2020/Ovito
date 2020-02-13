@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "PropertiesPanel.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /**
  * \brief Base class for property editors for RefTarget derived objects.
@@ -179,6 +179,4 @@ private:
 #define SET_OVITO_OBJECT_EDITOR(RefTargetClass, PropertiesEditorClass) \
 	static const int __editorSetter##RefTargetClass = (Ovito::PropertiesEditor::registry().registerEditorClass(&RefTargetClass::OOClass(), &PropertiesEditorClass::OOClass()), 0);
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

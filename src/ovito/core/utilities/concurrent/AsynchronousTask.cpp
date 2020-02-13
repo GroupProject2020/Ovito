@@ -24,7 +24,7 @@
 #include "AsynchronousTask.h"
 #include "TaskManager.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Destructor.
@@ -55,6 +55,4 @@ void AsynchronousTaskBase::run()
 	this->setFinished();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/properties/RefTargetListParameterUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(RefTargetListParameterUI);
 DEFINE_REFERENCE_FIELD(RefTargetListParameterUI, targets);
@@ -430,6 +430,4 @@ QVariant RefTargetListParameterUI::getHorizontalHeaderData(int index, int role)
 	return {};
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

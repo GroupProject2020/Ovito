@@ -33,7 +33,7 @@
 #include <ovito/core/utilities/io/LoadStream.h>
 #include "Matrix3.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A symmetric second order tensor (= symmetric 3x3 matrix).
@@ -322,8 +322,6 @@ inline LoadStream& operator>>(LoadStream& stream, SymmetricTensor2T<T>& m)
  */
 using SymmetricTensor2 = SymmetricTensor2T<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::SymmetricTensor2);

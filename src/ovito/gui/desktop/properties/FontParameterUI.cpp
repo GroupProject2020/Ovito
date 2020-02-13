@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/UndoStack.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FontParameterUI);
 
@@ -124,6 +124,4 @@ void FontParameterUI::onButtonClicked()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

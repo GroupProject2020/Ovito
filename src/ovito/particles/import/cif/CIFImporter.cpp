@@ -28,7 +28,7 @@
 #include <3rdparty/gemmi/cif.hpp>
 #include <3rdparty/gemmi/smcif.hpp>	// for reading small molecules
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 namespace cif = gemmi::cif;
 
@@ -185,7 +185,5 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile()
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -36,7 +36,7 @@
 #include <ovito/gui/desktop/dataset/io/FileImporterEditor.h>
 #include "GuiDataSetContainer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(GuiDataSetContainer);
 
@@ -369,5 +369,4 @@ bool GuiDataSetContainer::importFile(const QUrl& url, const FileImporterClass* i
 	return importer->importFile({url}, importMode, true);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

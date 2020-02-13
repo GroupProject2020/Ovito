@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/properties/FilenameParameterUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FilenameParameterUI);
 
@@ -112,6 +112,4 @@ void FilenameParameterUI::setEnabled(bool enabled)
 	if(selectorWidget()) selectorWidget()->setEnabled(editObject() && isEnabled());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include <ovito/core/dataset/pipeline/PipelineObject.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Loads particle trajectories from a separate file and injects them into the modification pipeline.
@@ -98,7 +98,5 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, trajectorySource, setTrajectorySource, PROPERTY_FIELD_NO_SUB_ANIM);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

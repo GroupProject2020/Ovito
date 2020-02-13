@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /******************************************************************************
 * This data structure describes a projection parameters used to render
@@ -69,5 +69,4 @@ struct ViewProjectionParameters
 	TimeInterval validityInterval;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

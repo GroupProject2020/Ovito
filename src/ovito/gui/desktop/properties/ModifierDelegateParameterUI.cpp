@@ -28,7 +28,7 @@
 #include <ovito/core/app/PluginManager.h>
 #include "ModifierDelegateParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ModifierDelegateParameterUI);
 
@@ -253,6 +253,4 @@ void ModifierDelegateParameterUI::setEnabled(bool enabled)
 	if(comboBox()) comboBox()->setEnabled(editObject() != NULL && isEnabled());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

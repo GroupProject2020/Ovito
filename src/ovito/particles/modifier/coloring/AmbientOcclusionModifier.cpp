@@ -32,7 +32,7 @@
 #include "AmbientOcclusionModifier.h"
 #include "AmbientOcclusionRenderer.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(AmbientOcclusionModifier);
 DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, intensity);
@@ -271,7 +271,5 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint tim
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

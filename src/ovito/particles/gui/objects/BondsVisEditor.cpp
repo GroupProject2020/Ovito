@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/properties/ColorParameterUI.h>
 #include "BondsVisEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(BondsVisEditor);
 SET_OVITO_OBJECT_EDITOR(BondsVis, BondsVisEditor);
@@ -77,6 +77,5 @@ void BondsVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	layout->addWidget(useParticleColorsUI->checkBox(), 4, 1);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

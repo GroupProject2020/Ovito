@@ -26,7 +26,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "CoordinateTripodOverlay.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(CoordinateTripodOverlay);
 DEFINE_PROPERTY_FIELD(CoordinateTripodOverlay, alignment);
@@ -333,6 +333,4 @@ void CoordinateTripodOverlay::paintSolidJoint(QPainter& painter, QPointF origin,
 	painter.setBrush(brush);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

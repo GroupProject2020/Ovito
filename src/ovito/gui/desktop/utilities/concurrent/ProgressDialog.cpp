@@ -25,7 +25,7 @@
 #include <ovito/gui/desktop/widgets/general/ElidedTextLabel.h>
 #include "ProgressDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the dialog window.
@@ -124,6 +124,4 @@ void ProgressDialog::reject()
 	_watcher->cancel();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

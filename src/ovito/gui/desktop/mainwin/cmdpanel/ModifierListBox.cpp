@@ -31,7 +31,7 @@
 #include "ModifierListBox.h"
 #include "PipelineListModel.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the widget.
@@ -346,6 +346,4 @@ void ModifierListBox::updateApplicableModifiersList()
 	_numModifierTemplates = numCustom;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

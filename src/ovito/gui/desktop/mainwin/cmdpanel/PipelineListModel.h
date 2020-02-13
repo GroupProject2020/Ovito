@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@
 #include <ovito/core/dataset/scene/SceneNode.h>
 #include "PipelineListItem.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * This Qt model class is used to populate the QListView widget.
@@ -175,7 +175,7 @@ private:
 	/// Indicates that the list of items needs to be updated.
 	bool _needListUpdate = false;
 
-	/// Status icons
+	// Status icons:
 	QPixmap _statusInfoIcon;
 	QPixmap _statusWarningIcon;
 	QPixmap _statusErrorIcon;
@@ -198,6 +198,4 @@ private:
 	DataSetContainer& _datasetContainer;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

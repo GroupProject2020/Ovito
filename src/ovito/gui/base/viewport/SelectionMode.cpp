@@ -30,7 +30,7 @@
 #include "ViewportInputManager.h"
 #include "SelectionMode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /// The cursor shape shown while the mouse is positioned over an object.
 boost::optional<QCursor> SelectionMode::_hoverCursor;
@@ -100,6 +100,4 @@ void SelectionMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* 
 	ViewportInputMode::mouseMoveEvent(vpwin, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

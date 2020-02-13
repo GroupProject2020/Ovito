@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesReplicateModifierDelegate.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticlesReplicateModifierDelegate);
 
@@ -185,7 +185,5 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 	return PipelineStatus::Success;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

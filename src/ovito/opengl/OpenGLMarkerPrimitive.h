@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/MarkerPrimitive.h>
 #include "OpenGLBuffer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief This class is responsible for rendering marker primitives using OpenGL.
@@ -78,8 +78,6 @@ private:
 	QOpenGLShaderProgram* _pickingShader;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

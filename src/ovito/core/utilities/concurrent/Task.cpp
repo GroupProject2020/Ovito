@@ -26,7 +26,7 @@
 #include "TaskWatcher.h"
 #include "TaskManager.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 #ifdef OVITO_DEBUG
 // Global counter of Task instance. Used to detect memory leaks.
@@ -176,6 +176,4 @@ bool Task::waitForFuture(const FutureBase& future)
 	return true;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

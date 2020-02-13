@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "AsynchronousDelegatingModifier.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifierDelegate);
 DEFINE_PROPERTY_FIELD(AsynchronousModifierDelegate, inputDataObject);
@@ -102,6 +102,4 @@ bool AsynchronousDelegatingModifier::OOMetaClass::isApplicableTo(const DataColle
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

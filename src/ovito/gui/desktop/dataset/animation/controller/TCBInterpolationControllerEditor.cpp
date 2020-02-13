@@ -23,11 +23,9 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "TCBInterpolationControllerEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PositionTCBAnimationKeyEditor);
 SET_OVITO_OBJECT_EDITOR(PositionTCBAnimationKey, PositionTCBAnimationKeyEditor);
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

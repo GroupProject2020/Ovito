@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(PluginSystem)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for services that want to perform actions on
@@ -59,5 +59,4 @@ public:
 	virtual void importedByExternalPythonInterpreter() {}
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

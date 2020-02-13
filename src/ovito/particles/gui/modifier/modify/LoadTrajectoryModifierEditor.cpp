@@ -25,7 +25,7 @@
 #include <ovito/gui/desktop/properties/SubObjectParameterUI.h>
 #include "LoadTrajectoryModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(LoadTrajectoryModifierEditor);
 SET_OVITO_OBJECT_EDITOR(LoadTrajectoryModifier, LoadTrajectoryModifierEditor);
@@ -51,8 +51,5 @@ void LoadTrajectoryModifierEditor::createUI(const RolloutInsertionParameters& ro
 	new SubObjectParameterUI(this, PROPERTY_FIELD(LoadTrajectoryModifier::trajectorySource), RolloutInsertionParameters().setTitle(tr("Trajectory Source")));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

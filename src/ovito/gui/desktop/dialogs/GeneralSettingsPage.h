@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/dialogs/ApplicationSettingsDialog.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * Page of the application settings dialog, which hosts general program options.
@@ -68,8 +68,6 @@ private:
 	QLabel* _restartRequiredLabel;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

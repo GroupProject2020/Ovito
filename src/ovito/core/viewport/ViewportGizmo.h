@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for viewport gizmos that display additional content in the
@@ -56,5 +56,4 @@ public:
 	virtual void renderOverlay2D(Viewport* vp, SceneRenderer* renderer) {}
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

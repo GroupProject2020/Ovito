@@ -31,7 +31,7 @@
 #include <ovito/core/oo/CloneHelper.h>
 #include <ovito/core/dataset/scene/SelectionSet.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(SceneNode);
 DEFINE_REFERENCE_FIELD(SceneNode, transformationController);
@@ -403,6 +403,4 @@ const Box3& SceneNode::worldBoundingBox(TimePoint time) const
 	return _worldBoundingBox;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

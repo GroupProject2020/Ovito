@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "ParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * This UI allows the user to edit a string property of the object being edited.
@@ -88,8 +88,6 @@ protected:
 	QPointer<QWidget> _textBox;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

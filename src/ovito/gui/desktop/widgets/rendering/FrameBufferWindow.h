@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/FrameBuffer.h>
 #include "FrameBufferWidget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /**
  * This window displays the contents of a FrameBuffer.
@@ -73,8 +73,6 @@ private:
 	Q_OBJECT
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

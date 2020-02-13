@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/io/SaveStream.h>
 #include <ovito/core/utilities/io/LoadStream.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief A point in animation time.
@@ -305,7 +305,6 @@ public:
 	const value_type& back() const { return _intervals.back(); }
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::TimeInterval);

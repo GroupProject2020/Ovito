@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/RenderSettings.h>
 #include "RenderCommandPage.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the command panel page.
@@ -74,6 +74,4 @@ void RenderCommandPage::onRenderSettingsReplaced(RenderSettings* newRenderSettin
 	propertiesPanel->setEditObject(newRenderSettings);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

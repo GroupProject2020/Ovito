@@ -32,7 +32,7 @@
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/oo/CloneHelper.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PipelineSceneNode);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, dataProvider);
@@ -516,6 +516,4 @@ DataVis* PipelineSceneNode::makeVisElementIndependent(DataVis* visElement)
 	return clonedVisElement;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

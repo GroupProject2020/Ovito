@@ -29,7 +29,7 @@
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "IdentifyDiamondModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(IdentifyDiamondModifier);
 
@@ -244,7 +244,5 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::emitResults(TimePoint
 	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_SECOND_NEIGH)), modApp);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -25,7 +25,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * This dialog box lets the user make a copy of a pipeline scene node.
@@ -99,8 +99,6 @@ private:
 	QLineEdit* _cloneNameEdit;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

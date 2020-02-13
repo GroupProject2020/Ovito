@@ -24,7 +24,7 @@
 #include "MainThreadTask.h"
 #include "TaskManager.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 bool MainThreadTask::setProgressValue(qlonglong value)
 {
@@ -53,6 +53,4 @@ void MainThreadTask::setProgressText(const QString& progressText)
 	taskManager()->processEvents();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

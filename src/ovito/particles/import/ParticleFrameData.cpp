@@ -39,7 +39,7 @@
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Sorts the types w.r.t. their name. Reassigns the per-element type IDs too.
@@ -506,6 +506,5 @@ void ParticleFrameData::sortParticlesById()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

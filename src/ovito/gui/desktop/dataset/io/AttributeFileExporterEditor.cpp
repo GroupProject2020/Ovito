@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include "AttributeFileExporterEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AttributeFileExporterEditor);
 SET_OVITO_OBJECT_EDITOR(AttributeFileExporter, AttributeFileExporterEditor);
@@ -189,5 +189,4 @@ void AttributeFileExporterEditor::onAttributeChanged()
 	settings.endGroup();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

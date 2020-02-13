@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for properties editors for FileImporter derived classes.
@@ -45,7 +45,6 @@ public:
 	virtual bool inspectNewFile(FileImporter* importer, const QUrl& sourceFile, QWidget* parent) { return true; }
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

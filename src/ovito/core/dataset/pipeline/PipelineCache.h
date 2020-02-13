@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief A data cache for PipelineFlowState objects, which is used in the implementation of the PipelineSceneNode 
@@ -132,6 +132,4 @@ private:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

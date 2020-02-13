@@ -43,7 +43,7 @@
 #include "cmdpanel/CommandPanel.h"
 #include "data_inspector/DataInspectorPanel.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * The constructor of the main window class.
@@ -546,5 +546,4 @@ bool MainWindow::openDataInspector(PipelineObject* dataSource, const QString& ob
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

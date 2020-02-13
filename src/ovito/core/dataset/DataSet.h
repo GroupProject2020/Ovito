@@ -41,7 +41,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/MixedKeyCache.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Stores the current program state including the three-dimensional scene, viewport configuration,
@@ -275,5 +275,4 @@ private:
 	friend class DataSetContainer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

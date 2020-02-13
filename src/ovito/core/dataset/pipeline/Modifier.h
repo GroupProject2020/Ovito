@@ -30,7 +30,7 @@
 #include "PipelineStatus.h"
 #include "ModifierClass.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Base class for algorithms that operate on a PipelineFlowState.
@@ -147,8 +147,6 @@ private:
 	friend ModifierApplication;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Modifier*);

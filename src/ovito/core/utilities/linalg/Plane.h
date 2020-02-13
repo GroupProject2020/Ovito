@@ -36,7 +36,7 @@
 #include "Ray.h"
 #include "AffineTransformation.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief An infinite plane in 3d space.
@@ -295,8 +295,6 @@ inline QDataStream& operator>>(QDataStream& stream, Plane_3<T>& p) {
  */
 using Plane3 = Plane_3<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Plane3);

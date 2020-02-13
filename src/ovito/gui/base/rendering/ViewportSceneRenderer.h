@@ -26,7 +26,7 @@
 #include <ovito/gui/base/GUIBase.h>
 #include <ovito/opengl/OpenGLSceneRenderer.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief This is the default scene renderer used to render the contents
@@ -76,5 +76,4 @@ private:
 	std::shared_ptr<LinePrimitive> _constructionGridGeometry;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

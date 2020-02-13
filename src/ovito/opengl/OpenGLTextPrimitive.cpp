@@ -24,7 +24,7 @@
 #include "OpenGLTextPrimitive.h"
 #include "OpenGLSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -108,6 +108,4 @@ void OpenGLTextPrimitive::renderWindow(SceneRenderer* renderer, const Point2& po
 	_imageBuffer->renderWindow(renderer, alignedPos, size);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

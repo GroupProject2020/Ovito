@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "AnimationSettings.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AnimationSettings);
 DEFINE_PROPERTY_FIELD(AnimationSettings, time);
@@ -376,5 +376,4 @@ AnimationSuspender::AnimationSuspender(RefMaker* object) : AnimationSuspender(ob
 {
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

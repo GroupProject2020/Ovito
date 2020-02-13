@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /**
  * \brief A spinner control for editing a numeric value.
@@ -204,8 +204,6 @@ protected:
 	virtual void focusOutEvent(QFocusEvent* event) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

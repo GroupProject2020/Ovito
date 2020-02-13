@@ -31,7 +31,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "CoordinationPolyhedraModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CoordinationPolyhedraModifier);
 DEFINE_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshVis);
@@ -164,7 +164,5 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitResults(TimePoin
 	meshObj->setVisElement(modifier->surfaceMeshVis());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -26,7 +26,7 @@
 
 #include <QOpenGLPaintDevice> 
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -309,6 +309,4 @@ QImage OpenGLImagePrimitive::convertToGLFormat(const QImage& img)
     return res;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

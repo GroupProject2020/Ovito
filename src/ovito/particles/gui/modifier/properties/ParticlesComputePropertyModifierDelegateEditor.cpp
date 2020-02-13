@@ -30,7 +30,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "ParticlesComputePropertyModifierDelegateEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticlesComputePropertyModifierDelegateEditor);
 SET_OVITO_OBJECT_EDITOR(ParticlesComputePropertyModifierDelegate, ParticlesComputePropertyModifierDelegateEditor);
@@ -192,8 +192,5 @@ void ParticlesComputePropertyModifierDelegateEditor::onExpressionEditingFinished
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

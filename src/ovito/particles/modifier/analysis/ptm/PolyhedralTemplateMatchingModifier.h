@@ -29,7 +29,7 @@
 #include <ovito/stdobj/table/DataTable.h>
 #include "PTMAlgorithm.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief A modifier that uses the Polyhedral Template Matching (PTM) method to identify
@@ -158,7 +158,5 @@ private:
 };
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

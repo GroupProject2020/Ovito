@@ -27,7 +27,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/DataSet.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief A meta-class for file importers (i.e. classes derived from FileImporter).
@@ -123,7 +123,6 @@ public:
 	static void activateCLocale();
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::FileImporter::ImportMode);

@@ -35,7 +35,7 @@
 #include <ovito/core/viewport/overlays/CoordinateTripodOverlay.h>
 #include "CoordinateTripodOverlayEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(CoordinateTripodOverlayEditor);
 SET_OVITO_OBJECT_EDITOR(CoordinateTripodOverlay, CoordinateTripodOverlayEditor);
@@ -216,6 +216,4 @@ void CoordinateTripodOverlayEditor::createUI(const RolloutInsertionParameters& r
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

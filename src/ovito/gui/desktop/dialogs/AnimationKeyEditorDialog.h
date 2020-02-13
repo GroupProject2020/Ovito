@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTargetListener.h>
 #include <ovito/gui/desktop/properties/ParameterUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * This dialog box allows to edit the animation keys of an animatable parameter.
@@ -66,8 +66,6 @@ private:
 	PropertiesPanel* _keyPropPanel;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

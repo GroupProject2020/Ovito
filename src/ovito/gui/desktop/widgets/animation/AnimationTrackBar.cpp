@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "AnimationTrackBar.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 using namespace std;
 
@@ -508,6 +508,4 @@ void AnimationTrackBar::onDeleteSelectedKeys()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

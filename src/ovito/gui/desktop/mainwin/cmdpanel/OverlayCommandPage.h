@@ -28,7 +28,7 @@
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/viewport/overlays/ViewportOverlay.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 class OverlayListModel;	// defined in OverlayListModel.h
 class OverlayListItem;	// defined in OverlayListItem.h
@@ -107,6 +107,4 @@ private:
 	QAction* _moveLayerDownAction;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

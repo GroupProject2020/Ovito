@@ -36,7 +36,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief An OpenGL-based scene renderer. This serves as base class for both the interactive renderer used
@@ -357,5 +357,4 @@ private:
 	template<typename T> friend class OpenGLBuffer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

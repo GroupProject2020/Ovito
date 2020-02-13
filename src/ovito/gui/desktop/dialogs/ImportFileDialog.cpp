@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "ImportFileDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the dialog window.
@@ -75,6 +75,4 @@ const FileImporterClass* ImportFileDialog::selectedFileImporterType() const
 		return nullptr;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

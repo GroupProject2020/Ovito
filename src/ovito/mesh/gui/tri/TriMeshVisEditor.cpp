@@ -27,7 +27,7 @@
 #include <ovito/mesh/tri/TriMeshVis.h>
 #include "TriMeshVisEditor.h"
 
-namespace Ovito { namespace Mesh { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Mesh {
 
 IMPLEMENT_OVITO_CLASS(TriMeshVisEditor);
 SET_OVITO_OBJECT_EDITOR(TriMeshVis, TriMeshVisEditor);
@@ -58,6 +58,5 @@ void TriMeshVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	layout->addWidget(highlightEdgesUI->checkBox(), 2, 0, 1, 2);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -24,7 +24,7 @@
 #include <ovito/core/viewport/Viewport.h>
 #include "AmbientOcclusionRenderer.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(AmbientOcclusionRenderer);
 
@@ -143,8 +143,5 @@ void AmbientOcclusionRenderer::endRender()
 	OpenGLSceneRenderer::endRender();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

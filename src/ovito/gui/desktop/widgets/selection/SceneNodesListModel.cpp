@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "SceneNodesListModel.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the model.
@@ -147,6 +147,4 @@ void SceneNodesListModel::onNodeNotificationEvent(RefTarget* source, const Refer
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -24,7 +24,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "FontSelectionDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * The constructor of the dialog.
@@ -45,6 +45,4 @@ QFont FontSelectionDialog::getFont(bool* ok, QFont currentFont, QWidget* parentW
 	return QFontDialog::getFont(ok, currentFont, parentWindow);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

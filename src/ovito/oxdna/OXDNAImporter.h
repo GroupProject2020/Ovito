@@ -28,7 +28,7 @@
 #include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/core/app/Application.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for data files of the oxDNA code.
@@ -128,7 +128,5 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QUrl, topologyFileUrl, setTopologyFileUrl);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

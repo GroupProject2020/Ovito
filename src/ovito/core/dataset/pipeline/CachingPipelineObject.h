@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/pipeline/PipelineCache.h>
 #include "PipelineObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief A pipeline object that maintains an output data cache.
@@ -92,6 +92,4 @@ private:
 	friend class PipelineCache;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

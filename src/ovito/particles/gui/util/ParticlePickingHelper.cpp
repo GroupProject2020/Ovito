@@ -30,7 +30,7 @@
 #include <ovito/particles/objects/ParticlesVis.h>
 #include "ParticlePickingHelper.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Finds the particle under the mouse cursor.
@@ -113,6 +113,5 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, SceneRenderer* r
 	particleVis->highlightParticle(particleIndex, particles, renderer);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

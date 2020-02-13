@@ -31,7 +31,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "GlobalAttributesInspectionApplet.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(GlobalAttributesInspectionApplet);
 
@@ -153,5 +153,4 @@ void GlobalAttributesInspectionApplet::exportToFile()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

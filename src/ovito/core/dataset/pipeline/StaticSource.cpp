@@ -24,7 +24,7 @@
 #include <ovito/core/dataset/pipeline/StaticSource.h>
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(StaticSource);
 DEFINE_REFERENCE_FIELD(StaticSource, dataCollection);
@@ -60,6 +60,4 @@ PipelineFlowState StaticSource::evaluateSynchronous(TimePoint time)
     return PipelineFlowState(dataCollection(), PipelineStatus::Success);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

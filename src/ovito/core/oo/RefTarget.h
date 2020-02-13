@@ -29,7 +29,7 @@
 #include <ovito/core/oo/RefTargetExecutor.h>
 #include "RefMaker.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Base class for objects that are referenced by RefMaker objects.
@@ -297,5 +297,4 @@ private:
 	friend class VectorReferenceFieldBase;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

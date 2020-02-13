@@ -27,7 +27,7 @@
 #include "Modifier.h"
 #include "CachingPipelineObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Represents the application of a Modifier in a data pipeline.
@@ -78,9 +78,6 @@ public:
 
 	/// \brief Asks the object for the result of the data pipeline.
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
-
-	/// \brief Returns the current status of the pipeline object.
-	virtual PipelineStatus status() const override;
 
 	/// \brief Returns the number of animation frames this pipeline object can provide.
 	virtual int numberOfSourceFrames() const override;
@@ -135,9 +132,6 @@ private:
 
 	/// The modifier that is inserted into the pipeline.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(Modifier, modifier, setModifier, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_OPEN_SUBEDITOR);
-
-	/// Indicates whether the modifier of this ModifierApplication is currently being evaluated.
-	int _numEvaluationsInProgress = 0;
 };
 
 /// This macro assigns a ModifierApplication-derived class to a Modifier-derived class.
@@ -145,6 +139,4 @@ private:
 	static const int __modAppSetter##ModifierClass = (Ovito::ModifierApplication::registry().registerModAppClass(&ModifierClass::OOClass(), &ModifierApplicationClass::OOClass()), 0);
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

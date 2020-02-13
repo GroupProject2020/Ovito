@@ -33,7 +33,7 @@
 #include <ovito/core/utilities/io/LoadStream.h>
 #include <ovito/core/utilities/io/SaveStream.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 /**
  * \brief A color value with red, blue, and green components.
@@ -565,7 +565,6 @@ using Color = ColorT<FloatType>;
  */
 using ColorA = ColorAT<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Color);

@@ -30,7 +30,7 @@
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Extends the current particle selection by adding particles to the selection
@@ -215,8 +215,6 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfIterations, setNumberOfIterations);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

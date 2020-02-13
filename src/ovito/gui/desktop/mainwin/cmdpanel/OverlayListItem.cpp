@@ -24,7 +24,7 @@
 #include <ovito/core/viewport/Viewport.h>
 #include "OverlayListItem.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(OverlayListItem);
 DEFINE_REFERENCE_FIELD(OverlayListItem, overlay);
@@ -78,6 +78,4 @@ QString OverlayListItem::title(Viewport* selectedViewport) const
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

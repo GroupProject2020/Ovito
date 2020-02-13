@@ -30,7 +30,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 /**
  * \brief A container class implementing a priority queue with a fixed compile-time maximum capacity and a variable run-time capacity.
@@ -128,5 +128,4 @@ protected:
 	Compare _comp;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

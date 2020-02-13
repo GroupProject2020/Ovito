@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/gui/desktop/widgets/general/RolloutContainer.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /******************************************************************************
 * This panel lets the user edit the properties of some RefTarget derived object.
@@ -63,8 +63,6 @@ protected:
 	MainWindow* _mainWindow;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

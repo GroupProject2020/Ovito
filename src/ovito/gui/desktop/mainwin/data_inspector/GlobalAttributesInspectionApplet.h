@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/mainwin/data_inspector/DataInspectionApplet.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /**
  * \brief Data inspector page for global attribute values.
@@ -132,5 +132,4 @@ private:
 	QPointer<PipelineSceneNode> _sceneNode;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

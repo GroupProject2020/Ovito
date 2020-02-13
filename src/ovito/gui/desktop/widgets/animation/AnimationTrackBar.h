@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/animation/controller/KeyframeController.h>
 #include "AnimationTimeSlider.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * The track bar displays the animation keys of the selected scene node.
@@ -146,8 +146,6 @@ private:
 	QMetaObject::Connection _timeChangedConnection;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

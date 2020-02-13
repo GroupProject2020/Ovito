@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/pipeline/Modifier.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 
 /**
@@ -216,6 +216,4 @@ protected:
 };
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

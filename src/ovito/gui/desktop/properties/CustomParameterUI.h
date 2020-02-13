@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "ParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * Utility class for creating UIs for custom parameter types.
@@ -100,8 +100,6 @@ protected:
 	std::function<void(RefTarget*)> _resetUIFunction;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

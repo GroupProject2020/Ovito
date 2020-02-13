@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/rendering/MarkerPrimitive.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a set of markers to be rendered by a non-interactive renderer.
@@ -70,7 +70,6 @@ private:
 	std::vector<Point3> _positionsBuffer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

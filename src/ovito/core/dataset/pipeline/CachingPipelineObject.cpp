@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/pipeline/CachingPipelineObject.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(CachingPipelineObject);
 DEFINE_PROPERTY_FIELD(CachingPipelineObject, pipelineTrajectoryCachingEnabled);
@@ -110,6 +110,4 @@ void CachingPipelineObject::rescaleTime(const TimeInterval& oldAnimationInterval
 	pipelineCache().invalidate();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

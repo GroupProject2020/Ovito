@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include "NonInteractiveSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(NonInteractiveSceneRenderer);
 
@@ -45,5 +45,4 @@ void NonInteractiveSceneRenderer::beginFrame(TimePoint time, const ViewProjectio
 	_modelTM.setIdentity();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

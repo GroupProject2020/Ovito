@@ -27,14 +27,14 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PipelineObject);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PipelineObject::PipelineObject(DataSet* dataset) : RefTarget(dataset)
+PipelineObject::PipelineObject(DataSet* dataset) : ActiveObject(dataset)
 {
 }
 
@@ -82,17 +82,6 @@ bool PipelineObject::isPipelineBranch(bool onlyScenePipelines) const
 }
 
 /******************************************************************************
-* Sets the current status of the pipeline object.
-******************************************************************************/
-void PipelineObject::setStatus(const PipelineStatus& status)
-{
-	if(status != _status) {
-		_status = status;
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
-}
-
-/******************************************************************************
 * Given an animation time, computes the source frame to show.
 ******************************************************************************/
 int PipelineObject::animationTimeToSourceFrame(TimePoint time) const
@@ -110,6 +99,4 @@ TimePoint PipelineObject::sourceFrameToAnimationTime(int frame) const
 	return dataset()->animationSettings()->frameToTime(frame);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

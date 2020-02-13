@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/scene/SceneNode.h>
 #include <ovito/core/dataset/data/DataObjectReference.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief A meta-class for file exporters (i.e. classes derived from FileExporter).
@@ -158,5 +158,4 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, ignorePipelineErrors, setIgnorePipelineErrors);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

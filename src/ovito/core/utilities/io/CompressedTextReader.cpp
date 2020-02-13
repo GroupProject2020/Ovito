@@ -24,7 +24,7 @@
 #include <ovito/core/utilities/io/FileManager.h>
 #include "CompressedTextReader.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /******************************************************************************
 * Opens the given I/O device for reading.
@@ -133,6 +133,4 @@ void CompressedTextReader::munmap()
 	_mmapPointer = nullptr;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

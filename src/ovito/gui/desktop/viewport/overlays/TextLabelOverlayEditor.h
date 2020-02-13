@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief A properties editor for the TextLabelOverlay class.
@@ -62,6 +62,4 @@ private:
 	DeferredMethodInvocation<TextLabelOverlayEditor, &TextLabelOverlayEditor::updateEditorFields> updateEditorFieldsLater;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

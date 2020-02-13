@@ -24,7 +24,7 @@
 #include "OpenGLArrowPrimitive.h"
 #include "OpenGLSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -773,6 +773,4 @@ void OpenGLArrowPrimitive::renderWithElementInfo(OpenGLSceneRenderer* renderer)
 	renderer->glDisable(GL_CULL_FACE);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

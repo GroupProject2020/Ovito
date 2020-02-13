@@ -35,7 +35,7 @@
 #include <ovito/gui/desktop/dialogs/ClonePipelineDialog.h>
 #include "ActionManager.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the ActionManager.
@@ -304,5 +304,4 @@ void ActionManager::on_RenamePipeline_triggered()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

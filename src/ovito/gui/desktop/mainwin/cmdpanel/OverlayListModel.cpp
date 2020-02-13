@@ -27,7 +27,7 @@
 #include "OverlayListModel.h"
 #include "ModifyCommandPage.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -266,6 +266,4 @@ Qt::ItemFlags OverlayListModel::flags(const QModelIndex& index) const
 	return QAbstractListModel::flags(index);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

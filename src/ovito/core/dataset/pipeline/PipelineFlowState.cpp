@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/oo/CloneHelper.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /******************************************************************************
 * Returns the data collection of this pipeline state after making sure it is
@@ -40,6 +40,4 @@ DataCollection* PipelineFlowState::mutableData()
     return _data.get();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

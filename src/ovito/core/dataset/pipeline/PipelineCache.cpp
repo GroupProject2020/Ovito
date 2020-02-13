@@ -30,7 +30,7 @@
 #include <ovito/core/app/Application.h>
 #include <ovito/core/utilities/concurrent/Future.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -531,6 +531,4 @@ void PipelineCache::precomputeNextAnimationFrame()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

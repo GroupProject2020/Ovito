@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/core/oo/RefTarget.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * The editor component for the StandardSceneRenderer class.
@@ -48,6 +48,4 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

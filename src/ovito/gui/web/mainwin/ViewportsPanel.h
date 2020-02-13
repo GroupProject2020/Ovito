@@ -26,7 +26,7 @@
 #include <ovito/gui/web/GUIWeb.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * The container widget for the viewports in OVITO's main window.
@@ -91,6 +91,4 @@ private:
 	OORef<AnimationSettings> _animSettings;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

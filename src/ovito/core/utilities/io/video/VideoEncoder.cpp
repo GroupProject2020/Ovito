@@ -31,7 +31,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 };
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /// The list of supported video formats.
 QList<VideoEncoder::Format> VideoEncoder::_supportedFormats;
@@ -435,7 +435,4 @@ void VideoEncoder::writeFrame(const QImage& image)
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

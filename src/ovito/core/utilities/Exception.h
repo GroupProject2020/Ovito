@@ -30,7 +30,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 #ifdef QT_NO_EXCEPTIONS
 	#error "OVITO requires Qt exception support. It seems that Qt has been built without exceptions (the macro QT_NO_EXCEPTIONS is defined). Please turn on exception support and rebuild the Qt library."
@@ -171,5 +171,4 @@ private:
 	QPointer<QObject> _context;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// namespace Ovito

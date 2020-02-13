@@ -23,7 +23,6 @@
 #include <ovito/gui/base/GUIBase.h>
 #include "MainWindowInterface.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

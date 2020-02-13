@@ -24,7 +24,7 @@
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
 #include "TriMesh.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs an empty mesh.
@@ -539,6 +539,4 @@ void TriMesh::removeDuplicateVertices(FloatType epsilon)
 	invalidateFaces();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

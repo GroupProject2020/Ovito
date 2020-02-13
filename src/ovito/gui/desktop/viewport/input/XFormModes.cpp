@@ -36,7 +36,7 @@
 #include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "XFormModes.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * This is called by the system after the input handler has
@@ -460,6 +460,4 @@ void RotateMode::onAnimateTransformationButton()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

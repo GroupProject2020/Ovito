@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * Handles the ACTION_GOTO_START_OF_ANIMATION command.
@@ -86,5 +86,4 @@ void ActionManager::on_AnimationSettings_triggered()
 	AnimationSettingsDialog(_dataset->animationSettings(), mainWindow()).exec();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

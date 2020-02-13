@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/LinePrimitive.h>
 #include "OpenGLBuffer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief This class is responsible for rendering line primitives using OpenGL.
@@ -107,8 +107,6 @@ private:
 	bool _useIndexVBO;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

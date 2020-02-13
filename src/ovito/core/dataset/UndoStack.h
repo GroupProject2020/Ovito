@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Undo)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for records of undoable operations.
@@ -572,6 +572,4 @@ private:
 	bool _committed;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

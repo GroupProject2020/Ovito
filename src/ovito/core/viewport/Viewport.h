@@ -32,7 +32,7 @@
 #include "ViewportWindowInterface.h"
 #include "ViewportProjectionParameters.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /**
  * \brief A viewport window that displays the current scene.
@@ -341,5 +341,4 @@ private:
 	ViewportWindowInterface* _window = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

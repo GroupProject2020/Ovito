@@ -23,10 +23,9 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "FileImporterEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileImporterEditor);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 

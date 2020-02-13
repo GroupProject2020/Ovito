@@ -28,7 +28,7 @@
 #include "OpenGLBuffer.h"
 #include "OpenGLTexture.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief This class is responsible for rendering particle primitives using OpenGL.
@@ -182,6 +182,4 @@ private:
 	std::vector<Point3> _particleCoordinates;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

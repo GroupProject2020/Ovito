@@ -33,7 +33,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "FileExporter.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileExporter);
 DEFINE_PROPERTY_FIELD(FileExporter, outputFilename);
@@ -321,5 +321,4 @@ QString FileExporter::getAvailableDataObjectList(const PipelineFlowState& state,
 }
 
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

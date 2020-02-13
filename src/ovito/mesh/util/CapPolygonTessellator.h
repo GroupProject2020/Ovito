@@ -29,7 +29,7 @@
 
 #include <qopengl.h>
 
-namespace Ovito { namespace Mesh { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Mesh {
 
 /**
  * \brief Helper class that can tessellate a set of non-convex polygons into triangles.
@@ -175,6 +175,5 @@ private:
 	bool _createOppositePolygon;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

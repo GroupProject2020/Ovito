@@ -29,7 +29,7 @@ namespace Ovito {
 	class MainWindowInterface;   // Note: This class is defined in another plugin module.
 }
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Abstract interface for viewport windows, which provide the connection between the 
@@ -133,6 +133,4 @@ private:
 	std::shared_ptr<ImagePrimitive> _renderFrameOverlay;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

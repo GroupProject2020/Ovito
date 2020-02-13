@@ -30,7 +30,7 @@
 #include "OverlayListModel.h"
 #include "OverlayListItem.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the command panel page.
@@ -305,6 +305,4 @@ void OverlayCommandPage::onLayerMoveDown()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

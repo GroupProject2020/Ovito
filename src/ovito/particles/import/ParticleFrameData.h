@@ -34,7 +34,7 @@
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/simcell/SimulationCell.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 /**
  * Holds the data of a single frame loaded by a ParticleImporter.
@@ -408,6 +408,5 @@ private:
 	OvitoClassPtr _particleVisElementClass = &ParticlesVis::OOClass();
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

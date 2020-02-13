@@ -29,7 +29,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(XSFImporter);
 
@@ -349,7 +349,5 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile()
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

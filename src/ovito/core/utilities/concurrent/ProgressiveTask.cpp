@@ -24,7 +24,7 @@
 #include "ProgressiveTask.h"
 #include "TaskWatcher.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 enum {
     MaxProgressEmitsPerSecond = 20
@@ -157,6 +157,4 @@ void ProgressiveTask::setProgressText(const QString& progressText)
 		QMetaObject::invokeMethod(watcher, "promiseProgressTextChanged", Qt::QueuedConnection, Q_ARG(QString, progressText));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

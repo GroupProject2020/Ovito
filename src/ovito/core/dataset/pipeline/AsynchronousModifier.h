@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/concurrent/AsynchronousTask.h>
 #include "Modifier.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Base class for modifiers that compute their results in a background thread.
@@ -143,6 +143,4 @@ protected:
 // Export this class template specialization from the DLL under Windows.
 extern template class OVITO_CORE_EXPORT Future<AsynchronousModifier::ComputeEnginePtr>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

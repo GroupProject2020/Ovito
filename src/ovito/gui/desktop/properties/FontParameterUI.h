@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "ParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * Allows the user to pick a font.
@@ -82,8 +82,6 @@ protected:
 	QPointer<QLabel> _label;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

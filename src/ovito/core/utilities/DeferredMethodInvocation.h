@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 /**
  * Utility class that invokes a member function of an object at some later time.
@@ -86,7 +86,6 @@ private:
 };
 
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

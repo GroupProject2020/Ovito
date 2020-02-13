@@ -25,7 +25,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /**
  * \brief A QListWidget that supports HTML text items.
@@ -44,8 +44,6 @@ public:
 	}
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

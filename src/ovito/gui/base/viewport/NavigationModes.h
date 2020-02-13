@@ -28,7 +28,7 @@
 #include <ovito/core/viewport/ViewportGizmo.h>
 #include "ViewportInputMode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Base class for viewport navigation modes likes zoom, pan and orbit.
@@ -260,6 +260,4 @@ private:
 	std::shared_ptr<ArrowPrimitive> _orbitCenterMarker;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

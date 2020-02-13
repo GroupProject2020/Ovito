@@ -29,7 +29,7 @@
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief A renderer used to compute ambient occlusion lighting.
@@ -93,9 +93,6 @@ private:
 	QSize _resolution;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

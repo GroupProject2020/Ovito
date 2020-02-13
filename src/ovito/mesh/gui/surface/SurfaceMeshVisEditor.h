@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 
-namespace Ovito { namespace Mesh { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Mesh {
 
 /**
  * \brief A properties editor for the SurfaceMeshVis class.
@@ -47,7 +47,6 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

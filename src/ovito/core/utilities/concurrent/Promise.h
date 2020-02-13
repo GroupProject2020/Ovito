@@ -28,7 +28,7 @@
 #include "MainThreadTask.h"
 #include "FutureDetail.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 class OVITO_CORE_EXPORT PromiseBase
 {
@@ -277,6 +277,4 @@ protected:
 	template<typename... R2> friend class SharedFuture;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

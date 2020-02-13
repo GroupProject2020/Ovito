@@ -28,7 +28,7 @@
 #include <ovito/gui/base/rendering/PickingSceneRenderer.h>
 #include <ovito/core/viewport/ViewportWindowInterface.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief The internal render window asosciated with the Viewport class.
@@ -173,8 +173,6 @@ private:
 	OORef<PickingSceneRenderer> _pickingRenderer;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 QML_DECLARE_TYPE(Ovito::ViewportWindow);

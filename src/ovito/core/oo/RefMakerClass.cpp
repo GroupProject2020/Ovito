@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "RefMakerClass.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /******************************************************************************
 * Is called by the system after construction of the meta-class instance.
@@ -130,5 +130,4 @@ void RefMakerClass::loadClassInfo(LoadStream& stream, OvitoClass::SerializedClas
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

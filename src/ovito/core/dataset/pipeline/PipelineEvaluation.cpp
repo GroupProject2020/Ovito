@@ -24,7 +24,7 @@
 #include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /******************************************************************************
 * Starts executing the pipeline evaluation.
@@ -36,6 +36,4 @@ void PipelineEvaluationFuture::reset(TimePoint time)
     _pipeline = nullptr;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

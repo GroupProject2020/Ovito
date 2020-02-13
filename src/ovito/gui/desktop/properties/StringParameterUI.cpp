@@ -25,7 +25,7 @@
 #include <ovito/gui/desktop/widgets/general/AutocompleteTextEdit.h>
 #include <ovito/core/dataset/UndoStack.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(StringParameterUI);
 
@@ -174,6 +174,4 @@ void StringParameterUI::updatePropertyValue()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

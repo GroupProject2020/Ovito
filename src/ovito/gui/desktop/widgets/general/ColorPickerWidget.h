@@ -30,7 +30,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /**
  * \brief A UI control lets the user choose a color.
@@ -82,8 +82,6 @@ protected:
 	Color _color;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

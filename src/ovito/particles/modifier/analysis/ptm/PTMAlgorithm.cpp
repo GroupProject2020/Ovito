@@ -25,7 +25,7 @@
 
 #include <3rdparty/ptm/ptm_functions.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Creates the algorithm object.
@@ -317,6 +317,5 @@ const Vector_3<double>& PTMAlgorithm::Kernel::getIdealNeighborVector(int index) 
 	return *reinterpret_cast<const Vector_3<double>*>(_bestTemplate[index + 1]);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

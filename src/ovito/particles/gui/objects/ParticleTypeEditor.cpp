@@ -37,7 +37,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ParticleTypeEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleTypeEditor);
 SET_OVITO_OBJECT_EDITOR(ParticleType, ParticleTypeEditor);
@@ -205,6 +205,5 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -34,7 +34,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "GenerateTrajectoryLinesModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(GenerateTrajectoryLinesModifierEditor);
 SET_OVITO_OBJECT_EDITOR(GenerateTrajectoryLinesModifier, GenerateTrajectoryLinesModifierEditor);
@@ -153,6 +153,5 @@ void GenerateTrajectoryLinesModifierEditor::onRegenerateTrajectory()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -28,7 +28,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "AttributeFileExporter.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AttributeFileExporter);
 DEFINE_PROPERTY_FIELD(AttributeFileExporter, attributesToExport);
@@ -132,5 +132,4 @@ bool AttributeFileExporter::exportFrame(int frameNumber, TimePoint time, const Q
 	return !operation.isCanceled();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

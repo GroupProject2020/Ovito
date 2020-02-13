@@ -30,7 +30,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "UnwrapTrajectoriesModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(UnwrapTrajectoriesModifier);
 
@@ -517,7 +517,5 @@ void UnwrapTrajectoriesModifierApplication::loadFromStream(ObjectLoadStream& str
 	stream.closeChunk();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -30,7 +30,7 @@
 #include <ovito/core/app/ApplicationService.h>
 #include "GuiApplication.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * Defines the program's command line parameters.
@@ -349,5 +349,4 @@ void GuiApplication::showErrorMessages()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

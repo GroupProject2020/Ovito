@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 //////////////////////// Action identifiers ///////////////////////////
 
@@ -259,5 +259,4 @@ private:
 	OORef<DataSet> _dataset;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

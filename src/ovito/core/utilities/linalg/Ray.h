@@ -35,7 +35,7 @@
 #include "Point3.h"
 #include "AffineTransformation.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief An infinite ray in 3d space, defined by a base point and a direction vector.
@@ -170,8 +170,6 @@ inline QDataStream& operator>>(QDataStream& stream, Ray_3<T>& r) {
  */
 using Ray3 = Ray_3<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Ray3);

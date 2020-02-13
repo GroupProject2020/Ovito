@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "PrimitiveBase.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for line drawing primitives.
@@ -51,7 +51,6 @@ public:
 	virtual void setLineColor(const ColorA color) = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

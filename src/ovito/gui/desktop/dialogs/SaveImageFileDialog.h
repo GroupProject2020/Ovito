@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/FrameBuffer.h>
 #include "HistoryFileDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
+namespace Ovito {
 
 /**
  * \brief This file chooser dialog lets the user select an image file for output.
@@ -58,8 +58,6 @@ private:
 	ImageInfo _imageInfo;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

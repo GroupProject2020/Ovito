@@ -29,7 +29,7 @@
 #include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "ParticleInspectionApplet.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleInspectionApplet);
 
@@ -331,7 +331,5 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, SceneR
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

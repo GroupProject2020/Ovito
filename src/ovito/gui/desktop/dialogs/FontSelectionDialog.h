@@ -25,7 +25,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * This dialog box lets the user select a font.
@@ -46,8 +46,6 @@ private:
 
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

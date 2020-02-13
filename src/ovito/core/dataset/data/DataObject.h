@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/dataset/data/DataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for all objects that represent data.
@@ -208,8 +208,6 @@ private:
 /// A pointer to a DataObject-derived metaclass.
 using DataObjectClassPtr = const DataObject::OOMetaClass*;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 #include <ovito/core/dataset/data/StrongDataObjectRef.h>

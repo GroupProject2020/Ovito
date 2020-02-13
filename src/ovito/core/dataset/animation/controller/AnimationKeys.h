@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include "Controller.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief Base class for animation keys.
@@ -487,5 +487,4 @@ struct SplineValueInterpolator<Scaling> {
 	}
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

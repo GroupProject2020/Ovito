@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * An item managed by the PipelineListModel representing a data source, data object, modifier application or vis element.
@@ -61,7 +61,10 @@ public:
 	PipelineListItem* parent() const { return _parent; }
 
 	/// Returns the status of the object represented by the list item.
-	PipelineStatus status() const;
+	const PipelineStatus& status() const;
+
+	/// Returns whether an active computation is in progress for this object.
+	bool isObjectActive() const;
 
 	/// Returns the title text for this list item.
 	QString title() const;
@@ -94,6 +97,4 @@ private:
 	PipelineListItem* _parent;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

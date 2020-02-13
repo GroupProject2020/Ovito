@@ -33,7 +33,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(SceneRenderer);
 IMPLEMENT_OVITO_CLASS(ObjectPickInfo);
@@ -308,5 +308,4 @@ void SceneRenderer::renderModifiers(PipelineSceneNode* pipeline, bool renderOver
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

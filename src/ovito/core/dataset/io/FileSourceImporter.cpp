@@ -33,7 +33,7 @@
 #include "FileSourceImporter.h"
 #include "FileSource.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileSourceImporter);
 DEFINE_PROPERTY_FIELD(FileSourceImporter, isMultiTimestepFile);
@@ -504,5 +504,4 @@ void FileSourceImporter::FrameLoader::perform()
 	setResult(loadFile());
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

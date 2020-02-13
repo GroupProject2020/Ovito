@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include "ExpandSelectionModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ExpandSelectionModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ExpandSelectionModifier, ExpandSelectionModifierEditor);
@@ -97,8 +97,5 @@ void ExpandSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 	layout->addWidget(statusLabel());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

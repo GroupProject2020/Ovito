@@ -28,7 +28,7 @@
 #include <ovito/core/app/Application.h>
 #include "TransformingDataVis.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(TransformingDataVis);
 
@@ -58,7 +58,6 @@ Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvalu
 
 	// Clear the status of the input unless it is an error.
 	if(flowState.status().type() != PipelineStatus::Error) {
-		OVITO_ASSERT(flowState.status().type() != PipelineStatus::Pending);
 		flowState.setStatus(PipelineStatus());
 	}
 	else if(request.breakOnError()) {
@@ -73,6 +72,9 @@ Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvalu
 	try {
 		// Let the transforming vis element do its job.
 		future = transformDataImpl(request, dataObject, std::move(flowState));
+
+		// Change status during long-running load operations.
+		registerActiveFuture(future);
 	}
 	catch(...) {
 		future = Future<PipelineFlowState>::createFailed(std::current_exception());
@@ -118,21 +120,7 @@ Future<PipelineFlowState> TransformingDataVis::transformData(const PipelineEvalu
 		}
 	});
 
-	// Change status to 'in progress' during long-running operations.
-	if(!future.isFinished() && Application::instance()->guiMode()) {
-		_activeTransformationsCount++;
-		setStatus(PipelineStatus::Pending);
-		// Reset the pending status after the Future is fulfilled.
-		future.finally(executor(), [this]() {
-			OVITO_ASSERT(_activeTransformationsCount > 0);
-			if(--_activeTransformationsCount == 0 && status().type() == PipelineStatus::Pending)
-				setStatus(PipelineStatus::Success);
-		});
-	}
-
 	return future;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

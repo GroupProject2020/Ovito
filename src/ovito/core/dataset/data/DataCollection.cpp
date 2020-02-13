@@ -28,7 +28,7 @@
 #include <ovito/core/oo/CloneHelper.h>
 #include <ovito/core/app/Application.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DataCollection);
 DEFINE_REFERENCE_FIELD(DataCollection, objects);
@@ -548,6 +548,4 @@ int DataCollection::sourceFrame() const
 	return getAttributeValue(QStringLiteral("SourceFrame"), -1).toInt();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

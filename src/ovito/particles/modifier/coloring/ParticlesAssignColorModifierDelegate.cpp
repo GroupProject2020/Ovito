@@ -25,7 +25,7 @@
 #include <ovito/particles/objects/VectorVis.h>
 #include "ParticlesAssignColorModifierDelegate.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticlesAssignColorModifierDelegate);
 IMPLEMENT_OVITO_CLASS(ParticleVectorsAssignColorModifierDelegate);
@@ -70,7 +70,5 @@ QVector<DataObjectReference> BondsAssignColorModifierDelegate::OOMetaClass::getA
     return {};
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

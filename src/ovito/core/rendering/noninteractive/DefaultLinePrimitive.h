@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/rendering/LinePrimitive.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores line geometry to be rendered by a non-interactive renderer.
@@ -85,7 +85,6 @@ private:
 
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

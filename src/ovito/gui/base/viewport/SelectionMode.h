@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTargetListener.h>
 #include "ViewportInputMode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * The default input mode for the viewports. This mode lets the user
@@ -85,6 +85,4 @@ protected:
 	static boost::optional<QCursor> _hoverCursor;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

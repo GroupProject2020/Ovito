@@ -32,9 +32,7 @@
 
 namespace Ovito {
 	namespace Particles {
-		OVITO_BEGIN_INLINE_NAMESPACE(Util)
-			class ParticlePropertyComboBox;
-		OVITO_END_INLINE_NAMESPACE
+		class ParticlePropertyComboBox;
 	}
 }
 

@@ -31,7 +31,7 @@
 #include <ovito/core/dataset/io/FileSource.h>
 #include "CalculateDisplacementsModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifierEditor);
 SET_OVITO_OBJECT_EDITOR(CalculateDisplacementsModifier, CalculateDisplacementsModifierEditor);
@@ -159,8 +159,5 @@ void CalculateDisplacementsModifierEditor::onContentsChanged(RefTarget* editObje
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

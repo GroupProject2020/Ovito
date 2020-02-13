@@ -24,7 +24,7 @@
 #include <ovito/opengl/OpenGLSceneRenderer.h>
 #include "GeneralSettingsPage.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(GeneralSettingsPage);
 
@@ -180,6 +180,4 @@ bool GeneralSettingsPage::saveValues(ApplicationSettingsDialog* settingsDialog, 
 	return true;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

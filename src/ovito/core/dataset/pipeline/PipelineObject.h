@@ -24,16 +24,15 @@
 
 
 #include <ovito/core/Core.h>
-#include <ovito/core/oo/RefTarget.h>
-#include <ovito/core/utilities/concurrent/Future.h>
+#include <ovito/core/dataset/pipeline/ActiveObject.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief This is the base class for objects that constitute a data pipeline.
  */
-class OVITO_CORE_EXPORT PipelineObject : public RefTarget
+class OVITO_CORE_EXPORT PipelineObject : public ActiveObject
 {
 	Q_OBJECT
 	OVITO_CLASS(PipelineObject)
@@ -63,12 +62,6 @@ public:
 	/// \param onlyScenePipelines If true, branches to pipelines which are currently not part of the scene are ignored.
 	bool isPipelineBranch(bool onlyScenePipelines) const;
 
-	/// \brief Sets the current status of the pipeline object.
-	void setStatus(const PipelineStatus& status);
-
-	/// \brief Returns the current status of the pipeline object.
-	virtual PipelineStatus status() const { return _status; }
-
 	/// \brief Returns the number of animation frames this pipeline object can provide.
 	virtual int numberOfSourceFrames() const { return 1; }
 
@@ -84,13 +77,6 @@ public:
 	/// Returns the data collection that is managed by this object (if it is a data source).
 	/// The returned data collection will be displayed under the data source in the pipeline editor.
 	virtual DataCollection* getSourceDataCollection() const { return nullptr; }
-
-private:
-
-	/// The current status of this pipeline object.
-	PipelineStatus _status;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

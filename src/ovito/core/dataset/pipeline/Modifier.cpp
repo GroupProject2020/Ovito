@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/pipeline/PipelineObject.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(Modifier);
 DEFINE_PROPERTY_FIELD(Modifier, isEnabled);
@@ -130,16 +130,12 @@ PipelineStatus Modifier::globalStatus() const
 		else if(s.text() != result.text())
 			result.setText(result.text() + QStringLiteral("\n") + s.text());
 
-		if(s.type() == PipelineStatus::Pending)
-			result.setType(PipelineStatus::Pending);
-		else if(result.type() != PipelineStatus::Pending && s.type() == PipelineStatus::Error)
+		if(s.type() == PipelineStatus::Error)
 			result.setType(PipelineStatus::Error);
-		else if(result.type() != PipelineStatus::Pending && result.type() != PipelineStatus::Error && s.type() == PipelineStatus::Warning)
+		else if(result.type() != PipelineStatus::Error && s.type() == PipelineStatus::Warning)
 			result.setType(PipelineStatus::Warning);
 	}
 	return result;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

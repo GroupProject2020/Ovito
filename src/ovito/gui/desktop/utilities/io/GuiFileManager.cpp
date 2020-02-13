@@ -24,7 +24,7 @@
 #include <ovito/core/app/Application.h>
 #include "GuiFileManager.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 #ifdef OVITO_SSH_CLIENT
 
@@ -97,6 +97,4 @@ bool GuiFileManager::detectedUnknownSshServer(const QString& hostname, const QSt
 
 #endif
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

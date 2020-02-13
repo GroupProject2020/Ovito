@@ -28,7 +28,7 @@
 #include "FutureDetail.h"
 #include "ThreadSafeTask.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * This shared state is returned by the Future::then() method.
@@ -170,6 +170,4 @@ private:
 	TaskDependency _continuedTask;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

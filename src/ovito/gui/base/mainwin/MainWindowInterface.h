@@ -25,7 +25,7 @@
 
 #include <ovito/gui/base/GUIBase.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /**
  * \brief The main window of the application.
@@ -58,5 +58,4 @@ private:
 	ViewportInputManager* _viewportInputManager = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

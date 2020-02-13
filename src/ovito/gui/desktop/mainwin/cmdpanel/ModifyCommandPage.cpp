@@ -40,7 +40,7 @@
 #include "PipelineListModel.h"
 #include "ModifierListBox.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the modify page.
@@ -667,6 +667,4 @@ void ModifyCommandPage::showProgramNotice(const QString& htmlPage)
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

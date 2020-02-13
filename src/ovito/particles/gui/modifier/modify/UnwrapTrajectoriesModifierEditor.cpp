@@ -24,7 +24,7 @@
 #include <ovito/particles/modifier/modify/UnwrapTrajectoriesModifier.h>
 #include "UnwrapTrajectoriesModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(UnwrapTrajectoriesModifierEditor);
 SET_OVITO_OBJECT_EDITOR(UnwrapTrajectoriesModifier, UnwrapTrajectoriesModifierEditor);
@@ -47,6 +47,5 @@ void UnwrapTrajectoriesModifierEditor::createUI(const RolloutInsertionParameters
 	layout->addSpacing(6);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

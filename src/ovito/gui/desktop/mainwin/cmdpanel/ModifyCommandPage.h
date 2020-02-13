@@ -32,7 +32,7 @@
 // QtNetwork module
 #include <QtNetwork>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 class PipelineListModel;	// defined in PipelineListModel.h
 class PipelineListItem;		// defined in PipelineListItem.h
@@ -124,6 +124,4 @@ private:
 	Rollout* _aboutRollout;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -25,7 +25,7 @@
 #include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include "ModifierDelegateListParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ModifierDelegateListParameterUI);
 
@@ -105,6 +105,4 @@ bool ModifierDelegateListParameterUI::referenceEvent(RefTarget* source, const Re
 	return RefTargetListParameterUI::referenceEvent(source, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

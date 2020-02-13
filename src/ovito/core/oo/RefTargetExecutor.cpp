@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "RefTargetExecutor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /******************************************************************************
 * Returns the task manager that provides the context for tasks created by this executor.
@@ -105,5 +105,4 @@ bool RefTargetExecutor::WorkEventBase::needToCancelWork() const
     return _obj.isNull() || QCoreApplication::closingDown();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

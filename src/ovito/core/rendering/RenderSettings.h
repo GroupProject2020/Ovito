@@ -31,7 +31,7 @@
 #include "FrameBuffer.h"
 #include "SceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * Stores general settings for rendering pictures and movies.
@@ -125,7 +125,6 @@ private:
     friend class RenderSettingsEditor;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::RenderSettings::RenderingRangeType);

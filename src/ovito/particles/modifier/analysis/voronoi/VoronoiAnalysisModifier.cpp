@@ -32,7 +32,7 @@
 
 #include <voro++.hh>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 constexpr int VoronoiAnalysisModifier::VoronoiAnalysisEngine::FaceOrderStorageLimit;
 
@@ -770,7 +770,5 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(TimePoint time,
 	state.addAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()), modApp);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

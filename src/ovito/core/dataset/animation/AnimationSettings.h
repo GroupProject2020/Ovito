@@ -29,7 +29,7 @@
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 #include "TimeInterval.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief Stores the animation settings such as the animation length, current frame number, playback rate, etc.
@@ -355,5 +355,4 @@ private:
 	QPointer<AnimationSettings> _animSettings;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "ModifierTemplates.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 static const QString modTemplateStoreGroup = QStringLiteral("core/modifier/templates/");
 
@@ -209,6 +209,4 @@ int ModifierTemplates::load(QSettings& settings)
 	return count;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

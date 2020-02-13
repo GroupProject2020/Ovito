@@ -28,7 +28,7 @@
 
 #include <QQueue>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 namespace Ssh {
 	// These classes are defined elsewhere:
@@ -196,7 +196,4 @@ private:
 	Promise<QStringList> _promise;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

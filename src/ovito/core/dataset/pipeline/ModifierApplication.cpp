@@ -30,7 +30,7 @@
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/app/Application.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ModifierApplication);
 DEFINE_REFERENCE_FIELD(ModifierApplication, modifier);
@@ -186,16 +186,6 @@ void ModifierApplication::notifyDependentsImpl(const ReferenceEvent& event)
 }
 
 /******************************************************************************
-* Returns the current status of the pipeline object.
-******************************************************************************/
-PipelineStatus ModifierApplication::status() const
-{
-	PipelineStatus status = CachingPipelineObject::status();
-	if(_numEvaluationsInProgress > 0) status.setType(PipelineStatus::Pending);
-	return status;
-}
-
-/******************************************************************************
 * Asks the object for the result of the upstream data pipeline.
 ******************************************************************************/
 SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(const PipelineEvaluationRequest& request)
@@ -239,7 +229,6 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 
 			// Clear the status of the input unless it is an error.
 			if(inputData.status().type() != PipelineStatus::Error) {
-				OVITO_ASSERT(inputData.status().type() != PipelineStatus::Pending);
 				inputData.setStatus(PipelineStatus());
 			}
 			else if(downstreamRequest.breakOnError()) {
@@ -256,21 +245,11 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			try {
 				// Let the modifier do its job.
 				future = modifier()->evaluate(downstreamRequest, this, inputData);
+				// Register the task with this pipeline stage.
+				registerActiveFuture(future);
 			}
 			catch(...) {
 				future = Future<PipelineFlowState>::createFailed(std::current_exception());
-			}
-
-			// Change status to 'in progress' during long-running modifier evaluation.
-			if(!future.isFinished() && Application::instance()->guiMode()) {
-				if(_numEvaluationsInProgress++ == 0)
-					notifyDependents(ReferenceEvent::ObjectStatusChanged);
-				// Reset the pending status after the Future is fulfilled.
-				future.finally(executor(), [this]() {
-					OVITO_ASSERT(_numEvaluationsInProgress > 0);
-					if(--_numEvaluationsInProgress == 0)
-						notifyDependents(ReferenceEvent::ObjectStatusChanged);
-				});
 			}
 
 			// Post-process the modifier results before returning them to the caller.
@@ -420,6 +399,4 @@ PipelineObject* ModifierApplication::pipelineSource() const
 	return obj;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

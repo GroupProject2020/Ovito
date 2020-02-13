@@ -26,7 +26,7 @@
 #include "DataInspectorPanel.h"
 #include "DataInspectionApplet.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -365,6 +365,4 @@ bool DataInspectorPanel::selectDataObject(PipelineObject* dataSource, const QStr
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

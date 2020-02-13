@@ -29,7 +29,7 @@
 #include "OXDNAImporter.h"
 #include "NucleotidesVis.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(OXDNAImporter);
 DEFINE_PROPERTY_FIELD(OXDNAImporter, topologyFileUrl);
@@ -294,7 +294,5 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile()
 	return std::move(frameData);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

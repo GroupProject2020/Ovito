@@ -25,7 +25,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
+namespace Ovito {
 
 /**
  * \brief The file chooser dialog that saves a history of recently visited directories.
@@ -58,8 +58,6 @@ private:
 	QString _dialogClass;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

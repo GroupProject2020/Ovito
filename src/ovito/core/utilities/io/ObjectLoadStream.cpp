@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "ObjectLoadStream.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /******************************************************************************
 * Opens the stream for reading.
@@ -181,6 +181,4 @@ void ObjectLoadStream::close()
 	LoadStream::close();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

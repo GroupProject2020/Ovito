@@ -23,12 +23,10 @@
 #include <ovito/core/Core.h>
 #include "TransformedDataObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(TransformedDataObject);
 DEFINE_PROPERTY_FIELD(TransformedDataObject, sourceDataObject);
 DEFINE_PROPERTY_FIELD(TransformedDataObject, visElementRevision);
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

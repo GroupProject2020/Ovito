@@ -32,7 +32,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "ViewportMenu.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the menu.
@@ -258,6 +258,4 @@ void ViewportMenu::onCreateCamera()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

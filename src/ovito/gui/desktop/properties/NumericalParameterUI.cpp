@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(NumericalParameterUI);
 
@@ -204,6 +204,4 @@ QLayout* NumericalParameterUI::createFieldLayout() const
 	return layout;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

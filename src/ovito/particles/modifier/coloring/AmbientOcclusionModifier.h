@@ -30,7 +30,7 @@
 
 #include <QOffscreenSurface>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring)
+namespace Ovito { namespace Particles {
 
 class AmbientOcclusionRenderer;		// defined in AmbientOcclusionRenderer.h
 
@@ -131,8 +131,6 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, bufferResolution, setBufferResolution);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

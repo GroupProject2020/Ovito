@@ -28,7 +28,7 @@
 #include "NavigationModes.h"
 #include "SelectionMode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(ViewportInput)
+namespace Ovito {
 
 /**
  * \brief Manages a stack of viewport input handlers.
@@ -146,6 +146,4 @@ private:
 	SelectionMode* _selectionMode;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

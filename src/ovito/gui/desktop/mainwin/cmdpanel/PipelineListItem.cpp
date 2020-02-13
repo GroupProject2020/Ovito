@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include "PipelineListItem.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PipelineListItem);
 DEFINE_REFERENCE_FIELD(PipelineListItem, object);
@@ -62,20 +62,26 @@ bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& e
 /******************************************************************************
 * Returns the status of the object represented by the list item.
 ******************************************************************************/
-PipelineStatus PipelineListItem::status() const
+const PipelineStatus& PipelineListItem::status() const
 {
-	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(object())) {
-		return modApp->status();
-	}
-	else if(PipelineObject* pipelineObj = dynamic_object_cast<PipelineObject>(object())) {
-		return pipelineObj->status();
-	}
-	else if(DataVis* displayObj = dynamic_object_cast<DataVis>(object())) {
-		return displayObj->status();
+	if(ActiveObject* activeObject = dynamic_object_cast<ActiveObject>(object())) {
+		return activeObject->status();
 	}
 	else {
-		return {};
+		static const PipelineStatus defaultStatus;
+		return defaultStatus;
 	}
+}
+
+/******************************************************************************
+* Returns whether an active computation is in progress for this object.
+******************************************************************************/
+bool PipelineListItem::isObjectActive() const
+{
+	if(ActiveObject* activeObject = dynamic_object_cast<ActiveObject>(object())) {
+		return activeObject->isObjectActive();
+	}
+	return false;
 }
 
 /******************************************************************************
@@ -99,6 +105,4 @@ QString PipelineListItem::title() const
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

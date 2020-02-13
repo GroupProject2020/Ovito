@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include <ovito/core/dataset/animation/controller/TCBInterpolationControllers.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * A properties editor template for the TCBAnimationKey class template.
@@ -93,8 +93,6 @@ public:
 	Q_INVOKABLE PositionTCBAnimationKeyEditor() {}
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

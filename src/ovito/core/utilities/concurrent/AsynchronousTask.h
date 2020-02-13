@@ -27,7 +27,7 @@
 #include "ThreadSafeTask.h"
 #include "Future.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 class OVITO_CORE_EXPORT AsynchronousTaskBase : public ThreadSafeTask, public QRunnable
 {
@@ -85,6 +85,4 @@ protected:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -31,7 +31,7 @@
 #include <ovito/core/rendering/ParticlePrimitive.h>
 #include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Utility class that supports the picking of particles in the viewports.
@@ -76,6 +76,5 @@ public:
 	void renderSelectionMarker(Viewport* vp, SceneRenderer* renderer, const PickResult& pickRecord);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

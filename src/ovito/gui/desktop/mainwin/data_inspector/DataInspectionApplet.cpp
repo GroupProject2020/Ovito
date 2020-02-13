@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "DataInspectionApplet.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DataInspectionApplet);
 
@@ -74,5 +74,4 @@ void DataInspectionApplet::TableView::keyPressEvent(QKeyEvent* event)
     }
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

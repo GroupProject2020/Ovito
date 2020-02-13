@@ -30,7 +30,7 @@
 #include <ovito/core/app/Application.h>
 #include "FileImporter.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileImporter);
 
@@ -83,5 +83,4 @@ void FileImporter::activateCLocale()
 	std::setlocale(LC_ALL, "C");
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -28,7 +28,7 @@
 #include "Future.h"
 #include "TaskWatcher.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * An object representing an asynchronous program operation that is executed in the main thread.
@@ -94,6 +94,4 @@ private:
 	AsyncOperation(TaskPtr&& p) noexcept : Promise<>(std::move(p)) {}
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

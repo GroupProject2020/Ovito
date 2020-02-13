@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/viewport/overlays/ViewportOverlay.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * An item of the OverlayListModel representing a ViewportOverlay attached to a Viewport.
@@ -79,6 +79,4 @@ private:
 	OverlayItemType _itemType;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

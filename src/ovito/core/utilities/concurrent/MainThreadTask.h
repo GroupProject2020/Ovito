@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "ProgressiveTask.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * \brief Type of Task to be used within a single-thread context.
@@ -55,6 +55,4 @@ public:
 	virtual void setProgressText(const QString& progressText) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

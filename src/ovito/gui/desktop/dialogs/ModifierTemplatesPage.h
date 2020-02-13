@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/dialogs/ApplicationSettingsDialog.h>
 #include <ovito/core/dataset/pipeline/ModifierTemplates.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * Page of the application settings dialog, which allows the user to manage the defined modifier templates.
@@ -77,6 +77,4 @@ private:
 	bool _dirtyFlag = false;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

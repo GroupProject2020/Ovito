@@ -24,7 +24,7 @@
 #include <ovito/gui/desktop/properties/SubObjectParameterUI.h>
 #include <ovito/core/dataset/UndoStack.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(SubObjectParameterUI);
 
@@ -85,6 +85,4 @@ void SubObjectParameterUI::setEnabled(bool enabled)
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

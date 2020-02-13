@@ -26,7 +26,7 @@
 #include "ModifyCommandPage.h"
 #include "OverlayCommandPage.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * The constructor of the command panel class.
@@ -51,6 +51,4 @@ CommandPanel::CommandPanel(MainWindow* mainWindow, QWidget* parent) : QWidget(pa
 	setCurrentPage(MainWindow::MODIFY_PAGE);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

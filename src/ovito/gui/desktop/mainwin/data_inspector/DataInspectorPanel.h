@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTargetListener.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * The data inspection panel.
@@ -150,6 +150,4 @@ private:
 	bool _inspectorActive = false;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -24,7 +24,7 @@
 #include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
 #include <ovito/core/dataset/UndoStack.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(VariantComboBoxParameterUI);
 
@@ -133,7 +133,5 @@ void VariantComboBoxParameterUI::updatePropertyValue()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 

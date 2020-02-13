@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/data/DataObject.h>
 #include <ovito/core/dataset/data/DataCollection.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief This data structure holds the list of data objects that flows down a data pipeline.
@@ -420,6 +420,4 @@ private:
 	PipelineStatus _status;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

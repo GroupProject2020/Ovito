@@ -46,7 +46,7 @@
 #include <QWindow>
 #include <QScreen>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(OpenGLSceneRenderer);
 
@@ -907,5 +907,4 @@ void OpenGLSceneRenderer::checkOpenGLErrorStatus(const char* command, const char
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

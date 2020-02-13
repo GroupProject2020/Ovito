@@ -23,41 +23,18 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/viewport/overlays/ViewportOverlay.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ViewportOverlay);
 DEFINE_PROPERTY_FIELD(ViewportOverlay, renderBehindScene);
-DEFINE_PROPERTY_FIELD(ViewportOverlay, isEnabled);
-DEFINE_PROPERTY_FIELD(ViewportOverlay, status);
-DEFINE_PROPERTY_FIELD(ViewportOverlay, title);
 SET_PROPERTY_FIELD_LABEL(ViewportOverlay, renderBehindScene, "Draw behind scene");
-SET_PROPERTY_FIELD_LABEL(ViewportOverlay, isEnabled, "Enabled");
-SET_PROPERTY_FIELD_LABEL(ViewportOverlay, status, "Status");
-SET_PROPERTY_FIELD_LABEL(ViewportOverlay, title, "Name");
-SET_PROPERTY_FIELD_CHANGE_EVENT(ViewportOverlay, isEnabled, ReferenceEvent::TargetEnabledOrDisabled);
-SET_PROPERTY_FIELD_CHANGE_EVENT(ViewportOverlay, status, ReferenceEvent::ObjectStatusChanged);
-SET_PROPERTY_FIELD_CHANGE_EVENT(ViewportOverlay, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ViewportOverlay::ViewportOverlay(DataSet* dataset) : RefTarget(dataset),
-    _renderBehindScene(false),
-    _isEnabled(true)
+ViewportOverlay::ViewportOverlay(DataSet* dataset) : ActiveObject(dataset),
+    _renderBehindScene(false)
 {
 }
 
-/******************************************************************************
-* Is called when the value of a non-animatable property field of this RefMaker has changed.
-******************************************************************************/
-void ViewportOverlay::propertyChanged(const PropertyFieldDescriptor& field)
-{
-    // If the overlay gets disabled, reset the status it indicates.
-	if(field == PROPERTY_FIELD(isEnabled) && !isEnabled())
-		setStatus(PipelineStatus::Success);
-
-    RefTarget::propertyChanged(field);
-}
-
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

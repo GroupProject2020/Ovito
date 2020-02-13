@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "PrimitiveBase.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for rendering triangle meshes.
@@ -67,5 +67,4 @@ private:
 	std::vector<ColorA> _materialColors;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

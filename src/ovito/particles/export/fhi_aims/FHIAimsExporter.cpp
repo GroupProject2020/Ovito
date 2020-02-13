@@ -29,7 +29,7 @@
 #include <ovito/core/app/Application.h>
 #include "FHIAimsExporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(FHIAimsExporter);
 
@@ -84,7 +84,5 @@ bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber
 	return !operation.isCanceled();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

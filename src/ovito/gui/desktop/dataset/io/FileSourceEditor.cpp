@@ -37,7 +37,7 @@
 #include <ovito/core/app/PluginManager.h>
 #include "FileSourceEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileSourceEditor);
 SET_OVITO_OBJECT_EDITOR(FileSource, FileSourceEditor);
@@ -478,6 +478,4 @@ bool FileSourceEditor::referenceEvent(RefTarget* source, const ReferenceEvent& e
 	return PropertiesEditor::referenceEvent(source, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/io/FileExporter.h>
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Abstract base class for export services that write particle datasets to an output file.
@@ -88,7 +88,6 @@ private:
 	std::unique_ptr<CompressedTextWriter> _outputStream;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

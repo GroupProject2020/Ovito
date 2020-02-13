@@ -31,7 +31,7 @@
 #include <ovito/core/dataset/pipeline/PipelineCache.h>
 #include <ovito/core/dataset/data/DataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief A visual node in the 3d scene which manages a data pipeline.
@@ -169,6 +169,4 @@ private:
 	friend class PipelineCache;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

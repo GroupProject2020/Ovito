@@ -23,7 +23,7 @@
 #include <ovito/particles/Particles.h>
 #include "ParticleImporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleImporter);
 DEFINE_PROPERTY_FIELD(ParticleImporter, sortParticles);
@@ -43,6 +43,5 @@ void ParticleImporter::propertyChanged(const PropertyFieldDescriptor& field)
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

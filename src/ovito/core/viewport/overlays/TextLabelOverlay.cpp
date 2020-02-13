@@ -30,7 +30,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "TextLabelOverlay.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(TextLabelOverlay);
 DEFINE_PROPERTY_FIELD(TextLabelOverlay, alignment);
@@ -122,6 +122,4 @@ void TextLabelOverlay::renderImplementation(QPainter& painter, const RenderSetti
 	painter.fillPath(textPath, QBrush(textColor()));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

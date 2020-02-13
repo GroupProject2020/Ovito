@@ -27,7 +27,7 @@
 #define NCERR(x)  Ovito::NetCDFError::ncerr((x), __FILE__, __LINE__)
 #define NCERRI(x, info)  Ovito::NetCDFError::ncerr_with_info((x), __FILE__, __LINE__, info)
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 /**
  * RAII helper class that is used by OVITO to coordinate concurrent
@@ -73,5 +73,4 @@ public:
     static void ncerr_with_info(int err, const char* file, int line, const QString& info);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

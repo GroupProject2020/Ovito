@@ -29,7 +29,7 @@
 #include <ovito/core/utilities/concurrent/Future.h>
 #include "FileSourceImporter.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief An object in the data pipeline that reads data from an external file.
@@ -87,9 +87,6 @@ public:
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() const override;
-
-	/// Returns the current status of the pipeline object.
-	virtual PipelineStatus status() const override;
 
 	/// Returns the list of data objects that are managed by this data source.
 	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
@@ -160,9 +157,6 @@ private:
 	/// The active future if loading the list of frames is in progress.
 	SharedFuture<QVector<FileSourceImporter::Frame>> _framesListFuture;
 
-	/// The number of frame load operations currently in progress.
-	int _numActiveFrameLoaders = 0;
-
 	/// The source frame that is currently used as a sub-object data collection.
 	int _dataCollectionFrame = -1;
 
@@ -178,5 +172,4 @@ private:
 	bool _handOverInProgress = false;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

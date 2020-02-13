@@ -35,7 +35,7 @@
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "ConstructSurfaceModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 using namespace Ovito::Delaunay;
 
@@ -467,7 +467,5 @@ void ConstructSurfaceModifier::GaussianDensityEngine::emitResults(TimePoint time
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1").arg(surfaceArea())));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

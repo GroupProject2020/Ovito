@@ -24,7 +24,7 @@
 #include "DefaultParticlePrimitive.h"
 #include "NonInteractiveSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /******************************************************************************
 * Returns true if the geometry buffer is filled and can be rendered with the given renderer.
@@ -47,5 +47,4 @@ void DefaultParticlePrimitive::render(SceneRenderer* renderer)
 	niRenderer->renderParticles(*this);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -27,7 +27,7 @@
 #include <ovito/particles/modifier/modify/CreateBondsModifier.h>
 #include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief A properties editor for the CreateBondsModifier class.
@@ -97,8 +97,5 @@ private:
 	PairCutoffTableModel* _pairCutoffTableModel;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

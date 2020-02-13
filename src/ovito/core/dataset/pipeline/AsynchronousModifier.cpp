@@ -30,7 +30,7 @@
 	#include <malloc.h>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifier);
 
@@ -165,6 +165,4 @@ void AsynchronousModifier::ComputeEngine::ComputeEngineTask::perform()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

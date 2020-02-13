@@ -27,7 +27,7 @@
 #include "ViewportInputManager.h"
 #include "ViewportInputMode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(ViewportInput)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the viewport input manager.
@@ -208,6 +208,4 @@ void ViewportInputManager::reset()
 		pushInputMode(_defaultMode);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

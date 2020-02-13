@@ -30,7 +30,7 @@
 #include <ovito/core/utilities/concurrent/AsynchronousTask.h>
 #include <ovito/core/utilities/io/FileManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief Base class for file parsers that can reload a file that has been imported into the scene.
@@ -272,5 +272,4 @@ OVITO_CORE_EXPORT SaveStream& operator<<(SaveStream& stream, const FileSourceImp
 /// \relates FileSourceImporter::Frame
 OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, FileSourceImporter::Frame& frame);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

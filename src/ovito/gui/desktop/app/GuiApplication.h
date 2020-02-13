@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/Exception.h>
 #include <ovito/core/app/StandaloneApplication.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /**
  * \brief The main application with a graphical user interface.
@@ -87,5 +87,4 @@ private:
 	QNetworkAccessManager* _networkAccessManager = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

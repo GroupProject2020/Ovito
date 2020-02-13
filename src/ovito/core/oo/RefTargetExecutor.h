@@ -28,7 +28,7 @@
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/MainThreadTask.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief An executor that can be used with Future<>::then(), which runs the closure
@@ -151,5 +151,4 @@ private:
 	friend class Application;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

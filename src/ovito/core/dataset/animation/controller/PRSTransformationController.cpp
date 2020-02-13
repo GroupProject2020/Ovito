@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/utilities/linalg/AffineDecomposition.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PRSTransformationController);
 DEFINE_REFERENCE_FIELD(PRSTransformationController, positionController);
@@ -93,5 +93,4 @@ TimeInterval PRSTransformationController::validityInterval(TimePoint time)
 	return iv;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Manages the DataSet being edited.
@@ -112,5 +112,4 @@ private:
 	SharedFuture<> _sceneReadyFuture;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

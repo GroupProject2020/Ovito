@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "AnimationTimeSpinner.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 using namespace std;
 
@@ -105,6 +105,4 @@ void AnimationTimeSpinner::onSpinnerValueChanged()
 		_animSettings->setTime(intValue());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

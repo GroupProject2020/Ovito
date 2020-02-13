@@ -23,9 +23,8 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "GuiApplicationService.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(PluginSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(GuiApplicationService);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

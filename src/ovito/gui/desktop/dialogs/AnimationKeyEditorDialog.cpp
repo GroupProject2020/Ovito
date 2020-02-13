@@ -31,7 +31,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "AnimationKeyEditorDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 class NumericalItemDelegate : public QStyledItemDelegate
 {
@@ -472,6 +472,4 @@ void AnimationKeyEditorDialog::onDeleteKey()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

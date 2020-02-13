@@ -28,7 +28,7 @@
 #include <ovito/core/oo/OORef.h>
 #include <ovito/core/utilities/io/LoadStream.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /**
  * \brief An input stream that can deserialize an OvitoObject graph stored in a file.
@@ -113,8 +113,6 @@ private:
 	DataSet* _dataset = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

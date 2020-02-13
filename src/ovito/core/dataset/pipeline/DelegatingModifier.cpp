@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "DelegatingModifier.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ModifierDelegate);
 DEFINE_PROPERTY_FIELD(ModifierDelegate, isEnabled);
@@ -237,6 +237,4 @@ void MultiDelegatingModifier::applyDelegates(PipelineFlowState& state, TimePoint
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

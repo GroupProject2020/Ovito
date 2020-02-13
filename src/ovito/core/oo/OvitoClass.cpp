@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "OvitoClass.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 // Head of linked list of native meta-classes.
 OvitoClass* OvitoClass::_firstMetaClass = nullptr;
@@ -287,5 +287,4 @@ OvitoClassPtr OvitoClass::decodeFromString(const QString& str)
 	return clazz;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

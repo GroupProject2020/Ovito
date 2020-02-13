@@ -34,7 +34,7 @@
 
 #include <QRegularExpression>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(XYZImporter);
 DEFINE_PROPERTY_FIELD(XYZImporter, autoRescaleCoordinates);
@@ -615,7 +615,5 @@ OORef<RefTarget> XYZImporter::clone(bool deepCopy, CloneHelper& cloneHelper) con
 	return clone;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

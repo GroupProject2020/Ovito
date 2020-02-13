@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifierApplication.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifierApplication);
 SET_MODIFIER_APPLICATION_TYPE(AsynchronousModifier, AsynchronousModifierApplication);
@@ -86,6 +86,4 @@ void AsynchronousModifierApplication::referenceReplaced(const PropertyFieldDescr
 	ModifierApplication::referenceReplaced(field, oldTarget, newTarget);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

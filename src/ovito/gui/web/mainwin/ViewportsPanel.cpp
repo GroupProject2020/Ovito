@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include "ViewportsPanel.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -217,6 +217,4 @@ void ViewportsPanel::layoutViewports()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

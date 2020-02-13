@@ -27,7 +27,7 @@
 #include <ovito/core/oo/CloneHelper.h>
 #include "ClonePipelineDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -445,6 +445,4 @@ void ClonePipelineDialog::onAccept()
 	accept();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

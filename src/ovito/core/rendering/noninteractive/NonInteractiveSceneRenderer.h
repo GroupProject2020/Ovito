@@ -33,7 +33,7 @@
 #include "DefaultMeshPrimitive.h"
 #include "DefaultMarkerPrimitive.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for non-interactive scene renderers.
@@ -130,5 +130,4 @@ private:
 	AffineTransformation _modelTM;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -34,7 +34,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "CommonNeighborAnalysisModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CommonNeighborAnalysisModifier);
 DEFINE_PROPERTY_FIELD(CommonNeighborAnalysisModifier, cutoff);
@@ -613,7 +613,5 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::emitResults(TimePoint time, 
 	particles->makeMutable(particles->expectBonds())->createProperty(cnaIndices());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

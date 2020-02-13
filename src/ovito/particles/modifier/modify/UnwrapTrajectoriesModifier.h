@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief This modifier unwraps the positions of particles that have crossed a periodic boundary
@@ -150,7 +150,5 @@ private:
 	std::array<int,3> _currentFlipState{{0,0,0}};
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

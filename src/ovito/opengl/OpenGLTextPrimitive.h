@@ -28,7 +28,7 @@
 #include <ovito/core/rendering/ImagePrimitive.h>
 #include "OpenGLSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a text string to be rendered in the viewports.
@@ -92,6 +92,4 @@ private:
 	bool _needImageUpdate;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

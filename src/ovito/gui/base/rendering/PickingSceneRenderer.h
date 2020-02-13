@@ -26,7 +26,7 @@
 #include <ovito/gui/base/GUIBase.h>
 #include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief A viewport renderer used for object picking.
@@ -117,6 +117,4 @@ private:
 	QSurface* _oldSurface;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "PropertyFieldDescriptor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /// Constructor	for a property field that stores a non-animatable property.
 PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, const char* identifier, PropertyFieldFlags flags,
@@ -134,5 +134,4 @@ bool PropertyFieldDescriptor::loadDefaultValue(RefMaker* object) const
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief A smart pointer holding a reference to an OvitoObject.
@@ -224,5 +224,4 @@ template<class T> QDebug operator<<(QDebug debug, const OORef<T>& p)
 	return debug << p.get();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/properties/PropertiesEditor.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PropertiesEditor);
 DEFINE_REFERENCE_FIELD(PropertiesEditor, editObject);
@@ -159,6 +159,4 @@ void PropertiesEditor::referenceReplaced(const PropertyFieldDescriptor& field, R
 	RefMaker::referenceReplaced(field, oldTarget, newTarget);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

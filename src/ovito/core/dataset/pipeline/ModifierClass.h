@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/RefTarget.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene) OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
+namespace Ovito {
 
 /**
  * \brief A meta-class for modifiers (i.e. classes derived from Modifier).
@@ -57,8 +57,6 @@ public:
 	}
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::ModifierClassPtr);

@@ -26,7 +26,7 @@
 #include "SceneNodeSelectionBox.h"
 #include "SceneNodesListModel.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the widget.
@@ -106,6 +106,4 @@ void SceneNodeSelectionBox::changeEvent(QEvent* event)
 	QComboBox::changeEvent(event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

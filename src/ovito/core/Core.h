@@ -109,52 +109,6 @@
 #include <boost/algorithm/cxx11/one_of.hpp>
 #include <boost/algorithm/cxx11/iota.hpp>
 
-/*! \namespace Ovito
-    \brief The root namespace of OVITO.
-*/
-/*! \namespace Ovito::Util
-    \brief This namespace contains general utility classes and typedefs used throughout OVITO's codebase.
-*/
-/*! \namespace Ovito::IO
-    \brief This namespace contains I/O-related utility classes.
-*/
-/*! \namespace Ovito::Concurrency
-    \brief This namespace contains class related to multi-threading, parallelism, and asynchronous tasks.
-*/
-/*! \namespace Ovito::Mesh
-    \brief This namespace contains classes for working with triangular and polyhedral meshes.
-*/
-/*! \namespace Ovito::Math
-    \brief This namespace contains classes related to linear algebra and geometry (vectors, transformation matrices, etc).
-*/
-/*! \namespace Ovito::Rendering
-    \brief This namespace contains classes related to scene rendering.
-*/
-/*! \namespace Ovito::View
-    \brief This namespace contains classes related to 3d viewports.
-*/
-/*! \namespace Ovito::DataIO
-    \brief This namespace contains the framework for data import and export.
-*/
-/*! \namespace Ovito::Anim
-    \brief This namespace contains classes related to object and parameter animation.
-*/
-/*! \namespace Ovito::PluginSystem
-    \brief This namespace contains classes related to OVITO's plugin-based extension system.
-*/
-/*! \namespace Ovito::ObjectSystem
-    \brief This namespace contains basic classes of OVITO's object system.
-*/
-/*! \namespace Ovito::Units
-    \brief This namespace contains classes related to parameter units.
-*/
-/*! \namespace Ovito::Undo
-    \brief This namespace contains the implementation of OVITO's undo framework.
-*/
-/*! \namespace Ovito::Scene
-    \brief This namespace contains the scene graph and modification pipeline framework.
-*/
-
 /******************************************************************************
 * Forward declaration of classes.
 ******************************************************************************/

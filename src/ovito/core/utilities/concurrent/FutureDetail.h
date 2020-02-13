@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <type_traits>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 namespace detail
 {
@@ -98,8 +98,6 @@ namespace detail
 
 } // End of namespace
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

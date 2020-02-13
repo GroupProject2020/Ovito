@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 namespace Ssh {
 	// These classes are defined elsewhere:
@@ -192,6 +192,4 @@ private:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

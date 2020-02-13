@@ -26,7 +26,7 @@
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/rendering/RenderSettings.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor which associates this window with the given viewport instance.
@@ -206,6 +206,4 @@ QRectF ViewportWindowInterface::renderViewportTitle(SceneRenderer* renderer, boo
 	return QRectF(0, 0, std::max(metrics.width(_captionBuffer->text()), 30.0) + pos.x(), metrics.height() + pos.y());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

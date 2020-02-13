@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTargetListener.h>
 #include "OverlayListItem.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * A Qt model class used to populate the QListView widget on the viewports overlay page of the command panel.
@@ -147,6 +147,4 @@ private:
 	QBrush _sectionHeaderForegroundBrush;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/widgets/display/StatusWidget.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /**
  * \brief Base class for property editors for Modifier subclasses.
@@ -90,6 +90,4 @@ private:
 	DECLARE_REFERENCE_FIELD_FLAGS(ModifierApplication, modifierApplication, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

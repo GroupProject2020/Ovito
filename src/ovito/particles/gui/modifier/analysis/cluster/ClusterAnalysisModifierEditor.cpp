@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "ClusterAnalysisModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ClusterAnalysisModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ClusterAnalysisModifier, ClusterAnalysisModifierEditor);
@@ -101,8 +101,5 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	layout->addWidget(btn);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

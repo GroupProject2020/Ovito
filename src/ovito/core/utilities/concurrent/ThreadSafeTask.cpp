@@ -25,7 +25,7 @@
 
 #include <QMutexLocker>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 #ifdef OVITO_DEBUG
 ThreadSafeTask::~ThreadSafeTask()
@@ -126,6 +126,4 @@ void ThreadSafeTask::setProgressText(const QString& text)
 	ProgressiveTask::setProgressText(text);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

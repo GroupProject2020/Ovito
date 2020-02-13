@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/data/DataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief A type of DataVis that first transforms data into another form before
@@ -55,9 +55,7 @@ public:
 
 	/// Bumps up the internal revision number of this DataVis in order to mark
 	/// all transformed data objects as outdated which have been generated so far.
-	void invalidateTransformedObjects() {
-		_revisionNumber++;
-	}
+	void invalidateTransformedObjects() { _revisionNumber++; }
 
 protected:
 
@@ -66,15 +64,10 @@ protected:
 
 private:
 
-	/// The number of data transformations that are currently in progress.
-	int _activeTransformationsCount = 0;
-
 	/// The revision counter of this element.
 	/// The counter is incremented every time one of the object's parameters changes that
 	/// trigger a regeneration of the transformed data object from the input data.
 	unsigned int _revisionNumber = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

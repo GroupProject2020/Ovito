@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ModifierPropertiesEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ModifierPropertiesEditor);
 DEFINE_REFERENCE_FIELD(ModifierPropertiesEditor, modifierApplication);
@@ -140,6 +140,4 @@ PipelineFlowState ModifierPropertiesEditor::getModifierOutput()
 	return {};
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

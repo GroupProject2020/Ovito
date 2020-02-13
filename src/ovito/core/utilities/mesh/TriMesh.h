@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
+namespace Ovito {
 
 /// \brief The maximum number of smoothing groups in a mesh.
 ///
@@ -582,8 +582,6 @@ using TriMeshPtr = std::shared_ptr<TriMesh>;
 /// A shared pointer to an immutable TriMesh data structure.
 using ConstTriMeshPtr = std::shared_ptr<const TriMesh>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_TYPEINFO(Ovito::TriMeshFace, Q_MOVABLE_TYPE);

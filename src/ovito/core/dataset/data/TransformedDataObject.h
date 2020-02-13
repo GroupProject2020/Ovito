@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/data/VersionedDataObjectRef.h>
 #include <ovito/core/dataset/data/TransformingDataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Base class for transient data objects that are dynamically generated from other data objects
@@ -68,6 +68,4 @@ private:
 	DECLARE_RUNTIME_PROPERTY_FIELD(unsigned int, visElementRevision, setVisElementRevision);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

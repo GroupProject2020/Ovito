@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/data/DataObject.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene) OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for camera objects.
@@ -65,7 +65,4 @@ public:
 	virtual void setFieldOfView(TimePoint time, FloatType newFOV) = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

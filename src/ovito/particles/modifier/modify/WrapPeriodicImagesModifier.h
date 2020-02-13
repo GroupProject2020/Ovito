@@ -26,7 +26,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/core/dataset/pipeline/Modifier.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief This modifier wraps around the atomic positions in directions with periodic boundary
@@ -61,7 +61,5 @@ public:
 	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

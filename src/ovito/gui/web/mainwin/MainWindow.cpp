@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include "MainWindow.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -61,5 +61,4 @@ void MainWindow::importDataFile()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

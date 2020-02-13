@@ -24,7 +24,7 @@
 #include "OpenGLLinePrimitive.h"
 #include "OpenGLSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -263,6 +263,4 @@ void OpenGLLinePrimitive::renderThickLines(OpenGLSceneRenderer* renderer)
 	OVITO_REPORT_OPENGL_ERRORS(renderer);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

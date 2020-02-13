@@ -33,7 +33,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "PolyhedralTemplateMatchingModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifier);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, rmsdCutoff);
@@ -347,7 +347,5 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, 
 	table->setIntervalEnd(rmsdHistogramRange());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

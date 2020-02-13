@@ -27,7 +27,7 @@
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include "WrapPeriodicImagesModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(WrapPeriodicImagesModifier);
 
@@ -100,7 +100,5 @@ void WrapPeriodicImagesModifier::evaluateSynchronous(TimePoint time, ModifierApp
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

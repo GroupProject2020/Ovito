@@ -24,7 +24,7 @@
 #include <ovito/core/utilities/io/FileManager.h>
 #include "ImportRemoteFileDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the dialog window.
@@ -155,6 +155,4 @@ const FileImporterClass* ImportRemoteFileDialog::selectedFileImporterType() cons
 		return nullptr;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

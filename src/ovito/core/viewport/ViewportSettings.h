@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /**
  * \brief Stores general settings related to the viewports.
@@ -167,7 +167,6 @@ private:
 	int _defaultMaximizedViewportType = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::ViewportSettings::ViewportColor);

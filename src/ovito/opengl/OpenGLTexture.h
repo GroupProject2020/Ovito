@@ -28,7 +28,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief A wrapper class for OpenGL textures.
@@ -81,8 +81,6 @@ private:
 	GLuint _id;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

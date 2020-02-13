@@ -27,7 +27,7 @@
 #include "ModifierApplication.h"
 #include "AsynchronousModifier.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Represents the application of an AsynchronousModifier in a data pipeline.
@@ -62,6 +62,4 @@ private:
 	AsynchronousModifier::ComputeEnginePtr _lastComputeResults;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

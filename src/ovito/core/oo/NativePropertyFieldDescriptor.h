@@ -27,7 +27,7 @@
 #include <ovito/core/oo/ReferenceEvent.h>
 #include "PropertyFieldDescriptor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * This structure describes one member field of a RefMaker object that stores
@@ -297,6 +297,4 @@ public:
 #define DECLARE_RUNTIME_PROPERTY_FIELD(type, name, setterName) \
 	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(type, name, setterName, PROPERTY_FIELD_NO_FLAGS)
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,28 +21,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/core/Core.h>
-#include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
-#include <ovito/core/utilities/concurrent/Future.h>
 #include "DataVis.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DataVis);
-DEFINE_PROPERTY_FIELD(DataVis, isEnabled);
-DEFINE_PROPERTY_FIELD(DataVis, title);
-DEFINE_PROPERTY_FIELD(DataVis, status);
-SET_PROPERTY_FIELD_LABEL(DataVis, isEnabled, "Enabled");
-SET_PROPERTY_FIELD_LABEL(DataVis, title, "Name");
-SET_PROPERTY_FIELD_LABEL(DataVis, status, "Status");
-SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, isEnabled, ReferenceEvent::TargetEnabledOrDisabled);
-SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, title, ReferenceEvent::TitleChanged);
-SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, status, ReferenceEvent::ObjectStatusChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataVis::DataVis(DataSet* dataset) : RefTarget(dataset), _isEnabled(true)
+DataVis::DataVis(DataSet* dataset) : ActiveObject(dataset)
 {
 }
 
@@ -63,6 +52,4 @@ QSet<PipelineSceneNode*> DataVis::pipelines(bool onlyScenePipelines) const
 	return pipelineList;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

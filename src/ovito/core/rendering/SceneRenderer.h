@@ -41,7 +41,7 @@
 #include "MeshPrimitive.h"
 #include "MarkerPrimitive.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * Abstract base class for object-specific information used in the picking system.
@@ -368,5 +368,4 @@ private:
 	quint32 _subobjectId = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

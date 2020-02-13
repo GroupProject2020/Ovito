@@ -30,7 +30,7 @@
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Defines the mapping between one column of an particle input file and
@@ -219,7 +219,6 @@ private:
 	QVector<TargetPropertyRecord> _properties;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

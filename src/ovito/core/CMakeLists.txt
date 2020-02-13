@@ -84,6 +84,7 @@ SET(SourceFiles
 	dataset/data/TransformedDataObject.cpp
 	dataset/data/camera/AbstractCameraObject.cpp
 	dataset/data/AttributeDataObject.cpp
+	dataset/pipeline/ActiveObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp
 	dataset/pipeline/PipelineCache.cpp
 	dataset/pipeline/PipelineEvaluation.cpp

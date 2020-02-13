@@ -24,7 +24,7 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "SpinnerWidget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the spinner.
@@ -384,6 +384,4 @@ void SpinnerWidget::focusOutEvent(QFocusEvent* event)
 	QWidget::focusOutEvent(event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

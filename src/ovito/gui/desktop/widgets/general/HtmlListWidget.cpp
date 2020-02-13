@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include "HtmlListWidget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs a list widget.
@@ -67,6 +67,4 @@ HtmlListWidget::HtmlListWidget(QWidget* parent) : QListWidget(parent)
 	setItemDelegate(new HtmlItemDelegate());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

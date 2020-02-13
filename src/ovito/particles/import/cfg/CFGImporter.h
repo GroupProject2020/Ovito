@@ -28,7 +28,7 @@
 #include <ovito/particles/import/InputColumnMapping.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for AtomEye CFG files.
@@ -96,8 +96,6 @@ protected:
 	static void generateAutomaticColumnMapping(InputColumnMapping& mapping, const QStringList& columnNames);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

@@ -30,7 +30,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /**
  * \brief A QLabel-like widget that display a line of text, which is shortened if necessary to fit the available space.
@@ -61,8 +61,6 @@ protected:
 	void paintEvent(QPaintEvent *) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

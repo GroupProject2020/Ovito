@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/utilities/io/FileManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /**
  * \brief The file manager provides transparent access to remote files.
@@ -55,8 +55,6 @@ public:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

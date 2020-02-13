@@ -30,7 +30,7 @@
 #include "OpenGLBuffer.h"
 #include <QOpenGLShaderProgram>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores an image to be rendered in the viewports.
@@ -78,6 +78,4 @@ private:
 	bool _needTextureUpdate = true;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

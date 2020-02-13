@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include "InterpolateTrajectoryModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(InterpolateTrajectoryModifier);
 DEFINE_PROPERTY_FIELD(InterpolateTrajectoryModifier, useMinimumImageConvention);
@@ -262,7 +262,5 @@ void InterpolateTrajectoryModifier::interpolateState(PipelineFlowState& state1, 
 	state1.intersectStateValidity(time);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

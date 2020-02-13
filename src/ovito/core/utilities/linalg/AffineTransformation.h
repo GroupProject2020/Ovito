@@ -36,7 +36,7 @@
 #include "Point3.h"
 #include "Matrix3.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A 3x4 matrix, which describes an affine transformation in 3d space.
@@ -838,8 +838,6 @@ inline QDataStream& operator>>(QDataStream& stream, AffineTransformationT<T>& m)
  */
 using AffineTransformation = AffineTransformationT<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::AffineTransformation);

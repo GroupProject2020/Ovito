@@ -28,7 +28,7 @@
 #include <ovito/mesh/surface/SurfaceMeshVis.h>
 #include "SurfaceMeshVisEditor.h"
 
-namespace Ovito { namespace Mesh { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Mesh {
 
 IMPLEMENT_OVITO_CLASS(SurfaceMeshVisEditor);
 SET_OVITO_OBJECT_EDITOR(SurfaceMeshVis, SurfaceMeshVisEditor);
@@ -87,6 +87,5 @@ void SurfaceMeshVisEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	sublayout->addWidget(reverseOrientationUI->checkBox(), 2, 0, 1, 2);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

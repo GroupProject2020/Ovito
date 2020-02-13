@@ -28,7 +28,7 @@
 
 namespace Ovito { namespace Particles {
 
-OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+
 
 /**
  * \brief A properties editor for the BondType class.
@@ -49,7 +49,6 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
 
 }	// End of namespace
 }	// End of namespace

@@ -27,7 +27,7 @@
 #include "ParameterUI.h"
 #include "PropertiesEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * A list view that shows the RefTarget items contained in a vector reference field.
@@ -201,8 +201,6 @@ protected:
 	RolloutInsertionParameters _rolloutParams;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

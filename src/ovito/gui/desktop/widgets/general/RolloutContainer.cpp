@@ -25,7 +25,7 @@
 #include "RolloutContainer.h"
 #include "RolloutContainerLayout.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the container.
@@ -346,6 +346,4 @@ void Rollout::setNotice(const QString& noticeText)
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

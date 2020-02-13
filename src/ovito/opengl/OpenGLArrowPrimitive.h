@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/ArrowPrimitive.h>
 #include "OpenGLBuffer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a set of arrows to be rendered in the viewports.
@@ -164,6 +164,4 @@ private:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

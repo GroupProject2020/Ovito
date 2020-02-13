@@ -38,7 +38,7 @@
 	#include <ovito/core/utilities/io/video/VideoEncoder.h>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DataSet);
 DEFINE_REFERENCE_FIELD(DataSet, viewportConfig);
@@ -639,5 +639,4 @@ void DataSet::saveToFile(const QString& filePath)
 	fileStream.close();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

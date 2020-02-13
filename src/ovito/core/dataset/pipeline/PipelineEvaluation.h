@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief This class holds the parameters for an evaluation request of a data pipeline.
@@ -104,6 +104,4 @@ private:
 	PipelineSceneNode* _pipeline = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

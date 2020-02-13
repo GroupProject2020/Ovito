@@ -26,7 +26,7 @@
 #include <ovito/core/oo/OvitoClass.h>
 #include "LoadStream.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 using namespace std;
 
@@ -274,7 +274,5 @@ LoadStream& operator>>(LoadStream& stream, QUrl& url)
 	return stream;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 

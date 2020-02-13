@@ -28,7 +28,7 @@
 #include <ovito/gui/desktop/properties/ColorParameterUI.h>
 #include "TrajectoryVisEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(TrajectoryVisEditor);
 SET_OVITO_OBJECT_EDITOR(TrajectoryVis, TrajectoryVisEditor);
@@ -73,6 +73,5 @@ void TrajectoryVisEditor::createUI(const RolloutInsertionParameters& rolloutPara
 	layout->addWidget(showUpToCurrentTimeUI->checkBox(), 4, 0, 1, 2);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

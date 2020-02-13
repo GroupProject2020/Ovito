@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "Promise.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * \brief Default shared state type used to connect Promise/Future pairs across thread boundaries.
@@ -91,6 +91,4 @@ protected:
 	QMutex _mutex;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

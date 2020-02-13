@@ -25,7 +25,7 @@
 #include "TaskManager.h"
 #include "TaskWatcher.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor creating a new operation, registering it with the given 
@@ -80,6 +80,4 @@ AsyncOperation AsyncOperation::createSignalOperation(bool startedState, TaskMana
 	return AsyncOperation(std::make_shared<Task>(Task::State(startedState ? Task::Started : Task::NoState), taskManager));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

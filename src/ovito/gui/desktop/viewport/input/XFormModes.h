@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/oo/RefTargetListener.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Base class for selection, move, rotate and scale modes.
@@ -222,6 +222,4 @@ private:
 	Rotation _rotation;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

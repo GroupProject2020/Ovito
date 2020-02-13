@@ -26,7 +26,7 @@
 #endif
 #include "SaveImageFileDialog.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the dialog window.
@@ -100,6 +100,4 @@ void SaveImageFileDialog::onFileSelected(const QString& file)
 		_imageInfo.setFormat(_formatList[index]);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

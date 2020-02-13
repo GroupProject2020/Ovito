@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PickingSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PickingSceneRenderer);
 
@@ -317,6 +317,4 @@ Point3 PickingSceneRenderer::worldPositionFromLocation(const QPoint& pos) const
 	return Point3::Origin();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

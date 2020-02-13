@@ -28,7 +28,7 @@
 
 #include <QElapsedTimer>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Class that provides the basic state management,
@@ -102,6 +102,4 @@ protected:
     std::vector<std::pair<int, std::vector<int>>> subStepsStack;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

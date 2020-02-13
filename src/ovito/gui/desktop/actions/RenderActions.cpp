@@ -29,7 +29,7 @@
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /******************************************************************************
 * Handles the ACTION_RENDER_ACTIVE_VIEWPORT command.
@@ -73,5 +73,4 @@ void ActionManager::on_RenderActiveViewport_triggered()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

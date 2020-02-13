@@ -24,7 +24,7 @@
 #include "OpenGLMarkerPrimitive.h"
 #include "OpenGLSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -184,6 +184,4 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 #endif
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

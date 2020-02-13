@@ -50,7 +50,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT SimplifyMicrostructureModifier : public Async
 	OVITO_CLASS_META(SimplifyMicrostructureModifier, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Simplify microstructure");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	Q_CLASSINFO("ModifierCategory", "-");
 
 public:
 

@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/widgets/general/SpinnerWidget.h>
 #include "ParameterUI.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /******************************************************************************
 * Base class for UI components that allow the user to edit a numerical
@@ -140,8 +140,6 @@ private:
 	QMetaObject::Connection _animationTimeChangedConnection;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

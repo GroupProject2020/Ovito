@@ -23,7 +23,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/properties/DefaultPropertiesEditor.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DefaultPropertiesEditor);
 SET_OVITO_OBJECT_EDITOR(RefTarget, DefaultPropertiesEditor);
@@ -104,6 +104,4 @@ void DefaultPropertiesEditor::updateSubEditors()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

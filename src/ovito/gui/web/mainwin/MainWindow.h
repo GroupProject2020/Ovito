@@ -27,7 +27,7 @@
 #include <ovito/gui/web/dataset/WasmDataSetContainer.h>
 #include <ovito/gui/base/mainwin/MainWindowInterface.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /**
  * \brief The main window of the application.
@@ -69,5 +69,4 @@ private:
 	WasmDataSetContainer _datasetContainer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -32,7 +32,7 @@
 #include <ovito/core/dataset/scene/SceneNode.h>
 #include <ovito/core/dataset/animation/controller/Controller.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief Rotation controller that lets an object always "look" at another scene node.
@@ -94,7 +94,6 @@ private:
 	TimeInterval _sourcePosValidity;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

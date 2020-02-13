@@ -28,7 +28,7 @@
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include "CoordinateDisplayWidget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -174,6 +174,4 @@ void CoordinateDisplayWidget::onSpinnerDragAbort()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

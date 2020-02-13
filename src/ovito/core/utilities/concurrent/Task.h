@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <3rdparty/function2/function2.hpp>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * \brief The shared state of a Promise/Future pair.
@@ -447,6 +447,4 @@ private:
     TaskPtr _ptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -33,7 +33,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief Base class for all animation controllers.
@@ -315,7 +315,6 @@ public:
 	static OORef<Controller> createTransformationController(DataSet* dataset);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

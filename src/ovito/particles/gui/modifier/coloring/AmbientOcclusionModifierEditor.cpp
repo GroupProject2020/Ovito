@@ -27,7 +27,7 @@
 #include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include "AmbientOcclusionModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(AmbientOcclusionModifierEditor);
 SET_OVITO_OBJECT_EDITOR(AmbientOcclusionModifier, AmbientOcclusionModifierEditor);
@@ -71,8 +71,5 @@ void AmbientOcclusionModifierEditor::createUI(const RolloutInsertionParameters& 
 	layout1->addWidget(statusLabel());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

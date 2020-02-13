@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 
 /**
@@ -147,6 +147,4 @@ protected:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(AsynchronousModifierDelegate, delegate, setDelegate, PROPERTY_FIELD_ALWAYS_CLONE);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

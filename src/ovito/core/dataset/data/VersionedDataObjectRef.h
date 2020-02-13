@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/data/DataObject.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief A weak reference (a.k.a. guarded pointer) that refers to a particular revision of a DataObject.
@@ -162,7 +162,6 @@ inline QDebug operator<<(QDebug debug, const VersionedDataObjectRef& p) {
 	return debug << p.get();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

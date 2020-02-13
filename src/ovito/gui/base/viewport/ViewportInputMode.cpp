@@ -29,7 +29,7 @@
 #include "ViewportInputMode.h"
 #include "NavigationModes.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(ViewportInput)
+namespace Ovito {
 
 /******************************************************************************
 * Destructor.
@@ -197,6 +197,4 @@ void ViewportInputMode::requestViewportUpdate()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

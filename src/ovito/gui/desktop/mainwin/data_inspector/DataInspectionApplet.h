@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/oo/OvitoObject.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for applets shown in the data inspector.
@@ -76,5 +76,4 @@ public:
 	};
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

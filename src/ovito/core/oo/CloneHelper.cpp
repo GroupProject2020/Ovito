@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "CloneHelper.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /******************************************************************************
 * This creates a copy of the RefTarget.
@@ -55,5 +55,4 @@ RefTarget* CloneHelper::cloneObjectImpl(const RefTarget* obj, bool deepCopy)
 	return copy;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

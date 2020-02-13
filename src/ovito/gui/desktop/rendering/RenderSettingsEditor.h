@@ -28,7 +28,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * The editor component for the RenderSettings class.
@@ -64,8 +64,6 @@ private:
 	QComboBox* sizePresetsBox;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

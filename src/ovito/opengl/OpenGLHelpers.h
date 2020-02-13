@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 // The minimum OpenGL version required by Ovito:
 #define OVITO_OPENGL_MINIMUM_VERSION_MAJOR 			2
@@ -48,6 +48,4 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
     #define OVITO_REPORT_OPENGL_ERRORS(renderer)
 #endif
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -33,7 +33,7 @@
 
 #include <qwt/qwt_plot_marker.h>
 
-namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(CreateIsosurfaceModifierEditor);
 SET_OVITO_OBJECT_EDITOR(CreateIsosurfaceModifier, CreateIsosurfaceModifierEditor);
@@ -131,6 +131,5 @@ void CreateIsosurfaceModifierEditor::plotHistogram()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

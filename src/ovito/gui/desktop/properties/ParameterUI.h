@@ -32,7 +32,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include "PropertiesEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
+namespace Ovito {
 
 /**
  * \brief Base class for UI components that allow the user to edit a parameter
@@ -233,8 +233,6 @@ private:
 	const char* _propertyName;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

@@ -32,7 +32,7 @@
 	#include <csignal>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the task manager.
@@ -351,6 +351,4 @@ void TaskManager::processEvents()
 		QCoreApplication::processEvents();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

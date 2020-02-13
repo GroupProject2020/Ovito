@@ -34,7 +34,7 @@
 #include <ovito/core/viewport/ViewportGizmo.h>
 #include "ViewportSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ViewportSceneRenderer);
 
@@ -235,5 +235,4 @@ qreal ViewportSceneRenderer::devicePixelRatio() const
 	return OpenGLSceneRenderer::devicePixelRatio();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

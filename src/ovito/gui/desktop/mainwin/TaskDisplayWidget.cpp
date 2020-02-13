@@ -26,7 +26,7 @@
 #include <ovito/core/utilities/concurrent/TaskWatcher.h>
 #include "TaskDisplayWidget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructs the widget and associates it with the main window.
@@ -145,6 +145,4 @@ void TaskDisplayWidget::updateIndicator()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

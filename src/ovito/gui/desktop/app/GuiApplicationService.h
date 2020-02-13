@@ -26,7 +26,7 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/app/ApplicationService.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(PluginSystem)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for plugin services that can perform actions on application startup.
@@ -45,5 +45,4 @@ public:
 	virtual void addActionsToMenu(ActionManager& actionManager, QMenuBar* menuBar) {}
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

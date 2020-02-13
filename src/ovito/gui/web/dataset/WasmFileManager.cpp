@@ -32,7 +32,7 @@
     #include <emscripten/html5.h>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /******************************************************************************
 * Makes a file available on this computer.
@@ -340,6 +340,4 @@ void WasmFileManager::importedFileDataCanceled()
 
 #endif
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
