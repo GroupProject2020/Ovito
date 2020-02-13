@@ -112,7 +112,7 @@ SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const Q
 #endif
 	}
 	else {
-		return Future<FileHandle>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
+		return Future<FileHandle>::createFailed(Exception(tr("URL scheme '%1' not supported. The program supports only the sftp:// scheme and local file paths.").arg(url.scheme()), taskManager.datasetContainer()));
 	}
 }
 
@@ -132,7 +132,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 #endif
 	}
 	else {
-		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
+		return Future<QStringList>::createFailed(Exception(tr("URL scheme '%1' not supported. The program supports only the sftp:// scheme and local file paths.").arg(url.scheme()), taskManager.datasetContainer()));
 	}
 }
 
