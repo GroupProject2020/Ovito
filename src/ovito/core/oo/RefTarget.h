@@ -274,6 +274,18 @@ public:
 	/// in the context (and the thread) of this object.
 	RefTargetExecutor executor() const { return RefTargetExecutor(this); }
 
+	/// \brief Rescales the times of all animation keys from the old animation interval to the new interval.
+	/// \param oldAnimationInterval The old animation interval, which should be mapped to the new animation interval.
+	/// \param newAnimationInterval The new animation interval.
+	///
+	/// For keyed controllers this will rescale the key times of all keys from the
+	/// old animation interval to the new interval using a linear mapping.
+	///
+	/// Keys that lie outside of the old animation interval will also be scaled using linear extrapolation.
+	///
+	/// The default implementation does nothing.
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) {}
+
 private:
 
 	/// The list of reference fields that hold a reference to this target.

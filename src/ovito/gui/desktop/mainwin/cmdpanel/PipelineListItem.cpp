@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -48,11 +48,10 @@ bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& e
 {
 	// The list must be updated if a modifier has been added or removed
 	// from a PipelineObject, or if a data object has been added/removed from the data source.
-	if((event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::ReferenceChanged) && dynamic_object_cast<PipelineObject>(object()))
-	{
+	if((event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::ReferenceChanged) && dynamic_object_cast<PipelineObject>(object())) {
 		Q_EMIT subitemsChanged(this);
 	}
-	/// Update item if it has been enabled/disabled, its status has changed, or its title has changed.
+	// Update item if it has been enabled/disabled, its status has changed, or its title has changed.
 	else if(event.type() == ReferenceEvent::TargetEnabledOrDisabled || event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TitleChanged) {
 		Q_EMIT itemChanged(this);
 	}

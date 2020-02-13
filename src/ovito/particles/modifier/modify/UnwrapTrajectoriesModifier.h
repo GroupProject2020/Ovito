@@ -103,6 +103,9 @@ public:
 	/// Unwraps the current particle coordinates.
 	void unwrapParticleCoordinates(TimePoint time, PipelineFlowState& state);
 
+	/// Rescales the times of all animation keys from the old animation interval to the new interval.
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) override;
+
 protected:
 
 	/// Saves the class' contents to an output stream.
@@ -122,6 +125,10 @@ protected:
 
 	/// Calculates the information that is needed to unwrap particle coordinates.
 	void processNextFrame(int frame, TimePoint time, const PipelineFlowState& state);
+
+	/// Throws away the precomputed unwrapping information and interrupts
+	/// any computation currently in progress.
+	void invalidateUnwrapData();
 
 private:
 

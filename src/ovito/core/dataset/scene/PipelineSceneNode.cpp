@@ -39,13 +39,18 @@ DEFINE_REFERENCE_FIELD(PipelineSceneNode, dataProvider);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, visElements);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, replacedVisElements);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, replacementVisElements);
+DEFINE_PROPERTY_FIELD(PipelineSceneNode, pipelineTrajectoryCachingEnabled);
 SET_PROPERTY_FIELD_LABEL(PipelineSceneNode, dataProvider, "Pipeline object");
+SET_PROPERTY_FIELD_LABEL(PipelineSceneNode, pipelineTrajectoryCachingEnabled, "Precompute all trajectory frames");
 SET_PROPERTY_FIELD_CHANGE_EVENT(PipelineSceneNode, dataProvider, ReferenceEvent::PipelineChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PipelineSceneNode::PipelineSceneNode(DataSet* dataset) : SceneNode(dataset)
+PipelineSceneNode::PipelineSceneNode(DataSet* dataset) : SceneNode(dataset), 
+	_pipelineCache(this, false), 
+	_pipelineRenderingCache(this, true),
+	_pipelineTrajectoryCachingEnabled(false)
 {
 }
 
@@ -63,8 +68,8 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelineSynchronous(bool inc
 {	
 	TimePoint time = dataset()->animationSettings()->time();
 	return includeVisElements ? 
-		_pipelineRenderingCache.evaluatePipelineSynchronous(this, time) : 
-		_pipelineCache.evaluatePipelineSynchronous(this, time);
+		_pipelineRenderingCache.evaluatePipelineSynchronous(time) : 
+		_pipelineCache.evaluatePipelineSynchronous(time);
 }
 
 /******************************************************************************
@@ -72,7 +77,7 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelineSynchronous(bool inc
 ******************************************************************************/
 PipelineEvaluationFuture PipelineSceneNode::evaluatePipeline(const PipelineEvaluationRequest& request)
 {
-	return PipelineEvaluationFuture(request, _pipelineCache.evaluatePipeline(request, nullptr, this, false), this);
+	return PipelineEvaluationFuture(request, _pipelineCache.evaluatePipeline(request), this);
 }
 
 /******************************************************************************
@@ -80,7 +85,7 @@ PipelineEvaluationFuture PipelineSceneNode::evaluatePipeline(const PipelineEvalu
 ******************************************************************************/
 PipelineEvaluationFuture PipelineSceneNode::evaluateRenderingPipeline(const PipelineEvaluationRequest& request)
 {
-	return PipelineEvaluationFuture(request, _pipelineRenderingCache.evaluatePipeline(request, nullptr, this, true), this);
+	return PipelineEvaluationFuture(request, _pipelineRenderingCache.evaluatePipeline(request), this);
 }
 
 /******************************************************************************
@@ -246,6 +251,19 @@ void PipelineSceneNode::loadFromStream(ObjectLoadStream& stream)
 	stream.expectChunk(0x01);
 	// For future use...
 	stream.closeChunk();
+
+	// Transfer the caching flag loaded from the state file to the internal cache instance.
+	_pipelineRenderingCache.setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+}
+
+/******************************************************************************
+* Rescales the times of all animation keys from the old animation interval to the new interval.
+******************************************************************************/
+void PipelineSceneNode::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval)
+{
+	SceneNode::rescaleTime(oldAnimationInterval, newAnimationInterval);
+	_pipelineCache.invalidate();
+	_pipelineRenderingCache.invalidate();
 }
 
 /******************************************************************************
@@ -419,6 +437,23 @@ void PipelineSceneNode::referenceRemoved(const PropertyFieldDescriptor& field, R
 		invalidatePipelineCache();
 	}
 	SceneNode::referenceRemoved(field, oldTarget, listIndex);
+}
+
+/******************************************************************************
+* Is called when the value of a non-animatable property field of this RefMaker has changed.
+******************************************************************************/
+void PipelineSceneNode::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(pipelineTrajectoryCachingEnabled)) {
+		_pipelineRenderingCache.setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+
+		// Send target changed event to trigger a new pipeline evaluation, which is 
+		// needed to start the precomputation process.
+		if(pipelineTrajectoryCachingEnabled())
+			notifyTargetChanged(&PROPERTY_FIELD(pipelineTrajectoryCachingEnabled));
+	}
+
+	SceneNode::propertyChanged(field);
 }
 
 /******************************************************************************

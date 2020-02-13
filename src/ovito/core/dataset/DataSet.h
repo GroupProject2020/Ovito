@@ -107,7 +107,7 @@ public:
 	/// \param oldAnimationInterval The old animation interval, which will be mapped to the new animation interval.
 	/// \param newAnimationInterval The new animation interval.
 	///
-	/// This method calls Controller::rescaleTime() for all controllers in the scene.
+	/// This method calls RefTarget::rescaleTime() for all objects (including animation controllers) in the scene.
 	/// For keyed controllers this will rescale the key times of all keys from the
 	/// old animation interval to the new interval using a linear mapping.
 	///
@@ -115,7 +115,7 @@ public:
 	/// according to a linear extrapolation.
 	///
 	/// \undoable
-	void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval);
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) override;
 
 	/// \brief This is the high-level rendering function, which invokes the renderer to generate one or more
 	///        output images of the scene. All rendering parameters are specified in the RenderSettings object.

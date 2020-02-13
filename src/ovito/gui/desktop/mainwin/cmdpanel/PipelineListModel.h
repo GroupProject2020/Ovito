@@ -79,10 +79,10 @@ public:
 	}
 
 	/// Populates the model with the given list items.
-	void setItems(const QList<OORef<PipelineListItem>>& newItems);
+	void setItems(std::vector<OORef<PipelineListItem>> newItems);
 
 	/// Returns the list of items.
-	const QList<OORef<PipelineListItem>>& items() const { return _items; }
+	const std::vector<OORef<PipelineListItem>>& items() const { return _items; }
 
 	/// Returns the type of drag and drop operations supported by the model.
 	Qt::DropActions supportedDropActions() const override {
@@ -115,6 +115,9 @@ public:
 
 	/// Sets the item in the modification list that should be selected on the next list update.
 	void setNextToSelectObject(RefTarget* obj) { _nextObjectToSelect = obj; }
+
+	/// Sets the item in the modification list that should be selected on the next list update.
+	void setNextSubObjectTitleToSelect(const QString& title) { _nextSubObjectTitleToSelect = title; }
 
 	/// Helper method that determines if the given object is part of more than one pipeline.
 	static bool isSharedObject(RefTarget* obj);
@@ -152,16 +155,19 @@ private Q_SLOTS:
 private:
 
 	/// Create the pipeline editor entries for the subjects of the given object (and their subobjects).
-	static void createListItemsForSubobjects(const DataObject* dataObj, QList<OORef<PipelineListItem>>& items, PipelineListItem* parentItem);
+	static void createListItemsForSubobjects(const DataObject* dataObj, std::vector<OORef<PipelineListItem>>& items, PipelineListItem* parentItem);
 
 	/// List of visible items in the model.
-	QList<OORef<PipelineListItem>> _items;
+	std::vector<OORef<PipelineListItem>> _items;
 
 	/// Holds reference to the currently selected PipelineSceneNode.
 	RefTargetListener<PipelineSceneNode> _selectedNode;
 
 	/// The item in the list that should be selected on the next list update.
 	RefTarget* _nextObjectToSelect = nullptr;
+
+	/// The sub-object to select in the pipeline editor during the next refresh.
+	QString _nextSubObjectTitleToSelect;
 
 	/// The selection model of the list view widget.
 	QItemSelectionModel* _selectionModel;

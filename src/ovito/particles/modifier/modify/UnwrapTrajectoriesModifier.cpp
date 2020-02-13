@@ -120,10 +120,25 @@ SharedFuture<> UnwrapTrajectoriesModifierApplication::detectPeriodicCrossings(Ti
 		}
 
 		// Starting the unwrap operation.
-		_unwrapOperation.setStarted();
 		fetchNextFrame();
 	}
 	return _unwrapOperation.sharedFuture();
+}
+
+/******************************************************************************
+* Throws away the precomputed unwrapping information and interrupts
+* any computation currently in progress.
+******************************************************************************/
+void UnwrapTrajectoriesModifierApplication::invalidateUnwrapData()
+{
+	_unwrappedUpToTime = TimeNegativeInfinity();
+	_unwrapRecords.clear();
+	_unflipRecords.clear();
+	if(_unwrapOperation.isValid()) {
+		_previousPositions.clear();
+		_unwrapOperation.cancel();
+		_unwrapOperation.reset();
+	}
 }
 
 /******************************************************************************
@@ -132,14 +147,7 @@ SharedFuture<> UnwrapTrajectoriesModifierApplication::detectPeriodicCrossings(Ti
 bool UnwrapTrajectoriesModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetChanged && source == input()) {
-		_unwrappedUpToTime = TimeNegativeInfinity();
-		_unwrapRecords.clear();
-		_unflipRecords.clear();
-		if(_unwrapOperation.isValid()) {
-			_previousPositions.clear();
-			_unwrapOperation.cancel();
-			_unwrapOperation.reset();
-		}
+		invalidateUnwrapData();
 	}
 	return ModifierApplication::referenceEvent(source, event);
 }
@@ -150,16 +158,18 @@ bool UnwrapTrajectoriesModifierApplication::referenceEvent(RefTarget* source, co
 void UnwrapTrajectoriesModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	if(field == PROPERTY_FIELD(input)) {
-		_unwrappedUpToTime = TimeNegativeInfinity();
-		_unwrapRecords.clear();
-		_unflipRecords.clear();
-		if(_unwrapOperation.isValid()) {
-			_previousPositions.clear();
-			_unwrapOperation.cancel();
-			_unwrapOperation.reset();
-		}
+		invalidateUnwrapData();
 	}
 	ModifierApplication::referenceReplaced(field, oldTarget, newTarget);
+}
+
+/******************************************************************************
+* Rescales the times of all animation keys from the old animation interval to the new interval.
+******************************************************************************/
+void UnwrapTrajectoriesModifierApplication::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval)
+{
+	ModifierApplication::rescaleTime(oldAnimationInterval, newAnimationInterval);
+	invalidateUnwrapData();
 }
 
 /******************************************************************************

@@ -168,7 +168,7 @@ private:
 	PropertiesEditor* _parentEditor = nullptr;
 
 	/// The object being edited in this editor.
-	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The list of rollout widgets that have been created by editor.
 	/// The cleanup handler is used to delete them when the editor is being deleted.

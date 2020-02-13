@@ -49,6 +49,9 @@ public:
 	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request) const override;
 
+	/// \brief Asks the object for the result of the data pipeline.
+	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
+
 	/// \brief Sets the source location(s) for importing data.
 	/// \param sourceUrls The new source location(s).
 	/// \param importer The importer object that will parse the input file.

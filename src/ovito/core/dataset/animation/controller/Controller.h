@@ -252,20 +252,6 @@ public:
 		}
 	}
 
-	/// \brief Rescales the times of all animation keys from the old animation interval to the new interval.
-	/// \param oldAnimationInterval The old animation interval, which should be mapped to the new animation interval.
-	/// \param newAnimationInterval The new animation interval.
-	///
-	/// For keyed controllers this will rescale the key times of all keys from the
-	/// old animation interval to the new interval using a linear mapping.
-	///
-	/// Keys that lie outside of the old animation interval will also be scaled using linear extrapolation.
-	///
-	/// The default implementation does nothing.
-	///
-	/// \undoable
-	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) {}
-
 	/// \brief Adjusts the controller's value after a scene node has gotten a new parent node.
 	/// \param time The animation at which to change the controller's parent.
 	/// \param oldParentTM The transformation of the old parent node.

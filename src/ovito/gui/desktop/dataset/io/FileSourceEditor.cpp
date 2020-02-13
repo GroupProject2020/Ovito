@@ -65,8 +65,10 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 #ifdef OVITO_SSH_CLIENT
 	toolbar->addAction(QIcon(":/gui/actions/file/file_import_remote.bw.svg"), tr("Pick new remote file"), this, SLOT(onPickRemoteInputFile()));
 #endif
-	toolbar->addAction(QIcon(":/gui/actions/file/import_object_reload.bw.svg"), tr("Reload data from external file"), this, SLOT(onReloadFrame()));
-	toolbar->addAction(QIcon(":/gui/actions/file/import_object_refresh_animation.bw.svg"), tr("Update time series"), this, SLOT(onReloadAnimation()));
+	toolbar->addAction(QIcon(":/gui/actions/file/import_object_reload.bw.svg"), tr("Reload file"), this, SLOT(onReloadFrame()));
+	toolbar->addAction(QIcon(":/gui/actions/file/import_object_refresh_animation.bw.svg"), tr("Update trajectory frames"), this, SLOT(onReloadAnimation()));
+	QAction* preloadTrajAction = toolbar->addAction(QIcon(":/gui/actions/file/cache_pipeline_output.svg"), tr("Load entire trajectory into memory"));
+	BooleanActionParameterUI* preloadTrajectoryUI = new BooleanActionParameterUI(this, PROPERTY_FIELD(FileSource::pipelineTrajectoryCachingEnabled), preloadTrajAction);
 
 	QGroupBox* sourceBox = new QGroupBox(tr("Data source"), rollout);
 	layout->addWidget(sourceBox);

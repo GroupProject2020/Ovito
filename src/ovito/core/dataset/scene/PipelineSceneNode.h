@@ -82,6 +82,9 @@ public:
 	/// \brief Deletes this node from the scene.
 	virtual void deleteNode() override;
 
+	/// Rescales the times of all animation keys from the old animation interval to the new interval.
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) override;
+
 	/// \brief Replaces the given visual element in this pipeline's output with an independent copy.
 	DataVis* makeVisElementIndependent(DataVis* visElement);
 
@@ -111,6 +114,9 @@ protected:
 
 	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
 	virtual void referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex) override;
+
+	/// Is called when the value of a non-animatable property field of this RefMaker has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// Saves the class' contents to the given stream.
 	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
@@ -150,6 +156,9 @@ private:
 
 	/// Visual elements owned by the node which replace the ones produced by the pipeline.
 	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, replacementVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+
+	/// Activates the precomputation of the pipeline results for all animation frames.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, pipelineTrajectoryCachingEnabled, setPipelineTrajectoryCachingEnabled, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The cached output of the data pipeline (without the effect of visualization elements).
 	PipelineCache _pipelineCache;

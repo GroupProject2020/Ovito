@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -60,6 +60,30 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	pipelineMenu->addAction(_actionManager->getAction(ACTION_EDIT_CLONE_PIPELINE));
 	pipelineMenu->addSeparator();
 	pipelineMenu->addAction(_actionManager->getAction(ACTION_EDIT_DELETE));
+	pipelineMenu->addSeparator();
+
+	// Set up the 'Precompute all frames' menu action.
+	QAction* precomputeFramesAction = pipelineMenu->addAction(QIcon(":/gui/actions/file/cache_pipeline_output.svg"), tr("Precompute all frames"));
+	precomputeFramesAction->setCheckable(true);
+	connect(pipelineMenu, &QMenu::aboutToShow, this, [this,precomputeFramesAction]() {
+		if(_datasetContainer.currentSet() && _datasetContainer.currentSet()->selection()->nodes().empty() == false) {
+			if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_datasetContainer.currentSet()->selection()->nodes().front())) {
+				precomputeFramesAction->setChecked(pipeline->pipelineTrajectoryCachingEnabled());
+				precomputeFramesAction->setEnabled(true);
+				return;
+			}
+		}
+		precomputeFramesAction->setChecked(false);
+		precomputeFramesAction->setEnabled(false);
+	});
+	connect(precomputeFramesAction, &QAction::triggered, this, [this,precomputeFramesAction]() {
+		if(_datasetContainer.currentSet() && _datasetContainer.currentSet()->selection()->nodes().empty() == false) {
+			if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_datasetContainer.currentSet()->selection()->nodes().front())) {
+				pipeline->setPipelineTrajectoryCachingEnabled(precomputeFramesAction->isChecked());
+			}
+		}
+	});
+
 	QToolButton* pipelineMenuButton = new QToolButton(this);
 	pipelineMenuButton->setStyleSheet(
 		"QToolButton { padding: 0px; margin: 0px; border: none; background-color: transparent; } "
@@ -191,14 +215,20 @@ void ModifyCommandPage::onSelectedItemChanged()
 	if(currentItem != nullptr) {
 		_aboutRollout->hide();
 		editObject = currentItem->object();
+		if(currentItem->isSubObject())
+			pipelineListModel()->setNextSubObjectTitleToSelect(currentItem->title());
 	}
 
 	if(editObject != _propertiesPanel->editObject()) {
 		_propertiesPanel->setEditObject(editObject);
+
+		// Request a viewport update whenever a new item in the pipeline editor is selected, 
+		// because the currently selected modifier may be rendering gizmos in the viewports. 
 		if(_datasetContainer.currentSet())
 			_datasetContainer.currentSet()->viewportConfig()->updateViewports();
+
+		updateActions(currentItem);
 	}
-	updateActions(currentItem);
 
 	// Whenever no object is selected, show the About Panel containing information about the program.
 	if(currentItem == nullptr)
@@ -224,7 +254,7 @@ void ModifyCommandPage::updateActions(PipelineListItem* currentItem)
 		moveModifierDownAction->setEnabled(
 			dynamic_object_cast<ModifierApplication>(modApp->input()) != nullptr &&
 			modApp->input()->isPipelineBranch(true) == false);
-		int index = _pipelineListModel->items().indexOf(currentItem);
+		int index = std::find(_pipelineListModel->items().begin(), _pipelineListModel->items().end(), currentItem) - _pipelineListModel->items().begin();
 		moveModifierUpAction->setEnabled(
 			index > 0 &&
 			dynamic_object_cast<ModifierApplication>(_pipelineListModel->item(index - 1)->object()) != nullptr &&

@@ -142,6 +142,9 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	if(field == PROPERTY_FIELD(modifier)) {
+		// Reset all caches when the modifier is replaced.
+		pipelineCache().invalidate(TimeInterval::empty(), true);
+
 		// Update the status of the Modifier when it is detached from the ModifierApplication.
 		if(Modifier* oldMod = static_object_cast<Modifier>(oldTarget)) {
 			oldMod->notifyDependents(ReferenceEvent::ObjectStatusChanged);
@@ -158,10 +161,11 @@ void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field
 			notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}
 	else if(field == PROPERTY_FIELD(input) && !isBeingLoaded()) {
-		if(modifier()) {
-			// Update the status of the Modifier when ModifierApplication is inserted/removed into pipeline.
+		// Reset all caches when the data input is replaced.
+		pipelineCache().invalidate(TimeInterval::empty(), true);
+		// Update the status of the Modifier when ModifierApplication is inserted/removed into pipeline.
+		if(modifier())
 			modifier()->notifyDependents(ReferenceEvent::ModifierInputChanged);
-		}
 		// The animation length might have changed when the pipeline has changed.
 		notifyDependents(ReferenceEvent::AnimationFramesChanged);
 	}

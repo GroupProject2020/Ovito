@@ -35,6 +35,7 @@
 	<file>actions/file/about.bw.svg</file>
 	<file>actions/file/opengl_info.bw.svg</file>
 	<file>actions/file/new_window.bw.svg</file>
+	<file>actions/file/cache_pipeline_output.svg</file>
 
 	<file>actions/viewport/maximize_viewport.bw.svg</file>
 	<file>actions/viewport/mode_orbit.bw.svg</file>

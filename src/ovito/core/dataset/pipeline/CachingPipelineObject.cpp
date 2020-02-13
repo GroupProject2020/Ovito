@@ -28,11 +28,15 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(CachingPipelineObject);
+DEFINE_PROPERTY_FIELD(CachingPipelineObject, pipelineTrajectoryCachingEnabled);
+SET_PROPERTY_FIELD_LABEL(CachingPipelineObject, pipelineTrajectoryCachingEnabled, "Precompute all trajectory frames");
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(dataset)
+CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(dataset),
+	_pipelineCache(this, false),
+	_pipelineTrajectoryCachingEnabled(false)
 {
 }
 
@@ -58,7 +62,7 @@ TimeInterval CachingPipelineObject::validityInterval(const PipelineEvaluationReq
 ******************************************************************************/
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEvaluationRequest& request)
 {
-	return pipelineCache().evaluatePipeline(request, this, nullptr, false);
+	return pipelineCache().evaluatePipeline(request);
 }
 
 /******************************************************************************
@@ -66,7 +70,44 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEv
 ******************************************************************************/
 PipelineFlowState CachingPipelineObject::evaluateSynchronous(TimePoint time)
 {
-	return pipelineCache().evaluatePipelineStageSynchronous(this, time);
+	return pipelineCache().evaluatePipelineStageSynchronous(time);
+}
+
+/******************************************************************************
+* Is called when the value of a non-animatable property field of this RefMaker has changed.
+******************************************************************************/
+void CachingPipelineObject::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(pipelineTrajectoryCachingEnabled)) {
+		pipelineCache().setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+
+		// Send target changed event to trigger a new pipeline evaluation, which is 
+		// needed to start the precomputation process.
+		if(pipelineTrajectoryCachingEnabled())
+			notifyTargetChanged(&PROPERTY_FIELD(pipelineTrajectoryCachingEnabled));
+	}
+
+	PipelineObject::propertyChanged(field);
+}
+
+/******************************************************************************
+* Loads the class' contents from an input stream.
+******************************************************************************/
+void CachingPipelineObject::loadFromStream(ObjectLoadStream& stream)
+{
+	PipelineObject::loadFromStream(stream);
+
+	// Transfer the caching flag loaded from the state file to the internal cache instance.
+	pipelineCache().setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+}
+
+/******************************************************************************
+* Rescales the times of all animation keys from the old animation interval to the new interval.
+******************************************************************************/
+void CachingPipelineObject::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval)
+{
+	PipelineObject::rescaleTime(oldAnimationInterval, newAnimationInterval);
+	pipelineCache().invalidate();
 }
 
 OVITO_END_INLINE_NAMESPACE

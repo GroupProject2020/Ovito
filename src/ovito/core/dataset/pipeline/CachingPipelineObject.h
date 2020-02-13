@@ -40,39 +40,51 @@ class OVITO_CORE_EXPORT CachingPipelineObject : public PipelineObject
 
 public:
 
-	/// \brief Constructor.
+	/// Constructor.
 	CachingPipelineObject(DataSet* dataset);
 
-	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	/// Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request) const override;
 
-	/// \brief Asks the object for the result of the data pipeline.
+	/// Asks the object for the result of the data pipeline.
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) override;
 
-	/// \brief Asks the pipeline stage to compute the preliminary results in a synchronous fashion.
+	/// Asks the pipeline stage to compute the preliminary results in a synchronous fashion.
 	virtual PipelineFlowState evaluateSynchronous(TimePoint time) override;
 
-	/// \brief Returns the internal output cache.
+	/// Rescales the times of all animation keys from the old animation interval to the new interval.
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) override;
+
+	/// Returns the internal output cache.
 	const PipelineCache& pipelineCache() const { return _pipelineCache; }
 
-	/// \brief Returns the internal output cache.
+	/// Returns the internal output cache.
 	PipelineCache& pipelineCache() { return _pipelineCache; }
 
 protected:
 
-	/// \brief Asks the object for the result of the data pipeline.
+	/// Is called when the value of a non-animatable property field of this RefMaker has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+
+	/// Loads the class' contents from an input stream.
+	virtual void loadFromStream(ObjectLoadStream& stream) override;
+
+	/// Asks the object for the result of the data pipeline.
 	virtual Future<PipelineFlowState> evaluateInternal(const PipelineEvaluationRequest& request) = 0;
 
-	/// \brief Lets the pipeline stage compute a preliminary result in a synchronous fashion.
+	/// Lets the pipeline stage compute a preliminary result in a synchronous fashion.
 	virtual PipelineFlowState evaluateInternalSynchronous(TimePoint time) { 
 		return PipelineFlowState(getSourceDataCollection(), status()); 
 	}
 
-	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been
-	///        evaluated but before the rest of the pipeline is complete.
+	/// Decides whether a preliminary viewport update is performed after this pipeline object has been
+	/// evaluated but before the rest of the pipeline is complete.
 	virtual bool performPreliminaryUpdateAfterEvaluation() { return true; }
 
 private:
+
+	/// Activates the precomputation of the pipeline results for all animation frames.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, pipelineTrajectoryCachingEnabled, setPipelineTrajectoryCachingEnabled, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Cache for the data output of this pipeline stage.
 	PipelineCache _pipelineCache;
