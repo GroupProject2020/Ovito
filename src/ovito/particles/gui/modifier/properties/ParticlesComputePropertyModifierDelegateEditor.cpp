@@ -22,15 +22,15 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/modifier/properties/ParticlesComputePropertyModifierDelegate.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
-#include <ovito/gui/widgets/general/AutocompleteTextEdit.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteTextEdit.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "ParticlesComputePropertyModifierDelegateEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticlesComputePropertyModifierDelegateEditor);
 SET_OVITO_OBJECT_EDITOR(ParticlesComputePropertyModifierDelegate, ParticlesComputePropertyModifierDelegateEditor);
@@ -192,8 +192,5 @@ void ParticlesComputePropertyModifierDelegateEditor::onExpressionEditingFinished
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

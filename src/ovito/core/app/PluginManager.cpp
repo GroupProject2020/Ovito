@@ -25,7 +25,7 @@
 
 #include <QLibrary>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(PluginSystem)
+namespace Ovito {
 
 /// The singleton instance of this class.
 PluginManager* PluginManager::_instance = nullptr;
@@ -189,5 +189,4 @@ QVector<OvitoClassPtr> PluginManager::listClasses(const OvitoClass& superClass, 
 	return result;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Stores status information associated with an evaluation of the modification pipeline.
@@ -37,16 +37,14 @@ public:
 	enum StatusType {
 		Success,		//< Indicates that the evaluation was success full.
 		Warning,		//< Indicates that a modifier has issued a warning.
-		Error,			//< Indicates that the evaluation failed.
-		Pending			//< Indicates that the returned results are preliminary.
+		Error			//< Indicates that the evaluation failed.
 	};
 
 	/// Default constructor that creates a status object with status StatusType::Success and an empty info text.
 	PipelineStatus() = default;
 
 	/// Constructs a status object with the given status and optional text string describing the status.
-	PipelineStatus(StatusType t, const QString& text = {}) :
-		_type(t), _text(text) {}
+	PipelineStatus(StatusType t, const QString& text = {}) : _type(t), _text(text) {}
 
 	/// Constructs a status object with success status and a text string describing the status.
 	PipelineStatus(const QString& text) : _text(text) {}
@@ -119,7 +117,6 @@ inline QDebug operator<<(QDebug debug, const PipelineStatus& s)
 {
 	switch(s.type()) {
 	case PipelineStatus::Success: debug << "Success"; break;
-	case PipelineStatus::Pending: debug << "Pending"; break;
 	case PipelineStatus::Warning: debug << "Warning"; break;
 	case PipelineStatus::Error: debug << "Error"; break;
 	}
@@ -128,8 +125,4 @@ inline QDebug operator<<(QDebug debug, const PipelineStatus& s)
 	return debug;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

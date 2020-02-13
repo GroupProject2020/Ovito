@@ -27,7 +27,7 @@
 #include <ovito/core/oo/RefMakerClass.h>
 #include <ovito/core/oo/ReferenceEvent.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 class SingleReferenceFieldBase;		// defined in PropertyFieldDescriptor.h
 class VectorReferenceFieldBase;		// defined in PropertyFieldDescriptor.h
@@ -338,7 +338,6 @@ private:
 	friend class PropertyFieldBase;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(const Ovito::RefMakerClass*);

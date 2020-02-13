@@ -23,8 +23,8 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/app/GuiApplicationService.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/app/GuiApplicationService.h>
 
 namespace VRPlugin {
 

@@ -1,0 +1,32 @@
+<RCC>
+    <qresource prefix="/gui">
+        <file>main.qml</file>
+        <file>ui/qmldir</file>
+        <file>ui/AboutDialog.qml</file>
+        <file>ui/AnimationBar.qml</file>
+        <file>ui/ErrorDialog.qml</file>
+        <file>ui/ImportDialog.qml</file>
+        <file>ui/ToolBar.qml</file>
+        <file>ui/ViewportWindow.qml</file>
+
+        <file>actions/file/file_import.bw.svg</file>
+        <file>actions/file/file_import_remote.bw.svg</file>
+	    <file>actions/file/about.bw.svg</file>
+        <file>actions/edit/edit_undo.bw.svg</file>
+        <file>actions/edit/edit_redo.bw.svg</file>
+        <file>actions/viewport/multi_viewports.svg</file>
+        <file>actions/viewport/zoom_scene_extents.bw.svg</file>
+
+        <file>actions/animation/animation_settings.bw.svg</file>
+        <file>actions/animation/goto_animation_end.bw.svg</file>
+        <file>actions/animation/goto_animation_start.bw.svg</file>
+        <file>actions/animation/goto_next_frame.bw.svg</file>
+        <file>actions/animation/goto_previous_frame.bw.svg</file>
+        <file>actions/animation/play_animation.bw.svg</file>
+        <file>actions/animation/stop_animation.bw.svg</file>
+
+        <file>samples/test.data</file>
+        <file>samples/animation.dump</file>
+        <file>samples/trajectory.xyz</file>
+    </qresource>
+</RCC>

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Smootly interpolates between snapshots of a particle system.
@@ -58,20 +58,34 @@ public:
 	/// Constructor.
 	Q_INVOKABLE InterpolateTrajectoryModifier(DataSet* dataset);
 
+	/// Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
+
+	/// Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) override;
+
+	/// Is called by the ModifierApplication to let the modifier adjust the time interval of a TargetChanged event 
+	/// received from the downstream pipeline before it is propagated to the upstream pipeline.
+	virtual void restrictInputValidityInterval(TimeInterval& iv) const override;
+
 	/// Modifies the input data.
 	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 private:
+
+	/// Computes the interpolated state from two input states.
+	void interpolateState(PipelineFlowState& state1, const PipelineFlowState& state2, ModifierApplication* modApp, TimePoint time, TimePoint time1, TimePoint time2);
 
 	/// Controls whether the minimum image convention is used during displacement calculation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, useMinimumImageConvention, setUseMinimumImageConvention);
 };
 
 /**
- * Used by the InterpolateTrajectoryModifier to cache the input state(s).
+ * This class is no longer used as 02/2020. It's only here for backward compatibility with files written by older OVITO versions.
+ * The class can be removed in the future.
  */
 class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifierApplication : public ModifierApplication
 {
@@ -82,30 +96,7 @@ public:
 
 	/// Constructor.
 	Q_INVOKABLE InterpolateTrajectoryModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
-
-	/// Clears the stored source frame.
-	void invalidateFrameCache() { _frameCache.reset(); }
-
-	/// Replaces the cached source frame.
-	void updateFrameCache(const PipelineFlowState& state) { _frameCache = state; }
-
-	/// Returns the stored source frame.
-	const PipelineFlowState& frameCache() const { return _frameCache; }
-
-protected:
-
-	/// Is called when a RefTarget referenced by this object has generated an event.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
-private:
-
-	/// The cached source frame.
-	PipelineFlowState _frameCache;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

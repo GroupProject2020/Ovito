@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "Controller.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief An animation controller with a constant float value.
@@ -238,5 +238,4 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(Scaling, value, setValue);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

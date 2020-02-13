@@ -24,9 +24,9 @@
 
 
 #include <ovito/particles/gui/ParticlesGui.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief A properties editor for the UnwrapTrajectoriesModifier class.
@@ -45,13 +45,7 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-private Q_SLOTS:
-
-	/// Is called when the user clicks the 'Unwrap trajectories' button.
-	void onUnwrapTrajectories();
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/data/DataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief A type of DataVis that first transforms data into another form before
@@ -44,27 +44,25 @@ protected:
 
 public:
 
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, PipelineSceneNode* pipeline) const { return TimeInterval::infinite(); }
+
 	/// Lets the vis element transform a data object in preparation for rendering.
-	Future<PipelineFlowState> transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState);
+	Future<PipelineFlowState> transformData(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const std::vector<OORef<TransformedDataObject>>& cachedTransformedDataObjects);
 
 	/// Returns the revision counter of this vis element, which is incremented each time one of its parameters changes.
 	unsigned int revisionNumber() const { return _revisionNumber; }
 
 	/// Bumps up the internal revision number of this DataVis in order to mark
 	/// all transformed data objects as outdated which have been generated so far.
-	void invalidateTransformedObjects() {
-		_revisionNumber++;
-	}
+	void invalidateTransformedObjects() { _revisionNumber++; }
 
 protected:
 
 	/// Lets the vis element transform a data object in preparation for rendering.
-	virtual Future<PipelineFlowState> transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState) = 0;
+	virtual Future<PipelineFlowState> transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState) = 0;
 
 private:
-
-	/// The number of data transformations that are currently in progress.
-	int _activeTransformationsCount = 0;
 
 	/// The revision counter of this element.
 	/// The counter is incremented every time one of the object's parameters changes that
@@ -72,6 +70,4 @@ private:
 	unsigned int _revisionNumber = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

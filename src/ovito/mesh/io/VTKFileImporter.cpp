@@ -41,10 +41,10 @@ bool VTKFileImporter::OOMetaClass::supportsDataType(const DataObject::OOMetaClas
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool VTKFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool VTKFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read first line.
 	stream.readLine(24);
@@ -59,11 +59,11 @@ bool VTKFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUr
 /******************************************************************************
 * Parses the given input file and stores the data in the given container object.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading VTK file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading VTK file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)

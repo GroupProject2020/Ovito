@@ -33,7 +33,7 @@
 #include <ovito/core/utilities/io/LoadStream.h>
 #include "Vector3.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A point in 3d space.
@@ -340,8 +340,6 @@ using Point3 = Point_3<FloatType>;
  */
 using Point3I = Point_3<int>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Point3);

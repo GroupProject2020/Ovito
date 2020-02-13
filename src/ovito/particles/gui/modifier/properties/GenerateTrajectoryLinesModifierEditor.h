@@ -24,9 +24,9 @@
 
 
 #include <ovito/particles/gui/ParticlesGui.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief A properties editor for the GenerateTrajectoryLinesModifier class.
@@ -52,6 +52,5 @@ private Q_SLOTS:
 	void onRegenerateTrajectory();
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

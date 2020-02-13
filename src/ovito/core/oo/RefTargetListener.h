@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "RefTarget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief A helper class that can be used to monitor notification events
@@ -193,7 +193,6 @@ public:
 	void insert(int index, T* target) { VectorRefTargetListenerBase::insert(index, target); }
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

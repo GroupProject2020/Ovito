@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,9 +26,10 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/NativePropertyFieldDescriptor.h>
 #include <ovito/core/oo/PropertyField.h>
+#include <ovito/core/oo/RefTargetExecutor.h>
 #include "RefMaker.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Base class for objects that are referenced by RefMaker objects.
@@ -198,7 +199,13 @@ public:
 
 	/// \brief Sends a ReferenceEvent::TargetChanged event to all dependents of this RefTarget.
 	inline void notifyTargetChanged(const PropertyFieldDescriptor* field = nullptr) const {
-		const_cast<RefTarget*>(this)->notifyDependentsImpl(PropertyFieldEvent(ReferenceEvent::TargetChanged, const_cast<RefTarget*>(this), field));
+		const_cast<RefTarget*>(this)->notifyDependentsImpl(TargetChangedEvent(const_cast<RefTarget*>(this), field));
+	}
+
+	/// \brief Notifies the dependents that this object's state has changed outside of the given animation time interval
+	///        but remained the same within the interval.
+	inline void notifyTargetChangedOutsideInterval(const TimeInterval& interval) const {
+		const_cast<RefTarget*>(this)->notifyDependentsImpl(TargetChangedEvent(const_cast<RefTarget*>(this), nullptr, interval));
 	}
 
 	////////////////////////////////// Dependency graph ///////////////////////////////////////
@@ -263,6 +270,22 @@ public:
 	/// \brief Determines if this object's properties are currently being edited in an editor.
 	bool isObjectBeingEdited() const;
 
+	/// Returns an executor object to be used with Future<>::then(), which executes work
+	/// in the context (and the thread) of this object.
+	RefTargetExecutor executor() const { return RefTargetExecutor(this); }
+
+	/// \brief Rescales the times of all animation keys from the old animation interval to the new interval.
+	/// \param oldAnimationInterval The old animation interval, which should be mapped to the new animation interval.
+	/// \param newAnimationInterval The new animation interval.
+	///
+	/// For keyed controllers this will rescale the key times of all keys from the
+	/// old animation interval to the new interval using a linear mapping.
+	///
+	/// Keys that lie outside of the old animation interval will also be scaled using linear extrapolation.
+	///
+	/// The default implementation does nothing.
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) {}
+
 private:
 
 	/// The list of reference fields that hold a reference to this target.
@@ -274,5 +297,4 @@ private:
 	friend class VectorReferenceFieldBase;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

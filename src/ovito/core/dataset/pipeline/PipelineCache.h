@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,53 +26,110 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
+#include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
- * \brief A local cache for PipelineFlowState objects.
+ * \brief A data cache for PipelineFlowState objects, which is used in the implementation of the PipelineSceneNode 
+ *        and the CachingPipelineObject class.
  */
 class OVITO_CORE_EXPORT PipelineCache
 {
 public:
 
-	/// Determines whether the cache contains a cached pipeline state for the given animation time.
-	bool contains(TimePoint time, bool onlyCurrentAnimTime = false) const;
+	/// Constructor.
+	PipelineCache(RefTarget* owner, bool includeVisElements);
 
-	/// Returns a state from this cache that is valid at the given animation time.
-	/// If the cache contains no state for the given animation time, then an empty pipeline state is returned.
+	/// Destructor.
+	~PipelineCache();
+
+	/// Starts a pipeline evaluation or returns a reference to an existing evaluation that is currently in progress. 
+	SharedFuture<PipelineFlowState> evaluatePipeline(const PipelineEvaluationRequest& request);
+
+	/// Performs a synchronous pipeline evaluation.
+	const PipelineFlowState& evaluatePipelineSynchronous(TimePoint time);
+
+	/// Performs a synchronous evaluation of a pipeline stage.
+	const PipelineFlowState& evaluatePipelineStageSynchronous(TimePoint time);
+
+	/// Looks up the pipeline state for the given animation time.
 	const PipelineFlowState& getAt(TimePoint time) const;
 
-	/// This is a special function that can be used after a call to invalidate() to access the
-	/// stale cache contents.
-	const PipelineFlowState& getStaleContents() const { return _currentAnimState; }
+	/// Returns the cached results from the last synchronous pipeline evaluation, which is used for interactive viewport rendering.
+	const PipelineFlowState& synchronousState() const { return _synchronousState; }
 
-	/// Puts the given pipeline state into the cache for later retrieval.
-	/// The cache may decide not to cache the state, in which case the method returns false.
-	bool insert(PipelineFlowState state, const RefTarget* ownerObject);
+	/// Invalidates the cached results from a synchronous pipeline evaluation.
+	void invalidateSynchronousState() { _synchronousState.setStateValidity(TimeInterval::empty()); }
 
-	/// Puts the given pipeline state into the cache when it comes available.
-	/// Depending on the given state validity interval, the cache may decide not to cache the state,
-	/// in which case the method returns false.
-	bool insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject);
+	/// Marks the contents of the cache as outdated and throws away data that is no longer needed.
+	void invalidate(TimeInterval keepInterval = TimeInterval::empty(), bool resetSynchronousCache = false);
 
-	/// Marks the contents of the cache as outdated and throws away the stored data.
-	///
-	/// \param keepStaleContents Requests the cache to not throw away some of the data. This will mark the cached state as stale, but holds on to it.
-	///                          The stored data can still be access via getStaleContents() after this method has been called.
-	/// \param keepInterval An optional time interval over which the cached data should be retained. The validity interval of the cached contents
-	///                     will be reduced to this interval.
-	void invalidate(bool keepStaleContents = false, TimeInterval keepInterval = TimeInterval::empty());
+	/// Special method used by the FileSource class to replace the contents of the pipeline
+	/// cache with a data collection modified by the user.
+	void overrideCache(DataCollection* dataCollection);
 
+	/// Enables or disables the precomputation and caching of all frames of the animation.
+	void setPrecomputeAllFrames(bool enable);
+	
 private:
 
-	/// Keeps the most recently inserted state.
-	PipelineFlowState _mostRecentState;
+	/// Describes a pipeline evaluation that is currently in progress. 
+	struct EvaluationInProgress {
+		TimeInterval validityInterval;
+		WeakSharedFuture<PipelineFlowState> future;
+	};
 
-	/// Keeps the state for the current animation time.
-	PipelineFlowState _currentAnimState;
+	/// Returns a pointer to the pipeline object that owns this cache.
+	RefTarget* ownerObject() const { return _ownerObject; }
+
+	/// Inserts (or may reject) a pipeline state into the cache. 
+	void insertState(const PipelineFlowState& state);
+
+	/// Populates the internal cache with transformed data objects generated by transforming visual elements.
+	void cacheTransformedDataObjects(const PipelineFlowState& state);
+
+	/// Removes an evaluation record from the list of evaluations currently in progress.
+	void cleanupEvaluation(std::forward_list<EvaluationInProgress>::iterator evaluation);
+
+	/// Starts the process of caching the pipeline results for all animation frames.
+	void startFramePrecomputation();
+
+	/// Requests the next frame from the pipeline that needs to be precomputed.
+	void precomputeNextAnimationFrame();
+
+	/// The contents of the cache.
+	std::vector<PipelineFlowState> _cachedStates;
+
+	/// Results from the last synchronous pipeline evaluation, which is used for interactive viewport rendering.
+	PipelineFlowState _synchronousState;
+
+	/// The union of time intervals for which this cache should maintain pipeline states.
+	TimeIntervalUnion _requestedIntervals;
+
+	/// The set of activate pipeline evaluations.
+	std::forward_list<EvaluationInProgress> _evaluationsInProgress;
+
+	/// A cache with the transformed data objects generated during the last pipeline evaluation.
+	std::vector<OORef<TransformedDataObject>> _cachedTransformedDataObjects;
+
+	/// The object this cache belongs to (either a PipelineSceneNode or a CachingPipelineObject).
+	RefTarget* _ownerObject;
+
+	/// Include the effect of visual elements in the pipeline evaluation.
+	bool _includeVisElements = false;
+
+	/// Enables the precomputation of the pipeline output for all animation frames.
+	bool _precomputeAllFrames = false;
+
+	/// The asynchronous task that precomputes the pipeline output for all animation frames.
+	AsyncOperation _precomputeFramesOperation;
+
+#ifdef OVITO_DEBUG
+	/// While this flag is set, the cache may not be invalidated.
+	bool _preparingEvaluation = false; 
+#endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

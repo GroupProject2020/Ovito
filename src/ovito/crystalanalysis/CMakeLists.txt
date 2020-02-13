@@ -22,7 +22,6 @@
 
 SET(SourceFiles
 	importer/CAImporter.cpp
-	importer/DislocImporter.cpp
 	importer/ParaDiSImporter.cpp
 	exporter/CAExporter.cpp
 	exporter/VTKDislocationsExporter.cpp
@@ -56,15 +55,25 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 		)
 ENDIF()
 
+IF(TARGET NetCDFIntegration)
+	LIST(APPEND SourceFiles
+		importer/DislocImporter.cpp
+	)
+ENDIF()
+
 # Define the plugin module.
 OVITO_STANDARD_PLUGIN(CrystalAnalysis
 	SOURCES
 		CrystalAnalysis.cpp
 		${SourceFiles}
 	PLUGIN_DEPENDENCIES Particles Mesh StdObj Grid Delaunay
-	PRIVATE_LIB_DEPENDENCIES NetCDFIntegration
 	OPTIONAL_PLUGIN_DEPENDENCIES StdMod
 )
+
+# The DislocImporter class requires NetCDF support.
+IF(TARGET NetCDFIntegration)
+	TARGET_LINK_LIBRARIES(CrystalAnalysis PRIVATE NetCDFIntegration)
+ENDIF()
 
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)

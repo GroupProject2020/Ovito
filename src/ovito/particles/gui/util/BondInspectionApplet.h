@@ -28,11 +28,11 @@
 #include <ovito/particles/objects/BondsObject.h>
 #include <ovito/particles/util/ParticleExpressionEvaluator.h>
 #include <ovito/stdobj/gui/properties/PropertyInspectionApplet.h>
-#include <ovito/gui/viewport/input/ViewportInputMode.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
-#include <ovito/gui/viewport/input/ViewportGizmo.h>
+#include <ovito/gui/base/viewport/ViewportInputMode.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/core/viewport/ViewportGizmo.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 
 /**
@@ -84,10 +84,10 @@ private:
 		PickingMode(BondInspectionApplet* applet) : ViewportInputMode(applet), _applet(applet) {}
 
 		/// Handles the mouse up events for a viewport.
-		virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+		virtual void mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 		/// Handles the mouse move event for the given viewport.
-		virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+		virtual void mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 		/// Clears the list of picked bonds.
 		void resetSelection() {
@@ -112,7 +112,5 @@ private:
 	PickingMode* _pickingMode;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

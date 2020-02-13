@@ -22,10 +22,10 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/export/vasp/POSCARExporter.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include "POSCARExporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(POSCARExporterEditor);
 SET_OVITO_OBJECT_EDITOR(POSCARExporter, POSCARExporterEditor);
@@ -47,8 +47,5 @@ void POSCARExporterEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	layout->addWidget(reducedCoordsUI->checkBox());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

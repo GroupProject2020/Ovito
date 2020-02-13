@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,7 +33,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "FileExporter.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileExporter);
 DEFINE_PROPERTY_FIELD(FileExporter, outputFilename);
@@ -137,7 +137,7 @@ void FileExporter::selectDefaultExportableData()
 bool FileExporter::isSuitableNode(SceneNode* node) const
 {
 	if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(node)) {
-		return isSuitablePipelineOutput(pipeline->evaluatePipelinePreliminary(true));
+		return isSuitablePipelineOutput(pipeline->evaluatePipelineSynchronous(true));
 	}
 	return false;
 }
@@ -150,7 +150,7 @@ bool FileExporter::isSuitableNode(SceneNode* node) const
 ******************************************************************************/
 bool FileExporter::isSuitablePipelineOutput(const PipelineFlowState& state) const
 {
-	if(state.isEmpty()) return false;
+	if(!state) return false;
 	std::vector<DataObjectClassPtr> objClasses = exportableDataObjectClass();
 	if(objClasses.empty())
 		return true;
@@ -171,18 +171,18 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 		throwException(tr("The scene object to be exported is not a data pipeline."));
 
 	// Evaluate pipeline.
-	PipelineEvaluationFuture future(time, !ignorePipelineErrors());
-	future.execute(pipeline, requestRenderState);
+	PipelineEvaluationRequest request(time, !ignorePipelineErrors());
+	PipelineEvaluationFuture future = requestRenderState ? pipeline->evaluateRenderingPipeline(request) : pipeline->evaluatePipeline(request);
 	if(!operation.waitForFuture(future))
 		return {};
 	PipelineFlowState state = future.result();
 
 	if(!ignorePipelineErrors() && state.status().type() == PipelineStatus::Error)
-		throwException(tr("Export of frame %1 failed, because data pipeline evaluation did not succeed. Status message: %2")
+		throwException(tr("Export of animation frame %1 failed, because data pipeline evaluation did not succeed. Status message: %2")
 			.arg(dataset()->animationSettings()->timeToFrame(time))
 			.arg(state.status().text()));
 
-	if(state.isEmpty())
+	if(!state)
 		throwException(tr("The data collection to be exported is empty."));
 
 	return state;
@@ -257,7 +257,7 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 
 			operation.setProgressText(tr("Exporting frame %1 to file '%2'").arg(frameNumber).arg(filename));
 
-			exportFrame(frameNumber, exportTime, filename, operation.createSubTask());
+			exportFrame(frameNumber, exportTime, filename, operation.createSubOperation());
 
 			if(exportAnimation() && useWildcardFilename())
 				closeOutputFile(!operation.isCanceled());
@@ -306,7 +306,7 @@ void FileExporter::activateCLocale()
 QString FileExporter::getAvailableDataObjectList(const PipelineFlowState& state, const DataObject::OOMetaClass& objectType) const
 {
 	QString str;
-	if(!state.isEmpty()) {
+	if(state) {
 		for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(objectType)) {
 			QString pathString = dataPath.toString();
 			if(!pathString.isEmpty()) {
@@ -321,5 +321,4 @@ QString FileExporter::getAvailableDataObjectList(const PipelineFlowState& state,
 }
 
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

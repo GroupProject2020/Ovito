@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "ProgressiveTask.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * \brief Type of Task to be used within a single-thread context.
@@ -41,8 +41,7 @@ class OVITO_CORE_EXPORT MainThreadTask : public ProgressiveTask
 public:
 
 	/// Constructor.
-	MainThreadTask(State initialState, TaskManager& taskManager) :
-		ProgressiveTask(initialState), _taskManager(taskManager) {}
+	explicit MainThreadTask(State initialState, TaskManager* taskManager) : ProgressiveTask(initialState, taskManager) {}
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
@@ -54,21 +53,6 @@ public:
 
 	/// Changes the status text of this promise.
 	virtual void setProgressText(const QString& progressText) override;
-
-	/// Creates a child operation.
-	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa.
-	virtual Promise<> createSubTask() override;
-
-	/// Blocks execution until the given future enters the completed state.
-	virtual bool waitForFuture(const FutureBase& future) override;
-
-protected:
-
-	TaskManager& _taskManager;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

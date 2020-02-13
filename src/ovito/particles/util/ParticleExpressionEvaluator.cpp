@@ -25,7 +25,7 @@
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include "ParticleExpressionEvaluator.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Initializes the list of input variables from the given input state.
@@ -56,7 +56,5 @@ void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

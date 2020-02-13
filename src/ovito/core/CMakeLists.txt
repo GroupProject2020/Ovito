@@ -48,13 +48,13 @@ SET(SourceFiles
 	oo/CloneHelper.cpp
 	oo/OvitoClass.cpp
 	oo/OvitoObject.cpp
-	oo/OvitoObjectExecutor.cpp
 	oo/PropertyFieldDescriptor.cpp
 	oo/PropertyField.cpp
 	oo/RefMaker.cpp
 	oo/RefMakerClass.cpp
 	oo/RefTarget.cpp
 	oo/RefTargetListener.cpp
+	oo/RefTargetExecutor.cpp
 	dataset/animation/AnimationSettings.cpp
 	dataset/animation/controller/Controller.cpp
 	dataset/animation/controller/ConstantControllers.cpp
@@ -84,6 +84,7 @@ SET(SourceFiles
 	dataset/data/TransformedDataObject.cpp
 	dataset/data/camera/AbstractCameraObject.cpp
 	dataset/data/AttributeDataObject.cpp
+	dataset/pipeline/ActiveObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp
 	dataset/pipeline/PipelineCache.cpp
 	dataset/pipeline/PipelineEvaluation.cpp
@@ -104,12 +105,10 @@ SET(SourceFiles
 	utilities/io/CompressedTextReader.cpp
 	utilities/io/CompressedTextWriter.cpp
 	utilities/concurrent/TaskWatcher.cpp
-	utilities/concurrent/Promise.cpp
 	utilities/concurrent/Task.cpp
 	utilities/concurrent/MainThreadTask.cpp
 	utilities/concurrent/ProgressiveTask.cpp
 	utilities/concurrent/ThreadSafeTask.cpp
-	utilities/concurrent/TrackingTask.cpp
 	utilities/concurrent/TaskManager.cpp
 	utilities/concurrent/AsynchronousTask.cpp
 	utilities/concurrent/AsyncOperation.cpp
@@ -126,6 +125,7 @@ SET(SourceFiles
 	rendering/RenderSettings.cpp
 	rendering/FrameBuffer.cpp
 	viewport/Viewport.cpp
+	viewport/ViewportWindowInterface.cpp
 	viewport/ViewportConfiguration.cpp
 	viewport/ViewportSettings.cpp
 	viewport/overlays/ViewportOverlay.cpp
@@ -155,6 +155,14 @@ ELSE()
 	MESSAGE("Libssh library not found. OVITO will be built without built-in SSH client.")
 ENDIF()
 
+# Make use of the zlib library provided by Emscripten.
+IF(NOT ZLIB_FOUND AND EMSCRIPTEN)
+	MESSAGE("Using Emscripten port of zlib library.")
+	ADD_LIBRARY(ZLIB::ZLIB INTERFACE IMPORTED)
+	TARGET_COMPILE_OPTIONS(ZLIB::ZLIB INTERFACE "SHELL:-s USE_ZLIB=1")
+	SET(ZLIB_FOUND TRUE)
+ENDIF()
+
 # Include optional Gzip file support.
 IF(ZLIB_FOUND)
 	LIST(APPEND SourceFiles
@@ -170,7 +178,7 @@ QT5_ADD_RESOURCES(ResourceFiles resources/core.qrc)
 # Define library target.
 OVITO_STANDARD_PLUGIN(Core
 	SOURCES Core.cpp ${SourceFiles} ${ResourceFiles}
-	LIB_DEPENDENCIES Boost::boost Qt5::Network
+	LIB_DEPENDENCIES Boost::boost
 )
 
 # Link to zlib.
@@ -216,8 +224,14 @@ ENDIF()
 IF(OVITO_BUILD_MONOLITHIC)
 	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_BUILD_MONOLITHIC")
 ENDIF()
+IF(OVITO_DISABLE_THREADING)
+	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_DISABLE_THREADING")
+ENDIF()
 IF(OVITO_BUILD_GUI)
 	SET_PROPERTY(SOURCE app/Application.cpp APPEND PROPERTY COMPILE_DEFINITIONS "OVITO_BUILD_GUI")
+ENDIF()
+IF(OVITO_BUILD_WEBGUI)
+	SET_PROPERTY(SOURCE app/Application.cpp APPEND PROPERTY COMPILE_DEFINITIONS "OVITO_BUILD_WEBGUI")
 ENDIF()
 IF(OVITO_BUILD_PROFESSIONAL)
 	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_BUILD_PROFESSIONAL")

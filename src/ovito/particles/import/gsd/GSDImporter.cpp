@@ -34,7 +34,7 @@
 #include <QJsonValue>
 #include <QJsonParseError>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(GSDImporter);
 DEFINE_PROPERTY_FIELD(GSDImporter, roundingResolution);
@@ -46,6 +46,8 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(GSDImporter, roundingResolution, IntegerParam
 ******************************************************************************/
 void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
 {
+	ParticleImporter::propertyChanged(field);
+
 	if(field == PROPERTY_FIELD(roundingResolution)) {
 		// Clear shape cache and reload GSD file when the rounding resolution is changed.
 		_cacheSynchronization.lockForWrite();
@@ -53,20 +55,20 @@ void GSDImporter::propertyChanged(const PropertyFieldDescriptor& field)
 		_cacheSynchronization.unlock();
 		requestReload();
 	}
-	ParticleImporter::propertyChanged(field);
 }
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool GSDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool GSDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
-	QString filename = QDir::toNativeSeparators(input.fileName());
-
-	gsd_handle handle;
-	if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == gsd_error::GSD_SUCCESS) {
-		::gsd_close(&handle);
-		return true;
+	QString filename = QDir::toNativeSeparators(file.localFilePath());
+	if(!filename.isEmpty()) {
+		gsd_handle handle;
+		if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == gsd_error::GSD_SUCCESS) {
+			::gsd_close(&handle);
+			return true;
+		}
 	}
 
 	return false;
@@ -95,24 +97,22 @@ TriMeshPtr GSDImporter::lookupParticleShapeInCache(const QByteArray& jsonString)
 /******************************************************************************
 * Scans the input file for simulation timesteps.
 ******************************************************************************/
-void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void GSDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 
 	// First close text stream, we don't need it here.
-	QString filename = QDir::toNativeSeparators(file.fileName());
+	QString filename = QDir::toNativeSeparators(fileHandle().localFilePath());
+	if(filename.isEmpty())
+		throw Exception(tr("The GSD file reader supports reading only from physical files. Cannot read data from an in-memory buffer."));
 
 	// Open GSD file for reading.
 	GSDFile gsd(filename.toLocal8Bit().constData());
 	uint64_t nFrames = gsd.numerOfFrames();
 
-	QFileInfo fileInfo(filename);
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
 	for(uint64_t i = 0; i < nFrames; i++) {
-		Frame frame;
-		frame.sourceFile = sourceUrl;
 		frame.byteOffset = i;
-		frame.lastModificationTime = lastModified;
 		frame.label = tr("Frame %1").arg(i);
 		frames.push_back(frame);
 	}
@@ -121,12 +121,14 @@ void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile()
 {
-	setProgressText(tr("Reading GSD file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading GSD file %1").arg(fileHandle().toString()));
 
 	// Open GSD file for reading.
-	QString filename = QDir::toNativeSeparators(file.fileName());
+	QString filename = QDir::toNativeSeparators(fileHandle().localFilePath());
+	if(filename.isEmpty())
+		throw Exception(tr("The GSD file reader supports reading only from physical files. Cannot read data from an in-memory buffer."));
 	GSDFile gsd(filename.toLocal8Bit().constData());
 
 	// Check schema name.
@@ -779,7 +781,5 @@ void GSDImporter::FrameLoader::parseMeshShape(int typeId, ParticleFrameData::Typ
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

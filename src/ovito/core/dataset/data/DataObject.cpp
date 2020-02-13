@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/pipeline/StaticSource.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DataObject);
 DEFINE_PROPERTY_FIELD(DataObject, identifier);
@@ -181,6 +181,4 @@ DataObject* DataObject::makeMutable(const DataObject* subObject)
 	return const_cast<DataObject*>(subObject);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

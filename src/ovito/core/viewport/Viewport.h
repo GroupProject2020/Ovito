@@ -26,53 +26,13 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/RefTarget.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
-#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/viewport/overlays/ViewportOverlay.h>
+#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include "ViewportSettings.h"
 #include "ViewportWindowInterface.h"
+#include "ViewportProjectionParameters.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
-
-/******************************************************************************
-* This data structure describes a projection parameters used to render
-* the 3D contents in a viewport.
-******************************************************************************/
-struct ViewProjectionParameters
-{
-	/// The aspect ratio (height/width) of the viewport.
-	FloatType aspectRatio;
-
-	/// Indicates whether this is a orthogonal or perspective projection.
-	bool isPerspective;
-
-	/// The distance of the front clipping plane in world units.
-	FloatType znear;
-
-	/// The distance of the back clipping plane in world units.
-	FloatType zfar;
-
-	/// For orthogonal projections this is the vertical field of view in world units.
-	/// For perspective projections this is the vertical field of view angle in radians.
-	FloatType fieldOfView;
-
-	/// The world to view space transformation matrix.
-	AffineTransformation viewMatrix;
-
-	/// The view space to world space transformation matrix.
-	AffineTransformation inverseViewMatrix;
-
-	/// The view space to screen space projection matrix.
-	Matrix4 projectionMatrix;
-
-	/// The screen space to view space transformation matrix.
-	Matrix4 inverseProjectionMatrix;
-
-	/// The bounding box of the scene.
-	Box3 boundingBox;
-
-	/// Specifies the time interval during which the stored parameters stay constant.
-	TimeInterval validityInterval;
-};
+namespace Ovito {
 
 /**
  * \brief A viewport window that displays the current scene.
@@ -81,6 +41,11 @@ class OVITO_CORE_EXPORT Viewport : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(Viewport)
+
+	Q_PROPERTY(QString title READ viewportTitle NOTIFY viewportChanged);
+	Q_PROPERTY(bool gridVisible READ isGridVisible WRITE setGridVisible NOTIFY viewportChanged);
+	Q_PROPERTY(bool previewMode READ renderPreviewMode WRITE setRenderPreviewMode NOTIFY viewportChanged);
+	Q_PROPERTY(Ovito::Viewport::ViewType viewType READ viewType WRITE setViewType NOTIFY viewportChanged);
 
 public:
 
@@ -97,7 +62,7 @@ public:
 		VIEW_PERSPECTIVE,
 		VIEW_SCENENODE,
 	};
-	Q_ENUMS(ViewType);
+	Q_ENUM(ViewType);
 
 public:
 
@@ -225,15 +190,6 @@ public:
 	/// The returned box is given in viewport coordinates (interval [-1,+1]).
 	Box2 renderFrameRect() const;
 
-	/// \brief Zooms to the extents of the scene.
-	Q_INVOKABLE void zoomToSceneExtents();
-
-	/// \brief Zooms to the extents of the currently selected nodes.
-	Q_INVOKABLE void zoomToSelectionExtents();
-
-	/// \brief Zooms to the extents of the given bounding box.
-	Q_INVOKABLE void zoomToBox(const Box3& box);
-
 	/// \brief Returns a color value for drawing something in the viewport. The user can configure the color for each element.
 	/// \param which The enum constant that specifies what type of element to draw.
 	/// \return The color that should be used for the given element type.
@@ -285,6 +241,22 @@ public:
 	/// Renders the contents of the interactive viewport in a window.
 	/// This is an internal method, which should not be called by user code.
 	void renderInteractive(SceneRenderer* renderer);
+
+public Q_SLOTS:
+
+	/// \brief Zooms to the extents of the scene.
+	void zoomToSceneExtents();
+
+	/// \brief Zooms to the extents of the currently selected nodes.
+	void zoomToSelectionExtents();
+
+	/// \brief Zooms to the extents of the given bounding box.
+	void zoomToBox(const Box3& box);
+
+Q_SIGNALS:
+
+	/// This signal is emitted whenever any of the UI properties of the viewport change.
+	void viewportChanged();
 
 protected:
 
@@ -369,10 +341,4 @@ private:
 	ViewportWindowInterface* _window = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-Q_DECLARE_METATYPE(Ovito::Viewport::ViewType);
-Q_DECLARE_TYPEINFO(Ovito::Viewport::ViewType, Q_PRIMITIVE_TYPE);
-
-#include <ovito/core/rendering/SceneRenderer.h>

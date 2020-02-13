@@ -55,6 +55,10 @@ ENDIF()
 # It is ignored oustide of Visual Studio Code/CMake tools.
 INCLUDE(CMakeToolsHelpers OPTIONAL)
 
+IF(EMSCRIPTEN)
+	INCLUDE(cmake/wasm.cmake)
+ENDIF()
+
 SET(OVITO_SOURCE_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
 LIST(APPEND CMAKE_MODULE_PATH "${OVITO_SOURCE_BASE_DIR}/cmake")
 INCLUDE(cmake/Version.cmake)
@@ -63,12 +67,14 @@ INCLUDE(cmake/PrecompiledHeader.cmake)
 
 # Define build options.
 OPTION(OVITO_DOUBLE_PRECISION_FP "Use double-precision floating-point numbers." "ON")
-OPTION(OVITO_BUILD_GUI "Build the graphical user interface." "ON")
+OPTION(OVITO_BUILD_GUI "Build the graphical user interface for the desktop application." "ON")
+OPTION(OVITO_BUILD_WEBGUI "Build the graphical user interface for the web brwoser." "OFF")
 OPTION(OVITO_BUILD_MONOLITHIC "Build a monolithic executable, statically linking all plugins." "OFF")
 OPTION(OVITO_REDISTRIBUTABLE_PACKAGE "Create a redistributable program package that includes third-party libraries." "OFF")
 OPTION(OVITO_BUILD_APPSTORE_VERSION "Build binaries for the Apple App Store and Windows Store." "OFF")
 OPTION(OVITO_RUN_CLANG_TIDY "Run the clang-tidy tool to check code." "OFF")
 OPTION(OVITO_USE_PRECOMPILED_HEADERS "Use precompiled C++ headers to speed up build." "ON")
+OPTION(OVITO_DISABLE_THREADING "Disable multi-threading code (meant only for development purposes)." "OFF")
 
 # Define user options that control the building of OVITO's standard plugins.
 OPTION(OVITO_BUILD_PLUGIN_STDOBJ "Build the standard objects plugin." "ON")

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,7 +27,7 @@
 #include "ThreadSafeTask.h"
 #include "Future.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 class OVITO_CORE_EXPORT AsynchronousTaskBase : public ThreadSafeTask, public QRunnable
 {
@@ -36,26 +36,8 @@ public:
 	/// Destructor.
 	virtual ~AsynchronousTaskBase();
 
-	/// Runs the given function once this task has reached the 'finished' state.
-	/// The function is run even if the task was canceled or produced an error state.
-	template<typename FC, class Executor>
-	void finally(Executor&& executor, FC&& cont)
-	{
-		addContinuation(
-			executor.createWork([cont = std::forward<FC>(cont)](bool workCanceled) mutable {
-				if(!workCanceled)
-					std::move(cont)();
-		}));
-	}
-
 	/// This virtual function is responsible for computing the results of the task.
 	virtual void perform() = 0;
-
-	/// Blocks execution until the given future enters the completed state.
-	virtual bool waitForFuture(const FutureBase& future) override;
-
-	/// Returns the TaskManager managing this task while it is running.
-	TaskManager& taskManager() { OVITO_ASSERT(_taskManager != nullptr); return *_taskManager; }
 
 protected:
 
@@ -68,9 +50,6 @@ private:
 
 	/// Implementation of QRunnable.
 	virtual void run() override;
-
-	/// The TaskManager which manages this task while it is running.
-	TaskManager* _taskManager = nullptr;
 
 	friend class TaskManager;
 };
@@ -106,6 +85,4 @@ protected:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

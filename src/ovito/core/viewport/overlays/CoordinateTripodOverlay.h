@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/FrameBuffer.h>
 #include "ViewportOverlay.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief A viewport overlay that displays the coordinate system orientation.
@@ -157,8 +157,6 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(TripodStyle, tripodStyle, setTripodStyle, PROPERTY_FIELD_MEMORIZE);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::CoordinateTripodOverlay::TripodStyle);

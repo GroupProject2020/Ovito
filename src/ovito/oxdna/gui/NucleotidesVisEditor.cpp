@@ -22,10 +22,10 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/oxdna/NucleotidesVis.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include "NucleotidesVisEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(NucleotidesVisEditor);
 SET_OVITO_OBJECT_EDITOR(NucleotidesVis, NucleotidesVisEditor);
@@ -55,6 +55,5 @@ void NucleotidesVisEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	layout->addLayout(cylinderRadiusUI->createFieldLayout(), 1, 1);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

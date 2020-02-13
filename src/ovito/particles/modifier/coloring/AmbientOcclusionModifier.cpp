@@ -32,7 +32,7 @@
 #include "AmbientOcclusionModifier.h"
 #include "AmbientOcclusionRenderer.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(AmbientOcclusionModifier);
 DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, intensity);
@@ -67,7 +67,7 @@ bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const DataCollection&
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(Application::instance()->headlessMode())
 		throwException(tr("The ambient occlusion modifier requires OpenGL support and cannot be used when program is running in headless mode. "
@@ -106,7 +106,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, particles, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
 
 	// Make sure the renderer and the offscreen surface stay alive until the compute engine finished.
-	engine->task()->finally(dataset()->executor(), [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
+	engine->task()->finally(dataset()->executor(), false, [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
 
 	return engine;
 }
@@ -271,7 +271,5 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint tim
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

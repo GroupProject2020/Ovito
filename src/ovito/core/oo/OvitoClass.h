@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/OORef.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Meta-class for classes derived from OvitoObject.
@@ -272,7 +272,6 @@ private: \
 		OVITO_PLUGIN_NAME, \
 		nullptr);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::OvitoClassPtr);

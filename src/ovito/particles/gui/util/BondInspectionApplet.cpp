@@ -22,12 +22,12 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/BondsObject.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
 #include "BondInspectionApplet.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(BondInspectionApplet);
 
@@ -105,7 +105,7 @@ void BondInspectionApplet::deactivate(MainWindow* mainWindow)
 /******************************************************************************
 * Handles the mouse up events for a Viewport.
 ******************************************************************************/
-void BondInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void BondInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
 		PickResult pickResult;
@@ -139,7 +139,7 @@ void BondInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vpwin,
 /******************************************************************************
 * Handles the mouse move event for the given viewport.
 ******************************************************************************/
-void BondInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void BondInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	// Change mouse cursor while hovering over a bond.
 	PickResult pickResult;
@@ -151,7 +151,5 @@ void BondInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin, QM
 	ViewportInputMode::mouseMoveEvent(vpwin, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

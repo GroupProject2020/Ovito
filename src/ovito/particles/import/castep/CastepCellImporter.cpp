@@ -27,7 +27,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CastepCellImporter);
 
@@ -61,10 +61,10 @@ static const char* chemical_symbols[] = {
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool CastepCellImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool CastepCellImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for string '%BLOCK POSITIONS' to occur within the first 100 lines of the .cell file.
 	for(int i = 0; i < 100 && !stream.eof(); i++) {
@@ -78,11 +78,11 @@ bool CastepCellImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading CASTEP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading CASTEP file %1").arg(fileHandle().toString()));
 
 	// Helper function that reads and returns the next line from the .cell file
 	// that is not a comment line:
@@ -225,7 +225,5 @@ FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

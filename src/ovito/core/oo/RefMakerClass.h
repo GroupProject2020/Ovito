@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/OvitoClass.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Meta-class for classes derived from RefMaker.
@@ -109,5 +109,4 @@ private:
 	friend class PropertyFieldDescriptor;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

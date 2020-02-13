@@ -25,7 +25,7 @@
 #include <ovito/core/Core.h>
 #include "DataObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /// Utility class that is used to reference a particular data object in a DataCollection
 /// as a path through the hierarchy of nested data objects.
@@ -182,8 +182,6 @@ public:
 	}
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::DataObjectReference);

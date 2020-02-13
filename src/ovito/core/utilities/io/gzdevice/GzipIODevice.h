@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 struct ZLibState;   // Internal data structure
 
@@ -124,5 +124,4 @@ private:
     std::unique_ptr<unsigned char[]> _buffer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

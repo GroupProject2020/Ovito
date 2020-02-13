@@ -35,7 +35,7 @@
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "ConstructSurfaceModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 using namespace Ovito::Delaunay;
 
@@ -94,7 +94,7 @@ bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const DataCollection&
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier inputs.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
@@ -431,6 +431,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::emitResults(TimePoint time, Mod
 
 	if(surfaceParticleSelection()) {
 		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
+		particles->verifyIntegrity();
 		particles->createProperty(surfaceParticleSelection());
 	}
 
@@ -466,7 +467,5 @@ void ConstructSurfaceModifier::GaussianDensityEngine::emitResults(TimePoint time
 	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1").arg(surfaceArea())));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

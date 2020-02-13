@@ -22,13 +22,13 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/TrajectoryVis.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
 #include "TrajectoryVisEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(TrajectoryVisEditor);
 SET_OVITO_OBJECT_EDITOR(TrajectoryVis, TrajectoryVisEditor);
@@ -73,6 +73,5 @@ void TrajectoryVisEditor::createUI(const RolloutInsertionParameters& rolloutPara
 	layout->addWidget(showUpToCurrentTimeUI->checkBox(), 4, 0, 1, 2);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

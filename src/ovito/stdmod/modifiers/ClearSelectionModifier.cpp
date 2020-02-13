@@ -39,9 +39,9 @@ ClearSelectionModifier::ClearSelectionModifier(DataSet* dataset) : GenericProper
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void ClearSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void ClearSelectionModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No input element type selected."));

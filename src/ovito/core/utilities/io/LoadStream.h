@@ -30,7 +30,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /**
  * \brief An input stream that reads binary data from a file in a platform-independent way.
@@ -388,8 +388,6 @@ auto operator>>(LoadStream& stream, OvitoSubclass const*& clazz)
 	return stream;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

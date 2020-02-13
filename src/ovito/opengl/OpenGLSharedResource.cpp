@@ -28,7 +28,7 @@
 #include <QWindow>
 #include <QThreadStorage>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 class OpenGLContextInfo
 {
@@ -199,6 +199,4 @@ void OpenGLSharedResource::destroyOpenGLResources()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

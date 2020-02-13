@@ -22,11 +22,11 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/export/xyz/XYZExporter.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include "XYZExporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(XYZExporterEditor);
 SET_OVITO_OBJECT_EDITOR(XYZExporter, XYZExporterEditor);
@@ -60,8 +60,5 @@ void XYZExporterEditor::createUI(const RolloutInsertionParameters& rolloutParams
 	FileColumnParticleExporterEditor::createUI(rolloutParams.before(rollout));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

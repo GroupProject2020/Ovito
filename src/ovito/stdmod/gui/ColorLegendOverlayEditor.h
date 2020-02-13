@@ -24,7 +24,7 @@
 
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/PropertiesEditor.h>
+#include <ovito/gui/desktop/properties/PropertiesEditor.h>
 
 namespace Ovito { namespace StdMod {
 

@@ -66,16 +66,16 @@ void AffineTransformationModifier::initializeModifier(ModifierApplication* modAp
 
 	// Take the simulation cell from the input object as the default destination cell geometry for absolute scaling.
 	if(targetCell() == AffineTransformation::Zero()) {
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const SimulationCellObject* cell = input.getObject<SimulationCellObject>())
 			setTargetCell(cell->cellMatrix());
 	}
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void AffineTransformationModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void AffineTransformationModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Validate parameters and input data.
 	if(!relativeMode()) {
@@ -85,7 +85,7 @@ void AffineTransformationModifier::evaluatePreliminary(TimePoint time, ModifierA
 	}
 
 	// Apply all enabled modifier delegates to the input data.
-	MultiDelegatingModifier::evaluatePreliminary(time, modApp, state);
+	MultiDelegatingModifier::evaluateSynchronous(time, modApp, state);
 }
 
 /******************************************************************************

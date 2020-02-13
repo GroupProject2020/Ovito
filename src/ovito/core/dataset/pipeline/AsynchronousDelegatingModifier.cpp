@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "AsynchronousDelegatingModifier.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifierDelegate);
 DEFINE_PROPERTY_FIELD(AsynchronousModifierDelegate, inputDataObject);
@@ -53,6 +53,19 @@ AsynchronousDelegatingModifier* AsynchronousModifierDelegate::modifier() const
 ******************************************************************************/
 AsynchronousDelegatingModifier::AsynchronousDelegatingModifier(DataSet* dataset) : AsynchronousModifier(dataset)
 {
+}
+
+/******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval AsynchronousDelegatingModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	TimeInterval iv = AsynchronousModifier::validityInterval(request, modApp);
+
+	if(delegate())
+		iv.intersect(delegate()->validityInterval(request, modApp));
+
+	return iv;
 }
 
 /******************************************************************************
@@ -89,6 +102,4 @@ bool AsynchronousDelegatingModifier::OOMetaClass::isApplicableTo(const DataColle
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

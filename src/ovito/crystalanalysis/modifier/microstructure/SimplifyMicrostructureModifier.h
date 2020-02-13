@@ -50,7 +50,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT SimplifyMicrostructureModifier : public Async
 	OVITO_CLASS_META(SimplifyMicrostructureModifier, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Simplify microstructure");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	Q_CLASSINFO("ModifierCategory", "-");
 
 public:
 
@@ -66,7 +66,7 @@ public:
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual Future<ComputeEnginePtr> createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
 

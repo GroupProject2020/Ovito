@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@
 
 #include <QElapsedTimer>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Class that provides the basic state management,
@@ -87,8 +87,8 @@ public:
 protected:
 
 	/// Constructor.
-	ProgressiveTask(State initialState = NoState, const QString& progressText = QString()) :
-		Task(initialState), _progressText(progressText) {}
+	ProgressiveTask(State initialState = NoState, TaskManager* taskManager = nullptr, const QString& progressText = QString()) :
+		Task(initialState, taskManager), _progressText(progressText) {}
 
     void computeTotalProgress();
 
@@ -102,6 +102,4 @@ protected:
     std::vector<std::pair<int, std::vector<int>>> subStepsStack;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -68,7 +68,7 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && subject() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			for(PropertyObject* property : container->properties()) {
 				setSourceProperty(PropertyReference(subject().dataClass(), property));
@@ -102,15 +102,18 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(const PipelineEvaluat
 		if(myModApp->hasFrozenState(freezeTime())) {
 			// Perform replacement of the property in the input pipeline state.
 			PipelineFlowState output = input;
-			evaluatePreliminary(request.time(), modApp, output);
+			evaluateSynchronous(request.time(), modApp, output);
 			return std::move(output);
 		}
 	}
 
-	// Request the frozen state from the pipeline.
-	return modApp->evaluateInput(PipelineEvaluationRequest(freezeTime(), request))
+	// Set up the downstream pipeline request.
+	PipelineEvaluationRequest downstreamRequest = request;
+	downstreamRequest.setTime(freezeTime());
+
+	// Request the frozen state from the downstream pipeline.
+	return modApp->evaluateInput(downstreamRequest)
 		.then(executor(), [this, time = request.time(), modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
-			UndoSuspender noUndo(this);
 
 			// Extract the input property.
 			if(FreezePropertyModifierApplication* myModApp = dynamic_object_cast<FreezePropertyModifierApplication>(modApp.data())) {
@@ -127,7 +130,7 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(const PipelineEvaluat
 							frozenState.stateValidity());
 
 						// Perform the actual replacement of the property in the input pipeline state.
-						evaluatePreliminary(time, modApp, state);
+						evaluateSynchronous(time, modApp, state);
 						return std::move(state);
 					}
 					else {
@@ -142,9 +145,9 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(const PipelineEvaluat
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void FreezePropertyModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No property type selected."));
@@ -261,8 +264,19 @@ void FreezePropertyModifierApplication::updateStoredData(const PropertyObject* p
 bool FreezePropertyModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetChanged) {
-		// Invalidate cached state.
-		invalidateFrozenState();
+		if(source == input()) {
+			if(FreezePropertyModifier* mod = dynamic_object_cast<FreezePropertyModifier>(modifier())) {
+				if(static_cast<const TargetChangedEvent&>(event).unchangedInterval().contains(mod->freezeTime()) == false) {
+					// Invalidate cached state.
+					invalidateFrozenState();
+					notifyTargetChanged();
+					return false;
+				}
+			}
+		}
+		else if(source == modifier()) {
+			invalidateFrozenState();
+		}
 	}
 	return ModifierApplication::referenceEvent(source, event);
 }

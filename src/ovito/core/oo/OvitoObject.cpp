@@ -25,7 +25,7 @@
 #include <ovito/core/oo/OvitoClass.h>
 #include "OvitoObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 #ifdef OVITO_DEBUG
 /******************************************************************************
@@ -47,5 +47,4 @@ bool OvitoObject::isBeingLoaded() const
 	return (qobject_cast<ObjectLoadStream*>(parent()) != nullptr);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

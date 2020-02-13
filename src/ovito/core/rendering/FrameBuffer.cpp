@@ -26,7 +26,7 @@
 	#include <ovito/core/utilities/io/video/VideoEncoder.h>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 #define IMAGE_FORMAT_FILE_FORMAT_VERSION		1
 
@@ -118,5 +118,4 @@ void FrameBuffer::clear(const ColorA& color)
 	_image.fill(color);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

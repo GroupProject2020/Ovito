@@ -24,7 +24,7 @@
 #include "DefaultArrowPrimitive.h"
 #include "NonInteractiveSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /******************************************************************************
 * Sets the properties of a single element.
@@ -61,5 +61,4 @@ void DefaultArrowPrimitive::render(SceneRenderer* renderer)
 	niRenderer->renderArrows(*this);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

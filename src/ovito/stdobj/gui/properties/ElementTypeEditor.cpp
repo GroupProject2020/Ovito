@@ -23,9 +23,9 @@
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/properties/ElementType.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "ElementTypeEditor.h"
 
 namespace Ovito { namespace StdObj {

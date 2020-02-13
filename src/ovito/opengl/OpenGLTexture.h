@@ -28,7 +28,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief A wrapper class for OpenGL textures.
@@ -69,7 +69,7 @@ protected:
 
     /// This method that takes care of freeing the shared OpenGL resources owned by this class.
     virtual void freeOpenGLResources() override {
-    	if(_id) {
+    	if(_id && QOpenGLContext::currentContext()) {
     		QOpenGLContext::currentContext()->functions()->glDeleteTextures(1, &_id);
 			_id = 0;
     	}
@@ -81,8 +81,6 @@ private:
 	GLuint _id;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

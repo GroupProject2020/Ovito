@@ -66,7 +66,7 @@ const PropertyPtr& PropertyObject::modifiableStorage()
 void PropertyObject::resize(size_t newSize, bool preserveData)
 {
 	modifiableStorage()->resize(newSize, preserveData);
-	notifyTargetChanged();
+	notifyTargetChanged(&PROPERTY_FIELD(storage));
 }
 
 /******************************************************************************
@@ -78,7 +78,7 @@ void PropertyObject::setName(const QString& newName)
 		return;
 
 	modifiableStorage()->setName(newName);
-	notifyTargetChanged();
+	notifyTargetChanged(&PROPERTY_FIELD(title));
 }
 
 /******************************************************************************

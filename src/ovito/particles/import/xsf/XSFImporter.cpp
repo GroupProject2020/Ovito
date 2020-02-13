@@ -29,7 +29,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(XSFImporter);
 
@@ -63,10 +63,10 @@ static const char* chemical_symbols[] = {
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool XSFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool XSFImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for 'ATOMS', 'BEGIN_BLOCK_DATAGRID' or other XSF-specific keywords.
 	// One of them must appear within the first 40 lines of the file.
@@ -89,11 +89,11 @@ bool XSFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void XSFImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void XSFImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning XSF file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
@@ -111,14 +111,11 @@ void XSFImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		setProgressValueIntermittent(stream.underlyingByteOffset());
 	}
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	for(int i = 0; i < nFrames; i++) {
-		Frame frame;
-		frame.sourceFile = sourceUrl;
 		frame.lineNumber = i;
-		frame.lastModificationTime = lastModified;
-		frame.label = tr("Frame %1").arg(i);
+		frame.label = tr("%1 (Frame %2)").arg(filename).arg(i);
 		frames.push_back(frame);
 	}
 }
@@ -126,11 +123,11 @@ void XSFImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading XSF file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading XSF file %1").arg(fileHandle().toString()));
 
 	// Create the destination container for the loaded data.
 	auto frameData = std::make_shared<ParticleFrameData>();
@@ -352,7 +349,5 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

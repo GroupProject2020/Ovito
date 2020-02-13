@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,7 +36,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief An OpenGL-based scene renderer. This serves as base class for both the interactive renderer used
@@ -50,10 +50,7 @@ class OVITO_OPENGLRENDERER_EXPORT OpenGLSceneRenderer : public SceneRenderer, pr
 public:
 
 	/// Default constructor.
-	OpenGLSceneRenderer(DataSet* dataset) : SceneRenderer(dataset),
-		_glcontext(nullptr),
-		_modelViewTM(AffineTransformation::Identity()),
-		_glVertexIDBufferSize(-1) {}
+	explicit OpenGLSceneRenderer(DataSet* dataset) : SceneRenderer(dataset) {}
 
 	/// Renders the current animation frame.
 	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation) override;
@@ -177,7 +174,10 @@ public:
 	virtual void setHighlightMode(int pass) override;
 
 	/// Returns the device pixel ratio of the output device we are rendering to.
-	qreal devicePixelRatio() const;
+	virtual qreal devicePixelRatio() const override;
+
+	/// Reports OpenGL error status codes.
+	void checkOpenGLErrorStatus(const char* command, const char* sourceFile, int sourceLine);
 
 	/// Determines whether all viewport windows should share one GL context or not.
 	static bool contextSharingEnabled(bool forceDefaultSetting = false);
@@ -231,6 +231,8 @@ protected:
 	/// Returns the supersampling level to use.
 	virtual int antialiasingLevelInternal() { return 1; }
 
+#ifndef Q_OS_WASM
+
 	/// The OpenGL glPointParameterf() function.
 	void glPointSize(GLfloat size) {
 		if(_glFunctions32) _glFunctions32->glPointSize(size);
@@ -267,16 +269,20 @@ protected:
 	/// The OpenGL 2.0 functions object.
 	QOpenGLFunctions_2_0* oldGLFunctions() const { return _glFunctions20; }
 
+#endif
+
 private:
 
 	/// The OpenGL context this renderer uses.
-	QOpenGLContext* _glcontext;
+	QOpenGLContext* _glcontext = nullptr;
 
 	/// The GL context group this renderer uses.
 	QPointer<QOpenGLContextGroup> _glcontextGroup;
 
 	/// The surface used by the GL context.
-	QSurface* _glsurface;
+	QSurface* _glsurface = nullptr;
+
+#ifndef Q_OS_WASM
 
 	/// The OpenGL 2.0 functions object.
 	QOpenGLFunctions_2_0* _glFunctions20;
@@ -287,6 +293,8 @@ private:
 	/// The OpenGL 3.2 core profile functions object.
 	QOpenGLFunctions_3_2_Core* _glFunctions32;
 
+#endif	
+
 	/// The OpenGL vertex array object that is required by OpenGL 3.2 core profile.
 	QScopedPointer<QOpenGLVertexArrayObject> _vertexArrayObject;
 
@@ -294,28 +302,28 @@ private:
 	QSurfaceFormat _glformat;
 
 	/// Indicates whether the current OpenGL implementation is based on the core or the compatibility profile.
-	bool _isCoreProfile;
+	bool _isCoreProfile = false;
 
 	/// Indicates whether it is okay to use OpenGL point sprites. Otherwise emulate them using explicit triangle geometry.
-	bool _usePointSprites;
+	bool _usePointSprites = false;
 
 	/// Indicates whether it is okay to use GLSL geometry shaders.
-	bool _useGeometryShaders;
+	bool _useGeometryShaders = false;
 
 	/// The current model-to-world transformation matrix.
-	AffineTransformation _modelWorldTM;
+	AffineTransformation _modelWorldTM = AffineTransformation::Identity();
 
 	/// The current model-to-view transformation matrix.
-	AffineTransformation _modelViewTM;
+	AffineTransformation _modelViewTM = AffineTransformation::Identity();
 
 	/// The internal OpenGL vertex buffer that stores vertex IDs.
 	QOpenGLBuffer _glVertexIDBuffer;
 
 	/// The number of IDs stored in the OpenGL buffer.
-	GLint _glVertexIDBufferSize;
+	GLint _glVertexIDBufferSize = 0;
 
 	/// Indicates that we are currently rendering the translucent objects during a second rendering pass.
-	bool _translucentPass;
+	bool _translucentPass = false;
 
 	/// List of translucent graphics primitives collected during the first rendering pass, which
 	/// need to be rendered during the second pass.
@@ -349,8 +357,4 @@ private:
 	template<typename T> friend class OpenGLBuffer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-
-

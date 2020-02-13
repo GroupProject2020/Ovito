@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,7 +31,7 @@
 #include <ovito/core/utilities/io/ssh/CatChannel.h>
 #include "RemoteFileJob.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 using namespace Ovito::Ssh;
 
@@ -265,7 +265,7 @@ void DownloadRemoteFileJob::shutdown(bool success)
 		_localFile->close();
 	}
 	if(_localFile && success)
-		_promise.setResults(_localFile->fileName());
+		_promise.setResults(FileHandle(url(), _localFile->fileName()));
 	else
 		_localFile.reset();
 
@@ -273,7 +273,7 @@ void DownloadRemoteFileJob::shutdown(bool success)
 	RemoteFileJob::shutdown(success);
 
 	// Hand downloaded file over to FileManager cache.
-	Application::instance()->fileManager()->fileFetched(_url, _localFile.take());
+	Application::instance()->fileManager()->fileFetched(url(), _localFile.take());
 }
 
 /******************************************************************************
@@ -422,7 +422,4 @@ void ListRemoteDirectoryJob::channelClosed()
 	shutdown(false);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

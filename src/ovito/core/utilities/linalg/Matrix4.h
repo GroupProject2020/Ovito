@@ -37,7 +37,7 @@
 #include "Vector4.h"
 #include "AffineTransformation.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A 4x4 matrix.
@@ -589,8 +589,6 @@ inline QDataStream& operator>>(QDataStream& stream, Matrix_4<T>& m) {
  */
 using Matrix4 = Matrix_4<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Matrix4);

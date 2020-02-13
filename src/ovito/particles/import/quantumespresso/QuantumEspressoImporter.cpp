@@ -27,7 +27,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(QuantumEspressoImporter);
 
@@ -42,10 +42,10 @@ static bool isalpha_ascii(char c)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Maximum number of lines we are going to read from the input file before giving up.
 	int numLinesToRead = 20;
@@ -78,11 +78,11 @@ bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(QFileDevice& input, c
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading Quantum Espresso file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading Quantum Espresso file %1").arg(fileHandle().toString()));
 
 	// Create the storage container for the data being loaded.
 	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
@@ -303,7 +303,5 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

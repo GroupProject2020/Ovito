@@ -31,7 +31,7 @@
 
 #include <boost/type_traits/has_equal_to.hpp>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief RefMaker derived classes use this implement properties and reference fields.
@@ -571,5 +571,4 @@ public:
 	const RefTargetVector& targets() const { return reinterpret_cast<const RefTargetVector&>(pointers); }
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,7 +33,7 @@
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(SceneRenderer);
 IMPLEMENT_OVITO_CLASS(ObjectPickInfo);
@@ -131,9 +131,9 @@ bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
 		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != node && viewport()->viewNode()->lookatTargetNode() != node)) {
 
 			// Evaluate data pipeline of object node and render the results.
-			PipelineEvaluationFuture pipelineEvaluation(time());
+			PipelineEvaluationFuture pipelineEvaluation;
 			if(waitForLongOperationsEnabled()) {
-				pipelineEvaluation.execute(pipeline, true);
+				pipelineEvaluation = pipeline->evaluateRenderingPipeline(time());
 				if(!operation.waitForFuture(pipelineEvaluation))
 					return false;
 
@@ -143,11 +143,11 @@ bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
 			}
 			const PipelineFlowState& state = pipelineEvaluation.isValid() ?
 												pipelineEvaluation.result() :
-												pipeline->evaluatePipelinePreliminary(true);
+												pipeline->evaluatePipelineSynchronous(true);
 
 			// Invoke all vis elements of all data objects in the pipeline state.
 			std::vector<const DataObject*> objectStack;
-			if(!state.isEmpty())
+			if(state)
 				renderDataObject(state.data(), pipeline, state, objectStack);
 			OVITO_ASSERT(objectStack.empty());
 		}
@@ -308,5 +308,4 @@ void SceneRenderer::renderModifiers(PipelineSceneNode* pipeline, bool renderOver
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

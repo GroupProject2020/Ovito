@@ -22,12 +22,9 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/modifier/modify/UnwrapTrajectoriesModifier.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/utilities/concurrent/ProgressDialog.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "UnwrapTrajectoriesModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(UnwrapTrajectoriesModifierEditor);
 SET_OVITO_OBJECT_EDITOR(UnwrapTrajectoriesModifier, UnwrapTrajectoriesModifierEditor);
@@ -48,26 +45,7 @@ void UnwrapTrajectoriesModifierEditor::createUI(const RolloutInsertionParameters
 	// Status label.
 	layout->addWidget(statusLabel());
 	layout->addSpacing(6);
-
-	QPushButton* unwrapTrajectoriesButton = new QPushButton(tr("Update"));
-	layout->addWidget(unwrapTrajectoriesButton);
-	connect(unwrapTrajectoriesButton, &QPushButton::clicked, this, &UnwrapTrajectoriesModifierEditor::onUnwrapTrajectories);
 }
 
-/******************************************************************************
-* Is called when the user clicks the 'Unwrap trajectories' button.
-******************************************************************************/
-void UnwrapTrajectoriesModifierEditor::onUnwrapTrajectories()
-{
-	UnwrapTrajectoriesModifier* modifier = static_object_cast<UnwrapTrajectoriesModifier>(editObject());
-	if(!modifier) return;
-
-	undoableTransaction(tr("Unwrap trajectories"), [this,modifier]() {
-		ProgressDialog progressDialog(container(), modifier->dataset()->taskManager(), tr("Unwrapping trajectories"));
-		modifier->detectPeriodicCrossings(progressDialog.taskManager());
-	});
-}
-
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

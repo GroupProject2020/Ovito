@@ -25,17 +25,17 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/particles/objects/ParticlesVis.h>
 #include "ParticlePickingHelper.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Finds the particle under the mouse cursor.
 ******************************************************************************/
-bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& clickPoint, PickResult& result)
+bool ParticlePickingHelper::pickParticle(ViewportWindowInterface* vpwin, const QPoint& clickPoint, PickResult& result)
 {
 	ViewportPickResult vpPickResult = vpwin->pick(clickPoint);
 	// Check if user has clicked on something.
@@ -75,7 +75,7 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 /******************************************************************************
 * Renders the particle selection overlay in a viewport.
 ******************************************************************************/
-void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRenderer* renderer, const PickResult& pickRecord)
+void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, SceneRenderer* renderer, const PickResult& pickRecord)
 {
 	if(!pickRecord.objNode)
 		return;
@@ -83,7 +83,7 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	if(!renderer->isInteractive() || renderer->isPicking())
 		return;
 
-	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelinePreliminary(true);
+	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelineSynchronous(true);
 	const ParticlesObject* particles = flowState.getObject<ParticlesObject>();
 	if(!particles) return;
 
@@ -113,6 +113,5 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	particleVis->highlightParticle(particleIndex, particles, renderer);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

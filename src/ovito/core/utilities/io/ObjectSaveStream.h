@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/utilities/io/SaveStream.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /**
  * \brief An output stream that can serialize an OvitoObject graph a file.
@@ -80,8 +80,6 @@ private:
 	DataSet* _dataset = nullptr;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

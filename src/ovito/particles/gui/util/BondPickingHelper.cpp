@@ -28,15 +28,15 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "BondPickingHelper.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Finds the bond under the mouse cursor.
 ******************************************************************************/
-bool BondPickingHelper::pickBond(ViewportWindow* vpwin, const QPoint& clickPoint, PickResult& result)
+bool BondPickingHelper::pickBond(ViewportWindowInterface* vpwin, const QPoint& clickPoint, PickResult& result)
 {
 	ViewportPickResult vpPickResult = vpwin->pick(clickPoint);
 	// Check if user has clicked on something.
@@ -63,6 +63,5 @@ bool BondPickingHelper::pickBond(ViewportWindow* vpwin, const QPoint& clickPoint
 	return false;
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

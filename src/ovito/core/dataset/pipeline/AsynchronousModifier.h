@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/concurrent/AsynchronousTask.h>
 #include "Modifier.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Base class for modifiers that compute their results in a background thread.
@@ -107,8 +107,8 @@ public:
 	/// Constructor.
 	AsynchronousModifier(DataSet* dataset);
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Suppress preliminary viewport updates when a parameter of the asynchronous modifier changes.
 	virtual bool performPreliminaryUpdateAfterChange() override { return false; }
@@ -129,6 +129,7 @@ protected:
 
 	/// Saves the class' contents to the given stream.
 	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
+	
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
@@ -136,12 +137,10 @@ protected:
 	virtual Future<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
+	virtual Future<ComputeEnginePtr> createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
 };
 
 // Export this class template specialization from the DLL under Windows.
 extern template class OVITO_CORE_EXPORT Future<AsynchronousModifier::ComputeEnginePtr>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

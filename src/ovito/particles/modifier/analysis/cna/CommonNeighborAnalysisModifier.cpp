@@ -34,7 +34,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "CommonNeighborAnalysisModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CommonNeighborAnalysisModifier);
 DEFINE_PROPERTY_FIELD(CommonNeighborAnalysisModifier, cutoff);
@@ -62,7 +62,7 @@ CommonNeighborAnalysisModifier::CommonNeighborAnalysisModifier(DataSet* dataset)
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
@@ -613,7 +613,5 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::emitResults(TimePoint time, 
 	particles->makeMutable(particles->expectBonds())->createProperty(cnaIndices());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

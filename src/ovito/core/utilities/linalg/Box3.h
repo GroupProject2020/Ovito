@@ -36,7 +36,7 @@
 #include "AffineTransformation.h"
 
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief An axis-aligned box in 3d space.
@@ -352,8 +352,6 @@ using Box3 = Box_3<FloatType>;
  */
 using Box3I = Box_3<int>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Box3);

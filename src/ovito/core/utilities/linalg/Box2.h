@@ -34,7 +34,7 @@
 #include "Vector2.h"
 #include "Point2.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief An axis-aligned box in 2d space.
@@ -299,8 +299,6 @@ using Box2 = Box_2<FloatType>;
  */
 using Box2I = Box_2<int>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Box2);

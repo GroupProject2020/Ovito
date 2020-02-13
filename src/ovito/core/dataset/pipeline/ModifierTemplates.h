@@ -27,7 +27,7 @@
 
 #include <QAbstractListModel>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Manages the application-wide list of modifier templates.
@@ -100,6 +100,4 @@ private:
 	std::map<QString, QByteArray> _templateData;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

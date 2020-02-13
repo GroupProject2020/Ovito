@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,7 @@
 #include "OpenGLTextPrimitive.h"
 #include "OpenGLSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -67,6 +67,7 @@ void OpenGLTextPrimitive::renderWindow(SceneRenderer* renderer, const Point2& po
 		return;
 
 	OpenGLSceneRenderer* vpRenderer = static_object_cast<OpenGLSceneRenderer>(renderer);
+    OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 	if(_needImageUpdate) {
 		_needImageUpdate = false;
 
@@ -96,6 +97,7 @@ void OpenGLTextPrimitive::renderWindow(SceneRenderer* renderer, const Point2& po
 
 		_imageBuffer->setImage(textureImage);
 	}
+    OVITO_REPORT_OPENGL_ERRORS(vpRenderer);
 
 	Point2 alignedPos = pos;
 	Vector2 size = Vector2(_imageBuffer->image().width(), _imageBuffer->image().height()) * (FloatType)vpRenderer->antialiasingLevelInternal();
@@ -106,6 +108,4 @@ void OpenGLTextPrimitive::renderWindow(SceneRenderer* renderer, const Point2& po
 	_imageBuffer->renderWindow(renderer, alignedPos, size);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

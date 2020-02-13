@@ -28,7 +28,7 @@
 #include <ovito/core/utilities/mesh/TriMesh.h>
 #include "OpenGLBuffer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a triangle mesh to be rendered in the viewports.
@@ -98,6 +98,4 @@ private:
 	bool _useInstancedRendering = false;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

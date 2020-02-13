@@ -30,7 +30,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "CentroSymmetryModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CentroSymmetryModifier);
 DEFINE_PROPERTY_FIELD(CentroSymmetryModifier, numNeighbors);
@@ -56,7 +56,7 @@ bool CentroSymmetryModifier::OOMetaClass::isApplicableTo(const DataCollection& i
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
@@ -137,7 +137,5 @@ void CentroSymmetryModifier::CentroSymmetryEngine::emitResults(TimePoint time, M
 	particles->createProperty(csp());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

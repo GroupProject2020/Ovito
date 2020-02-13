@@ -22,13 +22,13 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/BondType.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
 #include "BondTypeEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(BondTypeEditor);
 SET_OVITO_OBJECT_EDITOR(BondType, BondTypeEditor);
@@ -76,6 +76,5 @@ void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/data/DataObject.h>
 #include <ovito/core/oo/OORef.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Internal class used by PipelineFlowState to keep track of how many flow states
@@ -216,5 +216,4 @@ inline QDebug operator<<(QDebug debug, const StrongDataObjectRef& p)
 }
 #endif
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

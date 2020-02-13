@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@
 #include <ovito/core/oo/PropertyField.h>
 #include <ovito/core/oo/RefTarget.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Helper class that is used to clone a RefTarget derived object.
@@ -112,8 +112,4 @@ private:
 	QVarLengthArray<std::pair<const RefMaker*, OORef<RefTarget>>, 2> _cloneTable;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-
-

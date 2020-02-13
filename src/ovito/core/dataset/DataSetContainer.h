@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/oo/RefMaker.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Manages the DataSet being edited.
@@ -38,6 +38,7 @@ class OVITO_CORE_EXPORT DataSetContainer : public RefMaker
 {
 	Q_OBJECT
 	OVITO_CLASS(DataSetContainer)
+	Q_PROPERTY(Ovito::DataSet* currentSet READ currentSet WRITE setCurrentSet NOTIFY dataSetChanged);
 
 public:
 
@@ -138,7 +139,6 @@ private:
 	QMetaObject::Connection _filePathChangedConnection;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

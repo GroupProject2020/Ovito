@@ -32,7 +32,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "RefMaker.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(RefMaker);
 
@@ -562,5 +562,4 @@ void RefMaker::loadUserDefaults()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

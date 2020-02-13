@@ -24,7 +24,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "TCBInterpolationControllers.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS_TEMPLATE(TCBAnimationKey<FloatAnimationKey>);
 template<> OVITO_CORE_EXPORT DEFINE_PROPERTY_FIELD(TCBAnimationKey<FloatAnimationKey>, easeTo);
@@ -66,5 +66,4 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(PositionTCBAnimationKey, bias, FloatParameter
 
 IMPLEMENT_OVITO_CLASS(TCBPositionController);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

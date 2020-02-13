@@ -24,7 +24,7 @@
 
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include <ovito/stdmod/modifiers/InvertSelectionModifier.h>
 
 namespace Ovito { namespace StdMod {

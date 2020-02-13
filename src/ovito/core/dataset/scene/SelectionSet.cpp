@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/scene/SelectionSet.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(SelectionSet);
 DEFINE_REFERENCE_FIELD(SelectionSet, nodes);
@@ -114,6 +114,4 @@ void SelectionSet::onSelectionChangeCompleted()
 	Q_EMIT selectionChangeComplete(this);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

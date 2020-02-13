@@ -23,14 +23,14 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlotMarker;
 
-namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Grid {
 
 /**
  * \brief A properties editor for the CreateIsosurfaceModifier class.
@@ -67,6 +67,5 @@ private:
 	DeferredMethodInvocation<CreateIsosurfaceModifierEditor, &CreateIsosurfaceModifierEditor::plotHistogram> plotHistogramLater;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

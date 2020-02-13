@@ -30,8 +30,9 @@
 
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
+#include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/oo/RefTarget.h>
-#include <ovito/core/viewport/Viewport.h>
+#include <ovito/core/viewport/ViewportProjectionParameters.h>
 #include "LinePrimitive.h"
 #include "ParticlePrimitive.h"
 #include "TextPrimitive.h"
@@ -40,7 +41,7 @@
 #include "MeshPrimitive.h"
 #include "MarkerPrimitive.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * Abstract base class for object-specific information used in the picking system.
@@ -119,6 +120,9 @@ public:
 
 	/// Returns the final size of the rendered image in pixels.
 	virtual QSize outputSize() const;
+
+	/// Returns the device pixel ratio of the output device we are rendering to.
+	virtual qreal devicePixelRatio() const { return 1.0; }
 
 	/// \brief Computes the bounding box of the entire scene to be rendered.
 	/// \param time The time at which the bounding box should be computed.
@@ -364,5 +368,4 @@ private:
 	quint32 _subobjectId = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

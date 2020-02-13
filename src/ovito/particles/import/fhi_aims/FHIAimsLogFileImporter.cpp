@@ -28,17 +28,17 @@
 #include <boost/algorithm/string.hpp>
 #include <QRegularExpression>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(FHIAimsLogFileImporter);
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool FHIAimsLogFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool FHIAimsLogFileImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for 'Invoking FHI-aims' message.
 	// It must appear within the first 20 lines of the file.
@@ -52,32 +52,28 @@ bool FHIAimsLogFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, co
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	int frameNumber = 0;
 
 	while(!stream.eof() && !isCanceled()) {
 		const char* line = stream.readLineTrimLeft();
 		if(boost::algorithm::starts_with(line, "Updated atomic structure:")) {
 			stream.readLine();
-			Frame frame;
-			frame.sourceFile = sourceUrl;
 			frame.byteOffset = stream.byteOffset();
 			frame.lineNumber = stream.lineNumber();
-			frame.lastModificationTime = lastModified;
-			frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
+			frame.label = tr("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 			frames.push_back(frame);
 		}
 
@@ -88,11 +84,11 @@ void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading FHI-aims log file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading FHI-aims log file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
@@ -180,7 +176,5 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

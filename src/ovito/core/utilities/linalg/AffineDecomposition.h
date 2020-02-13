@@ -37,7 +37,7 @@
 #include "Scaling.h"
 #include "AffineTransformation.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief Decomposes an affine transformation matrix into translation, rotation and scaling parts.
@@ -84,8 +84,6 @@ private:
 	void decomp_affine(Matrix4& A);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

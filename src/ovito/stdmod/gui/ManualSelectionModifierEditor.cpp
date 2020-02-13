@@ -26,12 +26,12 @@
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/rendering/ViewportSceneRenderer.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
-#include <ovito/gui/viewport/input/ViewportInputMode.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/gui/base/viewport/ViewportInputMode.h>
 #include "ManualSelectionModifierEditor.h"
 
 namespace Ovito { namespace StdMod {
@@ -51,7 +51,7 @@ public:
 	PickElementMode(ManualSelectionModifierEditor* editor) : ViewportInputMode(editor), _editor(editor) {}
 
 	/// Handles the mouse up events for a Viewport.
-	virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
+	virtual void mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override {
 		if(event->button() == Qt::LeftButton) {
 			ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
 			if(mod && mod->subject()) {
@@ -65,7 +65,7 @@ public:
 						_editor->onElementPicked(pickResult, indexAndContainer.first, indexAndContainer.second);
 					}
 					else {
-						inputManager()->mainWindow()->statusBar()->showMessage(tr("You did not click on an element of type '%1'.").arg(mod->subject().dataClass()->elementDescriptionName()), 1000);
+						inputManager()->mainWindow()->showStatusBarMessage(tr("You did not click on an element of type '%1'.").arg(mod->subject().dataClass()->elementDescriptionName()), 1000);
 					}
 				}
 			}
@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Handles the mouse events for a Viewport.
-	virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
+	virtual void mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override {
 		ViewportInputMode::mouseMoveEvent(vpwin, event);
 
 		// Check if a selectable element is beneath the mouse cursor position.
@@ -117,7 +117,7 @@ public:
 	}
 
 	/// Handles the mouse down events for a Viewport.
-	virtual void mousePressEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
+	virtual void mousePressEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override {
 		_fence.clear();
 		if(event->button() == Qt::LeftButton) {
 			_fence.push_back(Point2(event->localPos().x(), event->localPos().y())
@@ -128,7 +128,7 @@ public:
 	}
 
 	/// Handles the mouse move events for a Viewport.
-	virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
+	virtual void mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override {
 		if(!_fence.isEmpty()) {
 			_fence.push_back(Point2(event->localPos().x(), event->localPos().y())
 					* (FloatType)vpwin->devicePixelRatio());
@@ -138,7 +138,7 @@ public:
 	}
 
 	/// Handles the mouse up events for a Viewport.
-	virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
+	virtual void mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override {
 		if(!_fence.isEmpty()) {
 			if(_fence.size() >= 3) {
 				ElementSelectionSet::SelectionMode mode = ElementSelectionSet::SelectionReplace;
@@ -155,9 +155,10 @@ public:
 	}
 
 	/// Lets the input mode render its 2d overlay content in a viewport.
-	virtual void renderOverlay2D(Viewport* vp, ViewportSceneRenderer* renderer) override {
+	virtual void renderOverlay2D(Viewport* vp, SceneRenderer* renderer) override {
 		if(isActive() && vp == vp->dataset()->viewportConfig()->activeViewport() && _fence.size() >= 2) {
-			renderer->render2DPolyline(_fence.constData(), _fence.size(), ViewportSettings::getSettings().viewportColor(ViewportSettings::COLOR_SELECTION), true);
+			if(ViewportSceneRenderer* vpRenderer = dynamic_object_cast<ViewportSceneRenderer>(renderer))
+				vpRenderer->render2DPolyline(_fence.constData(), _fence.size(), ViewportSettings::getSettings().viewportColor(ViewportSettings::COLOR_SELECTION), true);
 		}
 	}
 
@@ -169,11 +170,11 @@ protected:
 		ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
 		if(mod && mod->subject()) {
 #ifndef Q_OS_MACX
-			inputManager()->mainWindow()->statusBar()->showMessage(
+			inputManager()->mainWindow()->showStatusBarMessage(
 					tr("Draw a fence around a group of %1 to select. Use CONTROL or ALT keys to extend or reduce existing selection set.")
 					.arg(mod->subject().dataClass()->elementDescriptionName()));
 #else
-			inputManager()->mainWindow()->statusBar()->showMessage(
+			inputManager()->mainWindow()->showStatusBarMessage(
 					tr("Draw a fence around a group of %1 to select. Use COMMAND or ALT keys to extend or reduce existing selection set.")
 					.arg(mod->subject().dataClass()->elementDescriptionName()));
 #endif
@@ -184,7 +185,7 @@ protected:
 	/// This is called by the system after the input handler is no longer the active handler.
 	virtual void deactivated(bool temporary) override {
 		_fence.clear();
-		inputManager()->mainWindow()->statusBar()->clearMessage();
+		inputManager()->mainWindow()->clearStatusBarMessage();
 		inputManager()->removeViewportGizmo(this);
 		ViewportInputMode::deactivated(temporary);
 	}
@@ -275,7 +276,7 @@ void ManualSelectionModifierEditor::resetSelection()
 
 	undoableTransaction(tr("Reset selection"), [this,mod]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			mod->resetSelection(modApp, modApp->evaluateInputPreliminary());
+			mod->resetSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	});
 }
@@ -290,7 +291,7 @@ void ManualSelectionModifierEditor::selectAll()
 
 	undoableTransaction(tr("Select all"), [this,mod]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			mod->selectAll(modApp, modApp->evaluateInputPreliminary());
+			mod->selectAll(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	});
 }
@@ -305,7 +306,7 @@ void ManualSelectionModifierEditor::clearSelection()
 
 	undoableTransaction(tr("Clear selection"), [this,mod]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			mod->clearSelection(modApp, modApp->evaluateInputPreliminary());
+			mod->clearSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	});
 }
@@ -326,7 +327,7 @@ void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pi
 				continue;
 
 			// Get the modifier's input data.
-			const PipelineFlowState& modInput = modApp->evaluateInputPreliminary();
+			const PipelineFlowState& modInput = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 			const ConstDataObjectPath& inputObjectPath = modInput.expectObject(mod->subject());
 
 			// Look up the right element in the modifier's input.
@@ -357,7 +358,7 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 		for(ModifierApplication* modApp : modifierApplications()) {
 
 			// Get the modifier's input data.
-			const PipelineFlowState& modInput = modApp->evaluateInputPreliminary();
+			const PipelineFlowState& modInput = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 			const ConstDataObjectPath& inputObjectPath = modInput.expectObject(mod->subject());
 
 			// Iterate of the nodes that use this pipeline.

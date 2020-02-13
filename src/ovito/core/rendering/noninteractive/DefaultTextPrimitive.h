@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/rendering/TextPrimitive.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a text string to be rendered by a non-interactive renderer.
@@ -48,7 +48,6 @@ public:
 	virtual void renderViewport(SceneRenderer* renderer, const Point2& pos, int alignment = Qt::AlignLeft | Qt::AlignTop) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

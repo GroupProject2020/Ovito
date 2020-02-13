@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,21 +33,36 @@
 #include "FileSourceImporter.h"
 #include "FileSource.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(FileSourceImporter);
+DEFINE_PROPERTY_FIELD(FileSourceImporter, isMultiTimestepFile);
+SET_PROPERTY_FIELD_LABEL(FileSourceImporter, isMultiTimestepFile, "File contains multiple timesteps");
+
+/******************************************************************************
+* Is called when the value of a property of this object has changed.
+******************************************************************************/
+void FileSourceImporter::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	FileImporter::propertyChanged(field);
+
+	if(field == PROPERTY_FIELD(isMultiTimestepFile)) {
+		// Automatically rescan input file for animation frames when this option has been changed.
+		requestFramesUpdate();
+	}
+}
 
 /******************************************************************************
 * Sends a request to the FileSource owning this importer to reload
 * the input file.
 ******************************************************************************/
-void FileSourceImporter::requestReload(int frame)
+void FileSourceImporter::requestReload(bool refetchFiles, int frame)
 {
 	// Retrieve the FileSource that owns this importer by looking it up in the list of dependents.
 	for(RefMaker* refmaker : dependents()) {
 		if(FileSource* fileSource = dynamic_object_cast<FileSource>(refmaker)) {
 			try {
-				fileSource->reloadFrame(frame);
+				fileSource->reloadFrame(refetchFiles, frame);
 			}
 			catch(const Exception& ex) {
 				ex.reportError();
@@ -274,9 +289,9 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 
 		// Fetch file.
 		return Application::instance()->fileManager()->fetchUrl(dataset()->taskManager(), sourceUrl)
-			.then(executor(), [this, sourceUrl](const QString& filename) {
+			.then(executor(), [this](const FileHandle& file) {
 				// Scan file.
-				if(FrameFinderPtr frameFinder = createFrameFinder(sourceUrl, filename))
+				if(FrameFinderPtr frameFinder = createFrameFinder(file))
 					return dataset()->taskManager().runTaskAsync(frameFinder);
 				else
 					return Future<QVector<Frame>>::createImmediateEmplace();
@@ -313,11 +328,8 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 void FileSourceImporter::FrameFinder::perform()
 {
 	QVector<Frame> frameList;
-
-	// Scan file.
-	try {
-		QFile file(_localFilename);
-		discoverFramesInFile(file, _sourceUrl, frameList);
+	try {		
+		discoverFramesInFile(frameList);
 	}
 	catch(const Exception&) {
 		// Silently ignore parsing and I/O errors if at least two frames have been read.
@@ -327,18 +339,16 @@ void FileSourceImporter::FrameFinder::perform()
 		else
 			frameList.pop_back();		// Remove last discovered frame because it may be corrupted or only partially written.
 	}
-
 	setResult(std::move(frameList));
 }
 
 /******************************************************************************
 * Scans the given file for source frames
 ******************************************************************************/
-void FileSourceImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void FileSourceImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
 	// By default, register a single frame.
-	QFileInfo fileInfo(file.fileName());
-	frames.push_back({ sourceUrl, 0, 1, fileInfo.lastModified(), fileInfo.fileName() });
+	frames.push_back(Frame(fileHandle()));
 }
 
 /******************************************************************************
@@ -485,14 +495,13 @@ LoadStream& operator>>(LoadStream& stream, FileSourceImporter::Frame& frame)
 }
 
 /******************************************************************************
-* Fetches the source URL and calls loadFile().
+* Calls loadFile() and sets the returned frame data as result of the 
+* asynchronous task.
 ******************************************************************************/
 void FileSourceImporter::FrameLoader::perform()
 {
 	// Let the subclass implementation parse the file.
-	QFile file(_localFilename);
-	setResult(loadFile(file));
+	setResult(loadFile());
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

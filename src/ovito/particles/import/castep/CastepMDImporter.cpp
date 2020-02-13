@@ -27,17 +27,17 @@
 
 #include <boost/algorithm/string.hpp>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CastepMDImporter);
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool CastepMDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool CastepMDImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Look for string 'BEGIN header' to occur on first line.
 	if(!boost::algorithm::istarts_with(stream.readLineTrimLeft(32), "BEGIN header"))
@@ -53,11 +53,11 @@ bool CastepMDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QU
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void CastepMDImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
+	CompressedTextReader stream(fileHandle());
 	setProgressText(tr("Scanning CASTEP file %1").arg(stream.filename()));
 	setProgressMaximum(stream.underlyingSize());
 
@@ -75,22 +75,16 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 			return;
 	}
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	int frameNumber = 0;
 
 	while(!stream.eof()) {
-		auto byteOffset = stream.byteOffset();
-		auto lineNumber = stream.lineNumber();
+		frame.byteOffset = stream.byteOffset();
+		frame.lineNumber = stream.lineNumber();
 		stream.readLine();
 		if(stream.lineEndsWith("<-- h")) {
-			Frame frame;
-			frame.sourceFile = sourceUrl;
-			frame.byteOffset = byteOffset;
-			frame.lineNumber = lineNumber;
-			frame.lastModificationTime = lastModified;
-			frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
+			frame.label = tr("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 			frames.push_back(frame);
 			// Skip the two other lines of the cell matrix
 			stream.readLine();
@@ -105,11 +99,11 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading CASTEP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading CASTEP file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
@@ -197,7 +191,5 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

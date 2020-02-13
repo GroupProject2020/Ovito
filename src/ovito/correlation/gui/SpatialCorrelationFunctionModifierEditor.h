@@ -27,13 +27,13 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
 #include <ovito/core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlot;
 class QwtPlotCurve;
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /**
  * A properties editor for the SpatialCorrelationFunctionModifier class.
@@ -76,8 +76,5 @@ private:
 	DeferredMethodInvocation<SpatialCorrelationFunctionModifierEditor, &SpatialCorrelationFunctionModifierEditor::plotAllData> plotAllDataLater;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

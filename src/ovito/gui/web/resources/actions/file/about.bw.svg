@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   sodipodi:docname="about.bw.svg"
+   inkscape:version="1.0beta2 (2b71d25, 2019-12-03)"
+   version="1.1"
+   id="svg2"
+   viewBox="0 0 512 512">
+  <g
+     style="font-style:normal;font-weight:normal;font-size:59.3761px;line-height:1.25;font-family:sans-serif;fill:#505050;fill-opacity:1;stroke:none;stroke-width:1.4844"
+     id="text1498"
+     aria-label="i">
+    <path
+       id="path1500"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:593.761px;font-family:Georgia;-inkscape-font-specification:'Georgia Bold';fill:#505050;fill-opacity:1;stroke-width:1.4844"
+       d="M 351.2395,480.3999 H 168.00857 v -21.16433 q 7.53798,-0.57984 14.78604,-1.44961 7.24806,-0.86977 12.46666,-2.89923 9.27751,-3.47906 13.0465,-9.85736 3.76899,-6.66821 3.76899,-17.39534 V 258.89922 q 0,-10.14728 -4.63875,-17.68526 -4.63876,-7.82791 -11.5969,-12.46666 -5.2186,-3.47907 -15.94573,-6.66822 -10.4372,-3.18914 -19.13487,-4.05891 v -21.16433 l 142.06195,-7.53798 4.34884,4.34883 v 230.19835 q 0,10.14729 4.34883,17.39534 4.34884,6.95814 12.46666,10.43721 5.79845,2.6093 12.75659,4.63876 6.95813,2.02945 14.49612,2.89922 z M 308.91083,84.945808 q 0,22.034102 -17.10542,37.689902 -16.81549,15.36589 -40.00928,15.36589 -23.48371,0 -40.58913,-15.36589 -16.8155,-15.6558 -16.8155,-37.689902 0,-22.034099 16.8155,-37.689906 17.10542,-15.655808 40.58913,-15.655808 23.48371,0 40.2992,15.655808 16.8155,15.655807 16.8155,37.689906 z" />
+  </g>
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     inkscape:document-rotation="0"
+     inkscape:current-layer="svg2"
+     inkscape:window-maximized="1"
+     inkscape:window-y="23"
+     inkscape:window-x="56"
+     inkscape:cy="251.66102"
+     inkscape:cx="-76.074719"
+     inkscape:zoom="1.3037281"
+     showgrid="false"
+     id="namedview6"
+     inkscape:window-height="1395"
+     inkscape:window-width="2504"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+</svg>

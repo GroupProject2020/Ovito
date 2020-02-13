@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,7 @@
 
 #include <QRegularExpression>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(LAMMPSTextDumpImporter);
 DEFINE_PROPERTY_FIELD(LAMMPSTextDumpImporter, useCustomColumnMapping);
@@ -48,10 +48,10 @@ void LAMMPSTextDumpImporter::setCustomColumnMapping(const InputColumnMapping& ma
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool LAMMPSTextDumpImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool LAMMPSTextDumpImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read first line.
 	stream.readLine(15);
@@ -68,11 +68,11 @@ Future<InputColumnMapping> LAMMPSTextDumpImporter::inspectFileHeader(const Frame
 {
 	// Retrieve file.
 	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
-		.then(executor(), [this, frame](const QString& filename) {
+		.then(executor(), [this, frame](const FileHandle& fileHandle) {
 
 			// Start task that inspects the file header to determine the contained data columns.
 			activateCLocale();
-			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, fileHandle);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedColumnMapping();
@@ -81,12 +81,12 @@ Future<InputColumnMapping> LAMMPSTextDumpImporter::inspectFileHeader(const Frame
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning LAMMPS dump file %1").arg(stream.filename()));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning LAMMPS dump file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
@@ -94,9 +94,7 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 
 	int timestep = 0;
 	size_t numParticles = 0;
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
 
 	while(!stream.eof() && !isCanceled()) {
 		qint64 byteOffset = stream.byteOffset();
@@ -109,11 +107,8 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 			if(stream.lineStartsWith("ITEM: TIMESTEP")) {
 				if(sscanf(stream.readLine(), "%i", &timestep) != 1)
 					throw Exception(tr("LAMMPS dump file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(stream.line())));
-				Frame frame;
-				frame.sourceFile = sourceUrl;
 				frame.byteOffset = byteOffset;
 				frame.lineNumber = lineNumber;
-				frame.lastModificationTime = lastModified;
 				frame.label = QString("Timestep %1").arg(timestep);
 				frames.push_back(frame);
 				break;
@@ -156,11 +151,11 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading LAMMPS dump file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading LAMMPS dump file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
@@ -481,7 +476,5 @@ OORef<RefTarget> LAMMPSTextDumpImporter::clone(bool deepCopy, CloneHelper& clone
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

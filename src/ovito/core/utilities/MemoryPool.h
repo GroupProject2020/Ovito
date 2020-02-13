@@ -30,7 +30,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 /**
  * \brief A simple memory pool for the efficient allocation of a large number of object instances.
@@ -128,5 +128,4 @@ private:
 	std::allocator<T> _alloc;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

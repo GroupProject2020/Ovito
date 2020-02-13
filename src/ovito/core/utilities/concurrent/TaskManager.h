@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,10 +26,11 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 
-#include <QThreadPool>
-#include <QMetaObject>
+#ifndef OVITO_DISABLE_THREADING
+	#include <QThreadPool>
+#endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * \brief Manages the background tasks.
@@ -61,13 +62,15 @@ public:
 	template<class TaskType>
 	auto runTaskAsync(const std::shared_ptr<TaskType>& task) {
 		OVITO_ASSERT(task);
-		OVITO_ASSERT(task->_taskManager == nullptr);
-		// Associate this TaskManager with the task.
-		task->_taskManager = this; 
-		// Submit the task for execution.
-		QThreadPool::globalInstance()->start(task.get());
-		// The task is now associated with this TaskManager.
+		// Associate the task with this TaskManager.
 		registerTask(task);
+#ifndef OVITO_DISABLE_THREADING
+		// Submit the task for execution in a background thread.
+		QThreadPool::globalInstance()->start(task.get());
+#else
+		// If multi-threading is not available, run the task in the main thread as soon as execution returns to the event loop.
+		QTimer::singleShot(0, this, [task]() { task->run(); });
+#endif
 		return task->future();
 	}
 
@@ -105,7 +108,7 @@ public:
 		using tuple_type = typename promise_type::tuple_type;
 		promise_type promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
 			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
-			startedState ? Task::State(Task::Started) : Task::NoState, *this));
+			startedState ? Task::State(Task::Started) : Task::NoState, this));
 		addTaskInternal(promise.task());
 		return promise;
 	}
@@ -184,12 +187,9 @@ private:
 	/// The dataset container owning this task manager (may be NULL).
 	DataSetContainer* _datasetContainer;
 
-	// Needed by MainThreadTask::createSubTask():
-	friend class MainThreadTask;
+	friend class AsyncOperation; // Needed by AsyncOperation::watcher()
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::TaskPtr);

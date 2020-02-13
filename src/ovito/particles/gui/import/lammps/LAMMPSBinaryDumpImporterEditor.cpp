@@ -23,13 +23,13 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/lammps/LAMMPSBinaryDumpImporter.h>
 #include <ovito/particles/gui/import/InputColumnMappingDialog.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include "LAMMPSBinaryDumpImporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(LAMMPSBinaryDumpImporterEditor);
 SET_OVITO_OBJECT_EDITOR(LAMMPSBinaryDumpImporter, LAMMPSBinaryDumpImporterEditor);
@@ -150,8 +150,5 @@ void LAMMPSBinaryDumpImporterEditor::onEditColumnMapping()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

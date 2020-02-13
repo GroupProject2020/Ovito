@@ -27,7 +27,7 @@
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "CalculateDisplacementsModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifier);
 DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorVis);
@@ -54,7 +54,7 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::createEngineInternal(const PipelineEvaluationRequest& request, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
 {
 	// Get the current particle positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
@@ -167,7 +167,5 @@ void CalculateDisplacementsModifier::DisplacementEngine::emitResults(TimePoint t
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

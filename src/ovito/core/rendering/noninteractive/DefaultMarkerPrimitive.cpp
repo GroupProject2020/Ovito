@@ -24,7 +24,7 @@
 #include "DefaultMarkerPrimitive.h"
 #include "NonInteractiveSceneRenderer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /******************************************************************************
 * Returns true if the geometry buffer is filled and can be rendered with the given renderer.
@@ -43,5 +43,4 @@ void DefaultMarkerPrimitive::render(SceneRenderer* renderer)
 	// Markers are only rendered by the interactive viewport renderer.
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

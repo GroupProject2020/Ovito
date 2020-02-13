@@ -24,8 +24,8 @@
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include "PropertyInspectionApplet.h"
 
 namespace Ovito { namespace StdObj {
@@ -91,7 +91,7 @@ void PropertyInspectionApplet::updateContainerList()
 {
 	// Build list of all property container objects in the current data collection.
 	std::vector<ConstDataObjectPath> objectPaths;
-	if(!currentState().isEmpty())
+	if(currentState())
 		objectPaths = currentState().getObjectsRecursive(_containerClass);
 
 	containerSelectionWidget()->setUpdatesEnabled(false);
@@ -157,7 +157,7 @@ void PropertyInspectionApplet::currentContainerChanged()
 	_filterModel->setContentsEnd();
 
 	// Update the list of variables that can be referenced in the filter expression.
-	if(selectedContainerObject() && !currentState().isEmpty()) {
+	if(selectedContainerObject() && currentState()) {
 		try {
 			auto evaluator = createExpressionEvaluator();
 			evaluator->initialize(QStringList(), currentState(), selectedContainerObject());
@@ -273,13 +273,13 @@ void PropertyInspectionApplet::PropertyFilterModel::setupEvaluator()
 {
 	_evaluatorWorker.reset();
 	_evaluator.reset();
-	if(_filterExpression.isEmpty() == false && !_applet->currentState().isEmpty()) {
+	if(_filterExpression.isEmpty() == false && _applet->currentState()) {
 		if(const PropertyContainer* container = _applet->selectedContainerObject()) {
 			try {
 				// Check if expression contain an assignment ('=' operator).
-				// This should be considered an error, because the user is probably referring the comparison operator '=='.
+				// This should be considered an error, because the user is probably referring to the comparison operator '=='.
 				if(_filterExpression.contains(QRegExp("[^=!><]=(?!=)")))
-					throw Exception(tr("The entered expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
+					throw Exception(tr("The entered expression contains the assignment operator '='. Please use the correct comparison operator '==' instead."));
 
 				_evaluator = _applet->createExpressionEvaluator();
 				_evaluator->initialize(QStringList(_filterExpression), _applet->currentState(), container);

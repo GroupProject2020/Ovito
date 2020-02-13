@@ -24,7 +24,7 @@
 #include <ovito/core/viewport/Viewport.h>
 #include "AmbientOcclusionRenderer.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(AmbientOcclusionRenderer);
 
@@ -123,7 +123,7 @@ void AmbientOcclusionRenderer::endFrame(bool renderSuccessful)
 		if(_image.isNull() || _image.size() != size)
 			_image = QImage(size, QImage::Format_ARGB32);
 		while(glGetError() != GL_NO_ERROR);
-		glReadPixels(0, 0, size.width(), size.height(), GL_BGRA, GL_UNSIGNED_BYTE, _image.bits());
+		glReadPixels(0, 0, size.width(), size.height(), 0x80E1 /*GL_BGRA*/, GL_UNSIGNED_BYTE, _image.bits());
 		if(glGetError() != GL_NO_ERROR) {
 			glReadPixels(0, 0, size.width(), size.height(), GL_RGBA, GL_UNSIGNED_BYTE, _image.bits());
 			_image = _image.rgbSwapped();
@@ -143,8 +143,5 @@ void AmbientOcclusionRenderer::endRender()
 	OpenGLSceneRenderer::endRender();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

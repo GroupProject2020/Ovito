@@ -22,13 +22,13 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/modifier/analysis/voronoi/VoronoiAnalysisModifier.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/BooleanGroupBoxParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanGroupBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include "VoronoiAnalysisModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(VoronoiAnalysisModifierEditor);
 SET_OVITO_OBJECT_EDITOR(VoronoiAnalysisModifier, VoronoiAnalysisModifierEditor);
@@ -99,8 +99,5 @@ void VoronoiAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	layout->addWidget(statusLabel());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

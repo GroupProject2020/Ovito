@@ -25,9 +25,9 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/lammps/LAMMPSBinaryDumpImporter.h>
-#include <ovito/gui/dataset/io/FileImporterEditor.h>
+#include <ovito/gui/desktop/dataset/io/FileImporterEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief A properties editor for the LAMMPSBinaryDumpImporter class.
@@ -59,9 +59,6 @@ protected Q_SLOTS:
 	void onEditColumnMapping();
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

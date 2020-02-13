@@ -25,7 +25,7 @@
 
 #include <netcdf.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 // The global mutex used to serialize access to the NetCDF library functions.
 QMutex NetCDFExclusiveAccess::_netcdfMutex(QMutex::Recursive);
@@ -84,5 +84,4 @@ void NetCDFError::ncerr_with_info(int err, const char* file, int line, const QSt
 		throw Exception(QString("NetCDF I/O error: %1 %2 (line %3 of %4)").arg(QString(nc_strerror(err))).arg(info).arg(line).arg(file));
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

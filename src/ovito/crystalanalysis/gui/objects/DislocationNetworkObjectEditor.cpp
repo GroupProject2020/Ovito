@@ -22,7 +22,7 @@
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
-#include <ovito/gui/properties/RefTargetListParameterUI.h>
+#include <ovito/gui/desktop/properties/RefTargetListParameterUI.h>
 #include "DislocationNetworkObjectEditor.h"
 #include "MicrostructurePhaseEditor.h"
 

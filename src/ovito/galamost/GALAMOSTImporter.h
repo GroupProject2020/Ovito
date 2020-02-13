@@ -29,7 +29,7 @@
 
 #include <QXmlDefaultHandler>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for data files of the GALAMOST MD code.
@@ -50,7 +50,7 @@ class OVITO_GALAMOST_EXPORT GALAMOSTImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("GALAMOST Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(GALAMOSTImporter, OOMetaClass)
@@ -65,8 +65,8 @@ public:
 	virtual QString objectTitle() const override { return tr("GALAMOST"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 private:
@@ -77,13 +77,13 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-			: FileSourceImporter::FrameLoader(frame, filename) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+			: FileSourceImporter::FrameLoader(frame, file) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Is called by the XML parser whenever a new XML element is read.
 		virtual bool startElement(const QString& namespaceURI, const QString& localName, const QString& qName, const QXmlAttributes& atts) override;
@@ -119,7 +119,5 @@ private:
 	};
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

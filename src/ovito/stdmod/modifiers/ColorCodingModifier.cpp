@@ -111,14 +111,14 @@ void ColorCodingModifier::loadUserDefaults()
 }
 
 /******************************************************************************
-* Asks the modifier for its validity interval at the given time.
+* Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
-TimeInterval ColorCodingModifier::modifierValidity(TimePoint time)
+TimeInterval ColorCodingModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
 {
-	TimeInterval interval = DelegatingModifier::modifierValidity(time);
-	if(startValueController()) interval.intersect(startValueController()->validityInterval(time));
-	if(endValueController()) interval.intersect(endValueController()->validityInterval(time));
-	return interval;
+	TimeInterval iv = DelegatingModifier::validityInterval(request, modApp);
+	if(startValueController()) iv.intersect(startValueController()->validityInterval(request.time()));
+	if(endValueController()) iv.intersect(endValueController()->validityInterval(request.time()));
+	return iv;
 }
 
 /******************************************************************************
@@ -131,7 +131,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 
 	// When the modifier is inserted, automatically select the most recently added property from the input.
 	if(sourceProperty().isNull() && delegate() && Application::instance()->executionContext() == Application::ExecutionContext::Interactive) {
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const PropertyContainer* container = input.getLeafObject(delegate()->inputContainerRef())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
@@ -164,7 +164,7 @@ void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field
 ******************************************************************************/
 bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& state, FloatType& min, FloatType& max)
 {
-	if(!delegate() || state.isEmpty())
+	if(!delegate() || !state)
 		return false;
 	const PropertyContainer* container = state.getLeafObject(delegate()->inputContainerRef());
 	if(!container)
@@ -213,7 +213,7 @@ bool ColorCodingModifier::adjustRange()
 	// Loop over all input data.
 	bool success = false;
 	for(ModifierApplication* modApp : modifierApplications()) {
-		const PipelineFlowState& inputState = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& inputState = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 
 		// Determine the minimum and maximum values of the selected property.
 		success |= determinePropertyValueRange(inputState, minValue, maxValue);
@@ -234,7 +234,7 @@ bool ColorCodingModifier::adjustRange()
 * Sets the start and end value to the minimum and maximum value of the selected
 * particle or bond property determined over the entire animation sequence.
 ******************************************************************************/
-bool ColorCodingModifier::adjustRangeGlobal(Task& operation)
+bool ColorCodingModifier::adjustRangeGlobal(AsyncOperation&& operation)
 {
 	ViewportSuspender noVPUpdates(this);
 

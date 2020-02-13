@@ -28,6 +28,7 @@
 #include <ovito/core/utilities/concurrent/Task.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/io/CompressedTextReader.h>
+#include <ovito/core/utilities/io/FileManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "VoroTopModifier.h"
@@ -59,8 +60,8 @@ bool VoroTopModifier::loadFilterDefinition(const QString& filepath, AsyncOperati
     operation.setProgressText(tr("Loading VoroTop filter %1").arg(filepath));
 
     // Open filter file for reading.
-    QFile file(filepath);
-    CompressedTextReader stream(file, filepath);
+    FileHandle fileHandle(QUrl::fromLocalFile(filepath), filepath);
+    CompressedTextReader stream(fileHandle);
 
     // Load filter file header (i.e. list of structure types).
     std::shared_ptr<Filter> filter = std::make_shared<Filter>();
@@ -87,7 +88,7 @@ bool VoroTopModifier::loadFilterDefinition(const QString& filepath, AsyncOperati
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
     // Get the current positions.
     const ParticlesObject* particles = input.expectObject<ParticlesObject>();
@@ -372,8 +373,8 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
         task()->setProgressText(tr("Loading VoroTop filter file: %1").arg(_filterFile));
 
         // Open filter file for reading.
-        QFile file(_filterFile);
-        CompressedTextReader stream(file, _filterFile);
+        FileHandle fileHandle(QUrl::fromLocalFile(_filterFile), _filterFile);
+        CompressedTextReader stream(fileHandle);
 
         // Parse filter definition.
         _filter = std::make_shared<Filter>();

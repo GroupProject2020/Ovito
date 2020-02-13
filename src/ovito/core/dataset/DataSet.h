@@ -38,10 +38,10 @@
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/TaskWatcher.h>
-#include <ovito/core/utilities/concurrent/SignalPromise.h>
+#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/MixedKeyCache.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /**
  * \brief Stores the current program state including the three-dimensional scene, viewport configuration,
@@ -56,8 +56,10 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
  */
 class OVITO_CORE_EXPORT DataSet : public RefTarget
 {
-	OVITO_CLASS(DataSet)
 	Q_OBJECT
+	OVITO_CLASS(DataSet)
+	Q_PROPERTY(Ovito::AnimationSettings* animationSettings READ animationSettings WRITE setAnimationSettings NOTIFY animationSettingsReplaced);
+	Q_PROPERTY(Ovito::ViewportConfiguration* viewportConfiguration READ viewportConfig WRITE setViewportConfig NOTIFY viewportConfigReplaced);
 
 public:
 
@@ -91,10 +93,6 @@ public:
 	/// \brief Returns the manager of ParameterUnit objects.
 	UnitsManager& unitsManager() { return _unitsManager; }
 
-	/// \brief Returns a pointer to the main window in which this dataset is being edited.
-	/// \return The main window, or NULL if this data set is not being edited in any window.
-	//MainWindow* mainWindow() const;
-
 	/// \brief Returns the container this dataset belongs to.
 	DataSetContainer* container() const;
 
@@ -109,7 +107,7 @@ public:
 	/// \param oldAnimationInterval The old animation interval, which will be mapped to the new animation interval.
 	/// \param newAnimationInterval The new animation interval.
 	///
-	/// This method calls Controller::rescaleTime() for all controllers in the scene.
+	/// This method calls RefTarget::rescaleTime() for all objects (including animation controllers) in the scene.
 	/// For keyed controllers this will rescale the key times of all keys from the
 	/// old animation interval to the new interval using a linear mapping.
 	///
@@ -117,7 +115,7 @@ public:
 	/// according to a linear extrapolation.
 	///
 	/// \undoable
-	void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval);
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) override;
 
 	/// \brief This is the high-level rendering function, which invokes the renderer to generate one or more
 	///        output images of the scene. All rendering parameters are specified in the RenderSettings object.
@@ -206,7 +204,12 @@ private:
 	OORef<ViewportConfiguration> createDefaultViewportConfiguration();
 
 	/// Requests the (re-)evaluation of all data pipelines in the current scene.
-	void makeSceneReady(bool forceReevaluation);
+	Q_INVOKABLE void makeSceneReady(bool forceReevaluation);
+
+	/// Requests the (re-)evaluation of all data pipelines next time execution returns to the event loop.
+	void makeSceneReadyLater(bool forceReevaluation) { 
+		QMetaObject::invokeMethod(this, "makeSceneReady", Qt::QueuedConnection, Q_ARG(bool, forceReevaluation));
+	}
 
 private Q_SLOTS:
 
@@ -248,17 +251,17 @@ private:
 	/// This signal/slot connection updates the viewports when the animation time changes.
 	QMetaObject::Connection _updateViewportOnTimeChangeConnection;
 
-	/// The promise of the scene becoming ready.
-	SignalPromise _sceneReadyPromise;
-
-	/// The future of the scene becoming ready.
-	SharedFuture<> _sceneReadyFuture;
+	/// The operation making the scene ready.
+	AsyncOperation _sceneReadyOperation;
 
 	/// The last animation time at which the scene was made ready.
 	TimePoint _sceneReadyTime;
 
 	/// The current pipeline evaluation that is in progress.
 	PipelineEvaluationFuture _pipelineEvaluation;
+
+	/// The watcher object that is used to monitor the make-scene-ready task.
+	TaskWatcher _sceneReadyWatcher;
 
 	/// The watcher object that is used to monitor the evaluation of data pipelines in the scene.
 	TaskWatcher _pipelineEvaluationWatcher;
@@ -272,5 +275,4 @@ private:
 	friend class DataSetContainer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

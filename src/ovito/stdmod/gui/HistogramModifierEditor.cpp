@@ -23,11 +23,11 @@
 #include <ovito/stdmod/gui/StdModGui.h>
 #include <ovito/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <ovito/stdobj/gui/widgets/PropertyContainerParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
-#include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerRadioButtonParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/stdmod/modifiers/HistogramModifier.h>
 #include "HistogramModifierEditor.h"
 

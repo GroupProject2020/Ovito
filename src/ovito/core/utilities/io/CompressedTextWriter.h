@@ -28,7 +28,7 @@
 	#include <ovito/core/utilities/io/gzdevice/GzipIODevice.h>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /**
  * \brief A helper class for writing text-based files that are compressed (gzip format).
@@ -69,7 +69,7 @@ public:
 	/// Writes a 64-bit unsigned integer number to the text-based output file.
 	CompressedTextWriter& operator<<(quint64 i);
 
-#if !defined(Q_OS_WIN) && (QT_POINTER_SIZE != 4)
+#if (!defined(Q_OS_WIN) && (QT_POINTER_SIZE != 4)) || defined(Q_OS_WASM)
 	/// Writes an unsigned integer number to the text-based output file.
 	CompressedTextWriter& operator<<(size_t i);
 #endif
@@ -130,6 +130,4 @@ private:
 	Q_OBJECT
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

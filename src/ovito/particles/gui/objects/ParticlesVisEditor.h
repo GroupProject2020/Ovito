@@ -24,11 +24,9 @@
 
 
 #include <ovito/particles/gui/ParticlesGui.h>
-#include <ovito/gui/properties/PropertiesEditor.h>
+#include <ovito/gui/desktop/properties/PropertiesEditor.h>
 
 namespace Ovito { namespace Particles {
-
-OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * \brief A properties editor for the ParticlesVis class.
@@ -49,6 +47,5 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

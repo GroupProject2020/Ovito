@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(RootSceneNode);
 
@@ -72,6 +72,4 @@ QString RootSceneNode::makeNameUnique(QString baseName) const
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

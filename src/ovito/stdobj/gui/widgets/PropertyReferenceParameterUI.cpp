@@ -137,7 +137,7 @@ void PropertyReferenceParameterUI::updateUI()
 			if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 				for(ModifierApplication* modApp : mod->modifierApplications()) {
 					// Populate combo box with items from the upstream pipeline.
-					addItemsToComboBox(modApp->evaluateInputPreliminary());
+					addItemsToComboBox(modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 				}
 			}
 
@@ -182,7 +182,7 @@ void PropertyReferenceParameterUI::updateUI()
 void PropertyReferenceParameterUI::addItemsToComboBox(const PipelineFlowState& state)
 {
 	OVITO_ASSERT(containerRef());
-	if(const PropertyContainer* container = !state.isEmpty() ? state.getLeafObject(containerRef()) : nullptr) {
+	if(const PropertyContainer* container = state ? state.getLeafObject(containerRef()) : nullptr) {
 		for(const PropertyObject* property : container->properties()) {
 
 			// The client can apply a filter to the displayed property list.

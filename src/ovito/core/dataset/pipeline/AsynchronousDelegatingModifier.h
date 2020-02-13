@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifier.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 
 /**
@@ -53,7 +53,7 @@ public:
 
 		/// Asks the metaclass which data objects in the given input pipeline state the modifier delegate can operate on.
 		QVector<DataObjectReference> getApplicableObjects(const PipelineFlowState& input) const {
-			if(input.isEmpty()) return {};
+			if(!input) return {};
 			return getApplicableObjects(*input.data());
 		}
 
@@ -84,6 +84,9 @@ public:
 
 	/// \brief Returns the modifier to which this delegate belongs.
 	AsynchronousDelegatingModifier* modifier() const;
+
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const { return TimeInterval::infinite(); }
 
 private:
 
@@ -129,6 +132,9 @@ public:
 	/// Constructor.
 	AsynchronousDelegatingModifier(DataSet* dataset);
 
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
+
 protected:
 
 	/// Creates a default delegate for this modifier.
@@ -141,6 +147,4 @@ protected:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(AsynchronousModifierDelegate, delegate, setDelegate, PROPERTY_FIELD_ALWAYS_CLONE);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

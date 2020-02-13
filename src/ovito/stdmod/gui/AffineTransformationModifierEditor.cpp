@@ -21,10 +21,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/BooleanRadioButtonParameterUI.h>
-#include <ovito/gui/properties/AffineTransformationParameterUI.h>
-#include <ovito/gui/properties/ModifierDelegateListParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanRadioButtonParameterUI.h>
+#include <ovito/gui/desktop/properties/AffineTransformationParameterUI.h>
+#include <ovito/gui/desktop/properties/ModifierDelegateListParameterUI.h>
 #include <ovito/stdmod/modifiers/AffineTransformationModifier.h>
 #include "AffineTransformationModifierEditor.h"
 

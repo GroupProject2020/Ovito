@@ -29,7 +29,7 @@
 #include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for the text-based XYZ file format.
@@ -50,7 +50,7 @@ class OVITO_PARTICLES_EXPORT XYZImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("XYZ Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(XYZImporter, OOMetaClass)
@@ -76,15 +76,15 @@ public:
 	static bool mapVariableToProperty(InputColumnMapping &columnMapping, int column, QString name, int dataType, int vec);
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), columnMapping(), autoRescaleCoordinates());
+		return std::make_shared<FrameLoader>(frame, file, sortParticles(), columnMapping(), autoRescaleCoordinates());
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
-	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
+		return std::make_shared<FrameFinder>(file);
 	}
 
 	/// Inspects the header of the given file and returns the number of file columns.
@@ -116,21 +116,21 @@ private:
 	public:
 
 		/// Normal constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles, const InputColumnMapping& columnMapping, bool autoRescaleCoordinates)
-		  : FileSourceImporter::FrameLoader(frame, filename),
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file, bool sortParticles, const InputColumnMapping& columnMapping, bool autoRescaleCoordinates)
+		  : FileSourceImporter::FrameLoader(frame, file),
 		  	_parseFileHeaderOnly(false),
 			_sortParticles(sortParticles),
 			_columnMapping(columnMapping),
 			_autoRescaleCoordinates(autoRescaleCoordinates) {}
 
 		/// Constructor used when reading only the file header information.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-		  : FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(true) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+		  : FileSourceImporter::FrameLoader(frame, file), _parseFileHeaderOnly(true) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 
@@ -150,8 +150,8 @@ private:
 
 	protected:
 
-		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;
+		/// Scans the data file and builds a list of source frames.
+		virtual void discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames) override;
 	};
 
 protected:
@@ -175,9 +175,5 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, autoRescaleCoordinates, setAutoRescaleCoordinates);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

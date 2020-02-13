@@ -24,12 +24,12 @@
 #include <ovito/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
 #include <ovito/particles/gui/util/CutoffRadiusPresetsUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/IntegerRadioButtonParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerRadioButtonParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
 #include "CommonNeighborAnalysisModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CommonNeighborAnalysisModifierEditor);
 SET_OVITO_OBJECT_EDITOR(CommonNeighborAnalysisModifier, CommonNeighborAnalysisModifierEditor);
@@ -95,8 +95,5 @@ void CommonNeighborAnalysisModifierEditor::createUI(const RolloutInsertionParame
 	layout1->addWidget(label);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -29,7 +29,7 @@
 #include "OXDNAImporter.h"
 #include "NucleotidesVis.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(OXDNAImporter);
 DEFINE_PROPERTY_FIELD(OXDNAImporter, topologyFileUrl);
@@ -38,10 +38,10 @@ SET_PROPERTY_FIELD_LABEL(OXDNAImporter, topologyFileUrl, "Topology file");
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool OXDNAImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool OXDNAImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file for reading.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Check for a valid "t = ..." line.
 	FloatType t;
@@ -62,21 +62,20 @@ bool OXDNAImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl&
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void OXDNAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void OXDNAImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
+	Frame frame(fileHandle());
+	QString filename = fileHandle().sourceUrl().fileName();
 	int frameNumber = 0;
 
-	qint64 byteOffset = stream.byteOffset();
-	int lineNumber = stream.lineNumber();
+	frame.byteOffset = stream.byteOffset();
+	frame.lineNumber = stream.lineNumber();
 	while(!stream.eof() && !isCanceled()) {
 
 		// Check for a valid "t = ..." line.
@@ -96,18 +95,13 @@ void OXDNAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& s
 			break; 
 
 		// Create a new record for the time step.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = byteOffset;
-		frame.lineNumber = lineNumber;
-		frame.lastModificationTime = lastModified;
-		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
+		frame.label = tr("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 		frames.push_back(frame);
 
 		// Skip nucleotide lines.
 		while(!stream.eof()) {
-			byteOffset = stream.byteOffset();
-			lineNumber = stream.lineNumber();
+			frame.byteOffset = stream.byteOffset();
+			frame.lineNumber = stream.lineNumber();
 			stream.readLine();
 			if(stream.lineStartsWith("t", true))
 				break;
@@ -120,7 +114,7 @@ void OXDNAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& s
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile()
 {
 	// Locate the topology file. 
 	QUrl topoFileUrl = _userSpecifiedTopologyUrl;
@@ -149,15 +143,14 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	}
 
 	// Fetch the oxDNA topology file if it is stored on a remote location.
-	SharedFuture<QString> localTopologyFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager(), topoFileUrl);
+	SharedFuture<FileHandle> localTopologyFileFuture = Application::instance()->fileManager()->fetchUrl(*taskManager(), topoFileUrl);
 	if(!waitForFuture(localTopologyFileFuture))
 		return {};
 
 	// Open oxDNA topology file for reading.
-	QFile localTopologyFile(localTopologyFileFuture.result());
-	CompressedTextReader topoStream(localTopologyFile, topoFileUrl.path());
+	CompressedTextReader topoStream(localTopologyFileFuture.result());
 	beginProgressSubSteps(2);
-	setProgressText(tr("Reading oxDNA topology file %1").arg(topoFileUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading oxDNA topology file %1").arg(localTopologyFileFuture.result().toString()));
 
 	// Create the container for the particle data to be loaded.
 	auto frameData = std::make_shared<ParticleFrameData>();
@@ -221,9 +214,9 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	boost::copy(bonds, bondTopologyProperty.begin());
 
 	// Open oxDNA configuration file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
+	CompressedTextReader stream(fileHandle());
 	nextProgressSubStep();
-	setProgressText(tr("Reading oxDNA file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading oxDNA file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
@@ -301,7 +294,5 @@ FileSourceImporter::FrameDataPtr OXDNAImporter::FrameLoader::loadFile(QFile& fil
 	return std::move(frameData);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

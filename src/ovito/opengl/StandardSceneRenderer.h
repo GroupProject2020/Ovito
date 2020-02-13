@@ -30,7 +30,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief This is the default scene renderer used for high-quality image output.
@@ -90,5 +90,4 @@ private:
 	QSize _framebufferSize;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

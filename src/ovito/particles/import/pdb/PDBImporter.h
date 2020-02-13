@@ -27,7 +27,7 @@
 #include <ovito/particles/import/ParticleImporter.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for Protein Data Bank (PDB) files.
@@ -48,7 +48,7 @@ class OVITO_PARTICLES_EXPORT PDBImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("PDB Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(PDBImporter, OOMetaClass)
@@ -63,15 +63,15 @@ public:
 	virtual QString objectTitle() const override { return tr("PDB"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename);
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
-	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
+		return std::make_shared<FrameFinder>(file);
 	}
 
 private:
@@ -86,8 +86,8 @@ private:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames.
@@ -100,12 +100,10 @@ private:
 
 	protected:
 
-		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;
+		/// Scans the data file and builds a list of source frames.
+		virtual void discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames) override;
 	};
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

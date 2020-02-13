@@ -24,7 +24,7 @@
 
 
 #include <ovito/stdobj/gui/StdObjGui.h>
-#include <ovito/gui/properties/ParameterUI.h>
+#include <ovito/gui/desktop/properties/ParameterUI.h>
 
 namespace Ovito { namespace StdObj {
 

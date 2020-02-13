@@ -58,7 +58,7 @@
 		<row><entry><link xlink:href="http://ffmpeg.org/">ffmpeg</link></entry><entry>optional</entry>
 		<entry>Audio and video processing libraries used by OVITO to write movie files.</entry></row>
 		<row><entry><link xlink:href="http://www.unidata.ucar.edu/software/netcdf/">libnetcdf</link></entry><entry>optional</entry>
-		<entry>Required by the <literal>NetCDF</literal> plugin to read NetCDF files</entry></row>
+		<entry>Required by the Amber/NetCDF file reader/writer plugin</entry></row>
 	</tbody></tgroup>
 	</informaltable>
     The sources of the following third-party libraries are included in the OVITO source distribution

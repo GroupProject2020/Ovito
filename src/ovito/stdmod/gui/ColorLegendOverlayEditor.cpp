@@ -21,17 +21,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/FontParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/Vector3ParameterUI.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/CustomParameterUI.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
-#include <ovito/gui/viewport/overlays/MoveOverlayInputMode.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/FontParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/Vector3ParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/CustomParameterUI.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/gui/desktop/viewport/overlays/MoveOverlayInputMode.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>

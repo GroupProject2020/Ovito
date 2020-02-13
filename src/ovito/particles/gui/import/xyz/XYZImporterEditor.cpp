@@ -23,12 +23,12 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/xyz/XYZImporter.h>
 #include <ovito/particles/gui/import/InputColumnMappingDialog.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/dataset/io/FileSource.h>
 #include "XYZImporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(XYZImporterEditor);
 SET_OVITO_OBJECT_EDITOR(XYZImporter, XYZImporterEditor);
@@ -175,8 +175,8 @@ void XYZImporterEditor::onEditColumnMapping()
 		if(!fileSource || fileSource->frames().empty()) return;
 
 		QUrl sourceUrl;
-		if(fileSource->storedFrameIndex() >= 0)
-			sourceUrl = fileSource->frames()[fileSource->storedFrameIndex()].sourceFile;
+		if(fileSource->dataCollectionFrame() >= 0)
+			sourceUrl = fileSource->frames()[fileSource->dataCollectionFrame()].sourceFile;
 		else
 			sourceUrl = fileSource->frames().front().sourceFile;
 
@@ -188,8 +188,5 @@ void XYZImporterEditor::onEditColumnMapping()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

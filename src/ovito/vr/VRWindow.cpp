@@ -20,11 +20,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/viewport/Viewport.h>
-#include <ovito/gui/properties/PropertiesPanel.h>
+#include <ovito/gui/desktop/properties/PropertiesPanel.h>
 #include "VRWindow.h"
 
 namespace VRPlugin {

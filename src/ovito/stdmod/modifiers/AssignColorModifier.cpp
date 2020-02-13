@@ -68,13 +68,14 @@ void AssignColorModifier::loadUserDefaults()
 }
 
 /******************************************************************************
-* Asks the modifier for its validity interval at the given time.
+* Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
-TimeInterval AssignColorModifier::modifierValidity(TimePoint time)
+TimeInterval AssignColorModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
 {
-	TimeInterval interval = DelegatingModifier::modifierValidity(time);
-	if(colorController()) interval.intersect(colorController()->validityInterval(time));
-	return interval;
+	TimeInterval iv = DelegatingModifier::validityInterval(request, modApp);
+	if(colorController()) 
+		iv.intersect(colorController()->validityInterval(request.time()));
+	return iv;
 }
 
 /******************************************************************************

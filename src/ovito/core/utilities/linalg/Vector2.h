@@ -32,7 +32,7 @@
 #include <ovito/core/utilities/io/SaveStream.h>
 #include <ovito/core/utilities/io/LoadStream.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A vector with two components.
@@ -355,8 +355,6 @@ using Vector2 = Vector_2<FloatType>;
  */
 using Vector2I = Vector_2<int>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Vector2);

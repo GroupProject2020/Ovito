@@ -25,7 +25,7 @@
 #include <ovito/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <ovito/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include <ovito/stdobj/table/DataTable.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include "FreezePropertyModifierEditor.h"
 
 namespace Ovito { namespace StdMod {

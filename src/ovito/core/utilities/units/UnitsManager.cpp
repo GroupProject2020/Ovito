@@ -25,7 +25,7 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include "UnitsManager.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Units)
+namespace Ovito {
 
 /******************************************************************************
 * Constructor.
@@ -168,6 +168,4 @@ void TimeParameterUnit::onAnimationSettingsReplaced(AnimationSettings* newAnimat
 	Q_EMIT formatChanged();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

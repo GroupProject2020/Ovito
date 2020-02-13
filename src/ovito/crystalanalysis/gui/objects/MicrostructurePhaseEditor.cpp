@@ -22,9 +22,9 @@
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/objects/MicrostructurePhase.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/properties/RefTargetListParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/RefTargetListParameterUI.h>
 #include "MicrostructurePhaseEditor.h"
 
 namespace Ovito { namespace CrystalAnalysis {

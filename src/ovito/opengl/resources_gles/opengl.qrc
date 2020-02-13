@@ -1,0 +1,70 @@
+<!DOCTYPE RCC><RCC version="1.0">
+
+<qresource prefix="/openglrenderer">
+
+	<file>glsl/particles/imposter/sphere/flat_shading.fs</file>
+	<file>glsl/particles/imposter/sphere/with_depth.fs</file>
+	<file>glsl/particles/imposter/sphere/with_depth_tri.vs</file>
+	<file>glsl/particles/imposter/sphere/without_depth.fs</file>
+	<file>glsl/particles/imposter/sphere/without_depth_tri.vs</file>
+	<file>glsl/particles/imposter/sphere/picking/flat_shading.fs</file>
+	<file>glsl/particles/imposter/sphere/picking/with_depth.fs</file>
+	<file>glsl/particles/imposter/sphere/picking/with_depth_tri.vs</file>
+	<file>glsl/particles/imposter/sphere/picking/without_depth_tri.vs</file>
+
+	<file>glsl/particles/geometry/sphere/sphere.fs</file>
+	<file>glsl/particles/geometry/sphere/sphere_tristrip.vs</file>
+	<file>glsl/particles/geometry/sphere/picking/sphere.fs</file>
+	<file>glsl/particles/geometry/sphere/picking/sphere_tristrip.vs</file>
+
+	<file>glsl/particles/geometry/cube/cube.fs</file>
+	<file>glsl/particles/geometry/cube/cube_tristrip.vs</file>
+	<file>glsl/particles/geometry/cube/picking/cube.fs</file>
+	<file>glsl/particles/geometry/cube/picking/cube_tristrip.vs</file>
+	<file>glsl/particles/geometry/box/box_tristrip.vs</file>
+	<file>glsl/particles/geometry/box/picking/box_tristrip.vs</file>
+
+	<file>glsl/particles/geometry/ellipsoid/ellipsoid.fs</file>
+	<file>glsl/particles/geometry/ellipsoid/ellipsoid_tristrip.vs</file>
+	<file>glsl/particles/geometry/ellipsoid/picking/ellipsoid.fs</file>
+	<file>glsl/particles/geometry/ellipsoid/picking/ellipsoid_tristrip.vs</file>
+
+	<file>glsl/arrows/flat.fs</file>
+	<file>glsl/arrows/flat_tri.vs</file>
+	<file>glsl/arrows/picking/flat.fs</file>
+	<file>glsl/arrows/picking/flat_tri.vs</file>
+	<file>glsl/arrows/shaded.fs</file>
+	<file>glsl/arrows/shaded.vs</file>
+	<file>glsl/arrows/picking/shaded.fs</file>
+	<file>glsl/arrows/picking/shaded.vs</file>
+
+	<file>glsl/cylinder/cylinder_raytraced.fs</file>
+	<file>glsl/cylinder/cylinder_raytraced_tri.vs</file>
+	<file>glsl/cylinder/picking/cylinder_raytraced.fs</file>
+	<file>glsl/cylinder/picking/cylinder_raytraced_tri.vs</file>
+
+	<file>glsl/mesh/mesh.fs</file>
+	<file>glsl/mesh/mesh.vs</file>
+	<file>glsl/mesh/picking/mesh.fs</file>
+	<file>glsl/mesh/picking/mesh.vs</file>
+
+	<file>glsl/lines/line.vs</file>
+	<file>glsl/lines/line.fs</file>
+	<file>glsl/lines/thick_line.vs</file>
+	<file>glsl/lines/picking/line.vs</file>
+	<file>glsl/lines/picking/line.fs</file>
+	<file>glsl/lines/picking/thick_line.vs</file>
+
+	<file>glsl/markers/marker.vs</file>
+	<file>glsl/markers/marker.fs</file>
+	<file>glsl/markers/box_lines.vs</file>
+	<file>glsl/markers/picking/marker.vs</file>
+	<file>glsl/markers/picking/marker.fs</file>
+	<file>glsl/markers/picking/box_lines.vs</file>
+
+	<file>glsl/image/image.fs</file>
+	<file>glsl/image/image.vs</file>
+
+</qresource>
+
+</RCC>

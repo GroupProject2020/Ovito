@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include "SceneNode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief This is the scene's root node.
@@ -61,8 +61,6 @@ public:
 	virtual bool isRootNode() const override { return true; }
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

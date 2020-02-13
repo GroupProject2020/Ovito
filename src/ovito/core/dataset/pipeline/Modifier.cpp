@@ -27,7 +27,7 @@
 #include <ovito/core/dataset/pipeline/PipelineObject.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(Modifier);
 DEFINE_PROPERTY_FIELD(Modifier, isEnabled);
@@ -43,6 +43,14 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(Modifier, title, ReferenceEvent::TitleChanged);
 Modifier::Modifier(DataSet* dataset) : RefTarget(dataset),
 	_isEnabled(true)
 {
+}
+
+/******************************************************************************
+* Determines the time interval over which a computed pipeline state will remain valid.
+******************************************************************************/
+TimeInterval Modifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
+{
+	return TimeInterval::infinite();
 }
 
 /******************************************************************************
@@ -75,8 +83,8 @@ OORef<ModifierApplication> Modifier::createModifierApplication()
 Future<PipelineFlowState> Modifier::evaluate(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	if(!output.isEmpty())
-		evaluatePreliminary(request.time(), modApp, output);
+	if(output)
+		evaluateSynchronous(request.time(), modApp, output);
 	return Future<PipelineFlowState>::createImmediate(std::move(output));
 }
 
@@ -108,21 +116,6 @@ ModifierApplication* Modifier::someModifierApplication() const
 }
 
 /******************************************************************************
-* Asks the modifier for its validity interval at the given time.
-******************************************************************************/
-TimeInterval Modifier::modifierValidity(TimePoint time)
-{
-#if 0
-	// Return an empty validity interval if the modifier is currently being edited
-	// to let the system create a pipeline cache point just before the modifier.
-	// This will speed up re-evaluation of the pipeline if the user adjusts this modifier's parameters interactively.
-	if(isObjectBeingEdited())
-		return TimeInterval::empty();
-#endif
-	return TimeInterval::infinite();
-}
-
-/******************************************************************************
 * Returns the the current status of the modifier's applications.
 ******************************************************************************/
 PipelineStatus Modifier::globalStatus() const
@@ -137,16 +130,12 @@ PipelineStatus Modifier::globalStatus() const
 		else if(s.text() != result.text())
 			result.setText(result.text() + QStringLiteral("\n") + s.text());
 
-		if(s.type() == PipelineStatus::Pending)
-			result.setType(PipelineStatus::Pending);
-		else if(result.type() != PipelineStatus::Pending && s.type() == PipelineStatus::Error)
+		if(s.type() == PipelineStatus::Error)
 			result.setType(PipelineStatus::Error);
-		else if(result.type() != PipelineStatus::Pending && result.type() != PipelineStatus::Error && s.type() == PipelineStatus::Warning)
+		else if(result.type() != PipelineStatus::Error && s.type() == PipelineStatus::Warning)
 			result.setType(PipelineStatus::Warning);
 	}
 	return result;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

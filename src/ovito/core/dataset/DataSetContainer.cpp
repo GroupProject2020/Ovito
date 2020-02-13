@@ -33,7 +33,7 @@
 #include <ovito/core/utilities/io/ObjectLoadStream.h>
 #include <ovito/core/utilities/io/FileManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(DataSetContainer);
 DEFINE_REFERENCE_FIELD(DataSetContainer, currentSet);
@@ -150,5 +150,4 @@ void DataSetContainer::onAnimationSettingsReplaced(AnimationSettings* newAnimati
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

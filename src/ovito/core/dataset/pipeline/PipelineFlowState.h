@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/data/DataObject.h>
 #include <ovito/core/dataset/data/DataCollection.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief This data structure holds the list of data objects that flows down a data pipeline.
@@ -59,6 +59,9 @@ public:
 		_stateValidity.setEmpty();
 		_status = PipelineStatus();
 	}
+
+	/// \brief Returns whether this flow state has a data collection or not.
+	explicit operator bool() const { return _data; }
 
 	/// \brief Adds an additional data object to this state.
 	void addObject(const DataObject* obj) {
@@ -90,9 +93,6 @@ public:
 	/// \sa setStateValidity()
 	void intersectStateValidity(const TimeInterval& intersectionInterval) { _stateValidity.intersect(intersectionInterval); }
 
-	/// \brief Returns true if this state object has no valid contents.
-	bool isEmpty() const { return !_data; }
-
 	/// Returns the status of the pipeline evaluation.
 	const PipelineStatus& status() const { return _status; }
 
@@ -106,22 +106,24 @@ public:
 	DataCollection* mutableData();
 
 	const DataCollection* data() const { return _data.get(); }
+	
+	void setData(DataCollection* data) { _data = data; }
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
 	const DataObject* getObject(const DataObject::OOMetaClass& objectClass) const {
-		return !isEmpty() ? data()->getObject(objectClass) : nullptr;
+		return data() ? data()->getObject(objectClass) : nullptr;
 	}
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getObject() const {
-		return !isEmpty() ? data()->getObject<DataObjectClass>() : nullptr;
+		return data() ? data()->getObject<DataObjectClass>() : nullptr;
 	}
 
 	/// \brief Determines if an object of the given type is in this flow state.
 	template<class DataObjectClass>
 	bool containsObject() const {
-		return !isEmpty() ? data()->containsObject<DataObjectClass>() : nullptr;
+		return data() ? data()->containsObject<DataObjectClass>() : nullptr;
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
@@ -153,35 +155,35 @@ public:
 	/// Finds an object of the given type in the list of data objects stored in this flow state
 	/// or among any of their sub-objects.
 	bool containsObjectRecursive(const DataObject::OOMetaClass& objectClass) const {
-		return !isEmpty() ? data()->containsObjectRecursive(objectClass) : false;
+		return data() ? data()->containsObjectRecursive(objectClass) : false;
 	}
 
 	/// Finds all objects of the given type in this flow state (also searching among sub-objects).
 	/// Returns them as a list of object paths.
 	std::vector<ConstDataObjectPath> getObjectsRecursive(const DataObject::OOMetaClass& objectClass) const {
-		return !isEmpty() ? data()->getObjectsRecursive(objectClass) : std::vector<ConstDataObjectPath>{};
+		return data() ? data()->getObjectsRecursive(objectClass) : std::vector<ConstDataObjectPath>{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	ConstDataObjectPath getObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		return !isEmpty() ? data()->getObject(objectClass, pathString) : ConstDataObjectPath{};
+		return data() ? data()->getObject(objectClass, pathString) : ConstDataObjectPath{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	ConstDataObjectPath getObject(const DataObjectReference& dataRef) const {
-		return !isEmpty() ? data()->getObject(dataRef) : ConstDataObjectPath{};
+		return data() ? data()->getObject(dataRef) : ConstDataObjectPath{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	ConstDataObjectPath getObject(const QString& pathString) const {
-		return !isEmpty() ? data()->getObject<DataObjectClass>(pathString) : ConstDataObjectPath{};
+		return data() ? data()->getObject<DataObjectClass>(pathString) : ConstDataObjectPath{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	ConstDataObjectPath getObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const {
-		return !isEmpty() ? data()->getObject<DataObjectClass>(dataRef) : ConstDataObjectPath{};
+		return data() ? data()->getObject<DataObjectClass>(dataRef) : ConstDataObjectPath{};
 	}
 
 	/// Throws an exception if the input does not contain any a data object of the given type and under the given hierarchy path.
@@ -212,18 +214,18 @@ public:
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	const DataObject* getLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		return !isEmpty() ? data()->getLeafObject(objectClass, pathString) : nullptr;
+		return data() ? data()->getLeafObject(objectClass, pathString) : nullptr;
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	const DataObject* getLeafObject(const DataObjectReference& dataRef) const {
-		return !isEmpty() ? data()->getLeafObject(dataRef) : nullptr;
+		return data() ? data()->getLeafObject(dataRef) : nullptr;
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getLeafObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const {
-		return !isEmpty() ? data()->getLeafObject(dataRef) : nullptr;
+		return data() ? data()->getLeafObject(dataRef) : nullptr;
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
@@ -247,13 +249,13 @@ public:
 
 	/// Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
 	const DataObject* getObjectBy(const DataObject::OOMetaClass& objectClass, const PipelineObject* dataSource, const QString& identifier) const {
-		return !isEmpty() ? data()->getObjectBy(objectClass, dataSource, identifier) : nullptr;
+		return data() ? data()->getObjectBy(objectClass, dataSource, identifier) : nullptr;
 	}
 
 	/// Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getObjectBy(const PipelineObject* dataSource, const QString& identifier) const {
-		return !isEmpty() ? data()->getObjectBy<DataObjectClass>(dataSource, identifier) : nullptr;
+		return data() ? data()->getObjectBy<DataObjectClass>(dataSource, identifier) : nullptr;
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
@@ -374,13 +376,13 @@ public:
 	/// Looks up the value for the given global attribute.
 	/// Returns a given default value if the attribute is not defined in this pipeline state.
 	QVariant getAttributeValue(const QString& attrName, const QVariant& defaultValue = QVariant()) const {
-		return !isEmpty() ? data()->getAttributeValue(attrName, defaultValue) : defaultValue;
+		return data() ? data()->getAttributeValue(attrName, defaultValue) : defaultValue;
 	}
 
 	/// Looks up the value for the global attribute with the given base name and creator.
 	/// Returns a given default value if the attribute is not defined in this pipeline state.
 	QVariant getAttributeValue(const PipelineObject* dataSource, const QString& attrBaseName, const QVariant& defaultValue = QVariant()) const {
-		return !isEmpty() ? data()->getAttributeValue(dataSource, attrBaseName, defaultValue) : defaultValue;
+		return data() ? data()->getAttributeValue(dataSource, attrBaseName, defaultValue) : defaultValue;
 	}
 
 	/// Inserts a new global attribute into the pipeline state.
@@ -418,6 +420,4 @@ private:
 	PipelineStatus _status;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

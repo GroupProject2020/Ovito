@@ -30,13 +30,27 @@
 #include "FileManager.h"
 #include "RemoteFileJob.h"
 
-#include <QTemporaryFile>
-
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 #ifdef OVITO_SSH_CLIENT
 using namespace Ovito::Ssh;
 #endif
+
+/******************************************************************************
+* Create a QIODevice that permits reading data from the file referred to by this handle.
+******************************************************************************/
+std::unique_ptr<QIODevice> FileHandle::createIODevice() const 
+{
+	if(!localFilePath().isEmpty()) {
+		return std::make_unique<QFile>(localFilePath());
+	}
+	else {
+		auto buffer = std::make_unique<QBuffer>();
+		buffer->setData(_fileData);
+		OVITO_ASSERT(buffer->data().constData() == _fileData.constData()); // Rely on a shallow copy of the buffer being created.
+		return buffer;
+	}
+}
 
 /******************************************************************************
 * Destructor.
@@ -55,32 +69,32 @@ FileManager::~FileManager()
 /******************************************************************************
 * Makes a file available on this computer.
 ******************************************************************************/
-SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl& url)
+SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.isLocalFile()) {
 		// Nothing to do to fetch local files. Simply return a finished Future object.
 
 		// But first check if the file exists.
 		QString filePath = url.toLocalFile();
-		if(!QFileInfo(url.toLocalFile()).exists())
-			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), taskManager.datasetContainer()));
+		if(!QFileInfo(filePath).exists())
+			return Future<FileHandle>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), taskManager.datasetContainer()));
 
-		return filePath;
+		return FileHandle(url, std::move(filePath));
 	}
 	else if(url.scheme() == QStringLiteral("sftp")) {
 #ifdef OVITO_SSH_CLIENT
 		QUrl normalizedUrl = normalizeUrl(url);
-		QMutexLocker lock(&_mutex);
+		QMutexLocker lock(&mutex());
 
 		// Check if requested URL is already in the cache.
-		if(auto cacheEntry = _cachedFiles.object(normalizedUrl)) {
-			return cacheEntry->fileName();
+		if(auto cacheEntry = _downloadedFiles.object(normalizedUrl)) {
+			return FileHandle(url, cacheEntry->fileName());
 		}
 
 		// Check if requested URL is already being loaded.
 		auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 		if(inProgressEntry != _pendingFiles.end()) {
-			SharedFuture<QString> future = inProgressEntry->second.lock();
+			SharedFuture<FileHandle> future = inProgressEntry->second.lock();
 			if(future.isValid())
 				return future;
 			else
@@ -88,17 +102,17 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		}
 
 		// Start the background download job.
-		Promise<QString> promise = taskManager.createMainThreadOperation<QString>(false);
-		SharedFuture<QString> future(promise.future());
+		Promise<FileHandle> promise = taskManager.createMainThreadOperation<FileHandle>(false);
+		SharedFuture<FileHandle> future(promise.future());
 		_pendingFiles.emplace(normalizedUrl, future);
 		new DownloadRemoteFileJob(url, std::move(promise));
 		return future;
 #else
-		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
+		return Future<FileHandle>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
 #endif
 	}
 	else {
-		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
+		return Future<FileHandle>::createFailed(Exception(tr("URL scheme '%1' not supported. The program supports only the sftp:// scheme and local file paths.").arg(url.scheme()), taskManager.datasetContainer()));
 	}
 }
 
@@ -118,7 +132,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 #endif
 	}
 	else {
-		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), taskManager.datasetContainer()));
+		return Future<QStringList>::createFailed(Exception(tr("URL scheme '%1' not supported. The program supports only the sftp:// scheme and local file paths.").arg(url.scheme()), taskManager.datasetContainer()));
 	}
 }
 
@@ -129,7 +143,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 void FileManager::removeFromCache(const QUrl& url)
 {
 	QMutexLocker lock(&_mutex);
-	_cachedFiles.remove(normalizeUrl(url));
+	_downloadedFiles.remove(normalizeUrl(url));
 }
 
 /******************************************************************************
@@ -138,7 +152,7 @@ void FileManager::removeFromCache(const QUrl& url)
 void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 {
 	QUrl normalizedUrl = normalizeUrl(std::move(url));
-	QMutexLocker lock(&_mutex);
+	QMutexLocker lock(&mutex());
 
 	auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 	if(inProgressEntry != _pendingFiles.end())
@@ -148,7 +162,7 @@ void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 		// Store downloaded file in local cache.
 		OVITO_ASSERT(localFile->thread() == this->thread());
 		localFile->setParent(this);
-		if(!_cachedFiles.insert(normalizedUrl, localFile, 0))
+		if(!_downloadedFiles.insert(normalizedUrl, localFile, 0))
 			throw Exception(tr("Failed to insert downloaded file into file cache."));
 	}
 }
@@ -386,6 +400,4 @@ bool FileManager::askUserForKeyPassphrase(const QString& hostname, const QString
 }
 #endif
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

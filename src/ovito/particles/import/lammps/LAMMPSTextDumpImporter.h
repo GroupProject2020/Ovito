@@ -29,7 +29,7 @@
 #include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for text-based LAMMPS dump simulation files.
@@ -50,7 +50,7 @@ class OVITO_PARTICLES_EXPORT LAMMPSTextDumpImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("LAMMPS Text Dump Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(LAMMPSTextDumpImporter, OOMetaClass)
@@ -73,21 +73,21 @@ public:
 	void setCustomColumnMapping(const InputColumnMapping& mapping);
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), useCustomColumnMapping(), customColumnMapping());
+		return std::make_shared<FrameLoader>(frame, file, sortParticles(), useCustomColumnMapping(), customColumnMapping());
 	}
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	static std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename, bool sortParticles, bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping) {
+	static std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file, bool sortParticles, bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping) {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles, useCustomColumnMapping, customColumnMapping);
+		return std::make_shared<FrameLoader>(frame, file, sortParticles, useCustomColumnMapping, customColumnMapping);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
-	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
+		return std::make_shared<FrameFinder>(file);
 	}
 
 	/// Inspects the header of the given file and returns the number of file columns.
@@ -121,18 +121,18 @@ private:
 	public:
 
 		/// Normal constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename,
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file,
 				bool sortParticles,
 				bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping)
-			: FileSourceImporter::FrameLoader(frame, filename),
+			: FileSourceImporter::FrameLoader(frame, file),
 				_parseFileHeaderOnly(false),
 				_sortParticles(sortParticles),
 				_useCustomColumnMapping(useCustomColumnMapping),
 				_customColumnMapping(customColumnMapping) {}
 
 		/// Constructor used when reading only the file header information.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-			: FileSourceImporter::FrameLoader(frame, filename),
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file)
+			: FileSourceImporter::FrameLoader(frame, file),
 				_parseFileHeaderOnly(true),
 				_useCustomColumnMapping(false) {}
 
@@ -141,8 +141,8 @@ private:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 
@@ -162,8 +162,8 @@ private:
 
 	protected:
 
-		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;
+		/// Scans the data file and builds a list of source frames.
+		virtual void discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames) override;
 	};
 
 protected:
@@ -191,9 +191,5 @@ private:
 	InputColumnMapping _customColumnMapping;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

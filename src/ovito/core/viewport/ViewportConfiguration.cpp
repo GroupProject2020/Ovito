@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ViewportConfiguration);
 DEFINE_REFERENCE_FIELD(ViewportConfiguration, viewports);
@@ -164,5 +164,4 @@ Point3 ViewportConfiguration::orbitCenter()
 	return Point3::Origin();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -24,11 +24,11 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
 #include <ovito/particles/modifier/analysis/chill_plus/ChillPlusModifier.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include "ChillPlusModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ChillPlusModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ChillPlusModifier, ChillPlusModifierEditor);
@@ -75,8 +75,5 @@ void ChillPlusModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	layout1->addWidget(label);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

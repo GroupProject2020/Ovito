@@ -24,20 +24,20 @@
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/stdobj/properties/PropertyStorage.h>
 #include <ovito/mesh/tri/TriMeshObject.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/dialogs/ImportFileDialog.h>
-#include <ovito/gui/utilities/concurrent/ProgressDialog.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/dialogs/ImportFileDialog.h>
+#include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/app/PluginManager.h>
 #include <ovito/core/dataset/io/FileSourceImporter.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ParticleTypeEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleTypeEditor);
 SET_OVITO_OBJECT_EDITOR(ParticleType, ParticleTypeEditor);
@@ -188,8 +188,9 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 					fileImporterType = fileDialog.selectedFileImporterType();
 				}
 				// Load the geometry from the selected file.
-				ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
-				ptype->loadShapeMesh(selectedFile, progressDialog.taskManager(), fileImporterType);
+				AsyncOperation loadOperation(ptype->dataset()->taskManager());
+				ProgressDialog progressDialog(container(), loadOperation.task(), tr("Loading mesh file"));
+				ptype->loadShapeMesh(selectedFile, std::move(loadOperation), fileImporterType);
 			});
 		}
 	});
@@ -204,6 +205,5 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

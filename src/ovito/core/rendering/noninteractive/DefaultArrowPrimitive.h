@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/rendering/ArrowPrimitive.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a set of arrows to be rendered by a non-interactive renderer.
@@ -79,7 +79,6 @@ private:
 
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

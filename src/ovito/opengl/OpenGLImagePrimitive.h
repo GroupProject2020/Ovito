@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,9 +27,10 @@
 #include <ovito/core/rendering/ImagePrimitive.h>
 #include "OpenGLTexture.h"
 #include "OpenGLSceneRenderer.h"
+#include "OpenGLBuffer.h"
 #include <QOpenGLShaderProgram>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores an image to be rendered in the viewports.
@@ -68,17 +69,13 @@ private:
 	QOpenGLShaderProgram* _shader;
 
 	/// The OpenGL vertex buffer that stores the vertex positions.
-	QOpenGLBuffer _vertexBuffer;
+	OpenGLBuffer<Point_3<GLfloat>> _vertexBuffer;
 
 	/// The OpenGL texture that is used for rendering the image.
 	OpenGLTexture _texture;
 
 	/// Indicates that the texture needs to be updated.
-	bool _needTextureUpdate;
+	bool _needTextureUpdate = true;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

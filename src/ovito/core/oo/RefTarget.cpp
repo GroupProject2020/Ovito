@@ -26,7 +26,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "RefTarget.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(RefTarget);
 
@@ -249,6 +249,5 @@ bool RefTarget::isObjectBeingEdited() const
 }
 
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 

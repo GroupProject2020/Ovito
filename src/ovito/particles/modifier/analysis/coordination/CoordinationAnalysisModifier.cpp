@@ -31,7 +31,7 @@
 #include <ovito/core/utilities/concurrent/ParallelFor.h>
 #include "CoordinationAnalysisModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifier);
 DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifier, cutoff);
@@ -64,7 +64,7 @@ bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const DataCollect
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current positions.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
@@ -245,7 +245,5 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::emitResults(TimeP
 	table->setAxisLabelX(tr("Pair separation distance"));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -26,10 +26,10 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/objects/DislocationNetworkObject.h>
 #include <ovito/crystalanalysis/objects/DislocationVis.h>
-#include <ovito/gui/mainwin/data_inspector/DataInspectionApplet.h>
-#include <ovito/gui/viewport/input/ViewportInputMode.h>
-#include <ovito/gui/viewport/input/ViewportInputManager.h>
-#include <ovito/gui/viewport/input/ViewportGizmo.h>
+#include <ovito/gui/desktop/mainwin/data_inspector/DataInspectionApplet.h>
+#include <ovito/gui/base/viewport/ViewportInputMode.h>
+#include <ovito/gui/base/viewport/ViewportInputManager.h>
+#include <ovito/core/viewport/ViewportGizmo.h>
 
 namespace Ovito { namespace CrystalAnalysis {
 
@@ -108,7 +108,7 @@ private:
 		/// Replaces the contents of this data model.
 		void setContents(const PipelineFlowState& state) {
 			beginResetModel();
-			if(!state.isEmpty()) {
+			if(state) {
 				_dislocationObj = state.getObject<DislocationNetworkObject>();
 				_microstructure = state.getObject<Microstructure>();
 			}
@@ -147,13 +147,13 @@ private:
 		}
 
 		/// Handles the mouse up events for a viewport.
-		virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+		virtual void mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 		/// Handles the mouse move event for the given viewport.
-		virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+		virtual void mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event) override;
 
 		/// Lets the input mode render its overlay content in a viewport.
-		virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
+		virtual void renderOverlay3D(Viewport* vp, SceneRenderer* renderer) override;
 
 	private:
 
@@ -161,7 +161,7 @@ private:
 		DislocationInspectionApplet* _applet;
 
 		/// Determines the dislocation under the mouse cursor.
-		int pickDislocation(ViewportWindow* vpwin, const QPoint& pos) const;
+		int pickDislocation(ViewportWindowInterface* vpwin, const QPoint& pos) const;
 	};
 
 private:

@@ -28,7 +28,7 @@
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Helper class used to detect changes in the storage ordering of particles.
@@ -76,6 +76,5 @@ private:
 	ConstPropertyPtr _particleIdentifiers;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

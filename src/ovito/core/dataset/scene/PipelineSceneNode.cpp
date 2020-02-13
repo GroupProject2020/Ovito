@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,20 +32,25 @@
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/oo/CloneHelper.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(PipelineSceneNode);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, dataProvider);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, visElements);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, replacedVisElements);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, replacementVisElements);
+DEFINE_PROPERTY_FIELD(PipelineSceneNode, pipelineTrajectoryCachingEnabled);
 SET_PROPERTY_FIELD_LABEL(PipelineSceneNode, dataProvider, "Pipeline object");
+SET_PROPERTY_FIELD_LABEL(PipelineSceneNode, pipelineTrajectoryCachingEnabled, "Precompute all trajectory frames");
 SET_PROPERTY_FIELD_CHANGE_EVENT(PipelineSceneNode, dataProvider, ReferenceEvent::PipelineChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PipelineSceneNode::PipelineSceneNode(DataSet* dataset) : SceneNode(dataset)
+PipelineSceneNode::PipelineSceneNode(DataSet* dataset) : SceneNode(dataset), 
+	_pipelineCache(this, false), 
+	_pipelineRenderingCache(this, true),
+	_pipelineTrajectoryCachingEnabled(false)
 {
 }
 
@@ -57,145 +62,44 @@ PipelineSceneNode::~PipelineSceneNode() // NOLINT
 }
 
 /******************************************************************************
+* Performs a synchronous evaluation of the pipeline yielding only preliminary results.
+******************************************************************************/
+const PipelineFlowState& PipelineSceneNode::evaluatePipelineSynchronous(bool includeVisElements)
+{	
+	TimePoint time = dataset()->animationSettings()->time();
+	return includeVisElements ? 
+		_pipelineRenderingCache.evaluatePipelineSynchronous(time) : 
+		_pipelineCache.evaluatePipelineSynchronous(time);
+}
+
+/******************************************************************************
+* Performs an asynchronous evaluation of the data pipeline.
+******************************************************************************/
+PipelineEvaluationFuture PipelineSceneNode::evaluatePipeline(const PipelineEvaluationRequest& request)
+{
+	return PipelineEvaluationFuture(request, _pipelineCache.evaluatePipeline(request), this);
+}
+
+/******************************************************************************
+* Performs an asynchronous evaluation of the data pipeline.
+******************************************************************************/
+PipelineEvaluationFuture PipelineSceneNode::evaluateRenderingPipeline(const PipelineEvaluationRequest& request)
+{
+	return PipelineEvaluationFuture(request, _pipelineRenderingCache.evaluatePipeline(request), this);
+}
+
+/******************************************************************************
 * Invalidates the data pipeline cache of the object node.
 ******************************************************************************/
-void PipelineSceneNode::invalidatePipelineCache()
+void PipelineSceneNode::invalidatePipelineCache(TimeInterval keepInterval, bool resetSynchronousCache)
 {
 	// Invalidate data caches.
-	_pipelineCache.invalidate(false);
-	_pipelineRenderingCache.invalidate(true);	// Do not completely discard these cached objects,
-												// because we might be able to re-use the transformed data objects.
-	_pipelinePreliminaryCache.reset();
-
-	// Also mark the cached bounding box of this node as invalid.
+	_pipelineCache.invalidate(keepInterval, resetSynchronousCache);
+	_pipelineRenderingCache.invalidate(keepInterval, resetSynchronousCache);	
+	
+	// Also mark the cached bounding box of this scene node as invalid.
 	invalidateBoundingBox();
 }
-
-/******************************************************************************
-* Asks the object for the preliminary results of the data pipeline.
-******************************************************************************/
-const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool includeVisElements) const
-{
-	TimePoint time = dataset()->animationSettings()->time();
-
-	// First check if our real caches can serve the request.
-	if(includeVisElements) {
-		if(_pipelineRenderingCache.contains(time))
-			return _pipelineRenderingCache.getAt(time);
-	}
-	else {
-		if(_pipelineCache.contains(time))
-			return _pipelineCache.getAt(time);
-	}
-
-	// If not, check if our preliminary state cache is filled.
-	if(_pipelinePreliminaryCache.stateValidity().contains(time)) {
-		return _pipelinePreliminaryCache;
-	}
-
-	// If not, update the preliminary state cache from the pipeline.
-	if(dataProvider()) {
-		_pipelinePreliminaryCache = dataProvider()->evaluatePreliminary();
-	}
-	else {
-		_pipelinePreliminaryCache.reset();
-	}
-
-	// The preliminary state cache is time-independent.
-	_pipelinePreliminaryCache.setStateValidity(TimeInterval::infinite());
-
-	return _pipelinePreliminaryCache;
-}
-
-/******************************************************************************
-* Asks the node for the results of its data pipeline.
-******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(const PipelineEvaluationRequest& request) const
-{
-	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineCache.contains(request.time()))
-		return _pipelineCache.getAt(request.time());
-
-	// Without a data provider, we cannot serve any requests.
-	if(!dataProvider())
-		return Future<PipelineFlowState>::createImmediateEmplace();
-
-	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
-	return dataProvider()->evaluate(request)
-		.then(executor(), [this, time=request.time()](PipelineFlowState state) {
-			UndoSuspender noUndo(this);
-
-			// The pipeline should never return a state without proper validity interval.
-			OVITO_ASSERT(state.stateValidity().contains(time));
-
-			// We maintain a data cache for the current animation time.
-			if(_pipelineCache.insert(state, this)) {
-				const_cast<PipelineSceneNode*>(this)->updateVisElementList(dataset()->animationSettings()->time());
-			}
-
-			// Simply forward the pipeline results to the caller by default.
-			return std::move(state);
-		});
-}
-
-/******************************************************************************
-* Asks the node for the results of its data pipeline including the output of
-* asynchronous visualization elements.
-******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(const PipelineEvaluationRequest& request) const
-{
-	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineRenderingCache.contains(request.time()))
-		return _pipelineRenderingCache.getAt(request.time());
-
-	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
-	return evaluatePipeline(request)
-		.then(executor(), [this, request](const PipelineFlowState& state) {
-			UndoSuspender noUndo(this);
-
-			// Holds the results to be returned to the caller.
-			Future<PipelineFlowState> results;
-
-			// Give every visualization element the opportunity to apply an asynchronous data transformation.
-			if(!state.isEmpty()) {
-				for(const auto& dataObj : state.data()->objects()) {
-					for(DataVis* vis : dataObj->visElements()) {
-						if(TransformingDataVis* transformingVis = dynamic_object_cast<TransformingDataVis>(vis)) {
-							if(transformingVis->isEnabled()) {
-								if(!results.isValid()) {
-									results = transformingVis->transformData(request, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents());
-								}
-								else {
-									OORef<PipelineSceneNode> pipeline{this};
-									results = results.then(transformingVis->executor(), [request, transformingVis, dataObj, pipeline = std::move(pipeline)](PipelineFlowState&& state) {
-										UndoSuspender noUndo(transformingVis);
-										return transformingVis->transformData(request, dataObj, std::move(state), pipeline->_pipelineRenderingCache.getStaleContents());
-									});
-								}
-								OVITO_ASSERT(results.isValid());
-							}
-						}
-					}
-				}
-			}
-
-			// Maintain the cache with rendering pipeline outputs.
-			if(!results.isValid()) {
-				// Immediate storage in the cache:
-				_pipelineRenderingCache.insert(state, this);
-				results = Future<PipelineFlowState>::createImmediate(state);
-			}
-			else {
-				// Deferred storage in the cache as soon as the transforming vis elements have done their job:
-				_pipelineRenderingCache.insert(results, state.stateValidity(), this);
-				OVITO_ASSERT(results.isValid());
-			}
-
-			OVITO_ASSERT(results.isValid());
-			return results;
-		});
-}
-
 
 /******************************************************************************
 * Helper function that recursively collects all visual elements attached to a
@@ -217,9 +121,11 @@ void PipelineSceneNode::collectVisElements(const DataObject* dataObj, std::vecto
 /******************************************************************************
 * Rebuilds the list of visual elements maintained by the scene node.
 ******************************************************************************/
-void PipelineSceneNode::updateVisElementList(TimePoint time)
+void PipelineSceneNode::updateVisElementList(const PipelineFlowState& state)
 {
-	const PipelineFlowState& state = _pipelineCache.getAt(time);
+	// Only gather vis elements that are present in the pipeline at the current animation time.
+	if(!state.stateValidity().contains(dataset()->animationSettings()->time()))
+		return;
 
 	// Collect all visual elements from the current pipeline state.
 	std::vector<DataVis*> newVisElements;
@@ -255,39 +161,45 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 {
 	if(source == dataProvider()) {
 		if(event.type() == ReferenceEvent::TargetChanged) {
-			invalidatePipelineCache();
+			invalidatePipelineCache(static_cast<const TargetChangedEvent&>(event).unchangedInterval());
 		}
 		else if(event.type() == ReferenceEvent::TargetDeleted) {
-			invalidatePipelineCache();
+			// Reduce memory footprint when the pipeline's data provider gets deleted.
+			invalidatePipelineCache(TimeInterval::empty(), true);
 
-			// Data provider has been deleted -> delete node as well.
+			// Data provider has been deleted -> delete scene node as well.
 			if(!dataset()->undoStack().isUndoingOrRedoing())
 				deleteNode();
 		}
-		else if(event.type() == ReferenceEvent::TitleChanged) {
-			notifyDependents(ReferenceEvent::TitleChanged);
+		else if(event.type() == ReferenceEvent::TitleChanged && !nodeName().isEmpty()) {
+			// Forward this event to dependents of the pipeline.
+			return true;
 		}
 		else if(event.type() == ReferenceEvent::PipelineChanged || event.type() == ReferenceEvent::AnimationFramesChanged) {
 			// Forward pipeline changed events from the pipeline.
 			return true;
 		}
 		else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
-			// Invalidate our preliminary state cache.
-			_pipelinePreliminaryCache.reset();
+			// Invalidate the cache whenever the pipeline can provide a new preliminary state.
+			_pipelineCache.invalidateSynchronousState();
+			_pipelineRenderingCache.invalidateSynchronousState();
+			// Also recompute the cached bounding box of this scene node.
+			invalidateBoundingBox();
 		}
 	}
 	else if(_visElements.contains(source)) {
 		if(event.type() == ReferenceEvent::TargetChanged) {
 
-			// Update cached bounding box when visual element parameters change.
+			// Recompute bounding box when a visual element changes.
 			invalidateBoundingBox();
 
 			// Invalidate the rendering pipeline cache whenever an asynchronous visual element changes.
 			if(dynamic_object_cast<TransformingDataVis>(source)) {
 				// Do not completely discard these cached objects, because we might be able to re-use the transformed data objects.
-				_pipelineRenderingCache.invalidate(true);
+				_pipelineRenderingCache.invalidate();
 
 				// Trigger a pipeline re-evaluation.
+				// Note: We have to call notifyTargetChanged() here, because the visElements field is flagged as PROPERTY_FIELD_NO_CHANGE_MESSAGE.
 				notifyTargetChanged(&PROPERTY_FIELD(visElements));
 			}
 			else {
@@ -300,16 +212,21 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 }
 
 /******************************************************************************
-* Gets called when the data object of the node has been replaced.
+* Gets called when the data provider of the pipeline has been replaced.
 ******************************************************************************/
 void PipelineSceneNode::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	if(field == PROPERTY_FIELD(dataProvider)) {
-		invalidatePipelineCache();
+		// Reset caches when the pipeline data source is replaced.
+		invalidatePipelineCache(TimeInterval::empty(), true);
 
-		// The animation length might have changed when an object has been replaced in the scene.
-		if(!isBeingLoaded())
+		// The animation length and the title of the pipeline might have changed.
+		if(!isBeingLoaded()) {
 			notifyDependents(ReferenceEvent::AnimationFramesChanged);
+			if(!nodeName().isEmpty()) {
+				notifyDependents(ReferenceEvent::TitleChanged);
+			}
+		}
 	}
 	SceneNode::referenceReplaced(field, oldTarget, newTarget);
 }
@@ -334,6 +251,19 @@ void PipelineSceneNode::loadFromStream(ObjectLoadStream& stream)
 	stream.expectChunk(0x01);
 	// For future use...
 	stream.closeChunk();
+
+	// Transfer the caching flag loaded from the state file to the internal cache instance.
+	_pipelineRenderingCache.setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+}
+
+/******************************************************************************
+* Rescales the times of all animation keys from the old animation interval to the new interval.
+******************************************************************************/
+void PipelineSceneNode::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval)
+{
+	SceneNode::rescaleTime(oldAnimationInterval, newAnimationInterval);
+	_pipelineCache.invalidate();
+	_pipelineRenderingCache.invalidate();
 }
 
 /******************************************************************************
@@ -408,7 +338,7 @@ void PipelineSceneNode::setPipelineSource(PipelineObject* sourceObject)
 ******************************************************************************/
 Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity) const
 {
-	const PipelineFlowState& state = evaluatePipelinePreliminary(true);
+	const PipelineFlowState& state = const_cast<PipelineSceneNode*>(this)->evaluatePipelineSynchronous(true);
 
 	// Let visual elements compute the bounding boxes of the data objects.
 	Box3 bb;
@@ -469,7 +399,8 @@ void PipelineSceneNode::getDataObjectBoundingBox(TimePoint time, const DataObjec
 ******************************************************************************/
 void PipelineSceneNode::deleteNode()
 {
-	// Remove pipeline.
+	// Throw away data source.
+	// This will also clear the caches of the pipeline.
 	setDataProvider(nullptr);
 
 	// Discard transient references to visual elements.
@@ -484,6 +415,7 @@ void PipelineSceneNode::deleteNode()
 void PipelineSceneNode::referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
 {
 	if(field == PROPERTY_FIELD(replacementVisElements)) {
+		// Reset pipeline cache if a new replacement for a visual element is assigned.
 		invalidatePipelineCache();
 	}
 	SceneNode::referenceInserted(field, newTarget, listIndex);
@@ -496,14 +428,32 @@ void PipelineSceneNode::referenceRemoved(const PropertyFieldDescriptor& field, R
 {
 	if(field == PROPERTY_FIELD(replacedVisElements) && !isAboutToBeDeleted()) {
 		// If an upstream vis element is being removed from the list, because the weakly referenced vis element is being deleted,
-		// then also discard our corresponding replacement element managed by the node.
+		// then also discard our corresponding replacement element managed by the pipeline.
 		if(!dataset()->undoStack().isUndoingOrRedoing()) {
 			OVITO_ASSERT(replacedVisElements().size() + 1 == replacementVisElements().size());
 			_replacementVisElements.remove(this, PROPERTY_FIELD(replacementVisElements), listIndex);
 		}
+		// Reset pipeline cache if a replacement for a visual element is removed.
 		invalidatePipelineCache();
 	}
 	SceneNode::referenceRemoved(field, oldTarget, listIndex);
+}
+
+/******************************************************************************
+* Is called when the value of a non-animatable property field of this RefMaker has changed.
+******************************************************************************/
+void PipelineSceneNode::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(pipelineTrajectoryCachingEnabled)) {
+		_pipelineRenderingCache.setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+
+		// Send target changed event to trigger a new pipeline evaluation, which is 
+		// needed to start the precomputation process.
+		if(pipelineTrajectoryCachingEnabled())
+			notifyTargetChanged(&PROPERTY_FIELD(pipelineTrajectoryCachingEnabled));
+	}
+
+	SceneNode::propertyChanged(field);
 }
 
 /******************************************************************************
@@ -566,6 +516,4 @@ DataVis* PipelineSceneNode::makeVisElementIndependent(DataVis* visElement)
 	return clonedVisElement;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

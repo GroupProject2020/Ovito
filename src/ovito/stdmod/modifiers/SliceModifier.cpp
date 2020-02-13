@@ -84,15 +84,15 @@ SliceModifier::SliceModifier(DataSet* dataset) : MultiDelegatingModifier(dataset
 }
 
 /******************************************************************************
-* Asks the modifier for its validity interval at the given time.
+* Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
-TimeInterval SliceModifier::modifierValidity(TimePoint time)
+TimeInterval SliceModifier::validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const
 {
-	TimeInterval interval = MultiDelegatingModifier::modifierValidity(time);
-	if(normalController()) interval.intersect(normalController()->validityInterval(time));
-	if(distanceController()) interval.intersect(distanceController()->validityInterval(time));
-	if(widthController()) interval.intersect(widthController()->validityInterval(time));
-	return interval;
+	TimeInterval iv = MultiDelegatingModifier::validityInterval(request, modApp);
+	if(normalController()) iv.intersect(normalController()->validityInterval(request.time()));
+	if(distanceController()) iv.intersect(distanceController()->validityInterval(request.time()));
+	if(widthController()) iv.intersect(widthController()->validityInterval(request.time()));
+	return iv;
 }
 
 /******************************************************************************
@@ -244,7 +244,7 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Get the input simulation cell to initially place the cutting plane in
 	// the center of the cell.
-	const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+	const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 	if(const SimulationCellObject* cell = input.getObject<SimulationCellObject>()) {
 		TimeInterval iv;
 		if(distanceController() && distanceController()->getFloatValue(0, iv) == 0) {
@@ -257,11 +257,11 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void SliceModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void SliceModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	MultiDelegatingModifier::evaluatePreliminary(time, modApp, state);
+	MultiDelegatingModifier::evaluateSynchronous(time, modApp, state);
 
 	if(enablePlaneVisualization()) {
 

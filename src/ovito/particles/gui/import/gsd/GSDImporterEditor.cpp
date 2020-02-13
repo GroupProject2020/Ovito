@@ -22,10 +22,10 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/gsd/GSDImporter.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include "GSDImporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(GSDImporterEditor);
 SET_OVITO_OBJECT_EDITOR(GSDImporter, GSDImporterEditor);
@@ -56,8 +56,5 @@ void GSDImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams
 	sublayout->addLayout(resolutionUI->createFieldLayout(), 1, 1);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

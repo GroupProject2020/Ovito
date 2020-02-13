@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,7 +34,7 @@
 
 #include <QRegularExpression>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(XYZImporter);
 DEFINE_PROPERTY_FIELD(XYZImporter, autoRescaleCoordinates);
@@ -53,10 +53,10 @@ void XYZImporter::setColumnMapping(const InputColumnMapping& mapping)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool XYZImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool XYZImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read first line.
 	stream.readLine(20);
@@ -94,11 +94,11 @@ Future<InputColumnMapping> XYZImporter::inspectFileHeader(const Frame& frame)
 {
 	// Retrieve file.
 	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
-		.then(executor(), [this, frame](const QString& filename) {
+		.then(executor(), [this, frame](const FileHandle& fileHandle) {
 
 			// Start task that inspects the file header to determine the number of data columns.
 			activateCLocale();
-			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, fileHandle);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<XYZFrameData*>(frameData.get())->detectedColumnMapping();
@@ -107,25 +107,24 @@ Future<InputColumnMapping> XYZImporter::inspectFileHeader(const Frame& frame)
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void XYZImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
-	QDateTime lastModified = fileInfo.lastModified();
 	int frameNumber = 0;
+	QString filename = fileHandle().sourceUrl().fileName();
+	Frame frame(fileHandle());
 
 	while(!stream.eof() && !isCanceled()) {
-		qint64 byteOffset = stream.byteOffset();
-		int lineNumber = stream.lineNumber();
+		frame.byteOffset = stream.byteOffset();
+		frame.lineNumber = stream.lineNumber();
 
 		// Parse number of atoms.
 		stream.readLine();
@@ -144,11 +143,6 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		}
 
 		// Create a new record for the time step.
-		Frame frame;
-		frame.sourceFile = sourceUrl;
-		frame.byteOffset = byteOffset;
-		frame.lineNumber = lineNumber;
-		frame.lastModificationTime = lastModified;
 		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 		frames.push_back(frame);
 
@@ -240,11 +234,11 @@ inline bool parseBool(const char* s, int& d)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading XYZ file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading XYZ file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
@@ -621,7 +615,5 @@ OORef<RefTarget> XYZImporter::clone(bool deepCopy, CloneHelper& cloneHelper) con
 	return clone;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

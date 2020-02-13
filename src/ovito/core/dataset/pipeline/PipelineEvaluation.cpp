@@ -24,25 +24,7 @@
 #include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
-
-/******************************************************************************
-* Starts executing the pipeline evaluation.
-******************************************************************************/
-void PipelineEvaluationFuture::execute(PipelineSceneNode* pipeline, bool generateVisualElements)
-{
-    // The pipeline evaluation can not be started again while still in progress.
-    OVITO_ASSERT(!isValid() || isFinished());
-    // Need a valid pipeline as input.
-    OVITO_ASSERT(pipeline != nullptr);
-
-    // Let the pipeline do the heavy work.
-    _pipeline = pipeline;
-    if(!generateVisualElements)
-        static_cast<SharedFuture<PipelineFlowState>&>(*this) = pipeline->evaluatePipeline(_request);
-    else
-        static_cast<SharedFuture<PipelineFlowState>&>(*this) = pipeline->evaluateRenderingPipeline(_request);
-}
+namespace Ovito {
 
 /******************************************************************************
 * Starts executing the pipeline evaluation.
@@ -51,9 +33,7 @@ void PipelineEvaluationFuture::reset(TimePoint time)
 {
     SharedFuture<PipelineFlowState>::reset();
     _request = PipelineEvaluationRequest(time);
-    _pipeline.clear();
+    _pipeline = nullptr;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

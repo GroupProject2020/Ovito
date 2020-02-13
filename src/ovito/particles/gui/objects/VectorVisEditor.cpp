@@ -22,13 +22,13 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/VectorVis.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include "VectorVisEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(VectorVisEditor);
 SET_OVITO_OBJECT_EDITOR(VectorVis, VectorVisEditor);
@@ -80,6 +80,5 @@ void VectorVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	layout->addWidget(reverseArrowDirectionUI->checkBox(), row++, 1, 1, 1);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

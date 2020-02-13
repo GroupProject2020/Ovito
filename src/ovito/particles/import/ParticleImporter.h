@@ -26,7 +26,7 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/core/dataset/io/FileSourceImporter.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Base class for file parsers that read particle-position data.
@@ -39,32 +39,18 @@ class OVITO_PARTICLES_EXPORT ParticleImporter : public FileSourceImporter
 public:
 
 	/// \brief Constructs a new instance of this class.
-	ParticleImporter(DataSet* dataset) : FileSourceImporter(dataset),
-		_isMultiTimestepFile(false), _sortParticles(false) {}
-
-	/// This method indicates whether a wildcard pattern should be automatically generated
-	/// when the user picks a new input filename.
-	virtual bool autoGenerateWildcardPattern() override { return !isMultiTimestepFile(); }
+	ParticleImporter(DataSet* dataset) : FileSourceImporter(dataset), _sortParticles(false) {}
 
 protected:
 
 	/// \brief Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
-	/// \brief Determines whether the input file should be scanned to discover all contained frames.
-	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) override {
-		return isMultiTimestepFile();
-	}
-
 private:
-
-	/// Indicates that the input file contains multiple timesteps.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isMultiTimestepFile, setMultiTimestepFile);
 
 	/// Request sorting of the input particle with respect to IDs.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, sortParticles, setSortParticles);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

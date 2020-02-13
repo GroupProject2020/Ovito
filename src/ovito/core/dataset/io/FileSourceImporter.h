@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2014 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,8 +28,9 @@
 #include <ovito/core/dataset/pipeline/PipelineStatus.h>
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/utilities/concurrent/AsynchronousTask.h>
+#include <ovito/core/utilities/io/FileManager.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
+namespace Ovito {
 
 /**
  * \brief Base class for file parsers that can reload a file that has been imported into the scene.
@@ -48,8 +49,15 @@ public:
 		Frame() = default;
 
 		/// Initialization constructor.
-		Frame(QUrl url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString(), qint64 parserInfo = 0)	:
-			sourceFile(std::move(url)), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name), parserData(parserInfo) {}
+		explicit Frame(const FileHandle& fileHandle, qint64 offset = 0, int linenum = 1, const QString& name = QString(), qint64 parserInfo = 0) :
+				sourceFile(fileHandle.sourceUrl()), byteOffset(offset), lineNumber(linenum), label(name.isEmpty() ? fileHandle.sourceUrl().fileName() : name), parserData(parserInfo) {
+			if(!fileHandle.localFilePath().isEmpty())
+				lastModificationTime = QFileInfo(fileHandle.localFilePath()).lastModified();
+		}
+
+		/// Initialization constructor.
+		explicit Frame(const QUrl& url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString(), qint64 parserInfo = 0) :
+			sourceFile(url), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name), parserData(parserInfo) {}
 
 		/// The source file that contains the data of the animation frame.
 		QUrl sourceFile;
@@ -115,27 +123,30 @@ public:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename) :
-			_frame(frame), _localFilename(filename) {}
+		FrameLoader(const Frame& frame, const FileHandle& fileHandle) :
+			_frame(frame), _fileHandle(fileHandle) {}
 
 		/// Returns the source file information.
 		const Frame& frame() const { return _frame; }
 
-		/// Fetches the source URL and calls loadFile().
+		/// Returns the local handle to the input data file.
+		const FileHandle& fileHandle() const { return _fileHandle; }
+
+		/// Calls loadFile() and sets the returned frame data as result of the asynchronous task.
 		virtual void perform() override;
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) = 0;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() = 0;
 
 	private:
 
 		/// The source file information.
 		Frame _frame;
 
-		/// The local copy of the input file.
-		QString _localFilename;
+		/// The local handle to the input file.
+		FileHandle _fileHandle;
 	};
 
 	/// A managed pointer to a FrameLoader instance.
@@ -149,27 +160,23 @@ public:
 	public:
 
 		/// Constructor.
-		FrameFinder(const QUrl& sourceUrl, const QString& filename) :
-			_sourceUrl(sourceUrl), _localFilename(filename) {}
+		FrameFinder(const FileHandle& file) : _file(file) {}
 
-		/// Returns the source file information.
-		const QUrl& sourceUrl() const { return _sourceUrl; }
+		/// Returns the data file to scan.
+		const FileHandle& fileHandle() const { return _file; }
 
 		/// Scans the source URL for input frames.
 		virtual void perform() override;
 
 	protected:
 
-		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<Frame>& frames);
+		/// Scans the data file and builds a list of source frames.
+		virtual void discoverFramesInFile(QVector<Frame>& frames);
 
 	private:
 
-		/// The source file information.
-		QUrl _sourceUrl;
-
-		/// The local copy of the file.
-		QString _localFilename;
+		/// The data file to scan.
+		FileHandle _file;
 	};
 
 	/// A managed pointer to a FrameFinder instance.
@@ -178,7 +185,7 @@ public:
 public:
 
 	/// \brief Constructs a new instance of this class.
-	FileSourceImporter(DataSet* dataset) : FileImporter(dataset) {}
+	FileSourceImporter(DataSet* dataset) : FileImporter(dataset), _isMultiTimestepFile(false) {}
 
 	///////////////////////////// from FileImporter /////////////////////////////
 
@@ -192,9 +199,9 @@ public:
 	//////////////////////////// Specific methods ////////////////////////////////
 
 	/// This method indicates whether a wildcard pattern should be automatically generated
-	/// when the user picks a new input filename. The default implementation returns true.
+	/// when the user picks a new input filename. The default implementation returns if isMultiTimestepFile is set to false.
 	/// Subclasses can override this method to disable generation of wildcard patterns.
-	virtual bool autoGenerateWildcardPattern() { return true; }
+	virtual bool autoGenerateWildcardPattern() { return !isMultiTimestepFile(); }
 
 	/// Scans the given external path(s) (which may be a directory and a wild-card pattern,
 	/// or a single file containing multiple frames) to find all available animation frames.
@@ -220,18 +227,21 @@ public:
 	static Future<std::vector<QUrl>> findWildcardMatches(const QUrl& sourceUrl, DataSet* dataset);
 
 	/// \brief Sends a request to the FileSource owning this importer to reload the input file.
-	void requestReload(int frame = -1);
+	void requestReload(bool refetchFiles = false, int frame = -1);
 
 	/// \brief Sends a request to the FileSource owning this importer to refresh the animation frame sequence.
 	void requestFramesUpdate();
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual FrameLoaderPtr createFrameLoader(const Frame& frame, const QString& localFilename) = 0;
+	virtual FrameLoaderPtr createFrameLoader(const Frame& frame, const FileHandle& file) = 0;
 
 	/// Creates an asynchronous frame discovery object that scans a file for contained animation frames.
-	virtual FrameFinderPtr createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) { return {}; }
+	virtual FrameFinderPtr createFrameFinder(const FileHandle& file) { return {}; }
 
 protected:
+
+	/// \brief Is called when the value of a property of this object has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// This method is called when the pipeline scene node for the FileSource is created.
 	/// It can be overwritten by importer subclasses to customize the initial pipeline, add modifiers, etc.
@@ -242,11 +252,16 @@ protected:
 	static bool matchesWildcardPattern(const QString& pattern, const QString& filename);
 
 	/// Determines whether the input file should be scanned to discover all contained frames.
-	/// The default implementation returns false.
-	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) { return false; }
+	/// The default implementation returns the value of isMultiTimestepFile().
+	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) const { return isMultiTimestepFile(); }
 
 	/// Determines whether the URL contains a wildcard pattern.
 	static bool isWildcardPattern(const QUrl& sourceUrl);
+
+private:
+
+	/// Indicates that the input file contains multiple timesteps.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, isMultiTimestepFile, setMultiTimestepFile, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 /// \brief Writes an animation frame information record to a binary output stream.
@@ -257,5 +272,4 @@ OVITO_CORE_EXPORT SaveStream& operator<<(SaveStream& stream, const FileSourceImp
 /// \relates FileSourceImporter::Frame
 OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, FileSourceImporter::Frame& frame);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

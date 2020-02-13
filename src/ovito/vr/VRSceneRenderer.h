@@ -23,7 +23,7 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/opengl/OpenGLSceneRenderer.h>
 
 namespace VRPlugin {

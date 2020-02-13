@@ -27,7 +27,7 @@
 #include <ovito/core/rendering/ArrowPrimitive.h>
 #include "OpenGLBuffer.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a set of arrows to be rendered in the viewports.
@@ -99,13 +99,13 @@ private:
 	QPointer<QOpenGLContextGroup> _contextGroup;
 
 	/// The number of elements stored in the buffer.
-	int _elementCount;
+	int _elementCount = -1;
 
 	/// The number of cylinder segments to generate.
-	int _cylinderSegments;
+	int _cylinderSegments = 16;
 
-	/// The number of mesh vertices generated per element.
-	int _verticesPerElement;
+	/// The number of mesh vertices generated per primitive.
+	int _verticesPerElement = 0;
 
 	/// The OpenGL vertex buffer objects that store the vertices with normal vectors for polygon rendering.
 	std::vector<OpenGLBuffer<VertexWithNormal>> _verticesWithNormals;
@@ -114,28 +114,28 @@ private:
 	std::vector<OpenGLBuffer<VertexWithElementInfo>> _verticesWithElementInfo;
 
 	/// The index of the VBO chunk currently mapped to memory.
-	int _mappedChunkIndex;
+	int _mappedChunkIndex = -1;
 
 	/// Pointer to the memory-mapped VBO buffer.
-	VertexWithNormal* _mappedVerticesWithNormals;
+	VertexWithNormal* _mappedVerticesWithNormals = nullptr;
 
 	/// Pointer to the memory-mapped VBO buffer.
-	VertexWithElementInfo* _mappedVerticesWithElementInfo;
+	VertexWithElementInfo* _mappedVerticesWithElementInfo = nullptr;
 
 	/// The maximum size (in bytes) of a single VBO buffer.
-	int _maxVBOSize;
+	int _maxVBOSize = 4 * 1024 * 1024;
 
-	/// The maximum number of render elements per VBO buffer.
-	int _chunkSize;
+	/// The maximum number of primitives per VBO buffer.
+	int _chunkSize = 0;
 
 	/// Indicates that an OpenGL geometry shader is being used.
-	bool _usingGeometryShader;
+	bool _usingGeometryShader = false;
 
 	/// The OpenGL shader program that is used for rendering.
-	QOpenGLShaderProgram* _shader;
+	QOpenGLShaderProgram* _shader = nullptr;
 
 	/// The OpenGL shader program that is used for picking primitives.
-	QOpenGLShaderProgram* _pickingShader;
+	QOpenGLShaderProgram* _pickingShader = nullptr;
 
 	/// Lookup table for fast cylinder geometry generation.
 	std::vector<float> _cosTable;
@@ -143,6 +143,7 @@ private:
 	/// Lookup table for fast cylinder geometry generation.
 	std::vector<float> _sinTable;
 
+#ifndef Q_OS_WASM
 	/// Primitive start indices passed to glMultiDrawArrays() using GL_TRIANGLE_STRIP primitives.
 	std::vector<GLint> _stripPrimitiveVertexStarts;
 
@@ -154,10 +155,13 @@ private:
 
 	/// Primitive vertex counts passed to glMultiDrawArrays() using GL_TRIANGLE_FAN primitives.
 	std::vector<GLsizei> _fanPrimitiveVertexCounts;
+#else
+	/// The number of vertex indices need per element.
+	int _indicesPerElement = 0;
+
+	/// Vertex indices passed to glDrawElements() using GL_TRIANGLES primitives.
+	std::vector<GLuint> _trianglePrimitiveVertexIndices;
+#endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

@@ -25,10 +25,10 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
-#include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include "FileColumnParticleExporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(FileColumnParticleExporterEditor);
 SET_OVITO_OBJECT_EDITOR(FileColumnParticleExporter, FileColumnParticleExporterEditor);
@@ -117,10 +117,10 @@ void FileColumnParticleExporterEditor::updateParticlePropertiesList()
 
 	try {
 		// Determine the data that is available for export.
-		ProgressDialog progressDialog(container(), exporter->dataset()->container()->taskManager());
-		AsyncOperation asyncOperation(progressDialog.taskManager());
+		AsyncOperation asyncOperation(exporter->dataset()->taskManager());
+		ProgressDialog progressDialog(container(), asyncOperation.task());
 		PipelineFlowState state = exporter->getParticleData(exporter->dataset()->animationSettings()->time(), asyncOperation);
-		if(state.isEmpty())
+		if(!state)
 			throw Exception(tr("Operation has been canceled by the user."));
 
 		bool hasParticleIdentifiers = false;
@@ -217,6 +217,5 @@ void FileColumnParticleExporterEditor::onParticlePropertyItemChanged()
 	settings.endGroup();
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

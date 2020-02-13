@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "BondsComputePropertyModifierDelegate.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(BondsComputePropertyModifierDelegate);
 
@@ -212,7 +212,5 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::emitResults(TimePoint 
 	PropertyComputeEngine::emitResults(time, modApp, state);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

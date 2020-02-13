@@ -24,7 +24,7 @@
 ADD_LIBRARY(geogram Delaunay_psm.cpp)
 
 # Set floating-point math compiler options.
-IF(UNIX OR APPLE)
+IF((UNIX OR APPLE) AND NOT EMSCRIPTEN)
 	TARGET_COMPILE_OPTIONS(geogram PRIVATE "-frounding-math" "-ffp-contract=off")
 	IF(APPLE)
 		TARGET_COMPILE_OPTIONS(geogram PRIVATE "-Wno-ignored-optimization-argument")

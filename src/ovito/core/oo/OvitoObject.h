@@ -25,10 +25,9 @@
 
 #include <ovito/core/Core.h>
 #include <ovito/core/oo/OORef.h>
-#include <ovito/core/oo/OvitoObjectExecutor.h>
 #include <ovito/core/oo/OvitoClass.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 #ifdef OVITO_DEBUG
 	/// Checks whether a pointer to an OvitoObject is valid.
@@ -103,10 +102,6 @@ public:
 
 	/// Returns the class descriptor for this object.
 	const OvitoClass& getOOMetaClass() const { return OOClass(); }
-
-	/// Returns an executor object to be used with Future<>::then(), which executes work
-	/// in the context (and the thread) of this OvitoObject.
-	OvitoObjectExecutor executor() const { return OvitoObjectExecutor(this); }
 
 	/// \brief Internal method that calls this object's aboutToBeDeleted() routine.
 	/// It is automatically called when the object's reference counter reaches zero.
@@ -297,7 +292,6 @@ inline OORef<T> static_object_cast(const OORef<U>& obj) {
 	return static_pointer_cast<T>(obj);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_SMART_POINTER_METATYPE(Ovito::OORef);

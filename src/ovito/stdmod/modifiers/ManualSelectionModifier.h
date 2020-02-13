@@ -49,8 +49,8 @@ public:
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
+	/// Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Adopts the selection state from the modifier's input.
 	void resetSelection(ModifierApplication* modApp, const PipelineFlowState& state);

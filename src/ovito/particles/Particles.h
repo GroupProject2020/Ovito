@@ -32,43 +32,6 @@
 #include <ovito/grid/Grid.h>
 #include <ovito/stdobj/StdObj.h>
 
-/*! \namespace Ovito::Particles
-    \brief This root namespace of the particles plugin.
-*/
-/*! \namespace Ovito::Particles::Import
-    \brief This namespace contains basic classes for importing particle data.
-*/
-/*! \namespace Ovito::Particles::Import::Formats
-    \brief This namespace contains particle data importers for various file formats.
-*/
-/*! \namespace Ovito::Particles::Export
-    \brief This namespace contains basic classes for exporting particle data.
-*/
-/*! \namespace Ovito::Particles::Export::Formats
-    \brief This namespace contains particle data exporters for various file formats.
-*/
-/*! \namespace Ovito::Particles::Modifiers
-    \brief This namespace contains modifiers for particle data.
-*/
-/*! \namespace Ovito::Particles::Modifiers::Analysis
-    \brief This namespace contains analysis modifiers for particle systems.
-*/
-/*! \namespace Ovito::Particles::Modifiers::Coloring
-    \brief This namespace contains color-related modifiers for particle systems.
-*/
-/*! \namespace Ovito::Particles::Modifiers::Modify
-    \brief This namespace contains modifiers for particle systems.
-*/
-/*! \namespace Ovito::Particles::Modifiers::Properties
-    \brief This namespace contains modifiers that modify particle properties.
-*/
-/*! \namespace Ovito::Particles::Modifiers::Selection
-    \brief This namespace contains modifiers that select particles.
-*/
-/*! \namespace Ovito::Particles::Util
-    \brief This namespace contains particle-related utility classes.
-*/
-
 namespace Ovito {
 	namespace Particles {
 
@@ -86,19 +49,12 @@ namespace Ovito {
 		class ParticleBondMap;
 		class TrajectoryObject;
 
-		OVITO_BEGIN_INLINE_NAMESPACE(Import)
-			class ParticleFrameData;
-			class ParticleImporter;
-			class InputColumnMapping;
-		OVITO_END_INLINE_NAMESPACE
-
-		OVITO_BEGIN_INLINE_NAMESPACE(Export)
-		OVITO_END_INLINE_NAMESPACE
-
-		OVITO_BEGIN_INLINE_NAMESPACE(Util)
-			class NearestNeighborFinder;
-			class CutoffNeighborFinder;
-		OVITO_END_INLINE_NAMESPACE
+		class ParticleFrameData;
+		class ParticleImporter;
+		class InputColumnMapping;
+		
+		class NearestNeighborFinder;
+		class CutoffNeighborFinder;
 	}
 }
 

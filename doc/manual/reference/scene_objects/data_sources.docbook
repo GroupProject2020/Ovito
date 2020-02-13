@@ -34,7 +34,7 @@
         </thead>
         <tbody>
           <row>
-            <entry><link linkend="scene_objects.file_source">External&#xA0;file</link></entry>
+            <entry>External&#xA0;file</entry>
             <entry>Reads the simulation data from an external file.</entry>
           </row>
           <row>
@@ -98,21 +98,34 @@
       </varlistentry>
 
       <varlistentry>
-        <term>Reload data</term>
+        <term>Reload file</term>
         <listitem>
           <para>
-            Reloads the data for the current animation frame from the external file. This is useful
-            if the file contents have been updated or replaced, for example after re-running a simulation.
+            Reloads the data for the current animation frame from the external file. This function is useful
+            if the file contents have been updated or replaced, for example after re-running a simulation or editing the file in an external program.
           </para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>Update time series</term>
+        <term>Update trajectory frames</term>
         <listitem>
           <para>
-             Searches the directory for new files that match the current file search pattern or rescans the selected input file
-             to discover any new animation frames that have been appended to the file.
+             Refreshes the sequence of animation frames. OVITO will search the directory to find new files matching the filename pattern and/or 
+             rescan the loaded file to discover any new animation frames that have been appended to the trajectory file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Load entire trajectory into memory</term>
+        <listitem>
+          <para>
+             This option lets OVITO load all frames of the current trajectory into memory to speed up 
+             access to the data or enable smooth animation playback in the interactive viewports.
+             Note that you should make sure first that your computer has sufficent free memory to hold all
+             trajectory frames. If this option is turned off (the default), OVITO holds only a single frame
+             of the trajectory in memory at a time to reduce the memory footprint.
           </para>
         </listitem>
       </varlistentry>
@@ -127,8 +140,7 @@
      <title>Animation panel</title>
      <para>
         This sub-panel lets you control how simulation frames found in the input data file(s) are mapped to
-        OVITO's animation timeline. <link linkend="usage.animation">This page</link>
-        provides further information on this advanced topic.
+        OVITO's animation timeline. <link linkend="usage.animation">See here</link> for further information.
      </para>
    </simplesect>
 

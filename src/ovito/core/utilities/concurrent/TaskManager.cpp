@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,13 +24,15 @@
 #include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/dataset/DataSetContainer.h>
+#include <ovito/core/oo/RefTargetExecutor.h>
 #include <ovito/core/app/Application.h>
 
+#include <QMetaObject>
 #ifdef Q_OS_UNIX
 	#include <csignal>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /******************************************************************************
 * Initializes the task manager.
@@ -89,10 +91,18 @@ TaskWatcher* TaskManager::addTaskInternal(const TaskPtr& task)
     // In this case, a TaskWatcher must exist for the task that has been added as a child object to the TaskManager.
 	for(QObject* childObject : children()) {
 		if(TaskWatcher* watcher = qobject_cast<TaskWatcher*>(childObject)) {
-			if(watcher->task() == task)
+			if(watcher->task() == task) {
+				OVITO_ASSERT(task->taskManager() == this);
 				return watcher;
+			}
 		}
 	}
+
+	// The task should not be registered with more than one TaskManager.
+	OVITO_ASSERT(task->taskManager() == nullptr || task->taskManager() == this);
+
+	// Associate this TaskManager with the task.
+	task->setTaskManager(this);
 
 	// Create a task watcher, which will generate start/stop notification signals.
 	TaskWatcher* watcher = new TaskWatcher(this);
@@ -169,7 +179,7 @@ void TaskManager::waitForAll()
 	if(!QCoreApplication::closingDown()) {
 		do {
 			QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-			QCoreApplication::sendPostedEvents(nullptr, OvitoObjectExecutor::workEventType());
+			QCoreApplication::sendPostedEvents(nullptr, RefTargetExecutor::workEventType());
 		}
 		while(!runningTasks().empty());
 	}
@@ -206,16 +216,16 @@ bool TaskManager::waitForTask(const TaskPtr& task, const TaskPtr& dependentTask)
 	if(task->isFinished()) {
 		return !task->isCanceled();
 	}
+
+	// Also not need for the dependent task to wait if it has been canceled. 
 	if(dependentTask && dependentTask->isCanceled()) {
 		return false;
 	}
 
 	// Use different waiting schemes depending on the thread we are currently in.
-	bool result;
-	if(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread())
-		result = waitForTaskUIThread(task, dependentTask);
-	else
-		result = waitForTaskNonUIThread(task, dependentTask);
+	bool result = (QCoreApplication::instance() && QThread::currentThread() == QCoreApplication::instance()->thread()) ?
+		waitForTaskUIThread(task, dependentTask) :
+		waitForTaskNonUIThread(task, dependentTask);
 	if(!result)
 		return false;
 
@@ -257,14 +267,9 @@ bool TaskManager::waitForTaskUIThread(const TaskPtr& task, const TaskPtr& depend
 	QEventLoop eventLoop;
 	connect(watcher, &TaskWatcher::finished, &eventLoop, &QEventLoop::quit);
 
-	// Stop the event loop when the dependent task gets canceled.
-	if(dependentTask) {
-		TaskWatcher* dependentWatcher = addTaskInternal(dependentTask);
-		connect(dependentWatcher, &TaskWatcher::canceled, watcher, [dependentTask, watcher]() {
-			watcher->task()->cancelIfSingleFutureLeft();
-		});
-		connect(dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
-	}
+	// Break out of the event loop when the dependent task gets canceled.
+	if(dependentTask)
+		connect(addTaskInternal(dependentTask), &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
 
 #ifdef Q_OS_UNIX
 	// Boolean flag which is set by the POSIX signal handler when user
@@ -324,10 +329,8 @@ bool TaskManager::waitForTaskNonUIThread(const TaskPtr& task, const TaskPtr& dep
 
 	// Stop the event loop when the dependent task gets canceled.
 	if(dependentTask) {
-		connect(&dependentWatcher, &TaskWatcher::canceled, &watcher, [task]() {
-			task->cancelIfSingleFutureLeft();
-		});
 		connect(&dependentWatcher, &TaskWatcher::canceled, &eventLoop, &QEventLoop::quit);
+		dependentWatcher.watch(dependentTask);
 	}
 
 	// Start waiting phase.
@@ -348,6 +351,4 @@ void TaskManager::processEvents()
 		QCoreApplication::processEvents();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

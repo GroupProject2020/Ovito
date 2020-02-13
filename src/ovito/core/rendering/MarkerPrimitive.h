@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "PrimitiveBase.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for particle drawing primitives.
@@ -67,7 +67,6 @@ private:
 	MarkerShape _markerShape;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::MarkerPrimitive::MarkerShape);

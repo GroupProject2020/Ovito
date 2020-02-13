@@ -27,14 +27,12 @@
 #ifndef __OVITO_PARTICLES_GUI_
 #define __OVITO_PARTICLES_GUI_
 
-#include <ovito/gui/GUI.h>
+#include <ovito/gui/desktop/GUI.h>
 #include <ovito/particles/Particles.h>
 
 namespace Ovito {
 	namespace Particles {
-		OVITO_BEGIN_INLINE_NAMESPACE(Util)
-			class ParticlePropertyComboBox;
-		OVITO_END_INLINE_NAMESPACE
+		class ParticlePropertyComboBox;
 	}
 }
 

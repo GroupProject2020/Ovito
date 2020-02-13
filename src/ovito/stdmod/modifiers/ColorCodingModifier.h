@@ -337,8 +337,8 @@ public:
 	/// application's settings store.
 	virtual void loadUserDefaults() override;
 
-	/// Asks the modifier for its validity interval at the given time.
-	virtual TimeInterval modifierValidity(TimePoint time) override;
+	/// Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
 
 	/// Returns the range start value.
 	FloatType startValue() const { return startValueController() ? startValueController()->currentFloatValue() : 0; }
@@ -354,7 +354,7 @@ public:
 
 	/// Sets the start and end value to the minimum and maximum value of the selected input property
 	/// determined over the entire animation sequence.
-	bool adjustRangeGlobal(Task& operation);
+	bool adjustRangeGlobal(AsyncOperation&& operation);
 
 	/// Returns the current delegate of this modifier.
 	ColorCodingModifierDelegate* delegate() const {

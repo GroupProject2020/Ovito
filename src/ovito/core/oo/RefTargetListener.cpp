@@ -24,7 +24,7 @@
 #include <ovito/core/oo/RefTargetListener.h>
 #include <ovito/core/dataset/DataSet.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(RefTargetListenerBase);
 IMPLEMENT_OVITO_CLASS(VectorRefTargetListenerBase);
@@ -53,6 +53,5 @@ bool VectorRefTargetListenerBase::referenceEvent(RefTarget* source, const Refere
 	return RefMaker::referenceEvent(source, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 

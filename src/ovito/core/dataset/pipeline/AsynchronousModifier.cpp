@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@
 	#include <malloc.h>
 #endif
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AsynchronousModifier);
 
@@ -63,10 +63,10 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 	}
 
 	// Let the subclass create the computation engine based on the input data.
-	Future<ComputeEnginePtr> engineFuture = createEngine(request.time(), modApp, input);
-	return engineFuture.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
+	return createEngine(request, modApp, input)
+		.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
 
-			// Explicitly create a local copy of the shared_ptr to keep the task object alive for some time.
+			// Explicitly create a local copy of the shared_ptr to keep the task alive for some extra time.
 			auto task = engine->task();
 
 			// Execute the engine in a worker thread.
@@ -83,22 +83,19 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 							asyncModApp->setLastComputeResults(engine);
 						}
 
-						UndoSuspender noUndo(this);
-
 						// Apply the computed results to the input data.
 						engine->emitResults(time, modApp, state);
 						state.intersectStateValidity(engine->validityInterval());
-						return std::move(state);
 					}
-					else return std::move(state);
+					return std::move(state);
 				});
 		});
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void AsynchronousModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void AsynchronousModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
@@ -108,7 +105,7 @@ void AsynchronousModifier::evaluatePreliminary(TimePoint time, ModifierApplicati
 			state.intersectStateValidity(lastResults->validityInterval());
 		}
 	}
-	Modifier::evaluatePreliminary(time, modApp, state);
+	Modifier::evaluateSynchronous(time, modApp, state);
 }
 
 /******************************************************************************
@@ -168,6 +165,4 @@ void AsynchronousModifier::ComputeEngine::ComputeEngineTask::perform()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

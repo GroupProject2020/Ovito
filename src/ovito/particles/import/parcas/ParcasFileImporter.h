@@ -27,7 +27,7 @@
 #include <ovito/particles/import/ParticleImporter.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for simulation files written by the Parcas MD code.
@@ -48,7 +48,7 @@ class OVITO_PARTICLES_EXPORT ParcasFileImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("Parcas MD Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(ParcasFileImporter, OOMetaClass)
@@ -63,8 +63,8 @@ public:
 	virtual QString objectTitle() const override { return tr("Parcas"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles());
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
+		return std::make_shared<FrameLoader>(frame, file, sortParticles());
 	}
 
 private:
@@ -75,13 +75,13 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles)
-		  : FileSourceImporter::FrameLoader(frame, filename), _sortParticles(sortParticles) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const FileHandle& file, bool sortParticles)
+			: FileSourceImporter::FrameLoader(frame, file), _sortParticles(sortParticles) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 	private:
 
@@ -89,9 +89,5 @@ private:
 	};
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

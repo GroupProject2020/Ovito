@@ -21,16 +21,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/dialogs/LoadImageFileDialog.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/Vector3ParameterUI.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/CustomParameterUI.h>
-#include <ovito/gui/properties/ModifierDelegateParameterUI.h>
-#include <ovito/gui/dialogs/SaveImageFileDialog.h>
-#include <ovito/gui/utilities/concurrent/ProgressDialog.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/dialogs/LoadImageFileDialog.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/Vector3ParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/CustomParameterUI.h>
+#include <ovito/gui/desktop/properties/ModifierDelegateParameterUI.h>
+#include <ovito/gui/desktop/dialogs/SaveImageFileDialog.h>
+#include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include <ovito/core/app/PluginManager.h>
 #include "ColorCodingModifierEditor.h"
 
@@ -285,8 +285,9 @@ void ColorCodingModifierEditor::onAdjustRangeGlobal()
 	OVITO_CHECK_OBJECT_POINTER(mod);
 
 	undoableTransaction(tr("Adjust range"), [this, mod]() {
-		ProgressDialog progressDialog(container(), mod->dataset()->container()->taskManager(), tr("Determining property value range"));
-		mod->adjustRangeGlobal(*progressDialog.taskManager().createMainThreadOperation<>(true).task());
+		AsyncOperation adjustOperation(mod->dataset()->taskManager());
+		ProgressDialog progressDialog(container(), adjustOperation.task(), tr("Determining property value range"));
+		mod->adjustRangeGlobal(std::move(adjustOperation));
 	});
 }
 

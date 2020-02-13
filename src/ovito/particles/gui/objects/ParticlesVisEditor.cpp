@@ -22,11 +22,11 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/ParticlesVis.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
 #include "ParticlesVisEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticlesVisEditor);
 SET_OVITO_OBJECT_EDITOR(ParticlesVis, ParticlesVisEditor);
@@ -80,6 +80,5 @@ void ParticlesVisEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	layout->addWidget(renderingQualityUI->comboBox(), 1, 1);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

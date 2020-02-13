@@ -1,6 +1,6 @@
 #######################################################################################
 #
-#  Copyright 2019 Alexander Stukowski
+#  Copyright 2020 Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -36,7 +36,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	SET(python_wrappers ${ARG_PYTHON_WRAPPERS})
 
 	# Create the library target for the plugin.
-    ADD_LIBRARY(${target_name} ${plugin_sources})
+	ADD_LIBRARY(${target_name} ${plugin_sources})
 
     # Set default include directory.
     TARGET_INCLUDE_DIRECTORIES(${target_name} PUBLIC
@@ -50,7 +50,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Core)
 	ENDIF()
 
-	# Link to OVITO's GUI module when the plugin provides a UI.
+	# Link to OVITO's dekstop GUI module when the plugin provides a UI.
 	IF(${ARG_GUI_PLUGIN})
 		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
     	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Widgets)
@@ -84,9 +84,11 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		ENDIF()
 	ENDFOREACH()
 
-	# Set prefix and suffix of library name.
-	# This is needed so that the Python interpreter can load OVITO plugins as modules.
-	SET_TARGET_PROPERTIES(${target_name} PROPERTIES PREFIX "" SUFFIX "${OVITO_PLUGIN_LIBRARY_SUFFIX}")
+	IF(NOT EMSCRIPTEN)
+		# Set prefix and suffix of library name.
+		# This is needed so that the Python interpreter can load OVITO plugins as modules.
+		SET_TARGET_PROPERTIES(${target_name} PROPERTIES PREFIX "" SUFFIX "${OVITO_PLUGIN_LIBRARY_SUFFIX}")
+	ENDIF()
 
 	# Define macro for symbol export from shared library.
 	STRING(TOUPPER "${target_name}" _uppercase_plugin_name)
@@ -147,7 +149,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	ENDIF()
 
 	# Make this module part of the installation package.
-	IF(WIN32 AND (${target_name} STREQUAL "Core" OR ${target_name} STREQUAL "Gui"))
+	IF(WIN32 AND (${target_name} STREQUAL "Core" OR ${target_name} STREQUAL "Gui" OR ${target_name} STREQUAL "GuiBase"))
 		# On Windows, the Core and Gui DLLs need to be placed in the same directory
 		# as the Ovito executable, because Windows won't find them if they are in the
 		# plugins subdirectory.

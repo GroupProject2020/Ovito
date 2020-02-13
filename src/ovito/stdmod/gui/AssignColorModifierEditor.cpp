@@ -21,9 +21,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/ModifierDelegateParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/ModifierDelegateParameterUI.h>
 #include <ovito/stdmod/modifiers/AssignColorModifier.h>
 #include "AssignColorModifierEditor.h"
 

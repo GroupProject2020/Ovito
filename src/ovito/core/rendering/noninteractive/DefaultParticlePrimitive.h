@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/rendering/ParticlePrimitive.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Buffer object that stores a set of particles to be rendered by a non-interactive renderer.
@@ -140,7 +140,6 @@ private:
 	std::vector<Quaternion> _orientationsBuffer;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

@@ -35,7 +35,7 @@
 #include "Vector3.h"
 #include "Point3.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 template<typename T> class RotationT;
 template<typename T> class QuaternionT;
@@ -459,15 +459,13 @@ public:
 	static Matrix_3 scaling(const ScalingT<T>& scaling);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 #include "Quaternion.h"
 #include "Scaling.h"
 #include "Rotation.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 // Generates a rotation matrix from an axis and an angle.
 template<typename T>
@@ -760,8 +758,6 @@ inline QDataStream& operator>>(QDataStream& stream, Matrix_3<T>& m) {
  */
 using Matrix3 = Matrix_3<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Matrix3);

@@ -30,7 +30,7 @@
 #include "PipelineStatus.h"
 #include "ModifierClass.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Base class for algorithms that operate on a PipelineFlowState.
@@ -49,15 +49,19 @@ protected:
 
 public:
 
-	/// \brief Modifies the input data in an immediate, preliminary way.
-	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}
+	/// \brief Modifies the input data synchronously.
+	virtual void evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}
 
-	/// \brief Asks the modifier for its validity interval at the given time.
-	/// \param time The animation at which the validity interval should be computed.
-	/// \return The maximum time interval that contains \a time and during which the modifier's
-	///         parameters do not change. This does not include the validity interval of the
-	///         modifier's input object.
-	virtual TimeInterval modifierValidity(TimePoint time);
+	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const;
+
+	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) {}
+
+	/// \brief This method is called by the ModifierApplication to let the modifier adjust the time interval
+	/// of a TargetChanged event received from the downstream pipeline before it is propagated to the 
+	/// upstream pipeline.
+	virtual void restrictInputValidityInterval(TimeInterval& iv) const {}
 
 	/// \brief Lets the modifier render itself into a viewport.
 	/// \param time The animation time at which to render the modifier.
@@ -108,7 +112,7 @@ public:
 	virtual bool performPreliminaryUpdateAfterEvaluation() { return true; }
 
 	/// \brief Decides whether a preliminary viewport update is performed every time the modifier
-	///        iself changes. This makes mostly sense for synchronous modifiers.
+	///        itself changes.
 	virtual bool performPreliminaryUpdateAfterChange() { return true; }
 
 	/// \brief Returns the number of animation frames this modifier can provide.
@@ -143,8 +147,6 @@ private:
 	friend ModifierApplication;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Modifier*);

@@ -26,7 +26,7 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/InputColumnMapping.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Dialog box that lets the user edit an InputColumnMapping.
@@ -79,7 +79,6 @@ protected:
 	QTextEdit* _fileExcerptField;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

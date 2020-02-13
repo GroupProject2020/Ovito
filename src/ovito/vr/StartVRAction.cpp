@@ -20,9 +20,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/actions/ActionManager.h>
-#include <ovito/gui/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/actions/ActionManager.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/app/StandaloneApplication.h>
 #include "StartVRAction.h"
 #include "VRWindow.h"

@@ -40,9 +40,9 @@ InvertSelectionModifier::InvertSelectionModifier(DataSet* dataset) : GenericProp
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void InvertSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void InvertSelectionModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No data element type set."));

@@ -20,12 +20,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include <ovito/opengl/StandardSceneRenderer.h>
 #include "StandardSceneRendererEditor.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(StandardSceneRendererEditor);
 SET_OVITO_OBJECT_EDITOR(StandardSceneRenderer, StandardSceneRendererEditor);
@@ -51,6 +51,4 @@ void StandardSceneRendererEditor::createUI(const RolloutInsertionParameters& rol
 	layout->addLayout(antialiasingLevelUI->createFieldLayout(), 0, 1);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

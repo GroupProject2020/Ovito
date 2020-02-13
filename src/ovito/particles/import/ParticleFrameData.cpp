@@ -39,7 +39,7 @@
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
+namespace Ovito { namespace Particles {
 
 /******************************************************************************
 * Sorts the types w.r.t. their name. Reassigns the per-element type IDs too.
@@ -271,6 +271,8 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 				insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
 			}
 		}
+
+		particles->verifyIntegrity();
 	}
 
 	// Transfer voxel data.
@@ -504,6 +506,5 @@ void ParticleFrameData::sortParticlesById()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

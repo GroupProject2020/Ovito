@@ -24,7 +24,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "AnimationKeys.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AnimationKey);
 IMPLEMENT_OVITO_CLASS(FloatAnimationKey);
@@ -49,5 +49,4 @@ SET_PROPERTY_FIELD_LABEL(PositionAnimationKey, value, "Value");
 SET_PROPERTY_FIELD_LABEL(RotationAnimationKey, value, "Value");
 SET_PROPERTY_FIELD_LABEL(ScalingAnimationKey, value, "Value");
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

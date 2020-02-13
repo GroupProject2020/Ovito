@@ -28,7 +28,7 @@
 #include <ovito/particles/import/ParticleFrameData.h>
 #include <ovito/core/app/Application.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief File parser for data files of the oxDNA code.
@@ -53,7 +53,7 @@ class OVITO_OXDNA_EXPORT OXDNAImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("oxDNA Configuration Files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(OXDNAImporter, OOMetaClass)
@@ -68,16 +68,16 @@ public:
 	virtual QString objectTitle() const override { return tr("oxDNA"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
 		activateCLocale();
 		bool isInteractiveContext = (Application::instance()->executionContext() == Application::ExecutionContext::Interactive);
-		return std::make_shared<FrameLoader>(frame, localFilename, topologyFileUrl(), isInteractiveContext);
+		return std::make_shared<FrameLoader>(frame, file, topologyFileUrl(), isInteractiveContext);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
-	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
 		activateCLocale();
-		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
+		return std::make_shared<FrameFinder>(file);
 	}
 
 private:
@@ -88,15 +88,15 @@ private:
 	public:
 
 		/// Constructor.
-		FrameLoader(const Frame& frame, const QString& filename, const QUrl& userSpecifiedTopologyUrl, bool isInteractiveContext) :
-			FileSourceImporter::FrameLoader(frame, filename), 
+		FrameLoader(const Frame& frame, const FileHandle& file, const QUrl& userSpecifiedTopologyUrl, bool isInteractiveContext) :
+			FileSourceImporter::FrameLoader(frame, file), 
 			_userSpecifiedTopologyUrl(userSpecifiedTopologyUrl), 
 			_isInteractiveContext(isInteractiveContext) {}
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// URL of the topology file if explicitly specified by the user.
 		QUrl _userSpecifiedTopologyUrl;
@@ -115,8 +115,8 @@ private:
 
 	protected:
 
-		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;
+		/// Scans the data file and builds a list of source frames.
+		virtual void discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames) override;
 	};
 
 private:
@@ -128,7 +128,5 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QUrl, topologyFileUrl, setTopologyFileUrl);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

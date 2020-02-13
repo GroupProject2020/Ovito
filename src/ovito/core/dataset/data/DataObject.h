@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/dataset/data/DataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for all objects that represent data.
@@ -189,10 +189,10 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, identifier, setIdentifier);
 
 	/// The attached visual elements that are responsible for rendering this object's data.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_MEMORIZE);
 
 	/// The revision counter of this object.
-	/// The counter is increment every time the object changes.
+	/// The counter is incremented every time the object changes.
 	/// See the VersionedDataObjectRef class for more information.
 	unsigned int _revisionNumber = 0;
 
@@ -208,8 +208,6 @@ private:
 /// A pointer to a DataObject-derived metaclass.
 using DataObjectClassPtr = const DataObject::OOMetaClass*;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 #include <ovito/core/dataset/data/StrongDataObjectRef.h>

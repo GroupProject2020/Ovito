@@ -22,8 +22,8 @@
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/objects/BurgersVectorFamily.h>
-#include <ovito/gui/properties/ColorParameterUI.h>
-#include <ovito/gui/properties/StringParameterUI.h>
+#include <ovito/gui/desktop/properties/ColorParameterUI.h>
+#include <ovito/gui/desktop/properties/StringParameterUI.h>
 #include "BurgersVectorFamilyEditor.h"
 
 namespace Ovito { namespace CrystalAnalysis {

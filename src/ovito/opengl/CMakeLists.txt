@@ -20,18 +20,12 @@
 #
 #######################################################################################
 
-# Find OpenGL library.
-FIND_PACKAGE(OpenGL REQUIRED)
-IF(NOT TARGET OpenGL::GL AND OPENGL_FOUND)
-	ADD_LIBRARY(OpenGL::GL UNKNOWN IMPORTED)
-	SET_TARGET_PROPERTIES(OpenGL::GL PROPERTIES
-		IMPORTED_LOCATION "${OPENGL_gl_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES "${OPENGL_INCLUDE_DIR}"
-	)
-ENDIF()
-
 # Compile resources.
-QT5_ADD_RESOURCES(ResourceFiles resources/resources.qrc)
+IF(NOT EMSCRIPTEN)
+	QT5_ADD_RESOURCES(ResourceFiles resources/opengl.qrc OPTIONS ${OVITO_QT5_RESOURCE_OPTIONS})
+ELSE()
+	QT5_ADD_RESOURCES(ResourceFiles resources_gles/opengl.qrc OPTIONS ${OVITO_QT5_RESOURCE_OPTIONS})
+ENDIF()
 
 # Define plugin module.
 OVITO_STANDARD_PLUGIN(OpenGLRenderer
@@ -47,13 +41,30 @@ OVITO_STANDARD_PLUGIN(OpenGLRenderer
 		OpenGLSceneRenderer.cpp
 		StandardSceneRenderer.cpp
 		${ResourceFiles}
-	PRIVATE_LIB_DEPENDENCIES
-		OpenGL::GL
 )
 
-IF(APPLE)
-	# OpenGL functions have been marked as deprecated since macOS 10.14. Silence the compiler warnings.
-	TARGET_COMPILE_DEFINITIONS(OpenGLRenderer PRIVATE "GL_SILENCE_DEPRECATION")
+IF(NOT OVITO_BUILD_WEBGUI)
+	# Find OpenGL library.
+	FIND_PACKAGE(OpenGL REQUIRED)
+
+	# Define a CMake imported target for the OpenGL libraries and headers.
+	# Newer versions of CMake do that by themselves.
+	IF(NOT TARGET OpenGL::GL AND OPENGL_FOUND)
+		ADD_LIBRARY(OpenGL::GL UNKNOWN IMPORTED)
+		SET_TARGET_PROPERTIES(OpenGL::GL PROPERTIES
+			IMPORTED_LOCATION "${OPENGL_gl_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES "${OPENGL_INCLUDE_DIR}"
+		)
+	ENDIF()
+
+	# Link to OpenGL library.
+	TARGET_LINK_LIBRARIES(OpenGLRenderer PRIVATE OpenGL::GL)
+
+	IF(APPLE)
+		# OpenGL functions have been marked as deprecated since macOS 10.14. Silence the compiler warnings.
+		TARGET_COMPILE_DEFINITIONS(OpenGLRenderer PRIVATE "GL_SILENCE_DEPRECATION")
+	ENDIF()
+
 ENDIF()
 
 # Build corresponding GUI plugin.

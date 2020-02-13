@@ -32,7 +32,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "ChillPlusModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ChillPlusModifier);
 DEFINE_PROPERTY_FIELD(ChillPlusModifier, cutoff);
@@ -57,7 +57,7 @@ ChillPlusModifier::ChillPlusModifier(DataSet* dataset) : StructureIdentification
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> ChillPlusModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> ChillPlusModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
     if(structureTypes().size() != NUM_STRUCTURE_TYPES)
         throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
@@ -208,7 +208,5 @@ std::pair<float, float> ChillPlusModifier::ChillPlusEngine::polar_asimuthal(cons
     return std::pair<float, float>(polar, asimuthal);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

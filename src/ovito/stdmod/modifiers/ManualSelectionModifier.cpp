@@ -55,7 +55,7 @@ void ManualSelectionModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Take a snapshot of the existing selection state at the time the modifier is created.
 	if(!getSelectionSet(modApp, false)) {
-		resetSelection(modApp, modApp->evaluateInputPreliminary());
+		resetSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 	}
 }
 
@@ -67,16 +67,16 @@ void ManualSelectionModifier::propertyChanged(const PropertyFieldDescriptor& fie
 	// Whenever the subject of this modifier is changed, reset the selection.
 	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded()) {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			resetSelection(modApp, modApp->evaluateInputPreliminary());
+			resetSelection(modApp, modApp->evaluateInputSynchronous(dataset()->animationSettings()->time()));
 		}
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void ManualSelectionModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Retrieve the selection stored in the modifier application.
 	ElementSelectionSet* selectionSet = getSelectionSet(modApp, false);

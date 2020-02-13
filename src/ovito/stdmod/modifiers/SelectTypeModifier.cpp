@@ -61,7 +61,7 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 
 		// When the modifier is first inserted, automatically select the most recently added
 		// typed property (in GUI mode) or the canonical type property (in script mode).
-		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
@@ -90,9 +90,9 @@ void SelectTypeModifier::propertyChanged(const PropertyFieldDescriptor& field)
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void SelectTypeModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No input element type selected."));

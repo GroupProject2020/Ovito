@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,13 +23,61 @@
 #include <ovito/core/Core.h>
 #include "AsyncOperation.h"
 #include "TaskManager.h"
+#include "TaskWatcher.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
+/******************************************************************************
+* Constructor creating a new operation, registering it with the given 
+* task manager, and putting into the 'started' state.
+******************************************************************************/
 AsyncOperation::AsyncOperation(TaskManager& taskManager) : Promise(taskManager.createMainThreadOperation<>(true))
 {
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
+/******************************************************************************
+* Returns the TaskWatcher automatically created by the TaskManager for this operation.
+******************************************************************************/
+TaskWatcher* AsyncOperation::watcher()
+{
+    OVITO_ASSERT(isValid());
+	OVITO_ASSERT(!isFinished());
+	OVITO_ASSERT(task()->taskManager() != nullptr);
+
+    return task()->taskManager()->addTaskInternal(task());
+}
+
+/******************************************************************************
+* Creates a child operation that executes within the context of this parent 
+* operation. In case the child task gets canceled, this parent task gets 
+* canceled too --and vice versa.
+******************************************************************************/
+AsyncOperation AsyncOperation::createSubOperation()
+{
+    OVITO_ASSERT(isValid());
+	OVITO_ASSERT(isStarted());
+	OVITO_ASSERT(!isFinished());
+	OVITO_ASSERT(task()->taskManager() != nullptr);
+
+	// Create the sub-operation object.
+	AsyncOperation subOperation(*task()->taskManager());
+
+	// Ensure that the sub-operation gets canceled together with the parent operation.
+	TaskWatcher* parentOperationWatcher = watcher();
+	TaskWatcher* subOperationWatcher = subOperation.watcher();
+	QObject::connect(parentOperationWatcher, &TaskWatcher::canceled, subOperationWatcher, &TaskWatcher::cancel);
+	QObject::connect(subOperationWatcher, &TaskWatcher::canceled, parentOperationWatcher, &TaskWatcher::cancel);
+
+	return subOperation;
+}
+
+/******************************************************************************
+* Creates a special async operation that can be used just for signaling the 
+* completion of an operation and which is not registered with a task manager.
+******************************************************************************/
+AsyncOperation AsyncOperation::createSignalOperation(bool startedState, TaskManager* taskManager)
+{
+	return AsyncOperation(std::make_shared<Task>(Task::State(startedState ? Task::Started : Task::NoState), taskManager));
+}
+
 }	// End of namespace

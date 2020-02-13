@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdmod/gui/StdModGui.h>
-#include <ovito/gui/properties/ModifierDelegateListParameterUI.h>
+#include <ovito/gui/desktop/properties/ModifierDelegateListParameterUI.h>
 #include <ovito/stdmod/modifiers/DeleteSelectedModifier.h>
 #include "DeleteSelectedModifierEditor.h"
 

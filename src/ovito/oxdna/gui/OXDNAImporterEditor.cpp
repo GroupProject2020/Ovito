@@ -21,10 +21,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/particles/gui/ParticlesGui.h>
-#include <ovito/gui/dialogs/HistoryFileDialog.h>
+#include <ovito/gui/desktop/dialogs/HistoryFileDialog.h>
 #include "OXDNAImporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(OXDNAImporterEditor);
 SET_OVITO_OBJECT_EDITOR(OXDNAImporter, OXDNAImporterEditor);
@@ -108,8 +108,5 @@ void OXDNAImporterEditor::onChooseTopologyFile()
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

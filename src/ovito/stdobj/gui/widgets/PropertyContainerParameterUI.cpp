@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 #include <ovito/stdobj/gui/StdObjGui.h>
-#include <ovito/gui/properties/PropertiesEditor.h>
+#include <ovito/gui/desktop/properties/PropertiesEditor.h>
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/stdobj/properties/PropertyContainerClass.h>
@@ -95,7 +95,7 @@ void PropertyContainerParameterUI::updateUI()
 		bool currentContainerFilteredOut = false;
 		if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 			for(ModifierApplication* modApp : mod->modifierApplications()) {
-				const PipelineFlowState& state = modApp->evaluateInputPreliminary();
+				const PipelineFlowState& state = modApp->evaluateInputSynchronous(dataset()->animationSettings()->time());
 				std::vector<ConstDataObjectPath> containers = state.getObjectsRecursive(PropertyContainer::OOClass());
 				for(const ConstDataObjectPath& path : containers) {
 					const PropertyContainer* container = static_object_cast<PropertyContainer>(path.back());

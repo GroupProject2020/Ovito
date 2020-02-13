@@ -23,9 +23,8 @@
 #include <ovito/core/Core.h>
 #include "ApplicationService.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(PluginSystem)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(ApplicationService);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

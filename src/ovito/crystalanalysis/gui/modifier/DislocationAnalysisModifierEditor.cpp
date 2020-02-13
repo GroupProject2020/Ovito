@@ -24,12 +24,12 @@
 #include <ovito/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <ovito/particles/gui/modifier/analysis/StructureListParameterUI.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
-#include <ovito/gui/properties/BooleanGroupBoxParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/SubObjectParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanGroupBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/SubObjectParameterUI.h>
 #include "DislocationAnalysisModifierEditor.h"
 
 namespace Ovito { namespace CrystalAnalysis {
@@ -179,9 +179,9 @@ DislocationTypeListParameterUI::DislocationTypeListParameterUI(QObject* parent)
 void DislocationTypeListParameterUI::updateDislocationCounts(const PipelineFlowState& state, ModifierApplication* modApp)
 {
 	// Access the data table in the pipeline state containing the dislocation counts and lengths.
-	_dislocationCounts = (modApp && !state.isEmpty()) ? state.getObjectBy<DataTable>(modApp, QStringLiteral("disloc-counts")) : nullptr;
-	_dislocationLengths = (modApp && !state.isEmpty()) ? state.getObjectBy<DataTable>(modApp, QStringLiteral("disloc-lengths")) : nullptr;
-	const DislocationNetworkObject* dislocationsObj = !state.isEmpty() ? state.getObject<DislocationNetworkObject>() : nullptr;
+	_dislocationCounts = modApp ? state.getObjectBy<DataTable>(modApp, QStringLiteral("disloc-counts")) : nullptr;
+	_dislocationLengths = modApp ? state.getObjectBy<DataTable>(modApp, QStringLiteral("disloc-lengths")) : nullptr;
+	const DislocationNetworkObject* dislocationsObj = state.getObject<DislocationNetworkObject>();
 	int crystalStructure = 0;
 	if(modApp) {
 		if(DislocationAnalysisModifier* modifier = dynamic_object_cast<DislocationAnalysisModifier>(modApp->modifier()))

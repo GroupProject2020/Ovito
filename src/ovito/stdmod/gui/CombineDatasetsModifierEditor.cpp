@@ -22,7 +22,7 @@
 
 #include <ovito/stdmod/gui/StdModGui.h>
 #include <ovito/stdmod/modifiers/CombineDatasetsModifier.h>
-#include <ovito/gui/properties/SubObjectParameterUI.h>
+#include <ovito/gui/desktop/properties/SubObjectParameterUI.h>
 #include "CombineDatasetsModifierEditor.h"
 
 namespace Ovito { namespace StdMod {

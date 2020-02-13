@@ -27,7 +27,7 @@
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include "WrapPeriodicImagesModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(WrapPeriodicImagesModifier);
 
@@ -40,9 +40,9 @@ bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const DataCollectio
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void WrapPeriodicImagesModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	const SimulationCellObject* simCellObj = state.expectObject<SimulationCellObject>();
 	std::array<bool, 3> pbc = simCellObj->pbcFlags();
@@ -100,7 +100,5 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

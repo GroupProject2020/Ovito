@@ -34,7 +34,7 @@
 #include "Vector3.h"
 #include "Quaternion.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A transformation that describes a non-uniform scaling in an arbitrary axis system.
@@ -232,8 +232,6 @@ inline QDataStream& operator>>(QDataStream& stream, ScalingT<T>& s) {
  */
 using Scaling = ScalingT<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Scaling);

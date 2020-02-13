@@ -26,7 +26,7 @@
 
 #include <boost/spirit/include/karma.hpp>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /******************************************************************************
 * Opens the output file for writing.
@@ -128,7 +128,7 @@ CompressedTextWriter& CompressedTextWriter::operator<<(quint64 i)
 	return *this;
 }
 
-#if !defined(Q_OS_WIN) && (QT_POINTER_SIZE != 4)
+#if (!defined(Q_OS_WIN) && (QT_POINTER_SIZE != 4)) || defined(Q_OS_WASM)
 /******************************************************************************
 * Writes an integer number to the text-based output file.
 ******************************************************************************/
@@ -195,6 +195,4 @@ void CompressedTextWriter::reportWriteError()
 	throw Exception(tr("Failed to write output file '%1': %2").arg(filename()).arg(_stream->errorString()), _context);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

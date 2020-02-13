@@ -230,14 +230,14 @@ void SimulationCellVis::renderSolid(TimePoint time, const SimulationCellObject* 
 			solidPrimitives.lines->setElement(11, corners[3], corners[7] - corners[3], color, cellLineWidth());
 		}
 		solidPrimitives.lines->endSetElements();
-		solidPrimitives.corners ->setSize(cell->is2D() ? 4 : 8);
-		solidPrimitives.corners ->setParticlePositions(corners);
-		solidPrimitives.corners ->setParticleRadius(cellLineWidth());
-		solidPrimitives.corners ->setParticleColor(cellColor());
+		solidPrimitives.corners->setSize(cell->is2D() ? 4 : 8);
+		solidPrimitives.corners->setParticlePositions(corners);
+		solidPrimitives.corners->setParticleRadius(cellLineWidth());
+		solidPrimitives.corners->setParticleColor(cellColor());
 	}
 	renderer->beginPickObject(contextNode);
 	solidPrimitives.lines->render(renderer);
-	solidPrimitives.corners ->render(renderer);
+	solidPrimitives.corners->render(renderer);
 	renderer->endPickObject();
 }
 

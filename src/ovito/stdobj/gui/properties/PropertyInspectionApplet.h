@@ -27,7 +27,7 @@
 #include <ovito/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <ovito/stdobj/properties/PropertyObject.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
-#include <ovito/gui/mainwin/data_inspector/DataInspectionApplet.h>
+#include <ovito/gui/desktop/mainwin/data_inspector/DataInspectionApplet.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 
 namespace Ovito { namespace StdObj {

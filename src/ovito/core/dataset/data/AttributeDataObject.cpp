@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include "AttributeDataObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(AttributeDataObject);
 DEFINE_PROPERTY_FIELD(AttributeDataObject, value);
@@ -51,6 +51,4 @@ void AttributeDataObject::loadFromStream(ObjectLoadStream& stream)
 	stream.closeChunk();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

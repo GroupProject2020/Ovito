@@ -23,11 +23,11 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/export/lammps/LAMMPSDataExporter.h>
 #include <ovito/particles/import/lammps/LAMMPSDataImporter.h>
-#include <ovito/gui/properties/VariantComboBoxParameterUI.h>
-#include <ovito/gui/properties/IntegerParameterUI.h>
+#include <ovito/gui/desktop/properties/VariantComboBoxParameterUI.h>
+#include <ovito/gui/desktop/properties/IntegerParameterUI.h>
 #include "LAMMPSDataExporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(LAMMPSDataExporterEditor);
 SET_OVITO_OBJECT_EDITOR(LAMMPSDataExporter, LAMMPSDataExporterEditor);
@@ -65,8 +65,5 @@ void LAMMPSDataExporterEditor::createUI(const RolloutInsertionParameters& rollou
 	layout->addLayout(precisionUI->createFieldLayout(), 0, 4);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

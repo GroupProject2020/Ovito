@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,17 +24,16 @@
 
 
 #include <ovito/core/Core.h>
-#include <ovito/core/oo/RefTarget.h>
+#include <ovito/core/dataset/pipeline/ActiveObject.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
-#include <ovito/core/dataset/pipeline/PipelineStatus.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for display objects that are responsible
  *        for rendering DataObject-derived classes.
  */
-class OVITO_CORE_EXPORT DataVis : public RefTarget
+class OVITO_CORE_EXPORT DataVis : public ActiveObject
 {
 	Q_OBJECT
 	OVITO_CLASS(DataVis)
@@ -73,32 +72,9 @@ public:
 	/// The default implementation returns \c true.
 	virtual bool showSelectionMarker() { return true; }
 
-	/// \brief Returns the title of this object.
-	virtual QString objectTitle() const override {
-		if(title().isEmpty()) return RefTarget::objectTitle();
-		else return title();
-	}
-
-	/// \brief Changes the title of this object.
-	/// \undoable
-	void setObjectTitle(const QString& title) { setTitle(title); }
-
 	/// \brief Returns all pipeline nodes whose pipeline produced this visualization element.
 	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.
 	QSet<PipelineSceneNode*> pipelines(bool onlyScenePipelines) const;
-
-private:
-
-	/// Controls whether the visualization element is enabled.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isEnabled, setEnabled);
-
-	/// The title of this visualization element.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
-
-	/// The current status of this visualization element.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PipelineStatus, status, setStatus, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesAffineTransformationModifierDelegate.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticlesAffineTransformationModifierDelegate);
 IMPLEMENT_OVITO_CLASS(VectorParticlePropertiesAffineTransformationModifierDelegate);
@@ -50,6 +50,7 @@ QVector<DataObjectReference> ParticlesAffineTransformationModifierDelegate::OOMe
 PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
+		inputParticles->verifyIntegrity();
 
 		// Make sure we can safely modify the particles object.
 		ParticlesObject* outputParticles = state.makeMutable(inputParticles);
@@ -87,6 +88,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 					p = tm * p;
 			}
 		}
+		outputParticles->verifyIntegrity();
 	}
 
 	return PipelineStatus::Success;
@@ -158,7 +160,5 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 	return PipelineStatus::Success;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,17 +28,17 @@
 
 #include <QRegularExpression>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(POSCARImporter);
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool POSCARImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool POSCARImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Skip comment line
 	stream.readLine();
@@ -83,30 +83,27 @@ bool POSCARImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl
 /******************************************************************************
 * Determines whether the input file should be scanned to discover all contained frames.
 ******************************************************************************/
-bool POSCARImporter::shouldScanFileForFrames(const QUrl& sourceUrl)
+bool POSCARImporter::shouldScanFileForFrames(const QUrl& sourceUrl) const
 {
 	return sourceUrl.fileName().contains(QStringLiteral("XDATCAR"));
 }
 
 /******************************************************************************
-* Scans the given input file to find all contained simulation frames.
+* Scans the data file and builds a list of source frames.
 ******************************************************************************/
-void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
+void POSCARImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
 {
-	CompressedTextReader stream(file, sourceUrl.path());
-	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
-	QFileInfo fileInfo(stream.device().fileName());
-	QString filename = fileInfo.fileName();
 	int frameNumber = 0;
 	QStringList atomTypeNames;
 	QVector<int> atomCounts;
+	QString filename = fileHandle().sourceUrl().fileName();
 
 	// Read frames.
-	Frame frame;
-	frame.sourceFile = sourceUrl;
-	frame.lastModificationTime = fileInfo.lastModified();
+	Frame frame(fileHandle());
 	while(!stream.eof() && !isCanceled()) {
 		frame.byteOffset = stream.byteOffset();
 		frame.lineNumber = stream.lineNumber();
@@ -176,11 +173,11 @@ void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading VASP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading VASP file %1").arg(fileHandle().toString()));
 
 	// Create the destination container for loaded data.
 	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
@@ -415,7 +412,5 @@ void POSCARImporter::parseAtomTypeNamesAndCounts(CompressedTextReader& stream, Q
 }
 
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

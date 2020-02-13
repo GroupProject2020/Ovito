@@ -28,7 +28,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "LAMMPSDumpExporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(LAMMPSDumpExporter);
 
@@ -169,7 +169,5 @@ bool LAMMPSDumpExporter::exportData(const PipelineFlowState& state, int frameNum
 	return !operation.isCanceled();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

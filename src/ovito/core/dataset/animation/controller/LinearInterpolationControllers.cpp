@@ -23,7 +23,7 @@
 #include <ovito/core/Core.h>
 #include "LinearInterpolationControllers.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(LinearFloatController);
 IMPLEMENT_OVITO_CLASS(LinearIntegerController);
@@ -32,5 +32,4 @@ IMPLEMENT_OVITO_CLASS(LinearPositionController);
 IMPLEMENT_OVITO_CLASS(LinearRotationController);
 IMPLEMENT_OVITO_CLASS(LinearScalingController);
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

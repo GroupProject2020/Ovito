@@ -89,12 +89,12 @@ Box3I ReplicateModifier::replicaRange() const
 }
 
 /******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
+* Modifies the input data synchronously.
 ******************************************************************************/
-void ReplicateModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
+void ReplicateModifier::evaluateSynchronous(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Apply all enabled modifier delegates to the input data.
-	MultiDelegatingModifier::evaluatePreliminary(time, modApp, state);
+	MultiDelegatingModifier::evaluateSynchronous(time, modApp, state);
 
 	// Resize the simulation cell if enabled.
 	if(adjustBoxSize()) {

@@ -24,7 +24,7 @@
 #include "TaskWatcher.h"
 #include "Task.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 void TaskWatcher::watch(const TaskPtr& task, bool pendingAssignment)
 {
@@ -115,6 +115,4 @@ QString TaskWatcher::progressText() const
 	return isWatching() ? task()->progressText() : QString();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

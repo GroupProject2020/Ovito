@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,10 +22,9 @@
 
 #include <ovito/core/Core.h>
 #include "ProgressiveTask.h"
-#include "TrackingTask.h"
 #include "TaskWatcher.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 enum {
     MaxProgressEmitsPerSecond = 20
@@ -41,10 +40,6 @@ void ProgressiveTask::setProgressMaximum(qlonglong maximum)
 
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressMaximum()));
-	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-		for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressMaximum()));
-	}
 }
 
 bool ProgressiveTask::setProgressValue(qlonglong value)
@@ -62,10 +57,6 @@ bool ProgressiveTask::setProgressValue(qlonglong value)
 
 		for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-		for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-			for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-		}
     }
 
     return !isCanceled();
@@ -93,10 +84,6 @@ bool ProgressiveTask::incrementProgressValue(qlonglong increment)
 
 		for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-		for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-			for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-		}
     }
 
     return !isCanceled();
@@ -148,10 +135,6 @@ void ProgressiveTask::nextProgressSubStep()
 
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-		for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
-	}
 }
 
 void ProgressiveTask::endProgressSubSteps()
@@ -172,12 +155,6 @@ void ProgressiveTask::setProgressText(const QString& progressText)
 
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseProgressTextChanged", Qt::QueuedConnection, Q_ARG(QString, progressText));
-	for(TrackingTask* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
-		for(TaskWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressTextChanged", Qt::QueuedConnection, Q_ARG(QString, progressText));
-	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -20,13 +20,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/properties/FloatParameterUI.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/properties/FloatParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include <ovito/grid/objects/VoxelGridVis.h>
 #include "VoxelGridVisEditor.h"
 
-namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(VoxelGridVisEditor);
 SET_OVITO_OBJECT_EDITOR(VoxelGridVis, VoxelGridVisEditor);
@@ -56,6 +56,5 @@ void VoxelGridVisEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	layout->addWidget(interpolateColorsUI->checkBox(), 3, 0, 1, 2);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

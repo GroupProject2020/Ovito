@@ -22,10 +22,10 @@
 
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/import/parcas/ParcasFileImporter.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include "ParcasFileImporterEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParcasFileImporterEditor);
 SET_OVITO_OBJECT_EDITOR(ParcasFileImporter, ParcasFileImporterEditor);
@@ -53,8 +53,5 @@ void ParcasFileImporterEditor::createUI(const RolloutInsertionParameters& rollou
 	sublayout->addWidget(sortParticlesUI->checkBox());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,13 +27,55 @@
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 namespace Ssh {
 	// These classes are defined elsewhere:
 	class SshConnection;
 	struct SshConnectionParameters;
 }
+
+/**
+ * \brief A handle to a file manages by the FileManager.
+ */
+class OVITO_CORE_EXPORT FileHandle 
+{
+public:
+
+	/// Default constructor creating an invalid file handle.
+	FileHandle() = default;
+
+	/// Constructor for files located in the local file system.
+	explicit FileHandle(const QUrl& sourceUrl, const QString& localFilePath) : _sourceUrl(sourceUrl), _localFilePath(localFilePath) {}
+
+	/// Constructor for files stored in memory.
+	explicit FileHandle(const QUrl& sourceUrl, const QByteArray& fileData) : _sourceUrl(sourceUrl), _fileData(fileData) {}
+
+	/// Returns the URL denoting the source location of the data file.
+	const QUrl& sourceUrl() const { return _sourceUrl; }
+
+	/// Returns the path to the file in the local file system (may be empty). 
+	const QString& localFilePath() const { return _localFilePath; }
+
+	/// Create a QIODevice that permits reading data from the file referred to by this handle.
+	std::unique_ptr<QIODevice> createIODevice() const;
+
+	/// Returns a human-readable representation of the source location referred to by this file handle.
+	QString toString() const { 
+		return _sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded); 
+	}
+
+private:
+
+	/// The URL denoting the data source.
+	QUrl _sourceUrl;
+
+	/// A path to the file in the local file system. 
+	QString _localFilePath;
+
+	/// An buffer with the file's contents.
+	QByteArray _fileData;
+};
 
 /**
  * \brief The file manager provides transparent access to remote files.
@@ -50,16 +92,16 @@ public:
 	/// Destructor.
 	~FileManager();
 
-	/// \brief Makes a file available on this computer.
-	/// \return A Future that will provide the local file name of the downloaded file.
-	SharedFuture<QString> fetchUrl(TaskManager& taskManager, const QUrl& url);
+	/// \brief Makes a file available locally.
+	/// \return A Future that will provide access to the file contents after it has been fetched from the remote location.
+	virtual SharedFuture<FileHandle> fetchUrl(TaskManager& taskManager, const QUrl& url);
 
 	/// \brief Removes a cached remote file so that it will be downloaded again next time it is requested.
 	void removeFromCache(const QUrl& url);
 
 	/// \brief Lists all files in a remote directory.
 	/// \return A Future that will provide the list of file names.
-	Future<QStringList> listDirectoryContents(TaskManager& taskManager, const QUrl& url);
+	virtual Future<QStringList> listDirectoryContents(TaskManager& taskManager, const QUrl& url);
 
 	/// \brief Constructs a URL from a path entered by the user.
 	QUrl urlFromUserInput(const QString& path);
@@ -73,6 +115,16 @@ public:
 #endif
 
 protected:
+
+	/// Returns the mutex used internally to synchronize concurrent access to the data structures of this FileManager.
+	QMutex& mutex() { return _mutex; }
+
+	/// Strips a URL from username and password information.
+	static QUrl normalizeUrl(QUrl url) {
+		url.setUserName({});
+		url.setPassword({});
+		return std::move(url);
+	}
 
 #ifdef OVITO_SSH_CLIENT
 	/// \brief Asks the user for the login password for a SSH server.
@@ -118,20 +170,13 @@ private:
 	/// Is called when a remote file has been fetched.
 	void fileFetched(QUrl url, QTemporaryFile* localFile);
 
-	/// Strips a URL from username and password information.
-	static QUrl normalizeUrl(QUrl url) {
-		url.setUserName({});
-		url.setPassword({});
-		return std::move(url);
-	}
-
 private:
 
 	/// The remote files that are currently being fetched.
-	std::map<QUrl, WeakSharedFuture<QString>> _pendingFiles;
+	std::map<QUrl, WeakSharedFuture<FileHandle>> _pendingFiles;
 
 	/// Cache holding the remote files that have already been downloaded.
-	QCache<QUrl, QTemporaryFile> _cachedFiles{std::numeric_limits<int>::max()};
+	QCache<QUrl, QTemporaryFile> _downloadedFiles{std::numeric_limits<int>::max()};
 
 	/// The mutex to synchronize access to above data structures.
 	QMutex _mutex{QMutex::Recursive};
@@ -147,6 +192,4 @@ private:
 #endif
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

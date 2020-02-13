@@ -26,7 +26,7 @@
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "RenderSettings.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(RenderSettings);
 DEFINE_PROPERTY_FIELD(RenderSettings, imageInfo);
@@ -106,5 +106,4 @@ void RenderSettings::setImageFilename(const QString& filename)
 	setImageInfo(newInfo);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

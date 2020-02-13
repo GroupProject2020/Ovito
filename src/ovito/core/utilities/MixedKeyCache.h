@@ -31,7 +31,7 @@
 #include <ovito/core/Core.h>
 #include <boost/any.hpp>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 /**
  * \brief A cache data structure that can handle arbitrary keys and data values.
@@ -83,5 +83,4 @@ private:
 	std::vector<std::tuple<boost::any, boost::any, bool>> _entries;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

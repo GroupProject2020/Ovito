@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/scene/SelectionSet.h>
 #include "ParticleExporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleExporter);
 
@@ -102,7 +102,7 @@ bool ParticleExporter::exportFrame(int frameNumber, TimePoint time, const QStrin
 {
 	// Retreive the particle data to be exported.
 	const PipelineFlowState& state = getParticleData(time, operation);
-	if(operation.isCanceled() || state.isEmpty())
+	if(operation.isCanceled() || !state)
 		return false;
 
 	// Set progress display.
@@ -112,6 +112,5 @@ bool ParticleExporter::exportFrame(int frameNumber, TimePoint time, const QStrin
 	return exportData(state, frameNumber, time, filePath, std::move(operation));
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

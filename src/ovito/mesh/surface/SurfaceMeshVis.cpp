@@ -89,7 +89,7 @@ void SurfaceMeshVis::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState)
+Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(const PipelineEvaluationRequest& request, const DataObject* dataObject, PipelineFlowState&& flowState)
 {
 	// Get the input surface mesh.
 	const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(dataObject);
@@ -105,8 +105,6 @@ Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(const PipelineEvalua
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(std::move(engine))
 		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh, std::vector<ColorA>&& materialColors, std::vector<size_t>&& originalFaceMap, bool renderFacesTwoSided) mutable {
-			UndoSuspender noUndo(this);
-
 			// Output the computed mesh as a RenderableSurfaceMesh.
 			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), std::move(capPolygonsMesh), !renderFacesTwoSided);
             renderableMesh->setMaterialColors(std::move(materialColors));

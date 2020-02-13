@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,31 +25,36 @@
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/pipeline/CachingPipelineObject.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 IMPLEMENT_OVITO_CLASS(CachingPipelineObject);
+DEFINE_PROPERTY_FIELD(CachingPipelineObject, pipelineTrajectoryCachingEnabled);
+SET_PROPERTY_FIELD_LABEL(CachingPipelineObject, pipelineTrajectoryCachingEnabled, "Precompute all trajectory frames");
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(dataset)
+CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(dataset),
+	_pipelineCache(this, false),
+	_pipelineTrajectoryCachingEnabled(false)
 {
 }
 
 /******************************************************************************
-* Throws away the cached pipeline state.
+* Determines the time interval over which a computed pipeline state will remain valid.
 ******************************************************************************/
-void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
+TimeInterval CachingPipelineObject::validityInterval(const PipelineEvaluationRequest& request) const
 {
-	// Reduce the cache validity to the interval to be kept.
-	_pipelineCache.invalidate(false, keepInterval);
+	TimeInterval iv = PipelineObject::validityInterval(request);
 
-	// Abort any pipeline evaluation currently in progress unless it
-	// falls inside the time interval that should be kept.
-	if(!keepInterval.contains(_inProgressEvalTime)) {
-		_inProgressEvalFuture.reset();
-		_inProgressEvalTime = TimeNegativeInfinity();
-	}
+	// If the requested frame is available in the cache, restrict the returned validity interval to 
+	// the validity interval of the cached state. Otherwise assume that a new pipeline computation 
+	// will be performed and let the sub-class determine the actual validity interval.
+	const PipelineFlowState& state = pipelineCache().getAt(request.time());
+	if(state.stateValidity().contains(request.time()))
+		iv.intersect(state.stateValidity());
+	
+	return iv;
 }
 
 /******************************************************************************
@@ -57,45 +62,52 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 ******************************************************************************/
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(const PipelineEvaluationRequest& request)
 {
-	// Check if we can immediately serve the request from the internal cache.
-	//
-	// Workaround for bug #150: Force FileSource to reload the frame data after the current
-	// animation frame has changed, even if it the data is available in the cache.
-	if(_pipelineCache.contains(request.time(), request.time() == dataset()->animationSettings()->time()))
-		return _pipelineCache.getAt(request.time());
-
-	// Check if there is already an evaluation in progress whose shared future we can return to the caller.
-	if(_inProgressEvalTime == request.time()) {
-		SharedFuture<PipelineFlowState> sharedFuture = _inProgressEvalFuture.lock();
-		if(sharedFuture.isValid() && !sharedFuture.isCanceled()) {
-			return sharedFuture;
-		}
-	}
-
-	// Let the subclass perform the actual pipeline evaluation.
-	Future<PipelineFlowState> stateFuture = evaluateInternal(request);
-
-	// Cache the results in our local pipeline cache.
-	if(_pipelineCache.insert(stateFuture, request.time(), this)) {
-		// If the cache was updated, we also have a new preliminary state.
-		// Inform the pipeline about it.
-		if(performPreliminaryUpdateAfterEvaluation() && request.time() == dataset()->animationSettings()->time()) {
-			stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
-				notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
-				return std::move(state);
-			});
-		}
-	}
-	OVITO_ASSERT(stateFuture.isValid());
-
-	// Keep a weak reference to the future to be able to serve several simultaneous requests.
-	SharedFuture<PipelineFlowState> sharedFuture(std::move(stateFuture));
-	_inProgressEvalFuture = sharedFuture;
-	_inProgressEvalTime = request.time();
-
-	return sharedFuture;
+	return pipelineCache().evaluatePipeline(request);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
+/******************************************************************************
+* Returns the results of an immediate and preliminary evaluation of the data pipeline.
+******************************************************************************/
+PipelineFlowState CachingPipelineObject::evaluateSynchronous(TimePoint time)
+{
+	return pipelineCache().evaluatePipelineStageSynchronous(time);
+}
+
+/******************************************************************************
+* Is called when the value of a non-animatable property field of this RefMaker has changed.
+******************************************************************************/
+void CachingPipelineObject::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(pipelineTrajectoryCachingEnabled)) {
+		pipelineCache().setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+
+		// Send target changed event to trigger a new pipeline evaluation, which is 
+		// needed to start the precomputation process.
+		if(pipelineTrajectoryCachingEnabled())
+			notifyTargetChanged(&PROPERTY_FIELD(pipelineTrajectoryCachingEnabled));
+	}
+
+	PipelineObject::propertyChanged(field);
+}
+
+/******************************************************************************
+* Loads the class' contents from an input stream.
+******************************************************************************/
+void CachingPipelineObject::loadFromStream(ObjectLoadStream& stream)
+{
+	PipelineObject::loadFromStream(stream);
+
+	// Transfer the caching flag loaded from the state file to the internal cache instance.
+	pipelineCache().setPrecomputeAllFrames(pipelineTrajectoryCachingEnabled());
+}
+
+/******************************************************************************
+* Rescales the times of all animation keys from the old animation interval to the new interval.
+******************************************************************************/
+void CachingPipelineObject::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval)
+{
+	PipelineObject::rescaleTime(oldAnimationInterval, newAnimationInterval);
+	pipelineCache().invalidate();
+}
+
 }	// End of namespace

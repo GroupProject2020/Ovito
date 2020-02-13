@@ -24,16 +24,15 @@
 
 
 #include <ovito/core/Core.h>
-#include <ovito/core/oo/RefTarget.h>
-#include <ovito/core/dataset/pipeline/PipelineStatus.h>
+#include <ovito/core/dataset/pipeline/ActiveObject.h>
 #include <ovito/core/dataset/animation/TimeInterval.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for all viewport layers types.
  */
-class OVITO_CORE_EXPORT ViewportOverlay : public RefTarget
+class OVITO_CORE_EXPORT ViewportOverlay : public ActiveObject
 {
 	Q_OBJECT
 	OVITO_CLASS(ViewportOverlay)
@@ -68,36 +67,11 @@ public:
 	/// The default method implementation does nothing.
 	virtual void moveLayerInViewport(const Vector2& delta) {}
 
-	/// \brief Returns the title of this layer object.
-	virtual QString objectTitle() const override {
-		if(title().isEmpty()) return RefTarget::objectTitle();
-		else return title();
-	}
-
-	/// \brief Changes the title of this layer.
-	/// \undoable
-	void setObjectTitle(const QString& title) { setTitle(title); }
-
-protected:
-
-	/// \brief Is called when the value of a non-animatable property field of this RefMaker has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
 private:
-
-	/// The current status of this overlay object.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PipelineStatus, status, setStatus, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// Flag controlling the visibility of the overlay.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isEnabled, setEnabled);
 
 	/// Option for rendering the overlay contents behind the three-dimensional content.
 	/// Note: This field exists only for backward compatibility with OVITO 2.9.0. 
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderBehindScene, setRenderBehindScene);
-
-	/// The user-defined title of this viewport overlay.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

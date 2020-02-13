@@ -22,7 +22,7 @@
 
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/importer/CAImporter.h>
-#include <ovito/gui/properties/BooleanParameterUI.h>
+#include <ovito/gui/desktop/properties/BooleanParameterUI.h>
 #include "CAImporterEditor.h"
 
 namespace Ovito { namespace CrystalAnalysis {

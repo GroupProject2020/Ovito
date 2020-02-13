@@ -29,9 +29,9 @@
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/rendering/LinePrimitive.h>
 #include <ovito/core/rendering/ParticlePrimitive.h>
-#include <ovito/gui/rendering/ViewportSceneRenderer.h>
+#include <ovito/gui/base/rendering/ViewportSceneRenderer.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Utility class that supports the picking of particles in the viewports.
@@ -67,15 +67,14 @@ public:
 	/// \param time The animation at which hit testing is performed.
 	/// \param result The output structure that receives information about the picked particle.
 	/// \return \c true if a particle has been picked; \c false otherwise.
-	bool pickParticle(ViewportWindow* vpwin, const QPoint& clickPoint, PickResult& result);
+	bool pickParticle(ViewportWindowInterface* vpwin, const QPoint& clickPoint, PickResult& result);
 
 	/// \brief Renders the particle selection overlay in a viewport.
 	/// \param vp The viewport into which the selection marker should be rendered.
 	/// \param renderer The renderer for the viewport.
 	/// \param pickRecord Specifies the particle for which the selection marker should be rendered.
-	void renderSelectionMarker(Viewport* vp, ViewportSceneRenderer* renderer, const PickResult& pickRecord);
+	void renderSelectionMarker(Viewport* vp, SceneRenderer* renderer, const PickResult& pickRecord);
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

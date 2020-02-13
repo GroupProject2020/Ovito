@@ -37,7 +37,7 @@ ENDIF()
 ADD_EXECUTABLE(Ovito ${OVITO_WIN32_EXECUTABLE} MACOSX_BUNDLE Main.cpp ${WINDOWS_RESOURCES})
 
 # The executable depends on the core and the gui modules, of course.
-TARGET_LINK_LIBRARIES(Ovito Core Gui)
+TARGET_LINK_LIBRARIES(Ovito PRIVATE Core Gui)
 
 # Put the executable into the right directory.
 SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
@@ -46,13 +46,13 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_
 SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "ovito")
 
 # Link Qt5.
-TARGET_LINK_LIBRARIES(Ovito Qt5::Core Qt5::Gui)
+TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::Core Qt5::Gui)
 
 # Under Linux, Qt's Xcb platform plugin will dynamically load the DBus Qt module.
 # To avoid the dynamic linker pulling the wrong versions of the Qt module from the
 # system path, we make the executable preload the module on application startup.
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
-	TARGET_LINK_LIBRARIES(Ovito Qt5::DBus)
+	TARGET_LINK_LIBRARIES(Ovito PRIVATE Qt5::DBus)
 ENDIF()
 
 IF(APPLE)
@@ -73,10 +73,13 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 	IF(BUILD_SHARED_LIBS)
 		ADD_DEPENDENCIES(Ovito ${plugin})
 	ELSE()
+		# When generating a static executable that contains all plugins, make sure
+		# the linker doesn't remove apparently unreferenced symbols. They are needed to
+		# have the plugin classes register themselves.
 		IF(UNIX)
-			TARGET_LINK_LIBRARIES(Ovito -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
+			TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
 		ELSE()
-			TARGET_LINK_LIBRARIES(Ovito ${plugin})
+			TARGET_LINK_LIBRARIES(Ovito PRIVATE ${plugin})
 			IF(MSVC)
 				SET_PROPERTY(TARGET Ovito APPEND_STRING PROPERTY LINK_FLAGS " /WHOLEARCHIVE:${plugin}")
 			ENDIF()

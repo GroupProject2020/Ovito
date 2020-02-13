@@ -25,7 +25,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
+namespace Ovito {
 
 /**
  * \brief Abstract base class for drawing primitives.
@@ -44,7 +44,6 @@ public:
 	virtual void render(SceneRenderer* renderer) = 0;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

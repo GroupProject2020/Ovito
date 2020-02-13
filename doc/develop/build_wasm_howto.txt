@@ -1,0 +1,47 @@
+**************************************************************************
+How to build OVITO for the WebAssembly (wasm) platform
+**************************************************************************
+
+CMake toolkit definition:
+
+  {
+    "name": "Emscripten",
+    "environmentVariables": {
+      "PATH": "/Users/stuko/progs/emsdk:/Users/stuko/progs/emsdk/fastcomp-clang/e1.38.30_64bit:/Users/stuko/progs/emsdk/node/8.9.1_64bit/bin:/Users/stuko/progs/emsdk/emscripten/1.38.30:/Library/Frameworks/Python.framework/Versions/3.7/bin:/opt/local/bin:/usr/bin/",
+      "EMSDK": "/Users/stuko/progs/emsdk",
+      "EM_CONFIG": "/Users/stuko/progs/emsdk/.emscripten",
+      "EM_CACHE": "/Users/stuko/progs/emsdk/.emscripten_cache",
+      "LLVM_ROOT": "/Users/stuko/progs/emsdk/fastcomp-clang/e1.38.30_64bit",
+      "EMSCRIPTEN_NATIVE_OPTIMIZER": "/Users/stuko/progs/emsdk/fastcomp-clang/e1.38.30_64bit/optimizer",
+      "BINARYEN_ROOT": "/Users/stuko/progs/emsdk/fastcomp-clang/e1.38.30_64bit/binaryen",
+      "EMCC_WASM_BACKEND": "0",
+      "EMSDK_NODE": "/Users/stuko/progs/emsdk/node/8.9.1_64bit/bin/node",
+      "EMSCRIPTEN": "/Users/stuko/progs/emsdk/emscripten/1.38.30"
+    },
+    "toolchainFile": "/Users/stuko/progs/emsdk/emscripten/1.38.30/cmake/Modules/Platform/Emscripten.cmake"
+  } 
+
+CMake configuration:
+
+  "OVITO_REDISTRIBUTABLE_PACKAGE" : "OFF",
+  "OVITO_DOUBLE_PRECISION_FP" : "ON",
+  "OVITO_USE_PRECOMPILED_HEADERS": "OFF",
+  "OVITO_BUILD_MONOLITHIC": "ON",
+  "CMAKE_INSTALL_PREFIX" : "${workspaceRoot}/build/${buildType}_install",
+  "CMAKE_PREFIX_PATH" : "${userHome}/Qt/5.13.2/wasm_32/lib/cmake",
+  "BOOST_ROOT": "/opt/local",
+  "OVITO_BUILD_GUI" : "OFF",
+  "OVITO_BUILD_PLUGIN_STDMOD" : "OFF",
+  "OVITO_BUILD_PLUGIN_PARTICLES" : "OFF",
+  "OVITO_BUILD_PLUGIN_GRID" : "OFF",
+  "OVITO_BUILD_PLUGIN_CRYSTALANALYSIS" : "OFF",
+  "OVITO_BUILD_PLUGIN_NETCDFPLUGIN" : "OFF",
+  "OVITO_BUILD_PLUGIN_CORRELATION" : "OFF",
+  "OVITO_BUILD_PLUGIN_VOROTOP" : "OFF",
+  "OVITO_BUILD_PLUGIN_GALAMOST" : "OFF",
+  "OVITO_BUILD_PLUGIN_OXDNA" : "OFF"
+
+VS Code settings:
+
+  "cmake.buildDirectory": "${workspaceRoot}/build/${buildType}",
+  "cmake.generator": "Unix Makefiles",

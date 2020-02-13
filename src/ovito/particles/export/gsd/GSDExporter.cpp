@@ -29,7 +29,7 @@
 #include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "GSDExporter.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(GSDExporter);
 
@@ -313,7 +313,5 @@ bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, Ti
     return !operation.isCanceled();
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

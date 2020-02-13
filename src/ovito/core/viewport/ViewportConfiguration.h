@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/viewport/Viewport.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
+namespace Ovito {
 
 /**
  * \brief This class holds a collection of Viewport objects.
@@ -37,6 +37,9 @@ class OVITO_CORE_EXPORT ViewportConfiguration : public RefTarget
 {
 	Q_OBJECT
 	OVITO_CLASS(ViewportConfiguration)
+
+	Q_PROPERTY(Ovito::Viewport* activeViewport READ activeViewport WRITE setActiveViewport NOTIFY activeViewportChanged);
+	Q_PROPERTY(Ovito::Viewport* maximizedViewport READ maximizedViewport WRITE setMaximizedViewport NOTIFY maximizedViewportChanged);
 
 public:
 
@@ -196,10 +199,7 @@ private:
 	ViewportConfiguration& _vpconf;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::ViewportConfiguration::OrbitCenterMode);
 Q_DECLARE_TYPEINFO(Ovito::ViewportConfiguration::OrbitCenterMode, Q_PRIMITIVE_TYPE);
-
-

@@ -35,7 +35,7 @@
 #include "Quaternion.h"
 #include "Matrix3.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Math)
+namespace Ovito {
 
 /**
  * \brief A rotation in 3d space, described by a rotation axis and an angle.
@@ -537,8 +537,6 @@ inline QDataStream& operator>>(QDataStream& stream, RotationT<T>& r) {
  */
 using Rotation = RotationT<FloatType>;
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Rotation);

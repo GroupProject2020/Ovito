@@ -27,7 +27,7 @@
 #include <ovito/core/oo/RefTarget.h>
 #include "SceneNode.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
  * \brief Stores a selection of scene nodes.
@@ -128,8 +128,6 @@ private:
 	bool _selectionChangeInProgress = false;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

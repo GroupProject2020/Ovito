@@ -41,10 +41,10 @@ bool WavefrontOBJImporter::OOMetaClass::supportsDataType(const DataObject::OOMet
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read a couple of lines.
 	int nverts = 0;
@@ -81,11 +81,11 @@ bool WavefrontOBJImporter::OOMetaClass::checkFileFormat(QFileDevice& input, cons
 /******************************************************************************
 * Parses the given input file and stores the data in the given container object.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr WavefrontOBJImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading OBJ file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading OBJ file %1").arg(fileHandle().toString()));
 	setProgressMaximum(stream.underlyingSize());
 
 	// Jump to byte offset.

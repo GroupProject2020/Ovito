@@ -29,7 +29,7 @@
 #include "Controller.h"
 #include "AnimationKeys.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
+namespace Ovito {
 
 /**
  * \brief Base class for animation controllers that are based on animation keys.
@@ -285,7 +285,6 @@ protected:
 	}
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 

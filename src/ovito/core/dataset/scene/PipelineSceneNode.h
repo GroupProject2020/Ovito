@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,10 +31,10 @@
 #include <ovito/core/dataset/pipeline/PipelineCache.h>
 #include <ovito/core/dataset/data/DataVis.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito {
 
 /**
- * \brief A node in the scene that represents an object.
+ * \brief A visual node in the 3d scene which manages a data pipeline.
  */
 class OVITO_CORE_EXPORT PipelineSceneNode : public SceneNode
 {
@@ -49,11 +49,14 @@ public:
 	/// \brief Destructor.
 	virtual ~PipelineSceneNode();
 
-	/// \brief Asks the node for the results of its data pipeline.
-	SharedFuture<PipelineFlowState> evaluatePipeline(const PipelineEvaluationRequest& request) const;
+	/// \brief Performs a synchronous evaluation of the pipeline yielding only preliminary results.
+	const PipelineFlowState& evaluatePipelineSynchronous(bool includeVisElements);
 
-	/// \brief Asks the node for the results of its data pipeline including the output of asynchronous visualization elements.
-	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(const PipelineEvaluationRequest& request) const;
+	/// \brief Performs an asynchronous evaluation of the data pipeline.
+	PipelineEvaluationFuture evaluatePipeline(const PipelineEvaluationRequest& request);
+
+	/// \brief Performs an asynchronous evaluation of the data pipeline including the visualization elements.
+	PipelineEvaluationFuture evaluateRenderingPipeline(const PipelineEvaluationRequest& request);
 
 	/// Traverses the node's pipeline until the end and returns the object that generates the
 	/// input data for the pipeline.
@@ -62,9 +65,6 @@ public:
 	/// Sets the data source of this node's pipeline, i.e., the object that provides the
 	/// input data entering the pipeline.
 	void setPipelineSource(PipelineObject* sourceObject);
-
-	/// \brief Requests preliminary results from the data pipeline.
-	const PipelineFlowState& evaluatePipelinePreliminary(bool includeVisElements) const;
 
 	/// \brief Applies a modifier by appending it to the end of the node's data pipeline.
 	/// \param modifier The modifier to be inserted into the data flow pipeline.
@@ -81,6 +81,9 @@ public:
 
 	/// \brief Deletes this node from the scene.
 	virtual void deleteNode() override;
+
+	/// Rescales the times of all animation keys from the old animation interval to the new interval.
+	virtual void rescaleTime(const TimeInterval& oldAnimationInterval, const TimeInterval& newAnimationInterval) override;
 
 	/// \brief Replaces the given visual element in this pipeline's output with an independent copy.
 	DataVis* makeVisElementIndependent(DataVis* visElement);
@@ -112,6 +115,9 @@ protected:
 	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
 	virtual void referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex) override;
 
+	/// Is called when the value of a non-animatable property field of this RefMaker has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+
 	/// Saves the class' contents to the given stream.
 	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
@@ -121,13 +127,13 @@ protected:
 	/// This method is called once for this object after it has been completely loaded from a stream.
 	virtual void loadFromStreamComplete() override;
 
-	/// Invalidates the data pipeline cache of the scene node.
-	void invalidatePipelineCache();
+private:
+
+	/// Invalidates the contents of the data pipeline cache.
+	void invalidatePipelineCache(TimeInterval keepInterval = TimeInterval::empty(), bool resetSynchronousCache = false);
 
 	/// Rebuilds the list of visual elements maintained by the scene node.
-	void updateVisElementList(TimePoint time);
-
-private:
+	void updateVisElementList(const PipelineFlowState& state);
 
 	/// Helper function that recursively collects all visual elements attached to a
 	/// data object and its children and stores them in an output vector.
@@ -151,16 +157,16 @@ private:
 	/// Visual elements owned by the node which replace the ones produced by the pipeline.
 	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, replacementVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	/// The cached results from the data pipeline.
-	mutable PipelineCache _pipelineCache;
+	/// Activates the precomputation of the pipeline results for all animation frames.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, pipelineTrajectoryCachingEnabled, setPipelineTrajectoryCachingEnabled, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	/// The cached results from the data pipeline including the output of asynchronous visualization elements.
-	mutable PipelineCache _pipelineRenderingCache;
+	/// The cached output of the data pipeline (without the effect of visualization elements).
+	PipelineCache _pipelineCache;
 
-	/// The cached results from a preliminary pipeline evaluation.
-	mutable PipelineFlowState _pipelinePreliminaryCache;
+	/// The cached pipeline output including any output generated by asynchronous visualization elements.
+	PipelineCache _pipelineRenderingCache;
+
+	friend class PipelineCache;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

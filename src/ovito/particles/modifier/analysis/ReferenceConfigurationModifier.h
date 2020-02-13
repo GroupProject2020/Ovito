@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,7 @@
 #include <ovito/core/dataset/pipeline/PipelineObject.h>
 #include <ovito/core/dataset/pipeline/AsynchronousModifierApplication.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace Particles {
 
 /**
  * \brief Base class for analysis modifiers that require a reference configuration.
@@ -66,13 +66,26 @@ public:
 	/// Constructor.
 	ReferenceConfigurationModifier(DataSet* dataset);
 
+	/// Determines the time interval over which a computed pipeline state will remain valid.
+	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
+
+	/// Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) override;
+
+	/// Is called by the ModifierApplication to let the modifier adjust the time interval of a TargetChanged event 
+	/// received from the downstream pipeline before it is propagated to the upstream pipeline.
+	virtual void restrictInputValidityInterval(TimeInterval& iv) const override;
+
 protected:
 
-	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	/// Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual Future<ComputeEnginePtr> createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) = 0;
+	virtual Future<ComputeEnginePtr> createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngineInternal(const PipelineEvaluationRequest& request, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) = 0;
 
 	/// Base class for compute engines that make use of a reference configuration.
 	class OVITO_PARTICLES_EXPORT RefConfigEngineBase : public ComputeEngine
@@ -172,7 +185,8 @@ protected:
 };
 
 /**
- * Used by the ReferenceConfigurationModifier to cache the reference configuration.
+ * This class is no longer used as 02/2020. It's only here for backward compatibility with files written by older OVITO versions.
+ * The class can be removed in the future.
  */
 class OVITO_PARTICLES_EXPORT ReferenceConfigurationModifierApplication : public AsynchronousModifierApplication
 {
@@ -183,40 +197,8 @@ public:
 
 	/// Constructor.
 	Q_INVOKABLE ReferenceConfigurationModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
-
-	/// Returns the validity interval of the cached reference state.
-	const TimeInterval& referenceCacheValidity() const {
-		return _cacheValidity;
-	}
-
-	/// Returns the cached reference state.
-	const PipelineFlowState& referenceCache() const {
-		return _referenceCache;
-	}
-
-	/// Replaces the cached reference state.
-	void updateReferenceCache(PipelineFlowState state, TimeInterval cacheValidity) {
-		_referenceCache = std::move(state);
-		_cacheValidity = cacheValidity;
-	}
-
-protected:
-
-	/// Is called when a RefTarget referenced by this object has generated an event.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
-private:
-
-	/// The cached reference configuration.
-	PipelineFlowState _referenceCache;
-
-	/// The validity of the cache.
-	TimeInterval _cacheValidity = TimeInterval::empty();
-
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 

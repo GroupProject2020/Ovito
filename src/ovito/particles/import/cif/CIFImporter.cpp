@@ -28,7 +28,7 @@
 #include <3rdparty/gemmi/cif.hpp>
 #include <3rdparty/gemmi/smcif.hpp>	// for reading small molecules
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
+namespace Ovito { namespace Particles {
 
 namespace cif = gemmi::cif;
 
@@ -37,10 +37,10 @@ IMPLEMENT_OVITO_CLASS(CIFImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool CIFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
+bool CIFImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
 	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	CompressedTextReader stream(file);
 
 	// Read the first N lines of the file which are not comments.
 	int maxLines = 12;
@@ -68,11 +68,11 @@ bool CIFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile()
 {
 	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading CIF file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	CompressedTextReader stream(fileHandle());
+	setProgressText(tr("Reading CIF file %1").arg(fileHandle().toString()));
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
@@ -185,7 +185,5 @@ FileSourceImporter::FrameDataPtr CIFImporter::FrameLoader::loadFile(QFile& file)
 	return frameData;
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

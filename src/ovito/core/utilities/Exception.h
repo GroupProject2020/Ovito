@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 #ifdef QT_NO_EXCEPTIONS
 	#error "OVITO requires Qt exception support. It seems that Qt has been built without exceptions (the macro QT_NO_EXCEPTIONS is defined). Please turn on exception support and rebuild the Qt library."
@@ -82,7 +82,11 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
  * \endcode
  *
  */
-class OVITO_CORE_EXPORT Exception : public QException
+#ifndef OVITO_DISABLE_THREADING
+	class OVITO_CORE_EXPORT Exception : public QException
+#else
+	class OVITO_CORE_EXPORT Exception
+#endif
 {
 public:
 
@@ -144,6 +148,8 @@ public:
 	/// Sets the context object for this exception or error.
 	void setContext(QObject* context) { _context = context; }
 
+#ifndef OVITO_DISABLE_THREADING
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// The following two functions are required by the base class QException
 
@@ -152,6 +158,8 @@ public:
 
 	// Creates a copy of this exception object.
 	virtual Exception* clone() const override { return new Exception(*this); }
+
+#endif
 
 private:
 
@@ -163,7 +171,4 @@ private:
 	QPointer<QObject> _context;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// namespace Ovito
-
-

@@ -24,7 +24,7 @@
 #include <ovito/core/app/Application.h>
 #include "Exception.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito {
 
 Exception::Exception(QObject* context) : _context(context)
 {
@@ -68,5 +68,4 @@ void Exception::reportError(bool blocking) const
 		app->reportError(*this, blocking);
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// namespace Ovito

@@ -26,8 +26,8 @@
 #include <ovito/crystalanalysis/CrystalAnalysis.h>
 #include <ovito/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <ovito/stdobj/table/DataTable.h>
-#include <ovito/gui/properties/ModifierPropertiesEditor.h>
-#include <ovito/gui/properties/RefTargetListParameterUI.h>
+#include <ovito/gui/desktop/properties/ModifierPropertiesEditor.h>
+#include <ovito/gui/desktop/properties/RefTargetListParameterUI.h>
 
 namespace Ovito { namespace CrystalAnalysis {
 

@@ -26,7 +26,7 @@
 #include <ovito/core/Core.h>
 #include "Promise.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+namespace Ovito {
 
 /**
  * \brief Default shared state type used to connect Promise/Future pairs across thread boundaries.
@@ -86,13 +86,9 @@ protected:
 
     virtual void registerWatcher(TaskWatcher* watcher) override;
     virtual void unregisterWatcher(TaskWatcher* watcher) override;
-    virtual void registerTracker(TrackingTask* tracker) override;
-	virtual void addContinuationImpl(std::function<void()>&& cont) override;
+	virtual void addContinuationImpl(fu2::unique_function<void(bool)>&& cont, bool defer) override;
 
 	QMutex _mutex;
 };
 
-
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

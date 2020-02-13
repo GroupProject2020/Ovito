@@ -32,7 +32,7 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include "ExpandSelectionModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ExpandSelectionModifier);
 DEFINE_PROPERTY_FIELD(ExpandSelectionModifier, mode);
@@ -70,7 +70,7 @@ bool ExpandSelectionModifier::OOMetaClass::isApplicableTo(const DataCollection& 
 * Creates and initializes a computation engine that will compute the
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEngine(const PipelineEvaluationRequest& request, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the input particles.
 	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
@@ -219,7 +219,5 @@ void ExpandSelectionModifier::ExpandSelectionEngine::emitResults(TimePoint time,
 	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(msg)));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -23,8 +23,8 @@
 #pragma once
 
 
-#include <ovito/gui/GUI.h>
-#include <ovito/gui/dataset/GuiDataSetContainer.h>
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/gui/desktop/dataset/GuiDataSetContainer.h>
 #include "VRRenderingWidget.h"
 
 namespace VRPlugin {

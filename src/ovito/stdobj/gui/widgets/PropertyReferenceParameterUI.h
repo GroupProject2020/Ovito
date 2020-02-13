@@ -26,7 +26,7 @@
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/gui/widgets/PropertySelectionComboBox.h>
 #include <ovito/stdobj/properties/PropertyContainer.h>
-#include <ovito/gui/properties/ParameterUI.h>
+#include <ovito/gui/desktop/properties/ParameterUI.h>
 
 namespace Ovito { namespace StdObj {
 

@@ -23,13 +23,13 @@
 #include <ovito/particles/gui/ParticlesGui.h>
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/gui/mainwin/MainWindow.h>
-#include <ovito/gui/actions/ViewportModeAction.h>
-#include <ovito/gui/widgets/general/AutocompleteLineEdit.h>
-#include <ovito/gui/viewport/ViewportWindow.h>
+#include <ovito/gui/desktop/mainwin/MainWindow.h>
+#include <ovito/gui/desktop/actions/ViewportModeAction.h>
+#include <ovito/gui/desktop/widgets/general/AutocompleteLineEdit.h>
+#include <ovito/core/viewport/ViewportWindowInterface.h>
 #include "ParticleInspectionApplet.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace Particles {
 
 IMPLEMENT_OVITO_CLASS(ParticleInspectionApplet);
 
@@ -135,7 +135,7 @@ void ParticleInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 ******************************************************************************/
 void ParticleInspectionApplet::updateDistanceTable()
 {
-	if(currentState().isEmpty()) return;
+	if(!currentState()) return;
 
 	// Limit distance computation to the first 4 particles:
 	int n = std::min(4, visibleElementCount());
@@ -170,7 +170,7 @@ void ParticleInspectionApplet::updateDistanceTable()
 ******************************************************************************/
 void ParticleInspectionApplet::updateAngleTable()
 {
-	if(currentState().isEmpty()) return;
+	if(!currentState()) return;
 
 	// Limit angle computation to the first 3 particles:
 	int n = std::min(3, visibleElementCount());
@@ -220,7 +220,7 @@ void ParticleInspectionApplet::deactivate(MainWindow* mainWindow)
 /******************************************************************************
 * Handles the mouse up events for a Viewport.
 ******************************************************************************/
-void ParticleInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void ParticleInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	if(event->button() == Qt::LeftButton) {
 		PickResult pickResult;
@@ -257,7 +257,7 @@ void ParticleInspectionApplet::PickingMode::mouseReleaseEvent(ViewportWindow* vp
 /******************************************************************************
 * Handles the mouse move event for the given viewport.
 ******************************************************************************/
-void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
+void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindowInterface* vpwin, QMouseEvent* event)
 {
 	// Change mouse cursor while hovering over a particle.
 	PickResult pickResult;
@@ -272,7 +272,7 @@ void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin
 /******************************************************************************
 * Lets the input mode render its overlay content in a viewport.
 ******************************************************************************/
-void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
+void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, SceneRenderer* renderer)
 {
 	if(!renderer->isInteractive() || renderer->isPicking())
 		return;
@@ -290,7 +290,7 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Viewpo
 		std::array<Point3,4> vertices;
 		auto outVertex = vertices.begin();
 		for(auto& element : _pickedElements) {
-			const PipelineFlowState& flowState = element.objNode->evaluatePipelinePreliminary(true);
+			const PipelineFlowState& flowState = element.objNode->evaluatePipelineSynchronous(true);
 			if(const ParticlesObject* particles = flowState.getObject<ParticlesObject>()) {
 				// If particle selection is based on ID, find particle with the given ID.
 				size_t particleIndex = element.particleIndex;
@@ -331,7 +331,5 @@ void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Viewpo
 	}
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

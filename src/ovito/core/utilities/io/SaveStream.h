@@ -30,7 +30,7 @@
 
 #include <ovito/core/Core.h>
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+namespace Ovito {
 
 /**
  * \brief An output stream class that writes binary data to a file in a platform-independent way.
@@ -290,6 +290,4 @@ auto operator<<(SaveStream& stream, const OvitoSubclass* const clazz)
 	return stream << static_cast<const OvitoClassPtr&>(clazz);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

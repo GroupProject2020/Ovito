@@ -28,7 +28,7 @@
 #include <ovito/core/dataset/DataSet.h>
 #include "PropertyField.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
+namespace Ovito {
 
 /******************************************************************************
 * Generates a notification event to inform the dependents of the field's owner
@@ -409,5 +409,4 @@ QString VectorReferenceFieldBase::RemoveReferenceOperation::displayName() const
 		.arg(owner()->getOOClass().name());
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

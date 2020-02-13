@@ -49,7 +49,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT DislocImporter : public ParticleImporter
 		virtual QString fileFilterDescription() const override { return tr("Fix disloc files"); }
 
 		/// Checks if the given file has format that can be read by this importer.
-		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;
+		virtual bool checkFileFormat(const FileHandle& file) const override;
 	};
 
 	OVITO_CLASS_META(DislocImporter, OOMetaClass)
@@ -64,8 +64,8 @@ public:
 	virtual QString objectTitle() const override { return tr("Disloc"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
-		return std::make_shared<FrameLoader>(frame, localFilename);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const FileHandle& file) override {
+		return std::make_shared<FrameLoader>(frame, file);
 	}
 
 protected:
@@ -122,8 +122,8 @@ protected:
 
 	protected:
 
-		/// Loads the frame data from the given file.
-		virtual FrameDataPtr loadFile(QFile& file) override;
+		/// Reads the frame data from the external file.
+		virtual FrameDataPtr loadFile() override;
 
 		/// Connects the slip faces to form two-dimensional manifolds.
 		static void connectSlipFaces(MicrostructureData& microstructure, const std::vector<std::pair<qlonglong,qlonglong>>& slipSurfaceMap);
