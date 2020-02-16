@@ -186,13 +186,6 @@ private:
 			_bondPeriodicImages(std::move(bondPeriodicImages)),
 			_cnaIndices(std::make_shared<PropertyStorage>(_bondTopology->size(), PropertyStorage::Int, 3, 0, tr("CNA Indices"), false)) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_bondTopology.reset();
-			_bondPeriodicImages.reset();
-			CNAEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

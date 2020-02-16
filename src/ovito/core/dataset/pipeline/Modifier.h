@@ -55,12 +55,12 @@ public:
 	/// \brief Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const;
 
-	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	/// \brief Asks the modifier for the set of animation time intervals that should be cached by the upstream pipeline.
 	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) {}
 
 	/// \brief This method is called by the ModifierApplication to let the modifier adjust the time interval
-	/// of a TargetChanged event received from the downstream pipeline before it is propagated to the 
-	/// upstream pipeline.
+	/// of a TargetChanged event received from the upstream pipeline before it is propagated to the 
+	/// downstream pipeline.
 	virtual void restrictInputValidityInterval(TimeInterval& iv) const {}
 
 	/// \brief Lets the modifier render itself into a viewport.

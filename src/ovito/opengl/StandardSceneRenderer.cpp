@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -128,10 +128,10 @@ void StandardSceneRenderer::initializeGLState()
 /******************************************************************************
 * Renders the current animation frame.
 ******************************************************************************/
-bool StandardSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
+bool StandardSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, SynchronousOperation operation)
 {
 	// Let the base class do the main rendering work.
-	if(!OpenGLSceneRenderer::renderFrame(frameBuffer, stereoTask, operation))
+	if(!OpenGLSceneRenderer::renderFrame(frameBuffer, stereoTask, std::move(operation)))
 		return false;
 
 	// Flush the contents to the FBO before extracting image.

@@ -27,7 +27,6 @@
 #include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito {
 
@@ -58,14 +57,11 @@ void ActionManager::on_RenderActiveViewport_triggered()
 		// Show and activate frame buffer window.
 		frameBufferWindow->showAndActivateWindow();
 
-		// Create a task object for the rendering operation.
-		AsyncOperation renderingOperation(_dataset->taskManager());
-
 		// Show progress dialog.
-		ProgressDialog progressDialog(frameBufferWindow, renderingOperation.task(), tr("Rendering"));
+		ProgressDialog progressDialog(frameBufferWindow, _dataset->taskManager(), tr("Rendering"));
 
 		// Call high-level rendering function, which will take care of the rest.
-		_dataset->renderScene(settings, viewport, frameBuffer.get(), std::move(renderingOperation));
+		_dataset->renderScene(settings, viewport, frameBuffer.get(), progressDialog.createOperation());
 	}
 	catch(const Exception& ex) {
 		ex.logError();

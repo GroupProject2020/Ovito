@@ -123,14 +123,6 @@ private:
 				QStringList neighborExpressions,
 				FloatType cutoff);
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_neighborExpressions.clear();
-			_neighborEvaluator.reset();
-			PropertyComputeEngine::cleanup();
-		}
-
 		/// Returns the list of available input variables for the expressions managed by the delegate.
 		virtual QStringList delegateInputVariableNames() const override;
 

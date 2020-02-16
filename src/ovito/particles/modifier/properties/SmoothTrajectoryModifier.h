@@ -31,9 +31,9 @@
 namespace Ovito { namespace Particles {
 
 /**
- * \brief Smootly interpolates between snapshots of a particle system.
+ * \brief Smoothly interpolates the particle positions by averaging multiple snapshots.
  */
-class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifier : public Modifier
+class OVITO_PARTICLES_EXPORT SmoothTrajectoryModifier : public Modifier
 {
 	/// Give this modifier class its own metaclass.
 	class OOMetaClass : public Modifier::OOMetaClass
@@ -48,24 +48,25 @@ class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifier : public Modifier
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(InterpolateTrajectoryModifier, OOMetaClass)
+	OVITO_CLASS_META(SmoothTrajectoryModifier, OOMetaClass)
 
-	Q_CLASSINFO("DisplayName", "Interpolate trajectory");
+	Q_CLASSINFO("DisplayName", "Smooth trajectory");
 	Q_CLASSINFO("ModifierCategory", "Modification");
+	Q_CLASSINFO("ClassNameAlias", "InterpolateTrajectoryModifier");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE InterpolateTrajectoryModifier(DataSet* dataset);
+	Q_INVOKABLE SmoothTrajectoryModifier(DataSet* dataset);
 
 	/// Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
 
-	/// Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	/// Asks the modifier for the set of animation time intervals that should be cached by the upstream pipeline.
 	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) override;
 
 	/// Is called by the ModifierApplication to let the modifier adjust the time interval of a TargetChanged event 
-	/// received from the downstream pipeline before it is propagated to the upstream pipeline.
+	/// received from the upstream pipeline before it is propagated to the downstream pipeline.
 	virtual void restrictInputValidityInterval(TimeInterval& iv) const override;
 
 	/// Modifies the input data.
@@ -76,16 +77,22 @@ public:
 
 private:
 
-	/// Computes the interpolated state from two input states.
+	/// Computes the interpolated state between two input states.
 	void interpolateState(PipelineFlowState& state1, const PipelineFlowState& state2, ModifierApplication* modApp, TimePoint time, TimePoint time1, TimePoint time2);
+
+	/// Computes the averaged state from several input states.
+	void averageState(PipelineFlowState& state1, const std::vector<PipelineFlowState>& otherStates, ModifierApplication* modApp, TimePoint time);
 
 	/// Controls whether the minimum image convention is used during displacement calculation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, useMinimumImageConvention, setUseMinimumImageConvention);
+
+	/// The number of animation frames to include in the averaging procedure.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, smoothingWindowSize, setSmoothingWindowSize);
 };
 
 /**
- * This class is no longer used as 02/2020. It's only here for backward compatibility with files written by older OVITO versions.
- * The class can be removed in the future.
+ * This class is no longer used since 02/2020. It's only here for backward compatibility with files written by older OVITO versions.
+ * The class can safely be removed in the future.
  */
 class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifierApplication : public ModifierApplication
 {

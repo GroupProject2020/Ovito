@@ -23,7 +23,6 @@
 #include <ovito/grid/Grid.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/app/Application.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VTKVoxelGridExporter.h"
 
 namespace Ovito { namespace Grid {
@@ -34,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(VTKVoxelGridExporter);
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool VTKVoxelGridExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool VTKVoxelGridExporter::openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -62,10 +61,10 @@ void VTKVoxelGridExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool VTKVoxelGridExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool VTKVoxelGridExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	// Evaluate pipeline.
-	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation.subOperation());
 	if(operation.isCanceled())
 		return false;
 

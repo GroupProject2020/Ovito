@@ -27,7 +27,6 @@
 #include <ovito/stdobj/properties/PropertyAccess.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "UnwrapTrajectoriesModifier.h"
 
 namespace Ovito { namespace Particles {
@@ -99,12 +98,16 @@ void UnwrapTrajectoriesModifier::evaluateSynchronous(TimePoint time, ModifierApp
 SharedFuture<> UnwrapTrajectoriesModifierApplication::detectPeriodicCrossings(TimePoint time)
 {
 	if(_unwrapOperation.isValid() == false) {
-		_unwrapOperation = AsyncOperation(dataset()->taskManager());
+		_unwrapOperation = Promise<>::createAsynchronousOperation(dataset()->taskManager());
 		_unwrapOperation.setProgressText(tr("Unwrapping particle trajectories"));
+		registerActivePromise(_unwrapOperation);
 
-		// Reset the async operation when it gets canceled by the system.
-		connect(_unwrapOperation.watcher(), &TaskWatcher::canceled, [this]() {
-			_unwrapOperation.reset();
+		// Automatically reset the async operation object and the current frame evaluation if the 
+		// task gets canceled by the system.
+		_unwrapOperation.finally(executor(), false, [this](const TaskPtr& task) {
+			if(task->isCanceled())
+				_unwrapOperation.reset();
+			_fetchFrameFuture.reset();
 		});
 		
 		// Determine the remaining number of animation frames that need to be processed.
@@ -312,7 +315,7 @@ void UnwrapTrajectoriesModifierApplication::unwrapParticleCoordinates(TimePoint 
 }
 
 /******************************************************************************
-* Requests the next trajectory frame from the downstream pipeline.
+* Requests the next trajectory frame from the upstream pipeline.
 ******************************************************************************/
 void UnwrapTrajectoriesModifierApplication::fetchNextFrame()
 {
@@ -333,29 +336,29 @@ void UnwrapTrajectoriesModifierApplication::fetchNextFrame()
 	if(nextFrame >= numberOfSourceFrames()) {
 		_previousPositions.clear();
 		_unwrapOperation.setFinished();
+		OVITO_ASSERT(!_fetchFrameFuture.isValid());
 		return;
 	}
 
 	// Request the next frame from the input trajectory.
 	TimePoint nextFrameTime = sourceFrameToAnimationTime(nextFrame);
-	SharedFuture<PipelineFlowState> frameFuture = evaluateInput(PipelineEvaluationRequest(nextFrameTime));
+	_fetchFrameFuture = evaluateInput(PipelineEvaluationRequest(nextFrameTime));
 
 	// Wait until input frame is ready.
-	_unwrapOperation.waitForFutureAsync(std::move(frameFuture), executor(), true, [this, nextFrame, nextFrameTime](const SharedFuture<PipelineFlowState>& future) {
+	_fetchFrameFuture.finally(executor(), true, [this, nextFrame, nextFrameTime](const TaskPtr& task) {
 		try {	
 			// If the pipeline evaluation has been canceled for some reason, we cancel the unwrapping
 			// operation as well.
-			if(future.isCanceled() || !_unwrapOperation.isValid() || _unwrapOperation.isFinished()) {
+			if(task->isCanceled() || !_unwrapOperation.isValid() || _unwrapOperation.isFinished()) {
 				_previousPositions.clear();
-				if(_unwrapOperation.isValid())
-					_unwrapOperation.cancel();
 				_unwrapOperation.reset();
+				OVITO_ASSERT(!_fetchFrameFuture.isValid());
 				return;
 			}
+			OVITO_ASSERT(_fetchFrameFuture.isValid());
 
 			// Get the next frame and process it.
-			const PipelineFlowState& state = future.result();
-			processNextFrame(nextFrame, nextFrameTime, state);
+			processNextFrame(nextFrame, nextFrameTime, _fetchFrameFuture.result());
 			_unwrapOperation.incrementProgressValue(1);
 
 			// Schedule the pipeline evaluation for the next frame.

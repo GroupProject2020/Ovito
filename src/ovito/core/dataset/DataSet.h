@@ -35,10 +35,7 @@
 #include <ovito/core/rendering/RenderSettings.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
-#include <ovito/core/utilities/concurrent/SharedFuture.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/utilities/concurrent/TaskWatcher.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/utilities/MixedKeyCache.h>
 
 namespace Ovito {
@@ -125,7 +122,7 @@ public:
 	///        sequence, the buffer will contain only the last rendered frame when the function returns.
 	/// \return true on success; false if operation has been canceled by the user.
 	/// \throw Exception on error.
-	bool renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, AsyncOperation&& operation);
+	bool renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, SynchronousOperation operation);
 
 	/// \brief Returns a future that is triggered once all data pipelines in the scene
 	///        have been completely evaluated at the current animation time.
@@ -198,7 +195,7 @@ private:
 
 	/// Renders a single frame and saves the output file. This is part of the implementation of the renderScene() method.
 	bool renderFrame(TimePoint renderTime, int frameNumber, RenderSettings* settings, SceneRenderer* renderer,
-			Viewport* viewport, FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, AsyncOperation&& operation);
+			Viewport* viewport, FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, SynchronousOperation operation);
 
 	/// Returns a viewport configuration that is used as template for new scenes.
 	OORef<ViewportConfiguration> createDefaultViewportConfiguration();
@@ -251,17 +248,14 @@ private:
 	/// This signal/slot connection updates the viewports when the animation time changes.
 	QMetaObject::Connection _updateViewportOnTimeChangeConnection;
 
-	/// The operation making the scene ready.
-	AsyncOperation _sceneReadyOperation;
+	/// The promise to make the scene ready.
+	Promise<> _sceneReadyPromise;
 
 	/// The last animation time at which the scene was made ready.
 	TimePoint _sceneReadyTime;
 
 	/// The current pipeline evaluation that is in progress.
 	PipelineEvaluationFuture _pipelineEvaluation;
-
-	/// The watcher object that is used to monitor the make-scene-ready task.
-	TaskWatcher _sceneReadyWatcher;
 
 	/// The watcher object that is used to monitor the evaluation of data pipelines in the scene.
 	TaskWatcher _pipelineEvaluationWatcher;

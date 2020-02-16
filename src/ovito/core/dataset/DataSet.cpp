@@ -33,7 +33,6 @@
 #include <ovito/core/rendering/SceneRenderer.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/app/StandaloneApplication.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #ifdef OVITO_VIDEO_OUTPUT_SUPPORT
 	#include <ovito/core/utilities/io/video/VideoEncoder.h>
 #endif
@@ -66,9 +65,6 @@ DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 	setRenderSettings(new RenderSettings(this));
 
 	connect(&_pipelineEvaluationWatcher, &TaskWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
-	connect(&_sceneReadyWatcher, &TaskWatcher::canceled, this, [this]() {
-		_sceneReadyOperation.reset();
-	});
 }
 
 /******************************************************************************
@@ -155,8 +151,8 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		if(source == sceneRoot()) {
 
 			// If any of the scene pipelines change, the scene-ready state needs to be reset (unless it's still unfulfilled).
-			if(_sceneReadyOperation.isValid() && _sceneReadyOperation.isFinished()) {
-				_sceneReadyOperation.reset();
+			if(_sceneReadyPromise.isValid() && _sceneReadyPromise.isFinished()) {
+				_sceneReadyPromise.reset();
 				OVITO_ASSERT(!_pipelineEvaluation.isValid());
 			}
 
@@ -268,27 +264,26 @@ SharedFuture<> DataSet::whenSceneReady()
 	OVITO_CHECK_OBJECT_POINTER(viewportConfig());
 	OVITO_ASSERT(!viewportConfig()->isRendering());
 
-	if(_sceneReadyOperation.isValid()) {
-		// Recreate async operation object if the animation time has changed.
-		if(_sceneReadyOperation.isFinished() && _sceneReadyTime != animationSettings()->time())
-			_sceneReadyOperation.reset();
+	if(_sceneReadyPromise.isValid()) {
+		// The promise should never be in the canceled state, because we've used autoResetWhenCanceled().
+		OVITO_ASSERT(!_sceneReadyPromise.isCanceled());
 
-		// Recreate async operation object if was canceled before.
-		else if(_sceneReadyOperation.isCanceled())
-			_sceneReadyOperation.reset();
+		// Recreate async operation object if the animation time has changed.
+		if(_sceneReadyPromise.isFinished() && _sceneReadyTime != animationSettings()->time())
+			_sceneReadyPromise.reset();
 	}
 
-	// Create a new async operation object to represent the process of making the scene ready.
-	if(!_sceneReadyOperation.isValid()) {
-		_sceneReadyOperation = AsyncOperation::createSignalOperation(true, &taskManager());
-		_sceneReadyWatcher.watch(_sceneReadyOperation.task());
+	// Create a new promise to represent the process of making the scene ready.
+	if(!_sceneReadyPromise.isValid()) {
+		_sceneReadyPromise = Promise<>::createSignal();
+		_sceneReadyPromise.autoResetWhenCanceled(executor());
 		_sceneReadyTime = animationSettings()->time();
 
 		// This will call makeSceneReady() soon in order to evaluate all pipelines in the scene.
 		makeSceneReadyLater(false);
 	}
 
-	return _sceneReadyOperation.sharedFuture();
+	return _sceneReadyPromise.sharedFuture();
 }
 
 /******************************************************************************
@@ -297,12 +292,12 @@ SharedFuture<> DataSet::whenSceneReady()
 void DataSet::makeSceneReady(bool forceReevaluation)
 {
 	// Make sure whenSceneReady() was called before.
-	if(!_sceneReadyOperation.isValid()) {
+	if(!_sceneReadyPromise.isValid()) {
 		return;
 	}
 
 	// If scene is already ready, we are done.
-	if(_sceneReadyOperation.isFinished() && _sceneReadyTime == animationSettings()->time()) {
+	if(_sceneReadyPromise.isFinished() && _sceneReadyTime == animationSettings()->time()) {
 		return;
 	}
 
@@ -350,7 +345,8 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 
 	// If all pipelines are already complete, we are done.
 	if(!_pipelineEvaluation.isValid()) {
-		_sceneReadyOperation.setFinished();
+		// Set the promise to the fulfilled state.
+		_sceneReadyPromise.setFinished();
 	}
 	else {
 		_pipelineEvaluationWatcher.watch(_pipelineEvaluation.task());
@@ -375,7 +371,7 @@ void DataSet::pipelineEvaluationFinished()
 	OVITO_ASSERT(_pipelineEvaluation.isFinished());
 
 	// Query results of the pipeline evaluation to see if an exception has been thrown.
-	if(_sceneReadyOperation.isValid() && !_pipelineEvaluation.isCanceled()) {
+	if(_sceneReadyPromise.isValid() && !_pipelineEvaluation.isCanceled()) {
 		try {
 			_pipelineEvaluation.results();
 		}
@@ -397,7 +393,7 @@ void DataSet::pipelineEvaluationFinished()
 * This is the high-level rendering function, which invokes the renderer to generate one or more
 * output images of the scene. All rendering parameters are specified in the RenderSettings object.
 ******************************************************************************/
-bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, AsyncOperation&& operation)
+bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, SynchronousOperation operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(settings);
 	OVITO_CHECK_OBJECT_POINTER(viewport);
@@ -407,7 +403,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 	SceneRenderer* renderer = settings->renderer();
 	if(!renderer) throwException(tr("No rendering engine has been selected."));
 
-	operation.setProgressText(tr("Initializing renderer"));
+	bool notCanceled = true;
 	try {
 
 		// Resize output frame buffer.
@@ -420,6 +416,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 		ViewportSuspender noVPUpdates(this);
 
 		// Initialize the renderer.
+		operation.setProgressText(tr("Initializing renderer"));
 		if(renderer->startRender(this, settings)) {
 
 			VideoEncoder* videoEncoder = nullptr;
@@ -443,13 +440,13 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 				TimePoint renderTime = animationSettings()->time();
 				int frameNumber = animationSettings()->timeToFrame(renderTime);
 				operation.setProgressText(tr("Rendering frame %1").arg(frameNumber));
-				renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, std::move(operation));
+				notCanceled = renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, std::move(operation));
 			}
 			else if(settings->renderingRangeType() == RenderSettings::CUSTOM_FRAME) {
 				// Render a specific frame.
 				TimePoint renderTime = animationSettings()->frameToTime(settings->customFrame());
 				operation.setProgressText(tr("Rendering frame %1").arg(settings->customFrame()));
-				renderFrame(renderTime, settings->customFrame(), settings, renderer, viewport, frameBuffer, videoEncoder, std::move(operation));
+				notCanceled = renderFrame(renderTime, settings->customFrame(), settings, renderer, viewport, frameBuffer, videoEncoder, std::move(operation));
 			}
 			else if(settings->renderingRangeType() == RenderSettings::ANIMATION_INTERVAL || settings->renderingRangeType() == RenderSettings::CUSTOM_INTERVAL) {
 				// Render an animation interval.
@@ -471,15 +468,13 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 				operation.setProgressMaximum(numberOfFrames);
 
 				// Render frames, one by one.
-				for(int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++) {
+				for(int frameIndex = 0; frameIndex < numberOfFrames && notCanceled; frameIndex++) {
 					int frameNumber = firstFrameNumber + frameIndex * settings->everyNthFrame() + settings->fileNumberBase();
 
 					operation.setProgressValue(frameIndex);
 					operation.setProgressText(tr("Rendering animation (frame %1 of %2)").arg(frameIndex+1).arg(numberOfFrames));
 
-					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubOperation());
-					if(operation.isCanceled())
-						break;
+					notCanceled = renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.subOperation(true));
 
 					// Go to next animation frame.
 					renderTime += animationSettings()->ticksPerFrame() * settings->everyNthFrame();
@@ -499,7 +494,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 		// Shutdown renderer.
 		renderer->endRender();
 
-		// Free visual element resources to avoid clogging the memory in cases where render() get called repeatedly from a script.
+		// Free visual element resources to avoid clogging the memory in cases where render() gets called repeatedly from a script.
 		if(Application::instance()->executionContext() == Application::ExecutionContext::Scripting)
 			visCache().discardUnusedObjects();
 	}
@@ -511,14 +506,14 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 		throw;
 	}
 
-	return !operation.isCanceled();
+	return notCanceled;
 }
 
 /******************************************************************************
 * Renders a single frame and saves the output file.
 ******************************************************************************/
 bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings* settings, SceneRenderer* renderer, Viewport* viewport,
-		FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, AsyncOperation&& operation)
+		FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, SynchronousOperation operation)
 {
 	// Determine output filename for this frame.
 	QString imageFilename;
@@ -550,7 +545,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	}
 
 	// Request scene bounding box.
-	Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, operation);
+	Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, operation.subOperation());
 	if(operation.isCanceled()) {
 		renderer->endFrame(false);
 		return false;
@@ -565,7 +560,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		for(ViewportOverlay* layer : viewport->underlays()) {
 			if(layer->isEnabled()) {
 				{
-					layer->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
+					layer->render(viewport, renderTime, frameBuffer, projParams, settings, operation.subOperation());
 					if(operation.isCanceled()) {
 						renderer->endFrame(false);
 						return false;
@@ -577,7 +572,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 
 		// Let the scene renderer do its work.
 		renderer->beginFrame(renderTime, projParams, viewport);
-		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, operation)) {
+		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, operation.subOperation())) {
 			renderer->endFrame(false);
 			return false;
 		}
@@ -592,7 +587,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	for(ViewportOverlay* layer : viewport->overlays()) {
 		if(layer->isEnabled()) {
 			{
-				layer->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
+				layer->render(viewport, renderTime, frameBuffer, projParams, settings, operation.subOperation());
 				if(operation.isCanceled())
 					return false;
 			}

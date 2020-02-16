@@ -53,7 +53,7 @@ public:
 	explicit OpenGLSceneRenderer(DataSet* dataset) : SceneRenderer(dataset) {}
 
 	/// Renders the current animation frame.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, SynchronousOperation operation) override;
 
 	/// This method is called just before renderFrame() is called.
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;

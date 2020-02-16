@@ -88,12 +88,6 @@ private:
 				_algorithm->setRmsdCutoff(0.0); // Note: We do our own RMSD threshold filtering in postProcessStructureTypes().
 			}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_algorithm.reset();
-			StructureIdentificationEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

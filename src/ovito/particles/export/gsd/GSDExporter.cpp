@@ -25,8 +25,6 @@
 #include <ovito/particles/import/gsd/GSDFile.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "GSDExporter.h"
 
 namespace Ovito { namespace Particles {
@@ -51,7 +49,7 @@ GSDExporter::~GSDExporter()
  * This is called once for every output file to be written and before
  * exportFrame() is called.
  *****************************************************************************/
-bool GSDExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool GSDExporter::openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation)
 {
     OVITO_ASSERT(!outputFile().isOpen());
     outputFile().setFileName(filePath);
@@ -81,7 +79,7 @@ void GSDExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool GSDExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
     // Get particles.
     const ParticlesObject* particles = state.expectObject<ParticlesObject>();

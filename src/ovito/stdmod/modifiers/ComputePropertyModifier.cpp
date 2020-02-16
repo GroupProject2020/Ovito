@@ -216,13 +216,12 @@ ComputePropertyModifierDelegate::PropertyComputeEngine::PropertyComputeEngine(
 ******************************************************************************/
 void ComputePropertyModifierDelegate::PropertyComputeEngine::perform()
 {
-	task()->setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
-
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(outputProperty()->size());
+	setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
+	setProgressValue(0);
+	setProgressMaximum(outputProperty()->size());
 
 	// Parallelized loop over all data elements.
-	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
+	parallelForChunks(outputProperty()->size(), *this, [this](size_t startIndex, size_t count, Task& promise) {
 		PropertyExpressionEvaluator::Worker worker(*_evaluator);
 
 		size_t endIndex = startIndex + count;
@@ -251,6 +250,9 @@ void ComputePropertyModifierDelegate::PropertyComputeEngine::perform()
 			}
 		}
 	});
+
+	// Release data that is no longer needed to reduce memory footprint.
+	releaseWorkingData();
 }
 
 /******************************************************************************

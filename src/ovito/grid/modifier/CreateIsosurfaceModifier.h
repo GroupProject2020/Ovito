@@ -98,13 +98,7 @@ private:
 			_vectorComponent(std::max(vectorComponent, 0)),
 			_mesh(simCell),
 			_isolevel(isolevel) {}
-
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_property.reset();
-			ComputeEngine::cleanup();
-		}
-
+			
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

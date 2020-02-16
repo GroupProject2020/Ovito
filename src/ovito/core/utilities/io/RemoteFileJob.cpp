@@ -47,8 +47,8 @@ constexpr int MaximumNumberOfSimulateousJobs = 2;
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-RemoteFileJob::RemoteFileJob(QUrl url, TaskPtr promiseState) :
-		_url(std::move(url)), _promiseState(std::move(promiseState))
+RemoteFileJob::RemoteFileJob(QUrl url, PromiseBase& promise) :
+		_url(std::move(url)), _promise(promise)
 {
 	// Run all event handlers of this class in the main thread.
 	moveToThread(QCoreApplication::instance()->thread());
@@ -76,18 +76,19 @@ void RemoteFileJob::start()
 	}
 
 	// This background task started to run.
-	_promiseState->setStarted();
+	_promise.setStarted();
 
 	// Check if process has already been canceled.
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
 
-	// Get notified if user has canceled the promise.
-	_promiseWatcher = new TaskWatcher(this);
-	connect(_promiseWatcher, &TaskWatcher::canceled, this, &RemoteFileJob::connectionCanceled);
-	_promiseWatcher->watch(_promiseState);
+	// Get notified if user has canceled the task.
+	_promise.finally([this](const TaskPtr& task) {
+		if(task->isCanceled())
+			QMetaObject::invokeMethod(this, "connectionCanceled");
+	});
 
 	SshConnectionParameters connectionParams;
 	connectionParams.host = _url.host();
@@ -95,7 +96,7 @@ void RemoteFileJob::start()
 	connectionParams.password = _url.password();
 	connectionParams.port = _url.port(0);
 
-	_promiseState->setProgressText(tr("Connecting to remote host %1").arg(connectionParams.host));
+	_promise.setProgressText(tr("Connecting to remote host %1").arg(connectionParams.host));
 
 	// Open connection
 	_connection = Application::instance()->fileManager()->acquireSshConnection(connectionParams);
@@ -120,18 +121,13 @@ void RemoteFileJob::start()
 ******************************************************************************/
 void RemoteFileJob::shutdown(bool success)
 {
-	if(_promiseWatcher) {
-		_promiseWatcher->reset();
-		disconnect(_promiseWatcher, nullptr, this, nullptr);
-		_promiseWatcher->deleteLater();
-	}
 	if(_connection) {
 		disconnect(_connection, nullptr, this, nullptr);
 		Application::instance()->fileManager()->releaseSshConnection(_connection);
 		_connection = nullptr;
 	}
 
-	_promiseState->setFinished();
+	_promise.setFinished();
 
 	// Update the counter of active jobs.
 	if(_isActive) {
@@ -145,12 +141,12 @@ void RemoteFileJob::shutdown(bool success)
 	// If there jobs waiting in the queue, execute next job.
 	if(!_queuedJobs.isEmpty() && _numActiveJobs < MaximumNumberOfSimulateousJobs) {
 		RemoteFileJob* waitingJob = _queuedJobs.dequeue();
-		if(!waitingJob->_promiseState->isCanceled()) {
+		if(!waitingJob->_promise.isCanceled()) {
 			waitingJob->start();
 		}
 		else {
 			// Skip canceled jobs.
-			waitingJob->_promiseState->setStarted();
+			waitingJob->_promise.setStarted();
 			waitingJob->shutdown(false);
 		}
 	}
@@ -161,7 +157,7 @@ void RemoteFileJob::shutdown(bool success)
 ******************************************************************************/
 void RemoteFileJob::connectionError()
 {
-	_promiseState->setException(std::make_exception_ptr(
+	_promise.setException(std::make_exception_ptr(
 		Exception(tr("Cannot access URL\n\n%1\n\nSSH connection error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
 			arg(_connection->errorMessage()))));
 
@@ -173,7 +169,7 @@ void RemoteFileJob::connectionError()
 ******************************************************************************/
 void RemoteFileJob::authenticationFailed()
 {
-	_promiseState->setException(std::make_exception_ptr(
+	_promise.setException(std::make_exception_ptr(
 		Exception(tr("Cannot access URL\n\n%1\n\nSSH authentication failed").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)))));
 
 	shutdown(false);
@@ -184,9 +180,8 @@ void RemoteFileJob::authenticationFailed()
 ******************************************************************************/
 void RemoteFileJob::connectionCanceled()
 {
-	// If use has canceled the SSH connection,
-	// cancel the file retrievel operation as well.
-	_promiseState->cancel();
+	// If user has canceled the SSH connection, cancel the file retrieval operation as well.
+	_promise.cancel();
 	shutdown(false);
 }
 
@@ -195,8 +190,8 @@ void RemoteFileJob::connectionCanceled()
 ******************************************************************************/
 void DownloadRemoteFileJob::channelClosed()
 {
-	if(!_promiseState->isFinished()) {
-		_promiseState->setException(std::make_exception_ptr(
+	if(!_promise.isFinished()) {
+		_promise.setException(std::make_exception_ptr(
 			Exception(tr("Cannot access URL\n\n%1\n\nSSH channel closed: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
 				arg(_scpChannel->errorMessage()))));
 	}
@@ -209,13 +204,13 @@ void DownloadRemoteFileJob::channelClosed()
 ******************************************************************************/
 void DownloadRemoteFileJob::connectionEstablished()
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
 
 	// Open the SCP channel.
-	_promiseState->setProgressText(tr("Opening SCP channel to remote host %1").arg(_connection->hostname()));
+	_promise.setProgressText(tr("Opening SCP channel to remote host %1").arg(_connection->hostname()));
 	_scpChannel = new ScpChannel(_connection, _url.path());
 	connect(_scpChannel, &ScpChannel::receivingFile, this, &DownloadRemoteFileJob::receivingFile);
 	connect(_scpChannel, &ScpChannel::receivedData, this, &DownloadRemoteFileJob::receivedData);
@@ -230,7 +225,7 @@ void DownloadRemoteFileJob::connectionEstablished()
 ******************************************************************************/
 void DownloadRemoteFileJob::channelError()
 {
-	_promiseState->setException(std::make_exception_ptr(
+	_promise.setException(std::make_exception_ptr(
 		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
 			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
 			.arg(_scpChannel->errorMessage()))));
@@ -256,7 +251,7 @@ void DownloadRemoteFileJob::shutdown(bool success)
 		if(_fileMapping) {
 			// Make sure the received data was successfully written to the temporary file.
 			if(!_localFile->unmap(_fileMapping) || !_localFile->flush() || _localFile->error() != QFileDevice::NoError) {
-				_promiseState->setException(std::make_exception_ptr(Exception(
+				_promise.setException(std::make_exception_ptr(Exception(
 					tr("Failed to write to local file %1: %2").arg(_localFile->fileName()).arg(_localFile->errorString()))));
 				success = false;
 			}
@@ -281,12 +276,12 @@ void DownloadRemoteFileJob::shutdown(bool success)
 ******************************************************************************/
 void DownloadRemoteFileJob::receivingFile(qint64 fileSize)
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
-	_promiseState->setProgressMaximum(fileSize);
-	_promiseState->setProgressText(tr("Fetching remote file %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	_promise.setProgressMaximum(fileSize);
+	_promise.setProgressText(tr("Fetching remote file %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Create the destination file.
 	try {
@@ -303,7 +298,7 @@ void DownloadRemoteFileJob::receivingFile(qint64 fileSize)
 		_scpChannel->setDestinationBuffer(reinterpret_cast<char*>(_fileMapping));
 	}
     catch(Exception&) {
-		_promiseState->captureException();
+		_promise.captureException();
 		shutdown(false);
 	}
 }
@@ -313,7 +308,7 @@ void DownloadRemoteFileJob::receivingFile(qint64 fileSize)
 ******************************************************************************/
 void DownloadRemoteFileJob::receivedFileComplete()
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
@@ -325,11 +320,11 @@ void DownloadRemoteFileJob::receivedFileComplete()
 ******************************************************************************/
 void DownloadRemoteFileJob::receivedData(qint64 totalReceivedBytes)
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
-	_promiseState->setProgressValue(totalReceivedBytes);
+	_promise.setProgressValue(totalReceivedBytes);
 }
 
 /******************************************************************************
@@ -337,13 +332,13 @@ void DownloadRemoteFileJob::receivedData(qint64 totalReceivedBytes)
 ******************************************************************************/
 void ListRemoteDirectoryJob::connectionEstablished()
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
 
 	// Open the SCP channel.
-	_promiseState->setProgressText(tr("Opening channel to remote host %1").arg(_connection->hostname()));
+	_promise.setProgressText(tr("Opening channel to remote host %1").arg(_connection->hostname()));
 	_lsChannel = new LsChannel(_connection, _url.path());
 	connect(_lsChannel, &LsChannel::error, this, &ListRemoteDirectoryJob::channelError);
 	connect(_lsChannel, &LsChannel::receivingDirectory, this, &ListRemoteDirectoryJob::receivingDirectory);
@@ -357,13 +352,13 @@ void ListRemoteDirectoryJob::connectionEstablished()
 ******************************************************************************/
 void ListRemoteDirectoryJob::receivingDirectory()
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
 
 	// Set progress text.
-	_promiseState->setProgressText(tr("Listing remote directory %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	_promise.setProgressText(tr("Listing remote directory %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 }
 
 /******************************************************************************
@@ -371,7 +366,7 @@ void ListRemoteDirectoryJob::receivingDirectory()
 ******************************************************************************/
 void ListRemoteDirectoryJob::channelError()
 {
-	_promiseState->setException(std::make_exception_ptr(
+	_promise.setException(std::make_exception_ptr(
 		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
 			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
 			.arg(_lsChannel->errorMessage()))));
@@ -384,7 +379,7 @@ void ListRemoteDirectoryJob::channelError()
 ******************************************************************************/
 void ListRemoteDirectoryJob::receivedDirectoryComplete(const QStringList& listing)
 {
-	if(_promiseState->isCanceled()) {
+	if(_promise.isCanceled()) {
 		shutdown(false);
 		return;
 	}
@@ -413,8 +408,8 @@ void ListRemoteDirectoryJob::shutdown(bool success)
 ******************************************************************************/
 void ListRemoteDirectoryJob::channelClosed()
 {
-	if(!_promiseState->isFinished()) {
-		_promiseState->setException(std::make_exception_ptr(
+	if(!_promise.isFinished()) {
+		_promise.setException(std::make_exception_ptr(
 			Exception(tr("Cannot access URL\n\n%1\n\nSSH channel closed: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
 				arg(_lsChannel->errorMessage()))));
 	}

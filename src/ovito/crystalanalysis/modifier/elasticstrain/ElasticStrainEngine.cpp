@@ -65,32 +65,32 @@ ElasticStrainEngine::ElasticStrainEngine(
 ******************************************************************************/
 void ElasticStrainEngine::perform()
 {
-	task()->setProgressText(ElasticStrainModifier::tr("Calculating elastic strain tensors"));
+	setProgressText(ElasticStrainModifier::tr("Calculating elastic strain tensors"));
 
-	task()->beginProgressSubStepsWithWeights({ 35, 6, 1, 1, 20 });
-	if(!_structureAnalysis->identifyStructures(*task()))
+	beginProgressSubStepsWithWeights({ 35, 6, 1, 1, 20 });
+	if(!_structureAnalysis->identifyStructures(*this))
 		return;
 
-	task()->nextProgressSubStep();
-	if(!_structureAnalysis->buildClusters(*task()))
+	nextProgressSubStep();
+	if(!_structureAnalysis->buildClusters(*this))
 		return;
 
-	task()->nextProgressSubStep();
-	if(!_structureAnalysis->connectClusters(*task()))
+	nextProgressSubStep();
+	if(!_structureAnalysis->connectClusters(*this))
 		return;
 
-	task()->nextProgressSubStep();
-	if(!_structureAnalysis->formSuperClusters(*task()))
+	nextProgressSubStep();
+	if(!_structureAnalysis->formSuperClusters(*this))
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	ConstPropertyAccess<Point3> positionsArray(positions());
 	PropertyAccess<Matrix3> deformationGradientsArray(deformationGradients());
 	PropertyAccess<SymmetricTensor2> strainTensorsArray(strainTensors());
 	PropertyAccess<FloatType> volumetricStrainsArray(volumetricStrains());
 
-	parallelFor(positions()->size(), *task(), [&](size_t particleIndex) {
+	parallelFor(positions()->size(), *this, [&](size_t particleIndex) {
 
 		Cluster* localCluster = _structureAnalysis->atomCluster(particleIndex);
 		if(localCluster->id != 0) {
@@ -171,7 +171,11 @@ void ElasticStrainEngine::perform()
 			deformationGradientsArray[particleIndex] = Matrix3::Zero();
 	});
 
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
+	_structureAnalysis.reset();
 }
 
 /******************************************************************************

@@ -79,11 +79,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEn
 ******************************************************************************/
 void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 {
-	task()->setProgressText(tr("Finding nearest neighbors"));
+	setProgressText(tr("Finding nearest neighbors"));
 
 	// Prepare the neighbor list builder.
 	NearestNeighborFinder neighborFinder(4);
-	if(!neighborFinder.prepare(positions(), cell(), selection(), task().get()))
+	if(!neighborFinder.prepare(positions(), cell(), selection(), this))
 		return;
 
 	// This data structure stores information about a single neighbor.
@@ -96,7 +96,7 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 
 	// Determine four nearest neighbors of each atom and store vectors in the working array.
 	ConstPropertyAccess<int> selectionData(selection());
-	parallelFor(positions()->size(), *task(), [&](size_t index) {
+	parallelFor(positions()->size(), *this, [&](size_t index) {
 		// Skip particles that are not included in the analysis.
 		if(selectionData && selectionData[index] == 0)
 			return;
@@ -112,13 +112,14 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 			neighLists[index][i].index = -1;
 		}
 	});
+	if(isCanceled()) return;
 
 	// Create output storage.
 	PropertyAccess<int> output(structures());
 
 	// Perform structure identification.
-	task()->setProgressText(tr("Identifying diamond structures"));
-	parallelFor(positions()->size(), *task(), [&](size_t index) {
+	setProgressText(tr("Identifying diamond structures"));
+	parallelFor(positions()->size(), *this, [&](size_t index) {
 		// Mark atom as 'other' by default.
 		output[index] = OTHER;
 
@@ -187,6 +188,7 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 		else if(n421 == 6 && n422 == 6 && typesToIdentify()[HEX_DIAMOND]) 
 			output[index] = HEX_DIAMOND;
 	});
+	if(isCanceled()) return;
 
 	// Mark first neighbors of crystalline atoms.
 	for(size_t index = 0; index < output.size(); index++) {
@@ -226,6 +228,9 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 			}
 		}
 	}
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
 }
 
 /******************************************************************************

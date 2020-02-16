@@ -97,7 +97,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 ******************************************************************************/
 void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 {
-	task()->setProgressText(tr("Generating coordination polyhedra"));
+	setProgressText(tr("Generating coordination polyhedra"));
 
 	// Create the "Region" face property.
 	mesh().createFaceProperty(SurfaceMeshFaces::RegionProperty);
@@ -105,7 +105,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 	// Determine number of selected particles.
 	ConstPropertyAccess<int> selectionArray(_selection);
 	size_t npoly = boost::count_if(selectionArray, [](int s) { return s != 0; });
-	task()->setProgressMaximum(npoly);
+	setProgressMaximum(npoly);
 
 	ParticleBondMap bondMap(_bondTopology, _bondPeriodicImages);
 
@@ -132,7 +132,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 		// Construct the polyhedron (i.e. convex hull) from the bond vectors.
 		mesh().constructConvexHull(std::move(bondVectors));
 
-		if(!task()->incrementProgressValue())
+		if(!incrementProgressValue())
 			return;
 	}
 
@@ -148,6 +148,14 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 			*centerParticle++ = i;
 	}
 	OVITO_ASSERT(centerParticle == centerProperty.end());
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_selection.reset();
+	_particleTypes.reset();
+	_particleIdentifiers.reset();
+	_bondTopology.reset();
+	_bondPeriodicImages.reset();
 }
 
 /******************************************************************************

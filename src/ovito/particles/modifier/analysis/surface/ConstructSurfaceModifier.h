@@ -94,13 +94,6 @@ private:
 			_selection(std::move(selection)),
 			_mesh(simCell) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_selection.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Returns the generated surface mesh.
 		const SurfaceMeshData& mesh() const { return _mesh; }
 
@@ -118,6 +111,14 @@ private:
 
 		/// Returns the input particle selection.
 		const ConstPropertyPtr& selection() const { return _selection; }
+
+	protected:
+
+		/// Releases data that is no longer needed.
+		void releaseWorkingData() {
+			_positions.reset();
+			_selection.reset();
+		}	
 
 	private:
 
@@ -150,12 +151,6 @@ private:
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
-
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_particleProperties.clear();
-			ConstructSurfaceEngineBase::cleanup();
-		}
 
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;

@@ -650,6 +650,26 @@ inline Q_DECL_CONSTEXPR AffineTransformationT<T> operator+(const AffineTransform
 	return { a.column(0) + b.column(0), a.column(1) + b.column(1), a.column(2) + b.column(2), a.column(3) + b.column(3) };
 }
 
+/// Incremental addition of two 3x4 matrices.
+/// \relates AffineTransformationT
+template<typename T>
+inline Q_DECL_CONSTEXPR AffineTransformationT<T>& operator+=(AffineTransformationT<T>& a, const AffineTransformationT<T>& b)
+{
+	for(size_t col = 0; col < a.col_count(); col++)
+		a.column(col) += b.column(col);
+	return a;
+}
+
+/// Incremental subtraction of two 3x4 matrices.
+/// \relates AffineTransformationT
+template<typename T>
+inline Q_DECL_CONSTEXPR AffineTransformationT<T>& operator-=(AffineTransformationT<T>& a, const AffineTransformationT<T>& b)
+{
+	for(size_t col = 0; col < a.col_count(); col++)
+		a.column(col) -= b.column(col);
+	return a;
+}
+
 /// Subtracts 3x4 matrix from another matrix.
 /// \relates AffineTransformationT
 template<typename T>

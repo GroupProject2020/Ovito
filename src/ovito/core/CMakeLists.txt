@@ -111,7 +111,6 @@ SET(SourceFiles
 	utilities/concurrent/ThreadSafeTask.cpp
 	utilities/concurrent/TaskManager.cpp
 	utilities/concurrent/AsynchronousTask.cpp
-	utilities/concurrent/AsyncOperation.cpp
 	utilities/mesh/TriMesh.cpp
 	rendering/SceneRenderer.cpp
 	rendering/noninteractive/NonInteractiveSceneRenderer.cpp
@@ -180,6 +179,11 @@ OVITO_STANDARD_PLUGIN(Core
 	SOURCES Core.cpp ${SourceFiles} ${ResourceFiles}
 	LIB_DEPENDENCIES Boost::boost
 )
+
+IF(NOT EMSCRIPTEN)
+	# Qt Network module is used by the Core module, except in the wasm build.
+	TARGET_LINK_LIBRARIES(Core PUBLIC Qt5::Network)
+ENDIF()
 
 # Link to zlib.
 IF(ZLIB_FOUND)

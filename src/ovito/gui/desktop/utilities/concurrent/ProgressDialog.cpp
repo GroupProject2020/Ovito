@@ -30,18 +30,11 @@ namespace Ovito {
 /******************************************************************************
 * Initializes the dialog window.
 ******************************************************************************/
-ProgressDialog::ProgressDialog(QWidget* parent, const TaskPtr& task, const QString& dialogTitle) : QDialog(parent)
+ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const QString& dialogTitle) : QDialog(parent),
+	_taskManager(taskManager)
 {
 	setWindowModality(Qt::WindowModal);
 	setWindowTitle(dialogTitle);
-
-	// Get the task manager.
-	_taskManager = task->taskManager();
-	OVITO_ASSERT(_taskManager != nullptr);
-
-	// Create the task watcher to monitor the running task.
-	_watcher = new TaskWatcher(this);
-	_watcher->watch(task);
 
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->addStretch(1);
@@ -50,7 +43,7 @@ ProgressDialog::ProgressDialog(QWidget* parent, const TaskPtr& task, const QStri
 	layout->addWidget(buttonBox);
 
 	// Cancel the running task when user presses the cancel button.
-	connect(buttonBox, &QDialogButtonBox::rejected, _watcher, &TaskWatcher::cancel);
+	connect(buttonBox, &QDialogButtonBox::rejected, this, &ProgressDialog::reject);
 
 	// Helper function that sets up the UI widgets in the dialog for a newly started task.
 	auto createUIForTask = [this, layout](TaskWatcher* taskWatcher) {
@@ -79,7 +72,7 @@ ProgressDialog::ProgressDialog(QWidget* parent, const TaskPtr& task, const QStri
 	};
 
 	// Create UI for every running task.
-	for(TaskWatcher* watcher : _taskManager->runningTasks()) {
+	for(TaskWatcher* watcher : _taskManager.runningTasks()) {
 		createUIForTask(watcher);
 	}
 
@@ -87,14 +80,14 @@ ProgressDialog::ProgressDialog(QWidget* parent, const TaskPtr& task, const QStri
 	resize(450, height());
 
 	// Create a separate progress bar for every new active task.
-	connect(_taskManager, &TaskManager::taskStarted, this, std::move(createUIForTask));
+	connect(&_taskManager, &TaskManager::taskStarted, this, std::move(createUIForTask));
 
 	// Show the dialog with a short delay.
 	// This prevents the dialog from showing up for short tasks that terminate very quickly.
-	QTimer::singleShot(100, this, &QDialog::show);
+	QTimer::singleShot(200, this, &QDialog::show);
 
 	// Activate local event handling to keep the dialog responsive.
-	_taskManager->startLocalEventHandling();
+	_taskManager.startLocalEventHandling();
 }
 
 /******************************************************************************
@@ -102,7 +95,31 @@ ProgressDialog::ProgressDialog(QWidget* parent, const TaskPtr& task, const QStri
 ******************************************************************************/
 ProgressDialog::~ProgressDialog()
 {
-	_taskManager->stopLocalEventHandling();
+	_taskManager.stopLocalEventHandling();
+}
+
+/******************************************************************************
+* Create a new synchronous operation, whose progress will be displayed in this dialog.
+******************************************************************************/
+SynchronousOperation ProgressDialog::createOperation()
+{
+	SynchronousOperation operation = SynchronousOperation::create(taskManager());
+	// Create the task watcher to monitor the running task.
+	TaskWatcher* watcher = new TaskWatcher(this);
+	watcher->watch(operation.task());
+	return operation;
+}
+
+/******************************************************************************
+* Shows the progress of the given task in this dialog.
+******************************************************************************/
+void ProgressDialog::registerTask(const TaskPtr& task)
+{
+	taskManager().registerTask(task);
+
+	// Create a task watcher to monitor the running task.
+	TaskWatcher* watcher = new TaskWatcher(this);
+	watcher->watch(task);
 }
 
 /******************************************************************************
@@ -110,9 +127,12 @@ ProgressDialog::~ProgressDialog()
 ******************************************************************************/
 void ProgressDialog::closeEvent(QCloseEvent* event)
 {
-	_watcher->cancel();
+	for(TaskWatcher* watcher : findChildren<TaskWatcher*>())
+		watcher->cancel();
+
 	if(event->spontaneous())
 		event->ignore();
+
 	QDialog::closeEvent(event);
 }
 
@@ -121,7 +141,8 @@ void ProgressDialog::closeEvent(QCloseEvent* event)
 ******************************************************************************/
 void ProgressDialog::reject()
 {
-	_watcher->cancel();
+	for(TaskWatcher* watcher : findChildren<TaskWatcher*>())
+		watcher->cancel();
 }
 
 }	// End of namespace

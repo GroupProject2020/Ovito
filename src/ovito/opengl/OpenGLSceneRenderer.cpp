@@ -30,7 +30,6 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/rendering/RenderSettings.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "OpenGLSceneRenderer.h"
 #include "OpenGLLinePrimitive.h"
 #include "OpenGLParticlePrimitive.h"
@@ -396,7 +395,7 @@ void OpenGLSceneRenderer::endFrame(bool renderSuccessful)
 /******************************************************************************
 * Renders the current animation frame.
 ******************************************************************************/
-bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
+bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, SynchronousOperation operation)
 {
 	OVITO_ASSERT(_glcontext == QOpenGLContext::currentContext());
     OVITO_REPORT_OPENGL_ERRORS(this);

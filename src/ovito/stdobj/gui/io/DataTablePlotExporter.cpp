@@ -22,7 +22,6 @@
 
 #include <ovito/stdobj/gui/StdObjGui.h>
 #include <ovito/stdobj/gui/widgets/DataTablePlotWidget.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "DataTablePlotExporter.h"
 
 #include <qwt/qwt_plot_renderer.h>
@@ -53,7 +52,7 @@ DataTablePlotExporter::DataTablePlotExporter(DataSet* dataset) : FileExporter(da
 /******************************************************************************
  * This is called once for every output file to be written.
  *****************************************************************************/
-bool DataTablePlotExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool DataTablePlotExporter::openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	_outputFile.setFileName(filePath);
@@ -73,10 +72,10 @@ void DataTablePlotExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool DataTablePlotExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool DataTablePlotExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	// Evaluate pipeline.
-	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation.subOperation());
 	if(operation.isCanceled())
 		return false;
 

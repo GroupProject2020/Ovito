@@ -36,7 +36,6 @@
 #include <ovito/core/dataset/io/FileExporter.h>
 #include <ovito/core/dataset/scene/SelectionSet.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito {
 
@@ -367,8 +366,9 @@ void ActionManager::on_FileExport_triggered()
 
 		// Wait until the scene is ready.
 		{
+			ProgressDialog progressDialog(mainWindow(), _dataset->taskManager(), tr("File export"));
 			SharedFuture<> sceneReadyFuture = _dataset->whenSceneReady();
-			ProgressDialog progressDialog(mainWindow(), sceneReadyFuture.task(), tr("File export"));
+			progressDialog.registerTask(sceneReadyFuture.task());
 			if(!_dataset->taskManager().waitForFuture(sceneReadyFuture))
 				return;
 		}
@@ -381,14 +381,11 @@ void ActionManager::on_FileExport_triggered()
 		if(settingsDialog.exec() != QDialog::Accepted)
 			return;
 
-		// Create an operation object for the export process.
-		AsyncOperation exportOperation(_dataset->taskManager());
-
 		// Show progress dialog.
-		ProgressDialog progressDialog(mainWindow(), exportOperation.task(), tr("File export"));
+		ProgressDialog progressDialog(mainWindow(), _dataset->taskManager(), tr("File export"));
 
 		// Let the exporter do its work.
-		exporter->doExport(std::move(exportOperation));
+		exporter->doExport(progressDialog.createOperation());
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

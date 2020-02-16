@@ -285,7 +285,7 @@ protected:
 	void adjustProjectionForRenderFrame(ViewProjectionParameters& params);
 
 	/// Renders the viewport overlays to an image buffer.
-	void renderLayers(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, const QVector<ViewportOverlay*>& layers, AsyncOperation& operation);
+	void renderLayers(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, const QVector<ViewportOverlay*>& layers, SynchronousOperation& operation);
 
 private Q_SLOTS:
 

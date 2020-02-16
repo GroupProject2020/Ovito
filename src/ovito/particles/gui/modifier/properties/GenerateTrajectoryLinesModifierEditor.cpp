@@ -31,7 +31,6 @@
 #include <ovito/gui/desktop/properties/SubObjectParameterUI.h>
 #include <ovito/gui/desktop/widgets/general/ElidedTextLabel.h>
 #include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "GenerateTrajectoryLinesModifierEditor.h"
 
 namespace Ovito { namespace Particles {
@@ -146,10 +145,9 @@ void GenerateTrajectoryLinesModifierEditor::onRegenerateTrajectory()
 	GenerateTrajectoryLinesModifier* modifier = static_object_cast<GenerateTrajectoryLinesModifier>(editObject());
 	if(!modifier) return;
 
-	undoableTransaction(tr("Generate trajectory"), [this,modifier]() {
-		AsyncOperation trajectoryOperation(modifier->dataset()->taskManager());
-		ProgressDialog progressDialog(container(), trajectoryOperation.task(), tr("Generating trajectory lines"));
-		modifier->generateTrajectories(std::move(trajectoryOperation));
+	undoableTransaction(tr("Generate trajectory"), [&]() {
+		ProgressDialog progressDialog(container(), modifier->dataset()->taskManager(), tr("Generating trajectory lines"));
+		modifier->generateTrajectories(progressDialog.createOperation());
 	});
 }
 

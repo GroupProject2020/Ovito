@@ -163,14 +163,16 @@ public:
 	/// \brief Returns the TaskManager this task is associated with (may be null).
 	TaskManager* taskManager() const { return _taskManager; }
 
-	/// Invokes the given function once this task has reached the 'finished' state.
-	/// The continuation function will always be executed, even if this task was canceled or set to an error state.
+	/// Runs the given contintuation function once this task has reached either the 'finished' or 'canceled' states.
+	/// Note that the continuation function will always be executed, even if this task was canceled or set to an error state.
+    /// The continuation function must accept a TaskPtr (pointing to this Task) as a parameter.
     template<typename Executor, typename F>
     void finally(Executor&& executor, bool defer, F&& continuationFunc) noexcept {
         addContinuationImpl(
             fu2::unique_function<void(bool)>(
                 std::forward<Executor>(executor).createWork(
-                    std::forward<F>(continuationFunc))), defer);
+                    std::bind(std::forward<F>(continuationFunc), shared_from_this()))), 
+            defer);
     }
 
 #ifdef OVITO_DEBUG
@@ -242,35 +244,34 @@ protected:
 
     virtual void addContinuationImpl(fu2::unique_function<void(bool)>&& continuationFunc, bool defer);
 
-    void setFinishedNoSelfLock();
+    void cancelNoSelfLock() noexcept;
+    void setFinishedNoSelfLock() noexcept;
 
-    /// Increments the count of futures that hold a strong reference to this shared state.
-    void incrementShareCount() noexcept {
-        _shareCount.fetch_add(1, std::memory_order_relaxed);
-    }
+    /// Increments the counter of futures currently holding a strong reference to this task.
+    void incrementShareCount() noexcept { _shareCount.fetch_add(1, std::memory_order_relaxed); }
 
-    /// Decrements the count of futures that hold a strong reference to this shared state.
-    /// If the count reaches zero, the shared state is automatically canceled.
+    /// Decrements the counter of futures currently holding a strong reference to this task.
+    /// If the counter reaches zero, the task gets automatically canceled.
     void decrementShareCount() noexcept;
 
-    /// Head of linked list of TaskWatchers currently monitoring this shared state.
+    /// Head of linked list of TaskWatchers currently monitoring this task.
     TaskWatcher* _watchers = nullptr;
 
     /// Pointer to a std::tuple<...> storing the results of this task.
     void* _resultsTuple = nullptr;
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0) // Note: QVarLengthArray fully supports move-only types since Qt 5.12
-    /// List of continuation functions that will be called when this shared state enters the 'finished' state.
+    /// List of continuation functions that will be called when this task enters the 'finished' or the 'canceled' state.
     QVarLengthArray<fu2::unique_function<void(bool)>, 1> _continuations;
 #else
-    /// List of continuation functions that will be called when this shared state enters the 'finished' state.
+    /// List of continuation functions that will be called when this task enters the 'finished' or the 'canceled' state.
     std::vector<fu2::unique_function<void(bool)>> _continuations;
 #endif
 
     /// Holds the exception object when this shared state is in the failed state.
     std::exception_ptr _exceptionStore;
 
-	/// The TaskManager this task is associated with.
+	/// The TaskManager this task is registered with.
 	TaskManager* _taskManager = nullptr;
 
     /// The current state this task is in.
@@ -313,13 +314,13 @@ class TaskWithResultStorage : public TaskType
 #endif
 {
 public:
+
     /// A special tag parameter type used to differentiate the second TaskWithResultStorage constructor.
     struct no_result_init_t {
         explicit no_result_init_t() = default;
     };
 
-public:
-    /// \brief Constructor which sets the value of the results storage and initializes the Task with the extra arguments.
+    /// \brief Constructor assigning the task's results storage and forwarding any extra arguments to the task class constructor.
     /// \param initialResult The value to assign to the results storage tuple.
     /// \param args The extra arguments which will be passed to the constructor of the Task derived class.
     template <typename... Args>
@@ -360,8 +361,9 @@ public:
 #endif
     }
 
-#ifdef Q_CC_MSVC
 private:
+
+#ifdef Q_CC_MSVC
     Tuple _tuple;
 #endif
 };

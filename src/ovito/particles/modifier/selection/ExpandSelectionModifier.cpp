@@ -106,23 +106,27 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 ******************************************************************************/
 void ExpandSelectionModifier::ExpandSelectionEngine::perform()
 {
-	task()->setProgressText(tr("Expanding particle selection"));
+	setProgressText(tr("Expanding particle selection"));
 
 	setNumSelectedParticlesInput(_inputSelection->size() - boost::count(ConstPropertyAccess<int>(_inputSelection), 0));
 
-	task()->beginProgressSubSteps(_numIterations);
+	beginProgressSubSteps(_numIterations);
 	for(int i = 0; i < _numIterations; i++) {
 		if(i != 0) {
 			_inputSelection = outputSelection();
 			setOutputSelection(std::make_shared<PropertyStorage>(*inputSelection()));
-			task()->nextProgressSubStep();
+			nextProgressSubStep();
 		}
 		expandSelection();
-		if(task()->isCanceled()) return;
+		if(isCanceled()) return;
 	}
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
 
 	setNumSelectedParticlesOutput(outputSelection()->size() - boost::count(ConstPropertyAccess<int>(outputSelection()), 0));
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_inputSelection.reset();
 }
 
 /******************************************************************************
@@ -135,13 +139,13 @@ void ExpandSelectionModifier::ExpandSelectionNearestEngine::expandSelection()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(_numNearestNeighbors);
-	if(!neighFinder.prepare(positions(), simCell(), {}, task().get()))
+	if(!neighFinder.prepare(positions(), simCell(), {}, this))
 		return;
 
 	OVITO_ASSERT(inputSelection() != outputSelection());
 	ConstPropertyAccess<int> inputSelectionArray(inputSelection());
 	PropertyAccess<int> outputSelectionArray(outputSelection());
-	parallelFor(positions()->size(), *task(), [&](size_t index) {
+	parallelFor(positions()->size(), *this, [&](size_t index) {
 		if(!inputSelectionArray[index]) return;
 
 		NearestNeighborFinder::Query<MAX_NEAREST_NEIGHBORS> neighQuery(neighFinder);
@@ -164,7 +168,7 @@ void ExpandSelectionModifier::ExpandSelectionBondedEngine::expandSelection()
 	ConstPropertyAccess<ParticleIndexPair> bondTopologyArray(_bondTopology);
 
 	size_t particleCount = inputSelection()->size();
-	parallelFor(_bondTopology->size(), *task(), [&](size_t index) {
+	parallelFor(_bondTopology->size(), *this, [&](size_t index) {
 		size_t index1 = bondTopologyArray[index][0];
 		size_t index2 = bondTopologyArray[index][1];
 		if(index1 >= particleCount || index2 >= particleCount)
@@ -183,13 +187,13 @@ void ExpandSelectionModifier::ExpandSelectionCutoffEngine::expandSelection()
 {
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoffRange, positions(), simCell(), {}, task().get()))
+	if(!neighborListBuilder.prepare(_cutoffRange, positions(), simCell(), {}, this))
 		return;
 
 	PropertyAccess<int> outputSelectionArray(outputSelection());
 	ConstPropertyAccess<int> inputSelectionArray(inputSelection());
 
-	parallelFor(positions()->size(), *task(), [&](size_t index) {
+	parallelFor(positions()->size(), *this, [&](size_t index) {
 		if(!inputSelectionArray[index]) return;
 		for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, index); !neighQuery.atEnd(); neighQuery.next()) {
 			outputSelectionArray[neighQuery.current()] = 1;

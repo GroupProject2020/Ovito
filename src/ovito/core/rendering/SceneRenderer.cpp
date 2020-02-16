@@ -31,7 +31,6 @@
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito {
 
@@ -56,7 +55,7 @@ QSize SceneRenderer::outputSize() const
 /******************************************************************************
 * Computes the bounding box of the entire scene to be rendered.
 ******************************************************************************/
-Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, AsyncOperation& operation)
+Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, SynchronousOperation operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset()); // startRender() must be called first.
 
@@ -74,15 +73,15 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 			if(isInteractive())
 				renderInteractiveContent();
 
-			// Include three-dimensional content from viewport overlys in the bounding box.
+			// Include three-dimensional content from viewport layers in the bounding box.
 			if(vp && (!isInteractive() || vp->renderPreviewMode())) {
 				for(ViewportOverlay* layer : vp->underlays()) {
 					if(layer->isEnabled())
-						layer->render3D(vp, time, this, operation);
+						layer->render3D(vp, time, this, operation.subOperation());
 				}
 				for(ViewportOverlay* layer : vp->overlays()) {
 					if(layer->isEnabled())
-						layer->render3D(vp, time, this, operation);
+						layer->render3D(vp, time, this, operation.subOperation());
 				}
 			}
 		}
@@ -100,7 +99,7 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 /******************************************************************************
 * Renders all nodes in the scene
 ******************************************************************************/
-bool SceneRenderer::renderScene(AsyncOperation& operation)
+bool SceneRenderer::renderScene(Promise<>& operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset());
 
@@ -115,7 +114,7 @@ bool SceneRenderer::renderScene(AsyncOperation& operation)
 /******************************************************************************
 * Render a scene node (and all its children).
 ******************************************************************************/
-bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
+bool SceneRenderer::renderNode(SceneNode* node, Promise<>& operation)
 {
     OVITO_CHECK_OBJECT_POINTER(node);
 

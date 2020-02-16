@@ -391,8 +391,8 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 					 nX, nY, nZ,
 					 _applyWindow);
 
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	std::vector<FloatType> gridProperty2 = mapToSpatialGrid(sourceProperty2().get(),
@@ -400,8 +400,8 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
 					 _applyWindow);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	std::vector<FloatType> gridDensity = mapToSpatialGrid(nullptr,
@@ -409,8 +409,8 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
 					 _applyWindow);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	// FIXME. Apply windowing function in nonperiodic directions here.
@@ -419,18 +419,18 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 
 	// Compute Fourier transform of spatial grid.
 	std::vector<std::complex<FloatType>> ftProperty1 = r2cFFT(nX, nY, nZ, gridProperty1);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	std::vector<std::complex<FloatType>> ftProperty2 = r2cFFT(nX, nY, nZ, gridProperty2);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	std::vector<std::complex<FloatType>> ftDensity = r2cFFT(nX, nY, nZ, gridDensity);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	// Note: Reciprocal cell vectors are in rows. Those are 4-vectors.
@@ -510,7 +510,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 				}
 			}
 		}
-		if(task()->isCanceled()) return;
+		if(isCanceled()) return;
 	}
 
 	// Compute averages and normalize reciprocal-space correlation function.
@@ -519,21 +519,21 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 		if(numberOfValues[wavevectorBinIndex] != 0)
 			reciprocalSpaceCorrelationData[wavevectorBinIndex] *= normalizationFactor / numberOfValues[wavevectorBinIndex];
 	}
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	// Compute long-ranged part of the real-space correlation function from the FFT convolution.
 
 	// Computer inverse Fourier transform of correlation function.
 	gridProperty1 = c2rFFT(nX, nY, nZ, ftProperty1);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	gridDensity = c2rFFT(nX, nY, nZ, ftDensity);
-	task()->nextProgressSubStep();
-	if(task()->isCanceled())
+	nextProgressSubStep();
+	if(isCanceled())
 		return;
 
 	// Determine number of grid points for reciprocal-spacespace correlation function.
@@ -576,7 +576,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 				}
 			}
 		}
-		if(task()->isCanceled()) return;
+		if(isCanceled()) return;
 	}
 
 	// Compute averages and normalize real-space correlation function. Note KISS FFT computes an unnormalized transform.
@@ -588,7 +588,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCo
 		}
 	}
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 }
 
 /******************************************************************************
@@ -630,16 +630,16 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(neighCutoff(), positions(), cell(), {}, task().get()))
+	if(!neighborListBuilder.prepare(neighCutoff(), positions(), cell(), {}, this))
 		return;
 
 	// Perform analysis on each particle in parallel.
 	size_t vecComponent1 = _vecComponent1;
 	size_t vecComponent2 = _vecComponent2;
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(particleCount);
+	setProgressValue(0);
+	setProgressMaximum(particleCount);
 	std::mutex mutex;
-	parallelForChunks(particleCount, *task(), [&,this](size_t startIndex, size_t chunkSize, Task& promise) {
+	parallelForChunks(particleCount, *this, [&,this](size_t startIndex, size_t chunkSize, Task& promise) {
 		FloatType gridSpacing = (neighCutoff() + FLOATTYPE_EPSILON) / neighCorrelation()->size();
 		std::vector<FloatType> threadLocalCorrelation(neighCorrelation()->size(), 0);
 		std::vector<int> threadLocalRDF(neighCorrelation()->size(), 0);
@@ -678,9 +678,9 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 		for(auto iter_rdf = threadLocalRDF.cbegin(); iter_rdf != threadLocalRDF.cend(); ++iter_rdf, ++iter_rdf_out)
 			*iter_rdf_out += *iter_rdf;
 	});
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Normalize short-ranged real-space correlation function.
 	FloatType gridSpacing = (neighCutoff() + FLOATTYPE_EPSILON) / neighCorrelation()->size();
@@ -694,7 +694,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeigh
 		neighRDFArray[distanceBinIndex] *= normalizationFactor / (distance2*distance2*distance2 - distance*distance*distance);
 	}
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 }
 
 /******************************************************************************
@@ -750,7 +750,7 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimit
 		variance1 += data1*data1;
 		variance2 += data2*data2;
 		covariance += data1*data2;
-		if(task()->isCanceled()) return;
+		if(isCanceled()) return;
 	}
 	mean1 /= particleCount;
 	mean2 /= particleCount;
@@ -765,23 +765,28 @@ void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimit
 ******************************************************************************/
 void SpatialCorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Computing correlation function"));
-	task()->beginProgressSubSteps(neighCorrelation() ? 13 : 11);
+	setProgressText(tr("Computing correlation function"));
+	beginProgressSubSteps(neighCorrelation() ? 13 : 11);
 
 	// Compute reciprocal space correlation function and long-ranged part of
 	// the real-space correlation function from an FFT.
 	computeFftCorrelation();
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	// Compute short-ranged part of the real-space correlation function from a direct loop over particle neighbors.
 	if(neighCorrelation())
 		computeNeighCorrelation();
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	computeLimits();
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_sourceProperty1.reset();
+	_sourceProperty2.reset();
 }
 
 /******************************************************************************

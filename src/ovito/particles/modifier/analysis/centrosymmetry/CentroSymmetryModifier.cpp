@@ -79,11 +79,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEng
 ******************************************************************************/
 void CentroSymmetryModifier::CentroSymmetryEngine::perform()
 {
-	task()->setProgressText(tr("Computing centrosymmetry parameters"));
+	setProgressText(tr("Computing centrosymmetry parameters"));
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(_nneighbors);
-	if(!neighFinder.prepare(positions(), cell(), {}, task().get())) {
+	if(!neighFinder.prepare(positions(), cell(), {}, this)) {
 		return;
 	}
 
@@ -91,9 +91,12 @@ void CentroSymmetryModifier::CentroSymmetryEngine::perform()
 	PropertyAccess<FloatType> output(csp());
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *task(), [&](size_t index) {
+	parallelFor(positions()->size(), *this, [&](size_t index) {
 		output[index] = computeCSP(neighFinder, index);
 	});
+
+	// Release data that is no longer needed.
+	_positions.reset();
 }
 
 /******************************************************************************

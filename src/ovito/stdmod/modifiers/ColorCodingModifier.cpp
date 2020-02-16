@@ -234,7 +234,7 @@ bool ColorCodingModifier::adjustRange()
 * Sets the start and end value to the minimum and maximum value of the selected
 * particle or bond property determined over the entire animation sequence.
 ******************************************************************************/
-bool ColorCodingModifier::adjustRangeGlobal(AsyncOperation&& operation)
+bool ColorCodingModifier::adjustRangeGlobal(Promise<>&& operation)
 {
 	ViewportSuspender noVPUpdates(this);
 

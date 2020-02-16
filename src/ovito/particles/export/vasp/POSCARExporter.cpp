@@ -24,8 +24,6 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
 #include "POSCARExporter.h"
 
@@ -38,7 +36,7 @@ SET_PROPERTY_FIELD_LABEL(POSCARExporter, writeReducedCoordinates, "Output reduce
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	// Get particle positions and velocities.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();

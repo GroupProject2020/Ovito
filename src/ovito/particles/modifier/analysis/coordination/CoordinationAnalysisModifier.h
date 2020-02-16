@@ -102,13 +102,6 @@ private:
 			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true, DataTable::YProperty, std::move(componentNames));
 		}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_particleTypes.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

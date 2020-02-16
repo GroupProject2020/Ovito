@@ -30,7 +30,6 @@
 #include <ovito/core/dataset/scene/RootSceneNode.h>
 #include <ovito/core/dataset/data/camera/AbstractCameraObject.h>
 #include <ovito/core/dataset/DataSetContainer.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 /// The default field of view in world units used for orthogonal view types when the scene is empty.
 #define DEFAULT_ORTHOGONAL_FIELD_OF_VIEW		FloatType(200)
@@ -519,10 +518,10 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			adjustProjectionForRenderFrame(_projParams);
 
 		// This is the async operation object used when calling rendering functions in the following.
-		AsyncOperation renderOperation = AsyncOperation::createSignalOperation(true, &dataset()->taskManager());
+		SynchronousOperation renderOperation = SynchronousOperation::createSignal(dataset()->taskManager());
 
 		// Determine scene bounding box.
-		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderOperation);
+		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderOperation.subOperation());
 
 		// Set up final projection with the now known bounding box.
 		_projParams = computeProjectionParameters(time, aspectRatio, boundingBox);
@@ -548,7 +547,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(_projParams);
 
 			// Call the viewport renderer to render the scene objects.
-			renderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderOperation);
+			renderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderOperation.subOperation());
 		}
 		else {
 
@@ -573,7 +572,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(params);
 
 			// Render image of left eye.
-			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, renderOperation);
+			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, renderOperation.subOperation());
 
 			// Setup projection of right eye.
 			left = -c * params.znear / convergence;
@@ -585,7 +584,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(params);
 
 			// Render image of right eye.
-			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicRight, renderOperation);
+			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicRight, renderOperation.subOperation());
 		}
 
 		// Render viewport overlays.
@@ -619,7 +618,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 /******************************************************************************
 * Renders the viewport layers to an image buffer.
 ******************************************************************************/
-void Viewport::renderLayers(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, const QVector<ViewportOverlay*>& layers, AsyncOperation& operation)
+void Viewport::renderLayers(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, const QVector<ViewportOverlay*>& layers, SynchronousOperation& operation)
 {
 	// Let layers paint into QImage buffer, which will then be copied over the OpenGL frame buffer.
 	QImage paintBuffer(vpSize, QImage::Format_ARGB32_Premultiplied);
@@ -637,7 +636,7 @@ void Viewport::renderLayers(SceneRenderer* renderer, TimePoint time, RenderSetti
 			painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
 			painter.setViewport(renderFrameRect);
 			painter.setRenderHint(QPainter::Antialiasing);
-			layer->renderInteractive(this, time, painter, renderProjParams, renderSettings, operation);
+			layer->renderInteractive(this, time, painter, renderProjParams, renderSettings, operation.subOperation());
 		}
 	}
 	std::shared_ptr<ImagePrimitive> paintBufferPrim = renderer->createImagePrimitive();

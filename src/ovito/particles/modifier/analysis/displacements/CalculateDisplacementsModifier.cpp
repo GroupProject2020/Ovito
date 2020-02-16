@@ -102,14 +102,14 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 
 	// Compute displacement vectors.
 	if(affineMapping() != NO_MAPPING) {
-		parallelForChunks(displacements()->size(), *task(), [&](size_t startIndex, size_t count, Task& promise) {
+		parallelForChunks(displacements()->size(), *this, [&](size_t startIndex, size_t count, Task& task) {
 			Vector3* u = displacementsArray.begin() + startIndex;
 			FloatType* umag = displacementMagnitudesArray.begin() + startIndex;
 			const Point3* p = positionsArray.cbegin() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			const AffineTransformation& reduced_to_absolute = (affineMapping() == TO_REFERENCE_CELL) ? refCell().matrix() : cell().matrix();
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
-				if(promise.isCanceled()) return;
+				if(task.isCanceled()) return;
 				Point3 reduced_current_pos = cell().inverseMatrix() * (*p);
 				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositionsArray[*index];
 				Vector3 delta = reduced_current_pos - reduced_reference_pos;
@@ -125,13 +125,13 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 		});
 	}
 	else {
-		parallelForChunks(displacements()->size(), *task(), [&] (size_t startIndex, size_t count, Task& promise) {
+		parallelForChunks(displacements()->size(), *this, [&] (size_t startIndex, size_t count, Task& task) {
 			Vector3* u = displacementsArray.begin() + startIndex;
 			FloatType* umag = displacementMagnitudesArray.begin() + startIndex;
 			const Point3* p = positionsArray.cbegin() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
-				if(promise.isCanceled()) return;
+				if(task.isCanceled()) return;
 				*u = *p - refPositionsArray[*index];
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
@@ -148,6 +148,9 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 			}
 		});
 	}
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
 }
 
 /******************************************************************************
@@ -165,7 +168,6 @@ void CalculateDisplacementsModifier::DisplacementEngine::emitResults(TimePoint t
 	particles->createProperty(displacements())->setVisElement(modifier->vectorVis());
 	particles->createProperty(displacementMagnitudes());
 }
-
 
 }	// End of namespace
 }	// End of namespace

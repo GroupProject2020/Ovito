@@ -97,15 +97,6 @@ private:
 			_inputFingerprint(std::move(fingerprint)),
 			_polyhedraMesh(simCell) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_selection.reset();
-			_particleIdentifiers.reset();
-			decltype(_radii){}.swap(_radii);
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

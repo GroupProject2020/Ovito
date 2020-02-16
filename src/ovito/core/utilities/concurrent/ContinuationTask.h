@@ -120,7 +120,7 @@ public:
 			// Make this task dependent on the future's task.
 			_continuedTask = future.takeTaskDependency();
 			// Get results from the future's task once it completes and use it as the results of this continuation task.
-			_continuedTask->finally(Ovito::detail::InlineExecutor(), false, [this,promise = std::move(promise)]() {
+			_continuedTask->finally(Ovito::detail::InlineExecutor(), false, [this,promise = std::move(promise)](const TaskPtr&) {
 				if(TaskDependency finishedTask = this->takeContinuedTask()) {
 					if(!finishedTask->isCanceled()) {
 						if(finishedTask->_exceptionStore)

@@ -24,7 +24,6 @@
 #include <ovito/core/dataset/io/AttributeFileExporter.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include "AttributeFileExporterEditor.h"
 
@@ -118,9 +117,8 @@ void AttributeFileExporterEditor::updateAttributesList()
 
 	try {
 		QVariantMap attrMap;
-		AsyncOperation asyncOperation(exporter->dataset()->taskManager());
-		ProgressDialog progressDialog(container(), asyncOperation.task());
-		if(!exporter->getAttributesMap(exporter->dataset()->animationSettings()->time(), attrMap, asyncOperation))
+		ProgressDialog progressDialog(container(), exporter->dataset()->taskManager());
+		if(!exporter->getAttributesMap(exporter->dataset()->animationSettings()->time(), attrMap, progressDialog.createOperation()))
 			throw Exception(tr("Operation has been canceled by the user."));
 		for(const QString& attrName : attrMap.keys())
 			insertAttributeItem(attrName, exporter->attributesToExport());

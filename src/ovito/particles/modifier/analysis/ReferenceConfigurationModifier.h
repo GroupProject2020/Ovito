@@ -69,11 +69,11 @@ public:
 	/// Determines the time interval over which a computed pipeline state will remain valid.
 	virtual TimeInterval validityInterval(const PipelineEvaluationRequest& request, const ModifierApplication* modApp) const override;
 
-	/// Asks the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	/// Asks the modifier for the set of animation time intervals that should be cached by the upstream pipeline.
 	virtual void inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp) override;
 
 	/// Is called by the ModifierApplication to let the modifier adjust the time interval of a TargetChanged event 
-	/// received from the downstream pipeline before it is propagated to the upstream pipeline.
+	/// received from the upstream pipeline before it is propagated to the downstream pipeline.
 	virtual void restrictInputValidityInterval(TimeInterval& iv) const override;
 
 protected:
@@ -98,15 +98,14 @@ protected:
 				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 				AffineMappingType affineMapping, bool useMinimumImageConvention);
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
+		/// Releases data that is no longer needed.
+		void releaseWorkingData() {
 			_positions.reset();
 			_refPositions.reset();
 			_identifiers.reset();
 			_refIdentifiers.reset();
 			decltype(_currentToRefIndexMap){}.swap(_currentToRefIndexMap);
 			decltype(_refToCurrentIndexMap){}.swap(_refToCurrentIndexMap);
-			ComputeEngine::cleanup();
 		}
 
 		/// Determines the mapping between particles in the reference configuration and

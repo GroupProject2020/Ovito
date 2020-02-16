@@ -44,7 +44,6 @@ namespace Ovito {
 	class TaskWatcher;
 	class AsynchronousTaskBase;
 	class MainThreadTask;
-	class AsyncOperation;
 	template<typename tuple_type> class ContinuationTask;
 	template<typename... R> class Future;
 	template<typename... R> class SharedFuture;

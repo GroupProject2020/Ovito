@@ -74,8 +74,18 @@ protected:
 	/// UI that this object is no longer active.
 	void decrementNumberOfActiveTasks();
 
+	/// Registers the given asynchronous task as an active task associated with this object.
+	void registerActiveTask(const TaskPtr& task);
+
 	/// Registers the given future as an active task associated with this object.
-	void registerActiveFuture(const FutureBase& future);
+	void registerActiveFuture(const FutureBase& future) {
+		registerActiveTask(future.task());
+	}
+
+	/// Registers the given promise as an active task associated with this object.
+	void registerActivePromise(const PromiseBase& promise) {
+		registerActiveTask(promise.task());
+	}
 
 private:
 

@@ -43,12 +43,6 @@ public:
 			bool calculateDeformationGradients, bool calculateStrainTensors,
 			FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward);
 
-	/// This method is called by the system after the computation was successfully completed.
-	virtual void cleanup() override {
-		_structureAnalysis.reset();
-		StructureIdentificationEngine::cleanup();
-	}
-
 	/// Computes the modifier's results and stores them in this object for later retrieval.
 	virtual void perform() override;
 

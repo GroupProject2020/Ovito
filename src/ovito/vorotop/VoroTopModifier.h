@@ -51,7 +51,7 @@ public:
 	Q_INVOKABLE VoroTopModifier(DataSet* dataset);
 
 	/// Loads a new filter definition into the modifier.
-	bool loadFilterDefinition(const QString& filepath, AsyncOperation&& operation);
+	bool loadFilterDefinition(const QString& filepath, Promise<>&& operation);
 
 	/// Returns the VoroTop filter definition cached from the last analysis run.
 	const std::shared_ptr<Filter>& filter() const { return _filter; }
@@ -78,12 +78,6 @@ private:
 			_filterFile(filterFile),
 			_filter(std::move(filter)),
 			_radii(std::move(radii)) {}
-
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			decltype(_radii){}.swap(_radii);
-			StructureIdentificationEngine::cleanup();
-		}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;

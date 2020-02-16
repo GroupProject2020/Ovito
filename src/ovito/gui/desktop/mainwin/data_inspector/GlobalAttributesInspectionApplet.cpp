@@ -24,7 +24,6 @@
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/dataset/data/AttributeDataObject.h>
 #include <ovito/core/dataset/io/AttributeFileExporter.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/gui/desktop/dialogs/FileExporterSettingsDialog.h>
 #include <ovito/gui/desktop/dialogs/HistoryFileDialog.h>
 #include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
@@ -139,14 +138,11 @@ void GlobalAttributesInspectionApplet::exportToFile()
 		if(settingsDialog.exec() != QDialog::Accepted)
 			return;
 
-		// Create an operation object for the export process.
-		AsyncOperation exportOperation(exporter->dataset()->taskManager());
-
 		// Show progress dialog.
-		ProgressDialog progressDialog(_mainWindow, exportOperation.task(), tr("File export"));
+		ProgressDialog progressDialog(_mainWindow, exporter->dataset()->taskManager(), tr("File export"));
 
 		// Let the exporter do its job.
-		exporter->doExport(std::move(exportOperation));
+		exporter->doExport(progressDialog.createOperation());
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

@@ -27,7 +27,6 @@
 #include <ovito/stdobj/simcell/SimulationCell.h>
 #include <ovito/core/dataset/pipeline/Modifier.h>
 #include <ovito/core/dataset/pipeline/ModifierApplication.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito { namespace Particles {
 
@@ -120,7 +119,7 @@ protected:
 	/// Is called when the value of a reference field of this object changes.
 	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
 
-	/// Requests the next trajectory frame from the downstream pipeline.
+	/// Requests the next trajectory frame from the upstream pipeline.
 	void fetchNextFrame();
 
 	/// Calculates the information that is needed to unwrap particle coordinates.
@@ -133,7 +132,10 @@ protected:
 private:
 
 	/// The operation that processes all trajectory frames in the background to detect periodic crossings of particles.
-	AsyncOperation _unwrapOperation;
+	Promise<> _unwrapOperation;
+
+	/// The future for fetching the next frame from the upstream pipeline. 
+	SharedFuture<PipelineFlowState> _fetchFrameFuture;
 
 	/// Indicates the animation time up to which trajectories have been unwrapped already.
 	TimePoint _unwrappedUpToTime = TimeNegativeInfinity();

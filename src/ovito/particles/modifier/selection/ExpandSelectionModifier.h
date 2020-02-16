@@ -94,13 +94,6 @@ private:
 			_outputSelection(std::make_shared<PropertyStorage>(*inputSelection)),
 			_inputFingerprint(std::move(fingerprint)) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_inputSelection.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
@@ -185,12 +178,6 @@ private:
 		ExpandSelectionBondedEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstPropertyPtr bondTopology) :
 			ExpandSelectionEngine(std::move(fingerprint), std::move(positions), simCell, std::move(inputSelection), numIterations),
 			_bondTopology(std::move(bondTopology)) {}
-
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_bondTopology.reset();
-			ExpandSelectionEngine::cleanup();
-		}
 
 		/// Expands the selection by one step.
 		virtual void expandSelection() override;

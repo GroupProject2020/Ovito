@@ -122,14 +122,14 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 ******************************************************************************/
 void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Performing cluster analysis"));
+	setProgressText(tr("Performing cluster analysis"));
 
 	// Initialize.
 	particleClusters()->fill<qlonglong>(-1);
 
 	// Perform the actual clustering.
 	doClustering();
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	// Wrap bonds at periodic cell boundaries after particle coordinates have been unwrapped. 
@@ -160,7 +160,7 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 				}
 				++pbcVec;
 			}
-			if(task()->isCanceled())
+			if(isCanceled())
 				return;
 		}
 	}
@@ -171,7 +171,7 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 	for(auto id : ConstPropertyAccess<qlonglong>(particleClusters())) {
 		if(id != 0) clusterSizeArray[id-1]++;
 	}
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	// Create custer ID property.
@@ -205,6 +205,13 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 		for(auto& id : PropertyAccess<qlonglong>(particleClusters()))
 			id = inverseMapping[id];
 	}
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_selection.reset();
+	_bondTopology.reset();
+	if(!_unwrapParticleCoordinates) 
+		_unwrappedPositions.reset();
 }
 
 /******************************************************************************
@@ -214,12 +221,12 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 {
 	// Prepare the neighbor finder.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(cutoff(), positions(), cell(), selection(), task().get()))
+	if(!neighborFinder.prepare(cutoff(), positions(), cell(), selection(), this))
 		return;
 
 	size_t particleCount = positions()->size();
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(particleCount);
+	setProgressValue(0);
+	setProgressMaximum(particleCount);
 	size_t progress = 0;
 
 	PropertyAccess<qlonglong> particleClusters(this->particleClusters());
@@ -253,7 +260,7 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 		toProcess.push_back(seedParticleIndex);
 
 		do {
-			if(!task()->setProgressValueIntermittent(progress++))
+			if(!setProgressValueIntermittent(progress++))
 				return;
 
 			size_t currentParticle = toProcess.front();
@@ -287,8 +294,8 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 {
 	size_t particleCount = positions()->size();
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(particleCount);
+	setProgressValue(0);
+	setProgressMaximum(particleCount);
 	size_t progress = 0;
 
 	// Prepare particle bond map.
@@ -326,7 +333,7 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 		toProcess.push_back(seedParticleIndex);
 
 		do {
-			if(!task()->setProgressValueIntermittent(progress++))
+			if(!setProgressValueIntermittent(progress++))
 				return;
 
 			size_t currentParticle = toProcess.front();

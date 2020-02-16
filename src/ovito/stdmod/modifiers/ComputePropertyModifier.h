@@ -63,15 +63,6 @@ protected:
 				int frameNumber,
 				std::unique_ptr<PropertyExpressionEvaluator> evaluator);
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_selectionArray.reset();
-			_expressions.clear();
-			_evaluator.reset();
-			_outputArray.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
@@ -103,6 +94,14 @@ protected:
 		virtual bool isTimeDependent() { return _evaluator->isTimeDependent(); }
 
 	protected:
+
+		/// Releases data that is no longer needed.
+		void releaseWorkingData() {
+			_selectionArray.reset();
+			_expressions.clear();
+			_evaluator.reset();
+			_outputArray.reset();
+		}
 
 		const int _frameNumber;
 		QStringList _expressions;

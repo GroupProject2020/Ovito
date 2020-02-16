@@ -147,7 +147,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 ******************************************************************************/
 void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 {
-	task()->setProgressText(tr("Constructing surface mesh"));
+	setProgressText(tr("Constructing surface mesh"));
 
 	if(probeSphereRadius() <= 0)
 		throw Exception(tr("Radius parameter must be positive."));
@@ -174,12 +174,15 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		numInputParticles = positions()->size() - boost::count(ConstPropertyAccess<int>(selection()), 0);
 	}
 	if(numInputParticles <= 3) {
+		// Release data that is no longer needed.
+		releaseWorkingData();
+		_particleProperties.clear();
 		return;
 	}
 
 	// Algorithm is divided into several sub-steps.
 	// Assign weights to sub-steps according to estimated runtime.
-	task()->beginProgressSubStepsWithWeights({ 10, 30, 2, 2, 4 });
+	beginProgressSubStepsWithWeights({ 10, 30, 2, 2, 4 });
 
 	// Generate Delaunay tessellation.
 	DelaunayTessellation tessellation;
@@ -189,10 +192,10 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 			positions()->size(), 
 			ghostLayerSize,
 			selection() ? ConstPropertyAccess<int>(selection()).cbegin() : nullptr, 
-			*task()))
+			*this))
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Determines the region a solid Delaunay cell belongs to.
 	// We use this callback function to compute the total volume of the solid region.
@@ -227,7 +230,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 	};
 
 	ManifoldConstructionHelper<false, false, true> manifoldConstructor(tessellation, mesh(), alpha, *positions());
-	if(!manifoldConstructor.construct(tetrahedronRegion, *task(), std::move(prepareMeshFace), std::move(prepareMeshVertex)))
+	if(!manifoldConstructor.construct(tetrahedronRegion, *this, std::move(prepareMeshFace), std::move(prepareMeshVertex)))
 		return;
 
 	// Copy particle property values to mesh vertices.
@@ -252,23 +255,23 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		particleProperty->mappedCopyTo(*vertexProperty, vertexToParticleMap);
 	}
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Make sure every mesh vertex is only part of one surface manifold.
 	mesh().makeManifold();
 
-	task()->nextProgressSubStep();
-	if(!mesh().smoothMesh(_smoothingLevel, *task()))
+	nextProgressSubStep();
+	if(!mesh().smoothMesh(_smoothingLevel, *this))
 		return;
 
 	// Create the 'Surface area' region property.
 	PropertyAccess<FloatType> surfaceAreaProperty = mesh().createRegionProperty(SurfaceMeshRegions::SurfaceAreaProperty, true);
 
 	// Compute surface area (total and per-region) by summing up the triangle face areas.
-	task()->nextProgressSubStep();
-	task()->setProgressMaximum(mesh().faceCount());
+	nextProgressSubStep();
+	setProgressMaximum(mesh().faceCount());
 	for(HalfEdgeMesh::edge_index edge : mesh().firstFaceEdges()) {
-		if(!task()->incrementProgressValue()) return;
+		if(!incrementProgressValue()) return;
 		const Vector3& e1 = mesh().edgeVector(edge);
 		const Vector3& e2 = mesh().edgeVector(mesh().nextFaceEdge(edge));
 		FloatType area = e1.cross(e2).length() / 2;
@@ -277,7 +280,11 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		surfaceAreaProperty[region] += area;
 	}
 
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
+	_particleProperties.clear();
 }
 
 /******************************************************************************
@@ -285,18 +292,21 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 ******************************************************************************/
 void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 {
-	task()->setProgressText(tr("Constructing surface mesh"));
+	setProgressText(tr("Constructing surface mesh"));
 
 	// Check input data.
 	if(mesh().cell().volume3D() <= FLOATTYPE_EPSILON*FLOATTYPE_EPSILON*FLOATTYPE_EPSILON)
 		throw Exception(tr("Simulation cell is degenerate."));
 
-	if(positions()->size() == 0)
+	if(positions()->size() == 0) {
+		// Release data that is no longer needed.
+		releaseWorkingData();
 		return;
+	}
 
 	// Algorithm is divided into several sub-steps.
 	// Assign weights to sub-steps according to estimated runtime.
-	task()->beginProgressSubStepsWithWeights({ 1, 30, 1600, 1500, 30, 100, 300 });
+	beginProgressSubStepsWithWeights({ 1, 30, 1600, 1500, 30, 100, 300 });
 
 	// Scale the atomic radii.
 	for(FloatType& r : _particleRadii) r *= _radiusFactor;
@@ -339,17 +349,17 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 	gridDims[1] = std::max((size_t)2, (size_t)(gridBoundaries.column(1).length() / voxelSize));
 	gridDims[2] = std::max((size_t)2, (size_t)(gridBoundaries.column(2).length() / voxelSize));
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Allocate storage for the density grid values.
 	std::vector<FloatType> densityData(gridDims[0] * gridDims[1] * gridDims[2], FloatType(0));
 
 	// Set up a particle neighbor finder to speed up density field computation.
 	CutoffNeighborFinder neighFinder;
-	if(!neighFinder.prepare(cutoffSize, positions(), mesh().cell(), selection(), task().get()))
+	if(!neighFinder.prepare(cutoffSize, positions(), mesh().cell(), selection(), this))
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Set up a matrix that converts grid coordinates to spatial coordinates.
 	AffineTransformation gridToCartesian = gridBoundaries;
@@ -358,7 +368,7 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 	gridToCartesian.column(2) /= gridDims[2] - (mesh().cell().pbcFlags()[2]?0:1);
 
 	// Compute the accumulated density at each grid point.
-	parallelFor(densityData.size(), *task(), [&](size_t voxelIndex) {
+	parallelFor(densityData.size(), *this, [&](size_t voxelIndex) {
 
 		// Determine the center coordinates of the current grid cell.
 		size_t ix = voxelIndex % gridDims[0];
@@ -373,47 +383,50 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 			density += std::exp(-neighQuery.distanceSquared() / (FloatType(2) * alpha * alpha));
 		}
 	});
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Construct isosurface of the density field.
 	mesh().cell().setMatrix(gridBoundaries);
 	MarchingCubes mc(mesh(), gridDims[0], gridDims[1], gridDims[2], densityData.data(), 1, false);
-	if(!mc.generateIsosurface(_isoLevel, *task()))
+	if(!mc.generateIsosurface(_isoLevel, *this))
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Transform mesh vertices from orthogonal grid space to world space.
 	mesh().transformVertices(gridToCartesian);
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	// Flip surface orientation if cell is mirrored.
 	if(gridToCartesian.determinant() < 0)
 		mesh().flipFaces();
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	if(!mesh().connectOppositeHalfedges())
 		throw Exception(tr("Something went wrong. Isosurface mesh is not closed."));
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Compute surface area (total and per-region) by summing up the triangle face areas.
 	for(HalfEdgeMesh::edge_index edge : mesh().firstFaceEdges()) {
-		if(task()->isCanceled()) return;
+		if(isCanceled()) return;
 		const Vector3& e1 = mesh().edgeVector(edge);
 		const Vector3& e2 = mesh().edgeVector(mesh().nextFaceEdge(edge));
 		FloatType area = e1.cross(e2).length() / 2;
 		addSurfaceArea(area);
 	}
 
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
 }
 
 /******************************************************************************

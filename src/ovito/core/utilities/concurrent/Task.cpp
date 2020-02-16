@@ -59,17 +59,35 @@ void Task::cancel() noexcept
 {
 	if(isCanceled() || isFinished()) return;
 
+	// Prevent this task instance from getting deleted while canceling up.
+	TaskPtr selfLock = shared_from_this();
+	cancelNoSelfLock();
+}
+
+void Task::cancelNoSelfLock() noexcept
+{
+	if(isCanceled() || isFinished()) return;
+
+	// Put this task into the 'canceled' state.
 	_state = State(_state | Canceled);
 
 	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseCanceled", Qt::QueuedConnection);
+
+	// Run the continuation functions.
+	// Note: Move the functions into a new local list to avoid running them twice in case one of the continuation
+	// functions puts this task into the 'finished' state (which will also run all continuation functions).
+	decltype(_continuations) contFunctions;
+	std::move(_continuations.begin(), _continuations.end(), std::back_inserter(contFunctions));
+	_continuations.clear();
+	for(auto& cont : contFunctions)
+		std::move(cont)(false);
 }
 
 bool Task::setStarted()
 {
-    if(isStarted()) {
+    if(isStarted())
         return false;	// It's already started. Don't run it again.
-	}
 
     OVITO_ASSERT(!isFinished());
     _state = State(_state | Started);
@@ -84,15 +102,13 @@ void Task::setFinished()
 {
     OVITO_ASSERT(isStarted());
     if(!isFinished()) {
-
-		// Lock this promise while finishing up.
+		// Prevent this task instance from getting deleted while finishing up.
 		TaskPtr selfLock = shared_from_this();
-
 		setFinishedNoSelfLock();
     }
 }
 
-void Task::setFinishedNoSelfLock()
+void Task::setFinishedNoSelfLock() noexcept
 {
 	OVITO_ASSERT(!isFinished());
 
@@ -105,9 +121,8 @@ void Task::setFinishedNoSelfLock()
 		qPrintable(QStringLiteral("Result has not been set for the promise state. Please check program code setting the promise state. Progress text: %1").arg(progressText())));
 
 	// Inform task watchers.
-	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList) {
+	for(TaskWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
 		QMetaObject::invokeMethod(watcher, "promiseFinished", Qt::QueuedConnection);
-	}
 
 	// Run the continuation functions.
 	for(auto& cont : _continuations)

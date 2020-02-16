@@ -47,9 +47,6 @@ public:
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking) override;
 
-	/// Returns the application-wide network access manager object.
-	QNetworkAccessManager* networkAccessManager();
-
 protected:
 
 	/// Defines the program's command line parameters.
@@ -82,9 +79,6 @@ private:
 
 	/// List of errors to be displayed by showErrorMessages().
 	std::deque<Exception> _errorList;
-
-	/// The application-wide network manager object.
-	QNetworkAccessManager* _networkAccessManager = nullptr;
 };
 
 }	// End of namespace

@@ -599,7 +599,7 @@ void ModifyCommandPage::createAboutPanel()
 				.arg(QString(id.toHex()))
 				.arg(operatingSystemString)
 				.arg(QT_POINTER_SIZE*8);
-		QNetworkAccessManager* networkAccessManager = GuiApplication::instance()->networkAccessManager();
+		QNetworkAccessManager* networkAccessManager = Application::instance()->networkAccessManager();
 		QNetworkReply* networkReply = networkAccessManager->get(QNetworkRequest(QUrl(urlString)));
 		connect(networkReply, &QNetworkReply::finished, this, &ModifyCommandPage::onWebRequestFinished);
 	}

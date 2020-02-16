@@ -24,8 +24,6 @@
 #include <ovito/core/app/PluginManager.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/utilities/io/FileManager.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
@@ -164,7 +162,7 @@ bool FileExporter::isSuitablePipelineOutput(const PipelineFlowState& state) cons
 /******************************************************************************
 * Evaluates the pipeline whose data is to be exported.
 ******************************************************************************/
-PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, AsyncOperation& operation, bool requestRenderState) const
+PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, SynchronousOperation operation, bool requestRenderState) const
 {
 	PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(nodeToExport());
 	if(!pipeline)
@@ -191,7 +189,7 @@ PipelineFlowState FileExporter::getPipelineDataToBeExported(TimePoint time, Asyn
 /******************************************************************************
  * Exports the scene data to the output file(s).
  *****************************************************************************/
-bool FileExporter::doExport(AsyncOperation&& operation)
+bool FileExporter::doExport(SynchronousOperation operation)
 {
 	if(outputFilename().isEmpty())
 		throwException(tr("The output filename not been set for the file exporter."));
@@ -233,7 +231,7 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 
 	// Open output file for writing.
 	if(!exportAnimation() || !useWildcardFilename()) {
-		if(!openOutputFile(filename, numberOfFrames, operation))
+		if(!openOutputFile(filename, numberOfFrames, operation.subOperation()))
 			return false;
 	}
 
@@ -251,13 +249,13 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 				filename = dir.absoluteFilePath(wildcardFilename());
 				filename.replace(QChar('*'), QString::number(frameNumber));
 
-				if(!openOutputFile(filename, 1, operation))
+				if(!openOutputFile(filename, 1, operation.subOperation()))
 					return false;
 			}
 
 			operation.setProgressText(tr("Exporting frame %1 to file '%2'").arg(frameNumber).arg(filename));
 
-			exportFrame(frameNumber, exportTime, filename, operation.createSubOperation());
+			exportFrame(frameNumber, exportTime, filename, operation.subOperation());
 
 			if(exportAnimation() && useWildcardFilename())
 				closeOutputFile(!operation.isCanceled());
@@ -286,7 +284,7 @@ bool FileExporter::doExport(AsyncOperation&& operation)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool FileExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool FileExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	return !operation.isCanceled();
 }
@@ -319,6 +317,5 @@ QString FileExporter::getAvailableDataObjectList(const PipelineFlowState& state,
 		str = tr("<none>");
 	return str;
 }
-
 
 }	// End of namespace

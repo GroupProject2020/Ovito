@@ -53,7 +53,7 @@ public:
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;
 
 	/// Renders the current animation frame.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, SynchronousOperation operation) override;
 
 	/// This method is called after renderFrame() has been called.
 	virtual void endFrame(bool renderSuccessful) override;

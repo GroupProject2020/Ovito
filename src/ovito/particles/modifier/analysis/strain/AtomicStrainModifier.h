@@ -81,12 +81,6 @@ private:
 			_stretchTensors(calculateStretchTensors ? ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::StretchTensorProperty, false) : nullptr),
 			_inputFingerprint(std::move(fingerprint)) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_displacements.reset();
-			RefConfigEngineBase::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

@@ -23,8 +23,6 @@
 #include <ovito/particles/Particles.h>
 #include <ovito/core/dataset/io/FileSource.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ParticleType.h"
 
 namespace Ovito { namespace Particles {
@@ -59,7 +57,7 @@ ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset),
 /******************************************************************************
  * Loads a user-defined display shape from a geometry file and assigns it to this particle type.
  ******************************************************************************/
-bool ParticleType::loadShapeMesh(const QUrl& sourceUrl, AsyncOperation&& operation, const FileImporterClass* importerType)
+bool ParticleType::loadShapeMesh(const QUrl& sourceUrl, Promise<>&& operation, const FileImporterClass* importerType)
 {
     operation.setProgressText(tr("Loading mesh geometry file %1").arg(sourceUrl.fileName()));
 

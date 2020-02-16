@@ -74,18 +74,18 @@ DislocationAnalysisEngine::DislocationAnalysisEngine(
 ******************************************************************************/
 void DislocationAnalysisEngine::perform()
 {
-	task()->setProgressText(DislocationAnalysisModifier::tr("Dislocation analysis (DXA)"));
+	setProgressText(DislocationAnalysisModifier::tr("Dislocation analysis (DXA)"));
 
-	task()->beginProgressSubStepsWithWeights({ 35, 6, 1, 220, 60, 1, 53, 190, 146, 20, 4, 4 });
-	if(!_structureAnalysis->identifyStructures(*task()))
+	beginProgressSubStepsWithWeights({ 35, 6, 1, 220, 60, 1, 53, 190, 146, 20, 4, 4 });
+	if(!_structureAnalysis->identifyStructures(*this))
 		return;
 
-	task()->nextProgressSubStep();
-	if(!_structureAnalysis->buildClusters(*task()))
+	nextProgressSubStep();
+	if(!_structureAnalysis->buildClusters(*this))
 		return;
 
-	task()->nextProgressSubStep();
-	if(!_structureAnalysis->connectClusters(*task()))
+	nextProgressSubStep();
+	if(!_structureAnalysis->connectClusters(*this))
 		return;
 
 #if 0
@@ -115,42 +115,42 @@ void DislocationAnalysisEngine::perform()
 	stream << "12" << std::endl;  // Hexahedron
 #endif
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 	FloatType ghostLayerSize = FloatType(3.0) * _structureAnalysis->maximumNeighborDistance();
 	if(!_tessellation->generateTessellation(_structureAnalysis->cell(), 
 			ConstPropertyAccess<Point3>(positions()).cbegin(),
 			_structureAnalysis->atomCount(), 
 			ghostLayerSize, 
 			selection() ? ConstPropertyAccess<int>(selection()).cbegin() : nullptr, 
-			*task()))
+			*this))
 		return;
 
 	// Build list of edges in the tessellation.
-	task()->nextProgressSubStep();
-	if(!_elasticMapping->generateTessellationEdges(*task()))
+	nextProgressSubStep();
+	if(!_elasticMapping->generateTessellationEdges(*this))
 		return;
 
 	// Assign each vertex to a cluster.
-	task()->nextProgressSubStep();
-	if(!_elasticMapping->assignVerticesToClusters(*task()))
+	nextProgressSubStep();
+	if(!_elasticMapping->assignVerticesToClusters(*this))
 		return;
 
 	// Determine the ideal vector corresponding to each edge of the tessellation.
-	task()->nextProgressSubStep();
-	if(!_elasticMapping->assignIdealVectorsToEdges(4, *task()))
+	nextProgressSubStep();
+	if(!_elasticMapping->assignIdealVectorsToEdges(4, *this))
 		return;
 
 	// Free some memory that is no longer needed.
 	_structureAnalysis->freeNeighborLists();
 
 	// Create the mesh facets.
-	task()->nextProgressSubStep();
-	if(!_interfaceMesh->createMesh(_structureAnalysis->maximumNeighborDistance(), crystalClusters(), *task()))
+	nextProgressSubStep();
+	if(!_interfaceMesh->createMesh(_structureAnalysis->maximumNeighborDistance(), crystalClusters(), *this))
 		return;
 
 	// Trace dislocation lines.
-	task()->nextProgressSubStep();
-	if(!_dislocationTracer->traceDislocationSegments(*task()))
+	nextProgressSubStep();
+	if(!_dislocationTracer->traceDislocationSegments(*this))
 		return;
 	_dislocationTracer->finishDislocationSegments(_inputCrystalStructure);
 
@@ -230,35 +230,44 @@ void DislocationAnalysisEngine::perform()
 #endif
 
 	// Generate the defect mesh.
-	task()->nextProgressSubStep();
-	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, _defectMesh, *task()))
+	nextProgressSubStep();
+	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, _defectMesh, *this))
 		return;
 
 #if 0
 	_tessellation.dumpToVTKFile("tessellation.vtk");
 #endif
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Post-process surface mesh.
-	if(_defectMeshSmoothingLevel > 0 && !_defectMesh.smoothMesh(_defectMeshSmoothingLevel, *task()))
+	if(_defectMeshSmoothingLevel > 0 && !_defectMesh.smoothMesh(_defectMeshSmoothingLevel, *this))
 		return;
 
-	task()->nextProgressSubStep();
+	nextProgressSubStep();
 
 	// Post-process dislocation lines.
 	if(_lineSmoothingLevel > 0 || _linePointInterval > 0) {
-		if(!dislocationNetwork()->smoothDislocationLines(_lineSmoothingLevel, _linePointInterval, *task()))
+		if(!dislocationNetwork()->smoothDislocationLines(_lineSmoothingLevel, _linePointInterval, *this))
 			return;
 	}
 
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
 
 	// Return the results of the compute engine.
 	if(_doOutputInterfaceMesh) {
 		_outputInterfaceMesh = interfaceMesh().topology();
 		_outputInterfaceMeshVerts = interfaceMesh().vertexProperty(SurfaceMeshVertices::PositionProperty);
 	}
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
+	_structureAnalysis.reset();
+	_tessellation.reset();
+	_elasticMapping.reset();
+	_interfaceMesh.reset();
+	_dislocationTracer.reset();
+	_crystalClusters.reset();
 }
 
 /******************************************************************************

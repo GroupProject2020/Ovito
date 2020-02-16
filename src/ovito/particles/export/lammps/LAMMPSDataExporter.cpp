@@ -26,8 +26,6 @@
 #include <ovito/particles/objects/ParticleType.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
 #include "LAMMPSDataExporter.h"
 
@@ -40,7 +38,7 @@ SET_PROPERTY_FIELD_LABEL(LAMMPSDataExporter, atomStyle, "Atom style");
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	particles->verifyIntegrity();

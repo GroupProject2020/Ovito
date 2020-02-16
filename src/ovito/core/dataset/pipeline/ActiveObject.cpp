@@ -83,13 +83,12 @@ void ActiveObject::decrementNumberOfActiveTasks()
 /******************************************************************************
 * Registers the given future as an active task associated with this object.
 ******************************************************************************/
-void ActiveObject::registerActiveFuture(const FutureBase& future)
+void ActiveObject::registerActiveTask(const TaskPtr& task)
 {
-	OVITO_ASSERT(future.isValid());
-	if(!future.isFinished() && Application::instance()->guiMode()) {
+	if(!task->isFinished() && Application::instance()->guiMode()) {
 		incrementNumberOfActiveTasks();		
 		// Reset the pending status after the Future is fulfilled.
-		future.task()->finally(executor(), false, std::bind(&ActiveObject::decrementNumberOfActiveTasks, this));
+		task->finally(executor(), false, std::bind(&ActiveObject::decrementNumberOfActiveTasks, this));
 	}
 }
 

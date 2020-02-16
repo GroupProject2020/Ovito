@@ -39,6 +39,11 @@ public:
 	/// This virtual function is responsible for computing the results of the task.
 	virtual void perform() = 0;
 
+	/// Returns a future that gets fulfilled when this asynchronous task has run.
+	Future<> future() {
+		return Future<>(shared_from_this());
+	}
+
 protected:
 
 	/// Constructor.

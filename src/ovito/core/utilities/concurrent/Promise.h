@@ -26,6 +26,7 @@
 #include <ovito/core/Core.h>
 #include "Task.h"
 #include "MainThreadTask.h"
+#include "TaskManager.h"
 #include "FutureDetail.h"
 
 namespace Ovito {
@@ -33,6 +34,13 @@ namespace Ovito {
 class OVITO_CORE_EXPORT PromiseBase
 {
 public:
+
+	/// Default constructor.
+#ifndef Q_CC_MSVC
+	PromiseBase() noexcept = default;
+#else
+	PromiseBase() noexcept {}
+#endif
 
 	/// Destructor.
 	~PromiseBase() { reset(); }
@@ -44,7 +52,7 @@ public:
 	bool isValid() const { return (bool)_task; }
 
 	/// Detaches this promise from its shared state and makes sure that it reached the 'finished' state.
-	/// If the promise wasn't already finished when thsi function is called, it is automatically canceled.
+	/// If the promise wasn't already finished when this function is called, it is automatically canceled.
 	void reset() {
 		if(isValid()) {
 			if(!isFinished()) {
@@ -141,14 +149,21 @@ public:
 		return _task;
 	}
 
-protected:
+	/// Runs the given function in any case once this promise's task has reached the 'finished' or 'canceled' state.
+	/// The continuation function will always be executed, even if this task was canceled or set to an error state.
+    /// The continuation function must accept a TaskPtr (pointing to the finished task) as a parameter.
+	template<typename Executor, typename F>
+	void finally(Executor&& executor, bool defer, F&& cont) {
+		// This future must be valid for finally() to work.
+		OVITO_ASSERT_MSG(isValid(), "PromiseBase::finally()", "Promise must be valid.");
+		task()->finally(std::forward<Executor>(executor), defer, std::forward<F>(cont));
+	}
 
-	/// Default constructor.
-#ifndef Q_CC_MSVC
-	PromiseBase() noexcept = default;
-#else
-	PromiseBase() noexcept {}
-#endif
+	/// Overload of the method above using the inline executor.
+	template<typename F>
+	void finally(F&& cont) { finally(Ovito::detail::InlineExecutor(), false, std::forward<F>(cont)); }	
+
+protected:
 
 	/// Move constructor.
 	PromiseBase(PromiseBase&& p) noexcept = default;
@@ -215,6 +230,20 @@ public:
 		return Promise(std::make_shared<Task>(Task::State(Task::Started | Task::Canceled | Task::Finished)));
 	}
 
+	/// Creates a promise that can be used just for signaling the completion of an asynchronous operation.
+	static Promise createSignal() {
+		static_assert(std::tuple_size<tuple_type>::value == 0, "Signal promise may not have a result value.");
+		return Promise(std::make_shared<Task>(Task::Started));
+	}
+
+	/// Creates a new task that performs actions in an asynchronous fashion.
+	static Promise createAsynchronousOperation(TaskManager& taskManager, bool startedState = true) {
+		Promise promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
+			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
+			startedState ? Task::State(Task::Started) : Task::NoState, &taskManager));
+		return promise;
+	}
+
 	/// Returns a Future that is associated with the same shared state as this promise.
 	future_type future() {
 #ifdef OVITO_DEBUG
@@ -249,6 +278,25 @@ public:
 		setResultsDirect(std::forward<FC>(func)());
 	}
 
+	/// Requests this Promise to reset itself to the null state as soon as the task has reached the 'finished' state.
+	template<typename Executor>
+	void autoResetWhenFinished(Executor&& executor) {
+		this->finally(std::forward<Executor>(executor), false, [this](const TaskPtr& task) {
+			OVITO_ASSERT(this->task() == task);
+			reset();
+		});
+	}
+
+	/// Requests this Promise to reset itself to the null state as soon as the task is canceled.
+	template<typename Executor>
+	void autoResetWhenCanceled(Executor&& executor) {
+		this->finally(std::forward<Executor>(executor), false, [this](const TaskPtr& task) {
+			OVITO_ASSERT(this->task() == task);
+			if(task->isCanceled())
+				reset();
+		});
+	}
+
 protected:
 
 	Promise(TaskPtr p) noexcept : PromiseBase(std::move(p)) {}
@@ -275,6 +323,97 @@ protected:
 	friend class TaskManager;
 	template<typename... R2> friend class Future;
 	template<typename... R2> friend class SharedFuture;
+};
+
+/**
+ * A promise object that is used for long-running program actions that are executed in the main thread.
+ * 
+ * The task of a SynchronousOperation is automatically put into the 'finished' state by the destructor.
+ */
+class OVITO_CORE_EXPORT SynchronousOperation : public Promise<>
+{
+public:
+
+	/// No default constructor.
+	SynchronousOperation() = delete;
+
+	/// Move constructor. 
+	SynchronousOperation(SynchronousOperation&& p) noexcept = default;
+
+	/// Destructor.
+	~SynchronousOperation() { reset(); }
+
+	/// Puts the task into the 'finished' state and detaches this SynchronousOperation object from the task.
+	void reset() {
+		if(isValid()) {
+			// Set the task to the 'finished' if this is the master SynchronousOperation.
+			// If this is not the master, keep the task unfinished, because there the operation is still going on.
+			if(_isMaster && !isFinished()) {
+				task()->setStarted();
+				task()->setFinished();
+			}
+			_task.reset();
+		}
+	}
+
+	/// Creates a new synchronous operation that should be used when performing some long-running work in in the main thread.
+	/// The factory method registers the task with the given task manager and puts it into the 'started' state.
+	static SynchronousOperation create(TaskManager& taskManager, bool startedState = true) {
+		SynchronousOperation op(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
+			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
+			startedState ? Task::State(Task::Started) : Task::NoState, &taskManager), true);
+		taskManager.addTaskInternal(op.task());
+		return op;
+	}
+
+	/// Creates a promise that can be used just for signaling the completion of an asynchronous operation.
+	static SynchronousOperation createSignal(TaskManager& taskManager) {
+		return SynchronousOperation(std::make_shared<Task>(Task::Started, &taskManager), true);
+	}
+
+	/// Creates a child operation that executes within the context of this parent operation.
+    /// In case the child task gets canceled, this parent task gets canceled too --and vice versa.
+	SynchronousOperation subOperation(bool registerAsNewTask = false) {
+		OVITO_ASSERT(isValid());
+		OVITO_ASSERT(isStarted());
+		OVITO_ASSERT(!isFinished());
+
+		if(registerAsNewTask) {
+
+			// Create the task object for the child operation.
+			SynchronousOperation subOperation = SynchronousOperation::create(*task()->taskManager(), true);
+
+			// Ensure that the child operation gets canceled together with the parent operation.
+			this->finally(Ovito::detail::InlineExecutor(), false, [subTask = subOperation.task()](const TaskPtr& task) {
+				if(task->isCanceled())
+					subTask->cancel();
+			});
+
+			// Ensure that the parent operation gets canceled if the child operation is canceled.
+			subOperation.finally(Ovito::detail::InlineExecutor(), false, [thisTask = task()](const TaskPtr& task) {
+				if(task->isCanceled())
+					thisTask->cancel();
+			});
+
+			// Register child operation with task manager.
+			task()->taskManager()->addTaskInternal(subOperation.task());
+
+			return subOperation;
+		}
+		else {
+			// Create a promise that is referring to the same task object.
+			return SynchronousOperation(task(), false);
+		}	
+	}
+
+private:
+
+	/// Constructor.
+	SynchronousOperation(TaskPtr p, bool isMaster) noexcept :
+		Promise<>(std::move(p)), _isMaster(isMaster) {}
+
+	/// Indicates whether this SynchronousOperation is managing the shared task object or not.
+	bool _isMaster;
 };
 
 }	// End of namespace

@@ -53,17 +53,6 @@ public:
 			int lineSmoothingLevel, FloatType linePointInterval,
 			bool doOutputInterfaceMesh);
 
-	/// This method is called by the system after the computation was successfully completed.
-	virtual void cleanup() override {
-		_structureAnalysis.reset();
-		_tessellation.reset();
-		_elasticMapping.reset();
-		_interfaceMesh.reset();
-		_dislocationTracer.reset();
-		_crystalClusters.reset();
-		StructureIdentificationEngine::cleanup();
-	}
-
 	/// Computes the modifier's results and stores them in this object for later retrieval.
 	virtual void perform() override;
 

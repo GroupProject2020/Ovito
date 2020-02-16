@@ -102,11 +102,9 @@ SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const Q
 		}
 
 		// Start the background download job.
-		Promise<FileHandle> promise = taskManager.createMainThreadOperation<FileHandle>(false);
-		SharedFuture<FileHandle> future(promise.future());
-		_pendingFiles.emplace(normalizedUrl, future);
-		new DownloadRemoteFileJob(url, std::move(promise));
-		return future;
+		DownloadRemoteFileJob* job = new DownloadRemoteFileJob(url, taskManager);
+		_pendingFiles.emplace(normalizedUrl, job->sharedFuture());
+		return job->sharedFuture();
 #else
 		return Future<FileHandle>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
 #endif
@@ -123,10 +121,8 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 {
 	if(url.scheme() == QStringLiteral("sftp")) {
 #ifdef OVITO_SSH_CLIENT
-		Promise<QStringList> promise = taskManager.createMainThreadOperation<QStringList>(false);
-		Future<QStringList> future = promise.future();
-		new ListRemoteDirectoryJob(url, std::move(promise));
-		return future;
+		ListRemoteDirectoryJob* job = new ListRemoteDirectoryJob(url, taskManager);
+		return job->future();
 #else
 		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. This version fo OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
 #endif

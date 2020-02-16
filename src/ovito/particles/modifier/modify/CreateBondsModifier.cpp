@@ -222,11 +222,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 ******************************************************************************/
 void CreateBondsModifier::BondsEngine::perform()
 {
-	task()->setProgressText(tr("Generating bonds"));
+	setProgressText(tr("Generating bonds"));
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(_maxCutoff, _positions, _simCell, {}, task().get()))
+	if(!neighborFinder.prepare(_maxCutoff, _positions, _simCell, {}, this))
 		return;
 
 	FloatType minCutoffSquared = _minCutoff * _minCutoff;
@@ -236,7 +236,7 @@ void CreateBondsModifier::BondsEngine::perform()
 
 	// Generate bonds.
 	size_t particleCount = _positions->size();
-	task()->setProgressMaximum(particleCount);
+	setProgressMaximum(particleCount);
 	if(!particleTypesArray) {
 		for(size_t particleIndex = 0; particleIndex < particleCount; particleIndex++) {
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
@@ -252,7 +252,7 @@ void CreateBondsModifier::BondsEngine::perform()
 					bonds().push_back(bond);
 			}
 			// Update progress indicator.
-			if(!task()->setProgressValueIntermittent(particleIndex))
+			if(!setProgressValueIntermittent(particleIndex))
 				return;
 		}
 	}
@@ -275,11 +275,16 @@ void CreateBondsModifier::BondsEngine::perform()
 				}
 			}
 			// Update progress indicator.
-			if(!task()->setProgressValueIntermittent(particleIndex))
+			if(!setProgressValueIntermittent(particleIndex))
 				return;
 		}
 	}
-	task()->setProgressValue(particleCount);
+	setProgressValue(particleCount);
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_particleTypes.reset();
+	_moleculeIDs.reset();
 }
 
 /******************************************************************************

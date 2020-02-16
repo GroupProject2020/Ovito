@@ -113,22 +113,22 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::cre
 ******************************************************************************/
 void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Coordination analysis"));
+	setProgressText(tr("Coordination analysis"));
 
 	// Prepare the neighbor list service.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(cutoff(), positions(), cell(), {}, task().get()))
+	if(!neighborListBuilder.prepare(cutoff(), positions(), cell(), {}, this))
 		return;
 
 	size_t particleCount = positions()->size();
 	PropertyAccess<int> coordinationData(coordinationNumbers());
 	ConstPropertyAccess<int> particleTypeData(particleTypes());
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(particleCount);
+	setProgressValue(0);
+	setProgressMaximum(particleCount);
 
 	// Parallel calculation loop:
 	std::mutex mutex;
-	parallelForChunks(particleCount, *task(), [&](size_t startIndex, size_t chunkSize, Task& promise) {
+	parallelForChunks(particleCount, *this, [&](size_t startIndex, size_t chunkSize, Task& promise) {
 		size_t typeCount = _computePartialRdfs ? uniqueTypeIds().size() : 1;
 		size_t binCount = rdfY()->size();
 		size_t rdfCount = rdfY()->componentCount();
@@ -175,7 +175,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
 			*bin++ += *iter;
 	});
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	// Compute x values of histogram function.
@@ -212,7 +212,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 			if(typeIndex < particleCounts.size())
 				particleCounts[typeIndex]++;
 		}
-		if(task()->isCanceled()) return;
+		if(isCanceled()) return;
 
 		// Normalize RDFs.
 		size_t component = 0;
@@ -222,6 +222,10 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 			}
 		}
 	}
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_particleTypes.reset();
 }
 
 /******************************************************************************

@@ -66,12 +66,9 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 	return createEngine(request, modApp, input)
 		.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
 
-			// Explicitly create a local copy of the shared_ptr to keep the task alive for some extra time.
-			auto task = engine->task();
-
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
-			return dataset()->container()->taskManager().runTaskAsync(task)
+			return dataset()->container()->taskManager().runTaskAsync(engine)
 				.then(executor(), [this, time, modApp, state = std::move(input), engine = std::move(engine)]() mutable {
 					if(modApp && modApp->modifier() == this) {
 
@@ -129,40 +126,18 @@ void AsynchronousModifier::loadFromStream(ObjectLoadStream& stream)
 	stream.closeChunk();
 }
 
-/******************************************************************************
-* This method is called by the system after the computation was
-* successfully completed.
-******************************************************************************/
-void AsynchronousModifier::ComputeEngine::cleanup()
-{
-	// The asynchronous task object is no longer needed after compute operation is complete.
-	_task.reset();
-}
-
-/******************************************************************************
-* Is called when the asynchronous task begins to run.
-******************************************************************************/
-void AsynchronousModifier::ComputeEngine::ComputeEngineTask::perform()
-{
-	// Let the compute engine do the work.
-	_engine->perform();
-
-	if(!isCanceled()) {
-
-		// If compute job was successfully completed, release memory and references to the input data.
-		_engine->cleanup();
-
-		// Make sure the cleanup() method has really cleared the reference to this task object:
-		OVITO_ASSERT(isCanceled() || !_engine->task());
-
 #ifdef Q_OS_LINUX
-		// Some compute engines allocate a considerable amount of memory in small chunks,
-		// which is sometimes not released back to the OS by the C memory allocator.
-		// This call to malloc_trim() will explicitly trigger an attempt to release free memory
-		// at the top of the heap.
-		::malloc_trim(0);
-#endif
-	}
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+void AsynchronousModifier::ComputeEngine::~ComputeEngine()
+{
+	// Some compute engines allocate a considerable amount of memory in small chunks,
+	// which is sometimes not released back to the OS by the C memory allocator.
+	// This call to malloc_trim() will explicitly trigger an attempt to release free memory
+	// at the top of the heap.
+	::malloc_trim(0);
 }
+#endif
 
 }	// End of namespace

@@ -82,11 +82,6 @@ private:
             _kPB(kPB),
             _lambda(lambda) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
 

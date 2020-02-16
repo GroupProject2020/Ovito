@@ -30,9 +30,6 @@
 #include <ovito/core/dataset/DataSet.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/viewport/ViewportConfiguration.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
-#include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/core/utilities/units/UnitsManager.h>
 #include "GenerateTrajectoryLinesModifier.h"
 
@@ -99,7 +96,7 @@ void GenerateTrajectoryLinesModifier::evaluateSynchronous(TimePoint time, Modifi
 /******************************************************************************
 * Updates the stored trajectories from the source particle object.
 ******************************************************************************/
-bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& operation)
+bool GenerateTrajectoryLinesModifier::generateTrajectories(Promise<>&& operation)
 {
 	TimePoint currentTime = dataset()->animationSettings()->time();
 

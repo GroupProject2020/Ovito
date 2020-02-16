@@ -70,13 +70,9 @@ public:
 		AmbientOcclusionEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, int resolution, int samplingCount, PropertyPtr positions,
 			const Box3& boundingBox, std::vector<FloatType> particleRadii, AmbientOcclusionRenderer* renderer);
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			decltype(_particleRadii){}.swap(_particleRadii);
-			ComputeEngine::cleanup();
-		}
-
+		/// Destructor.
+		virtual ~AmbientOcclusionEngine();
+		
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
@@ -133,5 +129,3 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-
-

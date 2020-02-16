@@ -26,7 +26,6 @@
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/core/utilities/concurrent/TaskWatcher.h>
 #include <ovito/core/utilities/concurrent/Future.h>
 #include <ovito/core/app/Application.h>
 
@@ -91,10 +90,8 @@ bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent
 			// Also clear pipeline cache in order to reduce memory footprint when modifier is disabled.
 			pipelineCache().invalidate();
 		}
-		else {
-			// Propagate enabled/disabled notification events from the modifier.
-			return true;
-		}
+		// Propagate enabled/disabled notification events from the modifier.
+		return true;
 	}
 	else if(event.type() == ReferenceEvent::TitleChanged && source == modifier()) {
 		return true;
@@ -199,11 +196,24 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(const Pipelin
 }
 
 /******************************************************************************
+*  Asks the object for the result of the upstream data pipeline at several animation times.
+******************************************************************************/
+Future<std::vector<PipelineFlowState>> ModifierApplication::evaluateInputMultiple(const PipelineEvaluationRequest& request, std::vector<TimePoint> times)
+{
+	// Without a data source, this ModifierApplication doesn't produce any data.
+	if(!input())
+		return std::vector<PipelineFlowState>(times.size(), PipelineFlowState());
+
+	// Request the input data.
+	return input()->evaluateMultiple(request, std::move(times));
+}
+
+/******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
 SharedFuture<PipelineFlowState> ModifierApplication::evaluate(const PipelineEvaluationRequest& request)
 {
-	// If modifier is disabled, pass through results from downstream pipeline.
+	// If modifier is disabled, pass through results to downstream pipeline.
 	if(input() && (!modifier() || modifier()->isEnabled() == false))
 		return input()->evaluate(request);
 	
@@ -216,22 +226,22 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluate(const PipelineEval
 ******************************************************************************/
 Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEvaluationRequest& request)
 {
-	// Set up the evaluation request for the downstream pipeline.
-	PipelineEvaluationRequest downstreamRequest = request;
+	// Set up the evaluation request for the upstream pipeline.
+	PipelineEvaluationRequest upstreamRequest = request;
 
-	// Ask the modifier for the set of animation time intervals that should be cached by the downstream pipeline.
+	// Ask the modifier for the set of animation time intervals that should be cached by the upstream pipeline.
 	if(modifier() && modifier()->isEnabled())
-		modifier()->inputCachingHints(downstreamRequest.modifiableCachingIntervals(), this);
+		modifier()->inputCachingHints(upstreamRequest.modifiableCachingIntervals(), this);
 
 	// Obtain input data and pass it on to the modifier.
-	return evaluateInput(downstreamRequest)
-		.then(executor(), [this, downstreamRequest](PipelineFlowState inputData) -> Future<PipelineFlowState> {
+	return evaluateInput(upstreamRequest)
+		.then(executor(), [this, upstreamRequest](PipelineFlowState inputData) -> Future<PipelineFlowState> {
 
 			// Clear the status of the input unless it is an error.
 			if(inputData.status().type() != PipelineStatus::Error) {
 				inputData.setStatus(PipelineStatus());
 			}
-			else if(downstreamRequest.breakOnError()) {
+			else if(upstreamRequest.breakOnError()) {
 				// Skip all following modifiers once an error has occured along the pipeline.
 				return inputData;
 			}
@@ -244,7 +254,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			Future<PipelineFlowState> future;
 			try {
 				// Let the modifier do its job.
-				future = modifier()->evaluate(downstreamRequest, this, inputData);
+				future = modifier()->evaluate(upstreamRequest, this, inputData);
 				// Register the task with this pipeline stage.
 				registerActiveFuture(future);
 			}
@@ -255,7 +265,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(const PipelineEv
 			// Post-process the modifier results before returning them to the caller.
 			// Turn any exception that was thrown during modifier evaluation into a
 			// valid pipeline state with an error code.
-			return future.then_future(executor(), [this, time = downstreamRequest.time(), inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
+			return future.then_future(executor(), [this, time = upstreamRequest.time(), inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {

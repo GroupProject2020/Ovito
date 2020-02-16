@@ -33,7 +33,7 @@ AsynchronousTaskBase::~AsynchronousTaskBase()
 {
 	// If task was never started, cancel and finish it.
 	if(Task::setStarted()) {
-		Task::cancel();
+		Task::cancelNoSelfLock();
 		Task::setFinishedNoSelfLock();
 	}
 	OVITO_ASSERT(isFinished());

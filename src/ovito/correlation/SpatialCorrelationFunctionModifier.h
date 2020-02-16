@@ -141,14 +141,6 @@ private:
 			_averagingDirection(averagingDirection),
 			_neighCorrelation(doComputeNeighCorrelation ? std::make_shared<PropertyStorage>(numberOfNeighBins, PropertyStorage::Float, 1, 0, tr("Neighbor C(r)"), true, DataTable::YProperty) : nullptr) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_sourceProperty1.reset();
-			_sourceProperty2.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Compute real and reciprocal space correlation function via FFT.
 		void computeFftCorrelation();
 

@@ -30,7 +30,11 @@ LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Gui)
 IF(OVITO_BUILD_GUI)
 	# Note: QtConcurrent and QtPrintSupport are a dependency of the Qwt library.
 	# Note: QtDBus is an indirect dependency of the Xcb platform plugin under Linux.
-	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets Concurrent Network PrintSupport Svg DBus)
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets Concurrent PrintSupport Svg DBus)
+ENDIF()
+IF(NOT EMSCRIPTEN)
+	# The Qt Network module is used by the OVITO Core module, except in the wasm build.
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Network)
 ENDIF()
 IF(OVITO_BUILD_PLUGIN_GALAMOST)
 	# Note: QtXml is a dependency of the Galamost plugin.

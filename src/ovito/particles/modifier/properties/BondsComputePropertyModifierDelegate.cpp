@@ -155,13 +155,12 @@ QString BondsComputePropertyModifierDelegate::ComputeEngine::inputVariableTable(
 ******************************************************************************/
 void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 {
-	task()->setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
-
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(outputProperty()->size());
+	setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
+	setProgressMaximum(outputProperty()->size());
+	setProgressValue(0);
 
 	// Parallelized loop over all bonds.
-	parallelForChunks(outputProperty()->size(), *task(), [this](size_t startIndex, size_t count, Task& promise) {
+	parallelForChunks(outputProperty()->size(), *this, [this](size_t startIndex, size_t count, Task& promise) {
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
 		ConstPropertyAccess<ParticleIndexPair> topologyArray(_topology);
 
@@ -199,6 +198,10 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 			}
 		}
 	});
+
+	// Release data that is no longer needed to reduce memory footprint.
+	releaseWorkingData();
+	_topology.reset();
 }
 
 /******************************************************************************

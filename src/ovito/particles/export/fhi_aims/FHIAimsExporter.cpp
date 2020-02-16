@@ -24,8 +24,6 @@
 #include <ovito/particles/objects/ParticlesObject.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/stdobj/properties/PropertyAccess.h>
-#include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/app/Application.h>
 #include "FHIAimsExporter.h"
 
@@ -36,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(FHIAimsExporter);
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	// Get particle positions and types.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();

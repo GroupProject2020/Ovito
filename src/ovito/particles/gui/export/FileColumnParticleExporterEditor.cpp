@@ -24,7 +24,6 @@
 #include <ovito/particles/export/FileColumnParticleExporter.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
 #include <ovito/core/dataset/DataSetContainer.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/gui/desktop/utilities/concurrent/ProgressDialog.h>
 #include "FileColumnParticleExporterEditor.h"
 
@@ -117,9 +116,8 @@ void FileColumnParticleExporterEditor::updateParticlePropertiesList()
 
 	try {
 		// Determine the data that is available for export.
-		AsyncOperation asyncOperation(exporter->dataset()->taskManager());
-		ProgressDialog progressDialog(container(), asyncOperation.task());
-		PipelineFlowState state = exporter->getParticleData(exporter->dataset()->animationSettings()->time(), asyncOperation);
+		ProgressDialog progressDialog(container(), exporter->dataset()->taskManager());
+		PipelineFlowState state = exporter->getParticleData(exporter->dataset()->animationSettings()->time(), progressDialog.createOperation());
 		if(!state)
 			throw Exception(tr("Operation has been canceled by the user."));
 

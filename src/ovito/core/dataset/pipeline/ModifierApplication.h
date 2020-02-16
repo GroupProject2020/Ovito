@@ -73,6 +73,9 @@ public:
 	/// \brief Asks the object for the result of the upstream data pipeline.
 	SharedFuture<PipelineFlowState> evaluateInput(const PipelineEvaluationRequest& request);
 
+	/// \brief Asks the object for the result of the upstream data pipeline at several animation times.
+	Future<std::vector<PipelineFlowState>> evaluateInputMultiple(const PipelineEvaluationRequest& request, std::vector<TimePoint> times);
+
 	/// \brief Requests the preliminary computation results from the upstream data pipeline.
 	PipelineFlowState evaluateInputSynchronous(TimePoint time) const { return input() ? input()->evaluateSynchronous(time) : PipelineFlowState(); }
 

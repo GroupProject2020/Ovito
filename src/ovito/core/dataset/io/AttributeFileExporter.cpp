@@ -25,7 +25,6 @@
 #include <ovito/core/dataset/scene/SelectionSet.h>
 #include <ovito/core/dataset/data/AttributeDataObject.h>
 #include <ovito/core/dataset/animation/AnimationSettings.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "AttributeFileExporter.h"
 
 namespace Ovito {
@@ -37,7 +36,7 @@ DEFINE_PROPERTY_FIELD(AttributeFileExporter, attributesToExport);
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool AttributeFileExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool AttributeFileExporter::openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -91,9 +90,9 @@ void AttributeFileExporter::loadUserDefaults()
 * Evaluates the pipeline of the PipelineSceneNode to be exported and returns
 * the attributes list.
 ******************************************************************************/
-bool AttributeFileExporter::getAttributesMap(TimePoint time, QVariantMap& attributes, AsyncOperation& operation)
+bool AttributeFileExporter::getAttributesMap(TimePoint time, QVariantMap& attributes, SynchronousOperation operation)
 {
-	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, std::move(operation));
 	if(operation.isCanceled())
 		return false;
 
@@ -109,10 +108,10 @@ bool AttributeFileExporter::getAttributesMap(TimePoint time, QVariantMap& attrib
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool AttributeFileExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool AttributeFileExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	QVariantMap attrMap;
-	if(!getAttributesMap(time, attrMap, operation))
+	if(!getAttributesMap(time, attrMap, operation.subOperation()))
 		return false;
 
 	// Write the values of all attributes marked for export to the output file.

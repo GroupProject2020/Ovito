@@ -63,7 +63,7 @@ private:
 	/// Makes the pipeline system stop the evaluation as soon as a first error occurs in one of the modifiers.
 	bool _breakOnError = false;
 
-	/// Indicates to the downstream stages of the pipeline which animation frames they should keep in the cache.
+	/// Indicates to the upstream pipeline stages which animation frames they should keep in the cache.
 	TimeIntervalUnion _cachingIntervals;
 };
 

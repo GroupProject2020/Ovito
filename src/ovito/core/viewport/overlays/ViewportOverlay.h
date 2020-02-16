@@ -46,19 +46,18 @@ public:
 
 	/// \brief This method asks the overlay to paint its contents over the rendered image.
 	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer,
-						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) = 0;
+						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, SynchronousOperation operation) = 0;
 
 	/// \brief This method asks the overlay to paint its contents over the given interactive viewport.
 	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter,
-						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) = 0;
-
+						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, SynchronousOperation operation) = 0;
 
 	/// \brief Lets the overlay render its 3d content.
 	/// \param vp The viewport into which to render the graphical content.
 	/// \param renderer The renderer that should be used to produce the visualization.
 	///
 	/// The default implementation of this method does nothing.
-	virtual void render3D(Viewport* vp, TimePoint time, SceneRenderer* renderer, AsyncOperation& operation) {}
+	virtual void render3D(Viewport* vp, TimePoint time, SceneRenderer* renderer, SynchronousOperation operation) {}
 
 	/// \brief Moves the position of the layer in the viewport by the given amount,
 	///        which is specified as a fraction of the viewport render size.

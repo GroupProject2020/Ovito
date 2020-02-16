@@ -64,13 +64,13 @@ public:
 protected:
 
 	/// \brief This is called once for every output file to be written and before exportData() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation) override;
 
 	/// \brief This is called once for every output file written after exportData() has been called.
 	virtual void closeOutputFile(bool exportCompleted) override;
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation) override;
 
 	/// Returns the current file this exporter is writing to.
 	QFile& outputFile() { return _outputFile; }

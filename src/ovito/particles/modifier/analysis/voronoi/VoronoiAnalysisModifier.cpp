@@ -143,8 +143,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 ******************************************************************************/
 void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Performing Voronoi analysis"));
-	task()->beginProgressSubSteps(_computePolyhedra ? 2 : 1);
+	setProgressText(tr("Performing Voronoi analysis"));
+	beginProgressSubSteps(_computePolyhedra ? 2 : 1);
 
 	// Stores the starting vertex index and the vertex count for each Voronoi polyhedron. 
 	std::vector<std::pair<SurfaceMeshData::vertex_index, SurfaceMeshData::size_type>> polyhedraVertices;
@@ -382,14 +382,14 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			}
 			if(!count) return;
 
-			task()->setProgressValue(0);
-			task()->setProgressMaximum(count);
+			setProgressValue(0);
+			setProgressMaximum(count);
 
 			voro::c_loop_all cl(voroContainer);
 			voro::voronoicell_neighbor v;
 			if(cl.start()) {
 				do {
-					if(!task()->incrementProgressValue())
+					if(!incrementProgressValue())
 						return;
 					if(!voroContainer.compute_cell(v,cl))
 						continue;
@@ -418,14 +418,14 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			}
 
 			if(!count) return;
-			task()->setProgressValue(0);
-			task()->setProgressMaximum(count);
+			setProgressValue(0);
+			setProgressMaximum(count);
 
 			voro::c_loop_all cl(voroContainer);
 			voro::voronoicell_neighbor v;
 			if(cl.start()) {
 				do {
-					if(!task()->incrementProgressValue())
+					if(!incrementProgressValue())
 						return;
 					if(!voroContainer.compute_cell(v,cl))
 						continue;
@@ -443,7 +443,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 		// Prepare the nearest neighbor list generator.
 		NearestNeighborFinder nearestNeighborFinder;
-		if(!nearestNeighborFinder.prepare(positions(), _simCell, selection(), task().get()))
+		if(!nearestNeighborFinder.prepare(positions(), _simCell, selection(), this))
 			return;
 
 		// Squared particle radii (input was just radii).
@@ -469,8 +469,8 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		QMutex indexMutex;
 
 		// Perform analysis, particle-wise parallel.
-		task()->setProgressMaximum(_positions->size());
-		parallelForChunks(_positions->size(), *task(), [&](size_t startIndex, size_t chunkSize, Task& promise) {
+		setProgressMaximum(_positions->size());
+		parallelForChunks(_positions->size(), *this, [&](size_t startIndex, size_t chunkSize, Task& promise) {
 			std::vector<int> localVoronoiBuffer;
 			std::vector<size_t> localVoronoiBufferIndex;
 			for(size_t index = startIndex; chunkSize--; index++) {
@@ -531,6 +531,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 				voronoiBuffer.insert(voronoiBuffer.end(), localVoronoiBuffer.cbegin(), localVoronoiBuffer.cend());
 			}
 		});
+		if(isCanceled()) return;
 	}
 
 	if(maxFaceOrders()) {
@@ -556,16 +557,16 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 	// Finalize the polyhedral mesh.
 	if(_computePolyhedra) {
-		task()->nextProgressSubStep();
-		task()->beginProgressSubStepsWithWeights({1,12,1,1,1});
+		nextProgressSubStep();
+		beginProgressSubStepsWithWeights({1,12,1,1,1});
 
 		// First, connect adjacent faces from the same Voronoi cell.
 		_polyhedraMesh.connectOppositeHalfedges();
 
 		// The polyhedral cells should now be closed manifolds.
 		OVITO_ASSERT(_polyhedraMesh.topology()->isClosed());
-		task()->nextProgressSubStep();
-		task()->setProgressMaximum(_polyhedraMesh.faceCount());
+		nextProgressSubStep();
+		setProgressMaximum(_polyhedraMesh.faceCount());
 
 		// Merge mesh vertices that are shared by adjacent Voronoi polyhedra.
 
@@ -576,7 +577,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 		// Iterate over all Voronoi faces.
 		for(SurfaceMeshData::face_index face = 0; face < _polyhedraMesh.faceCount(); face++) {
-			if(!task()->setProgressValueIntermittent(face)) return;
+			if(!setProgressValueIntermittent(face)) return;
 			SurfaceMeshData::region_index region = _polyhedraMesh.faceRegion(face);
 
 			// We know for each Voronoi face which Voronoi polyhedron is on the other side. 
@@ -658,30 +659,30 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			}
 			while(edge != ffe);
 		}
-		task()->nextProgressSubStep();
+		nextProgressSubStep();
 
 		// Transfer edges from vertices that are going to be deleted to ramining vertices.
 		for(SurfaceMeshData::edge_index edge = 0; edge < _polyhedraMesh.edgeCount(); edge++) {
 			SurfaceMeshData::vertex_index new_vertex = parents[_polyhedraMesh.vertex2(edge)];
 			_polyhedraMesh.topology()->transferFaceBoundaryToVertex(edge, new_vertex);
-			if(task()->isCanceled()) return;
+			if(isCanceled()) return;
 		}
-		task()->nextProgressSubStep();
+		nextProgressSubStep();
 
 		// Delete unused vertices.
 		for(SurfaceMeshData::vertex_index vertex = _polyhedraMesh.vertexCount() - 1; vertex >= 0; vertex--) {
 			if(parents[vertex] != vertex) {
 				_polyhedraMesh.deleteVertex(vertex);
-				if(task()->isCanceled()) return;
+				if(isCanceled()) return;
 			}
 		}
-		task()->nextProgressSubStep();
-		task()->setProgressMaximum(_polyhedraMesh.faceCount());
+		nextProgressSubStep();
+		setProgressMaximum(_polyhedraMesh.faceCount());
 
 		// Connect pairs of internal Voronoi faces.
 		for(SurfaceMeshData::face_index face = 0; face < _polyhedraMesh.faceCount(); face++) {
 			if(_polyhedraMesh.hasOppositeFace(face)) continue;
-			if(!task()->setProgressValueIntermittent(face)) return;
+			if(!setProgressValueIntermittent(face)) return;
 
 			// We know for each Voronoi face which Voronoi polyhedron is on the other side.
 			SurfaceMeshData::region_index adjacentRegion = adjacentCellArray[face];
@@ -713,10 +714,16 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		// Remove the "Adjacent Cell" property from the mesh faces, because the user is typically not interested in it.
 		_polyhedraMesh.removeFaceProperty(_adjacentCellProperty);
 
-		task()->endProgressSubSteps();
+		endProgressSubSteps();
 	}
 
-	task()->endProgressSubSteps();
+	endProgressSubSteps();
+
+	// Release data that is no longer needed.
+	_positions.reset();
+	_selection.reset();
+	_particleIdentifiers.reset();
+	decltype(_radii){}.swap(_radii);
 }
 
 /******************************************************************************

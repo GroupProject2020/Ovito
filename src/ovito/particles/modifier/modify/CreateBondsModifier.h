@@ -87,14 +87,6 @@ private:
 					_moleculeIDs(std::move(moleculeIDs)),
 					_inputFingerprint(std::move(fingerprint)) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_particleTypes.reset();
-			_moleculeIDs.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

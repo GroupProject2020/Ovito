@@ -101,11 +101,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 ******************************************************************************/
 void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 {
-	task()->setProgressText(tr("Performing adaptive common neighbor analysis"));
+	setProgressText(tr("Performing adaptive common neighbor analysis"));
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(MAX_NEIGHBORS);
-	if(!neighFinder.prepare(positions(), cell(), selection(), task().get()))
+	if(!neighFinder.prepare(positions(), cell(), selection(), this))
 		return;
 
 	// Create output storage.
@@ -113,13 +113,13 @@ void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 
 	// Perform analysis on each particle.
 	if(!selection()) {
-		parallelFor(positions()->size(), *task(), [&](size_t index) {
+		parallelFor(positions()->size(), *this, [&](size_t index) {
 			output[index] = determineStructureAdaptive(neighFinder, index, typesToIdentify());
 		});
 	}
 	else {
 		ConstPropertyAccess<int> selectionData(selection());
-		parallelFor(positions()->size(), *task(), [&](size_t index) {
+		parallelFor(positions()->size(), *this, [&](size_t index) {
 			// Skip particles that are not included in the analysis.
 			if(selectionData[index])
 				output[index] = determineStructureAdaptive(neighFinder, index, typesToIdentify());
@@ -127,6 +127,9 @@ void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 				output[index] = OTHER;
 		});
 	}
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
 }
 
 /******************************************************************************
@@ -134,11 +137,11 @@ void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 ******************************************************************************/
 void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 {
-	task()->setProgressText(tr("Performing common neighbor analysis"));
+	setProgressText(tr("Performing common neighbor analysis"));
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoff, positions(), cell(), selection(), task().get()))
+	if(!neighborListBuilder.prepare(_cutoff, positions(), cell(), selection(), this))
 		return;
 
 	// Create output storage.
@@ -146,13 +149,13 @@ void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 
 	// Perform analysis on each particle.
 	if(!selection()) {
-		parallelFor(positions()->size(), *task(), [&](size_t index) {
+		parallelFor(positions()->size(), *this, [&](size_t index) {
 			output[index] = determineStructureFixed(neighborListBuilder, index, typesToIdentify());
 		});
 	}
 	else {
 		ConstPropertyAccess<int> selectionData(selection());
-		parallelFor(positions()->size(), *task(), [&](size_t index) {
+		parallelFor(positions()->size(), *this, [&](size_t index) {
 			// Skip particles that are not included in the analysis.
 			if(selectionData[index])
 				output[index] = determineStructureFixed(neighborListBuilder, index, typesToIdentify());
@@ -160,6 +163,9 @@ void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 				output[index] = OTHER;
 		});
 	}
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
 }
 
 /******************************************************************************
@@ -167,7 +173,7 @@ void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 ******************************************************************************/
 void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 {
-	task()->setProgressText(tr("Performing common neighbor analysis"));
+	setProgressText(tr("Performing common neighbor analysis"));
 
 	// Prepare particle bond map.
 	ParticleBondMap bondMap(bondTopology(), bondPeriodicImages());
@@ -178,7 +184,7 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 	ConstPropertyAccess<ParticleIndexPair> bonds(bondTopology());
 	ConstPropertyAccess<Vector3I> bondPeriodicImagesData(bondPeriodicImages());
 	PropertyAccess<Vector3I> cnaIndicesData(cnaIndices());
-	parallelFor(bonds.size(), *task(), [&](size_t bondIndex) {
+	parallelFor(bonds.size(), *this, [&](size_t bondIndex) {
 		size_t currentBondParticle1 = bonds[bondIndex][0];
 		size_t currentBondParticle2 = bonds[bondIndex][1];
 		if(currentBondParticle1 >= positions()->size()) return;
@@ -231,7 +237,7 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		cnaIndicesData[bondIndex][1] = numCommonNeighborBonds;
 		cnaIndicesData[bondIndex][2] = maxChainLength;
 	});
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 	if(maxNeighborLimitExceeded)
 		throw Exception(tr("Two of the particles have more than 32 common neighbors, which is the built-in limit. Cannot perform CNA in this case."));
@@ -243,7 +249,7 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 	ConstPropertyAccess<int> selectionData(selection());
 	
 	// Classify particles.
-	parallelFor(positions()->size(), *task(), [&](size_t particleIndex) {
+	parallelFor(positions()->size(), *this, [&](size_t particleIndex) {
 
 		int n421 = 0;
 		int n422 = 0;
@@ -280,6 +286,11 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		else
 			output[particleIndex] = OTHER;
 	});
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
+	_bondTopology.reset();
+	_bondPeriodicImages.reset();
 }
 
 /******************************************************************************

@@ -26,8 +26,6 @@
 #include <ovito/mesh/surface/SurfaceMesh.h>
 #include <ovito/core/utilities/io/CompressedTextWriter.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
-#include <ovito/core/utilities/concurrent/TaskManager.h>
 #include <ovito/stdobj/simcell/SimulationCellObject.h>
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include "CAExporter.h"
@@ -40,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(CAExporter);
  * This is called once for every output file to be written and before
  * exportFrame() is called.
  *****************************************************************************/
-bool CAExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool CAExporter::openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -68,10 +66,10 @@ void CAExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	// Evaluate data pipeline.
-	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation.subOperation());
 	if(operation.isCanceled())
 		return false;
 

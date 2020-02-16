@@ -22,7 +22,6 @@
 
 #include <ovito/core/Core.h>
 #include <ovito/core/app/Application.h>
-#include <ovito/core/utilities/concurrent/TaskWatcher.h>
 #include <ovito/core/dataset/DataSet.h>
 #include "AnimationSettings.h"
 
@@ -113,7 +112,6 @@ void AnimationSettings::onTimeChanged()
 	// Wait until scene is complete, then generate a timeChangeComplete event.
 	_sceneReadyFuture = dataset()->whenSceneReady().then(executor(), [this]() {
 		_isTimeChanging = false;
-		_sceneReadyFuture.reset();
 		Q_EMIT timeChangeComplete();
 	});
 }
@@ -245,13 +243,9 @@ void AnimationSettings::continuePlaybackAtTime(TimePoint time)
 	setTime(time);
 
 	if(isPlaybackActive()) {
-		
-		// Tell DataSet to make the scene ready at the current animation frame.
-		SharedFuture<> playbackFrameReadyFuture = dataset()->whenSceneReady();
-
 		// Once the scene is ready, schedule the next animation frame.
-		playbackFrameReadyFuture.finally(executor(), false, [this, future = playbackFrameReadyFuture]() {
-			if(future.isCanceled())
+		_sceneReadyFuture.finally(executor(), false, [this](const TaskPtr& task) {
+			if(task->isCanceled())
 				stopAnimationPlayback();
 			else
 				scheduleNextAnimationFrame();

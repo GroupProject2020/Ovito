@@ -24,7 +24,6 @@
 #include <ovito/core/viewport/ViewportWindowInterface.h>
 #include <ovito/core/viewport/Viewport.h>
 #include <ovito/core/rendering/RenderSettings.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "PickingSceneRenderer.h"
 
 namespace Ovito {
@@ -97,13 +96,13 @@ void PickingSceneRenderer::initializeGLState()
 /******************************************************************************
 * Renders the current animation frame.
 ******************************************************************************/
-bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
+bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, SynchronousOperation operation)
 {
 	// Clear previous object records.
 	reset();
 
 	// Let the base class do the main rendering work.
-	if(!ViewportSceneRenderer::renderFrame(frameBuffer, stereoTask, operation))
+	if(!ViewportSceneRenderer::renderFrame(frameBuffer, stereoTask, std::move(operation)))
 		return false;
 
 	// Clear OpenGL error state, so we start fresh for the glReadPixels() call below.
@@ -151,7 +150,7 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 	}
 #endif
 
-	return !operation.isCanceled();
+	return true;
 }
 
 /******************************************************************************

@@ -48,7 +48,7 @@ class RemoteFileJob : public QObject
 public:
 
 	/// Constructor.
-	RemoteFileJob(QUrl url, TaskPtr promiseState);
+	RemoteFileJob(QUrl url, PromiseBase& promise);
 
 	/// Returns the URL being accessed.
 	const QUrl& url() const { return _url; }
@@ -83,11 +83,8 @@ protected:
 	/// The SSH connection.
 	Ovito::Ssh::SshConnection* _connection = nullptr;
 
-    /// The associated future interface of the job.
-    TaskPtr _promiseState;
-
-	/// This is for listening to signals from the promise object.
-	TaskWatcher* _promiseWatcher = nullptr;
+    /// The associated asynchronous task of the job.
+    PromiseBase& _promise;
 
     /// Indicates whether this job is currently active.
     bool _isActive = false;
@@ -109,8 +106,14 @@ class DownloadRemoteFileJob : public RemoteFileJob
 public:
 
 	/// Constructor.
-	DownloadRemoteFileJob(QUrl url, Promise<FileHandle>&& promise) :
-		RemoteFileJob(std::move(url), promise.task()), _promise(std::move(promise)) {}
+	DownloadRemoteFileJob(QUrl url, TaskManager& taskManager) :
+		RemoteFileJob(std::move(url), _promise), 
+		_promise(Promise<FileHandle>::createAsynchronousOperation(taskManager, false)) {}
+
+	/// Returns a future yielding the file downloaded by this job.
+	SharedFuture<FileHandle> sharedFuture() {
+		return _promise.sharedFuture();
+	}
 
 protected:
 
@@ -162,8 +165,14 @@ class ListRemoteDirectoryJob : public RemoteFileJob
 public:
 
 	/// Constructor.
-	ListRemoteDirectoryJob(QUrl url, Promise<QStringList>&& promise) :
-		RemoteFileJob(std::move(url), promise.task()), _promise(std::move(promise)) {}
+	ListRemoteDirectoryJob(QUrl url, TaskManager& taskManager) :
+		RemoteFileJob(std::move(url), _promise), 
+		_promise(Promise<QStringList>::createAsynchronousOperation(taskManager, false)) {}
+
+	/// Returns a future yielding the file list downloaded by this job.
+	Future<QStringList> future() {
+		return _promise.future();
+	}
 
 protected:
 

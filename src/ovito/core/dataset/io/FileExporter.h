@@ -93,7 +93,7 @@ public:
 	/// \return \c true if the output file has been successfully written;
 	///         \c false if the export operation has been canceled by the user.
 	/// \throws Util::Exception if the export operation has failed due to an error.
-	virtual bool doExport(AsyncOperation&& operation);
+	virtual bool doExport(SynchronousOperation operation);
 
 	/// Helper function that is called by sub-classes prior to file output in order to
 	/// activate the default "C" locale.
@@ -103,7 +103,7 @@ public:
 	virtual bool supportsMultiFrameFiles() const { return false; }
 
 	/// \brief Evaluates the pipeline whose data is to be exported.
-	PipelineFlowState getPipelineDataToBeExported(TimePoint time, AsyncOperation& operation, bool requestRenderState = false) const;
+	PipelineFlowState getPipelineDataToBeExported(TimePoint time, SynchronousOperation operation, bool requestRenderState = false) const;
 
 	/// \brief Returns a string with the list of available data objects of the given type.
 	QString getAvailableDataObjectList(const PipelineFlowState& state, const DataObject::OOMetaClass& objectType) const;
@@ -114,13 +114,13 @@ protected:
 	FileExporter(DataSet* dataset);
 
 	/// \brief This is called once for every output file to be written and before exportFrame() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) = 0;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation) = 0;
 
 	/// \brief This is called once for every output file written after exportFrame() has been called.
 	virtual void closeOutputFile(bool exportCompleted) = 0;
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation);
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation);
 
 private:
 

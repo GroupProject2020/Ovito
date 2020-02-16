@@ -84,17 +84,6 @@ private:
 			_bondPeriodicImages(std::move(bondPeriodicImages)),
 			_mesh(simCell) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_selection.reset();
-			_particleTypes.reset();
-			_particleIdentifiers.reset();
-			_bondTopology.reset();
-			_bondPeriodicImages.reset();
-			ComputeEngine::cleanup();
-		}
-
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
 

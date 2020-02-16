@@ -86,13 +86,13 @@ TimeInterval ReferenceConfigurationModifier::validityInterval(const PipelineEval
 
 /******************************************************************************
 * Asks the modifier for the set of animation time intervals that should be 
-* cached by the downstream pipeline.
+* cached by the upstream pipeline.
 ******************************************************************************/
 void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachingIntervals, ModifierApplication* modApp)
 {
 	AsynchronousModifier::inputCachingHints(cachingIntervals, modApp);
 
-	// Only need to communicate caching hints when reference configuration is provided by the downstream pipeline.
+	// Only need to communicate caching hints when reference configuration is provided by the upstream pipeline.
 	if(!referenceConfiguration()) {
 		if(useReferenceFrameOffset()) {
 			// When using a relative reference configuration, we need to build the corresponding set of shifted time intervals. 
@@ -106,7 +106,7 @@ void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachin
 			}
 		}
 		else {
-			// When using a static reference configuration, ask the downstream pipeline to cache the corresponding animation frame.
+			// When using a static reference configuration, ask the upstream pipeline to cache the corresponding animation frame.
 			cachingIntervals.add(modApp->sourceFrameToAnimationTime(referenceFrameNumber()));
 		}
 	}
@@ -114,15 +114,15 @@ void ReferenceConfigurationModifier::inputCachingHints(TimeIntervalUnion& cachin
 
 /******************************************************************************
 * Is called by the ModifierApplication to let the modifier adjust the 
-* time interval of a TargetChanged event received from the downstream pipeline 
-* before it is propagated to the upstream pipeline.
+* time interval of a TargetChanged event received from the upstream pipeline 
+* before it is propagated to the downstream pipeline.
 ******************************************************************************/
 void ReferenceConfigurationModifier::restrictInputValidityInterval(TimeInterval& iv) const
 {
 	AsynchronousModifier::restrictInputValidityInterval(iv);
 
 	if(!referenceConfiguration()) {
-		// If the downstream pipeline changes, all computed output frames of the modifier become invalid.
+		// If the upstream pipeline changes, all computed output frames of the modifier become invalid.
 		iv.setEmpty();
 	}
 }
@@ -168,7 +168,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 		referenceFrame = referenceFrameNumber();
 	}
 
-	// Obtain the reference positions of the particles, either from the downstream pipeline or from a user-specified reference data source.
+	// Obtain the reference positions of the particles, either from the upstream pipeline or from a user-specified reference data source.
 	SharedFuture<PipelineFlowState> refState;
 	if(!referenceConfiguration()) {
 		// Convert frame to animation time.
@@ -179,7 +179,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 		referenceRequest.setTime(referenceTime);
 		inputCachingHints(referenceRequest.modifiableCachingIntervals(), modApp);
 
-		// Send the request to the downstream pipeline.
+		// Send the request to the upstream pipeline.
 		refState = modApp->evaluateInput(referenceRequest);
 	}
 	else {
@@ -281,8 +281,6 @@ ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
 ******************************************************************************/
 bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(bool requireCompleteCurrentToRefMapping, bool requireCompleteRefToCurrentMapping)
 {
-	OVITO_ASSERT(task());
-
 	// Build particle-to-particle index maps.
 	_currentToRefIndexMap.resize(positions()->size());
 	_refToCurrentIndexMap.resize(refPositions()->size());
@@ -300,7 +298,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			index++;
 		}
 
-		if(task()->isCanceled())
+		if(isCanceled())
 			return false;
 
 		// Check for duplicate identifiers in current configuration
@@ -313,7 +311,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			index++;
 		}
 
-		if(task()->isCanceled())
+		if(isCanceled())
 			return false;
 
 		// Build index maps.
@@ -329,7 +327,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			++id;
 		}
 
-		if(task()->isCanceled())
+		if(isCanceled())
 			return false;
 
 		id = refIdentifiersArray.cbegin();
@@ -355,7 +353,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 		std::iota(_currentToRefIndexMap.begin(), _currentToRefIndexMap.end(), size_t(0));
 	}
 
-	return !task()->isCanceled();
+	return !isCanceled();
 }
 
 }	// End of namespace

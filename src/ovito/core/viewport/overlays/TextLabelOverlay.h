@@ -27,7 +27,6 @@
 #include <ovito/core/dataset/scene/PipelineSceneNode.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include <ovito/core/rendering/FrameBuffer.h>
 #include "ViewportOverlay.h"
 
@@ -48,7 +47,7 @@ public:
 	Q_INVOKABLE TextLabelOverlay(DataSet* dataset);
 
 	/// This method asks the overlay to paint its contents over the rendered image.
-	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
+	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, SynchronousOperation operation) override {
 		if(sourceNode()) {
 			PipelineEvaluationFuture pipelineEvaluation = sourceNode()->evaluatePipeline(time);
 			if(!operation.waitForFuture(pipelineEvaluation))
@@ -63,7 +62,7 @@ public:
 	}
 
 	/// This method asks the overlay to paint its contents over the given interactive viewport.
-	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, SynchronousOperation operation) override {
 		const PipelineFlowState& flowState = sourceNode() ? sourceNode()->evaluatePipelineSynchronous(true) : PipelineFlowState();
 		renderImplementation(painter, renderSettings, flowState);
 	}

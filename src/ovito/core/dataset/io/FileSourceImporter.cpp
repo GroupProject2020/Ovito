@@ -216,8 +216,8 @@ OORef<PipelineSceneNode> FileSourceImporter::importFile(std::vector<QUrl> source
 	if(importMode != ReplaceSelected && importMode != DontAddToScene) {
 		// Adjust viewports to completely show the newly imported object.
 		// This needs to be done after the data has been completely loaded.
-		dataset()->whenSceneReady().finally(dataset()->executor(), [dataset = dataset()]() {
-			if(dataset->viewportConfig())
+		dataset()->whenSceneReady().finally(dataset()->executor(), [dataset = dataset()](const TaskPtr& task) {
+			if(!task->isCanceled() && dataset->viewportConfig())
 				dataset->viewportConfig()->zoomToSelectionExtents();
 		});
 	}

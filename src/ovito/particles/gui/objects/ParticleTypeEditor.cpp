@@ -34,7 +34,6 @@
 #include <ovito/gui/desktop/mainwin/MainWindow.h>
 #include <ovito/core/app/PluginManager.h>
 #include <ovito/core/dataset/io/FileSourceImporter.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "ParticleTypeEditor.h"
 
 namespace Ovito { namespace Particles {
@@ -188,9 +187,8 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 					fileImporterType = fileDialog.selectedFileImporterType();
 				}
 				// Load the geometry from the selected file.
-				AsyncOperation loadOperation(ptype->dataset()->taskManager());
-				ProgressDialog progressDialog(container(), loadOperation.task(), tr("Loading mesh file"));
-				ptype->loadShapeMesh(selectedFile, std::move(loadOperation), fileImporterType);
+				ProgressDialog progressDialog(container(), ptype->dataset()->taskManager(), tr("Loading mesh file"));
+				ptype->loadShapeMesh(selectedFile, progressDialog.createOperation(), fileImporterType);
 			});
 		}
 	});

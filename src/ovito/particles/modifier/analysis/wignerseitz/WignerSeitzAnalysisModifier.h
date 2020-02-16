@@ -71,14 +71,6 @@ private:
 			_referenceIdentifierProperty(std::move(referenceIdentifierProperty)),
 			_referenceState(std::move(referenceState)) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_typeProperty.reset();
-			_referenceTypeProperty.reset();
-			_referenceIdentifierProperty.reset();
-			RefConfigEngineBase::cleanup();
-		}
-
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

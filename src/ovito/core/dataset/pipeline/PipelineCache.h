@@ -27,7 +27,6 @@
 #include <ovito/core/dataset/animation/TimeInterval.h>
 #include <ovito/core/dataset/pipeline/PipelineFlowState.h>
 #include <ovito/core/dataset/pipeline/PipelineEvaluation.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 
 namespace Ovito {
 
@@ -124,7 +123,10 @@ private:
 	bool _precomputeAllFrames = false;
 
 	/// The asynchronous task that precomputes the pipeline output for all animation frames.
-	AsyncOperation _precomputeFramesOperation;
+	Promise<> _precomputeFramesOperation;
+
+	/// The future for the next precompute frame. 
+	SharedFuture<PipelineFlowState> _precomputeFrameFuture;
 
 #ifdef OVITO_DEBUG
 	/// While this flag is set, the cache may not be invalidated.

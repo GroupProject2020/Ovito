@@ -69,14 +69,6 @@ public:
 			_structures(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::StructureTypeProperty, false)),
 			_inputFingerprint(std::move(fingerprint)) {}
 
-		/// This method is called by the system after the computation was successfully completed.
-		virtual void cleanup() override {
-			_positions.reset();
-			_selection.reset();
-			decltype(_typesToIdentify){}.swap(_typesToIdentify);
-			ComputeEngine::cleanup();
-		}
-
 		/// Injects the computed results into the data pipeline.
 		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
@@ -102,6 +94,13 @@ public:
 		}
 
 	protected:
+
+		/// Releases data that is no longer needed.
+		void releaseWorkingData() {
+			_positions.reset();
+			_selection.reset();
+			decltype(_typesToIdentify){}.swap(_typesToIdentify);
+		}
 
 		/// Gives subclasses the possibility to post-process per-particle structure types
 		/// before they are output to the data pipeline.

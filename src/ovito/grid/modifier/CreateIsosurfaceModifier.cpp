@@ -151,7 +151,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 ******************************************************************************/
 void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 {
-	task()->setProgressText(tr("Constructing isosurface"));
+	setProgressText(tr("Constructing isosurface"));
 
 	if(_mesh.cell().is2D())
 		throw Exception(tr("Cannot construct isosurfaces for two-dimensional voxel grids."));
@@ -162,7 +162,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	ConstPropertyAccess<FloatType, true> data(property());
 	MarchingCubes mc(_mesh, _gridShape[0], _gridShape[1], _gridShape[2], data.cbegin() + _vectorComponent, property()->componentCount(), false);
-	if(!mc.generateIsosurface(_isolevel, *task()))
+	if(!mc.generateIsosurface(_isolevel, *this))
 		return;
 
 	// Transform mesh vertices from orthogonal grid space to world space.
@@ -175,12 +175,12 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	// Flip surface orientation if cell matrix is a mirror transformation.
 	if(tm.determinant() < 0)
 		_mesh.flipFaces();
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	if(!_mesh.connectOppositeHalfedges())
 		throw Exception(tr("Something went wrong. Isosurface mesh is not closed."));
-	if(task()->isCanceled())
+	if(isCanceled())
 		return;
 
 	// Determine range of input field values.
@@ -197,6 +197,9 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 		int binIndex = (v - minValue()) / binSize;
 		histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 	}
+
+	// Release data that is no longer needed to reduce memory footprint.
+	_property.reset();
 }
 
 /******************************************************************************

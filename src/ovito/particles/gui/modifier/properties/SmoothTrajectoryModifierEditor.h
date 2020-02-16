@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2016 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,17 +29,17 @@
 namespace Ovito { namespace Particles {
 
 /**
- * A properties editor for the InterpolateTrajectoryModifier class.
+ * A properties editor for the SmoothTrajectoryModifier class.
  */
-class InterpolateTrajectoryModifierEditor : public ModifierPropertiesEditor
+class SmoothTrajectoryModifierEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(InterpolateTrajectoryModifierEditor)
+	OVITO_CLASS(SmoothTrajectoryModifierEditor)
 
 public:
 
 	/// Default constructor
-	Q_INVOKABLE InterpolateTrajectoryModifierEditor() {}
+	Q_INVOKABLE SmoothTrajectoryModifierEditor() {}
 
 protected:
 

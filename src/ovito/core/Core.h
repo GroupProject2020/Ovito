@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -91,6 +91,9 @@
 #ifndef OVITO_DISABLE_THREADING
     #include <QException>
 #endif
+#ifndef Q_OS_WASM
+    #include <QNetworkAccessManager>
+#endif
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
 #  error "OVITO requires Qt 5.6 or newer."
@@ -122,4 +125,7 @@
 #include <ovito/core/utilities/Exception.h>
 #include <ovito/core/utilities/linalg/LinAlg.h>
 #include <ovito/core/utilities/Color.h>
+#include <ovito/core/utilities/concurrent/Future.h>
+#include <ovito/core/utilities/concurrent/SharedFuture.h>
+#include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/oo/OvitoObject.h>

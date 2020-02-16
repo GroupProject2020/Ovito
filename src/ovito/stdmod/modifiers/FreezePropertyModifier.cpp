@@ -107,12 +107,12 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(const PipelineEvaluat
 		}
 	}
 
-	// Set up the downstream pipeline request.
-	PipelineEvaluationRequest downstreamRequest = request;
-	downstreamRequest.setTime(freezeTime());
+	// Set up the upstream pipeline request.
+	PipelineEvaluationRequest upstreamRequest = request;
+	upstreamRequest.setTime(freezeTime());
 
-	// Request the frozen state from the downstream pipeline.
-	return modApp->evaluateInput(downstreamRequest)
+	// Request the frozen state from the upstream pipeline.
+	return modApp->evaluateInput(upstreamRequest)
 		.then(executor(), [this, time = request.time(), modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
 
 			// Extract the input property.

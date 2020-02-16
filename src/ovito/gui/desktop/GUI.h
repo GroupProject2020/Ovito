@@ -41,7 +41,6 @@
 #include <QtDebug>
 #include <QtGui>
 #include <QCommandLineParser>
-#include <QNetworkAccessManager>
 
 /******************************************************************************
 * Forward declaration of classes.

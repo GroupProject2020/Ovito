@@ -225,21 +225,21 @@ bool ParticlesComputePropertyModifierDelegate::ComputeEngine::isTimeDependent()
 ******************************************************************************/
 void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 {
-	task()->setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
+	setProgressText(tr("Computing property '%1'").arg(outputProperty()->name()));
 
 	// Only used when neighbor mode is active.
 	CutoffNeighborFinder neighborFinder;
 	if(neighborMode()) {
 		// Prepare the neighbor list.
-		if(!neighborFinder.prepare(_cutoff, positions(), _neighborEvaluator->simCell(), {}, task().get()))
+		if(!neighborFinder.prepare(_cutoff, positions(), _neighborEvaluator->simCell(), {}, this))
 			return;
 	}
 
-	task()->setProgressValue(0);
-	task()->setProgressMaximum(positions()->size());
+	setProgressMaximum(positions()->size());
+	setProgressValue(0);
 
 	// Parallelized loop over all particles.
-	parallelForChunks(positions()->size(), *task(), [this, &neighborFinder](size_t startIndex, size_t count, Task& promise) {
+	parallelForChunks(positions()->size(), *this, [this, &neighborFinder](size_t startIndex, size_t count, Task& task) {
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
 		ParticleExpressionEvaluator::Worker neighborWorker(*_neighborEvaluator);
 
@@ -268,10 +268,10 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 
 			// Update progress indicator.
 			if((particleIndex % 1024) == 0)
-				promise.incrementProgressValue(1024);
+				task.incrementProgressValue(1024);
 
 			// Exit if operation was canceled.
-			if(promise.isCanceled())
+			if(task.isCanceled())
 				return;
 
 			// Skip unselected particles if requested.
@@ -312,6 +312,12 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 			}
 		}
 	});
+
+	// Release data that is no longer needed to reduce memory footprint.
+	releaseWorkingData();
+	_positions.reset();
+	_neighborExpressions.clear();
+	_neighborEvaluator.reset();
 }
 
 /******************************************************************************

@@ -92,27 +92,6 @@ public:
     /// \note This function is thread-safe.
 	void registerTask(const TaskPtr& task);
 
-    /// \brief Creates a new promise for an asynchronous operation executing in the main thread and registers it with the TaskManager.
-    /// \param startedState If true, the new task is put into the 'started' state right away. Otherwise, it must be put into the 'started' via PromiseBase::setStarted() by the caller.
-    /// \tparam R The result value type of the operation.
-    /// \return The Promise which allows controlling the task and setting the result value of the operation.
-    /// \note This method may only be called from the main thread.
-	template<typename... R>
-	Promise<R...> createMainThreadOperation(bool startedState) {
-		return createMainThreadOperationPromise<Promise<R...>>(startedState);
-	}
-
-    // Same as the method above, but expecting the promise type instead of a parameter pack.
-	template<typename promise_type>
-	promise_type createMainThreadOperationPromise(bool startedState) {
-		using tuple_type = typename promise_type::tuple_type;
-		promise_type promise(std::make_shared<TaskWithResultStorage<MainThreadTask, tuple_type>>(
-			typename TaskWithResultStorage<MainThreadTask, tuple_type>::no_result_init_t(),
-			startedState ? Task::State(Task::Started) : Task::NoState, this));
-		addTaskInternal(promise.task());
-		return promise;
-	}
-
     /// \brief Waits for the given future to be fulfilled and displays a modal progress dialog to show the progress.
     /// \return False if the operation has been cancelled by the user.
     ///
@@ -187,7 +166,7 @@ private:
 	/// The dataset container owning this task manager (may be NULL).
 	DataSetContainer* _datasetContainer;
 
-	friend class AsyncOperation; // Needed by AsyncOperation::watcher()
+	friend class SynchronousOperation; // Needed by SynchronousOperation::create()
 };
 
 }	// End of namespace

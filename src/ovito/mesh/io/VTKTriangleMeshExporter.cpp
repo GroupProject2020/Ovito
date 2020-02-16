@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,6 @@
 #include <ovito/mesh/Mesh.h>
 #include <ovito/mesh/surface/RenderableSurfaceMesh.h>
 #include <ovito/core/app/Application.h>
-#include <ovito/core/utilities/concurrent/AsyncOperation.h>
 #include "VTKTriangleMeshExporter.h"
 
 namespace Ovito { namespace Mesh {
@@ -34,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(VTKTriangleMeshExporter);
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool VTKTriangleMeshExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
+bool VTKTriangleMeshExporter::openOutputFile(const QString& filePath, int numberOfFrames, SynchronousOperation operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -62,12 +61,12 @@ void VTKTriangleMeshExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, SynchronousOperation operation)
 {
 	// Evaluate pipeline.
 	// Note: We are requesting the rendering state from the pipeline,
 	// because we are interested in renderable triangle meshes.
-	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation, true);
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation.subOperation(), true);
 	if(operation.isCanceled())
 		return false;
 

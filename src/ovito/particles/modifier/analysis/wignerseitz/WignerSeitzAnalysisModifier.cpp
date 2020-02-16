@@ -122,7 +122,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 ******************************************************************************/
 void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Performing Wigner-Seitz cell analysis"));
+	setProgressText(tr("Performing Wigner-Seitz cell analysis"));
 
 	if(affineMapping() == TO_CURRENT_CELL)
 		throw Exception(tr("Remapping coordinates to the current cell is not supported by the Wigner-Seitz analysis routine. Only remapping to the reference cell or no mapping at all are supported options."));
@@ -133,7 +133,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 
 	// Prepare the closest-point query structure.
 	NearestNeighborFinder neighborTree(0);
-	if(!neighborTree.prepare(refPositions(), refCell(), {}, task().get()))
+	if(!neighborTree.prepare(refPositions(), refCell(), {}, this))
 		return;
 
 	// Determine the number of components of the occupancy property.
@@ -171,7 +171,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	ConstPropertyAccess<Point3> positionsArray(positions());
 	if(ncomponents == 1) {
 		// Without per-type occupancies:
-		parallelFor(positions()->size(), *task(), [&](size_t index) {
+		parallelFor(positions()->size(), *this, [&](size_t index) {
 			const Point3& p = positionsArray[index];
 			FloatType closestDistanceSq;
 			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
@@ -184,7 +184,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	else {
 		// With per-type occupancies:
 		ConstPropertyAccess<int> particleTypesArray(particleTypes());
-		parallelFor(positions()->size(), *task(), [&](size_t index) {
+		parallelFor(positions()->size(), *this, [&](size_t index) {
 			const Point3& p = positionsArray[index];
 			FloatType closestDistanceSq;
 			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
@@ -195,7 +195,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 				atomsToSites[index] = closestIndex;
 		});
 	}
-	if(task()->isCanceled()) return;
+	if(isCanceled()) return;
 
 	// Create output storage.
 	setOccupancyNumbers(std::make_shared<PropertyStorage>(
@@ -252,6 +252,12 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 			else if(oc > 1) incrementInterstitialCount(oc - 1);
 		}
 	}
+
+	// Release data that is no longer needed.
+	releaseWorkingData();
+	_typeProperty.reset();
+	_referenceTypeProperty.reset();
+	_referenceIdentifierProperty.reset();
 }
 
 /******************************************************************************

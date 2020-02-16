@@ -48,6 +48,9 @@ public:
 	/// \brief Asks the pipeline stage to compute the results.
 	virtual SharedFuture<PipelineFlowState> evaluate(const PipelineEvaluationRequest& request) = 0;
 
+	/// \brief Asks the pipeline stage to compute the results for several animation times.
+	Future<std::vector<PipelineFlowState>> evaluateMultiple(const PipelineEvaluationRequest& request, std::vector<TimePoint> times);
+
 	/// \brief Asks the pipeline stage to compute the preliminary results in a synchronous fashion.
 	virtual PipelineFlowState evaluateSynchronous(TimePoint time) { return {}; }
 

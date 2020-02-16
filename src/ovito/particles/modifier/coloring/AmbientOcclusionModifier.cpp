@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -94,21 +94,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	TimeInterval validityInterval = input.stateValidity();
 	std::vector<FloatType> radii = particles->inputParticleRadii();
 
-	// Create the offscreen surface for rendering.
-	auto offscreenSurface = std::make_unique<QOffscreenSurface>();
-	offscreenSurface->setFormat(OpenGLSceneRenderer::getDefaultSurfaceFormat());
-	offscreenSurface->create();
-
 	// Create the AmbientOcclusionRenderer instance.
-	OORef<AmbientOcclusionRenderer> renderer(new AmbientOcclusionRenderer(dataset(), QSize(resolution, resolution), *offscreenSurface));
+	AmbientOcclusionRenderer* renderer = new AmbientOcclusionRenderer(dataset(), QSize(resolution, resolution));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, particles, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
-
-	// Make sure the renderer and the offscreen surface stay alive until the compute engine finished.
-	engine->task()->finally(dataset()->executor(), false, [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
-
-	return engine;
+	return std::make_shared<AmbientOcclusionEngine>(validityInterval, particles, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
 }
 
 /******************************************************************************
@@ -133,113 +123,128 @@ AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const T
 ******************************************************************************/
 void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 {
-	if(positions()->size() == 0)
-		return;
-	if(_boundingBox.isEmpty())
-		throw Exception(tr("Modifier input is degenerate or contains no particles."));
+	if(positions()->size() != 0) {
+		if(_boundingBox.isEmpty())
+			throw Exception(tr("Modifier input is degenerate or contains no particles."));
 
-	task()->setProgressText(tr("Computing ambient occlusion"));
+		setProgressText(tr("Computing ambient occlusion"));
 
-	_renderer->startRender(nullptr, nullptr);
-	try {
-		// The buffered particle geometry used to render the particles.
-		std::shared_ptr<ParticlePrimitive> particleBuffer;
+		_renderer->startRender(nullptr, nullptr);
+		try {
+			// The buffered particle geometry used to render the particles.
+			std::shared_ptr<ParticlePrimitive> particleBuffer;
 
-		task()->setProgressMaximum(_samplingCount);
-		for(int sample = 0; sample < _samplingCount; sample++) {
-			if(!task()->setProgressValue(sample))
-				break;
+			setProgressMaximum(_samplingCount);
+			for(int sample = 0; sample < _samplingCount; sample++) {
+				if(!setProgressValue(sample))
+					break;
 
-			// Generate lighting direction on unit sphere.
-			FloatType y = (FloatType)sample * 2 / _samplingCount - FloatType(1) + FloatType(1) / _samplingCount;
-			FloatType phi = (FloatType)sample * FLOATTYPE_PI * (FloatType(3) - sqrt(FloatType(5)));
-			Vector3 dir(cos(phi), y, sin(phi));
+				// Generate lighting direction on unit sphere.
+				FloatType y = (FloatType)sample * 2 / _samplingCount - FloatType(1) + FloatType(1) / _samplingCount;
+				FloatType phi = (FloatType)sample * FLOATTYPE_PI * (FloatType(3) - sqrt(FloatType(5)));
+				Vector3 dir(cos(phi), y, sin(phi));
 
-			// Set up view projection.
-			ViewProjectionParameters projParams;
-			projParams.viewMatrix = AffineTransformation::lookAlong(_boundingBox.center(), dir, Vector3(0,0,1));
+				// Set up view projection.
+				ViewProjectionParameters projParams;
+				projParams.viewMatrix = AffineTransformation::lookAlong(_boundingBox.center(), dir, Vector3(0,0,1));
 
-			// Transform bounding box to camera space.
-			Box3 bb = _boundingBox.transformed(projParams.viewMatrix).centerScale(FloatType(1.01));
+				// Transform bounding box to camera space.
+				Box3 bb = _boundingBox.transformed(projParams.viewMatrix).centerScale(FloatType(1.01));
 
-			// Complete projection parameters.
-			projParams.aspectRatio = 1;
-			projParams.isPerspective = false;
-			projParams.inverseViewMatrix = projParams.viewMatrix.inverse();
-			projParams.fieldOfView = FloatType(0.5) * _boundingBox.size().length();
-			projParams.znear = -bb.maxc.z();
-			projParams.zfar  = std::max(-bb.minc.z(), projParams.znear + FloatType(1));
-			projParams.projectionMatrix = Matrix4::ortho(-projParams.fieldOfView, projParams.fieldOfView,
-								-projParams.fieldOfView, projParams.fieldOfView,
-								projParams.znear, projParams.zfar);
-			projParams.inverseProjectionMatrix = projParams.projectionMatrix.inverse();
-			projParams.validityInterval = TimeInterval::infinite();
+				// Complete projection parameters.
+				projParams.aspectRatio = 1;
+				projParams.isPerspective = false;
+				projParams.inverseViewMatrix = projParams.viewMatrix.inverse();
+				projParams.fieldOfView = FloatType(0.5) * _boundingBox.size().length();
+				projParams.znear = -bb.maxc.z();
+				projParams.zfar  = std::max(-bb.minc.z(), projParams.znear + FloatType(1));
+				projParams.projectionMatrix = Matrix4::ortho(-projParams.fieldOfView, projParams.fieldOfView,
+									-projParams.fieldOfView, projParams.fieldOfView,
+									projParams.znear, projParams.zfar);
+				projParams.inverseProjectionMatrix = projParams.projectionMatrix.inverse();
+				projParams.validityInterval = TimeInterval::infinite();
 
-			_renderer->beginFrame(0, projParams, nullptr);
-			_renderer->setWorldTransform(AffineTransformation::Identity());
-			try {
-				// Create particle buffer.
-				if(!particleBuffer || !particleBuffer->isValid(_renderer)) {
-					particleBuffer = _renderer->createParticlePrimitive(ParticlePrimitive::FlatShading, ParticlePrimitive::LowQuality, ParticlePrimitive::SphericalShape, false);
-					particleBuffer->setSize(positions()->size());
-					particleBuffer->setParticlePositions(ConstPropertyAccess<Point3>(positions()).cbegin());
-					particleBuffer->setParticleRadii(_particleRadii.data());
+				_renderer->beginFrame(0, projParams, nullptr);
+				_renderer->setWorldTransform(AffineTransformation::Identity());
+				try {
+					// Create particle buffer.
+					if(!particleBuffer || !particleBuffer->isValid(_renderer)) {
+						particleBuffer = _renderer->createParticlePrimitive(ParticlePrimitive::FlatShading, ParticlePrimitive::LowQuality, ParticlePrimitive::SphericalShape, false);
+						particleBuffer->setSize(positions()->size());
+						particleBuffer->setParticlePositions(ConstPropertyAccess<Point3>(positions()).cbegin());
+						particleBuffer->setParticleRadii(_particleRadii.data());
+					}
+					particleBuffer->render(_renderer);
 				}
-				particleBuffer->render(_renderer);
-			}
-			catch(...) {
-				_renderer->endFrame(false);
-				throw;
-			}
-			_renderer->endFrame(true);
+				catch(...) {
+					_renderer->endFrame(false);
+					throw;
+				}
+				_renderer->endFrame(true);
 
-			// Extract brightness values from rendered image.
-			const QImage image = _renderer->image();
-			PropertyAccess<FloatType> brightnessValues(brightness());
-			for(int y = 0; y < _resolution; y++) {
-				const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
-				for(int x = 0; x < _resolution; x++, ++pixel) {
-					quint32 red = qRed(*pixel);
-					quint32 green = qGreen(*pixel);
-					quint32 blue = qBlue(*pixel);
-					quint32 alpha = qAlpha(*pixel);
-					quint32 id = red + (green << 8) + (blue << 16) + (alpha << 24);
-					if(id == 0)
-						continue;
-					quint32 particleIndex = id - 1;
-					OVITO_ASSERT(particleIndex < brightnessValues.size());
-					brightnessValues[particleIndex] += 1;
+				// Extract brightness values from rendered image.
+				const QImage image = _renderer->image();
+				PropertyAccess<FloatType> brightnessValues(brightness());
+				for(int y = 0; y < _resolution; y++) {
+					const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
+					for(int x = 0; x < _resolution; x++, ++pixel) {
+						quint32 red = qRed(*pixel);
+						quint32 green = qGreen(*pixel);
+						quint32 blue = qBlue(*pixel);
+						quint32 alpha = qAlpha(*pixel);
+						quint32 id = red + (green << 8) + (blue << 16) + (alpha << 24);
+						if(id == 0)
+							continue;
+						quint32 particleIndex = id - 1;
+						OVITO_ASSERT(particleIndex < brightnessValues.size());
+						brightnessValues[particleIndex] += 1;
+					}
 				}
 			}
 		}
-	}
-	catch(...) {
+		catch(...) {
+			_renderer->endRender();
+			throw;
+		}
 		_renderer->endRender();
-		throw;
-	}
-	_renderer->endRender();
 
-	if(task()->isCanceled()) return;
-	task()->setProgressValue(_samplingCount);
+		if(isCanceled()) return;
+		setProgressValue(_samplingCount);
 
-	// Normalize brightness values by particle area.
-	auto r = _particleRadii.cbegin();
-	PropertyAccess<FloatType> brightnessValues(brightness());
-	for(FloatType& b : brightnessValues) {
-		if(*r != 0)
-			b /= (*r) * (*r);
-		++r;
-	}
-
-	if(task()->isCanceled()) return;
-
-	// Normalize brightness values by global maximum.
-	FloatType maxBrightness = *boost::max_element(brightnessValues);
-	if(maxBrightness != 0) {
+		// Normalize brightness values by particle area.
+		auto r = _particleRadii.cbegin();
+		PropertyAccess<FloatType> brightnessValues(brightness());
 		for(FloatType& b : brightnessValues) {
-			b /= maxBrightness;
+			if(*r != 0)
+				b /= (*r) * (*r);
+			++r;
+		}
+
+		if(isCanceled()) return;
+
+		// Normalize brightness values by global maximum.
+		FloatType maxBrightness = *boost::max_element(brightnessValues);
+		if(maxBrightness != 0) {
+			for(FloatType& b : brightnessValues) {
+				b /= maxBrightness;
+			}
 		}
 	}
+
+	// Release data that is no longer needed to reduce memory footprint.
+	_positions.reset();
+	decltype(_particleRadii){}.swap(_particleRadii);
+	_renderer->deleteLater();
+	_renderer = nullptr;
+}
+
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+AmbientOcclusionModifier::AmbientOcclusionEngine::~AmbientOcclusionEngine() 
+{
+	if(_renderer) 
+		_renderer->deleteLater();
 }
 
 /******************************************************************************
