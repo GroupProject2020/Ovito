@@ -130,7 +130,7 @@ void AsynchronousModifier::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Destructor.
 ******************************************************************************/
-void AsynchronousModifier::ComputeEngine::~ComputeEngine()
+AsynchronousModifier::ComputeEngine::~ComputeEngine()
 {
 	// Some compute engines allocate a considerable amount of memory in small chunks,
 	// which is sometimes not released back to the OS by the C memory allocator.

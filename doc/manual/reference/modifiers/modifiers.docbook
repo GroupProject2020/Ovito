@@ -123,10 +123,6 @@
               <entry>Freezes the values of a dynamic particle property at a given animation time to make them available at other times.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.interpolate_trajectory">Interpolate&#xA0;trajectory</link></entry>
-              <entry>Computes intermediate particle positions by interpolating a sequence of coarser snapshots.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.load_trajectory">Load&#xA0;trajectory</link></entry>
               <entry>Loads time-dependent atomic positions from a separate trajectory file.</entry>
             </row>
@@ -141,6 +137,10 @@
             <row>
               <entry><link linkend="particles.modifiers.slice">Slice</link></entry>
               <entry>Cuts the structure along an infinite plane.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.smooth_trajectory">Smooth&#xA0;trajectory</link></entry>
+              <entry>Computes averaged or interpolated particle positions over a sliding time window.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.unwrap_trajectories">Unwrap&#xA0;trajectories</link></entry>
@@ -301,8 +301,6 @@
 
   <xi:include href="particles/identify_diamond.docbook"/>
 
-  <xi:include href="particles/interpolate_trajectory.docbook"/>
-
   <xi:include href="particles/invert_selection.docbook"/>
 
   <xi:include href="particles/load_trajectory.docbook"/>
@@ -322,6 +320,8 @@
   <xi:include href="particles/bin_and_reduce.docbook"/>
 
   <xi:include href="particles/slice.docbook"/>
+
+  <xi:include href="particles/smooth_trajectory.docbook"/>
 
   <xi:include href="particles/unwrap_trajectories.docbook"/>
 

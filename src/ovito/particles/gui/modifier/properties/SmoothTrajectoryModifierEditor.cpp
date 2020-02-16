@@ -36,7 +36,7 @@ SET_OVITO_OBJECT_EDITOR(SmoothTrajectoryModifier, SmoothTrajectoryModifierEditor
 ******************************************************************************/
 void SmoothTrajectoryModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
-	QWidget* rollout = createRollout(tr("Smooth trajectory"), rolloutParams, "particles.modifiers.interpolate_trajectory.html");
+	QWidget* rollout = createRollout(tr("Smooth trajectory"), rolloutParams, "particles.modifiers.smooth_trajectory.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);

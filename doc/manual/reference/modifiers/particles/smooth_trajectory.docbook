@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="particles.modifiers.smooth_trajectory"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Smooth trajectory</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/modifiers/smooth_trajectory_panel.png" format="png" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This modifier averages or interpolates the particle positions from successive snapshots of a simulation trajectory.
+    Depending on the value of the <emphasis>Smoothing window size</emphasis> parameter, the modifier will perform 
+    either an averaging of multiple input frames or a linear interpolation between two consecutive frames. 
+  </para>
+
+  <simplesect>
+    <title>Averaging mode</title>
+    <para>
+     ....
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Interpolation mode</title>
+    <para>
+      This modifier interpolates the particle positions in between successive snapshots of a simulation trajectory.
+      It can be used to create smoothly looking animations from relatively coarse sequences of simulation snapshots.
+    </para>
+    <para>
+      First, you should reduce the playback rate of the loaded simulation sequence.
+      Instead of one animation frame per simulation snapshot, OVITO will then render <emphasis>N</emphasis> animation frames per snapshot.
+      See the <link linkend="usage.animation">animation</link> section for instruction how to do this.
+      The interpolation modifier is then applied to vary the particle positions on the intermediate animation frames.
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>Periodic boundary conditions</title>
+    <para>
+      The <emphasis>Use minimum image convention</emphasis> option of the modifier activates the automatic unwrapping of 
+      particle coordinates during the interpolation computation, which is needed to handle discontinuities in the trajectories correctly. 
+      Normally you should leave this option turned on if the input particle coordinates are given in wrapped form, i.e., if the simulation 
+      code has mapped the particles back into the primary simulation cell when using periodic boundary conditions.
+    </para>
+    <para>
+      If the input particle coordinates are in unwrapped form, i.e., if the input trajectories are already continuous,
+      you can safely turn this option off. The modifier will then take the input particle coordinates as is when computing averages of 
+      consecutive snapshots.
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>See also</title>
+    <para>
+      <pydoc-link href="modules/ovito_modifiers" anchor="ovito.modifiers.SmoothTrajectoryModifier"><classname>SmoothTrajectoryModifier</classname> (Python API)</pydoc-link>
+    </para>
+  </simplesect>
+
+</section>
