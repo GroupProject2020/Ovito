@@ -67,7 +67,7 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 		setProjParams(params);
 
 		// Perform bounding box rendering pass.
-		if(renderScene(operation)) {
+		if(renderScene(operation.subOperation())) {
 
 			// Include other visual content that is only visible in the interactive viewports.
 			if(isInteractive())
@@ -99,13 +99,13 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 /******************************************************************************
 * Renders all nodes in the scene
 ******************************************************************************/
-bool SceneRenderer::renderScene(Promise<>& operation)
+bool SceneRenderer::renderScene(SynchronousOperation operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset());
 
 	if(RootSceneNode* rootNode = renderDataset()->sceneRoot()) {
 		// Recursively render all scene nodes.
-		return renderNode(rootNode, operation);
+		return renderNode(rootNode, operation.subOperation());
 	}
 
 	return true;
@@ -114,7 +114,7 @@ bool SceneRenderer::renderScene(Promise<>& operation)
 /******************************************************************************
 * Render a scene node (and all its children).
 ******************************************************************************/
-bool SceneRenderer::renderNode(SceneNode* node, Promise<>& operation)
+bool SceneRenderer::renderNode(SceneNode* node, SynchronousOperation operation)
 {
     OVITO_CHECK_OBJECT_POINTER(node);
 
@@ -159,7 +159,7 @@ bool SceneRenderer::renderNode(SceneNode* node, Promise<>& operation)
 
 	// Render child nodes.
 	for(SceneNode* child : node->children()) {
-		if(!renderNode(child, operation))
+		if(!renderNode(child, operation.subOperation()))
 			return false;
 	}
 

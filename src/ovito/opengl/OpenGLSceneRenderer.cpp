@@ -409,7 +409,7 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 	}
 
 	// Render the 3D scene objects.
-	if(renderScene(operation)) {
+	if(renderScene(operation.subOperation())) {
 		OVITO_REPORT_OPENGL_ERRORS(this);
 
 		// Call subclass to render additional content that is only visible in the interactive viewports.

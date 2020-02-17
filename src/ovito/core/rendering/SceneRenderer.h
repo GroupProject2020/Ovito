@@ -228,10 +228,10 @@ protected:
 	SceneRenderer(DataSet* dataset);
 
 	/// \brief Renders all nodes in the scene.
-	virtual bool renderScene(Promise<>& operation);
+	virtual bool renderScene(SynchronousOperation operation);
 
 	/// \brief Render a scene node (and all its children).
-	virtual bool renderNode(SceneNode* node, Promise<>& operation);
+	virtual bool renderNode(SceneNode* node, SynchronousOperation operation);
 
 	/// \brief This virtual method is responsible for rendering additional content that is only
 	///       visible in the interactive viewports.
