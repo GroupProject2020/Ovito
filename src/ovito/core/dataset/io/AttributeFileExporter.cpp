@@ -92,7 +92,7 @@ void AttributeFileExporter::loadUserDefaults()
 ******************************************************************************/
 bool AttributeFileExporter::getAttributesMap(TimePoint time, QVariantMap& attributes, SynchronousOperation operation)
 {
-	const PipelineFlowState& state = getPipelineDataToBeExported(time, std::move(operation));
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation.subOperation());
 	if(operation.isCanceled())
 		return false;
 

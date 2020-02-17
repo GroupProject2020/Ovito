@@ -40,7 +40,8 @@ void PropertyContainerClass::registerStandardProperty(int typeId, QString name, 
 	OVITO_ASSERT_MSG(dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64 || dataType == PropertyStorage::Float, "PropertyContainerClass::registerStandardProperty", "Invalid standard property data type");
 
 	_standardPropertyList.push_back(typeId);
-	_standardPropertyIds.insert(name, typeId);
+	if(!name.isEmpty())
+		_standardPropertyIds.insert(name, typeId);
 	_standardPropertyNames.insert(typeId, std::move(name));
 	_standardPropertyTitles.insert(typeId, std::move(title));
 	_standardPropertyComponents.insert(typeId, std::move(componentNames));

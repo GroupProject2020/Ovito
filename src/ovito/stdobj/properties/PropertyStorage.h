@@ -97,8 +97,8 @@ public:
 	int type() const { return _type; }
 
 	/// \brief Changes the type of this property. Note that this method is only for internal use.
-	///        Normally, you should not change the type of a property after it was created.
-	void setType(int newType) { _type = type; }
+	///        Normally, you should not change the type of a property once it was created.
+	void setType(int newType) { _type = newType; }
 
 	/// \brief Gets the property's name.
 	/// \return The name of property.

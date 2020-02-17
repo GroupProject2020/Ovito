@@ -51,8 +51,8 @@ void DataTable::OOMetaClass::initialize()
 	setPythonName(QStringLiteral("table"));
 
 	const QStringList emptyList;
-	registerStandardProperty(XProperty, tr("X"), PropertyStorage::Float, emptyList);
-	registerStandardProperty(YProperty, tr("Y"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(XProperty, QString(), PropertyStorage::Float, emptyList);
+	registerStandardProperty(YProperty, QString(), PropertyStorage::Float, emptyList);
 }
 
 /******************************************************************************

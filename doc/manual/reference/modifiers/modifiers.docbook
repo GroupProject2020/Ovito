@@ -140,7 +140,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.smooth_trajectory">Smooth&#xA0;trajectory</link></entry>
-              <entry>Computes averaged or interpolated particle positions over a sliding time window.</entry>
+              <entry>Computes time-averaged particle positions using a sliding window or generates intermediate sub-frames using linear interpolation.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.unwrap_trajectories">Unwrap&#xA0;trajectories</link></entry>

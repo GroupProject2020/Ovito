@@ -125,7 +125,7 @@ public:
 
 	/// Creates a user-defined property and adds it to the container.
 	/// In case the property already exists, it is made sure that it's safe to modify it.
-	PropertyObject* createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory = false) ;
+	PropertyObject* createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory = false, QStringList componentNames = QStringList());
 
 	/// Creates a property and adds it to the container.
 	PropertyObject* createProperty(PropertyPtr storage);
