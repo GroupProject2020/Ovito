@@ -15,8 +15,8 @@
        <imagedata fileref="images/modifiers/smooth_trajectory_panel.png" format="png" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     This modifier smoothes the particle motion by taking into account successive snapshots of a simulation trajectory.
-    Depending on the value of the <emphasis>Smoothing window size</emphasis> parameter, the modifier will perform 
-    either a time-averaging of several input frames or a linear interpolation between two consecutive frames, see below. 
+    Depending on the value of the <emphasis>Smoothing window size</emphasis> parameter, the modifier will either perform 
+    a time-based averaging of the particle coordinates over several input frames or a linear interpolation between consecutive frames, see below. 
   </para>
 
   <simplesect>
@@ -24,8 +24,11 @@
     <para>
       If the <emphasis>Smoothing window size</emphasis> parameter is set to a value larger than 1, then the modifier 
       replaces the particle positions in the current frame with time-averaged coordinates computed over a time interval
-      centered around the current frame of the given size, i.e. a sliding window. This mode can be used to reduce fluctuations
-      in the particle trajectories, e.g. thermal vibrations.
+      centered around the current frame of the given size, i.e. a sliding window. This mode can be used to reduce fluctuations (e.g. thermal vibrations)
+      in the particle trajectories.
+      <screenshot><mediaobject><imageobject>
+        <imagedata fileref="images/modifiers/smooth_trajectory_averaging.svg" format="SVG" scale="80" />
+      </imageobject></mediaobject></screenshot>
     </para>
   </simplesect>
 
@@ -35,13 +38,16 @@
       If the <emphasis>Smoothing window size</emphasis> parameter is set to 1, the modifier will generate additional
       intermediate frames in between consecutive snapshots of the input trajectory via linear interpolation. 
       This mode can be used to create more smoothly looking animations from coarse simulation snapshot sequences.
+      <screenshot><mediaobject><imageobject>
+        <imagedata fileref="images/modifiers/smooth_trajectory_interpolation.svg" format="SVG" scale="80" />
+      </imageobject></mediaobject></screenshot>
     </para>
     <para>
-      In order to make use of this mode, you should first reduce the playback rate of the loaded simulation sequence
+      In order to make use of this mode, you should reduce the playback rate of the loaded simulation sequence
       such that OVITO will render <emphasis>N</emphasis> output animation frames per input simulation snapshot.
       See the <link linkend="usage.animation">animation</link> section for instructions how to do this.
-      This <emphasis>Smooth trajectory</emphasis> modifier can then be applied to compute the particle positions for 
-      the intermediate sub-frames of the animation.
+      The <emphasis>Smooth trajectory</emphasis> modifier can then be applied to dynamically compute the particle positions at 
+      intermediate sub-frames of the animation.
     </para>
   </simplesect>
 
