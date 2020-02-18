@@ -129,7 +129,7 @@ void DelegatingModifier::applyDelegate(PipelineFlowState& state, TimePoint time,
 
 	// Skip function if not applicable.
 	if(delegate()->getOOMetaClass().getApplicableObjects(state).empty())
-		throwException(tr("The modifier input does not contain the expected kind of data."));
+		throwException(tr("The modifier's pipeline input does not contain the expected kind of data."));
 
 	// Call the delegate function.
 	PipelineStatus delegateStatus = delegate()->apply(this, state, time, modApp, additionalInputs);

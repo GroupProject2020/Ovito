@@ -57,8 +57,10 @@ public:
 		if(isValid()) {
 			if(!isFinished()) {
 				task()->cancel();
-				task()->setStarted();
-				task()->setFinished();
+				if(isValid()) {
+					task()->setStarted();
+					task()->setFinished();
+				}
 			}
 			_task.reset();
 		}

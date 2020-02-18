@@ -332,7 +332,8 @@ public:
 
 	/// \brief Returns a pointer pointing to the end of the property array.
 	T* end() const {
-		return this->begin() + (this->size() * this->elementCount());
+		OVITO_ASSERT(this->stride() == sizeof(T) * this->componentCount());
+		return this->begin() + (this->size() * this->componentCount());
 	}
 
 	/// \brief Returns a range of iterators over the i-th vector component of all elements stored in this array.
@@ -341,6 +342,11 @@ public:
 		OVITO_ASSERT(this->_storage->componentCount() > componentIndex);
 		T* begin = this->begin() + componentIndex;
 		return boost::adaptors::stride(boost::make_iterator_range(begin, begin + (this->size() * this->componentCount())), this->componentCount());
+	}
+
+	/// \brief Returns a range of iterators over the elements stored in this array.
+	boost::iterator_range<T*> range() {
+		return boost::make_iterator_range(begin(), end());
 	}
 
 	/// \brief Sets the j-th component of the i-th element of the array to a new value.
