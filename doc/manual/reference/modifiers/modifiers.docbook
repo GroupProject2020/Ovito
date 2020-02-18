@@ -73,6 +73,10 @@
               <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
             </row>
             <row>
+              <entry><link linkend="particles.modifiers.time_averaging">Time&#xA0;averaging</link><ovito-pro/></entry>
+              <entry>Computes the average of some time-dependent input quantity over the entire trajectory.</entry>
+            </row>
+            <row>
               <entry><link linkend="particles.modifiers.voronoi_analysis">Voronoi&#xA0;analysis</link></entry>
               <entry>Computes the coordination number, atomic volume, and Voronoi index of particles from their Voronoi polyhedra.</entry>
             </row>
@@ -322,6 +326,8 @@
   <xi:include href="particles/slice.docbook"/>
 
   <xi:include href="particles/smooth_trajectory.docbook"/>
+
+  <xi:include href="particles/time_averaging.docbook"/>
 
   <xi:include href="particles/unwrap_trajectories.docbook"/>
 

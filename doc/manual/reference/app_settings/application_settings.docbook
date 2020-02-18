@@ -29,7 +29,7 @@
     <para>
       The program stores all user settings in a platform-dependent location to preserve them across sessions. On Windows, the information
       is saved in the user section of the system registry. On Linux, it is stored in an INI configuration file in the user's
-      home directory, and on MacOS, it is stored in a property list file. The precise storage
+      home directory, and on macOS, it is stored in a property list file. The precise storage
       location on your local computer is displayed by the application settings dialog at the bottom.
       You can copy the configuration data across computers to transfer your personal settings.
     </para>

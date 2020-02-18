@@ -89,6 +89,23 @@ void GlobalAttributesInspectionApplet::updateDisplay(const PipelineFlowState& st
 }
 
 /******************************************************************************
+* Selects a specific data object in this applet.
+******************************************************************************/
+bool GlobalAttributesInspectionApplet::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint)
+{
+	for(size_t i = 0; i < _tableModel->attributes().size(); i++) {
+		const auto& attr = _tableModel->attributes()[i];
+		if(attr->dataSource() == dataSource) {
+			if(objectIdentifierHint.isEmpty() || attr->identifier().startsWith(objectIdentifierHint)) {
+				_tableView->selectRow(i);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/******************************************************************************
 * Exports the global attributes to a text file.
 ******************************************************************************/
 void GlobalAttributesInspectionApplet::exportToFile()

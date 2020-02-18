@@ -25,6 +25,7 @@
 
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/mainwin/data_inspector/DataInspectionApplet.h>
+#include <ovito/core/dataset/data/AttributeDataObject.h>
 
 namespace Ovito {
 
@@ -54,6 +55,9 @@ public:
 	/// Updates the contents displayed in the inspector.
 	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
 
+	/// Selects a specific data object in this applet.
+	virtual bool selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint) override;
+
 private Q_SLOTS:
 
 	/// Action handler.
@@ -71,7 +75,7 @@ private:
 
 		/// Returns the number of rows.
 		virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-			return parent.isValid() ? 0 : _keys.size();
+			return parent.isValid() ? 0 : _attributes.size();
 		}
 
 		/// Returns the number of columns.
@@ -82,9 +86,9 @@ private:
 		/// Returns the data stored under the given 'role' for the item referred to by the 'index'.
 		virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
 			if(role == Qt::DisplayRole) {
-				if(index.column() == 0) return _keys[index.row()];
+				if(index.column() == 0) return _attributes[index.row()]->identifier();
 				else {
-					const QVariant& v = _values[index.row()];
+					const QVariant& v = _attributes[index.row()]->value();
 					if(v.type() == QVariant::Double)
 						return QString::number(v.toDouble());
 					return v;
@@ -105,16 +109,27 @@ private:
 		/// Replaces the contents of this data model.
 		void setContents(const DataCollection* dataCollection) {
 			beginResetModel();
-			const QVariantMap& attributes = dataCollection ? dataCollection->buildAttributesMap() : QVariantMap();
-			_keys = attributes.keys();
-			_values = attributes.values();
+			_attributes.clear();
+			if(dataCollection) {
+				for(const DataObject* obj : dataCollection->objects()) {
+					if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+						_attributes.push_back(attribute);
+					}
+				}
+				boost::sort(_attributes, [](const auto& a, const auto& b) {
+					return a->identifier() < b->identifier();
+				});
+			}
 			endResetModel();
 		}
 
+		/// Returns the current list of attributes.
+		const std::vector<OORef<AttributeDataObject>>& attributes() const { return _attributes; }
+
 	private:
 
-		QList<QString> _keys;
-		QList<QVariant> _values;
+		/// The list of attributes.
+		std::vector<OORef<AttributeDataObject>> _attributes;
 	};
 
 private:

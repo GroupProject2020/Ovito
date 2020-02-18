@@ -16,8 +16,8 @@
        <imagedata fileref="images/modifiers/histogram_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier computes the histogram of values of a certain property, taken over all particles, bonds or other data elements in a system.
-    The modifier furthermore lets you select all data elements that fall within a specified value range.
+    This modifier computes the histogram of the values of a certain property, taken over all particles, bonds or other data elements in the dataset.
+    The modifier furthermore lets you select all data elements that fall within a specified value interval.
   </para>
 
   <simplesect>
@@ -72,6 +72,16 @@
 
     </variablelist>
   </simplesect>
+
+  <simplesect>
+    <title>Time-averaged histogram</title>
+    <para>
+      Note that the <emphasis>Histogram</emphasis> modifier calculates the histogram for the current
+      simulation frame only and outputs it as a <link linkend="scene_objects.data_table">data table</link> that may vary with simulation time. 
+      Subsequently, you can use the <link linkend="particles.modifiers.time_averaging">Time averaging</link> modifier of OVITO to reduce all per-frame 
+      histograms to one mean histogram, which represents the average over all frames of the simulation trajectory.
+    </para>
+  </simplesect>  
 
   <simplesect>
   <title>See also</title>
