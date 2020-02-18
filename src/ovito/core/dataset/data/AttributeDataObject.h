@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,6 +35,7 @@ class OVITO_CORE_EXPORT AttributeDataObject : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(AttributeDataObject)
+	Q_CLASSINFO("DisplayName", "Attribute");
 
 public:
 

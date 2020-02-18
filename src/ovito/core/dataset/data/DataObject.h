@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2013 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -166,6 +166,13 @@ public:
 	template<class DataObjectClass>
 	DataObjectClass* makeMutable(const DataObjectClass* subObject) {
 		return static_object_cast<DataObjectClass>(makeMutable(static_cast<const DataObject*>(subObject)));
+	}
+
+	/// Returns the display title of this object.
+	virtual QString objectTitle() const override {
+		if(!identifier().isEmpty()) 
+			return identifier();
+		return RefTarget::objectTitle();
 	}
 
 protected:

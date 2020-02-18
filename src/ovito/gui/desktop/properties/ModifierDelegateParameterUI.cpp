@@ -153,7 +153,7 @@ void ModifierDelegateParameterUI::updateUI()
 				for(const DataObjectReference& ref : applicableObjects) {
 					comboBox()->addItem(ref.dataTitle().isEmpty() ? clazz->displayName() : ref.dataTitle(), QVariant::fromValue(clazz));
 					comboBox()->setItemData(comboBox()->count() - 1, QVariant::fromValue(ref), Qt::UserRole + 1);
-					if(&delegate->getOOClass() == clazz && (inputDataObject == ref || !inputDataObject)) {
+					if(delegate && &delegate->getOOClass() == clazz && (inputDataObject == ref || !inputDataObject)) {
 						indexToBeSelected = comboBox()->count() - 1;
 					}
 				}
@@ -161,7 +161,7 @@ void ModifierDelegateParameterUI::updateUI()
 			else {
 				// Even if this delegate cannot handle the input data, still show it in the list box as a disabled item.
 				comboBox()->addItem(clazz->displayName(), QVariant::fromValue(clazz));
-				if(&delegate->getOOClass() == clazz)
+				if(delegate && &delegate->getOOClass() == clazz)
 					indexToBeSelected = comboBox()->count() - 1;
 				model->item(comboBox()->count() - 1)->setEnabled(false);
 			}
