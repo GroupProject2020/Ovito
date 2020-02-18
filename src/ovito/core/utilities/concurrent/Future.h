@@ -282,6 +282,8 @@ public:
 	template<typename... R2> friend class Future;
 	template<typename... R2> friend class Promise;
 	template<typename... R2> friend class SharedFuture;
+	template<typename... R2> friend class AsynchronousTask;
+	friend class AsynchronousTaskBase;
 };
 
 /// Returns a new future that, upon the fulfillment of this future, will be fulfilled by running the given continuation function.
