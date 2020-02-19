@@ -246,7 +246,7 @@ bool FileExporter::doExport(SynchronousOperation operation)
 
 			if(exportAnimation() && useWildcardFilename()) {
 				// Generate an output filename based on the wildcard pattern.
-				filename = dir.absoluteFilePath(wildcardFilename());
+				filename = dir.absoluteFilePath(QFileInfo(wildcardFilename()).fileName());
 				filename.replace(QChar('*'), QString::number(frameNumber));
 
 				if(!openOutputFile(filename, 1, operation.subOperation()))
