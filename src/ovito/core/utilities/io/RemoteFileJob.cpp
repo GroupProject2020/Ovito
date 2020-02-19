@@ -54,7 +54,7 @@ RemoteFileJob::RemoteFileJob(QUrl url, PromiseBase& promise) :
 	moveToThread(QCoreApplication::instance()->thread());
 
 	// Start download process in the main thread.
-	QMetaObject::invokeMethod(this, "start", Qt::AutoConnection);
+	QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
 }
 
 /******************************************************************************
@@ -89,6 +89,9 @@ void RemoteFileJob::start()
 		if(task->isCanceled())
 			QMetaObject::invokeMethod(this, "connectionCanceled");
 	});
+
+	// Show task progress in the GUI.
+	_promise.task()->taskManager()->registerPromise(_promise);
 
 	SshConnectionParameters connectionParams;
 	connectionParams.host = _url.host();

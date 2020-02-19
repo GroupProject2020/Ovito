@@ -443,6 +443,7 @@ void PipelineCache::startFramePrecomputation()
 	if(_precomputeAllFrames && !_precomputeFramesOperation.isValid()) {
 		// Create the async operation object that manages the frame precomputation.
 		_precomputeFramesOperation = Promise<>::createAsynchronousOperation(ownerObject()->dataset()->taskManager());
+		ownerObject()->dataset()->taskManager().registerPromise(_precomputeFramesOperation);
 
 		// Determine the number of frames that need to be precomputed.
 		PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(ownerObject());

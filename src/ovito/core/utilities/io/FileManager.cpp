@@ -103,8 +103,9 @@ SharedFuture<FileHandle> FileManager::fetchUrl(TaskManager& taskManager, const Q
 
 		// Start the background download job.
 		DownloadRemoteFileJob* job = new DownloadRemoteFileJob(url, taskManager);
-		_pendingFiles.emplace(normalizedUrl, job->sharedFuture());
-		return job->sharedFuture();
+		auto future = job->sharedFuture();
+		_pendingFiles.emplace(normalizedUrl, future);
+		return future;
 #else
 		return Future<FileHandle>::createFailed(Exception(tr("URL scheme not supported. This version of OVITO was built without support for the sftp:// protocol and can open local files only."), taskManager.datasetContainer()));
 #endif

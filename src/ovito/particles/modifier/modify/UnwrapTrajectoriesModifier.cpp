@@ -101,6 +101,7 @@ SharedFuture<> UnwrapTrajectoriesModifierApplication::detectPeriodicCrossings(Ti
 		_unwrapOperation = Promise<>::createAsynchronousOperation(dataset()->taskManager());
 		_unwrapOperation.setProgressText(tr("Unwrapping particle trajectories"));
 		registerActivePromise(_unwrapOperation);
+		dataset()->taskManager().registerPromise(_unwrapOperation);
 
 		// Automatically reset the async operation object and the current frame evaluation if the 
 		// task gets canceled by the system.
