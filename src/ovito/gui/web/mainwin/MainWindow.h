@@ -36,6 +36,7 @@ class OVITO_GUIWEB_EXPORT MainWindow : public QQuickItem, public MainWindowInter
 {
 	Q_OBJECT
 	Q_PROPERTY(Ovito::WasmDataSetContainer* datasetContainer READ datasetContainer CONSTANT);
+	Q_PROPERTY(QString statusBarText READ statusBarText WRITE showStatusBarMessage NOTIFY statusBarTextChanged);
 
 public:
 
@@ -48,6 +49,12 @@ public:
 	/// Returns the container that keeps a reference to the current dataset.
 	WasmDataSetContainer* datasetContainer() { return &_datasetContainer; }
 
+	/// Displays a message string in the window's status bar.
+	virtual void showStatusBarMessage(const QString& message, int timeout = 0) override;
+
+	/// Returns the text currently displayed in the window's status bar.
+	const QString& statusBarText() const { return _statusBarText; }
+
 public Q_SLOTS:
 
 	/// Lets the user select a file on the local computer to be imported into the scene.
@@ -58,15 +65,29 @@ public Q_SLOTS:
 		Q_EMIT error(message, detailedText);
 	}
 
+	/// Hides any messages currently displayed in the window's status bar.
+	virtual void clearStatusBarMessage() override { 
+		showStatusBarMessage(QString()); 
+	}
+
 Q_SIGNALS:
 
 	/// This signal is emitted to display an error message to the user.
 	void error(const QString& message, const QString& detailedText);
 
+	/// This signal is emitted when the text to be displayed in the window's status bar changes.
+	void statusBarTextChanged(const QString& message);
+
 private:
 
 	/// Container managing the current dataset.
 	WasmDataSetContainer _datasetContainer;
+
+	/// The text string displayed in the window's status bar.
+	QString _statusBarText;
+
+	/// Used for timed display of status bar texts.
+	QTimer _statusBarTimer;
 };
 
 }	// End of namespace

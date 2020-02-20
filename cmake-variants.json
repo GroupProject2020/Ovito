@@ -1,7 +1,7 @@
 {
     "build_type": {
         "default": "debug",
-        "description": "The build type to use",
+        "description": "The CMake build type to use",
         "choices": {
             "debug": {
                 "short": "Debug",
@@ -15,22 +15,36 @@
             }
         }
     },
-    "documentation": {
-        "default": "no",
-        "description": "Build the user documentation",
+    "platform": {
+        "default": "desktop",
+        "description": "Selects the type of platform to build for",
         "choices": {
-            "yes": {
-                "short": "Docs",
-                "long": "Generate user documentation",
+            "desktop": {
+                "short": "Desktop",
+                "long": "Builds the desktop version of OVITO",
                 "settings": {
-                    "OVITO_BUILD_DOCUMENTATION" : "ON"
+                    "OVITO_BUILD_WEBGUI" : "OFF",
+                    "OVITO_BUILD_GUI" : "ON",
+                    "OVITO_BUILD_PLUGIN_NETCDFPLUGIN" : "ON",
+                    "OVITO_BUILD_PLUGIN_GALAMOST" : "ON",
+                    "OVITO_BUILD_PLUGIN_CRYSTALANALYSIS" : "ON",
+                    "OVITO_DISABLE_THREADING": "OFF",
+                    "OVITO_QT5_RESOURCE_OPTIONS" : "",
+                    "OVITO_REDISTRIBUTABLE_PACKAGE" : "ON"
                 }
             },
-            "no": {
-                "short": "NoDocs",
-                "long": "Don't generate user documentation",
+            "web": {
+                "short": "Web",
+                "long": "Builds the browser version of OVITO",
                 "settings": {
-                    "OVITO_BUILD_DOCUMENTATION" : "OFF"
+                    "OVITO_BUILD_WEBGUI" : "ON",
+                    "OVITO_BUILD_GUI" : "OFF",
+                    "OVITO_BUILD_PLUGIN_NETCDFPLUGIN" : "OFF",
+                    "OVITO_BUILD_PLUGIN_GALAMOST" : "OFF",
+                    "OVITO_BUILD_PLUGIN_CRYSTALANALYSIS" : "OFF",
+                    "OVITO_DISABLE_THREADING": "ON",
+                    "OVITO_QT5_RESOURCE_OPTIONS" : "-no-compress",
+                    "OVITO_REDISTRIBUTABLE_PACKAGE" : "OFF"
                 }
             }
         }

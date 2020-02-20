@@ -310,6 +310,7 @@ void Viewport::zoomToBox(const Box3& box)
 	else {
 		// Setup projection.
 		QSize vpSize = windowSize();
+		if(vpSize.isEmpty()) return;
 		FloatType aspectRatio = (vpSize.width() > 0) ? ((FloatType)vpSize.height() / vpSize.width()) : FloatType(1);
 		if(renderPreviewMode()) {
 			if(RenderSettings* renderSettings = dataset()->renderSettings())
@@ -497,7 +498,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 	OVITO_ASSERT(!dataset()->viewportConfig()->isSuspended());
 
 	QSize vpSize = windowSize();
-	if(vpSize.isEmpty())
+	if(vpSize.height() <= 0 || vpSize.width() <= 0)
 		return;
 
 	try {

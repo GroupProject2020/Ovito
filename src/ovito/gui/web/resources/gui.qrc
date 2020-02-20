@@ -4,8 +4,11 @@
         <file>ui/qmldir</file>
         <file>ui/AboutDialog.qml</file>
         <file>ui/AnimationBar.qml</file>
+        <file>ui/CommandPanel.qml</file>
         <file>ui/ErrorDialog.qml</file>
         <file>ui/ImportDialog.qml</file>
+        <file>ui/PipelineTab.qml</file>
+        <file>ui/StatusBar.qml</file>
         <file>ui/ToolBar.qml</file>
         <file>ui/ViewportWindow.qml</file>
 
@@ -24,6 +27,10 @@
         <file>actions/animation/goto_previous_frame.bw.svg</file>
         <file>actions/animation/play_animation.bw.svg</file>
         <file>actions/animation/stop_animation.bw.svg</file>
+
+        <file>command_panel/tab_modify.bw.svg</file>
+        <file>command_panel/tab_overlays.bw.svg</file>
+        <file>command_panel/tab_render.bw.svg</file>
 
         <file>samples/test.data</file>
         <file>samples/animation.dump</file>

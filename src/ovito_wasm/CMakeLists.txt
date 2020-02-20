@@ -87,6 +87,5 @@ FOREACH(plugin ${OVITO_PLUGIN_LIST})
 		# the linker doesn't remove apparently unreferenced symbols. They are needed to
 		# have the plugin classes register themselves.
 		TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
-#		TARGET_LINK_LIBRARIES(Ovito PRIVATE ${plugin})
 	ENDIF()
 ENDFOREACH()

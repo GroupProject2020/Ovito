@@ -35,6 +35,9 @@ MainWindow::MainWindow() : _datasetContainer(this)
 {
 	// Create the object that manages the input modes of the viewports.
 	setViewportInputManager(new ViewportInputManager(this, this, *datasetContainer()));
+
+	// For timed display of texts in the status bar:
+	connect(&_statusBarTimer, &QTimer::timeout, this, &MainWindow::clearStatusBarMessage);
 }
 
 /******************************************************************************
@@ -43,6 +46,23 @@ MainWindow::MainWindow() : _datasetContainer(this)
 MainWindow::~MainWindow()
 {
 	datasetContainer()->setCurrentSet(nullptr);
+}
+
+/******************************************************************************
+* Displays a message string in the window's status bar.
+******************************************************************************/
+void MainWindow::showStatusBarMessage(const QString& message, int timeout)
+{
+	if(message != _statusBarText) {
+		_statusBarText = message;
+		Q_EMIT statusBarTextChanged(_statusBarText);
+		if(timeout > 0) {
+			_statusBarTimer.start(timeout);
+		}
+		else {
+			_statusBarTimer.stop();
+		}
+	}
 }
 
 /******************************************************************************

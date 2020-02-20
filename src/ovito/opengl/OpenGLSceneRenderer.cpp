@@ -363,6 +363,7 @@ void OpenGLSceneRenderer::initializeGLState()
 	// Set up OpenGL state.
     OVITO_CHECK_OPENGL(this, this->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
 	OVITO_CHECK_OPENGL(this, this->glDisable(GL_STENCIL_TEST));
+	OVITO_CHECK_OPENGL(this, this->glDisable(GL_BLEND));
 	OVITO_CHECK_OPENGL(this, this->glEnable(GL_DEPTH_TEST));
 	OVITO_CHECK_OPENGL(this, this->glDepthFunc(GL_LESS));
 	OVITO_CHECK_OPENGL(this, this->glDepthRangef(0, 1));

@@ -191,8 +191,10 @@ void ViewportWindow::mouseMoveEvent(QMouseEvent* event)
 ******************************************************************************/
 void ViewportWindow::hoverMoveEvent(QHoverEvent* event)
 {
-	QMouseEvent mouseEvent(QEvent::MouseMove, event->posF(), Qt::NoButton, Qt::NoButton, event->modifiers());
-	mouseMoveEvent(&mouseEvent);
+	if(event->oldPosF() != event->posF()) {
+		QMouseEvent mouseEvent(QEvent::MouseMove, event->posF(), Qt::NoButton, Qt::NoButton, event->modifiers());
+		mouseMoveEvent(&mouseEvent);
+	}
 }
 
 /******************************************************************************
@@ -287,7 +289,7 @@ void ViewportWindow::renderViewport()
 	if(!hasCheckedFragDepthExtension) {
 		hasCheckedFragDepthExtension = true;
 		if(QOpenGLContext::currentContext()->hasExtension("EXT_frag_depth") == false) 
-			Q_EMIT viewportError(tr("WARNING: WebGL extension 'EXT_frag_depth' is not supported by your browser.\nWithout this capability, visual artifacts will likely appear in the display."));
+			Q_EMIT viewportError(tr("WARNING: WebGL extension 'EXT_frag_depth' is not supported by your browser.\nWithout this capability, visual artifacts are expected."));
 	}
 #endif
 
