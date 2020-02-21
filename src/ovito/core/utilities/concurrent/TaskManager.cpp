@@ -115,6 +115,32 @@ TaskWatcher* TaskManager::addTaskInternal(const TaskPtr& task)
 }
 
 /******************************************************************************
+* Enables or disables printing of task status messages to the console for 
+* this task manager.
+******************************************************************************/
+void TaskManager::setConsoleLoggingEnabled(bool enabled) 
+{
+	if(_consoleLoggingEnabled != enabled) {
+		_consoleLoggingEnabled = enabled;
+		if(enabled) {
+			// Foward status messages from the active tasks to the console if logging was enabled.
+		    for(TaskWatcher* watcher : runningTasks()) {
+				connect(watcher, &TaskWatcher::progressTextChanged, this, &TaskManager::taskProgressTextChangedInternal);
+			}
+		}	
+	}
+}
+
+/******************************************************************************
+* Is called when a task has reported a new progress text (only if logging is enabled).
+******************************************************************************/
+void TaskManager::taskProgressTextChangedInternal(const QString& msg)
+{
+	if(!msg.isEmpty())
+		std::cerr << "OVITO: " << qPrintable(msg) << std::endl;
+}
+
+/******************************************************************************
 * Waits for the given future to be fulfilled and displays a modal progress
 * dialog to show the progress.
 ******************************************************************************/
@@ -130,6 +156,10 @@ void TaskManager::taskStartedInternal()
 {
 	TaskWatcher* watcher = static_cast<TaskWatcher*>(sender());
 	_runningTaskStack.push_back(watcher);
+
+	// Foward status messages from the task to the console if logging is enabled.
+	if(_consoleLoggingEnabled)
+		connect(watcher, &TaskWatcher::progressTextChanged, this, &TaskManager::taskProgressTextChangedInternal);
 
 	Q_EMIT taskStarted(watcher);
 }

@@ -224,8 +224,6 @@ bool FileExporter::doExport(SynchronousOperation operation)
 			throwException(tr("Cannot write animation frames to separate files. The filename must contain the '*' wildcard character, which gets replaced by the frame number."));
 	}
 
-	operation.setProgressText(tr("Opening output file"));
-
 	QDir dir = QFileInfo(outputFilename()).dir();
 	QString filename = outputFilename();
 
@@ -274,7 +272,6 @@ bool FileExporter::doExport(SynchronousOperation operation)
 
 	// Close output file.
 	if(!exportAnimation() || !useWildcardFilename()) {
-		operation.setProgressText(tr("Closing output file"));
 		closeOutputFile(!operation.isCanceled());
 	}
 

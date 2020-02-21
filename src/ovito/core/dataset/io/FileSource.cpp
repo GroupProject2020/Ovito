@@ -197,8 +197,8 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 	if(frames.size() < _frames.size())
 		remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(frames.size())-1));
 
-	// When adding additional frames to the end, the cache validity interval of the last frame must be reduced.
-	if(frames.size() > _frames.size())
+	// When adding additional frames to the end, the cache validity interval of the last frame must be reduced (unless we are loading for the first time).
+	if(frames.size() > _frames.size() && !_frames.empty())
 		remainingCacheValidity.intersect(TimeInterval(TimeNegativeInfinity(), sourceFrameToAnimationTime(_frames.size())-1));
 
 	// Invalidate all cached frames that have changed.

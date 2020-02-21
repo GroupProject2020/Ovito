@@ -115,6 +115,12 @@ public:
 	/// \brief This should be called whenever a local event handling loop is left.
 	void stopLocalEventHandling();
 
+	/// \brief Returns whether printing of task status messages to the console is currently enabled.
+	bool consoleLoggingEnabled() const { return _consoleLoggingEnabled; }
+
+	/// \brief Enables or disables printing of task status messages to the console for this task manager.
+	void setConsoleLoggingEnabled(bool enabled);
+
 public Q_SLOTS:
 
 	/// Cancels all running tasks.
@@ -155,6 +161,9 @@ private Q_SLOTS:
 	/// \brief Is called when a task has finished.
 	void taskFinishedInternal();
 
+	/// \brief Is called when a task has reported a new progress text (only if logging is enabled).
+	void taskProgressTextChangedInternal(const QString& msg);
+
 private:
 
 	/// The list of watchers for the active tasks.
@@ -165,6 +174,9 @@ private:
 
 	/// The dataset container owning this task manager (may be NULL).
 	DataSetContainer* _datasetContainer;
+
+	/// Enables printing of task status messages to the console.
+	bool _consoleLoggingEnabled = false;
 
 	friend class SynchronousOperation; // Needed by SynchronousOperation::create()
 };
