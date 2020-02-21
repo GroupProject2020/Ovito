@@ -29,12 +29,27 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(PeriodicDomainDataObject);
 DEFINE_REFERENCE_FIELD(PeriodicDomainDataObject, domain);
 DEFINE_PROPERTY_FIELD(PeriodicDomainDataObject, cuttingPlanes);
+DEFINE_PROPERTY_FIELD(PeriodicDomainDataObject, title);
+SET_PROPERTY_FIELD_LABEL(PeriodicDomainDataObject, domain, "Domain");
+SET_PROPERTY_FIELD_LABEL(PeriodicDomainDataObject, cuttingPlanes, "Cutting planes");
+SET_PROPERTY_FIELD_LABEL(PeriodicDomainDataObject, title, "Title");
+SET_PROPERTY_FIELD_CHANGE_EVENT(PeriodicDomainDataObject, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PeriodicDomainDataObject::PeriodicDomainDataObject(DataSet* dataset) : DataObject(dataset)
+PeriodicDomainDataObject::PeriodicDomainDataObject(DataSet* dataset, const QString& title) : DataObject(dataset),
+    _title(title)
 {
+}
+
+/******************************************************************************
+* Returns the display title of this object.
+******************************************************************************/
+QString PeriodicDomainDataObject::objectTitle() const
+{
+	if(!title().isEmpty()) return title();
+	return DataObject::objectTitle();
 }
 
 }	// End of namespace

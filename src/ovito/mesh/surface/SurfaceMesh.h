@@ -40,18 +40,12 @@ class OVITO_MESH_EXPORT SurfaceMesh : public PeriodicDomainDataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(SurfaceMesh)
+	Q_CLASSINFO("DisplayName", "Surface mesh");
 
 public:
 
 	/// Constructor creating an empty SurfaceMesh object.
 	Q_INVOKABLE SurfaceMesh(DataSet* dataset, const QString& title = QString());
-
-	/// Returns the display title of this object.
-	virtual QString objectTitle() const override {
-		if(!title().isEmpty()) return title();
-		else if(!identifier().isEmpty()) return identifier();
-		else return tr("Surface mesh");
-	}
 
 	/// Makes sure that the data structures of the surface mesh are valid and all vertex and face properties
 	/// are consistent with the topology of the mesh. If this is not the case, the method throws an exception.
@@ -88,9 +82,6 @@ public:
 	boost::optional<SurfaceMeshData::region_index> locatePoint(const Point3& location, FloatType epsilon = FLOATTYPE_EPSILON) const;
 
 private:
-
-	/// The assigned title of the mesh, which is displayed in the user interface.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The data structure storing the topology of the surface mesh.
 	DECLARE_RUNTIME_PROPERTY_FIELD(HalfEdgeMeshPtr, topology, setTopology);

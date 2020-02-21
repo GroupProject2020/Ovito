@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -70,13 +70,6 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE VoxelGrid(DataSet* dataset, const QString& title = QString());
 
-	/// Returns the title of this object.
-	virtual QString objectTitle() const override {
-		if(!title().isEmpty()) return title();
-		else if(!identifier().isEmpty()) return identifier();
-		else return PropertyContainer::objectTitle();
-	}
-
 	/// Returns the spatial domain this voxel grid is embedded in after making sure it
 	/// can safely be modified.
 	SimulationCellObject* mutableDomain() {
@@ -104,9 +97,6 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 private:
-
-	/// The title of the grid, which is shown in the user interface.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The shape of the grid (i.e. number of voxels in each dimension).
 	DECLARE_RUNTIME_PROPERTY_FIELD(GridDimensions, shape, setShape);

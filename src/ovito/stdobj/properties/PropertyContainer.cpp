@@ -29,14 +29,28 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(PropertyContainer);
 DEFINE_REFERENCE_FIELD(PropertyContainer, properties);
 DEFINE_PROPERTY_FIELD(PropertyContainer, elementCount);
+DEFINE_PROPERTY_FIELD(PropertyContainer, title);
 SET_PROPERTY_FIELD_LABEL(PropertyContainer, properties, "Properties");
 SET_PROPERTY_FIELD_LABEL(PropertyContainer, elementCount, "Element count");
+SET_PROPERTY_FIELD_LABEL(PropertyContainer, title, "Title");
+SET_PROPERTY_FIELD_CHANGE_EVENT(PropertyContainer, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyContainer::PropertyContainer(DataSet* dataset) : DataObject(dataset), _elementCount(0)
+PropertyContainer::PropertyContainer(DataSet* dataset, const QString& title) : DataObject(dataset), 
+	_elementCount(0),
+	_title(title)
 {
+}
+
+/******************************************************************************
+* Returns the display title of this object.
+******************************************************************************/
+QString PropertyContainer::objectTitle() const
+{
+	if(!title().isEmpty()) return title();
+	return DataObject::objectTitle();
 }
 
 /******************************************************************************
@@ -370,6 +384,9 @@ void PropertyContainer::loadFromStream(ObjectLoadStream& stream)
 			setElementCount(0);
 		stream.closeChunk();
 	}
+	// This is needed only for backward compatibility with early dev builds of OVITO 3.0:
+	if(identifier().isEmpty())
+		setIdentifier(getOOMetaClass().pythonName());
 }
 
 }	// End of namespace

@@ -51,7 +51,7 @@ class OVITO_STDMOD_EXPORT ReplicateModifier : public MultiDelegatingModifier
 public:
 
 	/// Give this modifier class its own metaclass.
-	class OOMetalass : public MultiDelegatingModifier::OOMetaClass
+	class OOMetaClass : public MultiDelegatingModifier::OOMetaClass
 	{
 	public:
 
@@ -65,7 +65,7 @@ public:
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return ReplicateModifierDelegate::OOClass(); }
 	};
 
-	OVITO_CLASS_META(ReplicateModifier, OOMetalass)
+	OVITO_CLASS_META(ReplicateModifier, OOMetaClass)
 	Q_CLASSINFO("DisplayName", "Replicate");
 	Q_CLASSINFO("ModifierCategory", "Modification");
 	Q_OBJECT

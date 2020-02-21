@@ -35,8 +35,22 @@ namespace Ovito {
  */
 class OVITO_CORE_EXPORT DataObject : public RefTarget
 {
+public:
+
+	/// Give this object type its own metaclass.
+	class OOMetaClass : public RefTarget::OOMetaClass
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using RefTarget::OOMetaClass::OOMetaClass;
+
+		/// Generates a human-readable string representation of the data object reference.
+		virtual QString formatDataObjectPath(const ConstDataObjectPath& path) const;
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(DataObject)
+	OVITO_CLASS_META(DataObject, OOMetaClass)
 
 protected:
 
@@ -166,13 +180,6 @@ public:
 	template<class DataObjectClass>
 	DataObjectClass* makeMutable(const DataObjectClass* subObject) {
 		return static_object_cast<DataObjectClass>(makeMutable(static_cast<const DataObject*>(subObject)));
-	}
-
-	/// Returns the display title of this object.
-	virtual QString objectTitle() const override {
-		if(!identifier().isEmpty()) 
-			return identifier();
-		return RefTarget::objectTitle();
 	}
 
 protected:

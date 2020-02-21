@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2017 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,8 +35,20 @@ namespace Ovito { namespace StdObj {
  */
 class OVITO_STDOBJ_EXPORT PropertyObject : public DataObject
 {
+	/// Define a new property metaclass for particle containers.
+	class OOMetaClass : public DataObject::OOMetaClass
+	{
+	public:
+		/// Inherit constructor from base class.
+		using DataObject::OOMetaClass::OOMetaClass;
+
+		/// Generates a human-readable string representation of the data object reference.
+		virtual QString formatDataObjectPath(const ConstDataObjectPath& path) const override;
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(PropertyObject)
+	OVITO_CLASS_META(PropertyObject, OOMetaClass);
+	Q_CLASSINFO("DisplayName", "Property");
 
 public:
 
@@ -255,6 +267,9 @@ protected:
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
+
+	/// Is called when the value of a non-animatable field of this object changes.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 private:
 

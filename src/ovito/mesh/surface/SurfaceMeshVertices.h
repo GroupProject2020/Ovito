@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,15 +34,18 @@ namespace Ovito { namespace Mesh {
 class OVITO_MESH_EXPORT SurfaceMeshVertices : public PropertyContainer
 {
 	/// Define a new property metaclass for this container type.
-	class SurfaceMeshVerticesClass : public PropertyContainerClass
+	class OOMetaClass : public PropertyContainerClass
 	{
 	public:
 
 		/// Inherit constructor from base class.
 		using PropertyContainerClass::PropertyContainerClass;
 
-		/// \brief Create a storage object for standard vertex properties.
+		/// Create a storage object for standard vertex properties.
 		virtual PropertyPtr createStandardStorage(size_t vertexCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
+
+		/// Generates a human-readable string representation of the data object reference.
+		virtual QString formatDataObjectPath(const ConstDataObjectPath& path) const override;
 
 	protected:
 
@@ -51,7 +54,7 @@ class OVITO_MESH_EXPORT SurfaceMeshVertices : public PropertyContainer
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(SurfaceMeshVertices, SurfaceMeshVerticesClass);
+	OVITO_CLASS_META(SurfaceMeshVertices, OOMetaClass);
 	Q_CLASSINFO("DisplayName", "Mesh Vertices");
 
 public:
@@ -65,10 +68,10 @@ public:
 	};
 
 	/// \brief Constructor.
-	Q_INVOKABLE SurfaceMeshVertices(DataSet* dataset) : PropertyContainer(dataset) {}
-
-	/// Returns the title of this object.
-	virtual QString objectTitle() const override { return tr("Mesh Vertices"); }
+	Q_INVOKABLE SurfaceMeshVertices(DataSet* dataset) : PropertyContainer(dataset) {
+		// Assign the default data object identifier.
+		setIdentifier(OOClass().pythonName());
+	}
 };
 
 }	// End of namespace

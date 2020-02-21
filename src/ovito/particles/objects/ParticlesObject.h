@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,7 +35,7 @@ namespace Ovito { namespace Particles {
 class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 {
 	/// Define a new property metaclass for particle containers.
-	class ParticlesObjectClass : public PropertyContainerClass
+	class OOMetaClass : public PropertyContainerClass
 	{
 	public:
 		/// Inherit constructor from base class.
@@ -57,6 +57,9 @@ class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 		/// Determines which elements are located within the given viewport fence region (=2D polygon).
 		virtual boost::dynamic_bitset<> viewportFenceSelection(const QVector<Point2>& fence, const ConstDataObjectPath& objectPath, PipelineSceneNode* node, const Matrix4& projectionTM) const override;
 
+		/// Generates a human-readable string representation of the data object reference.
+		virtual QString formatDataObjectPath(const ConstDataObjectPath& path) const override { return this->displayName(); }
+
 	protected:
 
 		/// Is called by the system after construction of the meta-class instance.
@@ -67,7 +70,7 @@ class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(ParticlesObject, ParticlesObjectClass);
+	OVITO_CLASS_META(ParticlesObject, OOMetaClass);
 	Q_CLASSINFO("DisplayName", "Particles");
 
 public:
@@ -123,9 +126,6 @@ public:
 
 	/// \brief Constructor.
 	Q_INVOKABLE ParticlesObject(DataSet* dataset);
-
-	/// Returns the title of this object.
-	virtual QString objectTitle() const override { return tr("Particles"); }
 
 	/// Deletes the particles for which bits are set in the given bit-mask.
 	/// Returns the number of deleted particles.

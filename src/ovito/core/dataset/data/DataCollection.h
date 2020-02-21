@@ -296,6 +296,9 @@ public:
 		return static_object_cast<DataObjectClass>(makeMutable(static_cast<const DataObject*>(obj), deepCopy));
 	}
 
+	/// Ensures that a DataObject from this flow state is not shared with others and is safe to modify.
+	DataObjectPath makeMutable(const ConstDataObjectPath& path, bool deepCopy = false);
+
 	/// \brief Returns true if this state object has no valid contents.
 	bool isEmpty() const { return objects().empty(); }
 

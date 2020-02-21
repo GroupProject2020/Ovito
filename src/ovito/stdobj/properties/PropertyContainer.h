@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,7 +42,10 @@ class OVITO_STDOBJ_EXPORT PropertyContainer : public DataObject
 public:
 
 	/// Constructor.
-	PropertyContainer(DataSet* dataset);
+	PropertyContainer(DataSet* dataset, const QString& title = {});
+
+	/// Returns the display title of this object.
+	virtual QString objectTitle() const override;
 
 	/// Appends a new property to the list of properties.
 	void addProperty(const PropertyObject* property) {
@@ -163,6 +166,9 @@ private:
 
 	/// Keeps track of the number of elements stored in this property container.
 	DECLARE_PROPERTY_FIELD(size_t, elementCount);
+
+	/// The assigned title of the data object, which is displayed in the user interface.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 };
 
 /// Encapsulates a reference to a PropertyContainer in a PipelineFlowState.

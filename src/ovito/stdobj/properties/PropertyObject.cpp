@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -48,6 +48,8 @@ PropertyObject::PropertyObject(DataSet* dataset, PropertyPtr storage) : DataObje
 {
 	if(!_storage.mutableValue())
 		_storage.mutableValue() = defaultStorage;
+	else
+		setIdentifier(name());
 }
 
 /******************************************************************************
@@ -78,7 +80,19 @@ void PropertyObject::setName(const QString& newName)
 		return;
 
 	modifiableStorage()->setName(newName);
+	setIdentifier(newName);
 	notifyTargetChanged(&PROPERTY_FIELD(title));
+}
+
+/******************************************************************************
+* Is called when the value of a non-animatable field of this object changes.
+******************************************************************************/
+void PropertyObject::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(storage)) {
+		setIdentifier(storage() ? storage()->name() : QString());
+	}
+	DataObject::propertyChanged(field);
 }
 
 /******************************************************************************
@@ -87,6 +101,23 @@ void PropertyObject::setName(const QString& newName)
 QString PropertyObject::objectTitle() const
 {
 	return title().isEmpty() ? name() : title();
+}
+
+/******************************************************************************
+* Generates a human-readable string representation of the data object reference.
+******************************************************************************/
+QString PropertyObject::OOMetaClass::formatDataObjectPath(const ConstDataObjectPath& path) const
+{
+	QString str;
+	for(auto obj = path.begin(); obj != path.end(); ++obj) {
+		if(obj != path.begin())
+			str += QStringLiteral(u" \u2192 ");  // Unicode arrow
+		if(obj != path.end() - 1)
+			str += (*obj)->objectTitle();
+		else
+			str += static_object_cast<PropertyObject>(*obj)->name();
+	}
+	return str;
 }
 
 /******************************************************************************
@@ -113,6 +144,7 @@ void PropertyObject::loadFromStream(ObjectLoadStream& stream)
 	PropertyPtr s = std::make_shared<PropertyStorage>();
 	s->loadFromStream(stream);
 	setStorage(std::move(s));
+	setIdentifier(storage()->name());
 	stream.closeChunk();
 }
 

@@ -124,5 +124,19 @@ void SurfaceMeshFaces::OOMetaClass::initialize()
 	registerStandardProperty(CrystallographicNormalProperty, tr("Crystallographic Normal"), PropertyStorage::Float, xyzList);
 }
 
+/******************************************************************************
+* Generates a human-readable string representation of the data object reference.
+******************************************************************************/
+QString SurfaceMeshFaces::OOMetaClass::formatDataObjectPath(const ConstDataObjectPath& path) const
+{
+	QString str;
+	for(const DataObject* obj : path) {
+		if(!str.isEmpty())
+			str += QStringLiteral(u" \u2192 ");  // Unicode arrow
+		str += obj->objectTitle();
+	}
+	return str;
+}
+
 }	// End of namespace
 }	// End of namespace

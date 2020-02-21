@@ -109,5 +109,19 @@ void SurfaceMeshVertices::OOMetaClass::initialize()
 	registerStandardProperty(PositionProperty, tr("Position"), PropertyStorage::Float, xyzList, tr("Vertex positions"));
 }
 
+/******************************************************************************
+* Generates a human-readable string representation of the data object reference.
+******************************************************************************/
+QString SurfaceMeshVertices::OOMetaClass::formatDataObjectPath(const ConstDataObjectPath& path) const
+{
+	QString str;
+	for(const DataObject* obj : path) {
+		if(!str.isEmpty())
+			str += QStringLiteral(u" \u2192 ");  // Unicode arrow
+		str += obj->objectTitle();
+	}
+	return str;
+}
+
 }	// End of namespace
 }	// End of namespace

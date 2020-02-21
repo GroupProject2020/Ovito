@@ -43,6 +43,13 @@ public:
 	Q_INVOKABLE AttributeDataObject(DataSet* dataset, QVariant value = {})
 		: DataObject(dataset), _value(std::move(value)) {}
 
+	/// Returns the display title of this object.
+	virtual QString objectTitle() const override {
+		if(!identifier().isEmpty()) 
+			return identifier();
+		return DataObject::objectTitle();
+	}
+
 protected:
 
 	/// Saves the class' contents to the given stream.

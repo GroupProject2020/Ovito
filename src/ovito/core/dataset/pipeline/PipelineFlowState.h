@@ -350,6 +350,12 @@ public:
 		return mutableData()->makeMutable<DataObjectClass>(obj, deepCopy);
 	}
 
+	/// Ensures that a DataObject from this flow state is not shared with others and is safe to modify.
+	DataObjectPath makeMutable(const ConstDataObjectPath& path, bool deepCopy = false) {
+		OVITO_ASSERT(data());
+		return mutableData()->makeMutable(path, deepCopy);
+	}
+
 	/// Instantiates a new data object, passes the given parameters to its class constructor,
 	/// assigns the given data source object, and finally inserts the data object into this pipeline flow state.
 	template<class DataObjectType, class PipelineObjectClass, typename... Args>

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,7 +22,6 @@
 
 #include <ovito/core/Core.h>
 #include <ovito/core/dataset/data/DataObject.h>
-#include <ovito/core/dataset/pipeline/StaticSource.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 
 namespace Ovito {
@@ -46,23 +45,29 @@ QString ConstDataObjectPath::toString() const
 }
 
 /******************************************************************************
-* Produces a string representation of the object path that is suitable for the
-* user interface.
+* Returns a string representation of the object path that is suitable for 
+* display in the user interface.
 ******************************************************************************/
-QString ConstDataObjectPath::toHumanReadableString() const
+QString ConstDataObjectPath::toUIString() const
 {
 	if(empty()) return {};
-	QString str = back()->getOOMetaClass().displayName();
+	return back()->getOOMetaClass().formatDataObjectPath(*this);
+}
+
+/******************************************************************************
+* Generates a human-readable string representation of the data object reference.
+******************************************************************************/
+QString DataObject::OOMetaClass::formatDataObjectPath(const ConstDataObjectPath& path) const
+{
+	QString str = path.back()->getOOMetaClass().displayName();
 	bool first = true;
-	for(const DataObject* obj : *this) {
-		if(!obj->identifier().isEmpty()) {
-			if(first) {
-				first = false;
-				str += QStringLiteral(": ");
-			}
-			else str += QStringLiteral(" / ");
-			str += obj->objectTitle();
+	for(const DataObject* obj : path) {
+		if(first) {
+			first = false;
+			str += QStringLiteral(": ");
 		}
+		else str += QStringLiteral(u" \u2192 ");  // Unicode arrow
+		str += obj->objectTitle();
 	}
 	return str;
 }

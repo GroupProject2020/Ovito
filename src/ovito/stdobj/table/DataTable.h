@@ -35,7 +35,7 @@ namespace Ovito { namespace StdObj {
 class OVITO_STDOBJ_EXPORT DataTable : public PropertyContainer
 {
 	/// Define a new property metaclass for data table property containers.
-	class DataTableClass : public PropertyContainerClass
+	class OOMetaClass : public PropertyContainerClass
 	{
 	public:
 
@@ -52,7 +52,7 @@ class OVITO_STDOBJ_EXPORT DataTable : public PropertyContainer
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(DataTable, DataTableClass);
+	OVITO_CLASS_META(DataTable, OOMetaClass);
 	Q_CLASSINFO("DisplayName", "Data table");
 
 public:
@@ -90,15 +90,7 @@ public:
 	/// from the x-axis interval set for this data table.
 	ConstPropertyPtr getXStorage() const;
 
-	//////////////////////////////// from RefTarget //////////////////////////////
-
-	/// Returns the display title of this object in the user interface.
-	virtual QString objectTitle() const override;
-
 private:
-
-	/// The title of the data table, which is shown in the user interface.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The lower bound of the x-interval of the histogram if data points have no explicit x-coordinates.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, intervalStart, setIntervalStart);

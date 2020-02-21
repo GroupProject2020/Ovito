@@ -45,10 +45,13 @@ public:
 		return makeMutable(domain());
 	}
 
+	/// Returns the display title of this object.
+	virtual QString objectTitle() const override;
+
 protected:
 
 	/// \brief Constructor.
-	PeriodicDomainDataObject(DataSet* dataset);
+	PeriodicDomainDataObject(DataSet* dataset, const QString& title = {});
 
 private:
 
@@ -57,6 +60,9 @@ private:
 
 	/// The planar cuts to be applied to geometry after its has been transformed into a non-periodic representation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QVector<Plane3>, cuttingPlanes, setCuttingPlanes);
+
+	/// The assigned title of the data object, which is displayed in the user interface.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 };
 
 }	// End of namespace

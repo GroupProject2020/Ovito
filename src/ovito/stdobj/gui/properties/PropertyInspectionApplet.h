@@ -157,6 +157,9 @@ private:
 		/// Replaces the contents of this data model.
 		void setContents(const PropertyContainer* container);
 
+		/// Returns the list of properties managed by this table model.
+		const std::vector<OORef<PropertyObject>>& properties() const { return _properties; }
+
 	private:
 
 		/// The owner of the model.

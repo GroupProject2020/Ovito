@@ -257,8 +257,8 @@ void SmoothTrajectoryModifier::interpolateState(PipelineFlowState& state1, const
 	if(idProperty1 && idProperty2 && !boost::equal(idProperty1, idProperty2)) {
 
 		// Build ID-to-index map.
-		std::unordered_map<qlonglong,int> idmap;
-		int index = 0;
+		std::unordered_map<qlonglong,size_t> idmap;
+		size_t index = 0;
 		for(auto id : idProperty2) {
 			if(!idmap.insert(std::make_pair(id,index)).second)
 				throwException(tr("Detected duplicate particle ID: %1. Cannot interpolate trajectories in this case.").arg(id));
@@ -362,8 +362,8 @@ void SmoothTrajectoryModifier::averageState(PipelineFlowState& state1, const std
 		if(idProperty1 && idProperty2 && !boost::equal(idProperty1, idProperty2)) {
 
 			// Build ID-to-index map.
-			std::unordered_map<qlonglong,int> idmap;
-			int index = 0;
+			std::unordered_map<qlonglong,size_t> idmap;
+			size_t index = 0;
 			for(auto id : idProperty2) {
 				if(!idmap.insert(std::make_pair(id,index)).second)
 					throwException(tr("Detected duplicate particle ID: %1. Cannot smooth trajectories in this case.").arg(id));

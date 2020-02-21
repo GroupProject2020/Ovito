@@ -83,6 +83,8 @@ namespace Ovito {
 	class SceneNode;
 	class DataObject;
 	class DataObjectReference;
+	class ConstDataObjectPath;
+	class DataObjectPath;
 	class TransformedDataObject;
 	class AttributeDataObject;
 	class RootSceneNode;

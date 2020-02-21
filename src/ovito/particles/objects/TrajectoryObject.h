@@ -34,7 +34,7 @@ namespace Ovito { namespace Particles {
 class OVITO_PARTICLES_EXPORT TrajectoryObject : public PropertyContainer
 {
 	/// Define a new property metaclass for this property container type.
-	class TrajectoryObjectClass : public PropertyContainerClass
+	class OOMetaClass : public PropertyContainerClass
 	{
 	public:
 
@@ -51,7 +51,7 @@ class OVITO_PARTICLES_EXPORT TrajectoryObject : public PropertyContainer
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(TrajectoryObject, TrajectoryObjectClass);
+	OVITO_CLASS_META(TrajectoryObject, OOMetaClass);
 	Q_CLASSINFO("DisplayName", "Particle trajectories");
 
 public:

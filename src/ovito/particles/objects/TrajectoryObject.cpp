@@ -90,6 +90,10 @@ PropertyPtr TrajectoryObject::OOMetaClass::createStandardStorage(size_t elementC
 ******************************************************************************/
 TrajectoryObject::TrajectoryObject(DataSet* dataset) : PropertyContainer(dataset)
 {
+	// Assign the default data object identifier.
+	setIdentifier(OOClass().pythonName());
+
+	// Create and attach a default visualization element for rendering the trajectory lines.
 	addVisElement(new TrajectoryVis(dataset));
 }
 

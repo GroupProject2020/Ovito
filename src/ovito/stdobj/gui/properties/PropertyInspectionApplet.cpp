@@ -175,6 +175,7 @@ void PropertyInspectionApplet::currentContainerChanged()
 ******************************************************************************/
 bool PropertyInspectionApplet::selectDataObject(PipelineObject* dataSource, const QString& objectIdentifierHint, const QVariant& modeHint)
 {
+	// Check the property container list in case the requested data object is a PropertyContainer.
 	for(int i = 0; i < containerSelectionWidget()->count(); i++) {
 		QListWidgetItem* item = containerSelectionWidget()->item(i);
 		const ConstDataObjectPath& objectPath = item->data(Qt::UserRole).value<ConstDataObjectPath>();
@@ -186,6 +187,16 @@ bool PropertyInspectionApplet::selectDataObject(PipelineObject* dataSource, cons
 				}
 			}
 		}
+	}
+	// Check the property columns in case the requested data object is a property object.
+	const auto& properties = _tableModel->properties();
+	auto iter = boost::find_if(properties, [&](const PropertyObject* property) {
+		return property->dataSource() == dataSource && 
+			(objectIdentifierHint.isEmpty() || property->identifier().startsWith(objectIdentifierHint));
+	});
+	if(iter != properties.end()) {
+		_tableView->selectColumn(iter - properties.begin());
+		return true;
 	}
 	return false;
 }

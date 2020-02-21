@@ -39,6 +39,9 @@ IMPLEMENT_OVITO_CLASS(BondsObject);
 ******************************************************************************/
 BondsObject::BondsObject(DataSet* dataset) : PropertyContainer(dataset)
 {
+	// Assign the default data object identifier.
+	setIdentifier(OOClass().pythonName());
+	
 	// Attach a visualization element for rendering the bonds.
 	addVisElement(new BondsVis(dataset));
 }

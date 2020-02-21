@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2018 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,7 +35,7 @@ namespace Ovito { namespace Particles {
 class OVITO_PARTICLES_EXPORT BondsObject : public PropertyContainer
 {
 	/// Define a new property metaclass for bond property containers.
-	class BondsObjectClass : public PropertyContainerClass
+	class OOMetaClass : public PropertyContainerClass
 	{
 	public:
 
@@ -58,6 +58,9 @@ class OVITO_PARTICLES_EXPORT BondsObject : public PropertyContainer
 		/// Determines which elements are located within the given viewport fence region (=2D polygon).
 		virtual boost::dynamic_bitset<> viewportFenceSelection(const QVector<Point2>& fence, const ConstDataObjectPath& objectPath, PipelineSceneNode* node, const Matrix4& projectionTM) const override;
 
+		/// Generates a human-readable string representation of the data object reference.
+		virtual QString formatDataObjectPath(const ConstDataObjectPath& path) const override { return this->displayName(); }
+
 	protected:
 
 		/// Is called by the system after construction of the meta-class instance.
@@ -68,7 +71,7 @@ class OVITO_PARTICLES_EXPORT BondsObject : public PropertyContainer
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(BondsObject, BondsObjectClass);
+	OVITO_CLASS_META(BondsObject, OOMetaClass);
 	Q_CLASSINFO("DisplayName", "Bonds");
 
 public:
@@ -87,9 +90,6 @@ public:
 
 	/// \brief Constructor.
 	Q_INVOKABLE BondsObject(DataSet* dataset);
-
-	/// Returns the title of this object.
-	virtual QString objectTitle() const override { return tr("Bonds"); }
 
 	/// Convinience method that returns the bond topology property.
 	const PropertyObject* getTopology() const { return getProperty(TopologyProperty); }

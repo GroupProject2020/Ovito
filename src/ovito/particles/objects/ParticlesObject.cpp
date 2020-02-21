@@ -45,6 +45,9 @@ SET_PROPERTY_FIELD_LABEL(ParticlesObject, bonds, "Bonds");
 ******************************************************************************/
 ParticlesObject::ParticlesObject(DataSet* dataset) : PropertyContainer(dataset)
 {
+	// Assign the default data object identifier.
+	setIdentifier(OOClass().pythonName());
+	
 	// Create and attach a default visualization element for rendering the particles.
 	addVisElement(new ParticlesVis(dataset));
 }

@@ -30,11 +30,9 @@ namespace Ovito { namespace Mesh {
 IMPLEMENT_OVITO_CLASS(SurfaceMesh);
 DEFINE_PROPERTY_FIELD(SurfaceMesh, topology);
 DEFINE_PROPERTY_FIELD(SurfaceMesh, spaceFillingRegion);
-DEFINE_PROPERTY_FIELD(SurfaceMesh, title);
 DEFINE_REFERENCE_FIELD(SurfaceMesh, vertices);
 DEFINE_REFERENCE_FIELD(SurfaceMesh, faces);
 DEFINE_REFERENCE_FIELD(SurfaceMesh, regions);
-SET_PROPERTY_FIELD_LABEL(SurfaceMesh, title, "Title");
 SET_PROPERTY_FIELD_LABEL(SurfaceMesh, vertices, "Vertices");
 SET_PROPERTY_FIELD_LABEL(SurfaceMesh, faces, "Faces");
 SET_PROPERTY_FIELD_LABEL(SurfaceMesh, regions, "Regions");
@@ -42,8 +40,7 @@ SET_PROPERTY_FIELD_LABEL(SurfaceMesh, regions, "Regions");
 /******************************************************************************
 * Constructs an empty surface mesh object.
 ******************************************************************************/
-SurfaceMesh::SurfaceMesh(DataSet* dataset, const QString& title) : PeriodicDomainDataObject(dataset),
-	_title(title),
+SurfaceMesh::SurfaceMesh(DataSet* dataset, const QString& title) : PeriodicDomainDataObject(dataset, title),
 	_spaceFillingRegion(0)
 {
 	// Attach a visualization element for rendering the surface mesh.
