@@ -243,10 +243,10 @@ void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 ******************************************************************************/
 int FileSource::animationTimeToSourceFrame(TimePoint time) const
 {
-	int animFrame = dataset()->animationSettings()->timeToFrame(time);
-	return (animFrame - playbackStartTime()) *
+	const AnimationSettings* anim = dataset()->animationSettings();
+	return (time - anim->frameToTime(playbackStartTime())) *
 			std::max(1, playbackSpeedNumerator()) /
-			std::max(1, playbackSpeedDenominator());
+			std::max(1, playbackSpeedDenominator() * anim->ticksPerFrame());
 }
 
 /******************************************************************************
@@ -254,11 +254,11 @@ int FileSource::animationTimeToSourceFrame(TimePoint time) const
 ******************************************************************************/
 TimePoint FileSource::sourceFrameToAnimationTime(int frame) const
 {
-	int animFrame = frame *
-			std::max(1, playbackSpeedDenominator()) /
+	const AnimationSettings* anim = dataset()->animationSettings();
+	return frame *
+			std::max(1, playbackSpeedDenominator() * anim->ticksPerFrame()) /
 			std::max(1, playbackSpeedNumerator()) +
-			playbackStartTime();
-	return dataset()->animationSettings()->frameToTime(animFrame);
+			anim->frameToTime(playbackStartTime());
 }
 
 /******************************************************************************
@@ -310,6 +310,8 @@ Future<PipelineFlowState> FileSource::evaluateInternal(const PipelineEvaluationR
 	// Clamp to frame range.
 	if(frame < 0) frame = 0;
 	else if(frame >= frameCount && frameCount > 0) frame = frameCount - 1;
+
+	OVITO_ASSERT(frameTimeInterval(frame).contains(request.time()));
 
 	// Call implementation routine.
 	return requestFrameInternal(frame);
@@ -371,6 +373,7 @@ TimeInterval FileSource::frameTimeInterval(int frame) const
 	if(frame < frames().size() - 1)
 		interval.setEnd(std::max(sourceFrameToAnimationTime(frame + 1) - 1, sourceFrameToAnimationTime(frame)));
 	OVITO_ASSERT(!interval.isEmpty());
+	OVITO_ASSERT(interval.contains(sourceFrameToAnimationTime(frame)));
 	return interval;
 }
 
@@ -471,7 +474,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				catch(Exception& ex) {
 					ex.setContext(dataset());
 					ex.reportError();
-					return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar(' '))), sourceFrameToAnimationTime(frame));
+					return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar(' '))), frameTimeInterval(frame));
 				}
 			});
 	return future;

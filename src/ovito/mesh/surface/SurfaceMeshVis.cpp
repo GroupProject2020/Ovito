@@ -104,7 +104,7 @@ Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(const PipelineEvalua
 
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(std::move(engine))
-		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh, std::vector<ColorA>&& materialColors, std::vector<size_t>&& originalFaceMap, bool renderFacesTwoSided) mutable {
+		.then(executor(), [this, flowState = std::move(flowState), dataObject = OORef<DataObject>(dataObject)](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh, std::vector<ColorA>&& materialColors, std::vector<size_t>&& originalFaceMap, bool renderFacesTwoSided) mutable {
 			// Output the computed mesh as a RenderableSurfaceMesh.
 			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), std::move(capPolygonsMesh), !renderFacesTwoSided);
             renderableMesh->setMaterialColors(std::move(materialColors));
@@ -192,10 +192,10 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 		visCache.surfacePrimitive->setCullFaces(renderableMesh->backfaceCulling());
 
         // Get the original surface mesh.
-        const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(renderableMesh->sourceDataObject().get());
-
-        // Create the pick record that keeps a reference to the original data.
-        visCache.pickInfo = createPickInfo(surfaceMesh, renderableMesh);
+        if(const SurfaceMesh* surfaceMesh = dynamic_object_cast<SurfaceMesh>(renderableMesh->sourceDataObject().get())) {
+			// Create the pick record that keeps a reference to the original data.
+			visCache.pickInfo = createPickInfo(surfaceMesh, renderableMesh);
+		}
 	}
 
 	// Check if we already have a valid rendering primitive that is up to date.
@@ -226,6 +226,8 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>
 ******************************************************************************/
 OORef<ObjectPickInfo> SurfaceMeshVis::createPickInfo(const SurfaceMesh* mesh, const RenderableSurfaceMesh* renderableMesh) const
 {
+	OVITO_ASSERT(mesh);
+	OVITO_ASSERT(renderableMesh);
     return new SurfaceMeshPickInfo(this, mesh, renderableMesh);
 }
 
@@ -256,7 +258,7 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 					if(property->elementTypes().empty() == false) {
 						if(const ElementType* ptype = property->elementType(data.get(facetIndex, component))) {
 							if(!ptype->name().isEmpty())
-								str += QString(" (%1)").arg(ptype->name());
+								str += QStringLiteral(" (%1)").arg(ptype->name());
 						}
 					}
 				}
@@ -276,7 +278,7 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 				}
 			}
 			else {
-				str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : "unknown");
+				str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : QStringLiteral("unknown"));
 			}
 		}
 
@@ -301,7 +303,7 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 							if(property->elementTypes().empty() == false) {
 								if(const ElementType* ptype = property->elementType(data.get(regionIndex, component))) {
 									if(!ptype->name().isEmpty())
-										str += QString(" (%1)").arg(ptype->name());
+										str += QStringLiteral(" (%1)").arg(ptype->name());
 								}
 							}
 						}
@@ -321,7 +323,7 @@ QString SurfaceMeshPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 						}
 					}
 					else {
-						str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : "unknown");
+						str += QStringLiteral("<%1>").arg(QMetaType::typeName(property->dataType()) ? QMetaType::typeName(property->dataType()) : QStringLiteral("unknown"));
 					}
 				}
 			}

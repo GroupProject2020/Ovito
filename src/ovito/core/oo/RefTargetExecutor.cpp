@@ -58,8 +58,9 @@ void RefTargetExecutor::WorkEventBase::activateExecutionContext()
         _executionContext = static_cast<int>(previousContext);
 
         // In the current implementation, deferred work is always executed without undo recording.
-        // Thus, we should suspend the undo stack while running the work function.    
-        _obj->dataset()->undoStack().suspend();
+        // Thus, we should suspend the undo stack while running the work function.
+        if(_obj->dataset()) 
+            _obj->dataset()->undoStack().suspend();
     }
 }
 
@@ -74,7 +75,8 @@ void RefTargetExecutor::WorkEventBase::restoreExecutionContext()
         _executionContext = static_cast<int>(previousContext);
 
         // Restore undo recording state.
-        _obj->dataset()->undoStack().resume();
+        if(_obj->dataset()) 
+            _obj->dataset()->undoStack().resume();
     }
 }
 
