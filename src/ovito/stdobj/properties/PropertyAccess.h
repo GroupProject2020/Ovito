@@ -352,7 +352,17 @@ public:
 	/// \brief Sets the j-th component of the i-th element of the array to a new value.
 	void set(size_t i, size_t j, const T& value) {
 		OVITO_ASSERT(this->_storage);
+		OVITO_ASSERT(i < this->size());
+		OVITO_ASSERT(j < this->componentCount());
 		*(begin() + i * this->componentCount() + j) = value;
+	}
+
+	/// \brief Returns a modifiable reference to the j-th component of the i-th element of the array.
+	T& value(size_t i, size_t j) {
+		OVITO_ASSERT(this->_storage);
+		OVITO_ASSERT(i < this->size());
+		OVITO_ASSERT(j < this->componentCount());
+		return *(begin() + i * this->componentCount() + j);
 	}
 
 protected:

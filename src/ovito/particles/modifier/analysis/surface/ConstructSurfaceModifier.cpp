@@ -54,7 +54,7 @@ SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, smoothingLevel, "Smoothing le
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, probeSphereRadius, "Probe sphere radius");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, onlySelectedParticles, "Use only selected input particles");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, selectSurfaceParticles, "Select particles on the surface");
-SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, transferParticleProperties, "Copy particle properties to surface");
+SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, transferParticleProperties, "Transfer particle properties to surface");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, method, "Construction method");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, gridResolution, "Resolution");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, radiusFactor, "Radius scaling");
@@ -107,20 +107,19 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 	if(simCell->is2D())
 		throwException(tr("The construct surface mesh modifier does not support 2d simulation cells."));
 
-	if(method() == AlphaShape) {
-
-		// Collect the set of particle properties that should be transferred over to the surface mesh vertices.
-		std::vector<ConstPropertyPtr> particleProperties;
-		if(transferParticleProperties()) {
-			for(const PropertyObject* property : particles->properties()) {
-				// Certain properties should not be transferred to the mesh vertices.
-				if(property->type() == ParticlesObject::SelectionProperty) continue;
-				if(property->type() == ParticlesObject::PositionProperty) continue;
-				if(property->type() == ParticlesObject::IdentifierProperty) continue;
-				particleProperties.push_back(property->storage());
-			}
+	// Collect the set of particle properties that should be transferred over to the surface mesh vertices.
+	std::vector<ConstPropertyPtr> particleProperties;
+	if(transferParticleProperties()) {
+		for(const PropertyObject* property : particles->properties()) {
+			// Certain properties should not be transferred to the mesh vertices.
+			if(property->type() == ParticlesObject::SelectionProperty) continue;
+			if(property->type() == ParticlesObject::PositionProperty) continue;
+			if(property->type() == ParticlesObject::IdentifierProperty) continue;
+			particleProperties.push_back(property->storage());
 		}
-
+	}
+	
+	if(method() == AlphaShape) {
 		// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 		return std::make_shared<AlphaShapeEngine>(posProperty->storage(),
 				std::move(selProperty),
@@ -138,7 +137,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 				radiusFactor(),
 				isoValue(),
 				gridResolution(),
-				particles->inputParticleRadii());
+				particles->inputParticleRadii(),
+				std::move(particleProperties));
 	}
 }
 
@@ -176,7 +176,6 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 	if(numInputParticles <= 3) {
 		// Release data that is no longer needed.
 		releaseWorkingData();
-		_particleProperties.clear();
 		return;
 	}
 
@@ -234,7 +233,7 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 		return;
 
 	// Copy particle property values to mesh vertices.
-	for(const ConstPropertyPtr& particleProperty : _particleProperties) {
+	for(const ConstPropertyPtr& particleProperty : particleProperties()) {
 		PropertyStorage* vertexProperty;
 		if(SurfaceMeshVertices::OOClass().isValidStandardPropertyId(particleProperty->type())) {
 			// Input property is also a standard property for mesh vertices.
@@ -284,7 +283,6 @@ void ConstructSurfaceModifier::AlphaShapeEngine::perform()
 
 	// Release data that is no longer needed.
 	releaseWorkingData();
-	_particleProperties.clear();
 }
 
 /******************************************************************************
@@ -306,7 +304,7 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 
 	// Algorithm is divided into several sub-steps.
 	// Assign weights to sub-steps according to estimated runtime.
-	beginProgressSubStepsWithWeights({ 1, 30, 1600, 1500, 30, 100, 300 });
+	beginProgressSubStepsWithWeights({ 1, 30, 1600, 1500, 30, 500, 100, 300 });
 
 	// Scale the atomic radii.
 	for(FloatType& r : _particleRadii) r *= _radiusFactor;
@@ -314,7 +312,7 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 	// Determine the cutoff range of atomic Gaussians.
 	FloatType cutoffSize = FloatType(3) * *std::max_element(_particleRadii.cbegin(), _particleRadii.cend());
 
-	// Determine the extends of the density grid.
+	// Determine the extents of the density grid.
 	AffineTransformation gridBoundaries = mesh().cell().matrix();
 	ConstPropertyAccess<Point3> positionsArray(positions());
 	for(size_t dim = 0; dim < 3; dim++) {
@@ -400,6 +398,64 @@ void ConstructSurfaceModifier::GaussianDensityEngine::perform()
 	mesh().transformVertices(gridToCartesian);
 	if(isCanceled())
 		return;
+
+	nextProgressSubStep();
+
+	// Create mesh vertex properties for transferring particle property values to the surface.
+	std::vector<std::pair<ConstPropertyAccess<FloatType,true>, PropertyAccess<FloatType,true>>> propertyMapping;
+	for(const ConstPropertyPtr& particleProperty : particleProperties()) {
+		// Can only transfer floating-point properties, because we'll need to blend values of several particles.
+		if(particleProperty->dataType() == PropertyStorage::Float) {
+			PropertyPtr vertexProperty;
+			if(SurfaceMeshVertices::OOClass().isValidStandardPropertyId(particleProperty->type())) {
+				// Input property is also a standard property for mesh vertices.
+				vertexProperty = mesh().createVertexProperty(static_cast<SurfaceMeshVertices::Type>(particleProperty->type()), true);
+				OVITO_ASSERT(vertexProperty->dataType() == particleProperty->dataType());
+				OVITO_ASSERT(vertexProperty->stride() == particleProperty->stride());
+			}
+			else if(SurfaceMeshVertices::OOClass().standardPropertyTypeId(particleProperty->name()) != 0) {
+				// Input property name is that of a standard property for mesh vertices.
+				// Must rename the property to avoid conflict, because user properties may not have a standard property name.
+				QString newPropertyName = particleProperty->name() + tr("_particles");
+				vertexProperty = mesh().createVertexProperty(particleProperty->dataType(), particleProperty->componentCount(), particleProperty->stride(), newPropertyName, true, particleProperty->componentNames());
+			}
+			else {
+				// Input property is a user property for mesh vertices.
+				vertexProperty = mesh().createVertexProperty(particleProperty->dataType(), particleProperty->componentCount(), particleProperty->stride(), particleProperty->name(), true, particleProperty->componentNames());
+			}
+			propertyMapping.emplace_back(particleProperty, std::move(vertexProperty));
+		}
+	}
+
+	// Transfer property values from particles to to mesh vertices.
+	if(!propertyMapping.empty()) {
+		// Compute the accumulated density at each grid point.
+		parallelFor(mesh().vertexCount(), *this, [&](size_t vertexIndex) {
+			// Visit all particles in the vicinity of the vertex.
+			FloatType weightSum = 0;
+			for(CutoffNeighborFinder::Query neighQuery(neighFinder, mesh().vertexPosition(vertexIndex)); !neighQuery.atEnd(); neighQuery.next()) {
+				FloatType alpha = _particleRadii[neighQuery.current()];
+				FloatType weight = std::exp(-neighQuery.distanceSquared() / (FloatType(2) * alpha * alpha));
+				// Perform summation of particle contributions to the property values at the current mesh vertex.
+				for(auto& p : propertyMapping) {
+					for(size_t component = 0; component < p.first.componentCount(); component++) {
+						p.second.value(vertexIndex, component) += weight * p.first.get(neighQuery.current(), component);
+					}
+				}
+				weightSum += weight;
+			}
+			if(weightSum != 0) {
+				// Normalize property values.
+				for(auto& p : propertyMapping) {
+					for(size_t component = 0; component < p.second.componentCount(); component++) {
+						p.second.value(vertexIndex, component) /= weightSum;
+					}
+				}
+			}
+		});
+		if(isCanceled())
+			return;
+	}
 
 	// Flip surface orientation if cell is mirrored.
 	if(gridToCartesian.determinant() < 0)

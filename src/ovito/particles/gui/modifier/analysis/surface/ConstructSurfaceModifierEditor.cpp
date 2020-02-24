@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -76,11 +76,6 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	sublayout->addWidget(selectSurfaceParticlesUI->checkBox(), 3, 1, 1, 2);
 	connect(alphaShapeMethodBtn, &QRadioButton::toggled, selectSurfaceParticlesUI, &BooleanParameterUI::setEnabled);
 
-	BooleanParameterUI* transferParticlePropertiesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::transferParticleProperties));
-	transferParticlePropertiesUI->setEnabled(false);
-	sublayout->addWidget(transferParticlePropertiesUI->checkBox(), 4, 1, 1, 2);
-	connect(alphaShapeMethodBtn, &QRadioButton::toggled, transferParticlePropertiesUI, &BooleanParameterUI::setEnabled);
-
 	QRadioButton* gaussianDensityBtn = methodUI->addRadioButton(ConstructSurfaceModifier::GaussianDensity, tr("Gaussian density method (experimental):"));
 	sublayout->setRowMinimumHeight(5, 10);
 	sublayout->addWidget(gaussianDensityBtn, 6, 0, 1, 3);
@@ -113,6 +108,9 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 
 	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::onlySelectedParticles));
 	sublayout->addWidget(onlySelectedUI->checkBox(), 1, 0, 1, 2);
+
+	BooleanParameterUI* transferParticlePropertiesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::transferParticleProperties));
+	sublayout->addWidget(transferParticlePropertiesUI->checkBox(), 2, 0, 1, 2);
 
 	// Status label.
 	layout->addWidget(statusLabel());

@@ -201,15 +201,21 @@ JOM: Vol. 66, Issue 3 (2014), 399-407</link></literallayout>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>Copy particle properties to surface</term>
+        <term>Transfer particle properties to surface</term>
         <listitem>
-          <para>This option transfers all properties from the input particles to the vertices of the constructed <link linkend="scene_objects.surface_mesh">mesh</link>.
+          <para>This option transfers information from the input particles to the vertices of the constructed <link linkend="scene_objects.surface_mesh">mesh</link>.
             In particular, the values of the <literal>Color</literal> particle property of the surface particles will be copied over to the surface mesh vertices,
-            giving you a way to control the local coloring of the surface mesh. For example, you can insert the <link linkend="particles.modifiers.color_coding">
+            giving you a way to control the local coloring of the surface mesh. For example, you could insert the <link linkend="particles.modifiers.color_coding">
             Color coding</link> modifier <emphasis>prior to</emphasis> the construct surface mesh modifier to give the particles a color.
-            The constructed surface mesh will then inherit these local colors if this option is activated.
+            The constructed surface mesh will then inherit these local colors if this modifier option has been is activated.
             Alternatively, you can insert the <link linkend="particles.modifiers.color_coding">Color coding</link> modifier
             after having constructed the mesh, and color the mesh according to some vertex property that was inherited from the input particles.
+          </para>
+          <para>
+            Note: If the Gaussian density method is used, only particle properties of data type <literal>Float</literal> will be transferred 
+            to the surface. Integer properties will be skipped, because the algorithm needs to blend the property values of several particles
+            to compute the value at each mesh vertex. In case of the alpha-shape method, all properties are transferred, including integer 
+            properties, because there is a one-to-one mapping between particles and mesh vertices.
           </para>
         </listitem>
       </varlistentry>
