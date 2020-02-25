@@ -52,9 +52,9 @@ void ActionManager::on_Quit_triggered()
 ******************************************************************************/
 void ActionManager::on_HelpAbout_triggered()
 {
-	QMessageBox msgBox(QMessageBox::NoIcon, QCoreApplication::applicationName(),
+	QMessageBox msgBox(QMessageBox::NoIcon, Application::applicationName(),
 			tr("<h3>%1 (Open Visualization Tool)</h3>"
-				"<p>Version %2</p>").arg(QCoreApplication::applicationName()).arg(Application::applicationVersionString()),
+				"<p>Version %2</p>").arg(Application::applicationName()).arg(Application::applicationVersionString()),
 			QMessageBox::Ok, mainWindow());
 	msgBox.setInformativeText(QStringLiteral(OVITO_COPYRIGHT_NOTICE));
 	msgBox.setDefaultButton(QMessageBox::Ok);

@@ -78,7 +78,7 @@ LoadStream::LoadStream(QDataStream& source) : _is(source)
 	// OVITO 3.x cannot read state files written by OVITO 2.x:
 	if(_fileFormat < 30001)
 		throw Exception(tr("This file has been written by %1 %2 and %3 %4.x cannot read it anymore. Please use the old program version to open the file.")
-			.arg(_applicationName).arg(_applicationVersionString).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));
+			.arg(_applicationName).arg(_applicationVersionString).arg(Application::applicationName()).arg(Application::applicationVersionMajor()));
 }
 
 /******************************************************************************

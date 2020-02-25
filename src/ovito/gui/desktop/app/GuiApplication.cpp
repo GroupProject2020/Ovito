@@ -151,13 +151,13 @@ bool GuiApplication::startupApplication()
 		QDate expirationDate = QDate::fromString(QStringLiteral(OVITO_EXPIRATION_DATE), Qt::ISODate);
 		if(QDate::currentDate() > expirationDate) {
 			QMessageBox msgbox(mainWin);
-			msgbox.setWindowTitle(tr("Expiration - %1").arg(QCoreApplication::applicationName()));
+			msgbox.setWindowTitle(tr("Expiration - %1").arg(Application::applicationName()));
 			msgbox.setStandardButtons(QMessageBox::Close);
 			msgbox.setText(tr("<p>This is a preview version of %1 with a limited life span, which did expire on %2.</p>"
 				"<p>Please obtain the final program release, which is now available on our website "
 				"<a href=\"https://www.ovito.org/\">www.ovito.org</a>.</p>"
 				"<p>This pre-release build of %2 can no longer be used and will quit now.</p>")
-					.arg(QCoreApplication::applicationName())
+					.arg(Application::applicationName())
 					.arg(expirationDate.toString(Qt::SystemLocaleLongDate)));
 			msgbox.setTextInteractionFlags(Qt::TextBrowserInteraction);
 			msgbox.setIcon(QMessageBox::Critical);
@@ -279,7 +279,7 @@ void GuiApplication::showErrorMessages()
 
 		// Prepare a message box dialog.
 		QPointer<QMessageBox> msgbox = new QMessageBox();
-		msgbox->setWindowTitle(tr("Error - %1").arg(QCoreApplication::applicationName()));
+		msgbox->setWindowTitle(tr("Error - %1").arg(Application::applicationName()));
 		msgbox->setStandardButtons(QMessageBox::Ok);
 		msgbox->setText(exception.message());
 		msgbox->setIcon(QMessageBox::Critical);

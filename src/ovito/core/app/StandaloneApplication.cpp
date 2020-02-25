@@ -38,7 +38,7 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		return false;
 
 	// Set the application name.
-	QCoreApplication::setApplicationName(QStringLiteral(OVITO_APPLICATION_NAME));
+	QCoreApplication::setApplicationName(QStringLiteral("Ovito"));
 	QCoreApplication::setOrganizationName(tr("Ovito"));
 	QCoreApplication::setOrganizationDomain("ovito.org");
 	QCoreApplication::setApplicationVersion(QStringLiteral(OVITO_VERSION_STRING));
@@ -74,7 +74,7 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 
 	// Output program version if requested.
 	if(cmdLineParser().isSet("version")) {
-		std::cout << qPrintable(QCoreApplication::applicationName()) << " " << qPrintable(QCoreApplication::applicationVersion()) << std::endl;
+		std::cout << qPrintable(Application::applicationName()) << " " << qPrintable(Application::applicationVersionString()) << std::endl;
 		_consoleMode = true;
 		return true;
 	}
@@ -192,7 +192,7 @@ bool StandaloneApplication::processCommandLineParameters()
 {
 	// Output program version if requested.
 	if(cmdLineParser().isSet("version")) {
-		std::cout << qPrintable(QCoreApplication::applicationName()) << " " << qPrintable(QCoreApplication::applicationVersion()) << std::endl;
+		std::cout << qPrintable(Application::applicationName()) << " " << qPrintable(Application::applicationVersionString()) << std::endl;
 		return false;
 	}
 

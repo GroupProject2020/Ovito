@@ -551,7 +551,7 @@ void ModifyCommandPage::createAboutPanel()
 	newsPage = QByteArray((const char *)res.data(), (int)res.size());
 #endif
 
-	_aboutRollout = _propertiesPanel->addRollout(rollout, QCoreApplication::applicationName());
+	_aboutRollout = _propertiesPanel->addRollout(rollout, Application::applicationName());
 	showProgramNotice(QString::fromUtf8(newsPage.constData()));
 
 #if !defined(OVITO_BUILD_APPSTORE_VERSION)
@@ -641,21 +641,21 @@ void ModifyCommandPage::showProgramNotice(const QString& htmlPage)
 	if(currentDate < expirationDate.addMonths(-1)) {
 		expirationNotice = tr("<h4>Preview build</h4><p>You are using a preview version of %1, which will expire on %2. "
 				"The final release of %1 will be made available on our website <a href=\"https://www.ovito.org/\">www.ovito.org</a>.</p>")
-			.arg(QCoreApplication::applicationName())
+			.arg(Application::applicationName())
 			.arg(expirationDate.toString(Qt::SystemLocaleShortDate));
 	}
 	else if(currentDate <= expirationDate) {
 		expirationNotice = tr("<h4>Preview build: Expiration date approaching</h4><p style=\"background-color: rgb(230,180,180);\">You are using a preview version of %1, which will expire on %2. "
 				"The final program release is now available. Please visit our website <a href=\"https://www.ovito.org/\">www.ovito.org</a>. "
 				"<br>This preview release will stop working in %3 days!</p>")
-			.arg(QCoreApplication::applicationName())
+			.arg(Application::applicationName())
 			.arg(expirationDate.toString(Qt::SystemLocaleShortDate))
 			.arg(currentDate.daysTo(expirationDate));
 	}
 	else {
 		expirationNotice = tr("<h4>Preview build</h4><p style=\"background-color: rgb(230,180,180);\">This preview version of %1 has expired on %2 and will no longer work. "
 				"The final program release is now available, please visit our website <a href=\"https://www.ovito.org/\">www.ovito.org</a>. ")
-			.arg(QCoreApplication::applicationName())
+			.arg(Application::applicationName())
 			.arg(expirationDate.toString(Qt::SystemLocaleShortDate));
 	}
 	finalText.replace(QStringLiteral("<p>&nbsp;</p>"), expirationNotice);
