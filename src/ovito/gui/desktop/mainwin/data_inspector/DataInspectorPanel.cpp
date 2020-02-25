@@ -126,10 +126,9 @@ void DataInspectorPanel::onTabBarClicked(int index)
 void DataInspectorPanel::collapse()
 {
 	if(_appletContainer->height() != 0) {
-		parentWidget()->setMaximumHeight(parentWidget()->minimumSizeHint().height());
-		parentWidget()->parentWidget()->updateGeometry();
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-		parentWidget()->setMaximumHeight(16777215);
+		if(QSplitter* parentSplitter = qobject_cast<QSplitter*>(parentWidget())) {
+			parentSplitter->setSizes({ parentSplitter->height(), 0 });
+		}
 	}
 }
 
@@ -139,10 +138,11 @@ void DataInspectorPanel::collapse()
 void DataInspectorPanel::open()
 {
 	if(_appletContainer->height() == 0) {
-		parentWidget()->setMinimumHeight(parentWidget()->minimumSizeHint().height() + _mainWindow->centralWidget()->height() / 3);
-		parentWidget()->parentWidget()->updateGeometry();
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-		parentWidget()->setMinimumHeight(0);
+		if(QSplitter* parentSplitter = qobject_cast<QSplitter*>(parentWidget())) {
+			int viewportSize = parentSplitter->height() * 2 / 3;
+			int dataInspectorSize = parentSplitter->height() - viewportSize;
+			parentSplitter->setSizes({ viewportSize, dataInspectorSize });
+		}
 	}
 }
 

@@ -146,7 +146,7 @@ private:
 	/// The active page of the inspector.
 	int _activeAppletIndex = -1;
 
-	/// Indicates whether the inspector panel is currently open.
+	/// Indicates whether the inspector panel is currently open or collapsed.
 	bool _inspectorActive = false;
 };
 

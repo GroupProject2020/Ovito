@@ -50,7 +50,7 @@ namespace Ovito {
 ******************************************************************************/
 MainWindow::MainWindow() : _datasetContainer(this)
 {
-	_baseWindowTitle = tr("%1 (Open Visualization Tool)").arg(QCoreApplication::applicationName());
+	_baseWindowTitle = tr("%1 (Open Visualization Tool)").arg(Application::applicationName());
 #ifdef OVITO_EXPIRATION_DATE
 	_baseWindowTitle += tr(" - Preview build expiring on %1").arg(QDate::fromString(QStringLiteral(OVITO_EXPIRATION_DATE), Qt::ISODate).toString(Qt::SystemLocaleShortDate));
 #endif
@@ -82,8 +82,18 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	// Create the main toolbar.
 	createMainToolbar();
 
+	// Create the viewports panel and the data inspector panel.
+	QSplitter* dataInspectorSplitter = new QSplitter();
+	dataInspectorSplitter->setOrientation(Qt::Vertical);
+	dataInspectorSplitter->setChildrenCollapsible(false);
+	dataInspectorSplitter->setHandleWidth(0);
 	_viewportsPanel = new ViewportsPanel(this);
-	setCentralWidget(_viewportsPanel);
+	dataInspectorSplitter->addWidget(_viewportsPanel);
+	_dataInspector = new DataInspectorPanel(this);
+	dataInspectorSplitter->addWidget(_dataInspector);
+	dataInspectorSplitter->setStretchFactor(0, 1);
+	dataInspectorSplitter->setStretchFactor(1, 0);
+	setCentralWidget(dataInspectorSplitter);
 
 	// Create the animation panel below the viewports.
 	QWidget* animationPanel = new QWidget();
@@ -184,14 +194,10 @@ MainWindow::MainWindow() : _datasetContainer(this)
 
 	// Create the bottom docking widget.
 	QWidget* bottomDockWidget = new QWidget();
-	bottomDockWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+	bottomDockWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	QGridLayout* bottomDockLayout = new QGridLayout(bottomDockWidget);
 	bottomDockLayout->setContentsMargins(0,0,0,0);
 	bottomDockLayout->setSpacing(0);
-	bottomDockLayout->setRowStretch(0, 1);
-	_dataInspector = new DataInspectorPanel(this);
-	bottomDockLayout->addWidget(_dataInspector, 0, 0, 1, 5);
-	QTimer::singleShot(0, _dataInspector, &DataInspectorPanel::collapse);
 	QFrame* separatorLine = new QFrame();
 	QPalette pal = separatorLine->palette();
 	pal.setColor(QPalette::WindowText, pal.color(QPalette::Mid));

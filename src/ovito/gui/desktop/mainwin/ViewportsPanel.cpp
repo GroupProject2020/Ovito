@@ -37,14 +37,17 @@ namespace Ovito {
 /******************************************************************************
 * The constructor of the viewports panel class.
 ******************************************************************************/
-ViewportsPanel::ViewportsPanel(MainWindow* parent) : QWidget(parent)
+ViewportsPanel::ViewportsPanel(MainWindow* mainWindow)
 {
 	// Activate the new viewport layout as soon as a new state file is loaded.
-	connect(&parent->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
-	connect(&parent->datasetContainer(), &DataSetContainer::animationSettingsReplaced, this, &ViewportsPanel::onAnimationSettingsReplaced);
+	connect(&mainWindow->datasetContainer(), &DataSetContainer::viewportConfigReplaced, this, &ViewportsPanel::onViewportConfigurationReplaced);
+	connect(&mainWindow->datasetContainer(), &DataSetContainer::animationSettingsReplaced, this, &ViewportsPanel::onAnimationSettingsReplaced);
 
 	// Track viewport input mode changes.
-	connect(parent->viewportInputManager(), &ViewportInputManager::inputModeChanged, this, &ViewportsPanel::onInputModeChanged);
+	connect(mainWindow->viewportInputManager(), &ViewportInputManager::inputModeChanged, this, &ViewportsPanel::onInputModeChanged);
+
+	// Prevent the viewports from disappearing completely. 
+	setMinimumSize(40, 40);
 }
 
 /******************************************************************************
@@ -72,9 +75,9 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 	if(newViewportConfiguration) {
 
 		// Create windows for the new viewports.
-		MainWindow* mainWindow = static_cast<MainWindow*>(parentWidget());
 		try {
-			ViewportInputManager* inputManager = MainWindow::fromDataset(newViewportConfiguration->dataset())->viewportInputManager();
+			MainWindow* mainWindow = MainWindow::fromDataset(newViewportConfiguration->dataset());
+			ViewportInputManager* inputManager = mainWindow->viewportInputManager();
 			for(Viewport* vp : newViewportConfiguration->viewports()) {
 				OVITO_ASSERT(vp->window() == nullptr);
 				ViewportWindow* viewportWindow = new ViewportWindow(vp, inputManager, mainWindow, this);
