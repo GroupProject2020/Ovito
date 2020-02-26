@@ -65,11 +65,10 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(const PipelineEvaluatio
 	// Let the subclass create the computation engine based on the input data.
 	return createEngine(request, modApp, input)
 		.then(executor(), [this, time = request.time(), input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
-
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
-			return dataset()->container()->taskManager().runTaskAsync(engine)
-				.then(executor(), [this, time, modApp, state = std::move(input), engine = std::move(engine)]() mutable {
+			return dataset()->taskManager().runTaskAsync(engine)
+				.then(executor(), [this, time, modApp, state = std::move(input), engine]() mutable {
 					if(modApp && modApp->modifier() == this) {
 
 						// Keep a copy of the results in the ModifierApplication for later.

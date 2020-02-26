@@ -76,13 +76,13 @@ bool LAMMPSDataImporter::OOMetaClass::checkFileFormat(const FileHandle& file) co
 Future<LAMMPSDataImporter::LAMMPSAtomStyle> LAMMPSDataImporter::inspectFileHeader(const Frame& frame)
 {
 	// Retrieve file.
-	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
+	return Application::instance()->fileManager()->fetchUrl(dataset()->taskManager(), frame.sourceFile)
 		.then(executor(), [this, frame](const FileHandle& fileHandle) {
 
 			// Start task that inspects the file header to determine the LAMMPS atom style.
 			activateCLocale();
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, fileHandle, sortParticles(), atomStyle(), true);
-			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
+			return dataset()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedAtomStyle();
 				});

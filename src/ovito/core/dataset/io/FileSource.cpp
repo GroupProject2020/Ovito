@@ -400,7 +400,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 			}
 
 			// Retrieve the file.
-			Future<PipelineFlowState> loadFrameFuture = Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), sourceFrames[frame].sourceFile)
+			Future<PipelineFlowState> loadFrameFuture = Application::instance()->fileManager()->fetchUrl(dataset()->taskManager(), sourceFrames[frame].sourceFile)
 				.then(executor(), [this, frame](const FileHandle& fileHandle) -> Future<PipelineFlowState> {
 
 					// Without an importer object we have to give up immediately.
@@ -421,7 +421,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 					// Execute the loader in a background thread.
 					// Collect results from the loader in the UI thread once it has finished running.
-					auto future = dataset()->container()->taskManager().runTaskAsync(frameLoader)
+					auto future = dataset()->taskManager().runTaskAsync(frameLoader)
 						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) {
 							OVITO_ASSERT_MSG(frameData, "FileSource::requestFrameInternal()", "File importer did not return a FrameData object.");
 

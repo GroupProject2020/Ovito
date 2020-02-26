@@ -168,12 +168,12 @@ bool LAMMPSBinaryDumpImporter::OOMetaClass::checkFileFormat(const FileHandle& fi
 Future<InputColumnMapping> LAMMPSBinaryDumpImporter::inspectFileHeader(const Frame& frame)
 {
 	// Retrieve file.
-	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
+	return Application::instance()->fileManager()->fetchUrl(dataset()->taskManager(), frame.sourceFile)
 		.then(executor(), [this, frame](const FileHandle& fileHandle) {
 
 			// Start task that inspects the file header to determine the contained data columns.
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, fileHandle);
-			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
+			return dataset()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedColumnMapping();
 				});
