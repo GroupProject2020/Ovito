@@ -112,7 +112,12 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		IF(APPLE)
 			# Enable the use of @rpath on macOS.
 			SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
-			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
+			IF(NOT OVITO_BUILD_CONDA)
+				SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
+			ELSE()
+				# Look for other shared libraries in the parent directory ("lib/ovito/") and in the plugins directory ("lib/ovito/plugins/")
+				SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@loader_path/../")
+			ENDIF()
 			# The build tree target should have rpath of install tree target.
 			SET_TARGET_PROPERTIES(${target_name} PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 		ELSEIF(UNIX)

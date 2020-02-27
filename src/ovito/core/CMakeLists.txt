@@ -27,7 +27,7 @@ FIND_PACKAGE(FFMPEG)
 FIND_PACKAGE(ZLIB)
 
 # Locate the libssh library, needed for the built-in SSH client.
-IF(NOT OVITO_BUILD_PYTHON_CONDA)
+IF(NOT OVITO_BUILD_CONDA)
 	FIND_PACKAGE(Libssh)
 ENDIF()
 

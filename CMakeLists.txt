@@ -54,7 +54,7 @@ IF(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
 ENDIF()
 
 # This is to enable target debugging within Visual Studio Code.
-# It is ignored oustide of Visual Studio Code/CMake tools.
+# It is ignored outside of Visual Studio Code/CMake tools.
 INCLUDE(CMakeToolsHelpers OPTIONAL)
 
 IF(EMSCRIPTEN)
@@ -145,20 +145,42 @@ IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
 		# The directory where the compiled plugins go to.
 		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
 		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
+		IF(NOT OVITO_BUILD_CONDA)
+			SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
+		ELSE()
+			# For Conda package builds:
+			SET(OVITO_RELATIVE_PYTHON_DIRECTORY "$ENV{SP_DIR}")
+		ENDIF()
 	ELSEIF(APPLE)
-		# The directory where the main executable goes to.
-		SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
-		# The directory where the main libraries of Ovito go to.
-		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
-		# The directory where the third-party libraries go to.
-		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks")
-		# The directory where the auxiliary files go to.
-		SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
-		# The directory where the compiled plugins go to.
-		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
-		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
+		IF(NOT OVITO_BUILD_CONDA)
+			# The directory where the main executable goes to.
+			SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
+			# The directory where the main libraries of Ovito go to.
+			SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
+			# The directory where the third-party libraries go to.
+			SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks")
+			# The directory where the auxiliary files go to.
+			SET(OVITO_RELATIVE_SHARE_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
+			# The directory where the compiled plugins go to.
+			SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
+			# The directory where the Python source modules go to.
+			SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/Resources/python")
+		ELSE()
+			# For Conda package builds:
+
+			# The directory where the main executable goes to.
+			SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
+			# The directory where the main libraries go to.
+			SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "lib/ovito")
+			# The directory where the third-party libraries go to.
+			SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+			# The directory where the auxiliary files go to.
+			SET(OVITO_RELATIVE_SHARE_DIRECTORY "share/ovito")
+			# The directory where the compiled plugins go to.
+			SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
+			# The directory where the Python source modules go to.
+			SET(OVITO_RELATIVE_PYTHON_DIRECTORY "$ENV{SP_DIR}")
+		ENDIF()	
 	ELSEIF(WIN32)
 		# The directory where the main executable goes to.
 		SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
@@ -174,35 +196,20 @@ IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
 		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
 	ENDIF()
 ELSE()
-	# For Python-only builds:
+	# For Python-only (PyPI wheel) builds:
 
-	IF(NOT OVITO_BUILD_PYTHON_CONDA)
-		# The directory where the main executable goes to.
-		SET(OVITO_RELATIVE_BINARY_DIRECTORY "ovito")
-		# The directory where the main libraries go to.
-		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "ovito/plugins")
-		# The directory where the third-party libraries go to.
-		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-		# The directory where the auxiliary files go to.
-		SET(OVITO_RELATIVE_SHARE_DIRECTORY "ovito")
-		# The directory where the compiled plugins go to.
-		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY ".")
-	ELSE()
-		# The directory where the main executable goes to.
-		SET(OVITO_RELATIVE_BINARY_DIRECTORY "bin")
-		# The directory where the main libraries go to.
-		SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "$ENV{SP_DIR}/ovito/plugins")
-		# The directory where the third-party libraries go to.
-		SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-		# The directory where the auxiliary files go to.
-		SET(OVITO_RELATIVE_SHARE_DIRECTORY "$ENV{SP_DIR}/ovito")
-		# The directory where the compiled plugins go to.
-		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-		# The directory where the Python source modules go to.
-		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "$ENV{SP_DIR}")
-	ENDIF()	
+	# The directory where the main executable goes to.
+	SET(OVITO_RELATIVE_BINARY_DIRECTORY "ovito")
+	# The directory where the main libraries go to.
+	SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "ovito/plugins")
+	# The directory where the third-party libraries go to.
+	SET(OVITO_RELATIVE_3RDPARTY_LIBRARY_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	# The directory where the auxiliary files go to.
+	SET(OVITO_RELATIVE_SHARE_DIRECTORY "ovito")
+	# The directory where the compiled plugins go to.
+	SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	# The directory where the Python source modules go to.
+	SET(OVITO_RELATIVE_PYTHON_DIRECTORY ".")
 ENDIF()
 
 # The directory where the main executable goes to.
