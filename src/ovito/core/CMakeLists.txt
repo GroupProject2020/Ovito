@@ -27,7 +27,9 @@ FIND_PACKAGE(FFMPEG)
 FIND_PACKAGE(ZLIB)
 
 # Locate the libssh library, needed for the built-in SSH client.
-FIND_PACKAGE(Libssh)
+IF(NOT OVITO_BUILD_PYTHON_CONDA)
+	FIND_PACKAGE(Libssh)
+ENDIF()
 
 # Locate the Boost library.
 SET(_Boost_IMPORTED_TARGETS TRUE) # Workaround for bug in CMake 3.5, which doesn't define the Boost::boost imported target.
