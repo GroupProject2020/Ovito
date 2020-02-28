@@ -26,14 +26,13 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
     # Parse macro parameters
     SET(options GUI_PLUGIN)
     SET(oneValueArgs)
-    SET(multiValueArgs SOURCES LIB_DEPENDENCIES PRIVATE_LIB_DEPENDENCIES PLUGIN_DEPENDENCIES OPTIONAL_PLUGIN_DEPENDENCIES PYTHON_WRAPPERS)
+    SET(multiValueArgs SOURCES LIB_DEPENDENCIES PRIVATE_LIB_DEPENDENCIES PLUGIN_DEPENDENCIES OPTIONAL_PLUGIN_DEPENDENCIES)
     CMAKE_PARSE_ARGUMENTS(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 	SET(plugin_sources ${ARG_SOURCES})
 	SET(lib_dependencies ${ARG_LIB_DEPENDENCIES})
 	SET(private_lib_dependencies ${ARG_PRIVATE_LIB_DEPENDENCIES})
 	SET(plugin_dependencies ${ARG_PLUGIN_DEPENDENCIES})
 	SET(optional_plugin_dependencies ${ARG_OPTIONAL_PLUGIN_DEPENDENCIES})
-	SET(python_wrappers ${ARG_PYTHON_WRAPPERS})
 
 	# Create the library target for the plugin.
 	ADD_LIBRARY(${target_name} ${plugin_sources})
@@ -50,19 +49,19 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Core)
 	ENDIF()
 
-	# Link to OVITO's dekstop GUI module when the plugin provides a UI.
+	# Link to OVITO's desktop GUI module when the plugin provides a GUI.
 	IF(${ARG_GUI_PLUGIN})
 		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
     	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Widgets)
 	ENDIF()
 
-	# Link to Qt5.
+	# Link to Qt5 libs.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Core Qt5::Gui)
 
-	# Link to other required libraries needed by this specific plugin.
+	# Link to other third-party libraries needed by this specific plugin.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC ${lib_dependencies})
 
-	# Link to other required libraries needed by this specific plugin, which are not visible to dependent plugins.
+	# Link to other third-party libraries needed by this specific plugin, which should not be visible to dependent plugins.
 	TARGET_LINK_LIBRARIES(${target_name} PRIVATE ${private_lib_dependencies})
 
 	# Link to other plugin modules that are dependencies of this plugin.
@@ -110,8 +109,6 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 
 	IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
 		IF(APPLE)
-			# Enable the use of @rpath on macOS.
-			SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
 			IF(NOT OVITO_BUILD_CONDA)
 				SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/;@executable_path/;@loader_path/../MacOS/;@executable_path/../Frameworks/")
 			ELSE()
@@ -127,7 +124,6 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	ELSE()
 		IF(APPLE)
 			# Use @loader_path on macOS when building the Python modules only.
-			SET_TARGET_PROPERTIES(${target_name} PROPERTIES MACOSX_RPATH TRUE)
 			SET_TARGET_PROPERTIES(${target_name} PROPERTIES INSTALL_RPATH "@loader_path/")
 		ELSEIF(UNIX)
 			# Look for other shared libraries in the same directory.
@@ -138,19 +134,6 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 			# Since we will link this library into the dynamically loaded Python extension module, we need to use the fPIC flag.
 			SET_PROPERTY(TARGET ${target_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 		ENDIF()
-	ENDIF()
-
-	# Install Python wrapper files.
-	IF(python_wrappers AND OVITO_BUILD_PLUGIN_PYSCRIPT)
-		# Install the Python source files that belong to the plugin, which provide the scripting interface.
-		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} "-E" copy_directory "${python_wrappers}" "${OVITO_PYTHON_DIRECTORY}/"
-			COMMENT "Copying Python files for plugin ${target_name}")
-
-		# Also make them part of the installation package.
-		INSTALL(DIRECTORY "${python_wrappers}"
-			DESTINATION "${OVITO_RELATIVE_PYTHON_DIRECTORY}/"
-			REGEX "__pycache__" EXCLUDE)
 	ENDIF()
 
 	# Make this module part of the installation package.

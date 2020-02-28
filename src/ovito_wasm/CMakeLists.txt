@@ -68,8 +68,6 @@ IF(EMSCRIPTEN)
 	)
 ELSE()
 	IF(APPLE)
-		# Enable the use of @rpath on macOS.
-		SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_RPATH TRUE)
 		SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "@executable_path/;@executable_path/../Frameworks/;@executable_path/../PlugIns/")
 		SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 	ENDIF()

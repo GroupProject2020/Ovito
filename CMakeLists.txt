@@ -26,7 +26,7 @@ CMAKE_POLICY(VERSION 3.2.0)
 
 # Choose CMake policies.
 CMAKE_POLICY(SET CMP0020 NEW) 	# Automatically link to qtmain.lib on Windows.
-CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
+CMAKE_POLICY(SET CMP0042 NEW) 	# Set MACOSX_RPATH target property to TRUE by default.
 CMAKE_POLICY(SET CMP0007 NEW)   # Let LIST command not ignore empty elements.
 IF(NOT CMAKE_VERSION VERSION_LESS "3.3")
 	CMAKE_POLICY(SET CMP0063 NEW)   # Honor visibility properties for all target types.

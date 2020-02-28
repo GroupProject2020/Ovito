@@ -41,7 +41,6 @@ FUNCTION(OVITO_PLUGIN plugin_name)
     SET_TARGET_PROPERTIES(${plugin_name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "@OVITO_PLUGINS_DIRECTORY@")
 
     # Set rpath.
-    SET_TARGET_PROPERTIES(${plugin_name} PROPERTIES MACOSX_RPATH TRUE)
     SET_TARGET_PROPERTIES(${plugin_name} PROPERTIES INSTALL_RPATH "@executable_path/;@loader_path/")
 
     # The build tree target should have rpath of install tree target.
