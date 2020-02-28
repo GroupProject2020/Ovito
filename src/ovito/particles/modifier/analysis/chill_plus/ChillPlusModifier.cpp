@@ -92,6 +92,7 @@ void ChillPlusModifier::ChillPlusEngine::perform()
         return;
 
 	PropertyAccess<int> output(structures());
+	ConstPropertyAccess<int> selectionData(selection());
 
     // Find all relevant q_lm
     // create matrix of q_lm
@@ -113,6 +114,12 @@ void ChillPlusModifier::ChillPlusEngine::perform()
 
     // For each particle, count the bonds and determine structure
     parallelFor(particleCount, *this, [&](size_t index) {
+        // Skip particles that are not included in the analysis.
+        if(selectionData && !selectionData[index]) {
+            output[index] = OTHER;
+            return;
+        }
+
         output[index] = determineStructure(neighborListBuilder, index, typesToIdentify());
     });
 
