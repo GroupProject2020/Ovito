@@ -51,7 +51,9 @@ IF(XSLT_PROCESSOR AND OVITO_BUILD_GUI)
 					WORKING_DIRECTORY "${Ovito_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
 
+	# Install the documentation alongside with the application.
 	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/")
+	
 	IF(OVITO_BUILD_DOCUMENTATION)
 		ADD_DEPENDENCIES(Ovito documentation)
 	ENDIF()

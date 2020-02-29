@@ -137,6 +137,10 @@ SET_PROPERTY(SOURCE actions/FileActions.cpp
 	APPEND PROPERTY COMPILE_DEFINITIONS
 	"OVITO_COPYRIGHT_NOTICE=\"${OVITO_COPYRIGHT_NOTICE}\"")
 
+# Compute the relative path where the documentation files get installed relative to the executable. 
+FILE(RELATIVE_PATH OVITO_DOCUMENTATION_PATH "${OVITO_BINARY_DIRECTORY}" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/")
+TARGET_COMPILE_DEFINITIONS(Gui PRIVATE "OVITO_DOCUMENTATION_PATH=\"${OVITO_DOCUMENTATION_PATH}\"")
+
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(Gui ovito/gui/desktop/GUI.h)

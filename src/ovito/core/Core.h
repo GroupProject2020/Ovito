@@ -24,7 +24,8 @@
 // Standard precompiled header file included by all source files in this module
 //
 
-#pragma once
+#ifndef __OVITO_CORE_
+#define __OVITO_CORE_
 
 /******************************************************************************
 * Standard Template Library (STL)
@@ -129,3 +130,5 @@
 #include <ovito/core/utilities/concurrent/SharedFuture.h>
 #include <ovito/core/utilities/concurrent/Promise.h>
 #include <ovito/core/oo/OvitoObject.h>
+
+#endif // __OVITO_CORE_

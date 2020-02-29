@@ -28,12 +28,16 @@
 #  netcdf                - The imported library target.
 
 # First look for netcdf-config.cmake
-FIND_PACKAGE(netcdf QUIET CONFIG)
+IF(NOT OVITO_BUILD_CONDA)
+	FIND_PACKAGE(netcdf QUIET CONFIG)
+ENDIF()
 
 IF(NOT netcdf_FOUND)
 
 	# Look for netCDF-config.cmake
-	FIND_PACKAGE(netCDF QUIET CONFIG)
+	IF(NOT OVITO_BUILD_CONDA)
+		FIND_PACKAGE(netCDF QUIET CONFIG)
+	ENDIF()
 
 	IF(NOT netCDF_FOUND)
 

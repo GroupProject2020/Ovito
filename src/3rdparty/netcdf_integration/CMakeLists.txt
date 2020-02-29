@@ -28,13 +28,15 @@
 # NetCDF functions, which are not thread-safe.
 ###############################################################################
 
-# Locate the HDF5 library.
-FIND_PACKAGE(HDF5 COMPONENTS C HL)
+IF(NOT OVITO_BUILD_CONDA)
+	# Locate the HDF5 library.
+	FIND_PACKAGE(HDF5 COMPONENTS C HL)
+ENDIF()
 
 # Locate the NetCDF library.
 FIND_PACKAGE(NetCDF)
 
-IF(HDF5_FOUND AND TARGET netcdf)
+IF((HDF5_FOUND OR OVITO_BUILD_CONDA) AND (TARGET netcdf OR TARGET netCDF::netcdf))
 
 	# Build library.
 	ADD_LIBRARY(NetCDFIntegration NetCDFIntegration.cpp)
@@ -60,9 +62,13 @@ IF(HDF5_FOUND AND TARGET netcdf)
 	SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 	SET_TARGET_PROPERTIES(NetCDFIntegration PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-	# Link in the NetCDF library
-	TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC netcdf)
-	TARGET_INCLUDE_DIRECTORIES(NetCDFIntegration PUBLIC "${netcdf_INCLUDE_DIRS}")
+	# Link the NetCDF library
+	IF(TARGET netcdf)
+		TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC netcdf)
+		TARGET_INCLUDE_DIRECTORIES(NetCDFIntegration PUBLIC "${netcdf_INCLUDE_DIRS}")
+	ELSE()
+		TARGET_LINK_LIBRARIES(NetCDFIntegration PUBLIC netCDF::netcdf)
+	ENDIF()
 	IF(WIN32)
 		TARGET_COMPILE_DEFINITIONS(NetCDFIntegration PUBLIC DLL_NETCDF)
 	ENDIF()
@@ -78,7 +84,7 @@ IF(HDF5_FOUND AND TARGET netcdf)
 		LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
 		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
 
-	IF(NOT APPLE)
+	IF(NOT APPLE AND NOT OVITO_BUILD_CONDA)
 
 		# Deploy NetCDF shared library.
 		GET_TARGET_PROPERTY(NETCDF_LIBRARY netcdf LOCATION)

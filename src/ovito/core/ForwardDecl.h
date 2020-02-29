@@ -26,6 +26,7 @@
  */
 
 #pragma once
+
 namespace Ovito {
 
 	class Application;

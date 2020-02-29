@@ -115,7 +115,7 @@ OVITO_STANDARD_PLUGIN(Particles
 		Particles.cpp
 		${SourceFiles}
 	PLUGIN_DEPENDENCIES Mesh Grid StdObj Delaunay
-	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching CombinatoriallyOptimalPointRegistration
+	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching
 	OPTIONAL_PLUGIN_DEPENDENCIES StdMod
 )
 
