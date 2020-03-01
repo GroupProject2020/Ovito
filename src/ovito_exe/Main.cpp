@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2019 Alexander Stukowski
+//  Copyright 2020 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,14 +23,29 @@
 #include <ovito/gui/desktop/GUI.h>
 #include <ovito/gui/desktop/app/GuiApplication.h>
 
+#if defined(OVITO_BUILD_PLUGIN_PYSCRIPT) && !defined(OVITO_BUILD_BASIC)
+	// Qt defines the 'slots' and 'signals' keyword macros. They are in conflict with identifiers used in the Python headers.
+	#undef slots
+	#undef signals
+	#include <Python.h>
+#endif
+
 /**
  * This is the main entry point for the graphical desktop application.
  *
  * Note that most of the application logic is found in the Core and the Gui
- * modules of OVITO.
+ * library modules of OVITO, not in this executable module.
  */
 int main(int argc, char** argv)
 {
+#if defined(OVITO_BUILD_PLUGIN_PYSCRIPT) && !defined(OVITO_BUILD_BASIC)
+	// This (useless) call to a Python C API function is needed to force-link the Python library into the executable.
+	// We have to make sure the Python lib gets loaded into process memory before any of the OVITO plugin Python modules 
+	// are loaded, because they depend on the Python lib but were not explicitly linked to it.
+	if(Py_IsInitialized())
+		return 1;
+#endif
+
 	// Initialize the application.
 	Ovito::GuiApplication app;
 	if(!app.initialize(argc, argv))

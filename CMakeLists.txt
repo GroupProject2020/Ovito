@@ -154,7 +154,7 @@ IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
 	ELSEIF(APPLE)
 		IF(NOT OVITO_BUILD_CONDA)
 			# The directory where the main executable goes to.
-			SET(OVITO_RELATIVE_BINARY_DIRECTORY ".")
+			SET(OVITO_RELATIVE_BINARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
 			# The directory where the main libraries of Ovito go to.
 			SET(OVITO_RELATIVE_LIBRARY_DIRECTORY "${MACOSX_BUNDLE_NAME}.app/Contents/MacOS")
 			# The directory where the third-party libraries go to.
@@ -192,7 +192,7 @@ IF(NOT OVITO_BUILD_PYTHON_PACKAGE)
 		SET(OVITO_RELATIVE_SHARE_DIRECTORY ".")
 		# The directory where the compiled plugins go to.
 		SET(OVITO_RELATIVE_PLUGINS_DIRECTORY "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins")
-			# The directory where the Python source modules go to.
+		# The directory where the Python source modules go to.
 		SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")
 	ENDIF()
 ELSE()

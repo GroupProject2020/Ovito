@@ -40,7 +40,16 @@ ADD_EXECUTABLE(Ovito ${OVITO_WIN32_EXECUTABLE} Main.cpp ${WINDOWS_RESOURCES})
 TARGET_LINK_LIBRARIES(Ovito PRIVATE Core Gui)
 
 # Put the executable into the right directory.
-SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
+IF(APPLE)
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${Ovito_BINARY_DIR}")
+	INSTALL(TARGETS Ovito DESTINATION ".")
+ELSEIF(UNIX)
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${Ovito_BINARY_DIR}/bin")
+	INSTALL(TARGETS Ovito DESTINATION "bin/")
+ELSEIF(WIN32)
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${Ovito_BINARY_DIR}")
+	INSTALL(TARGETS Ovito DESTINATION ".")
+ENDIF()
 
 # Set name of executable.
 SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "ovito")
@@ -67,9 +76,6 @@ IF(APPLE)
 ELSEIF(UNIX)
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "$ORIGIN/../${OVITO_RELATIVE_LIBRARY_DIRECTORY}/:$ORIGIN/../${OVITO_RELATIVE_PLUGINS_DIRECTORY}/")
 ENDIF()
-
-# This executable will be part of the installation package.
-INSTALL(TARGETS Ovito DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/")
 
 # Build all plugins first before building the main executable.
 FOREACH(plugin ${OVITO_PLUGIN_LIST})
@@ -125,15 +131,16 @@ ELSEIF(APPLE AND NOT OVITO_BUILD_CONDA)
 
 ENDIF()
 
+# Special steps needed to build OVITO with Python scripting support.
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 
-	# Embedd the Python interpreter in the main executable.
-    FIND_PACKAGE(Python3 REQUIRED COMPONENTS Development)
-	IF(UNIX AND NOT APPLE)
-	    TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--no-as-needed Python3::Python -Wl,--as-needed)
-	ELSE()
-	    TARGET_LINK_LIBRARIES(Ovito PRIVATE Python3::Python)
-	ENDIF()
+	# Make sure the Python library gets loaded at program startup. We need to do it
+	# this way, because the OVITO scripting plugins do not explicitly link the
+	# Python interpreter library. They rely on it already being loaded into the 
+	# process memory (as is the case if the OVITO Python modules are imported by an external interpreter).
+	FIND_PACKAGE(Python3 REQUIRED COMPONENTS Interpreter Development)
+	TARGET_LINK_LIBRARIES(Ovito PRIVATE Python3::Python)
+	TARGET_COMPILE_DEFINITIONS(Ovito PRIVATE "OVITO_BUILD_PLUGIN_PYSCRIPT=1")
 
 	IF(OVITO_REDISTRIBUTABLE_PACKAGE AND UNIX AND NOT APPLE)
 		# Uninstall Python packages from the embedded interpreter that should not be part of the official distribution.
