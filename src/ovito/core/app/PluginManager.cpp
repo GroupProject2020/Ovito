@@ -85,15 +85,8 @@ void PluginManager::registerPlugin(Plugin* plugin)
 QList<QDir> PluginManager::pluginDirs()
 {
 	QDir prefixDir(QCoreApplication::applicationDirPath());
-#if defined(Q_OS_WIN)
-	return { QDir(prefixDir.absolutePath() + QStringLiteral("/plugins")) };
-#elif defined(Q_OS_MAC)
-	prefixDir.cdUp();
-	return { QDir(prefixDir.absolutePath() + QStringLiteral("/PlugIns")) };
-#else
-	prefixDir.cdUp();
-	return { QDir(prefixDir.absolutePath() + QStringLiteral("/lib/ovito/plugins")) };
-#endif
+	QString pluginsPath = prefixDir.absolutePath() + QChar('/') + QStringLiteral(OVITO_PLUGINS_RELATIVE_PATH);
+	return { QDir(pluginsPath) };
 }
 
 /******************************************************************************

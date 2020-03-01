@@ -214,6 +214,10 @@ IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	TARGET_COMPILE_OPTIONS(Core PUBLIC "-Wno-undefined-var-template")
 ENDIF()
 
+# Compute the relative path where the plugin libraries get installed relative to the executable. 
+FILE(RELATIVE_PATH OVITO_PLUGINS_RELATIVE_PATH "${OVITO_BINARY_DIRECTORY}" "${OVITO_PLUGINS_DIRECTORY}")
+TARGET_COMPILE_DEFINITIONS(Core PRIVATE "OVITO_PLUGINS_RELATIVE_PATH=\"${OVITO_PLUGINS_RELATIVE_PATH}\"")
+
 # Link to the pthread library on Linux platform.
 IF(UNIX AND NOT APPLE)
 	SET(THREADS_PREFER_PTHREAD_FLAG ON)
