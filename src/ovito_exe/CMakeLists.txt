@@ -129,7 +129,7 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 
 	# Embedd the Python interpreter in the main executable.
     FIND_PACKAGE(Python3 REQUIRED COMPONENTS Development)
-	IF(UNIX)
+	IF(UNIX AND NOT APPLE)
 	    TARGET_LINK_LIBRARIES(Ovito PRIVATE -Wl,--no-as-needed Python3::Python -Wl,--as-needed)
 	ELSE()
 	    TARGET_LINK_LIBRARIES(Ovito PRIVATE Python3::Python)
