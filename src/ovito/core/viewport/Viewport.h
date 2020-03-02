@@ -245,13 +245,13 @@ public:
 public Q_SLOTS:
 
 	/// \brief Zooms to the extents of the scene.
-	void zoomToSceneExtents();
+	void zoomToSceneExtents(FloatType viewportAspectRatio = 0.0);
 
 	/// \brief Zooms to the extents of the currently selected nodes.
-	void zoomToSelectionExtents();
+	void zoomToSelectionExtents(FloatType viewportAspectRatio = 0.0);
 
 	/// \brief Zooms to the extents of the given bounding box.
-	void zoomToBox(const Box3& box);
+	void zoomToBox(const Box3& box, FloatType viewportAspectRatio = 0.0);
 
 Q_SIGNALS:
 

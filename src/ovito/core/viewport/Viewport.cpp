@@ -271,51 +271,55 @@ ViewProjectionParameters Viewport::computeProjectionParameters(TimePoint time, F
 /******************************************************************************
 * Zooms to the extents of the scene.
 ******************************************************************************/
-void Viewport::zoomToSceneExtents()
+void Viewport::zoomToSceneExtents(FloatType viewportAspectRatio)
 {
 	Box3 sceneBoundingBox = dataset()->sceneRoot()->worldBoundingBox(dataset()->animationSettings()->time());
-	zoomToBox(sceneBoundingBox);
+	zoomToBox(sceneBoundingBox, viewportAspectRatio);
 }
 
 /******************************************************************************
 * Zooms to the extents of the currently selected nodes.
 ******************************************************************************/
-void Viewport::zoomToSelectionExtents()
+void Viewport::zoomToSelectionExtents(FloatType viewportAspectRatio)
 {
 	Box3 selectionBoundingBox;
 	for(SceneNode* node : dataset()->selection()->nodes()) {
 		selectionBoundingBox.addBox(node->worldBoundingBox(dataset()->animationSettings()->time()));
 	}
 	if(!selectionBoundingBox.isEmpty())
-		zoomToBox(selectionBoundingBox);
+		zoomToBox(selectionBoundingBox, viewportAspectRatio);
 	else
-		zoomToSceneExtents();
+		zoomToSceneExtents(viewportAspectRatio);
 }
 
 /******************************************************************************
 * Zooms to the extents of the given bounding box.
 ******************************************************************************/
-void Viewport::zoomToBox(const Box3& box)
+void Viewport::zoomToBox(const Box3& box, FloatType viewportAspectRatio)
 {
 	if(box.isEmpty())
 		return;
 
 	if(viewType() == VIEW_SCENENODE)
-		return;	// Do not reposition the camera node.
+		return;	// Do not reposition the camera object.
 
 	if(isPerspectiveProjection()) {
 		FloatType dist = box.size().length() * FloatType(0.5) / tan(fieldOfView() * FloatType(0.5));
 		setCameraPosition(box.center() - cameraDirection().resized(dist));
 	}
 	else {
-		// Setup projection.
-		QSize vpSize = windowSize();
-		if(vpSize.isEmpty()) return;
-		FloatType aspectRatio = (vpSize.width() > 0) ? ((FloatType)vpSize.height() / vpSize.width()) : FloatType(1);
-		if(renderPreviewMode()) {
-			if(RenderSettings* renderSettings = dataset()->renderSettings())
-				aspectRatio = renderSettings->outputImageAspectRatio();
+		// Set up projection.
+		FloatType aspectRatio = viewportAspectRatio;
+		if(aspectRatio == 0) {
+			QSize vpSize = windowSize();
+			aspectRatio = (vpSize.width() > 0) ? ((FloatType)vpSize.height() / vpSize.width()) : FloatType(1);
+			if(renderPreviewMode()) {
+				if(RenderSettings* renderSettings = dataset()->renderSettings())
+					aspectRatio = renderSettings->outputImageAspectRatio();
+			}
 		}
+		if(aspectRatio == 0)
+			return;
 		ViewProjectionParameters projParams = computeProjectionParameters(dataset()->animationSettings()->time(), aspectRatio, box);
 
 		FloatType minX = FLOATTYPE_MAX, minY = FLOATTYPE_MAX;
