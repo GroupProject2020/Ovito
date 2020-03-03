@@ -132,7 +132,7 @@ ELSEIF(APPLE AND NOT OVITO_BUILD_CONDA)
 ENDIF()
 
 # Special steps needed to build OVITO with Python scripting support.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT AND NOT OVITO_BUILD_BASIC)
 
 	# Make sure the Python library gets loaded at program startup. We need to do it
 	# this way, because the OVITO scripting plugins do not explicitly link the
