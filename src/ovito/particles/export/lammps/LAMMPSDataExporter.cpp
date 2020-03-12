@@ -107,11 +107,12 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	if(writeBonds)
 		textStream() << bonds->elementCount() << " bonds\n";
 
+	int numLAMMPSAtomTypes = 1;
 	if(particleTypeArray && particleTypeArray.size() > 0) {
-		int numParticleTypes = std::max(
+		numLAMMPSAtomTypes = std::max(
 				particleTypeProperty->elementTypes().size(),
 				*boost::max_element(particleTypeArray));
-		textStream() << numParticleTypes << " atom types\n";
+		textStream() << numLAMMPSAtomTypes << " atom types\n";
 	}
 	else textStream() << "1 atom types\n";
 	if(writeBonds) {
@@ -133,17 +134,28 @@ bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNum
 	textStream() << "\n";
 
 	// Write "Masses" section.
-	if(particleTypeProperty && particleTypeProperty->elementTypes().size() > 0) {
-		textStream() << "Masses\n\n";
-		for(const ElementType* type : particleTypeProperty->elementTypes()) {
-			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(type)) {
-				textStream() << ptype->numericId() << " " << ptype->mass();
-				if(!ptype->name().isEmpty())
-					textStream() << "  # " << ptype->name();
+	if(particleTypeProperty && particleTypeProperty->elementTypes().size() > 0 && atomStyle() != LAMMPSDataImporter::AtomStyle_Sphere) {
+		// Write the "Masses" section only if there is at least one atom type with a non-zero mass.
+		bool hasNonzeroMass = boost::algorithm::any_of(particleTypeProperty->elementTypes(), [](const ElementType* type) {
+			if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(type))
+				return ptype->mass() != 0;
+			return false;
+		}); 
+		if(hasNonzeroMass) {
+			textStream() << "Masses\n\n";
+			for(int atomType = 1; atomType <= numLAMMPSAtomTypes; atomType++) {
+				if(const ParticleType* ptype = dynamic_object_cast<ParticleType>(particleTypeProperty->elementType(atomType))) {
+					textStream() << atomType << " " << ((ptype->mass() > 0.0) ? ptype->mass() : 1.0);
+					if(!ptype->name().isEmpty())
+						textStream() << "  # " << ptype->name();
+				}
+				else {
+					textStream() << atomType << " " << 1.0;
+				}
 				textStream() << "\n";
 			}
+			textStream() << "\n";
 		}
-		textStream() << "\n";
 	}
 
 	qlonglong totalProgressCount = particles->elementCount();
