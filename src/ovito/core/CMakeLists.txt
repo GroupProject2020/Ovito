@@ -210,7 +210,7 @@ ENDIF()
 TARGET_COMPILE_DEFINITIONS(Core PUBLIC "$<$<CONFIG:Debug>:OVITO_DEBUG>")
 
 # Turn off Clang compiler warnings regarding undefined instantiation of static variable of class templates.
-IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+IF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	TARGET_COMPILE_OPTIONS(Core PUBLIC "-Wno-undefined-var-template")
 ENDIF()
 
