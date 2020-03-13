@@ -10,59 +10,100 @@
   <title>Installation</title>
 
     <para>
-      Binary program packages for Linux, Windows, and macOS
+      Binary program packages of OVITO for Linux, Windows, and macOS
       can be downloaded from <link xlink:href="https://www.ovito.org/">www.ovito.org</link>.
     </para>
 
-    <para>
-      Note that OVITO uses <link xlink:href="https://en.wikipedia.org/wiki/OpenGL">OpenGL</link> to render three-dimensional graphics
-      and thus requires a computer with modern graphics hardware supporting the OpenGL standard (at least version 2.1; version 3.2 or higher recommended). 
-      Older graphics drivers might not fully support modern OpenGL specifications and may therefore lead to problems when running OVITO. 
-      It is recommended that you install the latest version of the graphics driver provided by your hardware vendor prior to running OVITO.
-    </para>
-
-    <simplesect xml:id="installation.runovito.linux">
-      <title>Linux</title>
-      <para>Extract the downloaded <filename>.tar.xz</filename> archive using the <command>tar</command> command, e.g.: <command>tar xJfv ovito-3.0.0-x86_64.tar.xz</command>.
-      This will create a new subdirectory containing the program package.
-      Change into the new directory and start OVITO by running the executable <command>./bin/ovito</command>.
+    <simplesect xml:id="installation.requirements">
+      <title>Requirements</title>
+      <para>
+        OVITO requires a 64-bit operating system and runs on processors with x86-64 architecture.
+        The graphical user interface of OVITO requires 3D graphics hardware with support for the <link xlink:href="https://en.wikipedia.org/wiki/OpenGL">OpenGL</link> programming interface (OpenGL 2.1 or newer). 
+        In general it is recommended that you install the latest graphics driver provided by your hardware vendor before running OVITO as some older drivers may not fully support modern OpenGL specifications,
+        which can lead to compatibility problems.
       </para>
     </simplesect>
 
-    <simplesect xml:id="installation.runovito.windows">
-      <title>Windows</title>
+    <simplesect>
+      <title>Installation steps</title>
 
-      <para>Run the installer program <filename>ovito-x.y.z-win64.exe</filename> to install OVITO in a directory of your choice.
-      Windows might ask whether you really want to launch the program, because it was downloaded from the web and is not digitally signed.
+      <variablelist>
+        <varlistentry>
+          <term>Linux:</term>
+          <listitem>
+            <para>
+              Extract the downloaded <filename>.tar.xz</filename> archive file using the <link xlink:href="https://www.computerhope.com/unix/utar.htm"><command>tar</command> command</link>, e.g.: <command>tar xJfv ovito-3.0.0-x86_64.tar.xz</command>.
+              This will create a new subdirectory containing the program files.
+              Change into that directory and start OVITO by running the executable <command>./bin/ovito</command>.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Windows:</term>
+          <listitem>
+            <para>
+              Run the installer program <filename>ovito-x.y.z-win64.exe</filename> to install OVITO in a directory of your choice.
+              Note that Windows might ask whether you really want to launch the installer, because it was downloaded from the web and it is not digitally signed.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>macOS:</term>
+          <listitem>
+            <para>
+              Double-click the downloaded <filename>.dmg</filename> disk image file to open it, agree to the program license, and drag the <filename>Ovito</filename> application bundle into your <filename>Applications</filename> folder.
+              Then start OVITO by double-clicking the application bundle.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </simplesect>
+
+    <simplesect>
+      <title>Running OVITO on a remote machine</title>
+      <para>
+        Note that the OVITO desktop application cannot be run through an SSH connection using X11 forwarding mode, because it requires direct 
+        access to the graphics hardware (so-called OpenGL direct rendering mode). 
+        Thus, if you try to run <command>ovito</command> in an SSH terminal, you will likely get failure messages during program startup 
+        or just a black application window. 
+      </para>
+      <para>
+        It is possible, however, to run OVITO through an SSH connection using a VirtualGL + VNC setup.
+        For further information, please see the <link xlink:href="https://www.virtualgl.org/">www.virtualgl.org</link> website.
+        In this mode, OVITO will make use of the graphics hardware of the remote machine, which must be set up to allow running
+        applications in a desktop environment. Please contact your local computing center staff to find out whether 
+        this kind of remote visualization mode is supported by the HPC cluster you work on. 
       </para>
     </simplesect>
 
-    <simplesect xml:id="installation.runovito.macos">
-      <title>macOS</title>
-
-      <para>Double-click the <filename>.dmg</filename> disk image file downloaded from the OVITO website to open it,
-      agree to the program license, and drag the <filename>Ovito</filename> application bundle into your <filename>Applications</filename> folder.
-      Then start OVITO by double-clicking the application bundle.
+    <simplesect>
+      <title>Installing the Python module</title>
+      <para>
+        The <emphasis>OVITO Pro</emphasis> program packages ship with an integrated Python interpreter ("<command>ovitos</command>") that gets installed alongside with the graphical desktop application,
+        allowing you to execute Python scripts written for OVITO. 
+        Optionally, it is possible to install OVITO as a Python module into an existing Python interpreter on your system in case you would like to make use of 
+        OVITO's functionality in scripts written for other interpreters (e.g. the system Python interpreter or <emphasis>Anaconda</emphasis>).
+        Please refer to the <pydoc-link href="introduction/running" anchor="installing-the-ovito-module-in-your-python-interpreter" no-pro-tag="1">scripting manual</pydoc-link> for more 
+        information on the setup procedure.
       </para>
     </simplesect>
 
     <simplesect>
       <title>Troubleshooting</title>
-
       <para>
         If you run into any problems during the installation of OVITO, please contact us 
-        through the support forum on our website <link xlink:href="https://www.ovito.org/forum/">www.ovito.org</link>.
-        We will be happy to help you.
+        via the <link xlink:href="https://www.ovito.org/forum/">online support forum</link>. The OVITO team will be happy to provide help.
       </para>
     </simplesect>
 
     <simplesect>
-      <title>Building from source</title>
-
+      <title>Building OVITO from source</title>
       <para>
-        Large parts of OVITO (Basic) are available under an Open Source license and you can download the source code of OVITO 
+        <emphasis>OVITO Basic</emphasis> is available under an Open Source license and you can download the source code 
         to build the program yourself, for example to develop new plugin functions for OVITO. 
-        See the <link linkend="development">developers section</link> for build instructions.</para>
+        See the <link linkend="development">developers section</link> for further instructions.</para>
     </simplesect>
 
 </chapter>
