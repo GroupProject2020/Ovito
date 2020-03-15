@@ -6,10 +6,17 @@
         <file>ui/AnimationBar.qml</file>
         <file>ui/CommandPanel.qml</file>
         <file>ui/ErrorDialog.qml</file>
+        <file>ui/GroupBox.qml</file>
         <file>ui/ImportDialog.qml</file>
+        <file>ui/PipelineEditor.qml</file>
         <file>ui/PipelineTab.qml</file>
+        <file>ui/PropertiesEditor.qml</file>
         <file>ui/StatusBar.qml</file>
+        <file>ui/BooleanCheckBoxParameter.qml</file>
+        <file>ui/BooleanRadioButtonParameter.qml</file>
+        <file>ui/RolloutPanel.qml</file>
         <file>ui/ToolBar.qml</file>
+        <file>ui/VariantComboBoxParameter.qml</file>
         <file>ui/ViewportWindow.qml</file>
 
         <file>actions/file/file_import.bw.svg</file>
@@ -17,6 +24,7 @@
 	    <file>actions/file/about.bw.svg</file>
         <file>actions/edit/edit_undo.bw.svg</file>
         <file>actions/edit/edit_redo.bw.svg</file>
+        <file>actions/edit/delete_modifier.svg</file>
         <file>actions/viewport/multi_viewports.svg</file>
         <file>actions/viewport/zoom_scene_extents.bw.svg</file>
 

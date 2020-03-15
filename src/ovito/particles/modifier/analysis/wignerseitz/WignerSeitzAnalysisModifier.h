@@ -40,7 +40,11 @@ class OVITO_PARTICLES_EXPORT WignerSeitzAnalysisModifier : public ReferenceConfi
 	OVITO_CLASS(WignerSeitzAnalysisModifier)
 
 	Q_CLASSINFO("DisplayName", "Wigner-Seitz defect analysis");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Analysis");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

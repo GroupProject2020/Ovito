@@ -23,8 +23,11 @@
 #include <ovito/gui/web/GUIWeb.h>
 #include <ovito/gui/web/mainwin/MainWindow.h>
 #include <ovito/gui/web/mainwin/ViewportsPanel.h>
+#include <ovito/gui/web/mainwin/ModifierListModel.h>
+#include <ovito/gui/web/mainwin/PipelineListModel.h>
 #include <ovito/gui/web/dataset/WasmFileManager.h>
 #include <ovito/gui/web/viewport/ViewportWindow.h>
+#include <ovito/gui/web/properties/ParameterUI.h>
 #include <ovito/core/utilities/io/FileManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/app/ApplicationService.h>
@@ -111,6 +114,10 @@ bool WasmApplication::startupApplication()
 		eng->setObjectOwnership(&ViewportSettings::getSettings(), QQmlEngine::CppOwnership);
 		return &ViewportSettings::getSettings();
 	});
+	qmlRegisterUncreatableType<ModifierListModel>("org.ovito", 1, 0, "ModifierListModel", tr("ModifierListModel cannot be created from QML."));
+	qmlRegisterUncreatableType<PipelineListModel>("org.ovito", 1, 0, "PipelineListModel", tr("PipelineListModel cannot be created from QML."));
+	qmlRegisterUncreatableType<RefTarget>("org.ovito", 1, 0, "RefTarget", tr("RefTarget cannot be created from QML."));
+	qmlRegisterType<ParameterUI>("org.ovito", 1, 0, "ParameterUI");
 
 	// Initialize the Qml engine.
 	_qmlEngine = new QQmlApplicationEngine(this);
@@ -158,7 +165,7 @@ void WasmApplication::postStartupInitialization()
 		catch(const Exception& ex) {
 			ex.reportError();
 		}
-		newSet->undoStack().setClean();
+		newSet->undoStack().clear();
 	}
 
 	StandaloneApplication::postStartupInitialization();

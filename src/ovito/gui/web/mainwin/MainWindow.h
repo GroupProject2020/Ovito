@@ -26,6 +26,8 @@
 #include <ovito/gui/web/GUIWeb.h>
 #include <ovito/gui/web/dataset/WasmDataSetContainer.h>
 #include <ovito/gui/base/mainwin/MainWindowInterface.h>
+#include "ModifierListModel.h"
+#include "PipelineListModel.h"
 
 namespace Ovito {
 
@@ -37,6 +39,8 @@ class OVITO_GUIWEB_EXPORT MainWindow : public QQuickItem, public MainWindowInter
 	Q_OBJECT
 	Q_PROPERTY(Ovito::WasmDataSetContainer* datasetContainer READ datasetContainer CONSTANT);
 	Q_PROPERTY(QString statusBarText READ statusBarText WRITE showStatusBarMessage NOTIFY statusBarTextChanged);
+	Q_PROPERTY(Ovito::ModifierListModel* modifierListModel MEMBER _modifierListModel CONSTANT);
+	Q_PROPERTY(Ovito::PipelineListModel* pipelineListModel MEMBER _pipelineListModel CONSTANT);
 
 public:
 
@@ -88,6 +92,12 @@ private:
 
 	/// Used for timed display of status bar texts.
 	QTimer _statusBarTimer;
+
+	/// A Qt list model with all available modifier types.
+	ModifierListModel* _modifierListModel;
+
+	/// A Qt list model for the items in the selected data pipeline.
+	PipelineListModel* _pipelineListModel;
 };
 
 }	// End of namespace

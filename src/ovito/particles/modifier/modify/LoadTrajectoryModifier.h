@@ -50,7 +50,11 @@ class OVITO_PARTICLES_EXPORT LoadTrajectoryModifier : public Modifier
 	OVITO_CLASS_META(LoadTrajectoryModifier, LoadTrajectoryModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Load trajectory");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Modification");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

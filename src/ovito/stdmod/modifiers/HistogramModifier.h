@@ -38,7 +38,11 @@ class OVITO_STDMOD_EXPORT HistogramModifier : public GenericPropertyModifier
 	Q_OBJECT
 	OVITO_CLASS(HistogramModifier)
 	Q_CLASSINFO("DisplayName", "Histogram");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Analysis");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

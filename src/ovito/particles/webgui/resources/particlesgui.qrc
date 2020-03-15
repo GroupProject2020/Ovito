@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Particles">
+        <file>editors/ParticlesVis.qml</file>
+    </qresource>
+</RCC>

@@ -40,7 +40,11 @@ class OVITO_PARTICLES_EXPORT AtomicStrainModifier : public ReferenceConfiguratio
 	OVITO_CLASS(AtomicStrainModifier)
 
 	Q_CLASSINFO("DisplayName", "Atomic strain");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Analysis");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

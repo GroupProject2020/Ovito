@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/StdMod">
+        <file>editors/AssignColorModifier.qml</file>
+        <file>editors/SliceModifier.qml</file>
+    </qresource>
+</RCC>

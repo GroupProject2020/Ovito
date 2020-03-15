@@ -52,7 +52,11 @@ class OVITO_PARTICLES_EXPORT UnwrapTrajectoriesModifier : public Modifier
 	OVITO_CLASS_META(UnwrapTrajectoriesModifier, UnwrapTrajectoriesModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Unwrap trajectories");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Modification");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

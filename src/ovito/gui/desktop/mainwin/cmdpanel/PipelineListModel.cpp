@@ -266,7 +266,7 @@ void PipelineListModel::refreshItem(PipelineListItem* item)
 
 /******************************************************************************
 * Inserts the given modifier into the modification pipeline of the
-* scurrently elected scene nodes.
+* currently selected scene nodes.
 ******************************************************************************/
 void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers)
 {

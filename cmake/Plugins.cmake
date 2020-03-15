@@ -51,8 +51,15 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 
 	# Link to OVITO's desktop GUI module when the plugin provides a GUI.
 	IF(${ARG_GUI_PLUGIN})
-		TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
-    	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Widgets)
+		IF(OVITO_BUILD_GUI)
+			TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
+			TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Widgets)
+		ELSEIF(OVITO_BUILD_WEBGUI)
+			TARGET_LINK_LIBRARIES(${target_name} PUBLIC GuiWeb)
+			TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Qml Qt5::Quick Qt5::QuickControls2 Qt5::QuickTemplates2)
+		ELSE()
+			MESSAGE(FATAL_ERROR "Cannot build plugin ${target_name} marked as GUI_PLUGIN if building the GUI has been completely disabled.")
+		ENDIF()
 	ENDIF()
 
 	# Link to Qt5 libs.

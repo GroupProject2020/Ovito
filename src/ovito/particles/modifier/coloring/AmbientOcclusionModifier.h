@@ -55,7 +55,11 @@ class OVITO_PARTICLES_EXPORT AmbientOcclusionModifier : public AsynchronousModif
 	OVITO_CLASS_META(AmbientOcclusionModifier, AmbientOcclusionModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Ambient occlusion");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Coloring");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

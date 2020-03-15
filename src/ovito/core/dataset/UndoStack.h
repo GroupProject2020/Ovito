@@ -222,6 +222,11 @@ private:
 class OVITO_CORE_EXPORT UndoStack : public QObject
 {
 	Q_OBJECT
+	Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged);
+	Q_PROPERTY(bool canRedo READ canRedo NOTIFY canRedoChanged);
+	Q_PROPERTY(QString undoText READ undoText NOTIFY undoTextChanged);
+	Q_PROPERTY(QString redoText READ redoText NOTIFY redoTextChanged);
+	Q_PROPERTY(bool isClean READ isClean NOTIFY cleanChanged);
 
 public:
 

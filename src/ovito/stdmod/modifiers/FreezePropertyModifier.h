@@ -39,7 +39,11 @@ class OVITO_STDMOD_EXPORT FreezePropertyModifier : public GenericPropertyModifie
 	Q_OBJECT
 	OVITO_CLASS(FreezePropertyModifier)
 	Q_CLASSINFO("DisplayName", "Freeze property");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Modification");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

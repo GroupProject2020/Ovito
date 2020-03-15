@@ -75,7 +75,7 @@ ApplicationWindow {
 
 		Ui.CommandPanel {
 			id: commandPanel
-			Layout.preferredWidth: 300
+			Layout.preferredWidth: 320
 			Layout.fillHeight: true
 		}
 	}

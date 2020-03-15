@@ -57,6 +57,7 @@ class OVITO_CORE_EXPORT DataSet : public RefTarget
 	OVITO_CLASS(DataSet)
 	Q_PROPERTY(Ovito::AnimationSettings* animationSettings READ animationSettings WRITE setAnimationSettings NOTIFY animationSettingsReplaced);
 	Q_PROPERTY(Ovito::ViewportConfiguration* viewportConfiguration READ viewportConfig WRITE setViewportConfig NOTIFY viewportConfigReplaced);
+	Q_PROPERTY(Ovito::UndoStack* undoStack READ undoStackPtr CONSTANT);
 
 public:
 
@@ -86,6 +87,10 @@ public:
 		OVITO_CHECK_OBJECT_POINTER(this);
 		return _undoStack;
 	}
+
+	/// \brief Returns a pointer to the undo stack that keeps track of changes made to this dataset.
+	/// \note This method exists only for use with the Q_PROPERTY macro, which requires a QObject pointer.
+	UndoStack* undoStackPtr() { return &_undoStack; }
 
 	/// \brief Returns the manager of ParameterUnit objects.
 	UnitsManager& unitsManager() { return _unitsManager; }

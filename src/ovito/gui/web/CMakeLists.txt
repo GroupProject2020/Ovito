@@ -32,6 +32,10 @@ OVITO_STANDARD_PLUGIN(GuiWeb
 		dataset/WasmFileManager.cpp
 		mainwin/MainWindow.cpp
 		mainwin/ViewportsPanel.cpp
+		mainwin/ModifierListModel.cpp
+		mainwin/PipelineListModel.cpp
+		mainwin/PipelineListItem.cpp
+		properties/ParameterUI.cpp
 		viewport/ViewportWindow.cpp
 		${ResourceFiles}
 	PLUGIN_DEPENDENCIES

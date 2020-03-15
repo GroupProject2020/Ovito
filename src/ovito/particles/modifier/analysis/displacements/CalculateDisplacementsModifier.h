@@ -41,7 +41,11 @@ class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifier : public ReferenceCo
 	OVITO_CLASS(CalculateDisplacementsModifier)
 
 	Q_CLASSINFO("DisplayName", "Displacement vectors");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Analysis");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

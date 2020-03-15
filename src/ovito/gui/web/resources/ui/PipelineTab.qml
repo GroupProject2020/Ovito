@@ -3,48 +3,30 @@ import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.12
 
 ColumnLayout {
+	spacing: 0
+	// Modifiers combobox:
 	ComboBox {
 		Layout.fillWidth: true
-		model: ["Add modifier...", "Second", "Third"]
+		model: mainWindow.modifierListModel
+		textRole: "display"
+		onActivated: {
+			mainWindow.modifierListModel.insertModifier(index, pipelineEditor.model)
+			currentIndex = 0;
+		}
 	}
-	RowLayout {
-		ListView {
-			Layout.fillWidth: true
-			Layout.fillHeight: true
-			model: ListModel {
-				ListElement {
-					name: "Bill Smith"
-					number: "555 3264"
-				}
-				ListElement {
-					name: "John Brown"
-					number: "555 8426"
-				}
-				ListElement {
-					name: "Sam Wise"
-					number: "555 0473"
-				}
-			}
-			delegate: Text {
-				text: name + ": " + number
-			}
-		}
-		ToolBar {
-			Layout.alignment: Qt.AlignTop
-			hoverEnabled: true
-			Flow {
-				flow: Flow.TopToBottom
-				Layout.fillHeight: true
-
-				Column {
-					ToolButton {
-						icon.source: "qrc:/gui/actions/file/file_import.bw.svg"
-						ToolTip.text: qsTr("Import local file")
-						ToolTip.visible: hovered
-						ToolTip.delay: 500
-					}
-				}
-			}
-		}
+	// Pipeline editor:
+	PipelineEditor {
+		id: pipelineEditor
+		Layout.fillWidth: true
+		Layout.fillHeight: true
+		Layout.preferredHeight: 100
+		model: mainWindow.pipelineListModel
+	}
+	// Properties editor:
+	PropertiesEditor {
+		Layout.fillWidth: true
+		Layout.fillHeight: true
+		Layout.preferredHeight: 100
+		editObject: pipelineEditor.selectedObject
 	}
 }
