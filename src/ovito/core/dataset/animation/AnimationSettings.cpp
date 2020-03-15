@@ -23,6 +23,7 @@
 #include <ovito/core/Core.h>
 #include <ovito/core/app/Application.h>
 #include <ovito/core/dataset/DataSet.h>
+#include <ovito/core/utilities/units/UnitsManager.h>
 #include "AnimationSettings.h"
 
 namespace Ovito {
@@ -33,7 +34,9 @@ DEFINE_PROPERTY_FIELD(AnimationSettings, animationInterval);
 DEFINE_PROPERTY_FIELD(AnimationSettings, ticksPerFrame);
 DEFINE_PROPERTY_FIELD(AnimationSettings, playbackSpeed);
 DEFINE_PROPERTY_FIELD(AnimationSettings, loopPlayback);
+DEFINE_PROPERTY_FIELD(AnimationSettings, playbackEveryNthFrame);
 DEFINE_PROPERTY_FIELD(AnimationSettings, autoAdjustInterval);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(AnimationSettings, playbackEveryNthFrame, IntegerParameterUnit, 1);
 
 /******************************************************************************
 * Constructor.
@@ -44,6 +47,7 @@ AnimationSettings::AnimationSettings(DataSet* dataset) : RefTarget(dataset),
 		_animationInterval(0, 0),
 		_time(0),
 		_loopPlayback(true),
+		_playbackEveryNthFrame(1),
 		_autoAdjustInterval(true)
 {
 }
@@ -286,8 +290,8 @@ void AnimationSettings::onPlaybackTimer()
 	if(!isPlaybackActive())
 		return;
 
-	// Add one frame to current time
-	int newFrame = timeToFrame(time()) + (_activePlaybackRate > 0 ? 1 : -1);
+	// Add +/-N frames to current time.
+	int newFrame = timeToFrame(time()) + (_activePlaybackRate > 0 ? 1 : -1) * std::max(1, playbackEveryNthFrame());
 	TimePoint newTime = frameToTime(newFrame);
 
 	// Loop back to first frame if end has been reached.

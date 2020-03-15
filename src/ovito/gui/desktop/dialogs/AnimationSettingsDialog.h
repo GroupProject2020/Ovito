@@ -66,6 +66,7 @@ private:
 	QComboBox* fpsBox;
 	SpinnerWidget* animStartSpinner;
 	SpinnerWidget* animEndSpinner;
+	SpinnerWidget* everyNthFrameSpinner;
 	QComboBox* playbackSpeedBox;
 	QCheckBox* loopPlaybackBox;
 	QGroupBox* animIntervalBox;
