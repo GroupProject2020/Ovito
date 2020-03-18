@@ -71,6 +71,9 @@
 #include <QColor>
 #include <QGenericMatrix>
 #include <QMatrix4x4>
+#include <QVector2D> 
+#include <QVector3D> 
+#include <QVector4D> 
 #include <QDateTime>
 #include <QThread>
 #include <QMutex>

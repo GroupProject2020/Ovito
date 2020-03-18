@@ -98,6 +98,18 @@ void PipelineListModel::refreshList()
 {
 	_needListUpdate = false;
 
+	// Determine the currently selected object and
+	// select it again after the list has been rebuilt (and it is still there).
+	// If _nextObjectToSelect is already non-null then the caller
+	// has specified an object to be selected.
+	QString nextObjectTitleToSelect;
+	if(_nextObjectToSelect == nullptr) {
+		if(PipelineListItem* item = selectedItem()) {
+			_nextObjectToSelect = item->object();
+		}
+	}
+	RefTarget* defaultObjectToSelect = nullptr;
+
 	// Determine the selected pipeline.
 	_selectedPipeline.setTarget(nullptr);
     if(_datasetContainer.currentSet()) {
@@ -143,6 +155,8 @@ void PipelineListModel::refreshList()
 				// Create a list item for the data source.
 				PipelineListItem* item = new PipelineListItem(pipelineObject, PipelineListItem::DataObject);
 				newItems.push_back(item);
+				if(defaultObjectToSelect == nullptr)
+					defaultObjectToSelect = pipelineObject;
 
 				// Create list items for the source's editable data objects.
 				if(const DataCollection* collection = pipelineObject->getSourceDataCollection())
@@ -154,7 +168,41 @@ void PipelineListModel::refreshList()
 		}
 	}
 
+	int selIndex = -1;
+	int selDefaultIndex = -1;
+	int selTitleIndex = -1;
+	for(int i = 0; i < newItems.size(); i++) {
+		if(_nextObjectToSelect && _nextObjectToSelect == newItems[i]->object())
+			selIndex = i;
+		if(_nextSubObjectTitleToSelect.isEmpty() == false && _nextSubObjectTitleToSelect == newItems[i]->title())
+			selTitleIndex = i;
+		if(defaultObjectToSelect && defaultObjectToSelect == newItems[i]->object())
+			selDefaultIndex = i;
+	}
+	if(selIndex == -1)
+		selIndex = selTitleIndex;
+	if(selIndex == -1)
+		selIndex = selDefaultIndex;
+
 	setItems(std::move(newItems));
+	_nextObjectToSelect = nullptr;
+	_nextSubObjectTitleToSelect.clear();
+
+	// Select the right item in the list.
+	if(!items().empty()) {
+		if(selIndex == -1) {
+			for(int index = 0; index < items().size(); index++) {
+				if(item(index)->object()) {
+					selIndex = index;
+					break;
+				}
+			}
+		}
+		if(selIndex != -1 && item(selIndex)->isSubObject())
+			_nextSubObjectTitleToSelect = item(selIndex)->title();
+		_selectedIndex = selIndex;
+	}
+	Q_EMIT selectedItemChanged();	
 }
 
 /******************************************************************************
@@ -272,9 +320,44 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 	if(modifiers.empty())
 		return;
 
+	// Get the selected pipeline entry. The new modifier is inserted right behind it in the pipeline.
+	PipelineListItem* currentItem = selectedItem();
+
+	if(currentItem) {
+		while(currentItem->parent()) {
+			currentItem = currentItem->parent();
+		}
+		if(OORef<PipelineObject> pobj = dynamic_object_cast<PipelineObject>(currentItem->object())) {
+			for(int i = modifiers.size() - 1; i >= 0; i--) {
+				Modifier* modifier = modifiers[i];
+				std::vector<OORef<RefMaker>> dependentsList;
+				for(RefMaker* dependent : pobj->dependents()) {
+					if(dynamic_object_cast<ModifierApplication>(dependent) || dynamic_object_cast<PipelineSceneNode>(dependent)) {
+						dependentsList.push_back(dependent);
+					}
+				}
+				OORef<ModifierApplication> modApp = modifier->createModifierApplication();
+				modApp->setModifier(modifier);
+				modApp->setInput(pobj);
+				modifier->initializeModifier(modApp);
+				setNextObjectToSelect(modApp);
+				for(RefMaker* dependent : dependentsList) {
+					if(ModifierApplication* predecessorModApp = dynamic_object_cast<ModifierApplication>(dependent)) {
+						predecessorModApp->setInput(modApp);
+					}
+					else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+						pipeline->setDataProvider(modApp);
+					}
+				}
+				pobj = modApp;
+			}
+			return;
+		}
+	}
+
 	// Insert modifiers at the end of the selected pipeline.
 	for(int index = modifiers.size() - 1; index >= 0; --index) {
-		selectedPipeline()->applyModifier(modifiers[index]);
+		setNextObjectToSelect(selectedPipeline()->applyModifier(modifiers[index]));
 	}
 }
 
@@ -295,11 +378,13 @@ void PipelineListModel::deleteModifier(int index)
 			if(ModifierApplication* precedingModApp = dynamic_object_cast<ModifierApplication>(dependent)) {
 				if(precedingModApp->input() == modApp) {
 					precedingModApp->setInput(modApp->input());
+					setNextObjectToSelect(modApp->input());
 				}
 			}
 			else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
 				if(pipeline->dataProvider() == modApp) {
 					pipeline->setDataProvider(modApp->input());
+					setNextObjectToSelect(pipeline->dataProvider());
 				}
 			}
 		}

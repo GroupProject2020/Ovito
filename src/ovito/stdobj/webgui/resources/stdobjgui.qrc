@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/StdObj">
         <file>editors/SimulationCellObject.qml</file>
+        <file>editors/SimulationCellVis.qml</file>
     </qresource>
 </RCC>

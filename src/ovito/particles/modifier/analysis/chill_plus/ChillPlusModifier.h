@@ -41,7 +41,11 @@ class OVITO_PARTICLES_EXPORT ChillPlusModifier : public StructureIdentificationM
     OVITO_CLASS(ChillPlusModifier)
 
     Q_CLASSINFO("DisplayName", "Chill+");
-    Q_CLASSINFO("ModifierCategory", "Structure identification");
+#ifndef OVITO_BUILD_WEBGUI
+	Q_CLASSINFO("ModifierCategory", "Structure identification");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

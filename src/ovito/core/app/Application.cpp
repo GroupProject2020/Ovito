@@ -168,6 +168,14 @@ bool Application::initialize()
 	QMetaType::registerConverter<Color, QColor>();
 	QMetaType::registerConverter<QColor, ColorA>();
 	QMetaType::registerConverter<ColorA, QColor>();
+	QMetaType::registerConverter<Vector2, QVector2D>(&Vector2::operator QVector2D);
+	QMetaType::registerConverter<QVector2D, Vector2>();
+	QMetaType::registerConverter<Vector3, QVector3D>(&Vector3::operator QVector3D);
+	QMetaType::registerConverter<QVector3D, Vector3>();
+	QMetaType::registerConverter<Color, Vector3>();
+	QMetaType::registerConverter<Vector3, Color>();
+	QMetaType::registerConverter<QVector3D, Color>();
+	QMetaType::registerConverter<Color, QVector3D>(&Color::operator QVector3D);
 
 	// Register Qt resources.
 	::registerQtResources();

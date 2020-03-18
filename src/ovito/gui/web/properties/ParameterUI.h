@@ -36,9 +36,14 @@ class ParameterUI : public RefMaker, public QQmlPropertyValueSource
 {
 	Q_OBJECT
 	Q_INTERFACES(QQmlPropertyValueSource)
-    Q_PROPERTY(Ovito::RefTarget* editObject READ editObject WRITE setEditObject)
+    Q_PROPERTY(Ovito::RefTarget* editObject READ editObject WRITE setEditObject NOTIFY editObjectReplaced)
 	Q_PROPERTY(QString propertyName READ propertyName WRITE setPropertyName);
 	Q_PROPERTY(QVariant propertyValue READ getCurrentValue WRITE setCurrentValue);
+	Q_PROPERTY(QStringList editorComponentList READ editorComponentList NOTIFY editObjectReplaced);
+	Q_PROPERTY(QStringList subobjectFieldList READ subobjectFieldList NOTIFY editObjectReplaced);
+	Q_PROPERTY(FloatType minParameterValue READ minParameterValue NOTIFY editObjectReplaced);
+	Q_PROPERTY(FloatType maxParameterValue READ maxParameterValue NOTIFY editObjectReplaced);
+	Q_PROPERTY(QString propertyDisplayName READ propertyDisplayName NOTIFY editObjectReplaced);
 	OVITO_CLASS(ParameterUI)
 
 public:
@@ -74,10 +79,30 @@ public:
 	QQmlProperty& qmlProperty() { return _qmlProperty; }
 
 	/// Obtains the current value of the parameter from the C++ object.
-	QVariant getCurrentValue() const;
+	virtual QVariant getCurrentValue() const;
 
 	/// Changes the current value of the C++ object parameter.
-	void setCurrentValue(const QVariant& val);
+	virtual void setCurrentValue(const QVariant& val);
+
+	/// Returns the list of QML components that display the user interface for the current edit object.
+	QStringList editorComponentList() const;
+
+	/// Returns the list of reference fields of the edit object for which the PROPERTY_FIELD_OPEN_SUBEDITOR flag is set.
+	QStringList subobjectFieldList() const;
+
+	/// Returns the minimum value for the numeric parameter.
+	FloatType minParameterValue() const;
+
+	/// Returns the maximum value for the numeric parameter.
+	FloatType maxParameterValue() const;
+
+	/// Returns the UI display name of the parameter.
+	QString propertyDisplayName() const;
+
+Q_SIGNALS:
+
+	/// This signal is emitted whenever the edit object of this parameter UI is replaced.
+	void editObjectReplaced();
 
 protected:
 

@@ -112,6 +112,12 @@ public:
 	/// Returns the container of the dataset being edited.
 	DataSetContainer& datasetContainer() { return _datasetContainer; }
 
+	/// Sets the item in the pipeline editor that should be selected during the next list update.
+	void setNextObjectToSelect(RefTarget* obj) { _nextObjectToSelect = obj; }
+
+	/// Sets the item in the modification list that should be selected on the next list update.
+	void setNextSubObjectTitleToSelect(const QString& title) { _nextSubObjectTitleToSelect = title; }
+
     /// Inserts the given modifier(s) into the currently selected data pipeline.
 	void applyModifiers(const QVector<OORef<Modifier>>& modifiers);
 
@@ -164,6 +170,12 @@ private:
 
 	/// Container of the dataset being edited.
 	DataSetContainer& _datasetContainer;
+
+	/// The item in the list that should be selected during the next update.
+	RefTarget* _nextObjectToSelect = nullptr;
+
+	/// The sub-object to select in the pipeline editor during the next refresh.
+	QString _nextSubObjectTitleToSelect;
 };
 
 }	// End of namespace
