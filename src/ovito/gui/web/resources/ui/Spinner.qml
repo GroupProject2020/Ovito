@@ -3,6 +3,7 @@ import QtQuick.Controls 2.5
 
 Control {
 	id: control
+	implicitHeight: 32
 
 	// Standard SpinBox API properties (v2.4)
 	property double value: 0.0
@@ -73,8 +74,8 @@ Control {
 		editable: control.editable
 		inputMethodHints: control.inputMethodHints
 		validator: control.validator
-		from: -0x7FFFFFFF; to: 0x7FFFFFFF;  // prevent interference with our real from/to values
-		// wrap peroperty is set below as a Binding in case SpinBox vesion is < 2.3 (Qt 5.10).
+		from: -(Math.pow(2, 31) - 1); to: Math.pow(2, 31) - 1;  // prevent interference with our real from/to values
+		// wrap property is set below as a Binding in case SpinBox version is < 2.3 (Qt 5.10).
 	}
 
 	// Public function API

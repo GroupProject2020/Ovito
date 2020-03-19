@@ -234,7 +234,7 @@ FloatType ParameterUI::minParameterValue() const
 	if(propertyField() && propertyField()->numericalParameterInfo()) {
 		return propertyField()->numericalParameterInfo()->minValue;
 	}
-	return std::numeric_limits<FloatType>::min();
+	return std::numeric_limits<FloatType>::lowest();
 }
 
 /******************************************************************************

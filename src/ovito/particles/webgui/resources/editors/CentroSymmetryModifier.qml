@@ -12,7 +12,7 @@ Ui.RolloutPanel {
 		columns: 2
 
 		Label { text: qsTr("Number of neighbors:") }
-		Ui.FloatParameter { 
+		Ui.IntegerParameter { 
 			propertyField: "numNeighbors"
 			Layout.fillWidth: true 
 		}

@@ -37,6 +37,11 @@ static void registerQtResources()
 	#if defined(OVITO_BUILD_GUI) || defined(OVITO_BUILD_WEBGUI)
 		Q_INIT_RESOURCE(guibase);
 		Q_INIT_RESOURCE(gui);
+		#ifdef OVITO_BUILD_WEBGUI
+			Q_INIT_RESOURCE(stdobjgui);
+			Q_INIT_RESOURCE(stdmodgui);
+			Q_INIT_RESOURCE(particlesgui);
+		#endif
 	#endif
 #endif
 }

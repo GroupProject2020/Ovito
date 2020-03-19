@@ -2,7 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.5
 import org.ovito 1.0
 
-ComboBox {
+CustomComboBox {
 	id: control
 
 	property alias propertyField: parameterUI.propertyName

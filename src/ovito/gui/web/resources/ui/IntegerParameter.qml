@@ -5,6 +5,7 @@ import org.ovito 1.0
 SpinBox {
 	id: control
 
+	implicitHeight: 32
 	editable: true
 	stepSize: 1
 	from: Math.max(parameterUI.minParameterValue, -(Math.pow(2, 31) - 1))

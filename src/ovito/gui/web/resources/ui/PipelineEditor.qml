@@ -36,7 +36,7 @@ ScrollView {
 				states: State {
 					name: "HOVERING"
 					when: (containsMouse && type == 1)
-					PropertyChanges { target: deleteButton; opacity: 0.7 }
+					PropertyChanges { target: deleteButton; opacity: 0.85 }
 				}
 				transitions: Transition {
 					to: "*"

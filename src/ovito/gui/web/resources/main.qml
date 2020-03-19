@@ -21,10 +21,10 @@ ApplicationWindow {
 		id: aboutDialog
 	}
 
-	header: Ui.ToolBar {
-		id: toolBar
-		objectName: "toolBar"
-	}
+//	header: Ui.ToolBar {
+//		id: toolBar
+//		objectName: "toolBar"
+//	}
 
 	RowLayout {
 		anchors.fill: parent
@@ -32,6 +32,12 @@ ApplicationWindow {
 
 		ColumnLayout {
 			spacing: 0
+
+			Ui.ToolBar {
+				id: toolBar
+				objectName: "toolBar"
+				Layout.fillWidth: true
+			}
 
 			MainWindow {
 				id: mainWindow

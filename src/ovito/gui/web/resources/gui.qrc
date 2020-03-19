@@ -12,6 +12,9 @@
         <file>ui/ColorParameter.qml</file>
         <file>ui/ColorPicker.qml</file>
         <file>ui/ColorPickerPopup.qml</file>
+        <file>ui/CustomCheckBox.qml</file>
+        <file>ui/CustomComboBox.qml</file>
+        <file>ui/CustomRadioButton.qml</file>
         <file>ui/CommandPanel.qml</file>
         <file>ui/ErrorDialog.qml</file>
         <file>ui/FloatParameter.qml</file>
@@ -31,6 +34,8 @@
         <file>ui/VariantComboBoxParameter.qml</file>
         <file>ui/Vector3Parameter.qml</file>
         <file>ui/ViewportWindow.qml</file>
+
+        <file>ui/arrow_down.svg</file>
 
         <file>actions/file/file_import.bw.svg</file>
         <file>actions/file/file_import_remote.bw.svg</file>

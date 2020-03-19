@@ -15,7 +15,7 @@ AbstractButton {
         border.width: 1
         border.color: control.down ? "#404040" : "#a0a0a0"
     }
-
+/*
     onClicked: {
         colorPickerPopup.setColor(color);
         popup.open();
@@ -42,4 +42,5 @@ AbstractButton {
             }
         }
     }
+*/
 }

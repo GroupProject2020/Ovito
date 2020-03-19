@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.12
 ColumnLayout {
 	spacing: 0
 	// Modifiers combobox:
-	ComboBox {
+	CustomComboBox {
 		Layout.fillWidth: true
 		model: mainWindow.modifierListModel
 		textRole: "display"
