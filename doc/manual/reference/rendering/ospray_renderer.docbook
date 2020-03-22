@@ -44,7 +44,7 @@
       <varlistentry>
         <term>Samples per pixel</term>
         <listitem>
-          <para>The number of raytracing samples computed per pixel (default: 4). Larger values can help to reduce aliasing artifacts.</para>
+          <para>The number of raytracing samples computed per pixel (default: 2). Larger values can help to reduce aliasing artifacts.</para>
         </listitem>
       </varlistentry>
 
@@ -53,6 +53,14 @@
         <listitem>
           <para>The maximum number of recursion steps during raytracing. Normally, 1 or 2 is enough, but when rendering semi-transparent
           objects, a larger recursion depth is needed.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Denoising filter</term>
+        <listitem>
+          <para>Applies a denoising filter to the rendered image in order to reduce Monte Carlo noise inherent to stochastic ray tracing 
+          methods like path tracing.</para>
         </listitem>
       </varlistentry>
 
@@ -95,7 +103,25 @@
     </variablelist>
   </simplesect>
 
+
   <simplesect>
+    <title>Path Tracer backend</title>
+    <para>
+      The path tracer backend supports soft shadows, indirect illumination and realistic materials.
+    </para>
+
+    <variablelist>
+      <varlistentry>
+        <term>Roulette depth</term>
+        <listitem>
+          <para>Ray recursion depth at which to start Russian roulette termination (default: 2).</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+  </simplesect>
+
+ <simplesect>
     <title>SciVis backend</title>
     <para>
       The SciVis backend is a fast ray tracer for scientific visualization, which supports ambient occlusion (AO).
@@ -114,23 +140,6 @@
           <para>
           Ambient occlusion mimics some of the effects that occur under conditions of omnidirectional diffuse illumination, e.g. outdoors on an overcast day.
           The <emphasis>sample count</emphasis> parameter determines the number of rays per sample to compute for ambient occlusion (default: 12).</para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-
-  </simplesect>
-
-  <simplesect>
-    <title>Path Tracer backend</title>
-    <para>
-      The path tracer backend supports soft shadows, indirect illumination and realistic materials.
-    </para>
-
-    <variablelist>
-      <varlistentry>
-        <term>Roulette depth</term>
-        <listitem>
-          <para>Ray recursion depth at which to start Russian roulette termination (default: 5).</para>
         </listitem>
       </varlistentry>
     </variablelist>
