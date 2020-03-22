@@ -67,7 +67,7 @@ public:
 
 	/// Converts a 3-vector to a color.
 	/// The X, Y and Z vector components are used to initialize the red, green and blue components respectively.
-	Q_DECL_CONSTEXPR explicit ColorT(const Vector_3<T>& v)
+	Q_DECL_CONSTEXPR ColorT(const Vector_3<T>& v)
 #if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
 		: std::array<T, 3>{{v.x(), v.y(), v.z()}} {}
 #else
@@ -83,6 +83,14 @@ public:
 		: std::array<T, 3>{{T(c.redF()), T(c.greenF()), T(c.blueF())}} {}
 #else
 		{ this->r() = T(c.redF()); this->g() = T(c.greenF()); this->b() = T(c.blueF()); }
+#endif
+
+	/// Conversion constructor from a Qt color.
+	Q_DECL_CONSTEXPR ColorT(const QVector3D& v)
+#if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
+		: std::array<T, 3>{{T(v.x()), T(v.y()), T(v.z())}} {}
+#else
+		{ this->r() = T(v.x()); this->g() = T(v.y()); this->b() = T(v.z()); }
 #endif
 
 	/// Sets all components of the color to zero.
@@ -101,9 +109,12 @@ public:
 	}
 
 	/// Converts the RGB color to a 3-vector with XYZ components.
-	explicit Q_DECL_CONSTEXPR operator const Vector_3<T>&() const {
+	Q_DECL_CONSTEXPR operator const Vector_3<T>&() const {
 		return reinterpret_cast<const Vector_3<T>&>(*this);
 	}
+
+	/// Conversion operator to a Qt vector.
+	Q_DECL_CONSTEXPR explicit operator QVector3D() const { return QVector3D(r(), g(), b()); }
 
 	//////////////////////////// Component access //////////////////////////
 

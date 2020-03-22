@@ -6,29 +6,55 @@ import org.ovito 1.0
 ScrollView {
 	id: propertyEditor
 
-	/// The RefTarget object that is currently shown in the properties editor.
 	property RefTarget editObject
+	readonly property ParameterUI parameterUI: ParameterUI { editObject: propertyEditor.editObject }
 	clip: true
 
 	Flickable {
-		contentHeight: propertiesEditorLoader.height
+		contentHeight: column.childrenRect.height + column.topPadding + column.bottomPadding
 
-		/// This Loader loads the QML component containing the UI for the current RefTarget.
-		Loader { 
-			id: propertiesEditorLoader 
-			anchors.left: parent.left
-			anchors.right: parent.right
-			// Automatically generate the resource URL to the UI component for the current object's class. 
-			source: propertyEditor.editObject ? ("qrc:/" + propertyEditor.editObject.pluginId + "/editors/" + propertyEditor.editObject.className + ".qml") : ""
+		Column {
+			id: column
+			anchors.fill: parent
+			topPadding: 2
+			bottomPadding: 2
+			spacing: 2
+
+			/// Displays the editors for the current object.
+			Repeater {
+				id: editorList 
+				model: parameterUI.editorComponentList
+
+				/// This Loader loads the QML component containing the UI for the current RefTarget.
+				Loader { 
+					source: modelData
+					anchors.left: parent.left
+					anchors.right: parent.right
+				}
+			}
+
+			/// Displays the sub-object editors for RefMaker reference fields that have the PROPERTY_FIELD_OPEN_SUBEDITOR flag set.
+			Repeater {
+				id: subobjectEditorList
+				model: parameterUI.subobjectFieldList
+
+				SubobjectEditor {
+					propertyField: modelData
+					parentEditObject: propertyEditor.editObject
+					anchors.left: parent.left
+					anchors.right: parent.right
+					visible: hasEditorComponent
+				}
+			}
 		}
 	}
 
 	background: Rectangle {
-		color: "#E0E0E0"
+		color: "#F0F0F0"
 
 		Text {
 			anchors.centerIn: parent
-			visible: propertiesEditorLoader.status == Loader.Error
+			visible: editObject != null && column.visibleChildren.length <= 2 
 			text: "UI not implemented yet for this object"
 		}
 	}

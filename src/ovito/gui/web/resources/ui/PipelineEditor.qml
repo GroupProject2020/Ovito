@@ -14,7 +14,14 @@ ScrollView {
 		focus: true
 		highlightMoveDuration: 0
 		highlightMoveVelocity: -1
-		onCurrentIndexChanged: { model.selectedIndex = currentIndex }
+
+		// Keep the selected index of the model and the ListView in sync without creating a binding loop.
+		onCurrentIndexChanged: model.selectedIndex = currentIndex;
+		Connections {
+			target: model
+			onSelectedIndexChanged: listView.currentIndex = model.selectedIndex;
+		}
+
 		Component {
 			id: itemDelegate
 			MouseArea {
@@ -29,7 +36,7 @@ ScrollView {
 				states: State {
 					name: "HOVERING"
 					when: (containsMouse && type == 1)
-					PropertyChanges { target: deleteButton; opacity: 0.7 }
+					PropertyChanges { target: deleteButton; opacity: 0.85 }
 				}
 				transitions: Transition {
 					to: "*"

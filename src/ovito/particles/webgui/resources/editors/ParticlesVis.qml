@@ -18,12 +18,18 @@ Ui.RolloutPanel {
 			model: ListModel {
 				id: model
 				ListElement { text: qsTr("Sphere/Ellipsoid") }
-				ListElement { text: qsTr("Circle") }
 				ListElement { text: qsTr("Cube/Box") }
+				ListElement { text: qsTr("Circle") }
 				ListElement { text: qsTr("Square") }
 				ListElement { text: qsTr("Cylinder") }
 				ListElement { text: qsTr("Spherocylinder") }
 			}
+		}
+
+		Label { text: qsTr("Default radius:") }
+		Ui.FloatParameter { 
+			propertyField: "defaultParticleRadius"
+			Layout.fillWidth: true 
 		}
 	}
 }

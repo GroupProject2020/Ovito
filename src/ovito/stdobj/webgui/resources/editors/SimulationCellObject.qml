@@ -46,6 +46,6 @@ Ui.RolloutPanel {
 					text: qsTr("Z")
 				}
 			}
-		}		
+		}
 	}
 }

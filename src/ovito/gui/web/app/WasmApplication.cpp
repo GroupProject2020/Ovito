@@ -28,6 +28,7 @@
 #include <ovito/gui/web/dataset/WasmFileManager.h>
 #include <ovito/gui/web/viewport/ViewportWindow.h>
 #include <ovito/gui/web/properties/ParameterUI.h>
+#include <ovito/gui/web/properties/ModifierDelegateParameterUI.h>
 #include <ovito/core/utilities/io/FileManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include <ovito/core/app/ApplicationService.h>
@@ -84,6 +85,11 @@ void WasmApplication::createQtApplication(int& argc, char** argv)
 	// Let the base class create a QtGui application object.
 	StandaloneApplication::createQtApplication(argc, argv);
 
+	// Make the default UI font somewhat smaller.
+	QFont font = QGuiApplication::font();
+	font.setPointSizeF(0.75 * font.pointSizeF());
+	QGuiApplication::setFont(font);
+
 #else
 
 	// On desktop platforms, enable high-resolution toolbar icons for high-dpi screens.
@@ -118,6 +124,7 @@ bool WasmApplication::startupApplication()
 	qmlRegisterUncreatableType<PipelineListModel>("org.ovito", 1, 0, "PipelineListModel", tr("PipelineListModel cannot be created from QML."));
 	qmlRegisterUncreatableType<RefTarget>("org.ovito", 1, 0, "RefTarget", tr("RefTarget cannot be created from QML."));
 	qmlRegisterType<ParameterUI>("org.ovito", 1, 0, "ParameterUI");
+	qmlRegisterType<ModifierDelegateParameterUI>("org.ovito", 1, 0, "ModifierDelegateParameterUI");
 
 	// Initialize the Qml engine.
 	_qmlEngine = new QQmlApplicationEngine(this);

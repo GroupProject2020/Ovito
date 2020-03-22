@@ -39,7 +39,11 @@ class OVITO_STDMOD_EXPORT ManualSelectionModifier : public GenericPropertyModifi
 	OVITO_CLASS(ManualSelectionModifier)
 
 	Q_CLASSINFO("DisplayName", "Manual selection");
+#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Selection");
+#else
+	Q_CLASSINFO("ModifierCategory", "-");
+#endif
 
 public:
 

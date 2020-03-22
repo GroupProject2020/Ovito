@@ -36,6 +36,7 @@ OVITO_STANDARD_PLUGIN(GuiWeb
 		mainwin/PipelineListModel.cpp
 		mainwin/PipelineListItem.cpp
 		properties/ParameterUI.cpp
+		properties/ModifierDelegateParameterUI.cpp
 		viewport/ViewportWindow.cpp
 		${ResourceFiles}
 	PLUGIN_DEPENDENCIES

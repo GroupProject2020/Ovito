@@ -27,7 +27,9 @@
 #include <ovito/core/app/Application.h>
 #include "Task.h"
 
-#include <future>
+#ifndef OVITO_DISABLE_THREADING
+	#include <future>
+#endif
 
 namespace Ovito {
 
@@ -41,6 +43,7 @@ bool parallelFor(
 	promise.setProgressMaximum(loopCount / progressChunkSize);
 	promise.setProgressValue(0);
 
+#ifndef OVITO_DISABLE_THREADING
 	std::vector<std::future<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
 	T chunkSize = loopCount / num_threads;
@@ -73,6 +76,21 @@ bool parallelFor(
 		t.wait();
 	for(auto& t : workers)
 		t.get();
+#else
+	for(T i = 0; i < loopCount; ) {
+		// Execute kernel.
+		kernel(i);
+		i++;
+
+		// Update progress indicator.
+		if((i % progressChunkSize) == 0) {
+			OVITO_ASSERT(i != 0);
+			promise.incrementProgressValue();
+		}
+		if(promise.isCanceled())
+			break;
+	}
+#endif
 
 	promise.incrementProgressValue(loopCount % progressChunkSize);
 	return !promise.isCanceled();
@@ -81,6 +99,7 @@ bool parallelFor(
 template<class Function, typename T>
 void parallelFor(T loopCount, Function kernel)
 {
+#ifndef OVITO_DISABLE_THREADING
 	std::vector<std::future<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
 	if(num_threads > loopCount) {
@@ -114,11 +133,17 @@ void parallelFor(T loopCount, Function kernel)
 		t.wait();
 	for(auto& t : workers)
 		t.get();
+#else
+	for(T i = 0; i < loopCount; ++i) {
+		kernel(i);
+	}
+#endif
 }
 
 template<class Function>
 bool parallelForChunks(size_t loopCount, Task& promise, Function kernel)
 {
+#ifndef OVITO_DISABLE_THREADING
 	std::vector<std::future<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
 	if(num_threads > loopCount) {
@@ -144,6 +169,9 @@ bool parallelForChunks(size_t loopCount, Task& promise, Function kernel)
 		t.wait();
 	for(auto& t : workers)
 		t.get();
+#else
+	kernel(0, loopCount, promise);
+#endif
 
 	return !promise.isCanceled();
 }
@@ -152,6 +180,7 @@ bool parallelForChunks(size_t loopCount, Task& promise, Function kernel)
 template<class Function>
 void parallelForChunks(size_t loopCount, Function kernel)
 {
+#ifndef OVITO_DISABLE_THREADING
 	std::vector<std::future<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
 	if(num_threads > loopCount) {
@@ -177,6 +206,9 @@ void parallelForChunks(size_t loopCount, Function kernel)
 		t.wait();
 	for(auto& t : workers)
 		t.get();
+#else
+	kernel(0, loopCount);
+#endif
 }
 
 }	// End of namespace

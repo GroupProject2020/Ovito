@@ -118,7 +118,7 @@ public:
 			set(owner, descriptor, static_cast<property_type>(newValue.value<qvariant_type>()));
 		}
 		else {
-			OVITO_ASSERT_MSG(false, "PropertyField::setQVariant()", "The assigned QVariant value cannot be converted to the data type of the property field.");
+			OVITO_ASSERT_MSG(false, "PropertyField::setQVariant()", qPrintable(QString("The assigned QVariant value of type %1 cannot be converted to the data type %2 of the property field.").arg(newValue.typeName()).arg(QMetaType::typeName(qMetaTypeId<qvariant_type>()))));
 		}
 	}
 
