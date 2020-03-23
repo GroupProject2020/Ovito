@@ -54,12 +54,6 @@ FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
 	FIND_PACKAGE(Qt5${component} REQUIRED)
 ENDFOREACH()
 
-FILE(READ "/Users/stuko/temp/tbb2019_20190206oss/lib/intel64/gcc4.7/libtbb.so" _SO_FILE_HEADER LIMIT 5 HEX)
-MESSAGE("HEX: ${_SO_FILE_HEADER}")
-IF("${_SO_FILE_HEADER}" STREQUAL "494e505554")
-	MESSAGE("_SO_FILE_HEADER: ${_SO_FILE_HEADER}")
-ENDIF()
-
 # This macro installs a third-party shared library or DLL in the OVITO program directory
 # so that it can be distributed together with the program.
 FUNCTION(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
