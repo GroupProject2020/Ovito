@@ -51,12 +51,8 @@ class OVITO_PARTICLES_EXPORT SmoothTrajectoryModifier : public Modifier
 	OVITO_CLASS_META(SmoothTrajectoryModifier, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Smooth trajectory");
-	Q_CLASSINFO("ClassNameAlias", "InterpolateTrajectoryModifier");
-#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Modification");
-#else
-	Q_CLASSINFO("ModifierCategory", "-");
-#endif
+	Q_CLASSINFO("ClassNameAlias", "InterpolateTrajectoryModifier");
 
 public:
 

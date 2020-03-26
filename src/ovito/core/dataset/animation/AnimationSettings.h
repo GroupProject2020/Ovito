@@ -297,9 +297,6 @@ private:
 	/// Controls whether the animation is played back in a loop in the interactive viewports.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, loopPlayback, setLoopPlayback, PROPERTY_FIELD_MEMORIZE);
 
-	/// Specifies the number of frames to skip when playing back the animation in the interactive viewports.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, playbackEveryNthFrame, setPlaybackEveryNthFrame);
-
 	/// Controls whether the animation interval is automatically adjusted to accomodate all loaded
 	/// source animations in the scene.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, autoAdjustInterval, setAutoAdjustInterval);

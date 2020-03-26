@@ -38,7 +38,7 @@ DEFINE_PROPERTY_FIELD(SimulationCellVis, cellLineWidth);
 DEFINE_PROPERTY_FIELD(SimulationCellVis, renderCellEnabled);
 DEFINE_PROPERTY_FIELD(SimulationCellVis, cellColor);
 SET_PROPERTY_FIELD_LABEL(SimulationCellVis, cellLineWidth, "Line width");
-SET_PROPERTY_FIELD_LABEL(SimulationCellVis, renderCellEnabled, "Visible in rendered images");
+SET_PROPERTY_FIELD_LABEL(SimulationCellVis, renderCellEnabled, "Render cell");
 SET_PROPERTY_FIELD_LABEL(SimulationCellVis, cellColor, "Line color");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SimulationCellVis, cellLineWidth, WorldParameterUnit, 0);
 

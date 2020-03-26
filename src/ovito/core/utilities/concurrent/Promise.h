@@ -397,6 +397,9 @@ public:
 					thisTask->cancel();
 			});
 
+			// Register child operation with task manager.
+			task()->taskManager()->addTaskInternal(subOperation.task());
+
 			return subOperation;
 		}
 		else {

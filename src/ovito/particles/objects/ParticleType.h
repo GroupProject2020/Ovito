@@ -113,10 +113,24 @@ public:
 	/// Changes the default radius for a named particle type.
 	static void setDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType radius);
 
+	//Begin of modifications
+	/// Returns the default transparency for a named particle type
+	static FloatType getDefaultParticleTransparency(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
+
+	/// Changes the default transparency for a named particle type
+	static void setDefaultParticleTransparency(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType transparency);
+	//End of modifications
+
+
 private:
 
 	/// The default display radius to be used for particles of this type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, radius, setRadius);
+
+	//Begin of modification
+	/// The default display transparency to be used for particles of this type
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, transparency, setTransparency);
+	//End of modification
 
 	/// An optional user-defined shape used for rendering particles of this type.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TriMeshObject, shapeMesh, setShapeMesh, PROPERTY_FIELD_NO_SUB_ANIM);
@@ -136,7 +150,9 @@ private:
 private:
 
 	/// Data structure that holds the name, color, and radius of a particle type.
-	typedef std::tuple<QString,Color,FloatType> PredefinedTypeInfo;
+	//BEGIN OF MODIFICATION : Adding another FloatType for the transparency
+	typedef std::tuple<QString,Color,FloatType, FloatType> PredefinedTypeInfo;
+	//END OF MODIFICATION
 
 	/// Contains default names, colors, and radii for some predefined particle types.
 	static std::array<PredefinedTypeInfo, NUMBER_OF_PREDEFINED_PARTICLE_TYPES> _predefinedParticleTypes;

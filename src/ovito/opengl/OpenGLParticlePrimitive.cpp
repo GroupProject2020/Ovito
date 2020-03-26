@@ -317,6 +317,8 @@ void OpenGLParticlePrimitive::setSize(int particleCount)
 	int numChunks = particleCount ? ((particleCount + _chunkSize - 1) / _chunkSize) : 0;
 	_positionsBuffers.resize(numChunks);
 	_radiiBuffers.resize(numChunks);
+	//Modif
+	_transparenciesBuffers.resize(numChunks);
 	_colorsBuffers.resize(numChunks);
 	if(particleShape() == BoxShape || particleShape() == EllipsoidShape) {
 		_shapeBuffers.resize(numChunks);
@@ -327,6 +329,8 @@ void OpenGLParticlePrimitive::setSize(int particleCount)
 		int size = std::min(_chunkSize, particleCount - i * _chunkSize);
 		_positionsBuffers[i].create(QOpenGLBuffer::StaticDraw, size, verticesPerParticle);
 		_radiiBuffers[i].create(QOpenGLBuffer::StaticDraw, size, verticesPerParticle);
+		//Modif
+		_transparenciesBuffers[i].create(QOpenGLBuffer::StaticDraw, size, verticesPerParticle);
 		_colorsBuffers[i].create(QOpenGLBuffer::StaticDraw, size, verticesPerParticle);
 		if(particleShape() == BoxShape || particleShape() == EllipsoidShape) {
 			_shapeBuffers[i].create(QOpenGLBuffer::StaticDraw, size, verticesPerParticle);
@@ -379,6 +383,33 @@ void OpenGLParticlePrimitive::setParticleRadius(FloatType radius)
 		buffer.fillConstant(radius);
 }
 
+//Begin of modification
+/******************************************************************************
+* Sets the transparencies of the particles.
+******************************************************************************/
+void OpenGLParticlePrimitive::setParticleTransparencies(const FloatType* transparencies)
+{
+	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
+	for(auto& buffer : _transparenciesBuffers) {
+		buffer.fill(transparencies);
+		transparencies += buffer.elementCount();
+	}
+}
+
+/******************************************************************************
+* Sets the transparency of all particles to the given value.
+******************************************************************************/
+void OpenGLParticlePrimitive::setParticleTransparency(FloatType transparency)
+{
+	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
+	for(auto& buff : _transparenciesBuffers){
+		buff.fillConstant(transparency);
+		buff.unmap();
+    }
+}
+
+//End of modification
+
 /******************************************************************************
 * Sets the colors of the particles.
 ******************************************************************************/
@@ -406,7 +437,7 @@ void OpenGLParticlePrimitive::setParticleColors(const Color* colors)
 				dest->r() = (float)colors->r();
 				dest->g() = (float)colors->g();
 				dest->b() = (float)colors->b();
-				dest->a() = 1;
+				dest->a() = 0.5;
 			}
 		}
 		buffer.unmap();
@@ -583,6 +614,8 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 		int chunkSize = _positionsBuffers[chunkIndex].elementCount();
 		_positionsBuffers[chunkIndex].bindPositions(renderer, shader);
 		_radiiBuffers[chunkIndex].bind(renderer, shader, "particle_radius", GL_FLOAT, 0, 1);
+		//Modif
+		_transparenciesBuffers[chunkIndex].bind(renderer, shader, "particle_transparency", GL_FLOAT, 0, 1);
 		if(!renderer->isPicking())
 			_colorsBuffers[chunkIndex].bindColors(renderer, shader, 4);
 		else {
@@ -607,6 +640,8 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 
 		_positionsBuffers[chunkIndex].detachPositions(renderer, shader);
 		_radiiBuffers[chunkIndex].detach(renderer, shader, "particle_radius");
+		//Modif
+		_transparenciesBuffers[chunkIndex].detach(renderer, shader, "particle_transparency");
 		if(!renderer->isPicking())
 			_colorsBuffers[chunkIndex].detachColors(renderer, shader);
 	}

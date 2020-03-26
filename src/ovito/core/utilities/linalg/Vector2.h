@@ -107,14 +107,6 @@ public:
 	/// Initializes the vector from an array.
 	Q_DECL_CONSTEXPR explicit Vector_2(const std::array<T, 2>& a) : std::array<T, 2>(a) {}
 
-	/// Conversion constructor from a Qt vector.
-	Q_DECL_CONSTEXPR Vector_2(const QVector2D& v)
-#if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
-		: std::array<T, 2>{{T(v.x()), T(v.y())}} {}
-#else
-		{ this->x() = T(v.x()); this->y() = T(v.y()); }
-#endif
-
 	/// Casts the vector to another component type \a U.
 	template<typename U>
 	Q_DECL_CONSTEXPR explicit operator Vector_2<U>() const { return Vector_2<U>(static_cast<U>(x()), static_cast<U>(y())); }
@@ -123,9 +115,6 @@ public:
 
 	/// Returns the reverse vector (-x(), -y()).
 	Q_DECL_CONSTEXPR Vector_2 operator-() const { return Vector_2(-x(), -y()); }
-
-	/// Conversion operator to a Qt vector.
-	Q_DECL_CONSTEXPR explicit operator QVector2D() const { return QVector2D(x(), y()); }
 
 	///////////////////////////// Assignment operators ///////////////////////////
 

@@ -86,6 +86,14 @@ public:
 	/// Determines the display radius of a single particle.
 	FloatType particleRadius(size_t particleIndex, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const;
 
+	//Begin of modification
+	/// Determines the particle transparencies used for rendering.
+	std::vector<FloatType> particleTransparencies(const ParticlesObject* particles) const;
+
+	/// Determines the display transparency of a single particle.
+	FloatType particleTransparency(size_t particleIndex, ConstPropertyAccess<FloatType> transparencyProperty, const PropertyObject* typeProperty) const;
+	//End of modification
+
 	/// s the display color of a single particle.
 	ColorA particleColor(size_t particleIndex, ConstPropertyAccess<Color> colorProperty, const PropertyObject* typeProperty, ConstPropertyAccess<int> selectionProperty, ConstPropertyAccess<FloatType> transparencyProperty) const;
 

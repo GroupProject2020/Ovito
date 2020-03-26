@@ -114,21 +114,10 @@ public:
 	explicit Vector_4(const Vector_3<T>& v, T w) { this->x() = v.x; this->y() = v.y; this->z() = v.z; this->w() = w; }
 #endif
 
-	/// Conversion constructor from a Qt vector.
-	Q_DECL_CONSTEXPR explicit Vector_4(const QVector4D& v)
-#if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
-		: std::array<T, 4>{{T(v.x()), T(v.y()), T(v.z()), T(v.w())}} {}
-#else
-		{ this->x() = T(v.x()); this->y() = T(v.y()); this->z() = T(v.z()); this->w() = T(v.w()); }
-#endif
-
     /////////////////////////////// Unary operators //////////////////////////////
 
 	/// Returns the reverse vector (-x(), -y(), -z(), -w()).
 	Q_DECL_CONSTEXPR Vector_4 operator-() const { return Vector_4{-x(), -y(), -z(), -w()}; }
-
-	/// Conversion operator to a Qt vector.
-	Q_DECL_CONSTEXPR explicit operator QVector4D() const { return QVector4D(x(), y(), z(), w()); }
 
 	///////////////////////////// Assignment operators ///////////////////////////
 

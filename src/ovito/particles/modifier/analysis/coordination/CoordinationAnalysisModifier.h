@@ -58,11 +58,7 @@ class OVITO_PARTICLES_EXPORT CoordinationAnalysisModifier : public AsynchronousM
 
 	Q_CLASSINFO("ClassNameAlias", "CoordinationNumberModifier");
 	Q_CLASSINFO("DisplayName", "Coordination analysis");
-#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Analysis");
-#else
-	Q_CLASSINFO("ModifierCategory", "-");
-#endif
 
 public:
 

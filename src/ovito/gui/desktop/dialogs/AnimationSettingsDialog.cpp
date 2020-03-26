@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright 2020 Alexander Stukowski
+//  Copyright 2019 Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,10 +38,10 @@ AnimationSettingsDialog::AnimationSettingsDialog(AnimationSettings* animSettings
 
 	QVBoxLayout* layout1 = new QVBoxLayout(this);
 
-	QGroupBox* animationBox = new QGroupBox(tr("Animation"));
-	layout1->addWidget(animationBox);
+	QGroupBox* playbackRateBox = new QGroupBox(tr("Playback"));
+	layout1->addWidget(playbackRateBox);
 
-	QGridLayout* contentLayout = new QGridLayout(animationBox);
+	QGridLayout* contentLayout = new QGridLayout(playbackRateBox);
 	contentLayout->setHorizontalSpacing(0);
 	contentLayout->setVerticalSpacing(2);
 	contentLayout->setColumnStretch(1, 1);
@@ -72,44 +72,23 @@ AnimationSettingsDialog::AnimationSettingsDialog(AnimationSettings* animSettings
 	contentLayout->addWidget(fpsBox, 0, 1, 1, 2);
 	connect(fpsBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &AnimationSettingsDialog::onFramesPerSecondChanged);
 
-	QGroupBox* interactiveBox = new QGroupBox(tr("Playback in interactive viewports"));
-	layout1->addWidget(interactiveBox);
-
-	contentLayout = new QGridLayout(interactiveBox);
-	contentLayout->setHorizontalSpacing(0);
-	contentLayout->setVerticalSpacing(4);
-	contentLayout->setColumnMinimumWidth(1, 12);
-	contentLayout->setColumnStretch(2, 1);
-
-	contentLayout->addWidget(new QLabel(tr("Playback speed:"), this), 0, 0);
+	contentLayout->addWidget(new QLabel(tr("Playback speed in viewports:"), this), 1, 0);
 	playbackSpeedBox = new QComboBox(this);
 	playbackSpeedBox->addItem(tr("x 1/40"), -40);
 	playbackSpeedBox->addItem(tr("x 1/20"), -20);
 	playbackSpeedBox->addItem(tr("x 1/10"), -10);
 	playbackSpeedBox->addItem(tr("x 1/5"), -5);
 	playbackSpeedBox->addItem(tr("x 1/2"), -2);
-	playbackSpeedBox->addItem(tr("x 1 (realtime)"), 1);
+	playbackSpeedBox->addItem(tr("x 1 (Realtime)"), 1);
 	playbackSpeedBox->addItem(tr("x 2"), 2);
 	playbackSpeedBox->addItem(tr("x 5"), 5);
 	playbackSpeedBox->addItem(tr("x 10"), 10);
 	playbackSpeedBox->addItem(tr("x 20"), 20);
-	contentLayout->addWidget(playbackSpeedBox, 0, 2, 1, 2);
+	contentLayout->addWidget(playbackSpeedBox, 1, 1, 1, 2);
 	connect(playbackSpeedBox, (void (QComboBox::*)(int))&QComboBox::activated, this, &AnimationSettingsDialog::onPlaybackSpeedChanged);
 
-	contentLayout->addWidget(new QLabel(tr("Every Nth frame:"), this), 1, 0);
-	QLineEdit* everyNthFrameBox = new QLineEdit(this);
-	contentLayout->addWidget(everyNthFrameBox, 1, 2);
-	everyNthFrameSpinner = new SpinnerWidget(this);
-	everyNthFrameSpinner->setTextBox(everyNthFrameBox);
-	everyNthFrameSpinner->setUnit(animSettings->dataset()->unitsManager().integerIdentityUnit());
-	everyNthFrameSpinner->setMinValue(1);
-	contentLayout->addWidget(everyNthFrameSpinner, 1, 3);
-	connect(everyNthFrameSpinner, &SpinnerWidget::spinnerValueChanged, this, [this]() {
-		_animSettings->setPlaybackEveryNthFrame(everyNthFrameSpinner->intValue());
-	});
-
 	loopPlaybackBox = new QCheckBox(tr("Loop playback"));
-	contentLayout->addWidget(loopPlaybackBox, 2, 2, 1, 2);
+	contentLayout->addWidget(loopPlaybackBox, 2, 0, 1, 3);
 	connect(loopPlaybackBox, &QCheckBox::clicked, this, [this](bool checked) {
 		_animSettings->setLoopPlayback(checked);
 	});
@@ -181,7 +160,6 @@ void AnimationSettingsDialog::updateUI()
 	animIntervalBox->setChecked(!_animSettings->autoAdjustInterval());
 	animStartSpinner->setEnabled(!_animSettings->autoAdjustInterval());
 	animEndSpinner->setEnabled(!_animSettings->autoAdjustInterval());
-	everyNthFrameSpinner->setIntValue(_animSettings->playbackEveryNthFrame());
 }
 
 /******************************************************************************

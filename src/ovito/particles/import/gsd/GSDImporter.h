@@ -140,9 +140,6 @@ private:
 		/// Parsing routine for 'Mesh' particle shape definitions.
 		void parseMeshShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString);
 
-		/// Parsing routine for 'SphereUnion' particle shape definitions.
-		void parseSphereUnionShape(int typeId, ParticleFrameData::TypeList* typeList, QJsonObject definition, const QByteArray& shapeSpecString);
-
 	private:
 
 		OORef<GSDImporter> _importer;

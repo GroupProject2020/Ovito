@@ -91,17 +91,27 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	gridLayout->addWidget(radiusPUI->label(), 1, 0);
 	gridLayout->addLayout(radiusPUI->createFieldLayout(), 1, 1);
 
+	//Begin of modification
+	//Display transparency parameter
+	FloatParameterUI* transparencyPUI = new FloatParameterUI(this, PROPERTY_FIELD(ParticleType::transparency));
+	gridLayout->addWidget(transparencyPUI->label(), 2, 0);
+	gridLayout->addLayout(transparencyPUI->createFieldLayout(), 2, 1);
+	//End of modification
+
 	// "Save as defaults" button
 	QPushButton* setAsDefaultBtn = new QPushButton(tr("Save as defaults"));
 	setAsDefaultBtn->setToolTip(tr("Save current color/radius as default values for this particle type."));
 	setAsDefaultBtn->setEnabled(false);
-	gridLayout->addWidget(setAsDefaultBtn, 2, 0, 1, 2, Qt::AlignRight);
+	gridLayout->addWidget(setAsDefaultBtn, 3, 0, 1, 2, Qt::AlignRight);
 	connect(setAsDefaultBtn, &QPushButton::clicked, this, [this]() {
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
 		if(!ptype) return;
 
 		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->color());
 		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->radius());
+		//Begin of modification
+		ParticleType::setDefaultParticleTransparency(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->transparency());
+		//End of modification
 
 		mainWindow()->statusBar()->showMessage(tr("Stored current color and radius as defaults for particle type '%1'.").arg(ptype->nameOrNumericId()), 4000);
 	});

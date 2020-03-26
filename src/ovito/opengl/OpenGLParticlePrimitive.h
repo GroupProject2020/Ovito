@@ -56,6 +56,14 @@ public:
 	/// \brief Sets the radius of all particles to the given value.
 	virtual void setParticleRadius(FloatType radius) override;
 
+	//Begin of modification
+	/// \brief Sets the transparency of the particles.
+	virtual void setParticleTransparencies(const FloatType* transparencies) override;
+
+	/// \brief Sets the transparency of all particles to the given value.
+	virtual void setParticleTransparency(FloatType transparency) override;
+	//End of modification
+
 	/// \brief Sets the colors of the particles.
 	virtual void setParticleColors(const ColorA* colors) override;
 
@@ -135,6 +143,10 @@ private:
 
 	/// The internal OpenGL vertex buffer that stores the particle positions.
 	std::vector<OpenGLBuffer<Point_3<float>>> _positionsBuffers;
+
+	//Begin of modification
+	std::vector<OpenGLBuffer<float>> _transparenciesBuffers;
+	//End of modification
 
 	/// The internal OpenGL vertex buffer that stores the particle radii.
 	std::vector<OpenGLBuffer<float>> _radiiBuffers;

@@ -3,37 +3,48 @@ import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.12
 
 ColumnLayout {
-	spacing: 0
-	// Modifiers combobox:
-	CustomComboBox {
+	ComboBox {
 		Layout.fillWidth: true
-		model: mainWindow.modifierListModel
-		textRole: "display"
-		onActivated: {
-			mainWindow.modifierListModel.insertModifier(index, pipelineEditor.model)
-			currentIndex = 0;
-		}
+		model: ["Add modifier...", "Second", "Third"]
 	}
-	// Pipeline editor:
-	PipelineEditor {
-		id: pipelineEditor
-		Layout.fillWidth: true
-		Layout.fillHeight: true
-		Layout.preferredHeight: 100
-		model: mainWindow.pipelineListModel
+	RowLayout {
+		ListView {
+			Layout.fillWidth: true
+			Layout.fillHeight: true
+			model: ListModel {
+				ListElement {
+					name: "Bill Smith"
+					number: "555 3264"
+				}
+				ListElement {
+					name: "John Brown"
+					number: "555 8426"
+				}
+				ListElement {
+					name: "Sam Wise"
+					number: "555 0473"
+				}
+			}
+			delegate: Text {
+				text: name + ": " + number
+			}
+		}
+		ToolBar {
+			Layout.alignment: Qt.AlignTop
+			hoverEnabled: true
+			Flow {
+				flow: Flow.TopToBottom
+				Layout.fillHeight: true
 
-		// Request a viewport update whenever a new item in the pipeline editor is selected, 
-		// because the currently selected modifier may be rendering gizmos in the viewports. 
-		onSelectedObjectChanged: {
-			if(viewportsPanel.viewportConfiguration)
-				viewportsPanel.viewportConfiguration.updateViewports();
+				Column {
+					ToolButton {
+						icon.source: "qrc:/gui/actions/file/file_import.bw.svg"
+						ToolTip.text: qsTr("Import local file")
+						ToolTip.visible: hovered
+						ToolTip.delay: 500
+					}
+				}
+			}
 		}
-	}
-	// Properties editor:
-	PropertiesEditor {
-		Layout.fillWidth: true
-		Layout.fillHeight: true
-		Layout.preferredHeight: 160
-		editObject: pipelineEditor.selectedObject
 	}
 }

@@ -44,6 +44,8 @@ public:
 		_positionsBuffer.resize(particleCount);
 		_radiiBuffer.resize(particleCount);
 		_colorsBuffer.resize(particleCount);
+		//Modification
+		_transparenciesBuffer.resize(particleCount);
 	}
 
 	/// \brief Returns the number of particles stored in the buffer.
@@ -63,6 +65,18 @@ public:
 	virtual void setParticleRadius(FloatType radius) override {
 		std::fill(_radiiBuffer.begin(), _radiiBuffer.end(), radius);
 	}
+
+	//Begin of modification
+	/// \brief Sets the transparencies of the particles.
+	virtual void setParticleTransparencies(const FloatType* transparencies) override{
+		std::copy(transparencies, transparencies + _transparenciesBuffer.size(), _transparenciesBuffer.begin());
+	}
+
+	/// \brief Sets the transparency of all particles to the given value.
+	virtual void setParticleTransparency(FloatType transparency) override {
+		std::fill(_transparenciesBuffer.begin(), _transparenciesBuffer.end(), transparency);
+	}
+	//End of modification
 
 	/// \brief Sets the colors of the particles.
 	virtual void setParticleColors(const ColorA* colors) override {
@@ -129,6 +143,11 @@ private:
 
 	/// The internal buffer that stores the particle radii.
 	std::vector<FloatType> _radiiBuffer;
+
+	//Begin of modification
+	/// The internal buffer that stores the particle transparencies.
+	std::vector<FloatType> _transparenciesBuffer;
+	//End of modification
 
 	/// The internal buffer that stores the particle colors and alpha values.
 	std::vector<ColorA> _colorsBuffer;

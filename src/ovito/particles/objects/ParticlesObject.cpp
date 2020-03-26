@@ -289,7 +289,7 @@ std::vector<ColorA> ParticlesObject::inputParticleColors() const
 	}
 
 	// Return an array with uniform colors if there is no vis element attached to the particles object.
-	return std::vector<ColorA>(elementCount(), ColorA(1,1,1,1));
+	return std::vector<ColorA>(elementCount(), ColorA(1,1,1,0.2));
 }
 
 /******************************************************************************
@@ -309,12 +309,14 @@ std::vector<ColorA> ParticlesObject::inputBondColors(bool ignoreExistingColorPro
 			std::vector<ColorA> colors(bonds()->elementCount());
 			auto ci = halfBondColors.cbegin();
 			for(ColorA& co : colors) {
-				co = ColorA(ci->r(), ci->g(), ci->b(), 1);
+				//Modif
+				co = ColorA(ci->r(), ci->g(), ci->b(), 0.5);
 				ci += 2;
 			}
 			return colors;
 		}
-    	return std::vector<ColorA>(bonds()->elementCount(), ColorA(1,1,1,1));
+		//Modif
+	   	return std::vector<ColorA>(bonds()->elementCount(), ColorA(1,1,1,0.5));
     }
 	return {};
 }

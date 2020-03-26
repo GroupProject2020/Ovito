@@ -366,10 +366,14 @@ std::vector<ColorA> BondsVis::halfBondColors(const ParticlesObject* particles, b
 				const int* t = bondTypeData.cbegin();
 				for(auto c = output.begin(); c != output.end(); ++t) {
 					if(*t >= 0 && *t < (int)colorArray.size()) {
+						//Modif
+						colorArray[*t].a() = 0.5;
 						*c++ = colorArray[*t];
 						*c++ = colorArray[*t];
 					}
 					else {
+						//Modif
+						defaultColor.a() = 0.5;
 						*c++ = defaultColor;
 						*c++ = defaultColor;
 					}
@@ -382,10 +386,13 @@ std::vector<ColorA> BondsVis::halfBondColors(const ParticlesObject* particles, b
 				for(auto c = output.begin(); c != output.end(); ++t) {
 					auto it = colorMap.find(*t);
 					if(it != colorMap.end()) {
+						//Modif
+						//
 						*c++ = it->second;
 						*c++ = it->second;
 					}
 					else {
+						defaultColor.a() = 0.5;
 						*c++ = defaultColor;
 						*c++ = defaultColor;
 					}
@@ -394,11 +401,13 @@ std::vector<ColorA> BondsVis::halfBondColors(const ParticlesObject* particles, b
 		}
 		else {
 			// Assign a uniform color to all bonds.
+			defaultColor.a() = 0.5;
 			boost::fill(output, defaultColor);
 		}
 	}
 
 	// Apply transparency values.
+	// TRY TO MODIFY THIS
 	if(transparencyProperty && transparencyProperty.size() * 2 == output.size()) {
 		auto c = output.begin();
 		for(FloatType t : transparencyProperty) {

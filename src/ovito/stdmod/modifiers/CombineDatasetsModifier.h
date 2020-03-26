@@ -67,11 +67,7 @@ class OVITO_STDMOD_EXPORT CombineDatasetsModifier : public MultiDelegatingModifi
 	OVITO_CLASS_META(CombineDatasetsModifier, CombineDatasetsModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Combine datasets");
-#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Modification");
-#else
-	Q_CLASSINFO("ModifierCategory", "-");
-#endif
 
 public:
 

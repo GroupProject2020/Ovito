@@ -115,14 +115,6 @@ public:
 	/// Initializes the vector from an array.
 	Q_DECL_CONSTEXPR explicit Vector_3(const std::array<T, 3>& a) : std::array<T, 3>(a) {}
 
-	/// Conversion constructor from a Qt vector.
-	Q_DECL_CONSTEXPR Vector_3(const QVector3D& v)
-#if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
-		: std::array<T, 3>{{T(v.x()), T(v.y()), T(v.z())}} {}
-#else
-		{ this->x() = T(v.x()); this->y() = T(v.y()); this->z() = T(v.z()); }
-#endif
-
 	/// Casts the vector to another component type \a U.
 	template<typename U>
 	Q_DECL_CONSTEXPR explicit operator Vector_3<U>() const { return Vector_3<U>(static_cast<U>(x()), static_cast<U>(y()), static_cast<U>(z())); }
@@ -131,9 +123,6 @@ public:
 
 	/// Returns the reverse vector (-x(), -y(), -z()).
 	Q_DECL_CONSTEXPR Vector_3 operator-() const { return Vector_3(-x(), -y(), -z()); }
-
-	/// Conversion operator to a Qt vector.
-	Q_DECL_CONSTEXPR explicit operator QVector3D() const { return QVector3D(x(), y(), z()); }
 
 	///////////////////////////// Assignment operators ///////////////////////////
 

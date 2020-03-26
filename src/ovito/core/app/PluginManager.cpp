@@ -157,13 +157,7 @@ void PluginManager::registerLoadedPluginClasses()
 ******************************************************************************/
 OvitoClassPtr PluginManager::findClass(const QString& pluginId, const QString& className)
 {
-	if(pluginId.isEmpty()) {
-		for(Plugin* p : plugins()) {
-			if(OvitoClassPtr clazz = p->findClass(className))
-				return clazz;
-		}
-	}
-	else if(Plugin* p = plugin(pluginId)) {
+	if(Plugin* p = plugin(pluginId)) {
 		return p->findClass(className);
 	}
 	return nullptr;

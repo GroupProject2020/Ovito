@@ -38,11 +38,7 @@ class OVITO_STDMOD_EXPORT ScatterPlotModifier : public GenericPropertyModifier
 	Q_OBJECT
 	OVITO_CLASS(ScatterPlotModifier)
 	Q_CLASSINFO("DisplayName", "Scatter plot");
-#ifndef OVITO_BUILD_WEBGUI
 	Q_CLASSINFO("ModifierCategory", "Analysis");
-#else
-	Q_CLASSINFO("ModifierCategory", "-");
-#endif
 
 public:
 

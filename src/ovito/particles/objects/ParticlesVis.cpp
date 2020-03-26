@@ -221,8 +221,8 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 
 	// Allocate output array.
 	std::vector<ColorA> output(particles->elementCount());
-
 	ColorA defaultColor = defaultParticleColor();
+	defaultColor.a() = 0.5;
 	if(colorProperty && colorProperty.size() == output.size()) {
 		// Take particle colors directly from the color property.
 		boost::copy(colorProperty, output.begin());
@@ -243,10 +243,16 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 			ConstPropertyAccess<int> typeData(typeProperty);
 			const int* t = typeData.cbegin();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
-				if(*t >= 0 && *t < (int)colorArray.size())
+				if(*t >= 0 && *t < (int)colorArray.size()){
+					//Modif
+					colorArray[*t].a() = 0.5;
 					*c = colorArray[*t];
-				else
+				}
+				else{
+					//Modif
+					defaultColor.a() = 0.5;
 					*c = defaultColor;
+				}
 			}
 		}
 		else {
@@ -255,19 +261,33 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 			const int* t = typeData.cbegin();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				auto it = colorMap.find(*t);
-				if(it != colorMap.end())
+				if(it != colorMap.end()){
+					//Modif
+					//it->second->a() = 100;
 					*c = it->second;
-				else
+					c->a() = 0.5;
+					
+				}
+				else{
+					//Modif
+					defaultColor.a() = 0.5;
 					*c = defaultColor;
+				}
 			}
 		}
 	}
 	else {
 		// Assign a uniform color to all particles.
+		//Modif
+		defaultColor.a() = 0.5;
 		boost::fill(output, defaultColor);
 	}
 
 	// Set color alpha values based on transparency particle property.
+	//Modif
+	for(ColorA& c : output){
+		c.a() = 0.5;
+	}
 	if(transparencyProperty && transparencyProperty.size() == output.size()) {
 		const FloatType* t = transparencyProperty.cbegin();
 		for(ColorA& c : output) {
@@ -369,6 +389,7 @@ FloatType ParticlesVis::particleRadius(size_t particleIndex, ConstPropertyAccess
 	return defaultParticleRadius();
 }
 
+
 /******************************************************************************
 * Determines the display color of a single particle.
 ******************************************************************************/
@@ -394,6 +415,8 @@ ColorA ParticlesVis::particleColor(size_t particleIndex, ConstPropertyAccess<Col
 	}
 
 	// Apply alpha component.
+	//Modif
+	c.a() = 0.5;
 	if(transparencyProperty && transparencyProperty.size() > particleIndex) {
 		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty[particleIndex], FloatType(1));
 	}
@@ -498,6 +521,9 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	ConstPropertyPtr positionStorage = positionProperty ? positionProperty->storage() : nullptr;
 	ConstPropertyPtr radiusStorage = radiusProperty ? radiusProperty->storage() : nullptr;
 	ConstPropertyPtr colorStorage = colorProperty ? colorProperty->storage() : nullptr;
+	//Begin modification
+	//ConstPropertyPtr transparencyStorage = transparencyProperty ? transparencyProperty->storage() : nullptr;
+	//End modification
 	ConstPropertyPtr asphericalShapeStorage = asphericalShapeProperty ? asphericalShapeProperty->storage() : nullptr;
 	ConstPropertyPtr orientationStorage = orientationProperty ? orientationProperty->storage() : nullptr;
 

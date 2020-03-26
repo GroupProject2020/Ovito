@@ -30,36 +30,36 @@ ToolBar {
 			}
 			*/
 			ToolSeparator {
-				contentItem.visible: fileRow.y === editRow.y
+				contentItem.visible: fileRow.y === viewportRow.y
 			}
 		}
 
+/*
 		Row {
 			id: editRow
 			ToolButton {
 				id: undoButton
 				icon.source: "qrc:/gui/actions/edit/edit_undo.bw.svg"
-				ToolTip.text: qsTr("Undo action: ") + (mainWindow.datasetContainer.currentSet ? mainWindow.datasetContainer.currentSet.undoStack.undoText : "")
+				ToolTip.text: qsTr("Undo action")
 				ToolTip.visible: hovered
 				ToolTip.delay: 500
+				enabled: false
 				display: AbstractButton.IconOnly
-				enabled: mainWindow.datasetContainer.currentSet ? mainWindow.datasetContainer.currentSet.undoStack.canUndo : false
-				onClicked: mainWindow.datasetContainer.currentSet.undoStack.undo()
 			}
 			ToolButton {
 				id: redoButton
 				icon.source: "qrc:/gui/actions/edit/edit_redo.bw.svg"
-				ToolTip.text: qsTr("Redo action: ") + (mainWindow.datasetContainer.currentSet ? mainWindow.datasetContainer.currentSet.undoStack.redoText : "")
+				ToolTip.text: qsTr("Redo action")
 				ToolTip.visible: hovered
 				ToolTip.delay: 500
+				enabled: false
 				display: AbstractButton.IconOnly
-				enabled: mainWindow.datasetContainer.currentSet ? mainWindow.datasetContainer.currentSet.undoStack.canRedo : false
-				onClicked: mainWindow.datasetContainer.currentSet.undoStack.redo()
 			}
 			ToolSeparator {
 				contentItem.visible: editRow.y === viewportRow.y
 			}
 		}
+*/
 
 		Row {
 			id: viewportRow

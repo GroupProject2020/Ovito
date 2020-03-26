@@ -56,10 +56,6 @@ namespace Ovito {
  */
 class OVITO_CORE_EXPORT OvitoObject : public QObject
 {
-	Q_OBJECT
-	Q_PROPERTY(QString className READ className CONSTANT);
-	Q_PROPERTY(QString pluginId READ pluginId CONSTANT);
-
 public:
 
 	using ovito_class = OvitoObject;
@@ -199,20 +195,14 @@ private:
 		}
 	}
 
-	/// Returns the name of the plugin class this object is an instance of. 
-	/// This method is an implementation detail required for the Q_PROPERTY macro above.
-	const QString& className() const { return getOOClass().name(); }
-
-	/// Returns the idenitifier of the plugin module this object belongs to. 
-	/// This method is an implementation detail required for the Q_PROPERTY macro above.
-	QString pluginId() const { return QString::fromLatin1(getOOClass().pluginId()); }
-
 #ifdef OVITO_DEBUG
 	/// This field is initialized with a special value by the class constructor to indicate that
 	/// the object is still alive and has not been deleted. When the object is deleted, the
 	/// destructor sets the field to a different value to indicate that the object is no longer alive.
 	quint32 _magicAliveCode = 0x87ABCDEF;
 #endif
+
+	Q_OBJECT
 
 	// Give OORef smart pointer access to the internal reference count.
 	template<class T> friend class OORef;

@@ -78,6 +78,14 @@ public:
 	/// \brief Sets the radius of all particles to the given value.
 	virtual void setParticleRadius(FloatType radius) = 0;
 
+	//Begin of modification
+	/// \brief Sets the transparencies of the particles.
+	virtual void setParticleTransparencies(const FloatType* transparencies) = 0;
+
+	/// \brief Sets the transparency of all particles to the given value.
+	virtual void setParticleTransparency(FloatType transparency) = 0;
+	//End of modification
+
 	/// \brief Sets the colors of the particles.
 	virtual void setParticleColors(const ColorA* colors) = 0;
 

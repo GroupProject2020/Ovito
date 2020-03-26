@@ -377,8 +377,6 @@ bool TaskManager::waitForTaskNonUIThread(const TaskPtr& task, const TaskPtr& dep
 ******************************************************************************/
 void TaskManager::processEvents()
 {
-	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::processEvents", "Function may be called only from the main thread.");
-
 	if(_inLocalEventLoop)
 		QCoreApplication::processEvents();
 }

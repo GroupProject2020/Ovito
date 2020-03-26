@@ -34,7 +34,6 @@ namespace Ovito {
 class OVITO_CORE_EXPORT Plugin : public QObject
 {
 	Q_OBJECT
-	Q_PROPERTY(QString pluginId READ pluginId CONSTANT);
 
 public:
 

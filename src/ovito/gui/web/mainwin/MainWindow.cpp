@@ -25,7 +25,6 @@
 #include <ovito/gui/base/viewport/ViewportInputManager.h>
 #include <ovito/core/dataset/DataSetContainer.h>
 #include "MainWindow.h"
-#include "ModifierListModel.h"
 
 namespace Ovito {
 
@@ -39,12 +38,6 @@ MainWindow::MainWindow() : _datasetContainer(this)
 
 	// For timed display of texts in the status bar:
 	connect(&_statusBarTimer, &QTimer::timeout, this, &MainWindow::clearStatusBarMessage);
-
-	// Create list of available modifiers.
-	_modifierListModel = new ModifierListModel(this);
-
-	// Create list model for the items in the selected data pipeline.
-	_pipelineListModel = new PipelineListModel(_datasetContainer, this);
 }
 
 /******************************************************************************
