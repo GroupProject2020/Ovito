@@ -366,6 +366,7 @@ void OpenGLParticlePrimitive::setParticlePositions(const Point3* coordinates)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleRadii(const FloatType* radii)
 {
+	std::cout << "setParticleRadii()\n";
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _radiiBuffers) {
 		buffer.fill(radii);
@@ -378,6 +379,7 @@ void OpenGLParticlePrimitive::setParticleRadii(const FloatType* radii)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleRadius(FloatType radius)
 {
+	std::cout << "setParticleRadius()\n";
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _radiiBuffers)
 		buffer.fillConstant(radius);
@@ -391,6 +393,7 @@ void OpenGLParticlePrimitive::setParticleTransparencies(const FloatType* transpa
 {
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _transparenciesBuffers) {
+		std::cout << *transparencies << std::endl;
 		buffer.fill(transparencies);
 		transparencies += buffer.elementCount();
 	}
@@ -406,6 +409,8 @@ void OpenGLParticlePrimitive::setParticleTransparency(FloatType transparency)
 		buff.fillConstant(transparency);
 		buff.unmap();
     }
+
+
 }
 
 //End of modification
@@ -415,6 +420,8 @@ void OpenGLParticlePrimitive::setParticleTransparency(FloatType transparency)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleColors(const ColorA* colors)
 {
+	std::cout << "Displaying alpha channel\n";
+	std::cout << colors->a() << std::endl;
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _colorsBuffers) {
 		buffer.fill(colors);
@@ -437,7 +444,7 @@ void OpenGLParticlePrimitive::setParticleColors(const Color* colors)
 				dest->r() = (float)colors->r();
 				dest->g() = (float)colors->g();
 				dest->b() = (float)colors->b();
-				dest->a() = 0.5;
+				dest->a() = 1;
 			}
 		}
 		buffer.unmap();
@@ -598,11 +605,27 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 	shader->setUniformValue("projection_matrix", (QMatrix4x4)renderer->projParams().projectionMatrix);
 	shader->setUniformValue("modelview_matrix", (QMatrix4x4)renderer->modelViewTM());
 
-	if(!renderer->isPicking() && translucentParticles()) {
-		renderer->glEnable(GL_BLEND);
+	//MODIF
+//	if(!renderer->isPicking() && translucentParticles()) {
+	//std::cout << "Alpha\n";
+		renderer->glEnable(GL_CULL_FACE);
+		renderer->glEnable(GL_BLEND); //initialisation de la transparence
 		renderer->glBlendEquation(GL_FUNC_ADD);
-		renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-	}
+		//renderer->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+		//modif
+		//renderer->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		renderer->glBlendFunc(GL_SRC_ALPHA, GL_CONSTANT_ALPHA);// alpha = 1 - color_alpha
+		//renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		renderer->glEnable(GL_DEPTH_TEST);
+		//renderer->glDepthFunc(GL_LESS);
+		renderer->glDepthFunc(GL_NEVER);
+		renderer->glDisable(GL_CULL_FACE);
+		renderer->glDepthFunc(GL_LESS);
+
+		renderer->glEnable(GL_CULL_FACE);
+		renderer->glCullFace(GL_FRONT);
+		renderer->glDepthFunc(GL_ALWAYS);
+	//}
 
 	GLint pickingBaseID = 0;
 	if(renderer->isPicking()) {
@@ -623,8 +646,10 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 			pickingBaseID += _chunkSize;
 		}
 
+		//Modif
+
 		// Are we rendering translucent particles? If yes, render them in back to front order to avoid visual artifacts at overlapping particles.
-		if(!renderer->isPicking() && translucentParticles() && !_particleCoordinates.empty()) {
+//		if(!renderer->isPicking() && translucentParticles() && !_particleCoordinates.empty()) {
 			// Create temporary OpenGL index buffer which can be used with glDrawElements to draw particles in desired order.
 			OpenGLBuffer<GLuint> primitiveIndices(QOpenGLBuffer::IndexBuffer);
 			primitiveIndices.create(QOpenGLBuffer::StaticDraw, particleCount());
@@ -632,15 +657,14 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 			primitiveIndices.oglBuffer().bind();
 			OVITO_CHECK_OPENGL(renderer, renderer->glDrawElements(GL_POINTS, particleCount(), GL_UNSIGNED_INT, nullptr));
 			primitiveIndices.oglBuffer().release();
-		}
+/*		}
 		else {
 			// Fully opaque particles can be rendered in unsorted storage order.
 			OVITO_CHECK_OPENGL(renderer, renderer->glDrawArrays(GL_POINTS, 0, chunkSize));
 		}
-
+*/
 		_positionsBuffers[chunkIndex].detachPositions(renderer, shader);
 		_radiiBuffers[chunkIndex].detach(renderer, shader, "particle_radius");
-		//Modif
 		_transparenciesBuffers[chunkIndex].detach(renderer, shader, "particle_transparency");
 		if(!renderer->isPicking())
 			_colorsBuffers[chunkIndex].detachColors(renderer, shader);
@@ -651,9 +675,14 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 	shader->release();
 
 	OVITO_CHECK_OPENGL(renderer, renderer->glDisable(GL_VERTEX_PROGRAM_POINT_SIZE));
-	if(!renderer->isPicking() && translucentParticles()) {
+	//MODIF
+//	if(!renderer->isPicking() && translucentParticles()) {
+	//std::cout << "Alpha\n";
+		//renderer->glDisable(GL_CULL_FACE);
 		renderer->glDisable(GL_BLEND);
-	}
+		renderer->glDisable(GL_DEPTH_TEST);
+		//renderer->glDepthFunc(GL_LEQUAL);
+//	}
 
 	// Disable point sprites again.
 	if(renderer->glformat().profile() != QSurfaceFormat::CoreProfile)
@@ -744,6 +773,7 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 	shader->setUniformValue("viewport_origin", (float)viewportCoords[0], (float)viewportCoords[1]);
 	shader->setUniformValue("inverse_viewport_size", 2.0f / (float)viewportCoords[2], 2.0f / (float)viewportCoords[3]);
 
+	//MODIF
 	if(!renderer->isPicking() && translucentParticles()) {
 		renderer->glEnable(GL_BLEND);
 		renderer->glBlendEquation(GL_FUNC_ADD);
@@ -764,6 +794,8 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 			_orientationBuffers[chunkIndex].bind(renderer, shader, "orientation", GL_FLOAT, 0, 4);
 		}
 		_radiiBuffers[chunkIndex].bind(renderer, shader, "particle_radius", GL_FLOAT, 0, 1);
+		//Modif
+		_transparenciesBuffers[chunkIndex].bind(renderer, shader, "particle_transparency", GL_FLOAT, 0, 1);
 		if(!renderer->isPicking()) {
 			_colorsBuffers[chunkIndex].bindColors(renderer, shader, 4);
 		}
@@ -882,12 +914,15 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 			_orientationBuffers[chunkIndex].detach(renderer, shader, "orientation");
 		}
 		_radiiBuffers[chunkIndex].detach(renderer, shader, "particle_radius");
+		_transparenciesBuffers[chunkIndex].detach(renderer, shader, "particle_transparency");
 	}
 
-	if(!renderer->isPicking())
+	//Modif
+	//if(!renderer->isPicking())
+	std::cout << "Detla\n";
 		renderer->glDisable(GL_BLEND);
-	else
-		renderer->deactivateVertexIDs(shader);
+	//else
+	//	renderer->deactivateVertexIDs(shader);
 
 	shader->release();
 	renderer->glDisable(GL_CULL_FACE);
@@ -909,9 +944,27 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 		activateBillboardTexture(renderer);
 
 	// Need to render only the front facing sides.
+/*	//Modif
+	renderer->glDisable(GL_CULL_FACE);
+	renderer->glDepthFunc(GL_LESS);
+
 	renderer->glCullFace(GL_BACK);
 	renderer->glEnable(GL_CULL_FACE);
 
+	//Modif
+	renderer->glCullFace(GL_FRONT);
+	renderer->glDepthFunc(GL_ALWAYS);
+
+	//Modif
+	renderer->glEnable(GL_CULL_FACE);
+	renderer->glCullFace(GL_FRONT);
+	renderer->glDepthFunc(GL_LEQUAL);
+
+	//Modif
+	renderer->glEnable(GL_CULL_FACE);
+	renderer->glCullFace(GL_BACK);
+	renderer->glDepthFunc(GL_ALWAYS);
+*/
 	if(!_usingGeometryShader) {
 		// The texture coordinates of a quad made of two triangles.
 		static const QVector2D texcoords[6] = {{0,1},{1,1},{1,0},{0,1},{1,0},{0,0}};
@@ -929,11 +982,13 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 	// Account for possible scaling in the model-view TM.
 	shader->setUniformValue("radius_scalingfactor", (float)pow(renderer->modelViewTM().determinant(), FloatType(1.0/3.0)));
 
-	if(!renderer->isPicking() && translucentParticles()) {
+	//Modif
+//	if(!renderer->isPicking() && translucentParticles()) {
+		std::cout << "Echo\n";
 		renderer->glEnable(GL_BLEND);
 		renderer->glBlendEquation(GL_FUNC_ADD);
 		renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-	}
+	//}
 
 	GLint pickingBaseID = 0;
 	if(renderer->isPicking()) {
@@ -946,6 +1001,7 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 
 		_positionsBuffers[chunkIndex].bindPositions(renderer, shader);
 		_radiiBuffers[chunkIndex].bind(renderer, shader, "particle_radius", GL_FLOAT, 0, 1);
+		_transparenciesBuffers[chunkIndex].bind(renderer, shader, "particle_transparency", GL_FLOAT, 0, 1);
 		if(!renderer->isPicking()) {
 			_colorsBuffers[chunkIndex].bindColors(renderer, shader, 4);
 		}
@@ -997,6 +1053,7 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 
 		_positionsBuffers[chunkIndex].detachPositions(renderer, shader);
 		_radiiBuffers[chunkIndex].detach(renderer, shader, "particle_radius");
+		_transparenciesBuffers[chunkIndex].detach(renderer, shader, "particle_transparency");
 		if(!renderer->isPicking())
 			_colorsBuffers[chunkIndex].detachColors(renderer, shader);
 	}
@@ -1004,7 +1061,8 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 	renderer->deactivateVertexIDs(shader);
 	shader->release();
 
-	if(!renderer->isPicking() && translucentParticles())
+	//Modif
+//	if(!renderer->isPicking() && translucentParticles())
 		renderer->glDisable(GL_BLEND);
 
 	if(particleShape() == SphericalShape && shadingMode() == NormalShading && !renderer->isPicking())

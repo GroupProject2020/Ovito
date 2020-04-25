@@ -408,17 +408,24 @@ std::vector<ColorA> BondsVis::halfBondColors(const ParticlesObject* particles, b
 
 	// Apply transparency values.
 	// TRY TO MODIFY THIS
-	if(transparencyProperty && transparencyProperty.size() * 2 == output.size()) {
+
+	for(auto c=output.begin(); c!=output.end(); ++c){
+		c->a() = 0.5;
+	}
+	
+	/*if(transparencyProperty && transparencyProperty.size() * 2 == output.size()) {
 		auto c = output.begin();
 		for(FloatType t : transparencyProperty) {
-			FloatType alpha = qBound(FloatType(0), FloatType(1)-t, FloatType(1));
+			//Modif
+			//FloatType alpha = qBound(FloatType(0), FloatType(1)-t, FloatType(1));
+			FloatType alpha = 0.5;
 			c->a() = alpha; ++c;
 			c->a() = alpha; ++c;
 		}
 	}
-
+*/
 	// Highlight selected bonds.
-	if(bondSelectionProperty && bondSelectionProperty.size() * 2 == output.size()) {
+/*	if(bondSelectionProperty && bondSelectionProperty.size() * 2 == output.size()) {
 		const ColorA selColor = selectionBondColor();
 		const int* t = bondSelectionProperty.cbegin();
 		for(auto c = output.begin(); c != output.end(); ++t) {
@@ -429,7 +436,7 @@ std::vector<ColorA> BondsVis::halfBondColors(const ParticlesObject* particles, b
 			else c += 2;
 		}
 	}
-
+*/
 	return output;
 }
 

@@ -75,6 +75,47 @@ public:
     }
 };
 
+class TransparencyColumnDelegate : public QStyledItemDelegate
+{
+public:
+    TransparencyColumnDelegate(QObject* parent = 0) : QStyledItemDelegate(parent) {}
+
+    QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+        if(!index.model()->data(index, Qt::EditRole).isValid())
+            return nullptr;
+        QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
+        editor->setFrame(false);
+        editor->setMinimum(0);
+        editor->setSingleStep(0.05);
+        return editor;
+    }
+
+    void setEditorData(QWidget* editor, const QModelIndex& index) const override {
+        double value = index.model()->data(index, Qt::EditRole).toDouble();
+        QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
+        spinBox->setValue(value);
+    }
+
+    void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override {
+        QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
+        spinBox->interpretText();
+        double value = spinBox->value();
+        model->setData(index, value, Qt::EditRole);
+    }
+
+    void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+        editor->setGeometry(option.rect);
+    }
+
+    QString displayText(const QVariant& value, const QLocale& locale) const override {
+        if(value.isValid())
+            return QString::number(value.toDouble());
+        else
+            return QString();
+    }
+};
+
+
 class ColorColumnDelegate : public QStyledItemDelegate
 {
 public:
@@ -187,6 +228,9 @@ void ParticleSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* s
 	_predefTypesTable->setItemDelegateForColumn(1, colorDelegate);
 	RadiusColumnDelegate* radiusDelegate = new RadiusColumnDelegate(this);
 	_predefTypesTable->setItemDelegateForColumn(2, radiusDelegate);
+	std::cout << " DELEGATIONSSSSSSSSSSS\n";
+	TransparencyColumnDelegate* transparencyDelegate = new TransparencyColumnDelegate(this);
+	_predefTypesTable->setItemDelegateForColumn(3, transparencyDelegate);
 
 	QHBoxLayout* buttonLayout = new QHBoxLayout();
 	buttonLayout->setContentsMargins(0,0,0,0);
@@ -224,10 +268,13 @@ bool ParticleSettingsPage::saveValues(ApplicationSettingsDialog* settingsDialog,
 		QTreeWidgetItem* item = _particleTypesItem->child(i);
 		QColor color = item->data(1, Qt::DisplayRole).value<QColor>();
 		FloatType radius = item->data(2, Qt::DisplayRole).value<FloatType>();
+		FloatType transparency = item->data(4, Qt::DisplayRole).value<FloatType>();
+		std::cout << "Transparency of UI is equal to: " << transparency << std::endl;
 		color.setAlphaF((qreal)item->data(3, Qt::DisplayRole).value<FloatType>());
 		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, item->text(0), color);
 		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, item->text(0), radius);
-	//	ParticleType::setDefaultParticleTransparency(ParticlesObject::TypeProperty, item->text(0), transparency);
+		//Modif
+		ParticleType::setDefaultParticleTransparency(ParticlesObject::TypeProperty, item->text(0), transparency);
 	}
 
 	for(int i = 0; i < _structureTypesItem->childCount(); i++) {

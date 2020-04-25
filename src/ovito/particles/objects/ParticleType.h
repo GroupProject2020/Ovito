@@ -84,6 +84,16 @@ public:
 		return m;
 	}
 
+	//begin of modif
+	static std::map<int, FloatType> typeTransparencyMap(const PropertyObject* typeProperty){
+		std::map<int, FloatType> m;
+		for(const ElementType* type : typeProperty->elementTypes())
+			if(const ParticleType* particleType = dynamic_object_cast<ParticleType>(type))
+				m.insert({ type->numericId(), particleType->transparency() });
+		return m;
+	}
+	//end of modif
+
 	/// Loads a user-defined display shape from a geometry file and assigns it to this particle type.
 	bool loadShapeMesh(const QUrl& sourceUrl, Promise<>&& operation, const FileImporterClass* importerType = nullptr);
 

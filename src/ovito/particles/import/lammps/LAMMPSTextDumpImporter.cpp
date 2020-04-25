@@ -287,6 +287,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile()
 							columnParser.readParticle(i, stream.readLine());
 						else
 							s = columnParser.readParticle(i, s, s_end);
+							
 					}
 				}
 				catch(Exception& ex) {
@@ -296,7 +297,6 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile()
 					stream.munmap();
 					stream.seek(stream.byteOffset() + (s - s_start));
 				}
-
 				// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
 				columnParser.sortParticleTypes();
 
@@ -433,8 +433,11 @@ InputColumnMapping LAMMPSTextDumpImporter::generateAutomaticColumnMapping(const 
 		else if(name == "c_shape[2]") columnMapping[i].mapStandardColumn(ParticlesObject::AsphericalShapeProperty, 1);
 		else if(name == "c_shape[3]") columnMapping[i].mapStandardColumn(ParticlesObject::AsphericalShapeProperty, 2);
 		else if(name == "selection") columnMapping[i].mapStandardColumn(ParticlesObject::SelectionProperty, 0);
+		//else if(name=="transparency") columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);
 		else {
-			columnMapping[i].mapCustomColumn(name, PropertyStorage::Float);
+			std::cout << "Column mapping custom column\n";
+			columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);
+			//columnMapping[i].mapCustomColumn(name, PropertyStorage::Float);
 		}
 	}
 	return columnMapping;

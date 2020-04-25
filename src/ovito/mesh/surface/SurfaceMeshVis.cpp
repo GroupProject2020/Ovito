@@ -408,7 +408,9 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 void SurfaceMeshVis::PrepareSurfaceEngine::determineFaceColors()
 {
 	ColorA defaultFaceColor(_surfaceColor);
-	ColorA selectionColor(1,0,0,1);
+	//Modification (Was 1,0,0,1)
+	std::cout << "Selection color\n";
+	ColorA selectionColor(1,0,0,0.5);
 
 	if(ConstPropertyAccess<Color> colorProperty = _inputMesh.faceProperty(SurfaceMeshFaces::ColorProperty)) {
 		// The "Color" property of mesh faces has the highest priority.

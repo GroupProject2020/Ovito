@@ -215,6 +215,13 @@ public:
 		return m;
 	}
 
+//	std::map<int,FloatType> typeTransparencyMap() const {
+//		std::map<int, FloatType> m;
+//		for(ElementType* type : elementTypes())
+//			m.insert({type->numericId(), type->transparency()});
+///		return m;
+//	}
+
 	/// Returns an numeric type ID that is not yet used by any of the existing element types.
 	int generateUniqueElementTypeId(int startAt = 1) const {
 		int maxId = startAt;

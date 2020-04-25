@@ -61,6 +61,12 @@ void ParticlesVisEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	layout->addWidget(radiusUI->label(), 2, 0);
 	layout->addLayout(radiusUI->createFieldLayout(), 2, 1);
 
+	//Begin of modification
+	FloatParameterUI* transparencyUI = new FloatParameterUI(this, PROPERTY_FIELD(ParticlesVis::defaultParticleTransparency));
+	layout->addWidget(transparencyUI->label(), 3, 0);
+	layout->addLayout(transparencyUI->createFieldLayout(), 3, 1);
+	//End of modification
+
 	// Create a second rollout.
 	rollout = createRollout(tr("Advanced settings"), rolloutParams.after(rollout), "visual_elements.particles.html");
 

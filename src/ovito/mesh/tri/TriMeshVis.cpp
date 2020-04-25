@@ -81,7 +81,9 @@ void TriMeshVis::render(TimePoint time, const std::vector<const DataObject*>& ob
 		FloatType transp = 0;
 		TimeInterval iv;
 		if(transparencyController()) transp = transparencyController()->getFloatValue(time, iv);
-		ColorA color_mesh(color(), FloatType(1) - transp);
+		//Modif (was color(), FloatType(1) - transp
+		//ColorA color_mesh(color(), FloatType(1) - transp);
+		ColorA color_mesh(color(), 0.5);
 
 		// Lookup the rendering primitive in the vis cache.
 		auto& meshPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CacheKey(renderer, objectStack.back(), color_mesh, highlightEdges()));
@@ -93,7 +95,8 @@ void TriMeshVis::render(TimePoint time, const std::vector<const DataObject*>& ob
 			if(triMeshObj && triMeshObj->mesh())
 				meshPrimitive->setMesh(*triMeshObj->mesh(), color_mesh, highlightEdges());
 			else
-				meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,1));
+				//meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,1));
+				meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,0.5));
 		}
 
 		renderer->beginPickObject(contextNode);

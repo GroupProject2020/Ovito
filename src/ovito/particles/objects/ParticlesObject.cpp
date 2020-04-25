@@ -276,6 +276,21 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		bonds()->setVisElement(bondsVis);
 }
 
+//Begin of modif
+std::vector<FloatType> ParticlesObject::inputParticleTransparencies() const{
+
+	// Obtain the particle vis element.
+	if(ParticlesVis* particleVis = visElement<ParticlesVis>()) {
+		// Query particle transparencies from vis element.
+		return particleVis->particleTransparencies(this);
+    }
+    // Return uniform default transparencies for all particles.
+	return std::vector<FloatType>(elementCount(), FloatType(1));
+
+}
+//End of modif
+
+
 /******************************************************************************
 * Returns a vector with the input particle colors.
 ******************************************************************************/
@@ -283,13 +298,12 @@ std::vector<ColorA> ParticlesObject::inputParticleColors() const
 {
 	// Obtain the particle vis element.
 	if(ParticlesVis* particleVis = visElement<ParticlesVis>()) {
-		
 		// Query particle colors from vis element.
 		return particleVis->particleColors(this, false, true);
 	}
 
 	// Return an array with uniform colors if there is no vis element attached to the particles object.
-	return std::vector<ColorA>(elementCount(), ColorA(1,1,1,0.2));
+	return std::vector<ColorA>(elementCount(), ColorA(1,1,1,1));
 }
 
 /******************************************************************************
@@ -309,14 +323,12 @@ std::vector<ColorA> ParticlesObject::inputBondColors(bool ignoreExistingColorPro
 			std::vector<ColorA> colors(bonds()->elementCount());
 			auto ci = halfBondColors.cbegin();
 			for(ColorA& co : colors) {
-				//Modif
-				co = ColorA(ci->r(), ci->g(), ci->b(), 0.5);
+				co = ColorA(ci->r(), ci->g(), ci->b(), 1);
 				ci += 2;
 			}
 			return colors;
 		}
-		//Modif
-	   	return std::vector<ColorA>(bonds()->elementCount(), ColorA(1,1,1,0.5));
+	   	return std::vector<ColorA>(bonds()->elementCount(), ColorA(1,1,1,1));
     }
 	return {};
 }
@@ -489,6 +501,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 				const std::vector<ColorA>& colors = particles->inputParticleColors();
 				OVITO_ASSERT(colors.size() == property->size());
 				boost::transform(colors, PropertyAccess<Color>(property).begin(), [](const ColorA& c) { return Color(c.r(), c.g(), c.b()); });
+
 				initializeMemory = false;
 			}
 		}
@@ -511,6 +524,16 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 				}
 			}
 		}
+		//Begin modification
+		else if(type == TransparencyProperty){
+			if(const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(containerPath.back())){
+				const std::vector<FloatType>& transparencies = particles->inputParticleTransparencies();
+				OVITO_ASSERT(transparencies.size() == property->size());
+				boost::copy(transparencies, PropertyAccess<FloatType>(property).begin());
+				initializeMemory = false;
+			}
+		}
+		//End modification
 	}
 
 	if(initializeMemory) {
@@ -526,6 +549,7 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 ******************************************************************************/
 void ParticlesObject::OOMetaClass::initialize()
 {
+	std::cout << "ParticlesObject initialize()\n";
 	PropertyContainerClass::initialize();
 
 	// Enable automatic conversion of a ParticlePropertyReference to a generic PropertyReference and vice versa.
@@ -566,7 +590,10 @@ void ParticlesObject::OOMetaClass::initialize()
 	registerStandardProperty(MassProperty, tr("Mass"), PropertyStorage::Float, emptyList);
 	registerStandardProperty(ChargeProperty, tr("Charge"), PropertyStorage::Float, emptyList);
 	registerStandardProperty(PeriodicImageProperty, tr("Periodic Image"), PropertyStorage::Int, xyzList);
+//Begin of modif
 	registerStandardProperty(TransparencyProperty, tr("Transparency"), PropertyStorage::Float, emptyList);
+	//registerStandardProperty(TransparencyProperty, tr("Transparency"), PropertyStorage::Float, emptyList, tr("Transparencies"));
+//End of modif
 	registerStandardProperty(DipoleOrientationProperty, tr("Dipole Orientation"), PropertyStorage::Float, xyzList);
 	registerStandardProperty(DipoleMagnitudeProperty, tr("Dipole Magnitude"), PropertyStorage::Float, emptyList);
 	registerStandardProperty(AngularVelocityProperty, tr("Angular Velocity"), PropertyStorage::Float, xyzList);
@@ -601,6 +628,7 @@ std::pair<size_t, ConstDataObjectPath> ParticlesObject::OOMetaClass::elementFrom
 			if(particleIndex < particles->elementCount())
 				return std::make_pair(particleIndex, ConstDataObjectPath({particles}));
 		}
+		
 	}
 
 	return std::pair<size_t, ConstDataObjectPath>(std::numeric_limits<size_t>::max(), {});

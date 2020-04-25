@@ -39,18 +39,28 @@ IMPLEMENT_OVITO_CLASS(ParticlePickInfo);
 DEFINE_PROPERTY_FIELD(ParticlesVis, defaultParticleRadius);
 DEFINE_PROPERTY_FIELD(ParticlesVis, renderingQuality);
 DEFINE_PROPERTY_FIELD(ParticlesVis, particleShape);
+//Begin of modification
+DEFINE_PROPERTY_FIELD(ParticlesVis, defaultParticleTransparency);
+//End of modification
 SET_PROPERTY_FIELD_LABEL(ParticlesVis, defaultParticleRadius, "Default particle radius");
 SET_PROPERTY_FIELD_LABEL(ParticlesVis, renderingQuality, "Rendering quality");
 SET_PROPERTY_FIELD_LABEL(ParticlesVis, particleShape, "Shape");
+//Begin of modification
+SET_PROPERTY_FIELD_LABEL(ParticlesVis, defaultParticleTransparency, "Default particle transparency");
+//End of modification
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticlesVis, defaultParticleRadius, WorldParameterUnit, 0);
-
+//Begin of modification
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticlesVis, defaultParticleTransparency, WorldParameterUnit, 0);
+//End of modification
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 ParticlesVis::ParticlesVis(DataSet* dataset) : DataVis(dataset),
 	_defaultParticleRadius(1.2),
+//	_defaultParticleRadius(0.2),
 	_renderingQuality(ParticlePrimitive::AutoQuality),
-	_particleShape(Sphere)
+	_particleShape(Sphere),
+	_defaultParticleTransparency(1.0)
 {
 }
 
@@ -219,19 +229,27 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 	ConstPropertyAccess<int> selectionProperty = highlightSelection ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
 	ConstPropertyAccess<FloatType> transparencyProperty = includeTransparency ? particles->getProperty(ParticlesObject::TransparencyProperty) : nullptr;
 
+	if(transparencyProperty){
+		std::cout << "yesTransparency = " << transparencyProperty[0] << " \n";
+	}
+	else{
+		std::cout << "noTransparency\n";
+	}
+	
 	// Allocate output array.
 	std::vector<ColorA> output(particles->elementCount());
 	ColorA defaultColor = defaultParticleColor();
-	defaultColor.a() = 0.5;
 	if(colorProperty && colorProperty.size() == output.size()) {
 		// Take particle colors directly from the color property.
 		boost::copy(colorProperty, output.begin());
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
+		std::cout << "Assign colors\n";
 		// Assign colors based on particle types.
 		// Generate a lookup map for particle type colors.
 		const std::map<int,Color> colorMap = typeProperty->typeColorMap();
 		std::array<ColorA,16> colorArray;
+
 		// Check if all type IDs are within a small, non-negative range.
 		// If yes, we can use an array lookup strategy. Otherwise we have to use a dictionary lookup strategy, which is slower.
 		if(std::all_of(colorMap.begin(), colorMap.end(),
@@ -244,13 +262,9 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 			const int* t = typeData.cbegin();
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				if(*t >= 0 && *t < (int)colorArray.size()){
-					//Modif
-					colorArray[*t].a() = 0.5;
 					*c = colorArray[*t];
 				}
 				else{
-					//Modif
-					defaultColor.a() = 0.5;
 					*c = defaultColor;
 				}
 			}
@@ -262,15 +276,10 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 			for(auto c = output.begin(); c != output.end(); ++c, ++t) {
 				auto it = colorMap.find(*t);
 				if(it != colorMap.end()){
-					//Modif
-					//it->second->a() = 100;
 					*c = it->second;
-					c->a() = 0.5;
 					
 				}
 				else{
-					//Modif
-					defaultColor.a() = 0.5;
 					*c = defaultColor;
 				}
 			}
@@ -278,16 +287,10 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 	}
 	else {
 		// Assign a uniform color to all particles.
-		//Modif
-		defaultColor.a() = 0.5;
 		boost::fill(output, defaultColor);
 	}
 
 	// Set color alpha values based on transparency particle property.
-	//Modif
-	for(ColorA& c : output){
-		c.a() = 0.5;
-	}
 	if(transparencyProperty && transparencyProperty.size() == output.size()) {
 		const FloatType* t = transparencyProperty.cbegin();
 		for(ColorA& c : output) {
@@ -307,6 +310,12 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 
 	return output;
 }
+
+//Begin of modification
+const PropertyObject* ParticlesVis::getParticleTypeTransparencyProperty(const ParticlesObject* particles) const{
+	return particles->getProperty(ParticlesObject::TransparencyProperty);
+}
+//End of modification
 
 /******************************************************************************
 * Returns the typed particle property used to determine the rendering radii 
@@ -366,6 +375,58 @@ std::vector<FloatType> ParticlesVis::particleRadii(const ParticlesObject* partic
 	return output;
 }
 
+
+//Modif
+std::vector<FloatType> ParticlesVis::particleTransparencies(const ParticlesObject* particles) const
+{
+    particles->verifyIntegrity();
+
+    // Get particle properties that determine the rendering size of particles.
+	ConstPropertyAccess<FloatType> transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
+	const PropertyObject* typeProperty = getParticleTypeTransparencyProperty(particles);
+
+	// Allocate output array.
+	std::vector<FloatType> output(particles->elementCount());
+
+	std::cout << "First transparency: " << *transparencyProperty.cbegin() << std::endl;
+
+	FloatType defaultTransparency = defaultParticleTransparency();
+	if(transparencyProperty) {
+		// Take particle radii directly from the radius property.
+		boost::transform(transparencyProperty, output.begin(), [defaultTransparency](FloatType r) { return r >= 0 ? r : defaultTransparency; } );
+    }
+	else if(typeProperty) {
+		std::cout << "BeTa\n";
+		// Assign radii based on particle type
+		// Build a lookup map for particle type radii.
+		const std::map<int,FloatType> transparencyMap = ParticleType::typeTransparencyMap(typeProperty);
+		// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.
+		if(boost::algorithm::any_of(transparencyMap, [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
+			// Fill radius array.
+			ConstPropertyAccess<int> typeData(typeProperty);
+			boost::transform(typeData, output.begin(), [&](int t) {
+			auto it = transparencyMap.find(t);
+			// Set particle radius only if the type's radius is non-zero.
+			if(it != transparencyMap.end() && it->second != 0)
+				return it->second;
+			else
+				return defaultTransparency;
+			});
+		}
+		else {
+			// Assign a uniform radius to all particles.
+			boost::fill(output, defaultTransparency);
+		}
+    }
+    else {
+		std::cout << "GaMmA\n";
+		// Assign a uniform radius to all particles
+		boost::fill(output, defaultTransparency);
+	}
+    return output;
+}
+
+
 /******************************************************************************
 * Determines the display radius of a single particle.
 ******************************************************************************/
@@ -415,9 +476,7 @@ ColorA ParticlesVis::particleColor(size_t particleIndex, ConstPropertyAccess<Col
 	}
 
 	// Apply alpha component.
-	//Modif
-	c.a() = 0.5;
-	if(transparencyProperty && transparencyProperty.size() > particleIndex) {
+ 	if(transparencyProperty && transparencyProperty.size() > particleIndex) {
 		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty[particleIndex], FloatType(1));
 	}
 
@@ -490,6 +549,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	const PropertyObject* typeRadiusProperty = getParticleTypeRadiusProperty(particles);
 	const PropertyObject* selectionProperty = renderer->isInteractive() ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
 	const PropertyObject* transparencyProperty = particles->getProperty(ParticlesObject::TransparencyProperty);
+	const PropertyObject* typeTransparencyProperty = getParticleTypeTransparencyProperty(particles);
 	const PropertyObject* asphericalShapeProperty = particles->getProperty(ParticlesObject::AsphericalShapeProperty);
 	const PropertyObject* orientationProperty = particles->getProperty(ParticlesObject::OrientationProperty);
 
@@ -522,7 +582,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	ConstPropertyPtr radiusStorage = radiusProperty ? radiusProperty->storage() : nullptr;
 	ConstPropertyPtr colorStorage = colorProperty ? colorProperty->storage() : nullptr;
 	//Begin modification
-	//ConstPropertyPtr transparencyStorage = transparencyProperty ? transparencyProperty->storage() : nullptr;
+	ConstPropertyPtr transparencyStorage = transparencyProperty ? transparencyProperty->storage() : nullptr;
 	//End modification
 	ConstPropertyPtr asphericalShapeStorage = asphericalShapeProperty ? asphericalShapeProperty->storage() : nullptr;
 	ConstPropertyPtr orientationStorage = orientationProperty ? orientationProperty->storage() : nullptr;
@@ -531,7 +591,6 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 	int particleCount = particles->elementCount();
 
 	if(particleShape() != Cylinder && particleShape() != Spherocylinder) {
-
 		// If rendering quality is set to automatic, pick quality level based on current number of particles.
 		ParticlePrimitive::RenderingQuality renderQuality = effectiveRenderingQuality(renderer, particles);
 
@@ -612,6 +671,22 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			selectionProperty,
 			transparencyProperty));
 
+
+		//Begin of modification
+		using TransparencyCacheKey = std::tuple<
+			std::shared_ptr<ParticlePrimitive>,
+			FloatType,
+			VersionedDataObjectRef,
+			VersionedDataObjectRef
+		>;
+		bool& transparenciesUpToDate = dataset()->visCache().get<bool>(TransparencyCacheKey(
+			visCache.particlePrimitive,
+			defaultParticleTransparency(),
+			transparencyProperty,
+			typeTransparencyProperty)); /*typeTransparencyProperty*/
+		//End of modification
+
+
 		// The type of lookup key used for caching the mesh rendering primitives:
 		using ShapeMeshCacheKey = std::tuple<
 			CompatibleRendererGroup,	// The scene renderer
@@ -679,6 +754,10 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				std::vector<std::vector<size_t>> shapeParticleIndices(meshVisCache->shapeMeshPrimitives.size());
 				std::vector<ColorA> colors = particleColors(particles, renderer->isInteractive(), true);
 				std::vector<FloatType> radii = particleRadii(particles);
+				//Begin of modification
+
+				std::vector<FloatType> transparencies = particleTransparencies(particles);
+				//End of modification
 				ConstPropertyAccess<int> typeArray(typeProperty);
 				ConstPropertyAccess<Point3> positionArray(positionStorage);
 				ConstPropertyAccess<Quaternion> orientationArray(orientationStorage);
@@ -809,6 +888,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				if(boost::algorithm::any_of(radiusMap, [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
 					// Allocate value buffer.
 					std::vector<FloatType> particleRadii(visibleStandardParticles, defaultParticleRadius());
+
 					// Fill radius array.
 					auto c = particleRadii.begin();
 					size_t index = 0;
@@ -850,6 +930,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 			}
 			else {
 				std::vector<ColorA> colors = particleColors(particles, renderer->isInteractive(), true);
+				std::vector<FloatType> transparenciesVect = particleTransparencies(particles);
 				// Filter the color array to include only the visible particles.
 				if(visibleStandardParticles != particleCount) {
 					auto c = colors.begin();
@@ -857,7 +938,27 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 						if(!hiddenParticlesMask.test(i))
 							*c++ = colors[i];
 				}
+				auto c = colors.begin();
+				FloatType defaultTransparency = defaultParticleTransparency();
+
+				if(transparencyStorage){
+					visCache.particlePrimitive->setParticleTransparencies(ConstPropertyAccess<FloatType>(transparencyStorage).cbegin());
+					std::cout << "trstorage " << *ConstPropertyAccess<FloatType>(transparencyStorage).cbegin() << std::endl;
+					auto itTr = transparenciesVect.begin();
+					for(auto it = colors.begin(); it != colors.end(); ++it){
+						it->a() = 0.2;//*itTr;
+						++itTr;
+					}
+					//visCache.particlePrimitive->setParticleTransparencies(ConstPropertyAccess<FloatType>(transparencyStorage).cbegin());
+				}
+				else{
+					for(auto it = colors.begin(); it != colors.end(); ++it){
+						it->a() = defaultTransparency;//0.4;
+					}
+				}
+				std::cout << "Set particle colors!\n";
 				visCache.particlePrimitive->setParticleColors(colors.data());
+				visCache.particlePrimitive->setParticleTransparencies(transparenciesVect.data());
 			}
 		}
 
@@ -950,6 +1051,11 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				sphereColors.resize(particleCount * 2);
 			}
 
+			//Modif
+/*			for(auto it = std::begin(sphereColors); it != std::end(sphereColors); ++it){
+				it->a() = 0.5;
+			}
+*/
 			// Fill cylinder buffer.
 			visCache.cylinderPrimitive->startSetElements(particleCount);
 			ConstPropertyAccess<Point3> positionArray(positionStorage);
@@ -1068,7 +1174,6 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 
 		// Determine radius of selected particle.
 		FloatType radius = particleRadius(particleIndex, radiusProperty, typeProperty);
-
 		// Determine the display color of selected particle.
 		ColorA color = particleColor(particleIndex, colorProperty, typeProperty, selectionProperty, transparencyProperty);
 		ColorA highlightColor = selectionParticleColor();
@@ -1174,6 +1279,9 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 		const PropertyObject* radiusProperty = nullptr;
 		const PropertyObject* shapeProperty = nullptr;
 		const PropertyObject* typeProperty = nullptr;
+		//Begin of modification
+		const PropertyObject* transparencyProperty = nullptr;
+		//End of modification
 		for(const PropertyObject* property : particles->properties()) {
 			if(property->type() == ParticlesObject::PositionProperty && property->size() >= particleIndex)
 				posProperty = property;
@@ -1183,9 +1291,17 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 				shapeProperty = property;
 			else if(property->type() == ParticlesObject::TypeProperty && property->size() >= particleIndex)
 				typeProperty = property;
+			//Modif
+			else if(property->type() == ParticlesObject::TransparencyProperty && property->size() >= particleIndex)
+				transparencyProperty = property;
 		}
 		if(!posProperty)
 			return;
+
+		if(!transparencyProperty){
+
+			std::cout << "NO TRANSPARENCY PROPERTY DETECTED!!!!!\n";
+		}
 
 		// Determine position of selected particle.
 		Point3 pos = ConstPropertyAccess<Point3>(posProperty)[particleIndex];

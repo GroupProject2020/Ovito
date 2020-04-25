@@ -86,7 +86,7 @@ public:
 	/// Determines the display radius of a single particle.
 	FloatType particleRadius(size_t particleIndex, ConstPropertyAccess<FloatType> radiusProperty, const PropertyObject* typeProperty) const;
 
-	//Begin of modification
+
 	/// Determines the particle transparencies used for rendering.
 	std::vector<FloatType> particleTransparencies(const ParticlesObject* particles) const;
 
@@ -109,6 +109,11 @@ public:
 	/// Returns the typed particle property used to determine the rendering radii of particles (if no per-particle radii are defined).
 	virtual const PropertyObject* getParticleTypeRadiusProperty(const ParticlesObject* particles) const;
 
+	//Begin of modif
+	/// Returns the typed particle property used to determine the rendering transparencies of particles (if no per-particle transparencies are defined).
+	virtual const PropertyObject* getParticleTypeTransparencyProperty(const ParticlesObject* particles) const;
+	//End of modif
+
 public:
 
     Q_PROPERTY(Ovito::ParticlePrimitive::RenderingQuality renderingQuality READ renderingQuality WRITE setRenderingQuality);
@@ -124,6 +129,9 @@ private:
 
 	/// Controls the display shape of particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticleShape, particleShape, setParticleShape);
+
+	/// Controls the default transparency of the particles
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, defaultParticleTransparency, setDefaultParticleTransparency, PROPERTY_FIELD_MEMORIZE);
 };
 
 /**

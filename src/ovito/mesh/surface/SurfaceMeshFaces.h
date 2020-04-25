@@ -68,6 +68,8 @@ public:
 		RegionProperty = PropertyStorage::FirstSpecificProperty,
 		BurgersVectorProperty,
 		CrystallographicNormalProperty,
+		//Begin of modif
+		TransparencyProperty = PropertyStorage::GenericTypeProperty,
 	};
 
 	/// \brief Constructor.

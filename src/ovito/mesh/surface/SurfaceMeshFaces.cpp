@@ -116,12 +116,16 @@ void SurfaceMeshFaces::OOMetaClass::initialize()
 	const QStringList xyzList = QStringList() << "X" << "Y" << "Z";
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
 
+	std::cout << "initSurfaceMesh\n";
+
 	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Face colors"));
 	registerStandardProperty(FaceTypeProperty, tr("Type"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(RegionProperty, tr("Region"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(BurgersVectorProperty, tr("Burgers Vector"), PropertyStorage::Float, xyzList, tr("Burgers vectors"));
 	registerStandardProperty(CrystallographicNormalProperty, tr("Crystallographic Normal"), PropertyStorage::Float, xyzList);
+	//Begin of modif
+	registerStandardProperty(TransparencyProperty, tr("Transparency"), PropertyStorage::Float, emptyList);
 }
 
 /******************************************************************************

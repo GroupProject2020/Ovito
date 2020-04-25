@@ -64,7 +64,7 @@ public:
 		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
 		SelectionProperty = PropertyStorage::GenericSelectionProperty,
 		ColorProperty = PropertyStorage::GenericColorProperty,
-		PositionProperty = PropertyStorage::FirstSpecificProperty
+		PositionProperty = PropertyStorage::FirstSpecificProperty,
 	};
 
 	/// \brief Constructor.

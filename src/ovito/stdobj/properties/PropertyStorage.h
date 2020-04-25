@@ -59,7 +59,10 @@ public:
 		GenericColorProperty = 2,
 		GenericTypeProperty = 3,
 		GenericIdentifierProperty = 4,
-
+		//Begin of modification
+		GenericTransparencyProperty = 5,
+		//End of modification
+		
 		// This is value at which type IDs of specific standard properties start:
 		FirstSpecificProperty = 1000
 	};

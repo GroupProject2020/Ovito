@@ -151,6 +151,10 @@ public:
 	/// Returns a vector with the input particle radii.
 	std::vector<FloatType> inputParticleRadii() const;
 
+	//Begin of modification
+	std::vector<FloatType> inputParticleTransparencies() const;
+	//End of modification
+
 	/// Returns a vector with the input bond colors.
 	std::vector<ColorA> inputBondColors(bool ignoreExistingColorProperty = false) const;
 
