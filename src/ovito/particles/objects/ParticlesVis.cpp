@@ -229,13 +229,6 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 	ConstPropertyAccess<int> selectionProperty = highlightSelection ? particles->getProperty(ParticlesObject::SelectionProperty) : nullptr;
 	ConstPropertyAccess<FloatType> transparencyProperty = includeTransparency ? particles->getProperty(ParticlesObject::TransparencyProperty) : nullptr;
 
-	if(transparencyProperty){
-		std::cout << "yesTransparency = " << transparencyProperty[0] << " \n";
-	}
-	else{
-		std::cout << "noTransparency\n";
-	}
-	
 	// Allocate output array.
 	std::vector<ColorA> output(particles->elementCount());
 	ColorA defaultColor = defaultParticleColor();
@@ -244,7 +237,6 @@ std::vector<ColorA> ParticlesVis::particleColors(const ParticlesObject* particle
 		boost::copy(colorProperty, output.begin());
 	}
 	else if(typeProperty && typeProperty->size() == output.size()) {
-		std::cout << "Assign colors\n";
 		// Assign colors based on particle types.
 		// Generate a lookup map for particle type colors.
 		const std::map<int,Color> colorMap = typeProperty->typeColorMap();
@@ -388,15 +380,12 @@ std::vector<FloatType> ParticlesVis::particleTransparencies(const ParticlesObjec
 	// Allocate output array.
 	std::vector<FloatType> output(particles->elementCount());
 
-	std::cout << "First transparency: " << *transparencyProperty.cbegin() << std::endl;
-
 	FloatType defaultTransparency = defaultParticleTransparency();
 	if(transparencyProperty) {
 		// Take particle radii directly from the radius property.
 		boost::transform(transparencyProperty, output.begin(), [defaultTransparency](FloatType r) { return r >= 0 ? r : defaultTransparency; } );
     }
 	else if(typeProperty) {
-		std::cout << "BeTa\n";
 		// Assign radii based on particle type
 		// Build a lookup map for particle type radii.
 		const std::map<int,FloatType> transparencyMap = ParticleType::typeTransparencyMap(typeProperty);
@@ -419,7 +408,6 @@ std::vector<FloatType> ParticlesVis::particleTransparencies(const ParticlesObjec
 		}
     }
     else {
-		std::cout << "GaMmA\n";
 		// Assign a uniform radius to all particles
 		boost::fill(output, defaultTransparency);
 	}
@@ -945,28 +933,21 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				FloatType defaultTransparency = defaultParticleTransparency();
 
 				if(transparencyStorage){
-					for(int i = 0 ; i < typeProperty->elementTypes().size(); i++){
-						ElementType* etype = typeProperty->elementTypes()[i];
-					    ParticleType* ptype = dynamic_object_cast<ParticleType>(etype);
-						for(auto it = colors.begin(); it != colors.end(); ++it){
-							//std::cout << ptype->numericId() << std::endl;
-							if(ptype->numericId() == /*i + 1*/1){
-								it->a() = ptype->transparency();
-							}
-						}
-		                visCache.particlePrimitive->setParticleColors(colors.data());
+					ElementType* etype = typeProperty->elementTypes()[0];
+				    ParticleType* ptype = dynamic_object_cast<ParticleType>(etype);
+					for(auto it = colors.begin(); it != colors.end(); ++it){
+						it->a() = ptype->transparency();
 					}
+				
+					visCache.particlePrimitive->setParticleColors(colors.data());
 				}
 				else{
 					for(auto it = colors.begin(); it != colors.end(); ++it){
-						it->a() = defaultTransparency;//0.4;
+						it->a() = defaultTransparency;
 					}
 	                visCache.particlePrimitive->setParticleColors(colors.data());
 
 				}
-//				std::cout << "Set particle colors!\n";
-//				visCache.particlePrimitive->setParticleColors(colors.data());
-//				visCache.particlePrimitive->setParticleTransparencies(transparenciesVect.data());
 			}
 		}
 
@@ -1305,11 +1286,6 @@ void ParticlesVis::highlightParticle(size_t particleIndex, const ParticlesObject
 		}
 		if(!posProperty)
 			return;
-
-		if(!transparencyProperty){
-
-			std::cout << "NO TRANSPARENCY PROPERTY DETECTED!!!!!\n";
-		}
 
 		// Determine position of selected particle.
 		Point3 pos = ConstPropertyAccess<Point3>(posProperty)[particleIndex];

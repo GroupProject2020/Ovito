@@ -549,7 +549,6 @@ PropertyPtr ParticlesObject::OOMetaClass::createStandardStorage(size_t particleC
 ******************************************************************************/
 void ParticlesObject::OOMetaClass::initialize()
 {
-	std::cout << "ParticlesObject initialize()\n";
 	PropertyContainerClass::initialize();
 
 	// Enable automatic conversion of a ParticlePropertyReference to a generic PropertyReference and vice versa.

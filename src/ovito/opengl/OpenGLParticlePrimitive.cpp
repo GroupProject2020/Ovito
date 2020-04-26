@@ -366,7 +366,6 @@ void OpenGLParticlePrimitive::setParticlePositions(const Point3* coordinates)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleRadii(const FloatType* radii)
 {
-	std::cout << "setParticleRadii()\n";
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _radiiBuffers) {
 		buffer.fill(radii);
@@ -379,7 +378,6 @@ void OpenGLParticlePrimitive::setParticleRadii(const FloatType* radii)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleRadius(FloatType radius)
 {
-	std::cout << "setParticleRadius()\n";
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _radiiBuffers)
 		buffer.fillConstant(radius);
@@ -393,7 +391,6 @@ void OpenGLParticlePrimitive::setParticleTransparencies(const FloatType* transpa
 {
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _transparenciesBuffers) {
-		std::cout << *transparencies << std::endl;
 		buffer.fill(transparencies);
 		transparencies += buffer.elementCount();
 	}
@@ -407,7 +404,6 @@ void OpenGLParticlePrimitive::setParticleTransparency(FloatType transparency)
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buff : _transparenciesBuffers){
 		buff.fillConstant(transparency);
-		buff.unmap();
     }
 
 
@@ -420,8 +416,6 @@ void OpenGLParticlePrimitive::setParticleTransparency(FloatType transparency)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleColors(const ColorA* colors)
 {
-	std::cout << "Displaying alpha channel\n";
-	std::cout << colors->a() << std::endl;
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _colorsBuffers) {
 		buffer.fill(colors);
@@ -607,8 +601,7 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 
 	//MODIF
 //	if(!renderer->isPicking() && translucentParticles()) {
-	//std::cout << "Alpha\n";
-		renderer->glEnable(GL_CULL_FACE);
+		//renderer->glEnable(GL_CULL_FACE);
 		renderer->glEnable(GL_BLEND); //initialisation de la transparence
 		renderer->glBlendEquation(GL_FUNC_ADD);
 		//renderer->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
@@ -677,7 +670,6 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 	OVITO_CHECK_OPENGL(renderer, renderer->glDisable(GL_VERTEX_PROGRAM_POINT_SIZE));
 	//MODIF
 //	if(!renderer->isPicking() && translucentParticles()) {
-	//std::cout << "Alpha\n";
 		//renderer->glDisable(GL_CULL_FACE);
 		renderer->glDisable(GL_BLEND);
 		renderer->glDisable(GL_DEPTH_TEST);
@@ -919,7 +911,6 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 
 	//Modif
 	//if(!renderer->isPicking())
-	std::cout << "Detla\n";
 		renderer->glDisable(GL_BLEND);
 	//else
 	//	renderer->deactivateVertexIDs(shader);
@@ -984,7 +975,6 @@ void OpenGLParticlePrimitive::renderImposters(OpenGLSceneRenderer* renderer)
 
 	//Modif
 //	if(!renderer->isPicking() && translucentParticles()) {
-		std::cout << "Echo\n";
 		renderer->glEnable(GL_BLEND);
 		renderer->glBlendEquation(GL_FUNC_ADD);
 		renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);

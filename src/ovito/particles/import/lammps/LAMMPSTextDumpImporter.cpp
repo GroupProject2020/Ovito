@@ -433,9 +433,8 @@ InputColumnMapping LAMMPSTextDumpImporter::generateAutomaticColumnMapping(const 
 		else if(name == "c_shape[2]") columnMapping[i].mapStandardColumn(ParticlesObject::AsphericalShapeProperty, 1);
 		else if(name == "c_shape[3]") columnMapping[i].mapStandardColumn(ParticlesObject::AsphericalShapeProperty, 2);
 		else if(name == "selection") columnMapping[i].mapStandardColumn(ParticlesObject::SelectionProperty, 0);
-		//else if(name=="transparency") columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);
+		else if(name=="transparency") columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);
 		else {
-			std::cout << "Column mapping custom column\n";
 			columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);
 			//columnMapping[i].mapCustomColumn(name, PropertyStorage::Float);
 		}
