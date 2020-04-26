@@ -137,6 +137,7 @@ Box3 BondsVis::boundingBox(TimePoint time, const std::vector<const DataObject*>&
 ******************************************************************************/
 void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
+	std::cout << "RENDER BOND VIS\n";
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
 		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));

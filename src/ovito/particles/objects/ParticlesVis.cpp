@@ -578,6 +578,9 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 		return;
 	}
 
+//	ElementType* etype = typeProperty->elementTypes()[0];
+//	ParticleType* ptype = dynamic_object_cast<ParticleType>(etype);
+
 	ConstPropertyPtr positionStorage = positionProperty ? positionProperty->storage() : nullptr;
 	ConstPropertyPtr radiusStorage = radiusProperty ? radiusProperty->storage() : nullptr;
 	ConstPropertyPtr colorStorage = colorProperty ? colorProperty->storage() : nullptr;
@@ -942,23 +945,28 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				FloatType defaultTransparency = defaultParticleTransparency();
 
 				if(transparencyStorage){
-					visCache.particlePrimitive->setParticleTransparencies(ConstPropertyAccess<FloatType>(transparencyStorage).cbegin());
-					std::cout << "trstorage " << *ConstPropertyAccess<FloatType>(transparencyStorage).cbegin() << std::endl;
-					auto itTr = transparenciesVect.begin();
-					for(auto it = colors.begin(); it != colors.end(); ++it){
-						it->a() = 0.2;//*itTr;
-						++itTr;
+					for(int i = 0 ; i < typeProperty->elementTypes().size(); i++){
+						ElementType* etype = typeProperty->elementTypes()[i];
+					    ParticleType* ptype = dynamic_object_cast<ParticleType>(etype);
+						for(auto it = colors.begin(); it != colors.end(); ++it){
+							//std::cout << ptype->numericId() << std::endl;
+							if(ptype->numericId() == /*i + 1*/1){
+								it->a() = ptype->transparency();
+							}
+						}
+		                visCache.particlePrimitive->setParticleColors(colors.data());
 					}
-					//visCache.particlePrimitive->setParticleTransparencies(ConstPropertyAccess<FloatType>(transparencyStorage).cbegin());
 				}
 				else{
 					for(auto it = colors.begin(); it != colors.end(); ++it){
 						it->a() = defaultTransparency;//0.4;
 					}
+	                visCache.particlePrimitive->setParticleColors(colors.data());
+
 				}
-				std::cout << "Set particle colors!\n";
-				visCache.particlePrimitive->setParticleColors(colors.data());
-				visCache.particlePrimitive->setParticleTransparencies(transparenciesVect.data());
+//				std::cout << "Set particle colors!\n";
+//				visCache.particlePrimitive->setParticleColors(colors.data());
+//				visCache.particlePrimitive->setParticleTransparencies(transparenciesVect.data());
 			}
 		}
 
