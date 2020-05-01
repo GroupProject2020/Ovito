@@ -933,12 +933,16 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				FloatType defaultTransparency = defaultParticleTransparency();
 
 				if(transparencyStorage){
+					//const PropertyObject* partType = particles[150].getProperty(ParticlesObject::TypeProperty);
+					//ElementType* eteype = partType->elementTypes()[0];
+					//ParticleType* petype = dynamic_object_cast<ParticleType>(eteype);
+					//std::cout << petype->numericId() << std::endl;
 					ElementType* etype = typeProperty->elementTypes()[0];
-				    ParticleType* ptype = dynamic_object_cast<ParticleType>(etype);
+					//std::cout << "ETYPE size: " << typeProperty->elementTypes().size() << std::endl;
+					ParticleType* ptype = dynamic_object_cast<ParticleType>(etype);
 					for(auto it = colors.begin(); it != colors.end(); ++it){
 						it->a() = ptype->transparency();
 					}
-				
 					visCache.particlePrimitive->setParticleColors(colors.data());
 				}
 				else{

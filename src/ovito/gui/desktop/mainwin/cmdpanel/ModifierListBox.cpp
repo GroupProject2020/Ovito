@@ -126,6 +126,10 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 	mruListItem->setTextAlignment(Qt::AlignCenter);
 	_model->appendRow(mruListItem);
 
+	//Begin of modif
+	QStringList categoriesList;
+	//End of modif
+
 	// Create items for all modifiers and the category titles.
 	for(const ModifierCategory& category : modifierCategories) {
 		if(category.modifierClasses.empty()) continue;
@@ -138,6 +142,9 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 		categoryItem->setTextAlignment(Qt::AlignCenter);
 		_model->appendRow(categoryItem);
 
+		//Modif
+		categoriesList << category.name;
+
 		for(ModifierClassPtr descriptor : category.modifierClasses) {
 			QStandardItem* modifierItem = new QStandardItem("   " + descriptor->displayName());
 			modifierItem->setData(QVariant::fromValue(descriptor), Qt::UserRole);
@@ -145,6 +152,13 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 			_modifierItems.push_back(modifierItem);
 		}
 	}
+
+	QLineEdit *lineEdit = new QLineEdit(this);
+	//Modif
+	QCompleter *completer = new QCompleter(this);
+	completer->setModel(_model);
+	completer->setCaseSensitivity(Qt::CaseInsensitive);
+	lineEdit->setCompleter(completer);
 
 	// Create category for modifier templates.
 	QStandardItem* categoryItem = new QStandardItem(tr("Modifier templates"));
@@ -163,10 +177,12 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 	showAllItem->setTextAlignment(Qt::AlignCenter);
 	_model->appendRow(showAllItem);
 
+
 	// Filler item to workaround bug in Qt which doesn't fully show all items in the drop-down menu.
 	QStandardItem* fillerItem = new QStandardItem();
 	fillerItem->setFlags(Qt::ItemIsEnabled);
 	_model->appendRow(fillerItem);
+
 
 	// Expand list when the "Show all modifiers" entry is selected and update MRU list.
     connect(this, (void (QComboBox::*)(int))&QComboBox::activated, this, [this](int index) {

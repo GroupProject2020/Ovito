@@ -601,7 +601,7 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 
 	//MODIF
 //	if(!renderer->isPicking() && translucentParticles()) {
-		//renderer->glEnable(GL_CULL_FACE);
+/*		//renderer->glEnable(GL_CULL_FACE);
 		renderer->glEnable(GL_BLEND); //initialisation de la transparence
 		renderer->glBlendEquation(GL_FUNC_ADD);
 		//renderer->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
@@ -619,6 +619,13 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 		renderer->glCullFace(GL_FRONT);
 		renderer->glDepthFunc(GL_ALWAYS);
 	//}
+	//
+	//
+*/
+
+	renderer->glEnable(GL_BLEND);
+	renderer->glBlendEquation(GL_FUNC_SUBTRACT);
+	renderer->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	GLint pickingBaseID = 0;
 	if(renderer->isPicking()) {
@@ -672,7 +679,6 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 //	if(!renderer->isPicking() && translucentParticles()) {
 		//renderer->glDisable(GL_CULL_FACE);
 		renderer->glDisable(GL_BLEND);
-		renderer->glDisable(GL_DEPTH_TEST);
 		//renderer->glDepthFunc(GL_LEQUAL);
 //	}
 

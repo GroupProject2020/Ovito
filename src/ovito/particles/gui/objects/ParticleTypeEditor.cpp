@@ -96,6 +96,9 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	FloatParameterUI* transparencyPUI = new FloatParameterUI(this, PROPERTY_FIELD(ParticleType::transparency));
 	gridLayout->addWidget(transparencyPUI->label(), 2, 0);
 	gridLayout->addLayout(transparencyPUI->createFieldLayout(), 2, 1);
+
+	BooleanParameterUI* particleSmoothingPUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleType::particleSmoothing));
+	gridLayout->addWidget(particleSmoothingPUI->checkBox(), 3, 0, 3, 1);
 	//End of modification
 
 //	BooleanParameterUI* smoothingPUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleType::transparency));
@@ -108,9 +111,7 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	gridLayout->addWidget(setAsDefaultBtn, 3, 0, 1, 2, Qt::AlignRight);
 	connect(setAsDefaultBtn, &QPushButton::clicked, this, [this]() {
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
-		std::cout << "PTYPE transparency = " <<  ptype->transparency() << std::endl;
 		if(!ptype) return;
-		std::cout << "set as default\n";
 		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->color());
 		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, ptype->nameOrNumericId(), ptype->radius());
 		//Begin of modification

@@ -44,7 +44,7 @@ public:
 	virtual void showPopup() override {
 		updateApplicableModifiersList();
 		_filterModel->invalidate();
-		setMaxVisibleItems(_model->rowCount());
+		setMaxVisibleItems(_model->rowCount() - 10);
 		_showAllModifiers = false;
 		QComboBox::showPopup();
 	}

@@ -36,6 +36,7 @@ DEFINE_PROPERTY_FIELD(ParticleType, shapeUseMeshColor);
 DEFINE_PROPERTY_FIELD(ParticleType, mass);
 //Begin of modification
 DEFINE_PROPERTY_FIELD(ParticleType, transparency);
+DEFINE_PROPERTY_FIELD(ParticleType, particleSmoothing);
 //End of modification
 SET_PROPERTY_FIELD_LABEL(ParticleType, radius, "Radius");
 SET_PROPERTY_FIELD_LABEL(ParticleType, shapeMesh, "Shape");
@@ -45,6 +46,7 @@ SET_PROPERTY_FIELD_LABEL(ParticleType, shapeUseMeshColor, "Use mesh color");
 SET_PROPERTY_FIELD_LABEL(ParticleType, mass, "Mass");
 //Begin of modification
 SET_PROPERTY_FIELD_LABEL(ParticleType, transparency, "Transparency");
+SET_PROPERTY_FIELD_LABEL(ParticleType, particleSmoothing, "Particle smoothing");
 //End of modification
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticleType, radius, WorldParameterUnit, 0);
 
@@ -57,7 +59,8 @@ ParticleType::ParticleType(DataSet* dataset) : ElementType(dataset),
 	_shapeBackfaceCullingEnabled(true),
 	_shapeUseMeshColor(false),
 	_mass(0),
-	_transparency(1.0)
+	_transparency(1.0),
+	_particleSmoothing(0)
 {
 }
 
@@ -311,20 +314,6 @@ FloatType ParticleType::getDefaultParticleTransparency(ParticlesObject::Type typ
 /******************************************************************************
 * Changes the default transparency for a particle type name.
 *******************************************************************************/
-/*void ParticleType::setDefaultParticleTransparency(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType transparency)
-{
-    QSettings settings;
-    settings.beginGroup("particles/defaults/transparency");
-    settings.beginGroup(QString::number((int)typeClass));
-
-    if(getDefaultParticleTransparency(typeClass, particleTypeName, 0, false) != transparency)
-        settings.setValue(particleTypeName, QVariant::fromValue(transparency));
-    else
-        settings.remove(particleTypeName);
-}*/
-//End of modifications
-
-
 void ParticleType::setDefaultParticleTransparency(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType transparency)
 {
     QSettings settings;

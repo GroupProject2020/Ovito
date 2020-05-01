@@ -157,6 +157,8 @@ private:
 	/// The mass of this particle type (maybe zero if not set).
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, mass, setMass);
 
+  DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, particleSmoothing, activeParticleSmoothing);
+
 private:
 
 	/// Data structure that holds the name, color, and radius of a particle type.
