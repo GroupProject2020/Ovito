@@ -435,6 +435,7 @@ InputColumnMapping LAMMPSTextDumpImporter::generateAutomaticColumnMapping(const 
 		else if(name == "selection") columnMapping[i].mapStandardColumn(ParticlesObject::SelectionProperty, 0);
 		else if(name == "transparency"){ columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);std::cout<<"Transparency column found\n";}
 		else {
+			std::cout << (string)name << std::endl;
 			columnMapping[i].mapStandardColumn(ParticlesObject::TransparencyProperty);
 			//columnMapping[i].mapCustomColumn(name, PropertyStorage::Float);
 		}

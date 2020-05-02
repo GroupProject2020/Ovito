@@ -389,6 +389,7 @@ void OpenGLParticlePrimitive::setParticleRadius(FloatType radius)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleTransparencies(const FloatType* transparencies)
 {
+	std::cout << "YES\n";
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _transparenciesBuffers) {
 		buffer.fill(transparencies);
@@ -618,14 +619,25 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 		renderer->glEnable(GL_CULL_FACE);
 		renderer->glCullFace(GL_FRONT);
 		renderer->glDepthFunc(GL_ALWAYS);
-	//}
+*/	//}
 	//
 	//
-*/
+
+
+	renderer->glEnable(GL_DEPTH_TEST);
 
 	renderer->glEnable(GL_BLEND);
-	renderer->glBlendEquation(GL_FUNC_SUBTRACT);
-	renderer->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	renderer->glEnable(GL_DEPTH_TEST);
+
+	renderer->glEnable(GL_ALPHA_TEST);
+
+	renderer->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	
+	renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+
+
+	//renderer->glDepthMask(GL_FALSE);
 
 	GLint pickingBaseID = 0;
 	if(renderer->isPicking()) {
@@ -677,9 +689,9 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 	OVITO_CHECK_OPENGL(renderer, renderer->glDisable(GL_VERTEX_PROGRAM_POINT_SIZE));
 	//MODIF
 //	if(!renderer->isPicking() && translucentParticles()) {
-		//renderer->glDisable(GL_CULL_FACE);
+		renderer->glDisable(GL_CULL_FACE);
 		renderer->glDisable(GL_BLEND);
-		//renderer->glDepthFunc(GL_LEQUAL);
+		renderer->glDepthFunc(GL_LEQUAL);
 //	}
 
 	// Disable point sprites again.

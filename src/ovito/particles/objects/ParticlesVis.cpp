@@ -933,6 +933,8 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				FloatType defaultTransparency = defaultParticleTransparency();
 
 				if(transparencyStorage){
+					ParticlesVis* vis = particles->visElement<ParticlesVis>();
+					//std::cout << vis[0]->numericId() << std::endl;
 					//const PropertyObject* partType = particles[150].getProperty(ParticlesObject::TypeProperty);
 					//ElementType* eteype = partType->elementTypes()[0];
 					//ParticleType* petype = dynamic_object_cast<ParticleType>(eteype);

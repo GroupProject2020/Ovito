@@ -55,6 +55,7 @@ void XYZImporter::setColumnMapping(const InputColumnMapping& mapping)
 ******************************************************************************/
 bool XYZImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
 {
+	std::cout << "checkfileformat\n";
 	// Open input file.
 	CompressedTextReader stream(file);
 
@@ -207,7 +208,8 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	else {
 		// Only int or float custom properties are supported
 		if(dataType == PropertyStorage::Float || dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)
-			columnMapping[column].mapCustomColumn(name, dataType, vec);
+//			columnMapping[column].mapCustomColumn(name, dataType, vec);
+			columnMapping[column].mapStandardColumn(ParticlesObject::TransparencyProperty);
 		else
 			return false;
 	}
