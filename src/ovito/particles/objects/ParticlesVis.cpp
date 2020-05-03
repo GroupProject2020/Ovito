@@ -933,7 +933,7 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 				FloatType defaultTransparency = defaultParticleTransparency();
 
 				if(transparencyStorage){
-					ParticlesVis* vis = particles->visElement<ParticlesVis>();
+				/*	ParticlesVis* vis = particles->visElement<ParticlesVis>();
 					//std::cout << vis[0]->numericId() << std::endl;
 					//const PropertyObject* partType = particles[150].getProperty(ParticlesObject::TypeProperty);
 					//ElementType* eteype = partType->elementTypes()[0];
@@ -945,7 +945,23 @@ void ParticlesVis::render(TimePoint time, const std::vector<const DataObject*>& 
 					for(auto it = colors.begin(); it != colors.end(); ++it){
 						it->a() = ptype->transparency();
 					}
-					visCache.particlePrimitive->setParticleColors(colors.data());
+					visCache.particlePrimitive->setParticleColors(colors.data());*/
+
+
+					const std::map<int,FloatType> transparencyMap = ParticleType::typeTransparencyMap(typeProperty);
+					// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.                
+					if(boost::algorithm::any_of(transparencyMap, [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
+						auto c = colors.begin();			
+						for(int t : ConstPropertyAccess<int>(typeProperty)) {
+							auto it = transparencyMap.find(t);
+	                        // Set particle radius only if the type's radius is non-zero.
+		                    if(it != transparencyMap.end() && it->second >= 0)
+								c->a() = it->second;
+                            ++c;
+                        }
+
+						visCache.particlePrimitive->setParticleColors(colors.data());
+                    }
 				}
 				else{
 					for(auto it = colors.begin(); it != colors.end(); ++it){

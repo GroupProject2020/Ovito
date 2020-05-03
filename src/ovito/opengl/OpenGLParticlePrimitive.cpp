@@ -389,7 +389,6 @@ void OpenGLParticlePrimitive::setParticleRadius(FloatType radius)
 ******************************************************************************/
 void OpenGLParticlePrimitive::setParticleTransparencies(const FloatType* transparencies)
 {
-	std::cout << "YES\n";
 	OVITO_ASSERT(QOpenGLContextGroup::currentContextGroup() == _contextGroup);
 	for(auto& buffer : _transparenciesBuffers) {
 		buffer.fill(transparencies);
