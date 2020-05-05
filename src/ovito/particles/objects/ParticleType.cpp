@@ -235,7 +235,6 @@ void ParticleType::setDefaultParticleColor(ParticlesObject::Type typeClass, cons
 ******************************************************************************/
 FloatType ParticleType::getDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults)
 {
-	std::cout << "Default radius for particle\n";
 	if(userDefaults) {
 		QSettings settings;
 		settings.beginGroup("particles/defaults/radius");

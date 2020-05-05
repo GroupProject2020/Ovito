@@ -601,8 +601,8 @@ void OpenGLParticlePrimitive::renderPointSprites(OpenGLSceneRenderer* renderer)
 
 	//MODIF
 //	if(!renderer->isPicking() && translucentParticles()) {
-/*		//renderer->glEnable(GL_CULL_FACE);
-		renderer->glEnable(GL_BLEND); //initialisation de la transparence
+		//renderer->glEnable(GL_CULL_FACE);
+/*		renderer->glEnable(GL_BLEND); //initialisation de la transparence
 		renderer->glBlendEquation(GL_FUNC_ADD);
 		//renderer->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 		//modif

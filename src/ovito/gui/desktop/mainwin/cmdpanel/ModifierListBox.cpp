@@ -158,7 +158,10 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 	QCompleter *completer = new QCompleter(this);
 	completer->setModel(_model);
 	completer->setCaseSensitivity(Qt::CaseInsensitive);
+	completer->setCompletionColumn(1);
+	completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
 	lineEdit->setCompleter(completer);
+
 
 	// Create category for modifier templates.
 	QStandardItem* categoryItem = new QStandardItem(tr("Modifier templates"));
